@@ -325,6 +325,7 @@ public  class  tz390 {
     * 2022-10-24 jjg #451 z390 ignores CODEPAGE option for input;
     *                     replace non-printable with '.' in PRN, BAL, PCH
     * 2023-06-21 AFK #485 fix O attribute value for extended mnemonics
+    * 2023-06-22 AFK #495 fix O attribure value for vector instructions
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -1292,7 +1293,7 @@ public  class  tz390 {
 //           if a lowercase m is     used to specify a set of extended mnemonics, x=mnem    can be specified to assign a mnemonic that deviates from the pattern       #485
 //           if a lowercase m is     used to specify a set of extended mnemonics, *Short    can be specified to limit the number of generated mnemonics                #485
 //           if a lowercase m is not used to specify a set of extended mnemonics, *Extended can be specified to indicate the entry defines an extended mnemonic        #485
-// Remark 1: op_type and op_trace_type are entered as -- for assembler directives
+// Remark 1: opcode and op_trace_type are entered as -- for assembler directives
 // Remark 2: mnemonic may contain a ?, meaning that the next character in the mnemonic is optional,
 //           hence the mnemonic exists in two variants:
 //           the basic form (without the question mark) and the Alternate form with the optional character present
@@ -1307,7 +1308,7 @@ public  class  tz390 {
 // Example3: definition of instruction BC:          "47=BC,5,50"        --> opcode 47,  mnemonic BC,   opcode type  5 (see table opcode_formats above), trace type  50 #485
 // Example4: definition of B, BE, BNZ, etc:         "47m=Bm,6,60;0=NOP" --> opcode 47m, ext.mnemonics, opcode type  6 (see table opcode_formats above), trace type  60 #485
 //                                                                          generated extended mnemonics are Bx, BNx except for mask=0 mnemonic NOP is forced          #485
-// Example5: definition of instruction JLC:         "C04=JLC,33,330;*Extended"      --> opcode C04m, ext.mnemonics JLC, opcode type 33 (see table opcode_formats above), trace type 330 #485
+// Example5: definition of instruction JLC:         "C04=JLC,33,330;*Extended"      --> opcode C04, ext.mnemonic JLC, opcode type 33 (see table opcode_formats above), trace type 330 #485
 // Example6: definition of BROL, BRNZL, etc:        "C04m=BRmL,33,330;F=BRUL;0="    --> opcode C04m, ext.mnemonics, opcode type 33,                     trace type 330 #485
 //                                                                          generated extended mnemonics are BRxL, BRNxL except for mask=F ext.mnemonic BRUL is forced #485
 //                                                                                                                          and for mask=0 no mnemonic is defined      #485
@@ -1316,6 +1317,20 @@ public  class  tz390 {
 //                                                                                                                          and for mask=0 ext.mnemonic JLNOP is forced#485
 // Example8: definition of CGRTE, CGRTNH, etc:      "B960m=CGRTm,40,151;*Short"     --> opcode B960m,ext.mnemonics, opcode type 40,                     trace type 151 #485
 //                                                                          generated extended mnemonics are CGRTx, CGRTNx, only for x in {H, L, E}                    #485
+//
+// The above holds for non-vector instructions. For vector instructions different masking for extended mnemonics and their opcodes apply.                              #495
+// This applies only to instructions introduced with z15 - defined in op_table_z15 and later.                                                                          #495
+//           but not to the old and discontinued vector instructions defined in op_table_vector                                                                        #495
+// opcode=mnemonic,op_type,op_trace_type[;overrides]                                                                                                                   #495
+// opcode   defines the opcode in hexadecimal,           character e/f may be used to denote the element size / floating point format position for extended mnemonics  #495
+// mnemonic defines the mnemonic assigned to the opcode, character e/f may be used to denote the element size / floating point format position for extended mnemonics  #495
+// op_type is used during assembly; see process_bal_op() in az390                                                                                                      #495
+// op_trace_type is used during tracing: see trace_ins() in pz390                                                                                                      #495
+// optional ;overrides specifies up to two overrides as follows:                                                                                                       #495
+//           if a lowercase e is used to specify a set of extended mnemonics, e=xxx can be specified to indicate which element size values are valid                   #495
+//           if a lowercase f is used to specify a set of extended mnemonics, f=xxx can be specified to indicate which floating point format values are valid          #495
+//           if a lowercase e/f is not used to specify a set of extended mnemonics, *Extended can be specified to indicate the entry defines an extended mnemonic      #495
+//
      String[]   op_table_start = // Table added for RPI 1209A
         {"??=*,0,00",            //     00 comments
          };
@@ -1787,7 +1802,7 @@ public  class  tz390 {
          "--=AINSERT,204,--",    //   7630         "AINSERT"        204
          "--=ALIAS,106,--",      //   7190         "ALIAS"          106
          "--=AMODE,107,--",      //   7200         "AMODE"          107
-	  "--=ACALLPRM,228,--",      //   "ACALLPRM" resets ACALL parms just before AENTRY //  DSH #375 rename APARM to ACALLPRM
+         "--=ACALLPRM,228,--",   //   "ACALLPRM" resets ACALL parms just before AENTRY //  DSH #375 rename APARM to ACALLPRM
          "--=AREAD,206,--",      //   7650         "AREAD"          206
          "--=ASPACE,126,--",     //   7390         "ASPACE"         126
          "--=CATTR,108,--",      //   7210         "CATTR"          108
@@ -2481,8 +2496,6 @@ public  class  tz390 {
          "EB7E=ALGSI,21,212",    //    500 "EB7E"  "ALGSI"    "SIY"  21 RPI 817
          "EC54=RNSBG,52,400",    //    510 "EC54"  "RNSBG"    "RIE8" 52 RPI 817
          "EC54T=RNSBGT,52,400;*Extended",  //    520 "EC54T" "RNSBGT"   "RIE8" 52 RPI 817 #485
-       //  "EC55=RISBG,52,400",    //    530 "EC55"  "RISBG"    "RIE8" 52 RPI 817
-       //  "EC55Z=RISBGZ,52,400",  //    540 "EC55Z" "RISBGZ"   "RIE8" 52 RPI 817
          "EC56=ROSBG,52,400",    //    550 "EC56"  "ROSBG"    "RIE8" 52 RPI 817
          "EC56T=ROSBGT,52,400;*Extended",  //    560 "EC56T" "ROSBGT"   "RIE8" 52 RPI 817 #485
          "EC57=RXSBG,52,400",    //    570 "EC57"  "RXSBG"    "RIE8" 52 RPI 817
@@ -2594,39 +2607,8 @@ public  class  tz390 {
             "B9AC=IRBM,14,144", // B9AC RRE 14,144 IRBM R1,R2 RPI 2202
 			"B9E0=LOCFHR,39,153", // B9E0 RRF LOCFHR R1,R2  RPI 2202
             "B9E0m=LOCFHRm,39,153;0=;F=", // B9E0 RRF LOCFHR R1,R2 RPI 2202 #485
-			//"B9E01=LOCFHRO,39,153", // B9E0 RRF LOCFHR R1,R2,M3  RPI 2202 #485
-			//"B9E02=LOCFHRH,39,153", // B9E0 RRF LOCFHR R1,R2     RPI 2202 #485
-			//"B9E02=LOCFHRP,39,153", // B9E0 RRF LOCFHR R1,R2     RPI 2202 #485
-			//"B9E04=LOCFHRL,39,153", // B9E0 RRF LOCFHR R1,R2     RPI 2202 #485
-			//"B9E04=LOCFHRM,39,153", // B9E0 RRF LOCFHR R1,R2     RPI 2202 #485
-			//"B9E07=LOCFHRNE,39,153", // B9E0 RRF LOCFHR R1,R2    RPI 2202 #485
-			//"B9E07=LOCFHRNZ,39,153", // B9E0 RRF LOCFHR R1,R2    RPI 2202 #485
-			//"B9E08=LOCFHRE,39,153", // B9E0 RRF LOCFHR R1,R2     RPI 2202 #485
-			//"B9E08=LOCFHRZ,39,153", // B9E0 RRF LOCFHR R1,R2     RPI 2202 #485
-			//"B9E0B=LOCFHRNL,39,153", // B9E0 RRF LOCFHR R1,R2    RPI 2202 #485
-			//"B9E0B=LOCFHRNM,39,153", // B9E0 RRF LOCFHR R1,R2    RPI 2202 #485
-			//"B9E0D=LOCFHRNH,39,153", // B9E0 RRF LOCFHR R1,R2    RPI 2202 #485
-			//"B9E0D=LOCFHRNP,39,153", // B9E0 RRF LOCFHR R1,R2    RPI 2202 #485
-			//"B9E0E=LOCFHRNO,39,153", // B9E0 RRF LOCFHR R1,R2    RPI 2202 #485
-			
 			"B9E2=LOCGR,39,141",      // B9E2 RRF LOGGRH R1,R2     RPI 2202
             "B9E2m=LOCGRm,39,141;0=;F=", // B9E2 RRF LOGGRH R1,R2  RPI 2202 #485
-			//"B9E21=LOCGRO,39,141",  // B9E2 RRF LOGGRH R1,R2,M3  RPI 2202 #485
-			//"B9E22=LOCGRH,39,141",  // B9E2 RRF LOGGRH R1,R2     RPI 2202 #485
-			//"B9E22=LOCGRP,39,141",  // B9E2 RRF LOGGRH R1,R2     RPI 2202 #485
-			//"B9E24=LOCGRL,39,141",  // B9E2 RRF LOGGRH R1,R2     RPI 2202 #485
-			//"B9E24=LOCGRM,39,141",  // B9E2 RRF LOGGRH R1,R2     RPI 2202 #485
-			//"B9E27=LOCGRNE,39,141", // B9E2 RRF LOGGRH R1,R2     RPI 2202 #485
-			//"B9E27=LOCGRNZ,39,141", // B9E2 RRF LOGGRH R1,R2     RPI 2202 #485
-			//"B9E28=LOCGRE,39,141",  // B9E2 RRF LOGGRH R1,R2     RPI 2202 #485
-			//"B9E28=LOCGRZ,39,141",  // B9E2 RRF LOGGRH R1,R2     RPI 2202 #485
-			//"B9E2B=LOCGRNL,39,141", // B9E2 RRF LOGGRH R1,R2     RPI 2202 #485
-			//"B9E2B=LOCGRNM,39,141", // B9E2 RRF LOGGRH R1,R2     RPI 2202 #485
-			//"B9E2D=LOCGRNH,39,141", // B9E2 RRF LOGGRH R1,R2     RPI 2202 #485
-			//"B9E2D=LOCGRNP,39,141", // B9E2 RRF LOGGRH R1,R2     RPI 2202 #485
-			//"B9E2E=LOCGRNO,39,141", // B9E2 RRF LOGGRH R1,R2     RPI 2202 #485
-			
-			
             "B9E3=SELGR,74,156",         // "B9F0"  "SELRm'  "RRR"  RPI 2202 #485
             "B9E3m=SELGRm,74,156;0=;F=", // "B9F0"  "SELRm'  "RRR"  RPI 2202 #485
             "B9E5=NCGRK,39,153",     //  "B9E5"  "NCGRK'  "RRR"  RPI 2202
@@ -2665,40 +2647,25 @@ public  class  tz390 {
             "E601=VLEBRH,78,734", // E601 VRX VLEBRH V1,D2(X2,B2),M3 RPI 2202
             "E602=VLEBRG,78,734", // E602 VRX VLEBRG V1,D2(X2,B2),M3 RPI 2202
             "E603=VLEBRF,78,734", // E603 VRX VLEBRF V1,D2(X2,B2),M3 RPI 2202
-            "E604=VLLEBRZ,78,734", // E604 VRX VLLEBRZ V1,D2(X2,B2),M3 RPI 2202
-            "E6041=VLLEBRZH,78,734", // E6041 VRX VLLEBRZH V1,D2(X2,B2) RPI 2202
-            "E6042=VLLEBRZF,78,734", // E6042 VRX VLLEBRZF V1,D2(X2,B2) RPI 2202
-            "E6043=VLLEBRZG,78,734", // E6043 VRX VLLEBRZG V1,D2(X2,B2) RPI 2202
-            "E6046=VLLEBRZE,78,734", // E6046 VRX VLLEBRZE V1,D2(X2,B2) RPI 2202
-            "E6043=LDRV,78,734", // E6043 VRX LDRV V1,D2(X2,B2) RPI 2202
-            "E6046=LERV,78,734", // E6046 VRX LERV V1,D2(X2,B2) RPI 2202
-            "E605=VLBRREP,78,734",      // E605 VRX VLBRREP V1,D2(X2,B2),M3 RPI 2202
-            "E6051=VLBRREPH,78,734", // E6051 VRX VLBRREPH V1,D2(X2,B2) RPI 2202
-            "E6052=VLBRREPF,78,734",  // E6052 VRX VLBRREPF V1,D2(X2,B2) RPI 2202
-            "E6053=VLBRREPG,78,734", // E6053 VRX VLBRREPG V1,D2(X2,B2) RPI 2202
-            "E606=VLBR,78,734",      // E606 VRX VLBR V1,D2(X2,B2),M3 RPI 2202
-            "E6061=VLBRH,78,734", // E6061 VRX VLBRH V1,D2(X2,B2) RPI 2202
-            "E6062=VLBRF,78,734",  // E6062 VRX VLBRF V1,D2(X2,B2) RPI 2202
-            "E6063=VLBRG,78,734", // E6063 VRX VLBRG V1,D2(X2,B2) RPI 2202
-            "E6064=VLBRQ,78,734", // E6063 VRX VLBRQ V1,D2(X2,B2) RPI 2202
-            "E607=VLER,78,734",      // E607 VRX VLER V1,D2(X2,B2),M3 RPI 2202
-            "E6071=VLERH,78,734", // E6071 VRX VLERH V1,D2(X2,B2) RPI 2202
-            "E6072=VLERF,78,734",  // E6072 VRX VLERF V1,D2(X2,B2) RPI 2202
-            "E6073=VLERG,78,734", // E6073 VRX VLERG V1,D2(X2,B2) RPI 2202
+            "E604=VLLEBRZ,78,734",                     // E604 VRX VLLEBRZ V1,D2(X2,B2),M3 RPI 2202
+            "E604e=VLLEBRZe,78,734;e=1236;6=VLLEBRZE", // E604 VRX VLLEBRZ V1,D2(X2,B2),M3 RPI 2202 #495
+            "E6043=LDRV,78,734;*Extended", // E6043 VRX LDRV V1,D2(X2,B2) RPI 2202       #495
+            "E6046=LERV,78,734;*Extended", // E6046 VRX LERV V1,D2(X2,B2) RPI 2202       #495
+            "E605=VLBRREP,78,734",         // E605        VRX VLBRREP  V1,D2(X2,B2),M3 RPI 2202
+            "E605e=VLBRREPe,78,734;e=123", // E6051=E6053 VRX VLBRREP* V1,D2(X2,B2),M3 RPI 2202 #495
+            "E606=VLBR,78,734",          // E606        VRX VLBR  V1,D2(X2,B2),M3 RPI 2202
+            "E606e=VLBRe,78,734;e=1234", // E6061-E6064 VRX VLBR* V1,D2(X2,B2),M3 RPI 2202 #495
+            "E607=VLER,78,734",         // E607        VRX VLER  V1,D2(X2,B2),M3 RPI 2202
+            "E607e=VLERe,78,734;e=123", // E6071-E6073 VRX VLER* V1,D2(X2,B2),M3 RPI 2202 #495
             "E609=VSTEBRH,78,734",      // E609 VRX VSTEBRH V1,D2(X2,B2),M3 RPI 2202
             "E60A=VSTEBRG,78,734", // E60A VRX VSTEBRG V1,D2(X2,B2),M3 RPI 2202
-            "E60A0=STDRV,78,734",  // E60A0 VRX STDRV V1,D2(X2,B2) RPI 2202
+            "E60A0=STDRV,78,734;*Extended", // E60A0 VRX STDRV V1,D2(X2,B2) RPI 2202 #495
             "E60B=VSTEBRF,78,734", // E60B VRX VSTEBRF V1,D2(X2,B2),M3 RPI 2202
-            "E60B0=STERV,78,734",   // E60B0 VRX STERV V1,D2(X2,B2) RPI 2202
-            "E60E=VSTBR,78,734",      // E60E VRX VSTBR V1,D2(X2,B2),M3 RPI 2202
-            "E60E1=VSTBRH,78,734", // E60E1 7VRX VSTBRH V1,D2(X2,B2) RPI 2202
-            "E60E2=VSTBRF,78,734",  // E60E2 VRX VSTBRF V1,D2(X2,B2) RPI 2202
-            "E60E3=VSTBRG,78,734", // E60E3 VRX VSTBRG V1,D2(X2,B2) RPI 2202
-            "E60E4=VSTBRQ,78,734", // E60E4 VRX VSTBRQ V1,D2(X2,B2) RPI 2202
-            "E60F=VSTER,78,734",      // E60F VRX VSTER V1,D2(X2,B2),M3 RPI 2202
-            "E60F1=VSTERH,78,734", // E60F1 VRX VSTERH V1,D2(X2,B2) RPI 2202
-            "E60F2=VSTERF,78,734",  // E60F2 VRX VSTERF V1,D2(X2,B2) RPI 2202
-            "E60F3=VSTERG,78,734", // E60F3 VRX VSTERG V1,D2(X2,B2) RPI 2202
+            "E60B0=STERV,78,734;*Extended",   // E60B0 VRX STERV V1,D2(X2,B2) RPI 2202 #495
+            "E60E=VSTBR,78,734",          // E60E        VRX VSTBR  V1,D2(X2,B2),M3 RPI 2202
+            "E60Ee=VSTBRe,78,734;e=1234", // E60E1-E60E4 VRX VSTBR* V1,D2(X2,B2),M3 RPI 2202 #495
+            "E60F=VSTER,78,734",         // E60F        VRX VSTER  V1,D2(X2,B2),M3 RPI 2202
+            "E60Fe=VSTERe,78,734;e=123", // E60F1-E60F3 VRX VSTER* V1,D2(X2,B2),M3 RPI 2202 #495
             "E634=VPKZ,79,735", // E634 VSI VPKZ V1,D2(B2),I3 RPI 2202
             "E635=VLRL,79,735",  // E635 VSI VLRL V1,D2(B2),I3 RPI 2202
             "E637=VLRLR,80,736", // E637 VRSd VLRLR V1,R3,D2(B2) RPI 2202
@@ -2726,16 +2693,9 @@ public  class  tz390 {
             "E702=VLEG,78,734", // E702 VRX VLEG V1,D2(X2,B2),M3 RPI 2202
             "E703=VLEF,78,734", // E703 VRX VLEF V1,D2(X2,B2),M3 RPI 2202
             "E704=VLLEZ,78,734", // E704 VRX VLLEZ V1,D2(X2,B2),M3 RPI 2202
-            "E7040=VLLEZB,78,734", // E7040 VRX VLLEZB V1,D2(X2,B2) RPI 2202
-            "E7041=VLLEZH,78,734", // E7041 VRX VLLEZH V1,D2(X2,B2) RPI 2202
-            "E7042=VLLEZF,78,734", // E7042 VRX VLLEZF V1,D2(X2,B2) RPI 2202
-            "E7043=VLLEZG,78,734", // E7043 VRX VLLEZG V1,D2(X2,B2) RPI 2202
-            "E7046=VLLEZLF,78,734", // E7046 VRX VLLEZLF V1,D2(X2,B2) RPI 2202
+            "E704e=VLLEZe,78,734;e=01236", // E7040-E7046 VRX VLLEZ* V1,D2(X2,B2) RPI 2202 #495
             "E705=VLREP,78,734", // E705 VRX VLREP V1,D2(X2,B2),M3 RPI 2202
-            "E7050=VLREPB,78,734", // E7050 VRX VLREPB V1,D2(X2,B2) RPI 2202
-            "E7051=VLREPH,78,734", // E7051 VRX VLREPH V1,D2(X2,B2) RPI 2202
-            "E7052=VLREPF,78,734", // E7052 VRX VLREPF V1,D2(X2,B2) RPI 2202
-            "E7053=VLREPG,78,734", // E7053 VRX VLREPG V1,D2(X2,B2) RPI 2202
+            "E705e=VLREPe,78,734;e=0123", // E7059-E7053 VRX VLREP* V1,D2(X2,B2),M3 RPI 2202 #495
             "E706=VL,78,734", // E706 VRX VL V1,D2(X2,B2),M3 RPI 2202
             "E707=VLBB,78,734", // E707 VRX VLBB V1,D2(X2,B2),M3 RPI 2202
             "E708=VSTEB,78,734", // E708 VRX VSTEB V1,D2(X2,B2),M3 RPI 2202
@@ -2748,38 +2708,20 @@ public  class  tz390 {
             "E71A=VSCEG,83,734",     // E71A VRV VSCEG V1,D2(V2,B2),M3 RPI 2202
             "E71B=VSCEF,83,734",     // E71B VRV VSCEF V1,D2(V2,B2),M3 RPI 2202
             "E721=VLGV,80,736",     // E721 VRSc VLGV R1,V3,D2(B2),M4 RPI 2202
-            "E7210=VLGVB,80,736", // E7210 VRSc VLGVB R1,V3,D2(B2) RPI 2202
-            "E7211=VLGVH,80,736", // E7211 VRSc VLGVH R1,V3,D2(B2) RPI 2202
-            "E7212=VLGVF,80,736", // E7212 VRSc VLGVF R1,V3,D2(B2) RPI 2202
-            "E7213=VLGVG,80,736", // E7213 VRSc VLGVG R1,V3,D2(B2) RPI 2202
+            "E721e=VLGVe,80,736;e=0123", // E721 VRSc VLGV* R1,V3,D2(B2),M4 RPI 2202 #495
             "E722=VLVG,80,736",     // E722 VRSc VLVG V1,R3,D2(B2).M4 RPI 2202
-            "E7220=VLVGB,80,736", // E7220 VRSc VLVGB V1,R3,D2(B2) RPI 2202
-            "E7221=VLVGH,80,736", // E7221 VRSc VLVGH V1,R3,D2(B2) RPI 2202
-            "E7222=VLVGF,80,736", // E7222 VRSc VLVGF V1,R3,D2(B2) RPI 2202
-            "E7223=VLVGG,80,736", // E7223 VRSc VLVGG V1,R3,D2(B2) RPI 2202
+            "E722e=VLVGe,80,736;e=0123", // E7220-E7023 VRSc VLVG* V1,R3,D2(B2).M4 RPI 2202 #495
             "E727=LCBB,24,240",      // E727 RXE R1,D2(X2,B2),M3 RPI 2202
-			"E730=VESL,80,736",      // E730  VRSa VESL V1,V3,D2(B2).M4 RPI 2202 RPI 2216
-            "E7300=VESLB,80,736",    // E7300 VRSa VESLB V1,V3,D2(B2) RPI 2202 RPI 2216
-            "E7301=VESLH,80,736",    // E7301 VRSa VESLH V1,V3,D2(B2) RPI 2202 RPI 2216
-            "E7302=VESLF,80,736",    // E7302 VRSa VESLF V1,V3,D2(B2) RPI 2202 RPI 2216
-            "E7303=VESLG,80,736",    // E7303 VRSa VESRG V1,V3,D2(B2) RPI 2202 RPI 2216
-            "E733=VERLL,80,736",     // E733 VRSa VESL V1,V3,D2(B2).M4 RPI 2202
-            "E7330=VERLLB,80,736", // E7330 VRSa VESLB V1,V3,D2(B2) RPI 2202
-            "E7331=VERLLH,80,736", // E7331 VRSa VESLH V1,V3,D2(B2) RPI 2202
-            "E7332=VERLLF,80,736", // E7332 VRSa VESLF V1,V3,D2(B2) RPI 2202
-            "E7333=VERLLG,80,736", // E7333 VRSa VESLG V1,V3,D2(B2) RPI 2202
+            "E730=VESL,80,736",      // E730  VRSa VESL V1,V3,D2(B2).M4 RPI 2202 RPI 2216
+            "E730e=VESLe,80,736;e=0123", // E7300-E7303 VRSa VESL* V1,V3,D2(B2).M4 RPI 2202 RPI 2216 #495
+            "E733=VERLL,80,736",     // E733 VRSa VERLL V1,V3,D2(B2).M4 RPI 2202              #495
+            "E733e=VERLLe,80,736;e=0123", // E7330-E7333 VRSa VERLL* V1,V3,D2(B2).M4 RPI 2202 #495
             "E736=VLM,80,736",        // E736 VRSa VESL V1,V3,D2(B2).M4 RPI 2202
             "E737=VLL,80,736",         // E737 VRSb VESL V1,R3,D2(B2) RPI            
             "E738=VESRL,80,736",       // E738  VRSa VESRL V1,V3,D2(B2).M4 RPI 2202
-            "E7380=VESRLB,80,736",     // E7380 VRSa VESRLB V1,V3,D2(B2) RPI 2202
-            "E7381=VESRLH,80,736",     // E7381 VRSa VESRLH V1,V3,D2(B2) RPI 2202
-            "E7382=VESRLF,80,736",     // E7382 VRSa VESRLF V1,V3,D2(B2) RPI 2202
-            "E7383=VESRLG,80,736",     // E7383 VRSa VESRLG V1,V3,D2(B2) RPI 2202
-			"E73A=VESRA,80,736",     // E73A VRSa VESRA V1,V3,D2(B2).M4 RPI 2202
-            "E73A0=VESRAB,80,736", // E73A0 VRSa VESRAB V1,V3,D2(B2) RPI 2202
-            "E73A1=VESRAH,80,736", // E73A1 VRSa VESRAH V1,V3,D2(B2) RPI 2202
-            "E73A2=VESRAF,80,736",  // E73A2 VRSa VESRAF V1,V3,D2(B2) RPI 2202
-            "E73A3=VESRAG,80,736", // E73A3 VRSa VESRAG V1,V3,D2(B2) RPI 2202
+            "E738e=VESRLe,80,736;e=0123", // E7380-E7383 VRSa VESRL* V1,V3,D2(B2).M4 RPI 2202 #495
+            "E73A=VESRA,80,736",     // E73A VRSa VESRA V1,V3,D2(B2).M4 RPI 2202
+            "E73Ae=VESRAe,80,736;e=0123", // E73A0-E73A3 VRSa VESRA* V1,V3,D2(B2).M4 RPI 2202 #495
             "E73E=VSTM,80,736",     // E73E VRSa VSTM V1,V3,D2(B2).M4 RPI 2202
             "E73F=VSTL,80,736",     // E73F VRSb VSTL V1,R3,D2(B2) RPI 2202
             "E740=VLEIB,81,737", // E740 VRIa VLEIB V1,I2,M3 RPI 2202
@@ -2787,621 +2729,308 @@ public  class  tz390 {
             "E742=VLEIG,81,737", // E742 VRIa VLEIG V1,I2,M3 RPI 2202
             "E743=VLEIF,81,737", // E743 VRIa VLEIF V1,I2,M3 RPI 2202
             "E744=VGBM,81,737", // E744 VRIa VGBM V1,I2 RPI 2202
-            "E7440=VZERO,81,737", // E7440 VRIa VGBM V1 RPI 2202
-            "E7441=VONE,81,737",   // E7441 VRIa VGBM V1 RPI 2202
+            "E7440=VZERO,81,737;*Extended", // E7440 VRIa VGBM V1 RPI 2202 #495
+            "E7441=VONE,81,737;*Extended",  // E7441 VRIa VGBM V1 RPI 2202 #495
             "E745=VREPI,81,737",   // E745 VRIa VREPI V1,I2,M3 RPI 2202
-            "E7450=VREPIB,81,737", // E7450 VRIa VREPIB V1,I2 RPI 2202
-            "E7451=VREPIH,81,737", // E7451 VRIa VREPIH V1,I2 RPI 2202
-            "E7452=VREPIF,81,737",  // E7452 VRIa VREPIF V1,I2 RPI 2202
-            "E7453=VREPIG,81,737",  // E7453 VRIa VREPIG V1,I2 RPI 2202
+            "E745e=VREPIe,81,737;e=0123", // E7450-E7453 VRIa VREPI* V1,I2,M3 RPI 2202 #495
             "E746=VGM,81,737",   // E746 VRIb VGM V1,I2,I3,M3 RPI 2202
-            "E7460=VGMB,81,737", // E7460 VRIb VGMB V1,I2,I3 RPI 2202
-            "E7461=VGMH,81,737", // E7461 VRIb VGMH V1,I2,I3 RPI 2202
-            "E7462=VGMF,81,737",  // E7462 VRIb VGMF V1,I2,I3 RPI 2202
-            "E7463=VGMG,81,737",  // E7463 VRIb VGMG V1,I2,I3 RPI 2202
+            "E746e=VGMe,81,737;e=0123", // E7460-E7463 VRIb VGM* V1,I2,I3,M3 RPI 2202 #495
             "E74A=VFTCI,81,737",   // E74A VRIe VFTCI V1,V2,I3,M4,M5 RPI 2202
-            "E74A20=VFTCISB,81,737", // E74A20 VRIe VFTCISB V1,I2,I3 RPI 2202
-            "E74A30=VFTCIDB,81,737", // E74A30 VRIe VFTCIDB V1,I2,I3 RPI 2202
-            "E74A28=WFTCISB,81,737",  // E74A28 VRIe WFTCISB V1,I2,I3 RPI 2202
-            "E74A38=WFTCIDB,81,737",  // E74A38 VRIe WFTCIDB V1,I2,I3 RPI 2202
-            "E74A48=WFTCIXB,81,737",  // E74A48 VRIe WFTCIXB V1,I2,I3 RPI 2202
+            "E74Af0=VFTCIfB,81,737;f=23",  // E74A2-E74A3 VRIe VFTCI* V1,V2,I3,M4,M5 RPI 2202 #495
+            "E74Af8=WFTCIfB,81,737;f=234", // E74A2-E74A4 VRIe WFTCI* V1,V2,I3,M4,M5 RPI 2202 #495
             "E74D=VREP,81,737",   // E74D VRIc VREP V1,V2,I3,M4 RPI 2202
-            "E74D0=VREPB,81,737", // E74D0 VRIc VREPB V1,I2,I3 RPI 2202
-            "E74D1=VREPH,81,737", // E74D1 VRIc VREPH V1,V2,I3 RPI 2202
-            "E74D2=VREPF,81,737",  // E74D2 VRIc VREPF V1,V2,I3 RPI 2202
-            "E74D3=VREPG,81,737",  // E74D3 VRIc VREPG V1,V2,I3 RPI 2202
+            "E74De=VREPe,81,737;e=0123", // E74D0-E74D3 VRIc VREP* V1,V2,I3,M4 RPI 2202 #495
             "E750=VPOPCT,82,738",   // E750 VRRa VPOPCT V1,V2,M3 RPI 2202
-            "E7500=VPOPCTB,82,738", // E7500 VRRa VPOPCTB V1,V2 RPI 2202
-            "E7501=VPOPCTH,82,738", // E7501 VRRa VPOPCTH V1,V2 RPI 2202
-            "E7502=VPOPCTF,82,738",  // E7502 VRRa VPOPCTF V1,V2 RPI 2202
-            "E7503=VPOPCTG,82,738",  // E7503 VRRa VPOPCTG V1,V2 RPI 2202
+            "E750e=VPOPCTe,82,738;e=0123", // E7500-E7503 VRRa VPOPCT* V1,V2,M3 RPI 2202 #495
             "E752=VCTZ,82,738",   // E752 VRRa VCTZ V1,V2,M3 RPI 2202
-            "E7520=VCTZB,82,738", // E7520 VRRa VCTZB V1,V2 RPI 2202
-            "E7521=VCTZH,82,738", // E7521 VRRa VCTZH V1,V2 RPI 2202
-            "E7522=VCTZF,82,738",  // E7522 VRRa VCTZF V1,V2 RPI 2202
-            "E7523=VCTZG,82,738",  // E7523 VRRa VCTZG V1,V2 RPI 2202
+            "E752e=VCTZe,82,738;e=0123", // E7520-E7523 VRRa VCTZ* V1,V2,M3 RPI 2202 #495
             "E753=VCLZ,82,738",   // E753 VRRa VCLZ V1,V2,M3 RPI 2202
-            "E7530=VCLZB,82,738", // E7530 VRRa VCLZB V1,V2 RPI 2202
-            "E7531=VCLZH,82,738", // E7531 VRRa VCLZH V1,V2 RPI 2202
-            "E7532=VCLZF,82,738",  // E7532 VRRa VCLZF V1,V2 RPI 2202
-            "E7533=VCLZG,82,738",  // E7533 VRRa VCLZG V1,V2 RPI 2202
+            "E753e=VCLZe,82,738;e=0123", // E7530-E7533 VRRa VCLZ* V1,V2,M3 RPI 2202 #495
             "E756=VLR,82,738",   // E756 VRRa VLR V1,V2 RPI 2202
             "E75C=VISTR,82,738",   // E75C VRRa VISTR V1,V2,M3 RPI 2202
-            "E75C0=VISTRB,82,738", // E75C0 VRRa VISTRB V1,V2 RPI 2202
-            "E75C1=VISTRH,82,738", // E75C1 VRRa VISTRH V1,V2,M3,M5 RPI 2202
-            "E75C2=VISTRF,82,738",  // E75C2 VRRa VISTRF V1,V2,M3,M5 RPI 2202
-            "E75C01=VISTRBS,82,738", // E75C901 VRRa VISTRBS V1,V2 RPI 2202
-            "E75C11=VISTRHS,82,738",  // E75C11 VRRa VISTRHS V1,V2 RPI 2202
-            "E75C21=VISTRFS,82,738",    // E75C21 VRRa VISTRFS V1,V2 RPI 2202
+            "E75Ce=VISTRe,82,738;e=012",   // E75C0-E75C2   VRRa VISTR* V1,V2,M3 RPI 2202 #495
+            "E75Ce1=VISTReS,82,738;e=012", // E75C01-E75C21 VRRa VISTR* V1,V2,M3 RPI 2202 #495
             "E75F=VSEG,82,738",   // E75F VRRa VSEG V1,V2,M3 RPI 2202
-            "E75F0=VSEGB,82,738", // E75F0 VRRa VSEGB V1,V2 RPI 2202
-            "E75F1=VSEGH,82,738", // E75F1 VRRa VSEGH V1,V2 RPI 2202
-            "E75F2=VSEGF,82,738",  // E75F2 VRRa VSEGF V1,V2 RPI 2202
+            "E75Fe=VSEGe,82,738;e=012", // E75F0-E75F2 VRRa VSEG* V1,V2,M3 RPI 2202 #495
             "E760=VMRL,82,738",   // E760 VRRc VMRL V1,V2,V3,M4 RPI 2202
-            "E7600=VMRLB,82,738", // E7600 VRRc VMRLB V1,V2,V3 RPI 2202
-            "E7601=VMRLH,82,738", // E7601 VRRc VMRLH V1,V2,V3 RPI 2202
-            "E7602=VMRLF,82,738",  // E7602 VRRc VMRLF V1,V2,V3 RPI 2202
-            "E7603=VMRLG,82,738",  // E7603 VRRc VMRLG V1,V2,V3 RPI 2202
+            "E760e=VMRLe,82,738;e=0123", // E7600-E7603 VRRc VMRL* V1,V2,V3,M4 RPI 2202 #495
             "E761=VMRH,82,738",   // E761 VRRc VMRH V1,V2,V3,M4 RPI 2202
-            "E7610=VMRHB,82,738", // E7610 VRRc VMRHB V1,V2,V3 RPI 2202
-            "E7611=VMRHH,82,738", // E7611 VRRc VMRHH V1,V2,V3 RPI 2202
-            "E7612=VMRHF,82,738",  // E7612 VRRc VMRHF V1,V2,V3 RPI 2202
-            "E7613=VMRHG,82,738",  // E7613 VRRc VMRHG V1,V2,V3 RPI 2202
+            "E761e=VMRHe,82,738;e=0123", // E7610-E7613 VRRc VMRH* V1,V2,V3,M4 RPI 2202 #495
             "E762=VLVGP,82,738",   // E762 VRRf VLVGP V1,R2,R3 RPI 2202
             "E764=VSUM,82,738",   // E764 VRRc VSUM V1,V2,V3,M4 RPI 2202
-            "E7640=VSUMB,82,738", // E7640 VRRc VSUMB V1,V2,V3 RPI 2202
-            "E7641=VSUMH,82,738", // E7641 VRRc VSUMH V1,V2,V3 RPI 2202    
+            "E764e=VSUMe,82,738;e=01", // E7640-E7641 VRRc VSUM* V1,V2,V3,M4 RPI 2202 #495
             "E765=VSUMG,82,738",   // E765 VRRc VSUMG V1,V2,V3,M4 RPI 2202
-            "E7651=VSUMGH,82,738", // E7651 VRRc VSUMGH V1,V2,V3 RPI 2202
-            "E7652=VSUMGF,82,738",  // E7652 VRRc VSUMGF V1,V2,V3 RPI 2202  
+            "E765e=VSUMGe,82,738;e=12", // E7651-E7652 VRRc VSUMG* V1,V2,V3,M4 RPI 2202 #495
             "E766=VCKSM,82,738",   // E766 VRRc VCKSM V1,V2,V3 RPI 2202
             "E767=VSUMQ,82,738",   // E767 VRRc VSUMQ V1,V2,V3,M4 RPI 2202
-            "E7672=VSUMQF,82,738", // E7672 VRRc VSUMQF V1,V2,V3 RPI 2202
-            "E7673=VSUMQG,82,738", // E7673 VRRc VSUMQG V1,V2,V3 RPI 2202 
+            "E767e=VSUMQe,82,738;e=23", // E7672-E7673 VRRc VSUMQ* V1,V2,V3,M4 RPI 2202 #495
             "E768=VN,82,738",   // E768 VRRc VN V1,V2,V3 RPI 2202
             "E769=VNC,82,738",   // E769 VRRc VNC V1,V2,V3 RPI 2202
             "E76A=VO,82,738",   // E76A VRRc VO V1,V2,V3 RPI 2202
             "E76B=VNO,82,738",   // E76B VRRc VNO V1,V2,V3 RPI 2202
-            "E76BF=VNOT,82,738",   // E76B VRRc VNOT V1,V2 RPI 2202 RPI 2226 V3=V2
+            "E76BF=VNOT,82,738;*Extended",   // E76B VRRc VNOT V1,V2 RPI 2202 RPI 2226 V3=V2 #495
             "E76C=VNX,82,738",   // E76C VRRc VNX V1,V2,V3 RPI 2202
             "E76D=VX,82,738",     // E76D VRRc VX V1,V2,V3 RPI 2202
             "E76E=VNN,82,738",   // E76E VRRc VNN V1,V2,V3 RPI 2202
             "E76F=VOC,82,738",   // E76F VRRc VOC V1,V2,V3 RPI 2202
             "E770=VESLV,82,738",   // E770 VRSa VESLV V1,V2,V3,M4 RPI 2202
-            "E7700=VESLVB,82,738", // E7700 VRRc VESLVB V1,V2,V3 RPI 2202
-            "E7701=VESLVH,82,738", // E7701 VRRc VESLVH V1,V2,V3 RPI 2202
-            "E7702=VESLVF,82,738",  // E7702 VRRc VESLVF V1,V2,V3 RPI 2202
-            "E7703=VESLVG,82,738",  // E7703 VRRc VESLVG V1,V2,V3 RPI 2202
+            "E770e=VESLVe,82,738;e=0123", // E7700-E7703 VRSa VESLV* V1,V2,V3,M4 RPI 2202 #495
             "E772=VERIM,81,737",   // E772 VRId VERIM V1,V2,V3,i4,M5 RPI 2202
-            "E7720=VERIMB,81,737", // E7720 VRId VERIMB V1,V2,V3,I4 RPI 2202
-            "E7721=VERIMH,81,737", // E7721 VRId VERIMH V1,V2,V3.I4 RPI 2202
-            "E7722=VERIMF,81,737",  // E7722 VRId VERIMF V1,V2,V3,I4 RPI 2202
-            "E7723=VERIMG,81,737",  // E7723 VRId VERIMG V1,V2,V3,I4 RPI 2202
+            "E772e=VERIMe,81,737;e=0123", // E7720-E7723 VRId VERIM* V1,V2,V3,i4,M5 RPI 2202 #495
             "E773=VERLLV,82,738",   // E773 VRSa VERLLV V1,V2,V3,M4 RPI 2202
-            "E7730=VERLLVB,82,738", // E7730 VRRa VERLLVB V1,V2,V3 RPI 2202
-            "E7731=VERLLVH,82,738", // E7731 VRRa VERLLVH V1,V2,V3 RPI 2202
-            "E7732=VERLLVF,82,738",  // E7732 VRRa VERLLVF V1,V2,V3 RPI 2202
-            "E7733=VERLLVG,82,738",  // E7733 VRRa VERLLVG V1,V2,V3 RPI 2202
+            "E773e=VERLLVe,82,738;e=0123", // E7730-E7733 VRSa VERLLV* V1,V2,V3,M4 RPI 2202 #495
             "E774=VSL,82,738",   // E774 VRRc VSL V1,V2,V3 RPI 2202
             "E775=VSLB,82,738",   // E775 VRRc VSLB V1,V2,V3 RPI 2202
             "E777=VSLDB,81,737", // E777 VRId VSLDB V1,V2,V3,I4 RPI 2202
             "E778=VESRLV,82,738",   // E778 VRSc VESRLV V1,V2,V3,M4 RPI 2202
-            "E7780=VESRLVB,82,738", // E7780 VRRc VESRLVB V1,V2,V3 RPI 2202
-            "E7781=VESRLVH,82,738", // E7781 VRRc VESRLVH V1,V2,V3 RPI 2202
-            "E7782=VESRLVF,82,738",  // E7782 VRRc VESRLVF V1,V2,V3 RPI 2202
-            "E7783=VESRLVG,82,738",  // E7783 VRRc VESRLVG V1,V2,V3 RPI 2202
+            "E778e=VESRLVe,82,738;e=0123", // E7780-E7783 VRSc VESRLV* V1,V2,V3,M4 RPI 2202 #495
             "E77A=VESRAV,82,738",   // E77A VRSc VESRAV V1,V2,V3,M4 RPI 2202
-            "E77A0=VESRAVB,82,738", // E77A0 VRRc VESRAVB V1,V2,V3 RPI 2202
-            "E77A1=VESRAVH,82,738", // E77A1 VRRc VESRAVH V1,V2,V3 RPI 2202
-            "E77A2=VESRAVF,82,738",  // E77A2 VRRc VESRAVF V1,V2,V3 RPI 2202
-            "E77A3=VESRAVG,82,738",  // E77A3 VRRc VESRAVG V1,V2,V3 RPI 2202
+            "E77Ae=VESRAVe,82,738;e=0123", // E77A0-E77A3 VRSc VESRAV* V1,V2,V3,M4 RPI 2202 #495
             "E77C=VSRL,82,738",   // E77C VRRc VSRL V1,V2,V3 RPI 2202
             "E77D=VSRLB,82,738",   // E77D VRRc VSRLB V1,V2,V3 RPI 2202
             "E77E=VSRA,82,737", // E77E VRRc VSRA V1,V2,V3 RPI 2202
             "E77F=VSRAB,82,738",   // E77F VRRc VSRAB V1,V2,V3 RPI 2202
             "E780=VFEE,82,738",         // E780 VRRb VFEE V1,V2,V3,M4,M5 RPI 2202
-            "E7800=VFEEB,82,738",    // E7800 VRRb VFEEB V1,V2,V3,M5 RPI 2202
-            "E78001=VFEEBS,82,738",    // E78001 VRRb VFEEBS V1,V2,V3 RPI 2202  
-            "E78002=VFEEZB,82,738",    // E78001 VRRb VFEEZB V1,V2,V3 RPI 2202 
-            "E78003=VFEEZBS,82,738",    // E78001 VRRb VFEEZBS V1,V2,V3 RPI 2202 
-            "E7801=VFEEH,82,738",       // E7801 VRRb VFEEH V1,V2,V3,M5 RPI 2202
-            "E78011=VFEEHS,82,738",     // E78011 VRRb VFEEHS V1,V2,V3 RPI 2202  
-            "E78012=VFEEZH,82,738",     // E78012 VRRb VFEEZH V1,V2,V3 RPI 2202 
-            "E78013=VFEEZHS,82,738",    // E78013 VRRb VFEEZHS V1,V2,V3 RPI 2202         
-            "E7802=VFEEF,82,738",       // E7802 VRRb VFEEF V1,V2,V3,M5 RPI 2202
-            "E78021=VFEEFS,82,738",     // E78021 VRRb VFEEFS V1,V2,V3 RPI 2202  
-            "E78022=VFEEZF,82,738",     // E78022 VRRb VFEEZF V1,V2,V3 RPI 2202 
-            "E78023=VFEEZFS,82,738",    // E78023 VRRb VFEEZFS V1,V2,V3 RPI 2202
-			"E781=VFENE,82,738",        // E781  VRRb VFENE V1,V2,V3,M4,M5 RPI 2202
-            "E7810=VFENEB,82,738",       // E7810 VRRb VFENEB V1,V2,V3,M5 RPI 2202
-            "E78101=VFENEBS,82,738",     // E78101 VRRb VFENEBS V1,V2,V3 RPI 2202  
-            "E78102=VFENEZB,82,738",     // E78101 VRRb VFENEZB V1,V2,V3 RPI 2202 
-            "E78103=VFENEZBS,82,738",    // E78101 VRRb VFENEZBS V1,V2,V3 RPI 2202 
-            "E7811=VFENEH,82,738",       // E7811 VRRb VFENEH V1,V2,V3,M5 RPI 2202
-            "E78111=VFENEHS,82,738",     // E78111 VRRb VFENEHS V1,V2,V3 RPI 2202  
-            "E78112=VFENEZH,82,738",     // E78112 VRRb VFENEZH V1,V2,V3 RPI 2202 
-            "E78113=VFENEZHS,82,738",    // E7813 VRRb VFENEZHS V1,V2,V3 RPI 2202         
-            "E7812=VFENEF,82,738",       // E7812 VRRb VFENEF V1,V2,V3,M5 RPI 2202
-            "E78121=VFENEFS,82,738",     // E78121 VRRb VFENEFS V1,V2,V3 RPI 2202  
-            "E78122=VFENEZF,82,738",     // E78122 VRRb VFENEZF V1,V2,V3 RPI 2202 
-            "E78123=VFENEZFS,82,738",    // E7823 VRRb VFENEZFS V1,V2,V3 RPI 2202
-			"E782=VFAE,82,738",         // E782  VRRb VFAE V1,V2,V3,M4,M5 RPI 2202
-            "E7820=VFAEB,82,738",       // E7820 VRRb VFAEB V1,V2,V3,M5 RPI 2202
-            "E78201=VFAEBS,82,738",     // E78201 VRRb VFAEBS V1,V2,V3 RPI 2202  
-            "E78202=VFAEZB,82,738",     // E78201 VRRb VFAEZB V1,V2,V3 RPI 2202 
-            "E78203=VFAEZBS,82,738",    // E78201 VRRb VFAEZBS V1,V2,V3 RPI 2202 
-            "E7821=VFAEH,82,738",       // E7821 VRRb VFAEH V1,V2,V3,M5 RPI 2202
-            "E78211=VFAEHS,82,738",     // E78211 VRRb VFAEHS V1,V2,V3 RPI 2202  
-            "E78212=VFAEZH,82,738",     // E78212 VRRb VFAEZH V1,V2,V3 RPI 2202 
-            "E78213=VFAEZHS,82,738",    // E7823 VRRb VFAEZHS V1,V2,V3 RPI 2202         
-            "E7822=VFAEF,82,738",       // E7822 VRRb VFAEF V1,V2,V3,M5 RPI 2202
-            "E78221=VFAEFS,82,738",     // E78221 VRRb VFAEFS V1,V2,V3 RPI 2202  
-            "E78222=VFAEZF,82,738",     // E78222 VRRb VFAEZF V1,V2,V3 RPI 2202 
-            "E78223=VFAEZFS,82,738",    // E7823 VRRb VFAEZFS V1,V2,V3 RPI 2202
+            "E780e=VFEEe,82,738;e=012",    // E7800-E7802   VRRb VFEE* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E780e1=VFEEeS,82,738;e=012",  // E78001-E78021 VRRb VFEE* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E780e2=VFEEZe,82,738;e=012",  // E78001-E78021 VRRb VFEE* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E780e3=VFEEZeS,82,738;e=012", // E78001-E78021 VRRb VFEE* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E781=VFENE,82,738",            // E781  VRRb VFENE  V1,V2,V3,M4,M5 RPI 2202
+            "E781e=VFENEe,82,738;e=012",    // E781  VRRb VFENE* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E781e1=VFENEeS,82,738;e=012",  // E781  VRRb VFENE* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E781e2=VFENEZe,82,738;e=012",  // E781  VRRb VFENE* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E781e3=VFENEZeS,82,738;e=012", // E781  VRRb VFENE* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E782=VFAE,82,738",            // E782  VRRb VFAE  V1,V2,V3,M4,M5 RPI 2202
+            "E782e=VFAEe,82,738;e=012",    // E782  VRRb VFAE* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E782e1=VFAEeS,82,738;e=012",  // E782  VRRb VFAE* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E782e2=VFAEZe,82,738;e=012",  // E782  VRRb VFAE* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E782e3=VFAEZeS,82,738;e=012", // E782  VRRb VFAE* V1,V2,V3,M4,M5 RPI 2202 #495
 			"E784=VPDI,82,738",   // E784 VRRc VPDI V1,V2,V3,M4 RPI 2202
             "E785=VBPERM,82,738", // E785 VRRc VBPERM V1,V2,V3 RPI 2202
             "E786=VSLD,81,737",   // E786 VRId VSLD   V1,V2,V3,I4 RPI 2202
             "E787=VSRD,81,737",   // E787 VRId VSRD   V1,V2,V3,I4 RPI 2202
-			"E78A=VSTRC,82,738",  // E78A VRRd VSTRC  V1,V2,V3,V4,M5,M6 RPI 2202
-			"E78A0=VSTRCB,82,738",  // E78A0 VRRd VSTRCB  V1,V2,V3,V4,M6 RPI 2202
-			"E78A1=VSTRCH,82,738",  // E78A0 VRRd VSTRCH  V1,V2,V3,V4,M6 RPI 2202
-			"E78A2=VSTRCF,82,738",  // E78A0 VRRd VSTRCF  V1,V2,V3,V4,M6 RPI 2202
-			
-			"E78A01=VSTRCBS,82,738",  // E78A01 VRRd VSTRCBS  V1,V2,V3,V4,M6 RPI 2202
-			"E78A11=VSTRCHS,82,738",  // E78A11 VRRd VSTRCHS  V1,V2,V3,V4,M6 RPI 2202
-			"E78A21=VSTRCFS,82,738",  // E78A21 VRRd VSTRCFS  V1,V2,V3,V4,M6 RPI 2202
-			
-			"E78A02=VSTRCZB,82,738",  // E78A02 VRRd VSTRCZB  V1,V2,V3,V4,M6 RPI 2202
-			"E78A12=VSTRCZH,82,738",  // E78A12 VRRd VSTRCZH  V1,V2,V3,V4,M6 RPI 2202
-			"E78A22=VSTRCZF,82,738",  // E78A22 VRRd VSTRCZF  V1,V2,V3,V4,M6 RPI 2202
-			"E78A03=VSTRCZBS,82,738",  // E78A03 VRRd VSTRCZBS  V1,V2,V3,V4,M6 RPI 2202
-			"E78A13=VSTRCZHS,82,738",  // E78A13 VRRd VSTRCZHS  V1,V2,V3,V4,M6 RPI 2202
-			"E78A23=VSTRCZFS,82,738",  // E78A23 VRRd VSTRCZFS  V1,V2,V3,V4,M6 RPI 2202
-			"E78B=VSTRS,82,738",  // E78B VRRd VSTRS  V1,V2,V3,V4,M5,M6 RPI 2202
-			"E78B0=VSTRSB,82,738",  // E78B0 VRRd VSTRSB  V1,V2,V3,V4,M6 RPI 2202
-			"E78B1=VSTRSH,82,738",  // E78B0 VRRd VSTRSH  V1,V2,V3,V4,M6 RPI 2202
-			"E78B2=VSTRSF,82,738",  // E78B0 VRRd VSTRSF  V1,V2,V3,V4,M6 RPI 2202
-			"E78B02=VSTRSZB,82,738",  // E78B02 VRRd VSTRSZB  V1,V2,V3,V4,M6 RPI 2202
-			"E78B12=VSTRSZH,82,738",  // E78B12 VRRd VSTRSZH  V1,V2,V3,V4,M6 RPI 2202
-			"E78B22=VSTRSZF,82,738",  // E78B22 VRRd VSTRSZF  V1,V2,V3,V4,M6 RPI 2202
+            "E78A=VSTRC,82,738",  // E78A VRRd VSTRC  V1,V2,V3,V4,M5,M6 RPI 2202
+            "E78Ae=VSTRCe,82,738;e=012",    // E78A VRRd VSTRC* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E78Ae1=VSTRCeS,82,738;e=012",  // E78A VRRd VSTRC* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E78Ae2=VSTRCZe,82,738;e=012",  // E78A VRRd VSTRC* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E78Ae3=VSTRCZeS,82,738;e=012", // E78A VRRd VSTRC* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E78B=VSTRS,82,738",           // E78B VRRd VSTRS  V1,V2,V3,V4,M5,M6 RPI 2202
+            "E78Be=VSTRSe,82,738;e=012",   // E78B VRRd VSTRS* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E78Be2=VSTRSZe,82,738;e=012", // E78B VRRd VSTRS* V1,V2,V3,V4,M5,M6 RPI 2202 #495
 			"E78C=VPERM,82,738",   // E784 VRRe VPERM V1,V2,V3,V4 RPI 2202
             "E78D=VSEL,82,738",    // E78D VRRe VSEL  V1,V2,V3,V4 RPI 2202
-            "E78E=VFMS,82,738",      // E78E   VRRe VFMS    V1,V2,V3,V4,M5,M6 RPI 2202
-			"E78E02=VFMSSB,82,738",  // E78E02 VRRe VFMSSB  V1,V2,V3,V4 RPI 2202
-			"E78E03=VFMSDB,82,738",  // E78E03 VRRe VFMSDB  V1,V2,V3,V4 RPI 2202
-			"E78E82=WFMSSB,82,738",  // E78E82 VRRe WFMSSB  V1,V2,V3,V4 RPI 2202
-            "E78E83=WFMSDB,82,738",  // E78E83 VRRe WFMSDB  V1,V2,V3,V4 RPI 2202
-            "E78E84=WFMSXB,82,738",  // E78E84 VRRe WFMSXB  V1,V2,V3,V4 RPI 2202
-			"E78F=VFMA,82,738",      // E78F   VRRe VFMA    V1,V2,V3,V4,M5,M6 RPI 2202
-			"E78F02=VFMASB,82,738",  // E78F02 VRRe VFMASB  V1,V2,V3,V4 RPI 2202
-			"E78F03=VFMADB,82,738",  // E78F03 VRRe VFMADB  V1,V2,V3,V4 RPI 2202
-			"E78F82=WFMASB,82,738",  // E78F82 VRRe WFMASB  V1,V2,V3,V4 RPI 2202
-            "E78F83=WFMADB,82,738",  // E78F83 VRRe WFMADB  V1,V2,V3,V4 RPI 2202
-            "E78F84=WFMAXB,82,738",  // E78F84 VRRe VFMAXB  V1,V2,V3,V4 RPI 2202
-			"E794=VPK,82,738",       // E794  VRRc VPK   V1,V2,V3,M4 RPI 2202
-            "E7941=VPKH,82,738",     // E7941 VRRc VPKH  V1,V2,V3 RPI 2202
-            "E7942=VPKF,82,738",     // E7942 VRRc VPKF  V1,V2,V3 RPI 2202
-            "E7943=VPKG,82,738",     // E7943 VRRc VPKG  V1,V2,V3 RPI 2202
-			"E795=VPKLS,82,738",     // E795   VRRb VPKLS  V1,V2,V3,M4,M5 RPI 2202
-            "E79510=VPKLSH,82,738",  // E79510 VRRb VPKLSH V1,V2,V3 RPI 2202
-            "E79520=VPKLSF,82,738",  // E79520 VRRb VPKLSF V1,V2,V3 RPI 2202  
-            "E79530=VPKLSG,82,738",  // E79530 VRRb VPKLSG V1,V2,V3 RPI 2202 
-			"E79511=VPKLSHS,82,738", // E79511 VRRb VPKLSHS V1,V2,V3 RPI 2202
-            "E79521=VPKLSFS,82,738", // E79521 VRRb VPKLSFS V1,V2,V3 RPI 2202  
-            "E79531=VPKLSGS,82,738", // E79531 VRRb VPKLSGS V1,V2,V3 RPI 2202 
-			"E797=VPKS,82,738",     // E797   VRRb VPKS  V1,V2,V3,M4,M5 RPI 2202
-            "E79710=VPKSH,82,738",  // E79510 VRRb VPKSH V1,V2,V3 RPI 2202
-            "E79720=VPKSF,82,738",  // E79720 VRRb VPKSF V1,V2,V3 RPI 2202  
-            "E79730=VPKSG,82,738",  // E79730 VRRb VPKSG V1,V2,V3 RPI 2202 
-			"E79711=VPKSHS,82,738", // E79711 VRRb VPKSHS V1,V2,V3 RPI 2202
-            "E79721=VPKSFS,82,738", // E79721 VRRb VPKSFS V1,V2,V3 RPI 2202  
-            "E79731=VPKSGS,82,738",  // E79731 VRRb VPKSGS V1,V2,V3 RPI 2202 
-			"E79E=VFNMS,82,738",     // E79E   VRRe VFNMS   V1,V2,V3,V4,M4,M5 RPI 2202
-            "E79E02=VFNMSSB,82,738", // E79E02 VRRe VFNMSSB V1,V2,V3,V4 RPI 2202  
-            "E79E03=VFNMSDB,82,738", // E79E03 VRRe VFNMSDB V1,V2,V3,V4 RPI 2202 
-			"E79E82=WFNMSSB,82,738", // E79E82 VRRe WFNMSSB V1,V2,V3,V4 RPI 2202
-            "E79E83=WFNMSDB,82,738", // E79E83 VRRe WFNMSDB V1,V2,V3,V4 RPI 2202  
-            "E79E84=WFNMSXB,82,738", // E79E84 VRRe WFNMSXB V1,V2,V3,V4 RPI 2202 
-			"E79F=VFNMA,82,738",     // E79F   VRRe VFNMS   V1,V2,V3,V4,M4,M5 RPI 2202
-            "E79F02=VFNMASB,82,738", // E79F02 VRRe VFNMSSB V1,V2,V3,V4 RPI 2202  
-            "E79F03=VFNMADB,82,738", // E79F03 VRRe VFNMSDB V1,V2,V3,V4 RPI 2202 
-			"E79F82=WFNMASB,82,738", // E79F82 VRRe WFNMSSB V1,V2,V3,V4 RPI 2202
-            "E79F83=WFNMADB,82,738", // E79F83 VRRe WFNMSDB V1,V2,V3,V4 RPI 2202  
-            "E79F84=WFNMAXB,82,738", // E79F84 VRRe WFNMSXB V1,V2,V3,V4 RPI 2202 
-			"E7A1=VMLH,82,738",   // E7A1  VRRc VMLH  V1,V2,V3,M4 RPI 2202
-            "E7A10=VMLHB,82,738", // E7A10 VRRc VMLHB V1,V2,V3 RPI 2202
-			"E7A11=VMLHH,82,738", // E7A11 VRRc VMLHH V1,V2,V3 RPI 2202
-			"E7A12=VMLHF,82,738", // E7A12 VRRc VMLHF V1,V2,V3 RPI 2202
-			"E7A2=VML,82,738",    // E7A1  VRRc VML    V1,V2,V3,M4 RPI 2202
-            "E7A20=VMLB,82,738",  // E7A10 VRRc VMLB   V1,V2,V3 RPI 2202
-			"E7A21=VMLHW,82,738", // E7A11 VRRc VMLHW  V1,V2,V3 RPI 2202
-			"E7A22=VMLF,82,738",  // E7A12 VRRc VMLF   V1,V2,V3 RPI 2202
-			"E7A3=VMH,82,738",    // E7A3  VRRc VMH  V1,V2,V3,M4 RPI 2202
-            "E7A30=VMHB,82,738",  // E7A30 VRRc VMHB V1,V2,V3 RPI 2202
-			"E7A31=VMHH,82,738",  // E7A31 VRRc VMHH V1,V2,V3 RPI 2202
-			"E7A32=VMHF,82,738",  // E7A32 VRRc VMHF V1,V2,V3 RPI 2202
-			"E7A4=VMLE,82,738",   // E7A4  VRRc VMLE  V1,V2,V3,M4 RPI 2202
-            "E7A40=VMLEB,82,738", // E7A40 VRRc VMLEB V1,V2,V3 RPI 2202
-			"E7A41=VMLEH,82,738", // E7A41 VRRc VMLEH V1,V2,V3 RPI 2202
-			"E7A42=VMLEF,82,738", // E7A42 VRRc VMLEF V1,V2,V3 RPI 2202
-			"E7A5=VMLO,82,738",   // E7A5  VRRc VMLO  V1,V2,V3,M4 RPI 2202
-            "E7A50=VMLOB,82,738", // E7A50 VRRc VMLOB V1,V2,V3 RPI 2202
-			"E7A51=VMLOH,82,738", // E7A51 VRRc VMLOH V1,V2,V3 RPI 2202
-			"E7A52=VMLOF,82,738", // E7A52 VRRc VMLOF V1,V2,V3 RPI 2202
-			"E7A6=VME,82,738",    // E7A6  VRRc VME   V1,V2,V3,M4 RPI 2202
-            "E7A60=VMEB,82,738",  // E7A60 VRRc VMEB  V1,V2,V3 RPI 2202
-			"E7A61=VMEH,82,738",  // E7A61 VRRc VMEH  V1,V2,V3 RPI 2202
-			"E7A62=VMEF,82,738",  // E7A62 VRRc VMEF  V1,V2,V3 RPI 2202
-			"E7A7=VMO,82,738",    // E7A7  VRRc VMO   V1,V2,V3,M4 RPI 2202
-            "E7A70=VMOB,82,738",  // E7A70 VRRc VMOB  V1,V2,V3 RPI 2202
-			"E7A71=VMOH,82,738",  // E7A71 VRRc VMOH  V1,V2,V3 RPI 2202
-			"E7A72=VMOF,82,738",  // E7A72 VRRc VMOF  V1,V2,V3 RPI 2202
-			"E7A9=VMALH,82,738",    // E7A9  VRRd VMALH   V1,V2,V3,V4,M5,M6 RPI 2202
-			"E7A90=VMALHB,82,738",  // E7A90 VRRd VMALHB  V1,V2,V3,V4 RPI 2202
-			"E7A91=VMALHH,82,738",  // E7A91 VRRd VMALHH  V1,V2,V3,V4 RPI 2202
-			"E7A92=VMALHF,82,738",  // E7A92 VRRd VMALHF  V1,V2,V3,V4 RPI 2202
-			"E7AA=VMAL,82,738",     // E7AA  VRRd VMAL   V1,V2,V3,V4,M5,M6 RPI 2202
-			"E7AA0=VMALB,82,738",   // E7AA0  VRRd VMALB  V1,V2,V3,V4 RPI 2202
-			"E7AA1=VMALHW,82,738",  // E7AA1  VRRd VMALHW V1,V2,V3,V4 RPI 2202
-			"E7AA2=VMALF,82,738",   // E7AA2  VRRd VMALF  V1,V2,V3,V4 RPI 2202
-			"E7AB=VMAH,82,738",     // E7AB   VRRd VMAH   V1,V2,V3,V4,M5,M6 RPI 2202
-			"E7AB0=VMAHB,82,738",   // E7AB0  VRRd VMAHB  V1,V2,V3,V4 RPI 2202
-			"E7AB1=VMAHH,82,738",   // E7AB1  VRRd VMAHH  V1,V2,V3,V4 RPI 2202
-			"E7AB2=VMAHF,82,738",   // E7AB2  VRRd VMAHF  V1,V2,V3,V4 RPI 2202
-			"E7AC=VMALE,82,738",     // E7AC   VRRd VMALE   V1,V2,V3,V4,M5,M6 RPI 2202
-			"E7AC0=VMALEB,82,738",   // E7AC0  VRRd VMALEB  V1,V2,V3,V4 RPI 2202
-			"E7AC1=VMALEH,82,738",   // E7AC1  VRRd VMALEH  V1,V2,V3,V4 RPI 2202
-			"E7AC2=VMALEF,82,738",   // E7AC2  VRRd VMALEF  V1,V2,V3,V4 RPI 2202
-			"E7AD=VMALO,82,738",     // E7AD   VRRd VMALO   V1,V2,V3,V4,M5,M6 RPI 2202
-			"E7AD0=VMALOB,82,738",   // E7AD0  VRRd VMALOB  V1,V2,V3,V4 RPI 2202
-			"E7AD1=VMALOH,82,738",   // E7AD1  VRRd VMALOH  V1,V2,V3,V4 RPI 2202
-			"E7AD2=VMALOF,82,738",   // E7AD2  VRRd VMALOF  V1,V2,V3,V4 RPI 2202
-			"E7AE=VMAE,82,738",      // E7AE   VRRd VMAE    V1,V2,V3,V4,M5,M6 RPI 2202
-			"E7AE0=VMAEB,82,738",    // E7AE0  VRRd VMAEB   V1,V2,V3,V4 RPI 2202
-			"E7AE1=VMAEH,82,738",    // E7AE1  VRRd VMAEH   V1,V2,V3,V4 RPI 2202
-			"E7AE2=VMAEF,82,738",    // E7AE2  VRRd VMAEF   V1,V2,V3,V4 RPI 2202
-			"E7AF=VMAO,82,738",      // E7AF   VRRd VMAO    V1,V2,V3,V4,M5,M6 RPI 2202
-			"E7AF0=VMAOB,82,738",    // E7AF0  VRRd VMAOB   V1,V2,V3,V4 RPI 2202
-			"E7AF1=VMAOH,82,738",    // E7AF1  VRRd VMAOH   V1,V2,V3,V4 RPI 2202
-			"E7AF2=VMAOF,82,738",    // E7AF2  VRRd VMAOF   V1,V2,V3,V4 RPI 2202
-			"E7B4=VGFM,82,738",   // E7B4  VRRc VGFM  V1,V2,V3,M4 RPI 2202
-            "E7B40=VGFMB,82,738", // E7B40 VRRc VGFMB V1,V2,V3 RPI 2202
-            "E7B41=VGFMH,82,738", // E7B41 VRRc VGFMH V1,V2,V3 RPI 2202
-            "E7B42=VGFMF,82,738", // E7B42 VRRc VGFMF V1,V2,V3 RPI 2202
-            "E7B43=VGFMG,82,738", // E7B43 VRRc VFGMG V1,V2,V3 RPI 2202
-			"E7B8=VMSL,82,738",      // E7B8   VRRd VMSL    V1,V2,V3,V4,M5,M6 RPI 2202
-			"E7B83=VMSLG,82,738",    // E7B83  VRRd VMSLG   V1,V2,V3,V4,M6 RPI 2202
-			"E7B9=VACCC,82,738",      // E7B9   VRRd VACCC  V1,V2,V3,V4,M5 RPI 2202
-			"E7B94=VACCCQ,82,738",    // E7B94  VRRd VACCCQ V1,V2,V3,V4    RPI 2202
-			"E7BB=VAC,82,738",        // E7BB   VRRd VAC  V1,V2,V3,V4,M5 RPI 2202
-			"E7BB4=VACQ,82,738",      // E7BB4  VRRd VACQ V1,V2,V3,V4    RPI 2202
-			"E7BC=VGFMA,82,738",      // E7BC   VRRd VGFMA    V1,V2,V3,V4,M5  RPI 2202
-			"E7BC0=VGFMAB,82,738",    // E7BC0  VRRd VGFMAB   V1,V2,V3,V4 RPI 2202
-			"E7BC1=VGFMAH,82,738",    // E7BC1  VRRd VGFMAH   V1,V2,V3,V4 RPI 2202
-			"E7BC2=VGFMAF,82,738",    // E7BC2  VRRd VGFMAF   V1,V2,V3,V4 RPI 2202
-			"E7BC3=VGFMAG,82,738",    // E7BC3  VRRd VGFMAF   V1,V2,V3,V4 RPI 2202
-			"E7BD=VSBCBI,82,738",        // E7BD   VRRd VSBCBI  V1,V2,V3,V4,M5 RPI 2202
-			"E7BD4=VSBCBIQ,82,738",      // E7BD4  VRRd VSBCBIQ V1,V2,V3,V4    RPI 2202
-			"E7BF=VSBI,82,738",          // E7BF   VRRd VSBI    V1,V2,V3,V4,M5 RPI 2202
-			"E7BF4=VSBIQ,82,738",        // E7BF4  VRRd VSBIQ   V1,V2,V3,V4    RPI 2202
-			"E7C0=VCLFP,82,738",    // E7C0   VRRa VCLFP V1,V2,M3,M4,M5 RPI 2202
-            "E7C0=VCLGD,82,738",    // E7C0   VRRa VCLGD V1,V2,M3,M4,M5 RPI 2202
-            "E7C02=VCLFEB,82,738",  // E7C02  VRRa VCLFEB V1,V2,M4,M5 RPI 2202
-            "E7C03=VCLGDB,82,738",  // E7C03  VRRa VCLGDB V1,V2,M4,M5 RPI 2202
-            "E7C028=WCLFEB,82,738",  // E7C02  VRRa WCLFEB V1,V2,M4,M5 RPI 2202 #230
-            "E7C038=WCLGDB,82,738",  // E7C03  VRRa WCLGDB V1,V2,M4,M5 RPI 2202 #230
-			"E7C1=VCFPL,82,738",    // E7C1   VRRa VCFPL V1,V2,M3,M4,M5 RPI 2202
-            "E7C1=VCDLG,82,738",    // E7C1   VRRa VCDLG V1,V2,M3,M4,M5 RPI 2202
-            "E7C12=VCELFB,82,738",  // E7C12  VRRa VCELFB V1,V2,M4,M5 RPI 2202
-            "E7C13=VCDLGB,82,738",  // E7C13  VRRa VCDLGB V1,V2,M4,M5 RPI 2202
-            "E7C128=WCELFB,82,738",  // E7C12  VRRa WCELFB V1,V2,M4,M5 RPI 2202 #230
-            "E7C138=WCDLGB,82,738",  // E7C13  VRRa WCDLGB V1,V2,M4,M5 RPI 2202 #230
-			"E7C2=VCGD,82,738",    // E7C2  VRRa VCGD  V1,V2,M3,M4,M5 RPI 2202
-            "E7C2=VCSFP,82,738",   // E7C2  VRRa VCSFP V1,V2,M3,M4,M5 RPI 2202
-            "E7C22=VCFEB,82,738",  // E7C22 VRRa VCFEB V1,V2,M4,M5 RPI 2202
-            "E7C23=VCGDB,82,738",  // E7C23 VRRa VCGDB V1,V2,M4,M5 RPI 2202
-            "E7C228=WCFEB,82,738",  // E7C22 VRRa WCFEB V1,V2,M5,M6 RPI 2202 #230
-            "E7C238=WCGDB,82,738",  // E7C23 VRRa WCGDB V1,V2,M4,M5 RPI 2202 #230
-			"E7C3=VCDG,82,738",    // E7C3  VRRa VCDG  V1,V2,M3,M4,M5 RPI 2202
-            "E7C3=VCFPS,82,738",   // E7C3  VRRa VCFPS V1,V2,M3,M4,M5 RPI 2202
-            "E7C32=VCEFB,82,738",  // E7C32 VRRa VCEFB V1,V2,M4,M5 RPI 2202
-            "E7C33=VCDGB,82,738",  // E7C33 VRRa VCDGB V1,V2,M4,M5 RPI 2202
-            "E7C328=WCEFB,82,738",  // E7C32 VRRa WCEFB V1,V2,M4,M5 RPI 2202 #230 add OR 8
-            "E7C338=WCDGB,82,738",  // E7C33 VRRa WCDGB V1,V2,M4,M5 RPI 2202 #230 add OR 8 
-			"E7C4=VFLL,82,738",    // E7C4  VRRa VFLL  V1,V2,M3,M4 RPI 2202
-            "E7C4=VLDE,82,738",    // E7C4  VRRa VLDE  V1,V2,M3,M4 RPI 2202
-            "E7C420=VLDEB,82,738",  // E7C42 VRRa VCEFB V1,V2 RPI 2202
-            "E7C428=WLDEB,82,738",  // E7C43 VRRa VCDGB V1,V2 RPI 2202
-            "E7C420=VFLLS,82,738",  // E7C42 VRRa WCEFB V1,V2 RPI 2202
-            "E7C428=WFLLS,82,738",  // E7C43 VRRa WCDGB V1,V2 RPI 2202
-			"E7C438=WFLLD,82,738",  // E7C43 VRRa WCDGB V1,V2 RPI 2202
-			"E7C5=VFLR,82,738",    // E7C5  VRRa VFLR  V1,V2,M3,M4,M5 RPI 2202
-            "E7C5=VLED,82,738",    // E7C5  VRRa VLED  V1,V2,M3,M4,M5 RPI 2202
-            "E7C53=VLEDB,82,738",  // E7C53 VRRa VLEDB V1,V2,M4,M5 RPI 2202
-            "E7C538=WLEDB,82,738",  // E7C52 VRRa WLEDB V1,V2,M4,M5 RPI 2202 #230
-            "E7C53=VFLRD,82,738",  // E7C53 VRRa VFLRD V1,V2,M4,M5 RPI 2202
-            "E7C538=WFLRD,82,738",  // E7C53 VRRa WFLRD V1,V2,M4,M5 RPI 2202 #230
-			"E7C548=WFLRX,82,738",  // E7C54 VRRa WFLRX V1,V2,M4,M5 RPI 2202 #230
-			"E7C7=VFI,82,738",     // E7C7  VRRa VFID  V1,V2,M3,M4,M5 RPI 2202
-            "E7C72=VFISB,82,738",  // E7C72 VRRa VFISB V1,V2,M4,M5 RPI 2202
-            "E7C728=WFISB,82,738",  // E7C72 VRRa WFISB V1,V2,M4,M5 RPI 2202 #230
-            "E7C73=VFIDB,82,738",  // E7C73 VRRa VFIDB V1,V2,M4,M5 RPI 2202
-            "E7C738=WFIDB,82,738",  // E7C73 VRRa WFIDB V1,V2,M4,M5 RPI 2202 #230
-			"E7C748=WFIXB,82,738",  // E7C74 VRRa WFIXB V1,V2,M4,M5 RPI 2202 #230
-			"E7CA=WFK,82,738",      // E7CA   VRRa WFK   V1,V2,M3,M4 RPI 2202
-            "E7CA20=WFKSB,82,738",  // E7CA20 VRRa WFKSB V1,V2 RPI 2202
-            "E7CA30=WFKDB,82,738",  // E7CA30 VRRa WFKDB V1,V2 RPI 2202
-            "E7CA40=WFKXB,82,738",  // E7CA40 VRRa WFKXB V1,V2 RPI 2202
-			"E7CB=WFC,82,738",      // E7CB   VRRa WFC   V1,V2,M3,M4 RPI 2202
-            "E7CB20=WFCSB,82,738",  // E7CB20 VRRa WFCSB V1,V2 RPI 2202
-            "E7CB30=WFCDB,82,738",  // E7CB30 VRRa WFCDB V1,V2 RPI 2202
-            "E7CB40=WFCXB,82,738",  // E7CB40 VRRa WFCXB V1,V2 RPI 2202
-		    "E7CC=VFPSO,82,738",      //  VRRa VFPSO   V1,V2,M3,M4,M5 Z15?
-            "E7CC20=VFPSOSB,82,738",  //  VRRa VFPSOSB V1,V2,M5 Z15?
-            "E7CC28=WFPSOSB,82,738",  //  VRRa WFPSOSB V1,V2,M5 Z15?
-            "E7CC200=VFLCSB,82,738",  //  VRRa VFLCSB  V1,V2 Z15?
-            "E7CC280=WFLCSB,82,738",  //  VRRa WFLCSB  V1,V2 Z15?
-            "E7CC201=VFLNSB,82,738",  //  VRRa VFLNSB  V1,V2 Z15?
-            "E7CC281=WFLNSB,82,738",  //  VRRa WFLNSB  V1,V2 Z15?
-            "E7CC202=VFLPSB,82,738",  //  VRRa VFLPSB  V1,V2 Z15?
-            "E7CC282=WFLPSB,82,738",  //  VRRa WFLPSB  V1,V2 Z15?
-            "E7CC30=VFPSODB,82,738",  //  VRRa VFPSODB V1,V2,M5 Z15?
-            "E7CC38=WFPSODB,82,738",  //  VRRa WFPSODB V1,V2,M5 Z15?
-            "E7CC300=VFLCDB,82,738",  //  VRRa VFLCDB  V1,V2 Z15?
-            "E7CC380=WFLCDB,82,738",  //  VRRa WFLCDB  V1,V2 Z15?
-			"E7CC301=VFLNDB,82,738",  //  VRRa WFLNDB  V1,V2 Z15?
-            "E7CC381=WFLNDB,82,738",  //  VRRa WFLNDB  V1,V2 Z15?
-            "E7CC302=VFLPDB,82,738",  //  VRRa VFLPDB  V1,V2 Z15?
-            "E7CC382=WFLPDB,82,738",  //  VRRa WFLPDB  V1,V2 Z15?
-            "E7CC48=WFPSOXB,82,738",  //  VRRa WFPSOXB V1,V2,M5 Z15?
-            "E7CC480=WFLCXB,82,738",  //  VRRa WFLCXB  V1,V2 Z15?
-            "E7CC481=WFLNXB,82,738",  //  VRRa WFLNXB  V1,V2 Z15?
-            "E7CC482=WFLPXB,82,738",  //  VRRa WFLPXB  V1,V2 Z15? #230
-			"E7CE=VFSQ,82,738",     // E7CE   VRRa VFSQ V1,V2,M3,M4 RPI 2202
-            "E7CE20=VFSQSB,82,738", // E7CE20 VRRa VFSQSB V1,V2 RPI 2202
-            "E7CE30=VFSQDB,82,738", // E7CE30 VRRa VFSQDB V1,V2 RPI 2202
-            "E7CE28=WFSQSB,82,738", // E7CE30 VRRa WFSQSB V1,V2 RPI 2202
-			"E7CE38=WFSQDB,82,738", // E7CE38 VRRa WFSQDB V1,V2 RPI 2202
-            "E7CE48=WFSQXB,82,738", // E7CE48 VRRa WFSQXB V1,V2 RPI 2202
-			"E7D4=VUPLL,82,738",    // E7D4  VRRa VUPLL  V1,V2,M3 RPI 2202
-            "E7D40=VUPLLB,82,738",  // E7D40 VRRa VUPLLB V1,V2 RPI 2202
-            "E7D41=VUPLLH,82,738",  // E7D41 VRRa VUPLLH V1,V2 RPI 2202
-            "E7D42=VUPLLF,82,738",  // E7D42 VRRa VUPLLF V1,V2 RPI 2202
-			"E7D5=VUPLH,82,738",    // E7D5  VRRa VUPLH  V1,V2,M3 RPI 2202
-            "E7D50=VUPLHB,82,738",  // E7D50 VRRa VUPLHB V1,V2 RPI 2202
-            "E7D51=VUPLHH,82,738",  // E7D51 VRRa VUPLHH V1,V2 RPI 2202
-            "E7D52=VUPLHF,82,738",  // E7D52 VRRa VUPLHF V1,V2 RPI 2202
-			"E7D6=VUPL,82,738",     // E7D6  VRRa VUPL   V1,V2,M3 RPI 2202
-            "E7D60=VUPLB,82,738",   // E7D60 VRRa VUPLB  V1,V2 RPI 2202
-            "E7D61=VUPLHW,82,738",  // E7D61 VRRa VUPLHW V1,V2 RPI 2202
-            "E7D62=VUPLF,82,738",   // E7D62 VRRa VUPLF  V1,V2 RPI 2202
-			"E7D7=VUPH,82,738",     // E7D7  VRRa VUPH   V1,V2,M3 RPI 2202
-            "E7D70=VUPHB,82,738",   // E7D70 VRRa VUPHB  V1,V2 RPI 2202
-            "E7D71=VUPHH,82,738",   // E7D71 VRRa VUPHH  V1,V2 RPI 2202
-            "E7D72=VUPHF,82,738",   // E7D72 VRRa VUPHF  V1,V2 RPI 2202
-			"E7D8=VTM,82,738",      // E7D8  VRRa VTM    V1,V2 RPI 2202
-            "E7D9=VECL,82,738",     // E7D9  VRRa VECL   V1,V2,M3 RPI 2202
-			"E7D90=VECLB,82,738",   // E7D90 VRRa VECLB  V1,V2 RPI 2202
-            "E7D91=VECLH,82,738",   // E7D91 VRRa VECLH  V1,V2 RPI 2202
-            "E7D92=VECLF,82,738",   // E7D92 VRRa VECLF  V1,V2 RPI 2202
-			"E7D93=VECLG,82,738",   // E7D93 VRRa VECLG  V1,V2 RPI 2202
-			"E7DB=VEC,82,738",      // E7D9  VRRa VEC    V1,V2,M3 RPI 2202
-			"E7DB0=VECB,82,738",    // E7D90 VRRa VECB   V1,V2 RPI 2202
-            "E7DB1=VECH,82,738",    // E7D91 VRRa VECH   V1,V2 RPI 2202
-            "E7DB2=VECF,82,738",    // E7D92 VRRa VECF   V1,V2 RPI 2202
-			"E7DB3=VECG,82,738",    // E7D93 VRRa VECG   V1,V2 RPI 2202
-			"E7DE=VLC,82,738",      // E7DE  VRRa VLC    V1,V2,M3 RPI 2202
-			"E7DE0=VLCB,82,738",    // E7DE0 VRRa VLCB   V1,V2 RPI 2202
-            "E7DE1=VLCH,82,738",    // E7DE1 VRRa VLCH   V1,V2 RPI 2202
-            "E7DE2=VLCF,82,738",    // E7DE2 VRRa VLCF   V1,V2 RPI 2202
-			"E7DE3=VLCG,82,738",    // E7DE3 VRRa VLCG   V1,V2 RPI 2202
-			"E7DF=VLP,82,738",      // E7DF  VRRa VLP    V1,V2,M3 RPI 2202
-			"E7DF0=VLPB,82,738",    // E7DF0 VRRa VLPB   V1,V2 RPI 2202
-            "E7DF1=VLPH,82,738",    // E7DF1 VRRa VLPH   V1,V2 RPI 2202
-            "E7DF2=VLPF,82,738",    // E7DF2 VRRa VLPF   V1,V2 RPI 2202
-			"E7DF3=VLPG,82,738",    // E7DF3 VRRa VLPG   V1,V2 RPI 2202
-			"E7E2=VFS,82,738",     // E7E2   VRSc VFS    V1,V2,V3,M4,M5 RPI 2202
-            "E7E220=VFSSB,82,738", // E7E220 VRRc VFSSB  V1,V2,V3 RPI 2202
-            "E7E230=VFSDB,82,738", // E7E230 VRRc VFSDB  V1,V2,V3 RPI 2202
-            "E7E228=WFSSB,82,738", // E7E228 VRRc WFSSB  V1,V2,V3 RPI 2202
-            "E7E238=WFSDB,82,738", // E7E238 VRRc WFSDB  V1,V2,V3 RPI 2202
-			"E7E248=WFSXB,82,738", // E7E248 VRRc WFSXB  V1,V2,V3 RPI 2202
-			"E7E3=VFA,82,738",     // E7E3   VRSc VFA    V1,V2,V3,M4,M5 RPI 2202
-            "E7E320=VFASB,82,738", // E7E320 VRRc VFASB  V1,V2,V3 RPI 2202
-            "E7E330=VFADB,82,738", // E7E330 VRRc VFADB  V1,V2,V3 RPI 2202
-            "E7E328=WFASB,82,738", // E7E328 VRRc WFASB  V1,V2,V3 RPI 2202
-            "E7E338=WFADB,82,738", // E7E338 VRRc WFADB  V1,V2,V3 RPI 2202
-			"E7E348=WFAXB,82,738", // E7E348 VRRc WFAXB  V1,V2,V3 RPI 2202
-			"E7E5=VFD,82,738",     // E7E5   VRSc VFD    V1,V2,V3,M4,M5 RPI 2202
-            "E7E520=VFDSB,82,738", // E7E520 VRRc VFDSB  V1,V2,V3 RPI 2202
-            "E7E528=WFDSB,82,738", // E7E528 VRRc WFDSB  V1,V2,V3 RPI 2202
-            "E7E530=VFDDB,82,738", // E7E530 VRRc VFDDB  V1,V2,V3 RPI 2202
-            "E7E538=WFDDB,82,738", // E7E538 VRRc WFDDB  V1,V2,V3 RPI 2202
-			"E7E548=WFDXB,82,738", // E7E548 VRRc WFDXB  V1,V2,V3 RPI 2202
-			"E7E7=VFM,82,738",     // E7E7   VRSc VFM    V1,V2,V3,M4,M5 RPI 2202
-            "E7E720=VFMSB,82,738", // E7E720 VRRc VFMSB  V1,V2,V3 RPI 2202
-            "E7E728=WFMSB,82,738", // E7E728 VRRc WFMSB  V1,V2,V3 RPI 2202
-            "E7E730=VFMDB,82,738", // E7E730 VRRc VFMDB  V1,V2,V3 RPI 2202
-            "E7E738=WFMDB,82,738", // E7E738 VRRc WFMDB  V1,V2,V3 RPI 2202
-			"E7E748=WFMXB,82,738", // E7E748 VRRc WFMXB  V1,V2,V3 RPI 2202
-			"E7E8=VFCE,82,738",  // VRRc V1,V2,V3,M4,M5,M6 Z15?
-			"E7E8200=VFCESB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E8201=VFCESBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E8300=VFCEDB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E8301=VFCEDBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E8280=WFCESB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E8281=WFCESBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E8380=WFCEDB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E8381=WFCEDBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E8480=WFCEXB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E8481=WFCEXBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E8240=VFKESB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E8241=VFKESBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E8340=VFKEDB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E8341=VFKEDBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E82C0=WFKESB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E82C1=WFKESBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E83C0=WFKEDB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E83C1=WFKEDBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E84C0=WFKEXB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7E84C1=WFKEXBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA=VFCHE,82,738",  // VRRc V1,V2,V3,M4,M5,M6 Z15?
-			"E7EA200=VFCHESB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA201=VFCHESBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA300=VFCHEDB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA301=VFCHEDBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA280=WFCHESB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA281=WFCHESBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA380=WFCHEDB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA381=WFCHEDBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA480=WFCHEXB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA481=WFCHEXBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA240=VFKHESB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA241=VFKHESBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA340=VFKHEDB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA341=VFKHEDBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA2C0=WFKHESB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA2C1=WFKHESBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA3C0=WFKHEDB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA3C1=WFKHEDBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA4C0=WFKHEXB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EA4C1=WFKHEXBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB=VFCH,82,738",  // VRRc V1,V2,V3,M4,M5,M6 Z15?
-			"E7EB200=VFCHSB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB201=VFCHSBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB300=VFCHDB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB301=VFCHDBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB280=WFCHSB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB281=WFCHSBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB380=WFCHDB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB381=WFCHDBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB480=WFCHXB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB481=WFCHXBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB240=VFKHSB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB241=VFKHSBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB340=VFKHDB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB341=VFKHDBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB2C0=WFKHSB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB2C1=WFKHSBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB3C0=WFKHDB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB3C1=WFKHDBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB4C0=WFKHXB,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EB4C1=WFKHXBS,82,738",  // VRRc V1,V2,V3 Z15?
-			"E7EE=VFMIN,82,738",     // E7EE   VRSc VFMIN    V1,V2,V3,M4,M5 RPI 2202
-            "E7EE20=VFMINSB,82,738", // E7EE20 VRRc VFMINSB  V1,V2,V3 RPI 2202
-            "E7EE30=VFMINDB,82,738", // E7EE30 VRRc VFMINDB  V1,V2,V3 RPI 2202
-            "E7EE28=WFMINSB,82,738", // E7EE28 VRRc WFMINSB  V1,V2,V3 RPI 2202
-            "E7EE38=WFMINDB,82,738", // E7E738 VRRc WFMINDB  V1,V2,V3 RPI 2202
-			"E7EE48=WFMINXB,82,738", // E7E748 VRRc WFMINXB  V1,V2,V3 RPI 2202
-			"E7EF=VFMAX,82,738",     // E7EF   VRSc VFMAX    V1,V2,V3,M4,M5,M6 RPI 2202
-            "E7EF20=VFMAXSB,82,738", // E7EF20 VRRc VFMAXSB  V1,V2,V3,M4 RPI 2202
-            "E7EF30=VFMAXDB,82,738", // E7EF30 VRRc VFMAXDB  V1,V2,V3,M4 RPI 2202
-            "E7EF28=WFMAXSB,82,738", // E7EF28 VRRc WFMAXSB  V1,V2,V3,M4 RPI 2202
-            "E7EF38=WFMAXDB,82,738", // E7EF38 VRRc WFMAXDB  V1,V2,V3,M4 RPI 2202
-			"E7EF48=WFMAXXB,82,738", // E7EF48 VRRc WFMAXXB  V1,V2,V3,M4 RPI 2202
-			"E7F0=VAVGL,82,738",    // E7F0  VRRc VAVGL  V1,V2,V3,M4 RPI 2202
-            "E7F00=VAVGLB,82,738",  // E7F00 VRRc VAVGLB V1,V2,V3 RPI 2202
-			"E7F01=VAVGLH,82,738",  // E7F01 VRRc VAVGLH V1,V2,V3 RPI 2202
-			"E7F02=VAVGLF,82,738",  // E7F02 VRRc VAVGLF V1,V2,V3 RPI 2202
-			"E7F03=VAVGLG,82,738",  // E7F03 VRRc VAVGLG V1,V2,V3 RPI 2202
-			"E7F1=VACC,82,738",    // E7F1  VRRc VACC  V1,V2,V3,M4 RPI 2202
-            "E7F10=VACCB,82,738",  // E7F10 VRRc VACCB V1,V2,V3 RPI 2202
-			"E7F11=VACCH,82,738",  // E7F11 VRRc VACCH V1,V2,V3 RPI 2202
-			"E7F12=VACCF,82,738",  // E7F12 VRRc VACCF V1,V2,V3 RPI 2202
-			"E7F13=VACCG,82,738",  // E7F13 VRRc VACCG V1,V2,V3 RPI 2202
-			"E7F14=VACCQ,82,738",  // E7F14 VRRc VACCQ V1,V2,V3 RPI 2202
-			"E7F2=VAVG,82,738",    // E7F2  VRRc VAVG  V1,V2,V3,M4 RPI 2202
-            "E7F20=VAVGB,82,738",  // E7F20 VRRc VAVGB V1,V2,V3 RPI 2202
-			"E7F21=VAVGH,82,738",  // E7F21 VRRc VAVGH V1,V2,V3 RPI 2202
-			"E7F22=VAVGF,82,738",  // E7F22 VRRc VAVGF V1,V2,V3 RPI 2202
-			"E7F23=VAVGG,82,738",  // E7F23 VRRc VAVGG V1,V2,V3 RPI 2202
-			"E7F3=VA,82,738",    // E7F3  VRRc VA    V1,V2,V3,M4 RPI 2202
-            "E7F30=VAB,82,738",  // E7F30 VRRc VAB   V1,V2,V3 RPI 2202
-			"E7F31=VAH,82,738",  // E7F31 VRRc VAH   V1,V2,V3 RPI 2202
-			"E7F32=VAF,82,738",  // E7F32 VRRc VAF   V1,V2,V3 RPI 2202
-			"E7F33=VAG,82,738",  // E7F33 VRRc VAG   V1,V2,V3 RPI 2202
-			"E7F34=VAQ,82,738",  // E7F34 VRRc VAQ   V1,V2,V3 RPI 2202
-			"E7F5=VSCBI,82,738",    // E7F5  VRRc VSCBI    V1,V2,V3,M4 RPI 2202
-            "E7F50=VSCBIB,82,738",  // E7F50 VRRc VSCBIB   V1,V2,V3 RPI 2202
-			"E7F51=VSCBIH,82,738",  // E7F51 VRRc VSCBIH   V1,V2,V3 RPI 2202
-			"E7F52=VSCBIF,82,738",  // E7F52 VRRc VSCBIF   V1,V2,V3 RPI 2202
-			"E7F53=VSCBIG,82,738",  // E7F53 VRRc VSCBIG   V1,V2,V3 RPI 2202
-			"E7F54=VSCBIQ,82,738",  // E7F54 VRRc VSCBIQ   V1,V2,V3 RPI 2202
-			"E7F7=VS,82,738",    // E7F7  VRRc VS    V1,V2,V3,M4 RPI 2202
-            "E7F70=VSB,82,738",  // E7F70 VRRc VSB   V1,V2,V3 RPI 2202
-			"E7F71=VSH,82,738",  // E7F71 VRRc VSH   V1,V2,V3 RPI 2202
-			"E7F72=VSF,82,738",  // E7F72 VRRc VSF   V1,V2,V3 RPI 2202
-			"E7F73=VSG,82,738",  // E7F73 VRRc VSG   V1,V2,V3 RPI 2202
-			"E7F74=VSQ,82,738",  // E7F74 VRRc VSQ   V1,V2,V3 RPI 2202
-			"E7F8=VCEQ,82,738",         // E7F8   VRRb VCEQ V1,V2,V3,M4,M5 RPI 2202
-            "E7F800=VCEQB,82,738",      // E7F80  VRRb VCEQB V1,V2,V3,M5 RPI 2202
-            "E7F801=VCEQBS,82,738",     // E7F801 VRRb VCEQBS V1,V2,V3 RPI 2202  
-            "E7F802=VCEQZB,82,738",     // E7F801 VRRb VCEQZB V1,V2,V3 RPI 2202 
-            "E7F803=VCEQZBS,82,738",    // E7F801 VRRb VCEQZBS V1,V2,V3 RPI 2202 
-            "E7F81=VCEQH,82,738",       // E7F81  VRRb VCEQH   V1,V2,V3,M5 RPI 2202
-            "E7F811=VCEQHS,82,738",     // E7F811 VRRb VCEQHS  V1,V2,V3 RPI 2202  
-            "E7F812=VCEQZH,82,738",     // E7F812 VRRb VCEQZH  V1,V2,V3 RPI 2202 
-            "E7F813=VCEQZHS,82,738",    // E7F813 VRRb VCEQZHS V1,V2,V3 RPI 2202         
-            "E7F82=VCEQF,82,738",       // E7F82  VRRb VCEQF   V1,V2,V3,M5 RPI 2202
-            "E7F821=VCEQFS,82,738",     // E7F821 VRRb VCEQFS  V1,V2,V3 RPI 2202  
-            "E7F822=VCEQZF,82,738",     // E7F822 VRRb VCEQZF  V1,V2,V3 RPI 2202 
-            "E7F823=VCEQZFS,82,738",    // E7F823 VRRb VCEQZFS V1,V2,V3 RPI 2202
-			"E7F830=VCEQG,82,738",      // E7F830 VRRb VCEQG   V1,V2,V3 RPI 2202 
-            "E7F831=VCEQGS,82,738",     // E7F831 VRRb VCEQGS  V1,V2,V3 RPI 2202
-			"E7F9=VCHL,82,738",         // E7F9   VRRb VCHL   V1,V2,V3,M4,M5 RPI 2202
-            "E7F900=VCHLB,82,738",      // E7F900 VRRb VCHLB  V1,V2,V3,M5 RPI 2202
-            "E7F910=VCHLH,82,738",      // E7F910 VRRb VCHLH  V1,V2,V3 RPI 2202  
-            "E7F920=VCHLF,82,738",      // E7F920 VRRb VCHLF  V1,V2,V3 RPI 2202 
-            "E7F930=VCHLG,82,738",      // E7F930 VRRb VCHLG  V1,V2,V3 RPI 2202 
-            "E7F901=VCHLBS,82,738",     // E7F901 VRRb VCHLBS V1,V2,V3,M5 RPI 2202
-            "E7F911=VCHLHS,82,738",     // E7F911 VRRb VCHLHS V1,V2,V3 RPI 2202  
-            "E7F921=VCHLFS,82,738",     // E7F921 VRRb VCHLFS V1,V2,V3 RPI 2202 
-            "E7F931=VCHLGS,82,738",     // E7F831 VRRb VCHLGS V1,V2,V3 RPI 2202
-			"E7FB=VCH,82,738",         // E7FB   VRRb VCH   V1,V2,V3,M4,M5 RPI 2202
-            "E7FB00=VCHB,82,738",      // E7FB00 VRRb VCHB  V1,V2,V3,M5 RPI 2202
-            "E7FB10=VCHH,82,738",      // E7FB10 VRRb VCHH  V1,V2,V3 RPI 2202  
-            "E7FB20=VCHF,82,738",      // E7FB20 VRRb VCHF  V1,V2,V3 RPI 2202 
-            "E7FB30=VCHG,82,738",      // E7FB30 VRRb VCHG  V1,V2,V3 RPI 2202 
-            "E7FB01=VCHBS,82,738",     // E7FB01 VRRb VCHBS V1,V2,V3,M5 RPI 2202
-            "E7FB11=VCHHS,82,738",     // E7FB11 VRRb VCHHS V1,V2,V3 RPI 2202  
-            "E7FB21=VCHFS,82,738",     // E7FB21 VRRb VCHFS V1,V2,V3 RPI 2202 
-            "E7FB31=VCHGS,82,738",     // E7FB31 VRRb VCHGS V1,V2,V3 RPI 2202 
-			"E7FC=VMNL,82,738",    // E7FC  VRRc VMNL  V1,V2,V3,M4 RPI 2202
-			"E7FC0=VMNLB,82,738",  // E7FC0 VRRc VMNLB V1,V2,V3 RPI 2202
-            "E7FC1=VMNLH,82,738",  // E7FC1 VRRc VMNLH V1,V2,V3 RPI 2202
-            "E7FC2=VMNLF,82,738",  // E7FC2 VRRc VMNLF V1,V2,V3 RPI 2202
-            "E7FC3=VMNLG,82,738",  // E7FC3 VRRc VMNLG V1,V2,V3 RPI 2202
-			"E7FD=VMXL,82,738",    // E7FD  VRRc VMXL  V1,V2,V3,M4 RPI 2202
-			"E7FD0=VMXLB,82,738",  // E7FD0 VRRc VMXLB V1,V2,V3 RPI 2202
-            "E7FD1=VMXLH,82,738",  // E7FD1 VRRc VMXLH V1,V2,V3 RPI 2202
-            "E7FD2=VMXLF,82,738",  // E7FD2 VRRc VMXLF V1,V2,V3 RPI 2202
-            "E7FD3=VMXLG,82,738",  // E7FD3 VRRc VMXLG V1,V2,V3 RPI 2202
-			"E7FE=VMN,82,738",    // E7FE  VRRc VMN  V1,V2,V3,M4 RPI 2202
-			"E7FE0=VMNB,82,738",  // E7FE0 VRRc VMNB V1,V2,V3 RPI 2202
-            "E7FE1=VMNH,82,738",  // E7FE1 VRRc VMNH V1,V2,V3 RPI 2202
-            "E7FE2=VMNF,82,738",  // E7FE2 VRRc VMNF V1,V2,V3 RPI 2202
-            "E7FE3=VMNG,82,738",  // E7FE3 VRRc VMNG V1,V2,V3 RPI 2202
-			"E7FF=VMX,82,738",    // E7FF  VRRc VMX  V1,V2,V3,M4 RPI 2202
-			"E7FF0=VMXB,82,738",  // E7FF0 VRRc VMXB V1,V2,V3 RPI 2202
-            "E7FF1=VMXH,82,738",  // E7FF1 VRRc VMXH V1,V2,V3 RPI 2202
-            "E7FF2=VMXF,82,738",  // E7FF2 VRRc VMXF V1,V2,V3 RPI 2202
-            "E7FF3=VMXG,82,738",  // E7FF3 VRRc VMXG V1,V2,V3 RPI 2202
+            "E78E=VFMS,82,738",           // E78E VRRe VFMS  V1,V2,V3,V4,M5,M6 RPI 2202
+            "E78E0f=VFMSfB,82,738;f=23",  // E78E VRRe VFMS* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E78E8f=WFMSfB,82,738;f=234", // E78E VRRe WFMS* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E78F=VFMA,82,738",           // E78F VRRe VFMA  V1,V2,V3,V4,M5,M6 RPI 2202
+            "E78F0f=VFMAfB,82,738;f=23",  // E78F VRRe VFMA* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E78F8f=WFMAfB,82,738;f=234", // E78F VRRe WFMA* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E794=VPK,82,738",       // E794  VRRc VPK   V1,V2,V3,M4 RPI 2202
+            "E794e=VPKe,82,738;e=123", // E7941-E7943 VRRc VPK* V1,V2,V3,M4 RPI 2202 #495
+            "E795=VPKLS,82,738",     // E795   VRRb VPKLS  V1,V2,V3,M4,M5 RPI 2202
+            "E795e0=VPKLSe,82,738;e=123",  // E795 VRRb VPKLS* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E795e1=VPKLSeS,82,738;e=123", // E795 VRRb VPKLS* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E797=VPKS,82,738",           // E797 VRRb VPKS  V1,V2,V3,M4,M5 RPI 2202
+            "E797e0=VPKSe,82,738;e=123",  // E797 VRRb VPKS* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E797e1=VPKSeS,82,738;e=123", // E797 VRRb VPKS* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E79E=VFNMS,82,738",           // E79E VRRe VFNMS  V1,V2,V3,V4,M4,M5 RPI 2202
+            "E79E0f=VFNMSfB,82,738;f=23",  // E79E VRRe VFNMS* V1,V2,V3,V4,M4,M5 RPI 2202 #495
+            "E79E8f=WFNMSfB,82,738;f=234", // E79E VRRe WFNMS* V1,V2,V3,V4,M4,M5 RPI 2202 #495
+            "E79F=VFNMA,82,738",           // E79F VRRe VFNMS  V1,V2,V3,V4,M4,M5 RPI 2202
+            "E79F0f=VFNMAfB,82,738;f=23",  // E79F VRRe VFNMS* V1,V2,V3,V4,M4,M5 RPI 2202 #495
+            "E79F8f=WFNMAfB,82,738;f=234", // E79F VRRe WFNMS* V1,V2,V3,V4,M4,M5 RPI 2202 #495
+            "E7A1=VMLH,82,738",         // E7A1        VRRc VMLH  V1,V2,V3,M4 RPI 2202
+            "E7A1e=VMLHe,82,738;e=012", // E7A10-E7A12 VRRc VMLH* V1,V2,V3,M4 RPI 2202 #495
+            "E7A2=VML,82,738",                 // E7A2         VRRc VML  V1,V2,V3,M4 RPI 2202 #495
+            "E7A2e=VMLe,82,738;e=012;1=VMLHW", // E7A20-E7A22  VRRc VML* V1,V2,V3,M4 RPI 2202 #495
+            "E7A3=VMH,82,738",    // E7A3  VRRc VMH  V1,V2,V3,M4 RPI 2202
+            "E7A3e=VMHe,82,738;e=012", // E7A30-E7A32 VRRc VMH* V1,V2,V3,M4 RPI 2202 #495
+            "E7A4=VMLE,82,738",         // E7A4        VRRc VMLE  V1,V2,V3,M4 RPI 2202
+            "E7A4e=VMLEe,82,738;e=012", // E7A40-E7A42 VRRc VMLE* V1,V2,V3,M4 RPI 2202 #495
+            "E7A5=VMLO,82,738",   // E7A5  VRRc VMLO  V1,V2,V3,M4 RPI 2202
+            "E7A5e=VMLOe,82,738;e=012",   // E7A50-E7A52 VRRc VMLO* V1,V2,V3,M4 RPI 2202 #495
+            "E7A6=VME,82,738",         // E7A6        VRRc VME  V1,V2,V3,M4 RPI 2202
+            "E7A6e=VMEe,82,738;e=012", // E7A60-E7A62 VRRc VME* V1,V2,V3,M4 RPI 2202 #495
+            "E7A7=VMO,82,738",         // E7A7        VRRc VMO  V1,V2,V3,M4 RPI 2202
+            "E7A7e=VMOe,82,738;e=012", // E7A70-E7A72 VRRc VMO* V1,V2,V3,M4 RPI 2202 #495
+            "E7A9=VMALH,82,738",         // E7A9        VRRd VMALH  V1,V2,V3,V4,M5,M6 RPI 2202
+            "E7A9e=VMALHe,82,738;e=012", // E7A90-E7A92 VRRd VMALH* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E7AA=VMAL,82,738",                  // E7AA        VRRd VMAL  V1,V2,V3,V4,M5,M6 RPI 2202
+            "E7AAe=VMALe,82,738;e=012;1=VMALHW", // E7AA0-E7AA2 VRRd VMAL* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E7AB=VMAH,82,738",         // E7AB        VRRd VMAH  V1,V2,V3,V4,M5,M6 RPI 2202
+            "E7ABe=VMAHe,82,738;e=012", // E7AB0-E7AB2 VRRd VMAH* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E7AC=VMALE,82,738",         // E7AC        VRRd VMALE  V1,V2,V3,V4,M5,M6 RPI 2202
+            "E7ACe=VMALEe,82,738;e=012", // E7AC0-E7AC2 VRRd VMALE* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E7AD=VMALO,82,738",         // E7AD        VRRd VMALO  V1,V2,V3,V4,M5,M6 RPI 2202
+            "E7ADe=VMALOe,82,738;e=012", // E7AD0-E7AD2 VRRd VMALO* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E7AE=VMAE,82,738",         // E7AE        VRRd VMAE  V1,V2,V3,V4,M5,M6 RPI 2202
+            "E7AEe=VMAEe,82,738;e=012", // E7AE0-E7AE2 VRRd VMAE* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E7AF=VMAO,82,738",         // E7AF        VRRd VMAO  V1,V2,V3,V4,M5,M6 RPI 2202
+            "E7AFe=VMAOe,82,738;e=012", // E7AF0-E7AF2 VRRd VMAO* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E7B4=VGFM,82,738",          // E7B4        VRRc VGFM  V1,V2,V3,M4 RPI 2202
+            "E7B4e=VGFMe,82,738;e=0123", // E7B40-E7B43 VRRc VGFM* V1,V2,V3,M4 RPI 2202 #495
+            "E7B8=VMSL,82,738",       // E7B8        VRRd VMSL  V1,V2,V3,V4,M5,M6 RPI 2202
+            "E7B8e=VMSLe,82,738;e=3", // E7B83-E7B83 VRRd VMSL* V1,V2,V3,V4,M5,M6 RPI 2202 #495
+            "E7B9=VACCC,82,738",       // E7B9        VRRd VACCC  V1,V2,V3,V4,M5 RPI 2202
+            "E7B9e=VACCCe,82,738;e=4", // E7B94-E7B94 VRRd VACCC* V1,V2,V3,V4,M5 RPI 2202 #495
+            "E7BB=VAC,82,738",       // E7BB        VRRd VAC  V1,V2,V3,V4,M5 RPI 2202
+            "E7BBe=VACe,82,738;e=4", // E7BB4-E7BB4 VRRd VAC* V1,V2,V3,V4,M5 RPI 2202 #495
+            "E7BC=VGFMA,82,738",          // E7BC        VRRd VGFMA  V1,V2,V3,V4,M5  RPI 2202
+            "E7BCe=VGFMAe,82,738;e=0123", // E7BC0-E7BC3 VRRd VGFMA* V1,V2,V3,V4,M5  RPI 2202 #495
+            "E7BD=VSBCBI,82,738",       // E7BD        VRRd VSBCBI  V1,V2,V3,V4,M5 RPI 2202
+            "E7BDe=VSBCBIe,82,738;e=4", // E7BD4-E7BD4 VRRd VSBCBI* V1,V2,V3,V4,M5 RPI 2202 #495
+            "E7BF=VSBI,82,738",       // E7BF        VRRd VSBI  V1,V2,V3,V4,M5 RPI 2202
+            "E7BFe=VSBIe,82,738;e=4", // E7BF4-E7BF4 VRRd VSBI* V1,V2,V3,V4,M5 RPI 2202 #495
+            "E7C0=VCLFP,82,738",                 // E7C0        VRRa VCLFP V1,V2,M3,M4,M5 RPI 2202
+            "E7C0=VCLGD,82,738;*Extended",       // E7C0        VRRa VCLGD V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C0f=VCLFfB,82,738;f=2;2=VCLFEB",  // E7C02-E7C03 VRRa VCLFP V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C0f=VCLGfB,82,738;f=3",           // E7C02-E7C03 VRRa VCLFP V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C0f8=WCLFfB,82,738;f=2;2=WCLFEB", // E7C02-E7C03 VRRa VCLFP V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C0f8=WCLGfB,82,738;f=3",          // E7C02-E7C03 VRRa VCLFP V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C1=VCFPL,82,738",                 // E7C1 VRRa VCFPL V1,V2,M3,M4,M5 RPI 2202
+            "E7C1=VCDLG,82,738;*Extended",       // E7C1 VRRa VCDLG V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C1f=VCfLFB,82,738;f=2;2=VCELFB",  // E7C1 VRRa VCFPL V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C1f=VCfLGB,82,738;f=3",           // E7C1 VRRa VCFPL V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C1f8=WCfLFB,82,738;f=2;2=WCELFB", // E7C1 VRRa VCFPL V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C1f8=WCfLGB,82,738;f=3",          // E7C1 VRRa VCFPL V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C2=VCSFP,82,738",               // E7C2 VRRa VCSFP V1,V2,M3,M4,M5 RPI 2202
+            "E7C2=VCGD,82,738;*Extended",      // E7C2 VRRa VCGD  V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C2f=VCFfB,82,738;f=2;2=VCFEB",  // E7C2 VRRa VCSFP V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C2f=VCGfB,82,738;f=3",          // E7C2 VRRa VCSFP V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C2f9=WCFfB,82,738;f=2;2=WCFEB", // E7C2 VRRa VCSFP V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C2f9=WCGfB,82,738;f=3",         // E7C2 VRRa VCSFP V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C3=VCFPS,82,738",               // E7C3 VRRa VCFPS V1,V2,M3,M4,M5 RPI 2202
+            "E7C3=VCDG,82,738;*Extended",      // E7C3 VRRa VCDG  V1,V2,M3,M4,M5 RPI 2202  #495
+            "E7C3f=VCfFB,82,738;f=2;2=VCEFB",  // E7C3 VRRa VCFPS V1,V2,M3,M4,M5 RPI 2202  #495
+            "E7C3f=VCfGB,82,738;f=3",          // E7C3 VRRa VCFPS V1,V2,M3,M4,M5 RPI 2202  #495
+            "E7C3f8=WCfFB,82,738;f=2;2=WCEFB", // E7C3 VRRa VCFPS V1,V2,M3,M4,M5 RPI 2202  #495
+            "E7C3f8=WCfGB,82,738;f=3",         // E7C3 VRRa VCFPS V1,V2,M3,M4,M5 RPI 2202  #495
+            "E7C4=VFLL,82,738",                // E7C4 VRRa VFLL  V1,V2,M3,M4 RPI 2202
+            "E7C4=VLDE,82,738;*Extended",      // E7C4 VRRa VLDE  V1,V2,M3,M4 RPI 2202 #495
+            "E7C4f0=VLDfB,82,738;f=2;2=VLDEB", // E7C4 VRRa VFLL  V1,V2,M3,M4 RPI 2202 #495
+            "E7C4f8=WLDfB,82,738;f=2;2=WLDEB", // E7C4 VRRa VFLL  V1,V2,M3,M4 RPI 2202 #495
+            "E7C4f0=VFLLf,82,738;f=2",         // E7C4 VRRa VFLL  V1,V2,M3,M4 RPI 2202 #495
+            "E7C4f8=WFLLf,82,738;f=23",        // E7C4 VRRa VFLL  V1,V2,M3,M4 RPI 2202 #495
+            "E7C5=VFLR,82,738",           // E7C5 VRRa VFLR V1,V2,M3,M4,M5 RPI 2202
+            "E7C5=VLED,82,738;*Extended", // E7C5 VRRa VLED V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C5f=VLEfB,82,738;f=3",     // E7C5 VRRa VFLR V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C5f8=WLEfB,82,738;f=3",    // E7C5 VRRa VFLR V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C5f=VFLRf,82,738;f=3",     // E7C5 VRRa VFLR V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C5f8=WFLRf,82,738;f=34",   // E7C5 VRRa VFLR V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C7=VFI,82,738",           // E7C7 VRRa VFI V1,V2,M3,M4,M5 RPI 2202
+            "E7C7f=VFIfB,82,738;f=23",   // E7C7 VRRa VFI V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C7f8=WFIfB,82,738;f=234", // E7C7 VRRa VFI V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7CA=WFK,82,738",          // E7CA        VRRa WFK  V1,V2,M3,M4 RPI 2202
+            "E7CAf=WFKfB,82,738;f=234", // E7CA2-E7CA4 VRRa WFK* V1,V2,M3,M4 RPI 2202 #495
+            "E7CB=WFC,82,738",          // E7CB        VRRa WFC  V1,V2,M3,M4 RPI 2202
+            "E7CBf=WFCfB,82,738;f=234", // E7CB2-E7CB4 VRRa WFC* V1,V2,M3,M4 RPI 2202 #495
+            "E7CC=VFPSO,82,738",           // VRRa VFPSO V1,V2,M3,M4,M5 Z15?
+            "E7CCf0=VFPSOfB,82,738;f=23",  // VRRa VFPSO V1,V2,M3,M4,M5 Z15? #495
+            "E7CCf8=WFPSOfB,82,738;f=234", // VRRa VFPSO V1,V2,M3,M4,M5 Z15? #495
+            "E7CCf00=VFLCfB,82,738;f=23",  // VRRa VFPSO V1,V2,M3,M4,M5 Z15? #495
+            "E7CCf80=WFLCfB,82,738;f=234", // VRRa VFPSO V1,V2,M3,M4,M5 Z15? #495
+            "E7CCf01=VFLNfB,82,738;f=23",  // VRRa VFPSO V1,V2,M3,M4,M5 Z15? #495
+            "E7CCf81=WFLNfB,82,738;f=234", // VRRa VFPSO V1,V2,M3,M4,M5 Z15? #495
+            "E7CCf02=VFLPfB,82,738;f=23",  // VRRa VFPSO V1,V2,M3,M4,M5 Z15? #495
+            "E7CCf82=WFLPfB,82,738;f=234", // VRRa VFPSO V1,V2,M3,M4,M5 Z15? #495
+            "E7CE=VFSQ,82,738",           // E7CE VRRa VFSQ V1,V2,M3,M4 RPI 2202
+            "E7CEf0=VFSQfB,82,738;f=23",  // E7CE VRRa VFSQ V1,V2,M3,M4 RPI 2202 #495
+            "E7CEf8=WFSQfB,82,738;f=234", // E7CE VRRa VFSQ V1,V2,M3,M4 RPI 2202 #495
+            "E7D4=VUPLL,82,738",         // E7D4        VRRa VUPLL  V1,V2,M3 RPI 2202
+            "E7D4e=VUPLLe,82,738;e=012", // E7D40-E7D42 VRRa VUPLL* V1,V2,M3 RPI 2202 #495
+            "E7D5=VUPLH,82,738",         // E7D5        VRRa VUPLH  V1,V2,M3 RPI 2202
+            "E7D5e=VUPLHe,82,738;e=012", // E7D50-E7D52 VRRa VUPLH* V1,V2,M3 RPI 2202 #495
+            "E7D6=VUPL,82,738",                  // E7D6        VRRa VUPL  V1,V2,M3 RPI 2202
+            "E7D6e=VUPLe,82,738;e=012;1=VUPLHW", // E7D60-E7D62 VRRa VUPL* V1,V2,M3 RPI 2202 #495
+            "E7D7=VUPH,82,738",         // E7D7        VRRa VUPH  V1,V2,M3 RPI 2202
+            "E7D7e=VUPHe,82,738;e=012", // E7D70-E7D72 VRRa VUPH* V1,V2,M3 RPI 2202 #495
+            "E7D8=VTM,82,738",      // E7D8  VRRa VTM    V1,V2 RPI 2202
+            "E7D9=VECL,82,738",          // E7D9        VRRa VECL  V1,V2,M3 RPI 2202
+            "E7D9e=VECLe,82,738;e=0123", // E7D90-E7D93 VRRa VECL* V1,V2,M3 RPI 2202 #495
+            "E7DB=VEC,82,738",          // E7D9        VRRa VEC  V1,V2,M3 RPI 2202
+            "E7DBe=VECe,82,738;e=0123", // E7D90-E7D93 VRRa VEC* V1,V2,M3 RPI 2202 #495
+            "E7DE=VLC,82,738",          // E7DE        VRRa VLC  V1,V2,M3 RPI 2202
+            "E7DEe=VLCe,82,738;e=0123", // E7DE0-E7DE3 VRRa VLC* V1,V2,M3 RPI 2202 #495
+            "E7DF=VLP,82,738",          // E7DF        VRRa VLP  V1,V2,M3 RPI 2202
+            "E7DFe=VLPe,82,738;e=0123", // E7DF0-E7DF3 VRRa VLP* V1,V2,M3 RPI 2202 #495
+            "E7E2=VFS,82,738",           // E7E2 VRSc VFS V1,V2,V3,M4,M5 RPI 2202
+            "E7E2f0=VFSfB,82,738;f=23",  // E7E2 VRSc VFS V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7E2f8=WFSfB,82,738;f=234", // E7E2 VRSc VFS V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7E3=VFA,82,738",           // E7E3 VRSc VFA V1,V2,V3,M4,M5 RPI 2202
+            "E7E3f0=VFAfB,82,738;f=23",  // E7E3 VRSc VFA V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7E3f8=WFAfB,82,738;f=234", // E7E3 VRSc VFA V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7E5=VFD,82,738",           // E7E5 VRSc VFD V1,V2,V3,M4,M5 RPI 2202
+            "E7E5f0=VFDfB,82,738;f=23",  // E7E5 VRSc VFD V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7E5f8=WFDfB,82,738;f=234", // E7E5 VRSc VFD V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7E7=VFM,82,738",           // E7E7 VRSc VFM V1,V2,V3,M4,M5 RPI 2202
+            "E7E7f0=VFMfB,82,738;f=23",  // E7E7 VRSc VFM V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7E7f8=WFMfB,82,738;f=234", // E7E7 VRSc VFM V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7E8=VFCE,82,738",             // VRRc V1,V2,V3,M4,M5,M6 Z15?
+            "E7E8f00=VFCEfB,82,738;f=23",   // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7E8f01=VFCEfBS,82,738;f=23",  // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7E8f40=VFKEfB,82,738;f=23",   // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7E8f41=VFKEfBS,82,738;f=23",  // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7E8f80=WFCEfB,82,738;f=234",  // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7E8f81=WFCEfBS,82,738;f=234", // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7E8fC0=WFKEfB,82,738;f=234",  // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7E8fC1=WFKEfBS,82,738;f=234", // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EA=VFCHE,82,738",             // VRRc V1,V2,V3,M4,M5,M6 Z15?
+            "E7EAf00=VFCHEfB,82,738;f=23",   // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EAf01=VFCHEfBS,82,738;f=23",  // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EAf40=VFKHEfB,82,738;f=23",   // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EAf41=VFKHEfBS,82,738;f=23",  // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EAf80=WFCHEfB,82,738;f=234",  // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EAf81=WFCHEfBS,82,738;f=234", // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EAfC0=WFKHEfB,82,738;f=234",  // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EAfC1=WFKHEfBS,82,738;f=234", // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EB=VFCH,82,738",             // VRRc V1,V2,V3,M4,M5,M6 Z15?
+            "E7EBf00=VFCHfB,82,738;f=23",   // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EBf01=VFCHfBS,82,738;f=23",  // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EBf40=VFKHfB,82,738;f=23",   // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EBf41=VFKHfBS,82,738;f=23",  // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EBf80=WFCHfB,82,738;f=234",  // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EBf81=WFCHfBS,82,738;f=234", // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EBfC0=WFKHfB,82,738;f=234",  // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EBfC1=WFKHfBS,82,738;f=234", // VRRc V1,V2,V3,M4,M5,M6 Z15? #495
+            "E7EE=VFMIN,82,738",           // E7EE VRSc VFMIN V1,V2,V3,M4,M5 RPI 2202
+            "E7EEf0=VFMINfB,82,738;f=23",  // E7EE VRSc VFMIN V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7EEf8=WFMINfB,82,738;f=234", // E7EE VRSc VFMIN V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7EF=VFMAX,82,738",           // E7EF VRSc VFMAX V1,V2,V3,M4,M5,M6 RPI 2202
+            "E7EFf0=VFMAXfB,82,738;f=23",  // E7EF VRSc VFMAX V1,V2,V3,M4,M5,M6 RPI 2202 #495
+            "E7EFf8=WFMAXfB,82,738;f=234", // E7EF VRSc VFMAX V1,V2,V3,M4,M5,M6 RPI 2202 #495
+            "E7F0=VAVGL,82,738",          // E7F0        VRRc VAVGL  V1,V2,V3,M4 RPI 2202
+            "E7F0e=VAVGLe,82,738;e=0123", // E7F00-E7F03 VRRc VAVGL* V1,V2,V3,M4 RPI 2202 #495
+            "E7F1=VACC,82,738",    // E7F1  VRRc VACC  V1,V2,V3,M4 RPI 2202
+            "E7F1e=VACCe,82,738;e=01234", // E7F10-E7F14 VRRc VACC* V1,V2,V3,M4 RPI 2202 #495
+            "E7F2=VAVG,82,738",          // E7F2        VRRc VAVG  V1,V2,V3,M4 RPI 2202
+            "E7F2e=VAVGe,82,738;e=0123", // E7F20-E7F23 VRRc VAVG* V1,V2,V3,M4 RPI 2202 #495
+            "E7F3=VA,82,738",           // E7F3        VRRc VA  V1,V2,V3,M4 RPI 2202
+            "E7F3e=VAe,82,738;e=01234", // E7F30-E7F34 VRRc VA* V1,V2,V3,M4 RPI 2202 #495
+            "E7F5=VSCBI,82,738",           // E7F5        VRRc VSCBI  V1,V2,V3,M4 RPI 2202
+            "E7F5e=VSCBIe,82,738;e=01234", // E7F50-E7F54 VRRc VSCBI* V1,V2,V3,M4 RPI 2202 #495
+            "E7F7=VS,82,738",           // E7F7        VRRc VS  V1,V2,V3,M4 RPI 2202
+            "E7F7e=VSe,82,738;e=01234", // E7F70-E7F74 VRRc VS* V1,V2,V3,M4 RPI 2202 #495
+            "E7F8=VCEQ,82,738",            // E7F8 VRRb VCEQ  V1,V2,V3,M4,M5 RPI 2202
+            "E7F8e0=VCEQe,82,738;e=0123",  // E7F8 VRRb VCEQ* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7F8e1=VCEQeS,82,738;e=0123", // E7F8 VRRb VCEQ* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7F9=VCHL,82,738",            // E7F9 VRRb VCHL  V1,V2,V3,M4,M5 RPI 2202
+            "E7F9e0=VCHLe,82,738;e=0123",  // E7F9 VRRb VCHL* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7F9e1=VCHLeS,82,738;e=0123", // E7F9 VRRb VCHL* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7FB=VCH,82,738",            // E7FB VRRb VCH  V1,V2,V3,M4,M5 RPI 2202
+            "E7FBe0=VCHe,82,738;e=0123",  // E7FB VRRb VCH* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7FBe1=VCHeS,82,738;e=0123", // E7FB VRRb VCH* V1,V2,V3,M4,M5 RPI 2202 #495
+            "E7FC=VMNL,82,738",          // E7FC        VRRc VMNL  V1,V2,V3,M4 RPI 2202
+            "E7FCe=VMNLe,82,738;e=0123", // E7FC0-E7FC3 VRRc VMNL* V1,V2,V3,M4 RPI 2202 #495
+            "E7FD=VMXL,82,738",    // E7FD  VRRc VMXL  V1,V2,V3,M4 RPI 2202
+            "E7FDe=VMXLe,82,738;e=0123", // E7FD0-E7FD3 VRRc VMXL* V1,V2,V3,M4 RPI 2202 #495
+            "E7FE=VMN,82,738",          // E7FE        VRRc VMN  V1,V2,V3,M4 RPI 2202
+            "E7FEe=VMNe,82,738;e=0123", // E7FE0-E7FE3 VRRc VMN* V1,V2,V3,M4 RPI 2202 #495
+            "E7FF=VMX,82,738",    // E7FF  VRRc VMX  V1,V2,V3,M4 RPI 2202
+            "E7FFe=VMXe,82,738;e=0123", // E7FF0-E7FF3 VRRc VMX* V1,V2,V3,M4 RPI 2202 #495
 			"EB23=CLT,20,201",       // EB23   RSYb CLT     R1,M3,D2(B2)       RPI 2202 #485
             "EB23m=CLTm,20,201;*Short;F=", // EB23   RSYb CLT     R1,M3,D2(B2) RPI 2202 #485
-			// "EB238=CLTE,20,201",     // EB238  RSYb CLTE    R1,D2(B2)       RPI 2202 #485
-			// "EB232=CLTH,20,201",     // EB232  RSYb CLTH    R1,D2(B2)       RPI 2202 #485
-			// "EB234=CLTL,20,201",     // EB234  RSYb CLTL    R1,D2(B2)       RPI 2202 #485
-			// "EB236=CLTNE,20,201",    // EB236  RSYb CLTNE   R1,D2(B2)       RPI 2202 #485
-			// "EB23C=CLTNH,20,201",    // EB23C  RSYb CLTNH   R1,D2(B2)       RPI 2202 #485
-			// "EB23A=CLTNL,20,201",    // EB23A  RSYb CLTNL   R1,D2(B2)       RPI 2202 #485
 			"EB2B=CLGT,20,201",      // EB2B   RSYb CLGT    R1,M3,D2(B2)       RPI 2202 #485
             "EB2Bm=CLGTm,20,201;*Short;F=", // EB2B   RSYb CLGT   R1,M3,D2(B2) RPI 2202 #485
-			// "EB2B8=CLGTE,20,201",    // EB2B8  RSYb CLGTE   R1,D2(B2)       RPI 2202 #485
-			// "EB2B2=CLGTH,20,201",    // EB2B2  RSYb CLGTH   R1,D2(B2)       RPI 2202 #485
-			// "EB2B4=CLGTL,20,201",    // EB2B4  RSYb CLGTL   R1,D2(B2)       RPI 2202 #485
-			// "EB2B6=CLGTNE,20,201",   // EB2B6  RSYb CLGTNE  R1,D2(B2)       RPI 2202 #485
-			// "EB2BC=CLGTNH,20,201",   // EB2BC  RSYb CLGTNH  R1,D2(B2)       RPI 2202 #485
-			// "EB2BA=CLGTNL,20,201",   // EB2BA  RSYb CLGTNL  R1,D2(B2)       RPI 2202 #485
 	        "EBE0=LOCFH,56,207",        // EBE0  RSYb LOCFH  R1,D2(B2),M3 RPI 2202
 			"EBE0m=LOCFHm,56,207;0=;F=",   // EBE0  RSYb LOCFHm  R1,D2(B2) RPI 2202 #485
             "EBE1=STOCFH,56,207",       // EBE1  RSYb STOCFH R1,D2(B2),M3
@@ -3499,7 +3128,6 @@ public  class  tz390 {
          "B9DD=CHLR,39,144",     //        "B9DD"  "CHLR"     "RRE"  39 RPI 1125 Z196
          "B9DF=CLHLR,14,144",    //        "B9DF"  "CLHLR"    "RRE"  14 RPI 1125 Z196
          "B9E1=POPCNT,39,151",   //   5115 "B9E1"  "POPCNT"   "RRE"  14 RPI 1125  RPI 2202 support m3=8
-      //   "B9E2=LOCGR,39,141",    //        "B9E2"  "LOCGR"    "RRF5" 39 RPI 1125 Z196
          "B9E4=NGRK,39,153",     //        "B9E4"  "NGRK"     "RRF5" 39 RPI 1125 Z196
          "B9E6=OGRK,39,153",     //        "B9E6"  "OGRK"     "RRF5" 39 RPI 1125 Z196
          "B9E7=XGRK,39,153",     //        "B9E7"  "XGRK"     "RRF5" 39 RPI 1125 Z196
@@ -3840,8 +3468,7 @@ public void create_opcodes()  // Routine added for RPI 1209
     // WARNING: take heed to define all opcodes BEFORE defining any directives!    <<<<<<-------
     index2=0;
     while (index2 <= 1)
-       {//System.out.println("afk tz390 main loop start pass " + index2); // #485
-        op_code_count = 0;
+       {op_code_count = 0;
         op_directives_count = 0;
         process_opcodes(op_table_start);
         if (opt_assist == true)               // RPI 1209M
@@ -4005,14 +3632,12 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
-        //System.out.println("afk tz390 main loop end pass " + index2); // #485
         if (index2 == 0) // only on first pass: allocate tables
            {op_code       = new String[op_code_count]; // no entries allocated for directives
             op_name       = new String[op_code_count+op_directives_count];
             op_type       = new int[op_code_count+op_directives_count];
             op_trace_type = new int[op_code_count];
             op_type_oattribute = new String[op_code_count+op_directives_count]; // fix #485
-            //System.out.println("afk tz390 main loop allocation done, size " + (op_code_count+op_directives_count)); // #485
             }
         index2++; // indicate this pass is done
         }
@@ -4048,7 +3673,48 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
     String  override_mnemon2;
     String  override_short;
     int     index3, index4;
-
+    char    mask_char;       // applicable mask character: m=condition mask, non_vector      #495
+                             //                            e=vector element size             #495
+                             //                            f=vector floating point format    #495
+    String  override_masks;  // applicable mask values for entry size in vecror instructions #495
+    char    hex_digit;       // hex digit from override_masks                                #495
+    int     mask_val;        // numerical value of a single mask digit fro override_masks    #495
+    int     part_mnem_index; // index into relevant section of partial_mnemonic (below)      #495
+    String[] partial_mnemonic={      // entries 0-15: element size                           #495
+                               "B",  // 0=Byte                                               #495
+                               "H",  // 1=Halfword                                           #495
+                               "F",  // 2=Fullword                                           #495
+                               "G",  // 3=Grande (doubleword)                                #495
+                               "Q",  // 4=Quadword                                           #495
+                               "",   // 5 unassigned                                         #495
+                               "LF", // 6=Left-aligned Fullword                              #495
+                               "",   // 7 unassigned                                         #495
+                               "",   // 8 unassigned                                         #495
+                               "",   // 9 unassigned                                         #495
+                               "",   // A unassigned                                         #495
+                               "",   // B unassigned                                         #495
+                               "",   // C unassigned                                         #495
+                               "",   // C unassigned                                         #495
+                               "",   // E unassigned                                         #495
+                               "",   // F unassigned                                         #495
+                                     // entries 16-31: floating point format                 #495
+                               "",   // 0 unassigned                                         #495
+                               "",   // 1 unassigned                                         #495
+                               "S",  // 2=Short format                                       #495
+                               "D",  // 3=Long format (doubleword)                           #495
+                               "X",  // 4=Extened format                                     #495
+                               "",   // 5 unassigned                                         #495
+                               "",   // 6 unassigned                                         #495
+                               "",   // 7 unassigned                                         #495
+                               "",   // 8 unassigned                                         #495
+                               "",   // 9 unassigned                                         #495
+                               "",   // A unassigned                                         #495
+                               "",   // B unassigned                                         #495
+                               "",   // C unassigned                                         #495
+                               "",   // C unassigned                                         #495
+                               "",   // E unassigned                                         #495
+                               ""    // F unassigned                                         #495
+                               };    //                                                      #495
     index=0;
     index2=op_code_count+op_directives_count;
     while (index < op_tables.length) // for each entry in op_tables
@@ -4089,7 +3755,6 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
         catch (Exception e)
            {abort_error(47,"Error in opcode definition " + op_tables[index] + " - " + e.toString());
             }
-        //System.out.println("afk tz390 entry" + index + " --> " + opcode + "," + mnemonic + "," + optype + "," + tracetype + "," + entry + '.'); // #485
         // convert op_type to an integer value and check its validity
         try                                                     // convert op_type to Integer
            {optype_nr=Integer.decode(optype);
@@ -4149,20 +3814,57 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
            {tracetype_nr=-1;
             }
         // if entry is not an empty string, it contains overrides for extended instructions
-        i=opcode.indexOf("m");
+        part_mnem_index = -100;  // init to invalid value             #495
+        mask_char = ' ';         // assume instruction is non-masked  #495
+        i=opcode.indexOf("m");   // first try for m mask              #495
         j=mnemonic.indexOf("m");
         if ((i == -1 && j != -1) // check validity of placeholders for mask
         ||  (j == -1 && i != -1)
             )
            {abort_error(53,"Non-matching mask positions in opcode definition " + op_tables[index]);
             }
-        if (i == -1 && j == -1)              // Not a masked instruction
+        else if (i != -1 && j != -1) // masked non-vector instruction        // #495
+           {mask_char = 'm';                                                 // #495
+            }                                                                // #495
+        i=opcode.indexOf("e");   // test for entry size mask                 // #495
+        j=mnemonic.indexOf("e");                                             // #495
+        if ((i == -1 && j != -1) // check validity of placeholders for mask  // #495
+        ||  (j == -1 && i != -1)                                             // #495
+            )                                                                // #495
+           {abort_error(53,"Non-matching mask positions in opcode definition " + op_tables[index]); // #495
+            }                                                                // #495
+        else if (i != -1 && j != -1) // instruction with element size        // #495
+           {if (mask_char == ' ')                                            // #495
+               {mask_char = 'e';                                             // #495
+                part_mnem_index=0; // es section of partial mnemonic table   // #495
+                }                                                            // #495
+            else                                                             // #495
+               {abort_error(53,"Conflicting mask indicators in opcode definition " + op_tables[index]); // #495
+                }                                                            // #495
+            }                                                                // #495
+        i=opcode.indexOf("f");   // test for floating point control mask     // #495
+        j=mnemonic.indexOf("f");                                             // #495
+        if ((i == -1 && j != -1) // check validity of placeholders for mask  // #495
+        ||  (j == -1 && i != -1)                                             // #495
+            )                                                                // #495
+           {abort_error(53,"Non-matching mask positions in opcode definition " + op_tables[index]); // #495
+            }                                                                // #495
+        else if (i != -1 && j != -1) // instruction with floating point ctrl // #495
+           {if (mask_char == ' ')                                            // #495
+               {mask_char = 'f';                                             // #495
+                part_mnem_index=16; // fp section of partial mnemonic table  // #495
+                }                                                            // #495
+            else                                                             // #495
+               {abort_error(53,"Conflicting mask indicators in opcode definition " + op_tables[index]); // #495
+                }                                                            // #495
+            }                                                                // #495
+        if (mask_char == ' ')  // Not a masked instruction                   // #495
            {override_oattribute = "";              // #485
-            if (entry.equals("*Extended") == true) // #485
+            if (entry.equals("*Extended"))         // #485
                {override_oattribute = "E";         // #485
                 entry = "";                        // #485
                 }                                  // #485
-            if (entry.equals("") == false)
+            if (!entry.equals(""))                 // #495
                {abort_error(54,entry + " unsupported overrides for non-masked opcode definition " + op_tables[index]); // #485
                 }
             if (mnemonic.indexOf("?")==mnemonic.length()-1 && mnemonic.length()!=0)
@@ -4171,7 +3873,7 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
             if (op_code != null) // insert data only if arrays allocated
                {op_name[index2]       = mnemonic;
                 op_type[index2]       = optype_nr;
-                if (opcode.equals("--") == false)
+                if (!opcode.equals("--"))                 // #495
                    {op_code[index2]       = opcode;
                     op_trace_type[index2] = tracetype_nr;
                     if (override_oattribute == "")                                            // #485
@@ -4184,22 +3886,22 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
                 else                                                                      // #485
                    {op_type_oattribute[index2] = "A"; // this is an assembler operation code #485
                     }                                                                     // #485
-                //System.out.println("afk tz390 " + op_type_oattribute[index2] + " entry " + index2 + " --> " + opcode + "," + mnemonic + "," + optype + "," + tracetype + "," + entry + '.'); // #485
                 }
             index2++;
             if (opcode.equals("--")) // Need to count directives separately!
                {op_directives_count++;
                 }
             }
-        else
+        else // must be a masked instruction #495
            {// first we'll need to extract the overrides definitions
             override_mask1="";
             override_mnemon1="";
             override_mask2="";
             override_mnemon2="";
+            override_masks=""; // #495
             override_short="";
             // extract and verify first override (if present)
-            if (entry.equals("") == false) // only if entry contains override(s)
+            if (!entry.equals("")) // only if entry contains override(s)    #495
                {i=entry.indexOf(";");     // more overrides?
                 if (i == -1) // No more overrides
                    {override=entry;
@@ -4218,6 +3920,9 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
                     if (i == -1) // No separator!
                        {abort_error(55,"Missing equal-sign in first override in opcode definition " + op_tables[index]);
                         }
+                    else if (override.substring(0,i).equals(String.valueOf(mask_char)))  // #495
+                       {override_masks=override.substring(i+1);          // #495
+                        }                                                // #495
                     else
                        {override_mask1=override.substring(0,i);
                         override_mnemon1=override.substring(i+1);
@@ -4225,7 +3930,7 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
                     }                                                                 // #485
                 }
             // extract and verify second override (if present)
-            if (entry.equals("") == false) // only if entry contains another override
+            if (!entry.equals("")) // only if entry contains another override   #495
                {i=entry.indexOf(";");     // more overrides?
                 if (i == -1) // No more overrides
                    {override=entry;
@@ -4240,54 +3945,90 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
                 if (i == -1) // No separator!
                    {abort_error(56,"Missing equal-sign in second override in opcode definition " + op_tables[index]);
                     }
+                else if (override.substring(0,i).equals(mask_char))  // #495
+                   {override_masks=override.substring(i+1);          // #495
+                    }                                                // #495
                 else
                    {override_mask2=override.substring(0,i);
                     override_mnemon2=override.substring(i+1);
                     }
                 }
-            if (entry.equals("") == false)  // more overrides not supported!
+            if (!entry.equals(""))  // more overrides not supported!   #495
                {abort_error(57,"More than two overrides found in opcode definition " + op_tables[index]);
                 }
-            // split opcode and mnemonic; then combine with each mask to form valid masked instructions
-            i=opcode.indexOf("m");
-            j=mnemonic.indexOf("m");
+            i=opcode.indexOf(mask_char);
+            j=mnemonic.indexOf(mask_char);
             opcode_hdr   = opcode.substring(0,i);   // first part of opcode
             opcode_ftr   = opcode.substring(i+1);   // last part of opcode
             mnemonic_hdr = mnemonic.substring(0,j); // first part of mnemonic
             mnemonic_ftr = mnemonic.substring(j+1); // last part of mnemonic
-            if (override_short.equals("*Short"))
-               {index3=opcode_masks.length; // Select second section of combined tables
-                index4=mask_opcode.length;
-                }
-            else
-               {index3=0;  // select first section of combined tables
-                index4=opcode_masks.length;
-                }
-            while (index3 < index4)
-               {if (mask_opcode[index3].equals(override_mask1) && override_mnemon1.equals("")
-                ||  mask_opcode[index3].equals(override_mask2) && override_mnemon2.equals("")
-                    )
-                   {index3++; // suppress generated instruction - mnemonic not supported
+            if (mask_char == 'm') // masked non-vector instruction  #495
+               {// split opcode and mnemonic; then combine with each mask to form valid masked instructions
+                if (override_short.equals("*Short"))
+                   {index3=opcode_masks.length; // Select second section of combined tables
+                    index4=mask_opcode.length;
                     }
-                else // Ok to generate this masked instruction
-                   {if (op_code != null)
-                       {op_code[index2]       = opcode_hdr+mask_opcode[index3]+opcode_ftr;
-                        op_name[index2]       = mnemonic_hdr+mask_mnemonic[index3]+mnemonic_ftr;
-                        if (mask_opcode[index3].equals(override_mask1)) // Override 1 applies?
-                           {op_name[index2]   = override_mnemon1;
-                            }
-                        if (mask_opcode[index3].equals(override_mask2)) // Override 2 applies?
-                           {op_name[index2]   = override_mnemon2;
-                            }
-                        op_type[index2]       = optype_nr;
-                        op_type_oattribute[index2] = "E"; // this is an extended mnemonic operation code #485
-                        //System.out.println("afk tz390 E entry " + index2 + " --> " + op_code[index2] + "," + op_name[index2] + "," + op_type[index2]); // #485
-                        op_trace_type[index2] = tracetype_nr;
+                else
+                   {index3=0;  // select first section of combined tables
+                    index4=opcode_masks.length;
+                    }
+                while (index3 < index4)
+                   {if (mask_opcode[index3].equals(override_mask1) && override_mnemon1.equals("")
+                    ||  mask_opcode[index3].equals(override_mask2) && override_mnemon2.equals("")
+                        )
+                       {index3++; // suppress generated instruction - mnemonic not supported
                         }
-                    index2++;
-                    index3++;
+                    else // Ok to generate this masked instruction
+                       {if (op_code != null)
+                           {op_code[index2]       = opcode_hdr+mask_opcode[index3]+opcode_ftr;
+                            op_name[index2]       = mnemonic_hdr+mask_mnemonic[index3]+mnemonic_ftr;
+                            if (mask_opcode[index3].equals(override_mask1)) // Override 1 applies?
+                               {op_name[index2]   = override_mnemon1;
+                                }
+                            if (mask_opcode[index3].equals(override_mask2)) // Override 2 applies?
+                               {op_name[index2]   = override_mnemon2;
+                                }
+                            op_type[index2]       = optype_nr;
+                            op_type_oattribute[index2] = "E"; // this is an extended mnemonic operation code #485
+                            op_trace_type[index2] = tracetype_nr;
+                            }
+                        index2++;
+                        index3++;
+                        }
                     }
-                }
+                }                                                                                                     // #495
+            else // masked vector instruction                                                                         // #495
+               {index3=0;                                                                                             // #495
+                index4=override_masks.length();                                                                       // #495
+                if (override_masks.equals(""))                                                                        // #495
+                   {abort_error(54,entry + " allowable mask values not specified for masked opcode definition " + op_tables[index]); // #495
+                    }                                                                                                 // #495
+                override_masks=override_masks.toUpperCase();                                                          // #495
+                while (index3 < index4)                                                                               // #495
+                   {if (op_code != null)                                                                              // #495
+                       {hex_digit             = override_masks.charAt(index3); // get single hex digit                // #495
+                        mask_val              = hex_digits.indexOf(hex_digit);                                        // #495
+                       if (partial_mnemonic[part_mnem_index+mask_val].equals(""))                                     // #495
+                          {abort_error(54,entry + " mask value " + hex_digit + " is not valid for opcode definition " + op_tables[index]); // #495
+                           }                                                                                          // #495
+                        op_code[index2]       = opcode_hdr+hex_digit+opcode_ftr;                                      // #495
+                        op_name[index2]       = mnemonic_hdr+partial_mnemonic[part_mnem_index+mask_val]+mnemonic_ftr; // #495
+                        if (override_mask1 != null && override_mask1.length() == 1                                    // #495
+                                                   && override_mask1.charAt(0) == hex_digit) // Override 1 applies?   // #495
+                           {op_name[index2]   = override_mnemon1;                                                     // #495
+                            }                                                                                         // #495
+                        if (override_mask2 != null && override_mask2.length() == 1                                    // #495
+                                                   && override_mask2.charAt(0) == hex_digit) // Override 2 applies?   // #495
+                           {op_name[index2]   = override_mnemon2;                                                     // #495
+                            }                                                                                         // #495
+                        op_type[index2]       = optype_nr;                                                            // #495
+                        op_type_oattribute[index2] = "E"; // this is an extended mnemonic operation code              // #495
+                        op_trace_type[index2] = tracetype_nr;                                                         // #495
+                        }                                                                                             // #495
+                    index2++;                                                                                         // #495
+                    index3++;                                                                                         // #495
+                    }                                                                                                 // #495
+                }                                                                                                     // #495
             }
         index++;
         }
@@ -6235,7 +5976,7 @@ public boolean exec_cmd(String cmd){
 
     /**
      * add all opcodes to key index table
-     * @return booleant - true if method executed successfully, false otherwise
+     * @return boolean - true if method executed successfully, false otherwise
      */
 public boolean init_opcode_name_keys(){
 
@@ -6245,30 +5986,30 @@ public boolean init_opcode_name_keys(){
 		// add alternate opcodes for ? = blank and A  RPI 1125
 		if (find_key_index('O',op_name[index].substring(0,op_name[index].length()-1)) == -1){
 			if(!add_key_index(index)){ 
-				abort_error(118,"1 abort on add opcode " + op_name[index]); // rpi 2202 debug
+				abort_error(118,"1 abort on add opcode " + op_name[index] + " (index=" + index + ")"); // rpi 2202 debug #495
 				return false;
 			}
 		} else {
-			abort_error(118,"2 abort on duplicate opcode " + op_name[index]); // rpi 2202 debug
+			abort_error(118,"2 abort on duplicate opcode " + op_name[index] + " (index=" + index + ")"); // rpi 2202 debug #495
 			return false;
 		}
 		if (find_key_index('O',op_name[index].substring(0,op_name[index].length()-1).concat("A")) == -1){
 			if(!add_key_index(index)){ 
-				abort_error(118,"3 abort on duplicate opcode " + op_name[index]); // rpi 2202 debug
+				abort_error(118,"3 abort on duplicate opcode " + op_name[index] + " (index=" + index + ")"); // rpi 2202 debug #495
 				return false;
 			}
 		} else {
-			abort_error(118,"4 abort on duplicate opcode " + op_name[index]); // rpi 2202 debug
+			abort_error(118,"4 abort on duplicate opcode " + op_name[index] + " (index=" + index + ")"); // rpi 2202 debug #495
 			return false;
 		}
 	  } else {
 			if (find_key_index('O',op_name[index]) == -1){
 				if(!add_key_index(index)){ 
-					abort_error(118,"5 abort on add opcode " + op_name[index]); // dsh rpi 2202 debug
+					abort_error(118,"5 abort on add opcode " + op_name[index] + " (index=" + index + ")"); // dsh rpi 2202 debug #495
 					return false;
 				}
 			} else {
-				abort_error(118,"6 abort on duplicate opcode " + op_name[index]); // rpi 2202 
+				abort_error(118,"6 abort on duplicate opcode " + op_name[index] + " (index=" + index + ")"); // rpi 2202 #495
 				return false;
 			}
 	  }
