@@ -5,26 +5,41 @@
 set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script
 
-mkdir -p "../jar"   # create folder if does not exist
+# if not suppressed ($1 = nodocs), generate javadoc; ignore any errors
+case $1 in
+    [Nn][Oo][Dd][Oo][Cc][Ss])
+        shift
+        ;;
+    *)
+        ./bldjavadoc
+        ec=$?
+        echo "bldjavadoc return code is $ec"
+        ;;
+esac
+
+mkdir -p "../jar"   # create directory if it does not exist
 
 # empty destination directory; cd to it
 rm -f ../jar/*
 cd ../jar
 
 # compile z390 java sources to class vm object code
-echo "Compiling ../src/*.java into jar"
+echo "Compiling ../src/*.java into jar directory"
 javac -d . -g:none ../src/*.java
 ec=$?
 echo "The exit code of the javac command is $ec"
+if [ $ec -ne 0 ]; then echo "bldjar: Error compiling Java sources"; exit $ec; fi
 
 # create z390.properties file
 ../bash/relver $1
+if [ $ec -ne 0 ]; then echo "bldjar: Error finding z390 version number"; exit $ec; fi
 
 # build z390.jar with the JDK jar utility
 echo "Build z390.jar"
 jar cmf ../src/Z390.MAN z390.jar *.class ../*.properties
 ec=$?
 echo "The exit code of the jar command is $ec"
+if [ $ec -ne 0 ]; then echo "bldjar: Error creating z390.jar file"; exit $ec; fi
 
 # list names of all the compiled class files
 echo "List of compiled class files"
