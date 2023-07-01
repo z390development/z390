@@ -91,21 +91,18 @@ if [ $rc -ne 0 ]; then errmsg "KSF1NAME: KSF1NAME.TF1 not equal to KSF1NAME.TF2"
 
 # unload NAMELIST
 
-# REPRO abends with S013. Problem with zVSAM code.
-# See additional comments in vsam1/bat/KSF1RPO2.BAT.
-
-#rm -f ${vsampath}/KSF1NAME.TF2
-#export INFILE=${vsampath}/DEMOCAT.NAMELIST
-#export OUTFILE=${vsampath}/KSF1NAME.TF2[RECFM=FT]
-#bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
-#rc=$?
-#if [ $rc -ne 0 ]; then errmsg "error in unload of NAMELIST"; fi
+rm -f ${vsampath}/KSF1NAME.TF2
+export INFILE=${vsampath}/DEMOCAT.NAMELIST
+export OUTFILE=${vsampath}/KSF1NAME.TF2[RECFM=FT]
+bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "error in unload of NAMELIST"; fi
 
 # compare input and output QSAM files
 
-#diff ${vsampath}/KSF1NAME.TF1 ${vsampath}/KSF1NAME.TF2 > ${vsampath}/${pgmname}.DIF
-#rc=$?
-#if [ $rc -ne 0 ]; then errmsg "NAMELIST: KSF1NAME.TF1 not equal to KSF1NAME.TF2"; fi
+diff ${vsampath}/KSF1NAME.TF1 ${vsampath}/KSF1NAME.TF2 > ${vsampath}/${pgmname}.DIF
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "NAMELIST: KSF1NAME.TF1 not equal to KSF1NAME.TF2"; fi
 
 ################################################################################
 

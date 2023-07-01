@@ -22,6 +22,7 @@
 .*********************************************************************
 .* 04/07/08 initial coding for global FD definition
 .* 10/06/08 ZSTRMAC
+.* 2023/05/12 &FILE_xxx(&PARM_IX) -> &FILE_xxx(&FILE_IX)
 .*********************************************************************
 .* Generate file definition using file data from SELECT in ZC_FD.CPY
 .*********************************************************************
@@ -67,18 +68,18 @@
               AIF ('&SYSLIST(&PARM_IX)' EQ 'CONTAINS')
                   :&PARM_IX SETA &PARM_IX+1
               AEND
-              :&FILE_BLKSI2(&PARM_IX) SETC '&SYSLIST(&PARM_IX)'
+              :&FILE_BLKSI2(&FILE_IX) SETC '&SYSLIST(&PARM_IX)'
               :&PARM_IX SETA &PARM_IX+1
               AIF ('&SYSLIST(&PARM_IX)' EQ 'TO')
-                  :&FILE_BLKSI1(&PARM_IX) SETC '&FILE_BLKSI2(&PARM_IX)'
-                  :&FILE_BLKSI2(&PARM_IX) SETC '&SYSLIST(&PARM_IX+1)'
+                  :&FILE_BLKSI1(&FILE_IX) SETC '&FILE_BLKSI2(&FILE_IX)'
+                  :&FILE_BLKSI2(&FILE_IX) SETC '&SYSLIST(&PARM_IX+1)'
                   :&PARM_IX SETA &PARM_IX+2
               AEND
               AIF ('&SYSLIST(&PARM_IX)' EQ 'CHARACTERS')
                   :&PARM_IX SETA &PARM_IX+1
               AEND
               AIF ('&SYSLIST(&PARM_IX)' EQ 'RECORDS')
-                  :&FILE_BLOCK_RECS(&PARM_IX) SETB 1
+                  :&FILE_BLOCK_RECS(&FILE_IX) SETB 1
                   :&PARM_IX SETA &PARM_IX+1
               AEND
          AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'RECORD')
@@ -102,11 +103,11 @@
                       AEND
                   AEND
               AEND
-              :&FILE_LRECL2(&PARM_IX) SETC '&SYSLIST(&PARM_IX)'
+              :&FILE_LRECL2(&FILE_IX) SETC '&SYSLIST(&PARM_IX)'
               :&PARM_IX SETA &PARM_IX+1
               AIF ('&SYSLIST(&PARM_IX)' EQ 'TO')
-                  :&FILE_LRECL1(&PARM_IX) SETC '&FILE_LRECL2(&PARM_IX)'
-                  :&FILE_LRECL2(&PARM_IX) SETC '&SYSLIST(&PARM_IX+1)'
+                  :&FILE_LRECL1(&FILE_IX) SETC '&FILE_LRECL2(&FILE_IX)'
+                  :&FILE_LRECL2(&FILE_IX) SETC '&SYSLIST(&PARM_IX+1)'
                   :&PARM_IX SETA &PARM_IX+2
               AEND
               AIF ('&SYSLIST(&PARM_IX)' EQ 'CHARACTERS')
@@ -117,7 +118,7 @@
                   AIF ('&SYSLIST(&PARM_IX)' EQ 'ON')
                       :&PARM_IX SETA &PARM_IX+1
                   AEND
-                  :&FILE_DEPENDING(&PARM_IX) SETC '&SYSLIST(&PARM_IX)'
+                  :&FILE_DEPENDING(&FILE_IX) SETC '&SYSLIST(&PARM_IX)'
                   :&PARM_IX SETA &PARM_IX+1
               AEND
          AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'LABEL')
