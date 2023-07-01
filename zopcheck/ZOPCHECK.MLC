@@ -25,6 +25,7 @@
 * 2020/11/08 dsh add open and close dcb for use by SNAP on mainframe
 *            snap defaults to the TRACE file output for z390
 * 2020/12/23 DSH ADD I2RLD TO TEST IILF ETC. RPI 2223
+* 2023-06-22 AFK #495 fix O attribure value for vector instructions
 *************************************************************
 * This program assembles all the opcodes in z15 POP
 * and verified that generated code matches expected  DC code
@@ -74,7 +75,7 @@ WRAPUP   DS    0H
 NO_MISSING EQU *	
 		 L     R4,SNAPS
 		 LTR   R4,R4
-		 BNE   NO_SNAPS
+		 BZ    NO_SNAPS               #495
 		 WTO   'ERROR RC = TOTAL SNAP DUMPS OF OPCODE DIFFERENCES'
 NO_SNAPS DS    0H	
          SUBEXIT RC=(R4) R4 = TOTAL MISSING OR TOTAL SNAPS	

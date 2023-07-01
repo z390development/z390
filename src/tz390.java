@@ -2897,8 +2897,8 @@ public  class  tz390 {
             "E7C2=VCGD,82,738;*Extended",      // E7C2 VRRa VCGD  V1,V2,M3,M4,M5 RPI 2202 #495
             "E7C2f=VCFfB,82,738;f=2;2=VCFEB",  // E7C2 VRRa VCSFP V1,V2,M3,M4,M5 RPI 2202 #495
             "E7C2f=VCGfB,82,738;f=3",          // E7C2 VRRa VCSFP V1,V2,M3,M4,M5 RPI 2202 #495
-            "E7C2f9=WCFfB,82,738;f=2;2=WCFEB", // E7C2 VRRa VCSFP V1,V2,M3,M4,M5 RPI 2202 #495
-            "E7C2f9=WCGfB,82,738;f=3",         // E7C2 VRRa VCSFP V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C2f8=WCFfB,82,738;f=2;2=WCFEB", // E7C2 VRRa VCSFP V1,V2,M3,M4,M5 RPI 2202 #495
+            "E7C2f8=WCGfB,82,738;f=3",         // E7C2 VRRa VCSFP V1,V2,M3,M4,M5 RPI 2202 #495
             "E7C3=VCFPS,82,738",               // E7C3 VRRa VCFPS V1,V2,M3,M4,M5 RPI 2202
             "E7C3=VCDG,82,738;*Extended",      // E7C3 VRRa VCDG  V1,V2,M3,M4,M5 RPI 2202  #495
             "E7C3f=VCfFB,82,738;f=2;2=VCEFB",  // E7C3 VRRa VCFPS V1,V2,M3,M4,M5 RPI 2202  #495
