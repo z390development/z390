@@ -326,6 +326,7 @@ public  class  tz390 {
     *                     replace non-printable with '.' in PRN, BAL, PCH
     * 2023-06-21 AFK #485 fix O attribute value for extended mnemonics
     * 2023-06-22 AFK #495 fix O attribure value for vector instructions
+    * 2023-07-02 DSH/AFK #503 add support for new z16 instructions to opcode tables
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -3054,6 +3055,39 @@ public  class  tz390 {
     	 {
     	  "DFLTCC   RRR  B939 R1,R2,R3",
     	 };
+     String[] op_table_z16 =                  // #503
+         {                                    // #503
+          "B200=LBEAR,7,70",                  // #503
+          "C09=LFI,16,160",                   // #503
+          "C0F=LLGFI,16,160",                 // #503
+          "EB71=LPSWEY,21,212",               // #503
+          "B93B=NNPA,14,144",                 // #503
+          "B28F=QPACI,7,70",                  // #503
+          "B98B=RDP,30,300",                  // #503
+          "EC5D$3100=SLLHH,52,400",           // #503
+          "EC5D$3132=SLLHL,52,400",           // #503
+          "EC51$3132=SLLLH,52,400",           // #503
+          "EC5D$3100=SRLHH,52,400",           // #503
+          "EC5D$3132=SRLHL,52,400",           // #503
+          "EC51$3132=SRLLH,52,400",           // #503
+          "B201=STBEAR,7,70",                 // #503
+          "E65D=VCFN,82,738",                 // #503
+          "E656=VCLFNH,82,738",               // #503
+          "E65E=VCLFNL,82,738",               // #503
+          "E651=VCLZDP,82,738",               // #503
+          "E655=VCNF,82,738",                 // #503
+          "E675=VCRNF,82,738",                // #503
+          "E67D=VCSPH,82,738",                // #503
+          "E670=VPKZR,81,737",                // #503
+          "E6743=VSCHDP,82,738",              // #503
+          "E674=VSCHP,82,738",                // #503
+          "E6742=VSCHSP,82,738",              // #503
+          "E6744=VSCHXP,82,738",              // #503
+          "E67C=VSCSHP,82,738",               // #503
+          "E672=VSRPR,81,737",                // #503
+          "E654=VUPKZH,82,738",               // #503
+          "E65C=VUPKZL,82,738",               // #503
+     };                                       // #503
      String[]   op_table_UNI =   // Table added for RPI 1209A
         {"B2B8=SRNMB,7,70",      //   3392 "B2B8"  "SRNMB"    "S"     7 RPI 1125
          "B344=LEDBRA,53,142",   //   3860 "B344"  "LEDBRA"   "RRE"  53 RPI 1125
@@ -3590,6 +3624,23 @@ public void create_opcodes()  // Routine added for RPI 1209
          process_opcodes(op_table_DOS_directives);
          process_opcodes(op_table_370_directives);
          }
+        if (opt_optable.equals("Z16"))               // #503
+        {process_opcodes(op_table_DOS);              // #503
+         if (opt_allow)                              // #503
+            {process_opcodes(op_table_DOS_obsolete); // #503
+             }                                       // #503
+         process_opcodes(op_table_370);              // #503
+         process_opcodes(op_table_XA);               // #503
+         process_opcodes(op_table_ESA);              // #503
+         process_opcodes(op_table_ZOP);              // #503
+         process_opcodes(op_table_YOP);              // #503
+         process_opcodes(op_table_ZS3);              // #503
+         process_opcodes(op_table_ZS4);              // #503
+         process_opcodes(op_table_Z15);              // #503
+         process_opcodes(op_table_Z16);              // #503
+         process_opcodes(op_table_DOS_directives);   // #503
+         process_opcodes(op_table_370_directives);   // #503
+         }                                           // #503
         if (opt_optable.equals("UNI"))
            {process_opcodes(op_table_DOS);
             if (opt_allow)                              // RPI 1209N
@@ -3606,6 +3657,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_ZS3);
             process_opcodes(op_table_ZS4);
             process_opcodes(op_table_Z15); // rpi 2202
+            process_opcodes(op_table_Z16); // #503
             process_opcodes(op_table_UNI);
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
@@ -3626,6 +3678,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_ZS3);
             process_opcodes(op_table_ZS4);
             process_opcodes(op_table_Z15); // rpi 2202
+            process_opcodes(op_table_Z16); // #503
             process_opcodes(op_table_UNI);
 //          process_opcodes(op_table_ASSIST); // RPI 1209M
             process_opcodes(op_table_z390);
@@ -4423,6 +4476,8 @@ private void check_options(){
                  }
         else if (opt_machine.equals("Z15")) // rpi 2202
                 {}
+        else if (opt_machine.equals("Z16")) // #503
+                {}
         else
            {abort_error(778,"MACHINE("+opt_machine+") not supported");
             }
@@ -4694,6 +4749,9 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                else if (opt_machine.contentEquals("Z15"))
                		{opt_optable = "Z15";  // rpi 2202
                      }
+               else if (opt_machine.contentEquals("Z16"))  // #503
+               		{opt_optable = "Z16";                  // #503
+                     }                                     // #503
                else
                    {add_invalid_option(opt_file_name,opt_file_line,token);
                     }
@@ -4816,6 +4874,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                &&  opt_optable.equals("ZS3") != true
                &&  opt_optable.equals("ZS4") != true
                &&  opt_optable.contentEquals("Z15") != true  // rpi 2202
+               &&  opt_optable.contentEquals("Z16") != true  // #503
                &&  opt_optable.equals("Z390") != true
                    )
                    {add_invalid_option(opt_file_name,opt_file_line,token);
