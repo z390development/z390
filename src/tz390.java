@@ -2111,10 +2111,9 @@ public  class  tz390 {
          "EE=PLO,27,270",        //   7020 "EE"    "PLO"      "SS3"  27
          };
      String[]   op_table_ESA_notsupported = // Table added for RPI 1209A
-        {"JC       RI   A7.4 M1,I2",
-         "JLC      RIL  C0.4 M1,I2",
-         "JLNOP    RIL  C004 I2",
-         };
+        {"JLC      RIL  C0.4 M1,I2",     // supported for ZOP, not ESA #486
+         "JLNOP    RIL  C004 I2",        // supported for ZOP, not ESA #486
+         };                                                              // #486
      String[]   op_table_ZOP =   // Table added for RPI 1209A
         {"010E=SAM64,1,10",      //     70 "010E"  "SAM64"    "E"     1
          "A50=IIHH,73,730",      //   1820 "A50"   "IIHH"     "RI"   12 // RPI 1522
@@ -2580,40 +2579,29 @@ public  class  tz390 {
          "ECFFm=CLIBm,48,381;*Short;F=", //   "ECFFm" "CLIBm"    "RRS4" 48      #485
          };
      String[]   op_table_ZS4_notsupported =   // Table added for RPI 1209A
-        {"LPP      S     B280 D2(B2)",
-         "LCCTL    S     B284 D2(B2)",
-         "LPCTL    S     B285 D2(B2)",
-         "QSI      S     B286 D2(B2)",
-         "LSCTL    S     B287 D2(B2)",
-         "QCTRI    S     B28E D2(B2)",
-         "SCCTR    RRE   B2E0 R1,R2",
-         "SPCTR    RRE   B2E1 R1,R2",
-         "ECCTR    RRE   B2E4 R1,R2",
-         "EPCTR    RRE   B2E5 R1,R2",
-         "ECPGA    RRE   B2ED R1,R2",
-         "BPP      SMI   C7   M1,RI2,D3(B3)", // RPI 1209K
-         "BPRP     MII   C5   M1,RI2,RI3", // RPI 1209K
-         "CDZT     RSL-b EDAA R1,D2(L2,B2),M3", // RPI 1209K
-         "CLGT     RSY-b EB2B R1,M3,D2(B2)", // RPI 1209K
-         "CLT      RSY-b EB23 R1,M3,D2(B2)", // RPI 1209K
-         "CRDTE    RRF-b B98F R1,R3,R2,M4", // RPI 1209K
-         "CXZT     RSL-b EDAB R1,D2(L2,B2),M3", // RPI 1209K
-         "CZDT     RSL-b EDA8 R1,D2(L2,B2),M3", // RPI 1209K
-         "CZXT     RSL-b EDA9 R1,D2(L2,B2),M3", // RPI 1209K
-         "ETND     RRE   B2EC R1", // RPI 1209K
-         "LAT      RXY-a E39F R1,D2(X2,B2)", // RPI 1209K
-         "LFHAT    RXY-a E3C8 R1,D2(X2,B2)", // RPI 1209K
-         "LGAT     RXY-a E385 R1,D2(X2,B2)", // RPI 1209K
-         "LLGFAT   RXY-a E39D R1,D2(X2,B2)", // RPI 1209K
-         "LLGTAT   RXY-a E39C R1,D2(X2,B2)", // RPI 1209K
-         "NIAI     IE    B2FA I1,I2", // RPI 1209K
-         "NTSTG    RXY   E325 R1,D2(x2,B2)", // RPI 1209K
-         "PPA      RRF-c B2E8 R1,R2,M3", // RPI 1209K
+        {"BPP      SMI   C7   M1,RI2,D3(B3)", // RPI 1209K     supported for Z15, not ZS4 #486
+         "BPRP     MII   C5   M1,RI2,RI3", // RPI 1209K        supported for Z15, not ZS4 #486
+         "CDZT     RSL-b EDAA R1,D2(L2,B2),M3", // RPI 1209K   supported for Z15, not ZS4 #486
+         "CLGT     RSY-b EB2B R1,M3,D2(B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "CLT      RSY-b EB23 R1,M3,D2(B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "CRDTE    RRF-b B98F R1,R3,R2,M4", // RPI 1209K       supported for Z15, not ZS4 #486
+         "CXZT     RSL-b EDAB R1,D2(L2,B2),M3", // RPI 1209K   supported for Z15, not ZS4 #486
+         "CZDT     RSL-b EDA8 R1,D2(L2,B2),M3", // RPI 1209K   supported for Z15, not ZS4 #486
+         "CZXT     RSL-b EDA9 R1,D2(L2,B2),M3", // RPI 1209K   supported for Z15, not ZS4 #486
+         "ETND     RRE   B2EC R1", // RPI 1209K                supported for Z15, not ZS4 #486
+         "LAT      RXY-a E39F R1,D2(X2,B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "LFHAT    RXY-a E3C8 R1,D2(X2,B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "LGAT     RXY-a E385 R1,D2(X2,B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "LLGFAT   RXY-a E39D R1,D2(X2,B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "LLGTAT   RXY-a E39C R1,D2(X2,B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "NIAI     IE    B2FA I1,I2", // RPI 1209K             supported for Z15, not ZS4 #486
+         "NTSTG    RXY   E325 R1,D2(x2,B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "PPA      RRF-c B2E8 R1,R2,M3", // RPI 1209K          supported for Z15, not ZS4 #486
          "RISBGN   RIE-f ED59 R1,R2,I3,I4,I5", // RPI 1209K
-         "TABORT   S     B2FC D2(B2)", // RPI 1209K
-         "TBEGIN   SIL   E560 D1(B1),I2", // RPI 1209K
-         "TBEGINC  SIL   E561 D1(B1),I2", // RPI 1209K
-         "TEND     S     B2F8 --", // RPI 1209K
+         "TABORT   S     B2FC D2(B2)", // RPI 1209K            supported for Z15, not ZS4 #486
+         "TBEGIN   SIL   E560 D1(B1),I2", // RPI 1209K         supported for Z15, not ZS4 #486
+         "TBEGINC  SIL   E561 D1(B1),I2", // RPI 1209K         supported for Z15, not ZS4 #486
+         "TEND     S     B2F8 --", // RPI 1209K                supported for Z15, not ZS4 #486
          };
      String[]   op_table_Z15 =   //  dsh table added for RPI 2202
          {
@@ -3088,10 +3076,6 @@ public  class  tz390 {
 			"EDAE=CDPT,22,230",   // EDAE  RSLb CDPT   R1,D2(l2,B2),M3 RPI 2202
 			"EDAF=CXPT,22,230",   // EDAF  RSLb CXPT   R1,D2(l2,B2),M3 RPI 2202
 			};
-     String[]   op_table_Z15_notsupported =   // Table added for RPI 2202
-    	 {
-    	  "DFLTCC   RRR  B939 R1,R2,R3",
-    	 };
      String[] op_table_Z16 =                  // #503
          {"B200=LBEAR,7,70",                  // #503
           "B201=STBEAR,7,70",                 // #503
@@ -3283,45 +3267,6 @@ public  class  tz390 {
          "ECD9=AGHIK,57,430",    //        "ECD9"  "AGHIK"    "RIE9" 57 RPI 1125 Z196
          "ECDA=ALHSIK,57,420",   //        "ECDA"  "ALHSIK"   "RIE9" 57 RPI 1125 Z196
          "ECDB=ALGHSIK,57,430",  //        "ECDB"  "ALGHSIK"  "RIE9" 57 RPI 1125 Z196
-         };
-     String[]   op_table_UNI_notsupported =   // Table added for RPI 1209A
-        {"LOCGRE   RRF  B9E2 R1,R2",
-         "LOCGRH   RRF  B9E2 R1,R2",
-         "LOCGRL   RRF  B9E2 R1,R2",
-         "LOCGRNE  RRF  B9E2 R1,R2",
-         "LOCGRNH  RRF  B9E2 R1,R2",
-         "LOCGRNL  RRF  B9E2 R1,R2",
-         "LOCRE    RRF  B9F2 R1,R2",
-         "LOCRH    RRF  B9F2 R1,R2",
-         "LOCRL    RRF  B9F2 R1,R2",
-         "LOCRNE   RRF  B9F2 R1,R2",
-         "LOCRNH   RRF  B9F2 R1,R2",
-         "LOCRNL   RRF  B9F2 R1,R2",
-         "JCTH     RIL  CC.6 R1,I2",
-         "LOCGE    RSY  EBE2 R1,D2(B2)",
-         "LOCGH    RSY  EBE2 R1,D2(B2)",
-         "LOCGL    RSY  EBE2 R1,D2(B2)",
-         "LOCGNE   RSY  EBE2 R1,D2(B2)",
-         "LOCGNH   RSY  EBE2 R1,D2(B2)",
-         "LOCGNL   RSY  EBE2 R1,D2(B2)",
-         "STOCGE   RSY  EBE3 R1,D2(B2)",
-         "STOCGH   RSY  EBE3 R1,D2(B2)",
-         "STOCGL   RSY  EBE3 R1,D2(B2)",
-         "STOCGNE  RSY  EBE3 R1,D2(B2)",
-         "STOCGNH  RSY  EBE3 R1,D2(B2)",
-         "STOCGNL  RSY  EBE3 R1,D2(B2)",
-         "LOCE     RSY  EBF2 R1,D2(B2)",
-         "LOCH     RSY  EBF2 R1,D2(B2)",
-         "LOCL     RSY  EBF2 R1,D2(B2)",
-         "LOCNE    RSY  EBF2 R1,D2(B2)",
-         "LOCNH    RSY  EBF2 R1,D2(B2)",
-         "LOCNL    RSY  EBF2 R1,D2(B2)",
-         "STOCE    RSY  EBF3 R1,D2(B2)",
-         "STOCH    RSY  EBF3 R1,D2(B2)",
-         "STOCL    RSY  EBF3 R1,D2(B2)",
-         "STOCNE   RSY  EBF3 R1,D2(B2)",
-         "STOCNH   RSY  EBF3 R1,D2(B2)",
-         "STOCNL   RSY  EBF3 R1,D2(B2)",
          };
      String[]   op_table_ASSIST = // Table added for RPI 1209A
         {"52=XDECO,37,50",       //   1193 "52"    "XDECO"    "RX"   37 RPI 812
@@ -4794,6 +4739,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                for(int i = 0; i < machine_option_id.length; i++)                   // #503
                   {if(machine_option_id[i].equals(opt_machine))                    // #503
                      {opt_machine_optable = machines_optable[i];                   // #503
+                      opt_optable         = optables_optable[i];                   // #503
                       break;                                                       // #503
                       }                                                            // #503
                    }                                                               // #503
@@ -4913,6 +4859,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                for(int i = 0; i < optable_option_id.length; i++)                    // #503
                   {if(optable_option_id[i].equals(opt_optable))                     // #503
                      {opt_optable_optable = optables_optable[i];                    // #503
+                      opt_optable         = optables_optable[i];                    // #503
                       break;                                                        // #503
                       }                                                             // #503
                    }                                                                // #503
