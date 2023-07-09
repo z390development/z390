@@ -2,7 +2,9 @@ gradle is located in the z390test subdirectory
 
 The test scripts are in subdir z390test\src\test\groovy\org\z390\test
 
-force a test run:                   gradlew test -—rerun
+get a list of gradlew command options     gradlew --help
+
+force a test run                          gradlew test -—rerun
 
 
 

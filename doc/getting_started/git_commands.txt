@@ -1,5 +1,8 @@
 some useful git commands:
 
+get list of available commands              git help
+get syntax details for a git command        git help <command> 
+
 create local clone of git repo:             git clone <url> <subdir>
 
 review status of current branch:            git status
