@@ -56,6 +56,22 @@ the bldjar script.
         
     `bash> bash/bldjar`
 
+## Test the jar
+
+gradle info: https://docs.gradle.org/current/userguide/userguide.html
+
+in z390, to access and use the gradle commands, you first have to
+make the z390test subdirectory your current or working directory.
+
+The test scripts are in subdirectory z390test\src\test\groovy\org\z390\test
+
+### Quick reference with some gradle commands
+
+Action                                    | Command
+------------------------------------------|------------
+get a list of gradlew command options     | gradlew --help
+force a test run                          | gradlew test -—rerun
+
 ## Proposing new functionality
 
 Enhancements are welcome, but be aware that you are stepping into 
@@ -241,18 +257,3 @@ graphical display of branches             | git log --graph --oneline --decorate
 -- > when viewing the bracnches displayed | <Enter> to scroll 1 line, <PgDn> to scroll a page, q to quit
 go 'back in time' to a specific commit    | git branch -f <new_branch> [<start-point>]
                                           | git switch <new_branch>
-
-#### Quick reference with some gradle commands
-
-gradle info: https://docs.gradle.org/current/userguide/userguide.html
-
-in z390, to access and use the gradle commands, you first have to
-make the z390test subdirectory your current or working directory.
-
-The test scripts are in subdirectory z390test\src\test\groovy\org\z390\test
-
-Action                                    | Command
-------------------------------------------|------------
-get a list of gradlew command options     | gradlew --help
-force a test run                          | gradlew test -—rerun
-

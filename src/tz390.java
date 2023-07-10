@@ -3399,7 +3399,7 @@ public void init_option_tables()                                                
                         }                                                                                // #503
                     index2++;                                                                            // #503
                     }                                                                                    // #503
-                if (index2 >= index) // base optable is defined?                                         // #503
+                if (index2 >= index) // invalid index indicates not-found condition                      // #503
                    {abort_error(41,"Base optable not defined for optable definition " + entry);          // #503
                     }                                                                                    // #503
                 }                                                                                        // #503
@@ -3427,7 +3427,7 @@ public void init_option_tables()                                                
                     }                                                                                    // #503
                 index2++;                                                                                // #503
                 }                                                                                        // #503
-            if (index2 >= optables_optable.length) // optable is defined?                                // #503
+            if (index2 >= optables_optable.length) // invalid index indicates not-found condition        // #503
                {abort_error(41,"Optable not defined for machine definition " + entry);                   // #503
                 }                                                                                        // #503
             }                                                                                            // #503
