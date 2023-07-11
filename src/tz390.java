@@ -326,6 +326,7 @@ public  class  tz390 {
     *                     replace non-printable with '.' in PRN, BAL, PCH
     * 2023-06-21 AFK #485 fix O attribute value for extended mnemonics
     * 2023-06-22 AFK #495 fix O attribure value for vector instructions
+    * 2023-07-02 DSH/AFK #503 add support for new z16 instructions to opcode tables
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -384,12 +385,14 @@ public  class  tz390 {
     boolean opt_listuse  = true;  // list usage at USING and DROP
     boolean opt_loadhigh = true;  // load pgms and alloc storage from top down
     String  opt_machine  = "";    // No machine specified RPI 1209A
+    String  opt_machine_optable = ""; // optable associated with specified machine option #503
     boolean opt_mcall    = false; // list MCALL and MEXIT on PRN // RPI 511
     boolean opt_mod      = false;  // generate raw code output from lz390 with sfx .MOD
     boolean opt_obj      = true;  // generate binary MVS compatible OBJ file RPI 694
     boolean opt_objhex   = false; // generate ascii hex obj records (lz390 accepts bin or hex)
     String  opt_optable  = "*DFLT"; // default optable depends on z390/HLASM mode as indicated by allow option RPI 1209A
     String  opt_optable_list = "NOLIST"; // do not to list instructions RPI 1209A
+    String  opt_optable_optable = ""; // effective optable associated with specified optable option #503
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
     boolean opt_pc       = true;  // generate macro pseudo code
     boolean opt_pcopt    = true;  // optimize pc code for speed
@@ -1087,6 +1090,111 @@ public  class  tz390 {
         		760,761,762,763,764,765,766,767,768,769,786,787,966,967,(988),(989),// 3E
         		770,771,772,773,774,775,776,777,778,779,796,797,976,977,(998),(999),// 3F
         		};
+  /*                                                      // #503
+   * MACHINE and OPTABLE options                          // #503
+   *                                                      // #503
+   * Logic in method init_option_tables() will analyze    // #503
+   * table machine_optable_equivalence and split its      // #503
+   * content into the tables machine_option_id and        // #503
+   * machines_optable.                                    // #503
+   * The same goes for table optable_optable_equivalence  // #503
+   * which is split into the tables optable_option_id and // #503
+   * optables_optable                                     // #503
+   *                                                      // #503
+   */                                                     // #503
+    String[] optable_option_id = null;                    // #503
+    String[] optables_optable = null; // optable's optable// #503
+    String[] optable_optable_equivalence =                // #503
+       {"UNI=UNI",                                        // #503
+        "DOS=DOS",                                        // #503
+        "370=370",                                        // #503
+        "XA=XA",                                          // #503
+        "ESA=ESA",                                        // #503
+        "ZOP=ZOP",                                        // #503
+        "ZS1=ZOP",                                        // #503
+        "YOP=YOP",                                        // #503
+        "ZS2=YOP",                                        // #503
+        "Z9=Z9",                                          // #503
+        "ZS3=Z9",                                         // #503
+        "Z10=Z10",                                        // #503
+        "ZS4=Z10",                                        // #503
+        "Z11=Z11",                                        // #503
+        "ZS5=Z11",                                        // #503
+        "Z12=Z12",                                        // #503
+        "ZS6=Z12",                                        // #503
+        "Z13=Z13",                                        // #503
+        "ZS7=Z13",                                        // #503
+        "Z14=Z14",                                        // #503
+        "ZS8=Z14",                                        // #503
+        "Z15=Z15",                                        // #503
+        "ZS9=Z15",                                        // #503
+        "Z16=Z16",                                        // #503
+        "ZSA=Z16",                                        // #503
+        "z390=z390",                                      // #503
+        };                                                // #503
+    String[] machine_option_id = null;                    // #503
+    String[] machines_optable = null; // machine's optable// #503
+    String[] machine_optable_equivalence =                // #503
+       {"S370=370",                                       // #503
+        "S370XA=XA",                                      // #503
+        "ARCH-0=XA",                                      // #503
+        "S390=ESA",                                       // #503
+        "S390E=ESA",                                      // #503
+        "S370ESA=ESA",                                    // #503
+        "ARCH-1=ESA",                                     // #503
+        "ARCH-2=ESA",                                     // #503
+        "ARCH-3=ESA",                                     // #503
+        "ARCH-4=ESA",                                     // #503
+        "zSeries=ZOP",                                    // #503
+        "ZS=ZOP",                                         // #503
+        "z900=ZOP",                                       // #503
+        "z800=ZOP",                                       // #503
+        "ARCH-5=ZOP",                                     // #503
+        "zSeries-1=ZOP",                                  // #503
+        "ZS-1=ZOP",                                       // #503
+        "z990=YOP",                                       // #503
+        "z890=YOP",                                       // #503
+        "ARCH-6=YOP",                                     // #503
+        "zSeries-2=YOP",                                  // #503
+        "ZS-2=YOP",                                       // #503
+        "z9=Z9",                                          // #503
+        "ARCH-7=Z9",                                      // #503
+        "zSeries-3=Z9",                                   // #503
+        "ZS-3=Z9",                                        // #503
+        "z10=Z10",                                        // #503
+        "ARCH-8=Z10",                                     // #503
+        "zSeries-4=Z10",                                  // #503
+        "ZS-4=Z10",                                       // #503
+        "z11=Z11",                                        // #503
+        "z196=Z11",                                       // #503
+        "z114=Z11",                                       // #503
+        "ARCH-9=Z11",                                     // #503
+        "zSeries-5=Z11",                                  // #503
+        "ZS-5=Z11",                                       // #503
+        "z12=Z12",                                        // #503
+        "zEC12=Z12",                                      // #503
+        "zBC12=Z12",                                      // #503
+        "ARCH-10=Z12",                                    // #503
+        "zSeries-6=Z12",                                  // #503
+        "ZS-6=Z12",                                       // #503
+        "z13=Z13",                                        // #503
+        "ARCH-11=Z13",                                    // #503
+        "zSeries-7=Z13",                                  // #503
+        "ZS-7=Z13",                                       // #503
+        "z14=Z14",                                        // #503
+        "ARCH-12=Z14",                                    // #503
+        "zSeries-8=Z14",                                  // #503
+        "ZS-8=Z14",                                       // #503
+        "z15=Z15",                                        // #503
+        "ARCH-13=Z15",                                    // #503
+        "zSeries-9=Z15",                                  // #503
+        "ZS-9=Z15",                                       // #503
+        "z16=Z16",                                        // #503
+        "ARCH-14=Z16",                                    // #503
+        "zSeries-10=Z16",                                 // #503
+        "ZS-10=Z16",                                      // #503
+        "z390=z390",                                      // #503
+        };                                                // #503
   /*
    * opcode tables for trace
    */
@@ -1094,79 +1202,9 @@ public  class  tz390 {
     int[]    op_type_len = null; // See process_opcodes() RPI 1209G
     String[] op_type_src_format = null; // See process_opcodes() RPI 1209G
     String[] op_type_obj_format = null; // See process_opcodes() RPI 1209G
-  //String[] op_name = // Static content removed, content now generated RPI 1209
     String[] op_name  = null; // See process_opcodes() RPI 1209
     String[] op_type_oattribute = null; // See process_opcodes() (#485)
-//    int[]    op_type_len = { // old definition commented out RPI 1209G
-//    	 0, // 0 comment place holder	
-//         2,	// 1 "E" 8 PR oooo
-//         2, // 2 "RR" 60  LR  oorr  
-//         2, // 3 "BRX" 16  BER oomr
-//         2, // 4 "I" 1 SVC 00ii
-//         4, // 5 "RX" 52  L  oorxbddd
-//         4, // 6 "BCX" 16 BE  oomxbddd
-//         4, // 7 "S" 43 SPM oo00bddd
-//         4, // 8 "DM" 1  DIAGNOSE 83000000
-//         4, // 9 "RSI" 4 BRXH  oorriiii
-//         4, //10 "RS" 25  oorrbddd
-//         4, //11 "SI" 9 CLI  ooiibddd
-//         4, //12 "RI" 37 IIHH  ooroiiii
-//         4, //13 "BRCX" 31 BRE  oomoiiii
-//         4, //14 "RRE" 185  MSR oooo00rr
-//         4, //15 "RRF1" 28 MAER oooor0rr (r1,r3,r2 maps to r1,r3,r2)
-//         6, //16 "RIL" 6  BRCL  oomollllllll
-//         6, //17 "SS" 32  MVC oollbdddbddd  
-//         6, //18 "RXY" 76 MLG oorxbdddhhoo
-//         6, //19 "SSE" 5  LASP  oooobdddbddd
-//         6, //20 "RSY" 31  LMG  oorrbdddhhoo
-//         6, //21 "SIY" 6  TMY  ooiibdddhhoo
-//         6, //22 "RSL" 1  TP  oor0bddd00oo
-//         6, //23 "RIE" 4  BRXLG  oorriiii00oo
-//         6, //24 "RXE" 28  ADB oorxbddd00oo
-//         6, //25 "RXF" 8   MAE  oorxbdddr0oo (note r3 before r1)
-//         6, //26 AP SS2  oollbdddbddd
-//         6, //27 PLO SS3  oorrbdddbddd  r1,s2,r3,s4
-//         6, //28 LMD SS5  oorrbdddbddd  r1,r3,s2,s4
-//         6, //29 SRP SS2  oolibdddbddd s1(l1),s2,i3
-//         4, //30 "RRF3" 30 DIEBR oooormrr (r1,r3,r2,m4 maps to r3,m4,r1,r2) RPI 407 fix (was 6) 
-//         6, //31 "SS" PKA oollbdddbddd  ll from S2 
-//         6, //32 "SSF" MVCOS oor0bdddbddd (s1,s2,r3) z9-41
-//         6, //33 "BLX" BRCL  oomollllllll (label)
-//         4,  //34 "RRF2" FIXBR oooom0rr (r1,m3,r2 maps to m3,r1,r2) RPI 407 fix was 6
-//         4,  //35 "FFR4" CSDTR oooo0mrr (r1,r2,m4 maps to m4,r1,r2) RPI 407 add new
-//         4,  //36 "RRR"  
-//         4,  //37 "RXAS" RX    if ASSIST
-//         6,   //38 "RXSS" RX-SS if ASSIST else PKU x'E1'
-//         4,   //39 "RRF5" CRT   RPI 817
-//         4,   //40 "RRF6" CRTE  RPI 817
-//         6,   //41 "RIE2" CIT   RPI 817
-//         6,   //42 "RIE3" CITE  RPI 817
-//         6,   //43 "RIE4" CGIJ  RPI 817
-//         6,   //44 "RIE5" CGIJE RPI 817
-//         6,   //45 "RRS1" CGRB  RPI 817
-//         6,   //46 "RRS2" CGRBE RPI 817
-//         6,   //47 "RRS3" CGIB  RPI 817
-//         6,   //48 "RRS4" CGIBE RPI 817
-//         6,   //49 "RIE6" CGRJ  RPI 817
-//         6,   //50 "RIE7" CGRJE RPI 817
-//         6,   //51 "SIL"  MVHHI RPI 817
-//         6,   //52 "RIE2"
-//         4,   //53 
-//         4,   //54
-//         6,   //55
-//         6,   //56
-//         6,   //57
-//         4,   //58 "V-QST" RPI VF01
-//         4,   //59 "V-QV"  RPI VF01
-//         4,   //60 "V-VST" VAE  oooovtvs RPI VF01
-//         4,   //61 "V-VV"  RPI VF01
-//         4,   //62 "V-RRE" RPI VF01
-//         6,   //63 "V-RSEv" RPI VF01
-//         4,   //64 "V-S"   VRCL oooobddd RPI VF01
-//         4,   //65 "V-VR"  RPI VF01
-//         4,   //66 "V-VS"  RPI VF01
-//    };
-//  int    max_op_type_offset = 75; // see changes required RPI 812, RPI 817, RPI 1125, RPI VF01. Commented out RPI 1209G rpi 2202
+
     int    max_op_type_offset = 0; // Content inserted dynamically. See process_opcodes() RPI 1209G
     int    max_ins_type = 100;    // RPI 315 
     int    max_asm_type = 200;
@@ -2073,10 +2111,9 @@ public  class  tz390 {
          "EE=PLO,27,270",        //   7020 "EE"    "PLO"      "SS3"  27
          };
      String[]   op_table_ESA_notsupported = // Table added for RPI 1209A
-        {"JC       RI   A7.4 M1,I2",
-         "JLC      RIL  C0.4 M1,I2",
-         "JLNOP    RIL  C004 I2",
-         };
+        {"JLC      RIL  C0.4 M1,I2",     // supported for ZOP, not ESA #486
+         "JLNOP    RIL  C004 I2",        // supported for ZOP, not ESA #486
+         };                                                              // #486
      String[]   op_table_ZOP =   // Table added for RPI 1209A
         {"010E=SAM64,1,10",      //     70 "010E"  "SAM64"    "E"     1
          "A50=IIHH,73,730",      //   1820 "A50"   "IIHH"     "RI"   12 // RPI 1522
@@ -2542,40 +2579,29 @@ public  class  tz390 {
          "ECFFm=CLIBm,48,381;*Short;F=", //   "ECFFm" "CLIBm"    "RRS4" 48      #485
          };
      String[]   op_table_ZS4_notsupported =   // Table added for RPI 1209A
-        {"LPP      S     B280 D2(B2)",
-         "LCCTL    S     B284 D2(B2)",
-         "LPCTL    S     B285 D2(B2)",
-         "QSI      S     B286 D2(B2)",
-         "LSCTL    S     B287 D2(B2)",
-         "QCTRI    S     B28E D2(B2)",
-         "SCCTR    RRE   B2E0 R1,R2",
-         "SPCTR    RRE   B2E1 R1,R2",
-         "ECCTR    RRE   B2E4 R1,R2",
-         "EPCTR    RRE   B2E5 R1,R2",
-         "ECPGA    RRE   B2ED R1,R2",
-         "BPP      SMI   C7   M1,RI2,D3(B3)", // RPI 1209K
-         "BPRP     MII   C5   M1,RI2,RI3", // RPI 1209K
-         "CDZT     RSL-b EDAA R1,D2(L2,B2),M3", // RPI 1209K
-         "CLGT     RSY-b EB2B R1,M3,D2(B2)", // RPI 1209K
-         "CLT      RSY-b EB23 R1,M3,D2(B2)", // RPI 1209K
-         "CRDTE    RRF-b B98F R1,R3,R2,M4", // RPI 1209K
-         "CXZT     RSL-b EDAB R1,D2(L2,B2),M3", // RPI 1209K
-         "CZDT     RSL-b EDA8 R1,D2(L2,B2),M3", // RPI 1209K
-         "CZXT     RSL-b EDA9 R1,D2(L2,B2),M3", // RPI 1209K
-         "ETND     RRE   B2EC R1", // RPI 1209K
-         "LAT      RXY-a E39F R1,D2(X2,B2)", // RPI 1209K
-         "LFHAT    RXY-a E3C8 R1,D2(X2,B2)", // RPI 1209K
-         "LGAT     RXY-a E385 R1,D2(X2,B2)", // RPI 1209K
-         "LLGFAT   RXY-a E39D R1,D2(X2,B2)", // RPI 1209K
-         "LLGTAT   RXY-a E39C R1,D2(X2,B2)", // RPI 1209K
-         "NIAI     IE    B2FA I1,I2", // RPI 1209K
-         "NTSTG    RXY   E325 R1,D2(x2,B2)", // RPI 1209K
-         "PPA      RRF-c B2E8 R1,R2,M3", // RPI 1209K
+        {"BPP      SMI   C7   M1,RI2,D3(B3)", // RPI 1209K     supported for Z15, not ZS4 #486
+         "BPRP     MII   C5   M1,RI2,RI3", // RPI 1209K        supported for Z15, not ZS4 #486
+         "CDZT     RSL-b EDAA R1,D2(L2,B2),M3", // RPI 1209K   supported for Z15, not ZS4 #486
+         "CLGT     RSY-b EB2B R1,M3,D2(B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "CLT      RSY-b EB23 R1,M3,D2(B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "CRDTE    RRF-b B98F R1,R3,R2,M4", // RPI 1209K       supported for Z15, not ZS4 #486
+         "CXZT     RSL-b EDAB R1,D2(L2,B2),M3", // RPI 1209K   supported for Z15, not ZS4 #486
+         "CZDT     RSL-b EDA8 R1,D2(L2,B2),M3", // RPI 1209K   supported for Z15, not ZS4 #486
+         "CZXT     RSL-b EDA9 R1,D2(L2,B2),M3", // RPI 1209K   supported for Z15, not ZS4 #486
+         "ETND     RRE   B2EC R1", // RPI 1209K                supported for Z15, not ZS4 #486
+         "LAT      RXY-a E39F R1,D2(X2,B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "LFHAT    RXY-a E3C8 R1,D2(X2,B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "LGAT     RXY-a E385 R1,D2(X2,B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "LLGFAT   RXY-a E39D R1,D2(X2,B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "LLGTAT   RXY-a E39C R1,D2(X2,B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "NIAI     IE    B2FA I1,I2", // RPI 1209K             supported for Z15, not ZS4 #486
+         "NTSTG    RXY   E325 R1,D2(x2,B2)", // RPI 1209K      supported for Z15, not ZS4 #486
+         "PPA      RRF-c B2E8 R1,R2,M3", // RPI 1209K          supported for Z15, not ZS4 #486
          "RISBGN   RIE-f ED59 R1,R2,I3,I4,I5", // RPI 1209K
-         "TABORT   S     B2FC D2(B2)", // RPI 1209K
-         "TBEGIN   SIL   E560 D1(B1),I2", // RPI 1209K
-         "TBEGINC  SIL   E561 D1(B1),I2", // RPI 1209K
-         "TEND     S     B2F8 --", // RPI 1209K
+         "TABORT   S     B2FC D2(B2)", // RPI 1209K            supported for Z15, not ZS4 #486
+         "TBEGIN   SIL   E560 D1(B1),I2", // RPI 1209K         supported for Z15, not ZS4 #486
+         "TBEGINC  SIL   E561 D1(B1),I2", // RPI 1209K         supported for Z15, not ZS4 #486
+         "TEND     S     B2F8 --", // RPI 1209K                supported for Z15, not ZS4 #486
          };
      String[]   op_table_Z15 =   //  dsh table added for RPI 2202
          {
@@ -3050,10 +3076,36 @@ public  class  tz390 {
 			"EDAE=CDPT,22,230",   // EDAE  RSLb CDPT   R1,D2(l2,B2),M3 RPI 2202
 			"EDAF=CXPT,22,230",   // EDAF  RSLb CXPT   R1,D2(l2,B2),M3 RPI 2202
 			};
-     String[]   op_table_Z15_notsupported =   // Table added for RPI 2202
-    	 {
-    	  "DFLTCC   RRR  B939 R1,R2,R3",
-    	 };
+     String[] op_table_Z16 =                  // #503
+         {"B200=LBEAR,7,70",                  // #503
+          "B201=STBEAR,7,70",                 // #503
+          "B28F=QPACI,7,70",                  // #503
+          "B93B=NNPA,14,144",                 // #503
+          "B98B=RDP,30,300",                  // #503
+          "C09=LFI,16,160;*Extended",         // #503
+          "C0F=LLGFI,16,160;*Extended",       // #503
+          "E651=VCLZDP,82,738",               // #503
+          "E654=VUPKZH,82,738",               // #503
+          "E655=VCNF,82,738",                 // #503
+          "E656=VCLFNH,82,738",               // #503
+          "E65C=VUPKZL,82,738",               // #503
+          "E65D=VCFN,82,738",                 // #503
+          "E65E=VCLFNL,82,738",               // #503
+          "E670=VPKZR,81,737",                // #503
+          "E672=VSRPR,81,737",                // #503
+          "E674=VSCHP,82,738",                // #503
+          "E674f=VSCHPf,82,738;f=234",        // #503
+          "E675=VCRNF,82,738",                // #503
+          "E67C=VSCSHP,82,738",               // #503
+          "E67D=VCSPH,82,738",                // #503
+          "EB71=LPSWEY,21,212",               // #503
+          "EC5D$3100=SLLHH,52,400;*Extended", // #503
+          "EC5D$3132=SLLHL,52,400;*Extended", // #503
+          "EC51$3132=SLLLH,52,400;*Extended", // #503
+          "EC5D$3100=SRLHH,52,400;*Extended", // #503
+          "EC5D$3132=SRLHL,52,400;*Extended", // #503
+          "EC51$3132=SRLLH,52,400;*Extended", // #503
+     };                                       // #503
      String[]   op_table_UNI =   // Table added for RPI 1209A
         {"B2B8=SRNMB,7,70",      //   3392 "B2B8"  "SRNMB"    "S"     7 RPI 1125
          "B344=LEDBRA,53,142",   //   3860 "B344"  "LEDBRA"   "RRE"  53 RPI 1125
@@ -3216,45 +3268,6 @@ public  class  tz390 {
          "ECDA=ALHSIK,57,420",   //        "ECDA"  "ALHSIK"   "RIE9" 57 RPI 1125 Z196
          "ECDB=ALGHSIK,57,430",  //        "ECDB"  "ALGHSIK"  "RIE9" 57 RPI 1125 Z196
          };
-     String[]   op_table_UNI_notsupported =   // Table added for RPI 1209A
-        {"LOCGRE   RRF  B9E2 R1,R2",
-         "LOCGRH   RRF  B9E2 R1,R2",
-         "LOCGRL   RRF  B9E2 R1,R2",
-         "LOCGRNE  RRF  B9E2 R1,R2",
-         "LOCGRNH  RRF  B9E2 R1,R2",
-         "LOCGRNL  RRF  B9E2 R1,R2",
-         "LOCRE    RRF  B9F2 R1,R2",
-         "LOCRH    RRF  B9F2 R1,R2",
-         "LOCRL    RRF  B9F2 R1,R2",
-         "LOCRNE   RRF  B9F2 R1,R2",
-         "LOCRNH   RRF  B9F2 R1,R2",
-         "LOCRNL   RRF  B9F2 R1,R2",
-         "JCTH     RIL  CC.6 R1,I2",
-         "LOCGE    RSY  EBE2 R1,D2(B2)",
-         "LOCGH    RSY  EBE2 R1,D2(B2)",
-         "LOCGL    RSY  EBE2 R1,D2(B2)",
-         "LOCGNE   RSY  EBE2 R1,D2(B2)",
-         "LOCGNH   RSY  EBE2 R1,D2(B2)",
-         "LOCGNL   RSY  EBE2 R1,D2(B2)",
-         "STOCGE   RSY  EBE3 R1,D2(B2)",
-         "STOCGH   RSY  EBE3 R1,D2(B2)",
-         "STOCGL   RSY  EBE3 R1,D2(B2)",
-         "STOCGNE  RSY  EBE3 R1,D2(B2)",
-         "STOCGNH  RSY  EBE3 R1,D2(B2)",
-         "STOCGNL  RSY  EBE3 R1,D2(B2)",
-         "LOCE     RSY  EBF2 R1,D2(B2)",
-         "LOCH     RSY  EBF2 R1,D2(B2)",
-         "LOCL     RSY  EBF2 R1,D2(B2)",
-         "LOCNE    RSY  EBF2 R1,D2(B2)",
-         "LOCNH    RSY  EBF2 R1,D2(B2)",
-         "LOCNL    RSY  EBF2 R1,D2(B2)",
-         "STOCE    RSY  EBF3 R1,D2(B2)",
-         "STOCH    RSY  EBF3 R1,D2(B2)",
-         "STOCL    RSY  EBF3 R1,D2(B2)",
-         "STOCNE   RSY  EBF3 R1,D2(B2)",
-         "STOCNH   RSY  EBF3 R1,D2(B2)",
-         "STOCNL   RSY  EBF3 R1,D2(B2)",
-         };
      String[]   op_table_ASSIST = // Table added for RPI 1209A
         {"52=XDECO,37,50",       //   1193 "52"    "XDECO"    "RX"   37 RPI 812
          "53=XDECI,37,50",       //   1196 "53"    "XDECI"    "RX"   37 RPI 812
@@ -3348,8 +3361,82 @@ public void init_tz390(){
 	init_pat();      // init patterns for matcher
 	init_os_type();  // set os type
 	init_os_util();  // set os utilities (overides from env var)
-        // init_opcodes();  // verify opcode tables - moved to init_options RPI 1209A
+    init_option_tables(); // create option-validating tables #503
 }
+
+
+
+    /**
+     * Valid options for MACHINE and OPTABLE are stored as id=value pairs
+     * This routine sets up the translation tables we need
+     */
+public void init_option_tables()                                                                         // #503
+   {int     index, index2;                                                                               // #503
+    int     i;                                                                                           // #503
+    String  entry;                                                                                       // #503
+                                                                                                         // #503
+    machine_option_id = new String[machine_optable_equivalence.length];                                  // #503
+    machines_optable  = new String[machine_optable_equivalence.length];                                  // #503
+    optable_option_id = new String[optable_optable_equivalence.length];                                  // #503
+    optables_optable  = new String[optable_optable_equivalence.length];                                  // #503
+                                                                                                         // #503
+    index=0;                                                                                             // #503
+    while (index < optable_optable_equivalence.length) // for each optable option                        // #503
+       {try      // separate entry into optable id part and associated optable value                     // #503
+           {entry=optable_optable_equivalence[index].toUpperCase();                                      // #503
+            i=entry.indexOf("=");                                                                        // #503
+            if (i == -1)                                                                                 // #503
+               {abort_error(40,"Missing equal sign in optable option definition " + entry);              // #503
+                }                                                                                        // #503
+            optable_option_id[index]=entry.substring(0,i);                                               // #503
+            optables_optable [index]=entry.substring(i+1);                                               // #503
+            // if the optable is an alias, issue error when the alias is not defined                     // #503
+            if (!optable_option_id[index].equals(optables_optable[index]))                               // #503
+               {index2=0;                                                                                // #503
+                while (index2 < index) // check all entries defined before this one                      // #503
+                   {if (optables_optable[index].equals(optables_optable[index2]))                        // #503
+                       {break;                                                                           // #503
+                        }                                                                                // #503
+                    index2++;                                                                            // #503
+                    }                                                                                    // #503
+                if (index2 >= index) // invalid index indicates not-found condition                      // #503
+                   {abort_error(41,"Base optable not defined for optable definition " + entry);          // #503
+                    }                                                                                    // #503
+                }                                                                                        // #503
+            }                                                                                            // #503
+        catch (Exception e)                                                                              // #503
+           {abort_error(41,"Error in optable option definition " + optable_optable_equivalence[index] + " - " + e.toString()); // #503
+            }                                                                                            // #503
+        index++;                                                                                         // #503
+        }                                                                                                // #503
+    index=0;                                                                                             // #503
+    while (index < machine_optable_equivalence.length) // for each machine option                        // #503
+       {try      // separate entry into machine id part and associated optable value                     // #503
+           {entry=machine_optable_equivalence[index].toUpperCase();                                      // #503
+            i=entry.indexOf("=");                                                                        // #503
+            if (i == -1)                                                                                 // #503
+               {abort_error(40,"Missing equal sign in machine option definition " + entry);              // #503
+                }                                                                                        // #503
+            machine_option_id[index]=entry.substring(0,i);                                               // #503
+            machines_optable [index]=entry.substring(i+1);                                               // #503
+            // issue error when the optable is not defined                                               // #503
+            index2=0;                                                                                    // #503
+            while (index2 < optables_optable.length) // check all optable entries defined                // #503
+               {if (machines_optable[index].equals(optables_optable[index2]))                            // #503
+                   {break;                                                                               // #503
+                    }                                                                                    // #503
+                index2++;                                                                                // #503
+                }                                                                                        // #503
+            if (index2 >= optables_optable.length) // invalid index indicates not-found condition        // #503
+               {abort_error(41,"Optable not defined for machine definition " + entry);                   // #503
+                }                                                                                        // #503
+            }                                                                                            // #503
+        catch (Exception e)                                                                              // #503
+           {abort_error(41,"Error in machine option definition " + machine_optable_equivalence[index] + " - " + e.toString()); // #503
+            }                                                                                            // #503
+        index++;                                                                                         // #503
+        }                                                                                                // #503
+    }                                                                                                    // #503
 
 
 
@@ -3412,7 +3499,7 @@ public void create_opcodes()  // Routine added for RPI 1209
                 }
             }
         catch (Exception e)
-           {abort_error(41,"Error in instruction fomat definition " + opcode_formats[index] + " - " + e.toString());
+           {abort_error(41,"Error in instruction format definition " + opcode_formats[index] + " - " + e.toString());
             }
         index++;
         }
@@ -3545,7 +3632,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
-        if (opt_optable.equals("ZS3"))
+        if (opt_optable.equals("Z9"))                   // #503
            {process_opcodes(op_table_DOS);
             if (opt_allow)                              // RPI 1209N
                {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
@@ -3559,7 +3646,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
-        if (opt_optable.equals("ZS4"))
+        if (opt_optable.equals("Z10"))                  // #503
            {process_opcodes(op_table_DOS);
             if (opt_allow)                              // RPI 1209N
                {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
@@ -3574,6 +3661,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
+        // logic for optables Z11-Z14 is missing. See issue #510
         if (opt_optable.equals("Z15"))  // rpi 2202
         {process_opcodes(op_table_DOS);
          if (opt_allow)                              // RPI 1209N
@@ -3590,6 +3678,23 @@ public void create_opcodes()  // Routine added for RPI 1209
          process_opcodes(op_table_DOS_directives);
          process_opcodes(op_table_370_directives);
          }
+        if (opt_optable.equals("Z16"))               // #503
+        {process_opcodes(op_table_DOS);              // #503
+         if (opt_allow)                              // #503
+            {process_opcodes(op_table_DOS_obsolete); // #503
+             }                                       // #503
+         process_opcodes(op_table_370);              // #503
+         process_opcodes(op_table_XA);               // #503
+         process_opcodes(op_table_ESA);              // #503
+         process_opcodes(op_table_ZOP);              // #503
+         process_opcodes(op_table_YOP);              // #503
+         process_opcodes(op_table_ZS3);              // #503
+         process_opcodes(op_table_ZS4);              // #503
+         process_opcodes(op_table_Z15);              // #503
+         process_opcodes(op_table_Z16);              // #503
+         process_opcodes(op_table_DOS_directives);   // #503
+         process_opcodes(op_table_370_directives);   // #503
+         }                                           // #503
         if (opt_optable.equals("UNI"))
            {process_opcodes(op_table_DOS);
             if (opt_allow)                              // RPI 1209N
@@ -3626,6 +3731,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_ZS3);
             process_opcodes(op_table_ZS4);
             process_opcodes(op_table_Z15); // rpi 2202
+            process_opcodes(op_table_Z16); // #503
             process_opcodes(op_table_UNI);
 //          process_opcodes(op_table_ASSIST); // RPI 1209M
             process_opcodes(op_table_z390);
@@ -4374,6 +4480,16 @@ private void check_options(){
                         abort_error(27,"NOASM requires CHKSRC(0-2)"); // RPI 1053
                 }
         }
+        // Check MACHINE and OPTABLE options for compatability RPI 1209A
+        if (opt_machine.equals("")) // no  machine specified: use specified or defaulted optable option  // #503
+           {}                                                                                            // #503
+        else if (opt_optable.equals("*DFLT")) // no optable specified: use machine-derived optable       // #503
+           {opt_optable=opt_machine_optable;                                                             // #503
+            }                                                                                            // #503
+        else // both machine and optable specified: check that they're compatible                        // #503
+             if (!opt_machine_optable.equals(opt_optable_optable))                                       // #503
+                {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE("+opt_machine+")"); // #503
+                 }                                                                                       // #503
         // If no optable was requested, select proper default RPI 1209A
         if (opt_optable.equals("*DFLT"))
            {if (opt_allow)
@@ -4383,49 +4499,10 @@ private void check_options(){
                {opt_optable="UNI";
                 }
             }
-        // Check MACHINE and OPTABLE options for compatability RPI 1209A
-        if (opt_machine.equals("")) // most common case
-           {}
-        else if (opt_machine.equals("S370"))
-                {if (opt_optable.equals("370") == false)
-                    {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(S370)");
-                     }
-                 }
-        else if (opt_machine.equals("S370XA"))
-                {if (opt_optable.equals("XA") == false)
-                    {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(S370XA)");
-                     }
-                 }
-        else if (opt_machine.equals("S390E"))
-                {if (opt_optable.equals("ESA") == false)
-                    {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(S390E)");
-                     }
-                 }
-        else if (opt_machine.equals("ZSERIES"))
-                {if (opt_optable.equals("ZOP") == false)
-                    {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(ZSERIES)");
-                     }
-                 }
-        else if (opt_machine.equals("ZSERIES-2"))
-                {if (opt_optable.equals("YOP") == false)
-                    {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(ZSERIES-2)");
-                     }
-                 }
-        else if (opt_machine.equals("ZSERIES-3"))
-                {if (opt_optable.equals("ZS3") == false)
-                    {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(ZSERIES-3)");
-                     }
-                 }
-        else if (opt_machine.equals("ZSERIES-4"))
-                {if (opt_optable.equals("ZS4") == false)
-                    {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE(ZSERIES-4)");
-                     }
-                 }
-        else if (opt_machine.equals("Z15")) // rpi 2202
-                {}
-        else
-           {abort_error(778,"MACHINE("+opt_machine+") not supported");
-            }
+    // Suboption LIST for options MACHINE/OPTABLE is disallowed for optable UNI in compatibility mode   // #503
+    if (opt_optable.equals("UNI") && opt_optable_list.equals("LIST") && !opt_allow)                     // #503
+       {abort_error(30,"option LIST for optable UNI only allow in non-compatibility mode");             // #503
+        }                                                                                               // #503
     // Check vector support parameters RPI VF01
     if (opt_vsectsize != 8
         && opt_vsectsize != 16
@@ -4445,7 +4522,7 @@ private void check_options(){
     // Check requested zVSAM version                  // RPI 1598
     if (opt_zvsam != 0                                // RPI 1598
     &&  opt_zvsam != 1                                // RPI 1598
-	&&  opt_zvsam != 2)                                 // RPI 1628 RPI 2226
+    &&  opt_zvsam != 2)                                 // RPI 1628 RPI 2226
        {abort_error(30,"option VSAM must be 0, 1 or 2"); // RPI 1628 RPI 2226
         }                                             // RPI 1598
 }
@@ -4652,56 +4729,23 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                    // list option is shared with OPTABLE parameter, hence opt_optable_list is used correctly here!
                   {opt_optable_list = opt_machine.substring(1+opt_machine.indexOf(",")); // Extract list option
                    opt_machine      = opt_machine.substring(0,opt_machine.indexOf(",")); // Extract machine name only
+                   if (opt_optable_list.equals("LIST")   != true                   // #503
+                   &&  opt_optable_list.equals("NOLIST") != true                   // #503
+                       )                                                           // #503
+                      {add_invalid_option(opt_file_name,opt_file_line,token);      // #503
+                       }                                                           // #503
                    }
-               if (opt_machine.equals("S370ESA")
-               ||  opt_machine.equals("S390")
-                   )
-                  {opt_machine = "S390E";
-                   }
-               if (opt_machine.equals("ZS"))
-                  {opt_machine = "ZSERIES";
-                   }
-               if (opt_machine.equals("ZS-2"))
-                  {opt_machine = "ZSERIES-2";
-                   }
-               if (opt_machine.equals("ZS-3"))
-                  {opt_machine = "ZSERIES-3";
-                   }
-               if (opt_machine.equals("ZS-4"))
-                  {opt_machine = "ZSERIES-4";
-                   }
-               if (opt_machine.equals("S370"))
-                  {opt_optable = "370";
-                   }
-               else if (opt_machine.equals("S370XA"))
-                  {opt_optable = "XA";
-                   }
-               else if (opt_machine.equals("S390E"))
-                  {opt_optable = "ESA";
-                   }
-               else if (opt_machine.equals("ZSERIES"))
-                  {opt_optable = "ZOP";
-                   }
-               else if (opt_machine.equals("ZSERIES-2"))
-                  {opt_optable = "YOP";
-                   }
-               else if (opt_machine.equals("ZSERIES-3"))
-                  {opt_optable = "ZS3";
-                   }
-               else if (opt_machine.equals("ZSERIES-4"))
-                  {opt_optable = "ZS4";
-                   }
-               else if (opt_machine.contentEquals("Z15"))
-               		{opt_optable = "Z15";  // rpi 2202
-                     }
-               else
+               opt_machine_optable = "";                                           // #503
+               for(int i = 0; i < machine_option_id.length; i++)                   // #503
+                  {if(machine_option_id[i].equals(opt_machine))                    // #503
+                     {opt_machine_optable = machines_optable[i];                   // #503
+                      opt_optable         = optables_optable[i];                   // #503
+                      break;                                                       // #503
+                      }                                                            // #503
+                   }                                                               // #503
+               if (opt_machine_optable.equals(""))                                 // #503
                    {add_invalid_option(opt_file_name,opt_file_line,token);
                     }
-               if (opt_optable_list.equals("LIST")   != true
-               &&  opt_optable_list.equals("NOLIST") != true
-                   )
-                  {add_invalid_option(opt_file_name,opt_file_line,token);
-                   }
     } else if (token.length() > 8
       		&& token.substring(0,8).toUpperCase().equals("MAXCALL(")){
        	opt_maxcall = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
@@ -4805,26 +4849,23 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                if (opt_optable.indexOf(",") != -1) // Optable name contains a comma?
                   {opt_optable_list = opt_optable.substring(1+opt_optable.indexOf(",")); // Extract list option
                    opt_optable      = opt_optable.substring(0,opt_optable.indexOf(",")); // Extract optable name only
+                   if (opt_optable_list.equals("LIST")   != true                    // #503
+                   &&  opt_optable_list.equals("NOLIST") != true                    // #503
+                       )                                                            // #503
+                      {add_invalid_option(opt_file_name,opt_file_line,token);       // #503
+                       }                                                            // #503
                    }
-               if (opt_optable.equals("UNI") != true
-               &&  opt_optable.equals("DOS") != true
-               &&  opt_optable.equals("ESA") != true
-               &&  opt_optable.equals("XA")  != true
-               &&  opt_optable.equals("370") != true
-               &&  opt_optable.equals("YOP") != true
-               &&  opt_optable.equals("ZOP") != true
-               &&  opt_optable.equals("ZS3") != true
-               &&  opt_optable.equals("ZS4") != true
-               &&  opt_optable.contentEquals("Z15") != true  // rpi 2202
-               &&  opt_optable.equals("Z390") != true
-                   )
+               opt_optable_optable = "";                                            // #503
+               for(int i = 0; i < optable_option_id.length; i++)                    // #503
+                  {if(optable_option_id[i].equals(opt_optable))                     // #503
+                     {opt_optable_optable = optables_optable[i];                    // #503
+                      opt_optable         = optables_optable[i];                    // #503
+                      break;                                                        // #503
+                      }                                                             // #503
+                   }                                                                // #503
+               if (opt_optable_optable.equals(""))                                  // #503
                    {add_invalid_option(opt_file_name,opt_file_line,token);
                     }
-               if (opt_optable_list.equals("LIST")   != true
-               &&  opt_optable_list.equals("NOLIST") != true
-                   )
-                  {add_invalid_option(opt_file_name,opt_file_line,token);
-                   }
     } else if (token.length() > 5
        		&& token.substring(0,5).toUpperCase().equals("PARM(")){
         	opt_parm = token.substring(5,token.length()-1);

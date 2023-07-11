@@ -56,6 +56,22 @@ the bldjar script.
         
     `bash> bash/bldjar`
 
+## Test the jar
+
+gradle info: https://docs.gradle.org/current/userguide/userguide.html
+
+in z390, to access and use the gradle commands, you first have to
+make the z390test subdirectory your current or working directory.
+
+The test scripts are in subdirectory z390test\src\test\groovy\org\z390\test
+
+### Quick reference with some gradle commands
+
+Action                                    | Command
+------------------------------------------|------------
+get a list of gradlew command options     | gradlew --help
+force a test run                          | gradlew test -—rerun
+
 ## Proposing new functionality
 
 Enhancements are welcome, but be aware that you are stepping into 
@@ -221,3 +237,23 @@ The following preamble should be applied to all programs
 .**********************************************************************
 
 ```
+
+#### Quick reference with some git commands
+
+git info: https://git-scm.com
+git documentation:https://git-scm.com/doc
+
+Action                                    | Command
+------------------------------------------|------------
+get list of available commands            | git help
+get syntax details for a git command      | git help <command> 
+create local clone of git repo            | git clone <url> <subdir>
+review status of current branch           | git status
+get list of all defined branches          | git branch -v --all
+prepare commit                            | git add .
+commit a set of changes                   | git commit -m"desriptive comments"
+push changes to your own fork             | git push 
+graphical display of branches             | git log --graph --oneline --decorate --all
+-- > when viewing the bracnches displayed | <Enter> to scroll 1 line, <PgDn> to scroll a page, q to quit
+go 'back in time' to a specific commit    | git branch -f <new_branch> [<start-point>]
+                                          | git switch <new_branch>
