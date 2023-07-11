@@ -1061,6 +1061,26 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#test-the-jar" class="md-nav__link">
+    Test the jar
+  </a>
+  
+    <nav class="md-nav" aria-label="Test the jar">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-reference-with-some-gradle-commands" class="md-nav__link">
+    Quick reference with some gradle commands
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#proposing-new-functionality" class="md-nav__link">
     Proposing new functionality
   </a>
@@ -1227,6 +1247,26 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#test-the-jar" class="md-nav__link">
+    Test the jar
+  </a>
+  
+    <nav class="md-nav" aria-label="Test the jar">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-reference-with-some-gradle-commands" class="md-nav__link">
+    Quick reference with some gradle commands
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#proposing-new-functionality" class="md-nav__link">
     Proposing new functionality
   </a>
@@ -1339,6 +1379,30 @@ the bldjar script.</p>
 <p><code>bash&gt; bash/bldjar</code></p>
 </div>
 </div>
+<h2 id="test-the-jar">Test the jar</h2>
+<p>gradle info: https://docs.gradle.org/current/userguide/userguide.html</p>
+<p>in z390, to access and use the gradle commands, you first have to
+make the z390test subdirectory your current or working directory.</p>
+<p>The test scripts are in subdirectory z390test\src\test\groovy\org\z390\test</p>
+<h3 id="quick-reference-with-some-gradle-commands">Quick reference with some gradle commands</h3>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>get a list of gradlew command options</td>
+<td>gradlew --help</td>
+</tr>
+<tr>
+<td>force a test run</td>
+<td>gradlew test -—rerun</td>
+</tr>
+</tbody>
+</table>
 <h2 id="proposing-new-functionality">Proposing new functionality</h2>
 <p>Enhancements are welcome, but be aware that you are stepping into 
 an existing and well established project. </p>
@@ -1575,6 +1639,67 @@ with this program; if not, see &lt;https://www.gnu.org/licenses/&gt;.
 .* Macro documentation goes here
 .**********************************************************************
 </code></pre></div>
+<h4 id="quick-reference-with-some-git-commands">Quick reference with some git commands</h4>
+<p>git info: https://git-scm.com
+git documentation:https://git-scm.com/doc</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>get list of available commands</td>
+<td>git help</td>
+</tr>
+<tr>
+<td>get syntax details for a git command</td>
+<td>git help <command></td>
+</tr>
+<tr>
+<td>create local clone of git repo</td>
+<td>git clone <url> <subdir></td>
+</tr>
+<tr>
+<td>review status of current branch</td>
+<td>git status</td>
+</tr>
+<tr>
+<td>get list of all defined branches</td>
+<td>git branch -v --all</td>
+</tr>
+<tr>
+<td>prepare commit</td>
+<td>git add .</td>
+</tr>
+<tr>
+<td>commit a set of changes</td>
+<td>git commit -m"desriptive comments"</td>
+</tr>
+<tr>
+<td>push changes to your own fork</td>
+<td>git push</td>
+</tr>
+<tr>
+<td>graphical display of branches</td>
+<td>git log --graph --oneline --decorate --all</td>
+</tr>
+<tr>
+<td>-- &gt; when viewing the bracnches displayed</td>
+<td><Enter> to scroll 1 line, <PgDn> to scroll a page, q to quit</td>
+</tr>
+<tr>
+<td>go 'back in time' to a specific commit</td>
+<td>git branch -f <new_branch> [<start-point>]</td>
+</tr>
+<tr>
+<td></td>
+<td>git switch <new_branch></td>
+</tr>
+</tbody>
+</table>
                 
               
               
@@ -1656,7 +1781,7 @@ with this program; if not, see &lt;https://www.gnu.org/licenses/&gt;.
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.1-24-gb243519"}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.1-25-g286565b"}</script>
     
     
       <script src="../../assets/javascripts/bundle.b1047164.min.js"></script>
