@@ -327,6 +327,7 @@ public  class  tz390 {
     * 2023-06-21 AFK #485 fix O attribute value for extended mnemonics
     * 2023-06-22 AFK #495 fix O attribure value for vector instructions
     * 2023-07-02 DSH/AFK #503 add support for new z16 instructions to opcode tables
+    * 2023-07-16 AFK #504 create named constants for floating point 'special values'
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -829,6 +830,125 @@ public  class  tz390 {
         byte fp_ld_digits = 34;
         byte fp_lh_digits = 32; // RPI 821  
         byte fp_guard_digits = 4; // RPI 1124        
+        /*                                                                                               // #504
+         * Constants with special values for various fp formats                                          // #504
+         */                                                                                              // #504
+        int   fp_eh_pos_nmax =  0x7fffffff;                                      // Ehrman v2 par 33.4.2 // #504
+        int   fp_eh_pos_nmin =  0x00100000;                                      // Ehrman v2 par 33.4.2 // #504
+        int   fp_eh_pos_dmin =  0x00000001;                                      // Ehrman v2 par 33.4.2 // #504
+        int   fp_eh_neg_nmax =  0xffffffff;                                                              // #504
+        int   fp_eh_neg_nmin =  0x80100000;                                                              // #504
+        int   fp_eh_neg_dmin =  0x80000001;                                                              // #504
+        int[] fp_dh_pos_nmax = {0x7fffffff, 0xffffffff};                         // Ehrman v2 par 33.4.2 // #504
+        int[] fp_dh_pos_nmin = {0x00100000, 0x00000000};                         // Ehrman v2 par 33.4.2 // #504
+        int[] fp_dh_pos_dmin = {0x00000000, 0x00000001};                         // Ehrman v2 par 33.4.2 // #504
+        int[] fp_dh_neg_nmax = {0xffffffff, 0xffffffff};                                                 // #504
+        int[] fp_dh_neg_nmin = {0x80100000, 0x00000000};                                                 // #504
+        int[] fp_dh_neg_dmin = {0x80000000, 0x00000001};                                                 // #504
+        int[] fp_lh_pos_nmax = {0x7fffffff, 0xffffffff, 0x71ffffff, 0xffffffff}; // Ehrman v2 par 33.4.2 // #504
+        int[] fp_lh_pos_nmin = {0x00100000, 0x00000000, 0x72000000, 0x00000000}; // Ehrman v2 par 33.4.2 // #504
+        int[] fp_lh_pos_dmin = {0x00000000, 0x00000000, 0x72000000, 0x00000001}; // Ehrman v2 par 33.4.2 // #504
+        int[] fp_lh_neg_nmax = {0xffffffff, 0xffffffff, 0xf1ffffff, 0xffffffff};                         // #504
+        int[] fp_lh_neg_nmin = {0x80100000, 0x00000000, 0x82000000, 0x00000000};                         // #504
+        int[] fp_lh_neg_dmin = {0x80000000, 0x00000000, 0x82000000, 0x00000001};                         // #504
+        int   fp_tb_pos_nmax =  0x7bff;                                                                  // #504
+        int   fp_tb_pos_nmin =  0x0200;                                                                  // #504
+        int   fp_tb_pos_dmin =  0x0001;                                                                  // #504
+        int   fp_tb_pos_inf  =  0x7c00;                                                                  // #504
+        int   fp_tb_pos_snan =  0x7d00;                                                                  // #504
+        int   fp_tb_pos_qnan =  0x7f00;                                                                  // #504
+        int   fp_tb_pos_nan  =  0x7e00;                                                                  // #504
+        int   fp_tb_neg_nmax =  0xfbff;                                                                  // #504
+        int   fp_tb_neg_nmin =  0x8200;                                                                  // #504
+        int   fp_tb_neg_dmin =  0x8001;                                                                  // #504
+        int   fp_tb_neg_inf  =  0xfc00;                                                                  // #504
+        int   fp_tb_neg_snan =  0xfd00;                                                                  // #504
+        int   fp_tb_neg_qnan =  0xff00;                                                                  // #504
+        int   fp_tb_neg_nan  =  0xfe00;                                                                  // #504
+        int   fp_db_pos_nmax =  0x7f7fffff;                                      // Ehrman v2 par 34.2   // #504
+        int   fp_db_pos_nmin =  0x00400000;                             // Ehrman v2 par 34.2, corrected // #504
+        int   fp_db_pos_dmin =  0x00000001;                                      // Ehrman v2 par 34.2   // #504
+        int   fp_db_pos_inf  =  0x7f800000;                                      // Ehrman v2 par 34.2   // #504
+        int   fp_db_pos_snan =  0x7fa00000;                                      // Ehrman v2 par 34.2   // #504
+        int   fp_db_pos_qnan =  0x7fe00000;                                      // Ehrman v2 par 34.2   // #504
+        int   fp_db_pos_nan  =  0x7fc00000;                                      // Ehrman v2 par 34.2   // #504
+        int   fp_db_neg_nmax =  0xff7fffff;                                                              // #504
+        int   fp_db_neg_nmin =  0x80800000;                                                              // #504
+        int   fp_db_neg_dmin =  0x80000001;                                                              // #504
+        int   fp_db_neg_inf  =  0xff800000;                                                              // #504
+        int   fp_db_neg_snan =  0xffa00000;                                                              // #504
+        int   fp_db_neg_qnan =  0xffe00000;                                                              // #504
+        int   fp_db_neg_nan  =  0xffc00000;                                                              // #504
+        int[] fp_eb_pos_nmax = {0x7fefffff, 0xffffffff};                         // Ehrman v2 par 34.2   // #504
+        int[] fp_eb_pos_nmin = {0x00100000, 0x00000000};                         // Ehrman v2 par 34.2   // #504
+        int[] fp_eb_pos_dmin = {0x00000000, 0x00000001};                         // Ehrman v2 par 34.2   // #504
+        int[] fp_eb_pos_inf  = {0x7ff00000, 0x00000000};                         // Ehrman v2 par 34.2   // #504
+        int[] fp_eb_pos_snan = {0x7ff40000, 0x00000000};                         // Ehrman v2 par 34.2   // #504
+        int[] fp_eb_pos_qnan = {0x7ffc0000, 0x00000000};                         // Ehrman v2 par 34.2   // #504
+        int[] fp_eb_pos_nan  = {0x7ff80000, 0x00000000};                         // Ehrman v2 par 34.2   // #504
+        int[] fp_eb_neg_nmax = {0xffefffff, 0xffffffff};                                                 // #504
+        int[] fp_eb_neg_nmin = {0x80100000, 0x00000000};                                                 // #504
+        int[] fp_eb_neg_dmin = {0x80000000, 0x00000001};                                                 // #504
+        int[] fp_eb_neg_inf  = {0xfff00000, 0x00000000};                                                 // #504
+        int[] fp_eb_neg_snan = {0xfff40000, 0x00000000};                                                 // #504
+        int[] fp_eb_neg_qnan = {0xfffc0000, 0x00000000};                                                 // #504
+        int[] fp_eb_neg_nan  = {0xfff80000, 0x00000000};                                                 // #504
+        int[] fp_lb_pos_nmax = {0x7ffeffff, 0xffffffff, 0xffffffff, 0xffffffff}; // Ehrman v2 par 34.2   // #504
+        int[] fp_lb_pos_nmin = {0x00010000, 0x00000000, 0x00000000, 0x00000000}; // Ehrman v2 par 34.2   // #504
+        int[] fp_lb_pos_dmin = {0x00000000, 0x00000000, 0x00000000, 0x00000001}; // Ehrman v2 par 34.2   // #504
+        int[] fp_lb_pos_inf  = {0x7fff0000, 0x00000000, 0x00000000, 0x00000000}; // Ehrman v2 par 34.2   // #504
+        int[] fp_lb_pos_snan = {0x7fff4000, 0x00000000, 0x00000000, 0x00000000}; // Ehrman v2 par 34.2   // #504
+        int[] fp_lb_pos_qnan = {0x7fffc000, 0x00000000, 0x00000000, 0x00000000}; // Ehrman v2 par 34.2   // #504
+        int[] fp_lb_pos_nan  = {0x7fff8000, 0x00000000, 0x00000000, 0x00000000}; // Ehrman v2 par 34.2   // #504
+        int[] fp_lb_neg_nmax = {0xfffeffff, 0xffffffff, 0xffffffff, 0xffffffff};                         // #504
+        int[] fp_lb_neg_nmin = {0x80010000, 0x00000000, 0x00000000, 0x00000000};                         // #504
+        int[] fp_lb_neg_dmin = {0x80000000, 0x00000000, 0x00000000, 0x00000001};                         // #504
+        int[] fp_lb_neg_inf  = {0xffff0000, 0x00000000, 0x00000000, 0x00000000};                         // #504
+        int[] fp_lb_neg_snan = {0xffff4000, 0x00000000, 0x00000000, 0x00000000};                         // #504
+        int[] fp_lb_neg_qnan = {0xffffc000, 0x00000000, 0x00000000, 0x00000000};                         // #504
+        int[] fp_lb_neg_nan  = {0xffff8000, 0x00000000, 0x00000000, 0x00000000};                         // #504
+        int   fp_dd_pos_nmax =  0x77f3fcff;                                      // Ehrman v2 par 35.3   // #504
+        int   fp_dd_pos_nmin =  0x04000000;                                      // Ehrman v2 par 35.3   // #504
+        int   fp_dd_pos_dmin =  0x00000001;                                      // Ehrman v2 par 35.3   // #504
+        int   fp_dd_pos_inf  =  0x78000000;                                      // Ehrman v2 par 35.3   // #504
+        int   fp_dd_pos_snan =  0x7e000000;                                      // Ehrman v2 par 35.3   // #504
+        int   fp_dd_pos_qnan =  0x7c000000;                                      // Ehrman v2 par 35.3   // #504
+        int   fp_dd_pos_nan  =  0x7c000000;                                      // Ehrman v2 par 35.3   // #504
+        int   fp_dd_neg_nmax =  0xf7f3fcff;                                                              // #504
+        int   fp_dd_neg_nmin =  0x84000000;                                                              // #504
+        int   fp_dd_neg_dmin =  0x80000001;                                                              // #504
+        int   fp_dd_neg_inf  =  0xf8000000;                                                              // #504
+        int   fp_dd_neg_snan =  0xfe000000;                                                              // #504
+        int   fp_dd_neg_qnan =  0xfc000000;                                                              // #504
+        int   fp_dd_neg_nan  =  0xfc000000;                                                              // #504
+        int[] fp_ed_pos_nmax = {0x77fcff3f, 0xcff3fcff};                         // Ehrman v2 par 35.3   // #504
+        int[] fp_ed_pos_nmin = {0x04000000, 0x00000000};                         // Ehrman v2 par 35.3   // #504
+        int[] fp_ed_pos_dmin = {0x00000000, 0x00000001};                         // Ehrman v2 par 35.3   // #504
+        int[] fp_ed_pos_inf  = {0x78000000, 0x00000000};                         // Ehrman v2 par 35.3   // #504
+        int[] fp_ed_pos_snan = {0x7e000000, 0x00000000};                         // Ehrman v2 par 35.3   // #504
+        int[] fp_ed_pos_qnan = {0x7c000000, 0x00000000};                         // Ehrman v2 par 35.3   // #504
+        int[] fp_ed_pos_nan  = {0x7c000000, 0x00000000};                         // Ehrman v2 par 35.3   // #504
+        int[] fp_ed_neg_nmax = {0xf7fcff3f, 0xcff3fcff};                                                 // #504
+        int[] fp_ed_neg_nmin = {0x84000000, 0x00000000};                                                 // #504
+        int[] fp_ed_neg_dmin = {0x80000000, 0x00000001};                                                 // #504
+        int[] fp_ed_neg_inf  = {0xf8000000, 0x00000000};                                                 // #504
+        int[] fp_ed_neg_snan = {0xfe000000, 0x00000000};                                                 // #504
+        int[] fp_ed_neg_qnan = {0xfc000000, 0x00000000};                                                 // #504
+        int[] fp_ed_neg_nan  = {0xfc000000, 0x00000000};                                                 // #504
+        int[] fp_ld_pos_nmax = {0x77ffcff3, 0xfcff3fcf, 0xf3fcff3f, 0xcff3fcff}; // Ehrman v2 par 35.3   // #504
+        int[] fp_ld_pos_nmin = {0x04000000, 0x00000000, 0x00000000, 0x00000000}; // Ehrman v2 par 35.3   // #504
+        int[] fp_ld_pos_dmin = {0x00000000, 0x00000000, 0x00000000, 0x00000001}; // Ehrman v2 par 35.3   // #504
+        int[] fp_ld_pos_inf  = {0x78000000, 0x00000000, 0x00000000, 0x00000000}; // Ehrman v2 par 35.3   // #504
+        int[] fp_ld_pos_snan = {0x7e000000, 0x00000000, 0x00000000, 0x00000000}; // Ehrman v2 par 35.3   // #504
+        int[] fp_ld_pos_qnan = {0x7c000000, 0x00000000, 0x00000000, 0x00000000}; // Ehrman v2 par 35.3   // #504
+        int[] fp_ld_pos_nan  = {0x7c000000, 0x00000000, 0x00000000, 0x00000000}; // Ehrman v2 par 35.3   // #504
+        int[] fp_ld_neg_nmax = {0xf7ffcff3, 0xfcff3fcf, 0xf3fcff3f, 0xcff3fcff};                         // #504
+        int[] fp_ld_neg_nmin = {0x84000000, 0x00000000, 0x00000000, 0x00000000};                         // #504
+        int[] fp_ld_neg_dmin = {0x80000000, 0x00000000, 0x00000000, 0x00000001};                         // #504
+        int[] fp_ld_neg_inf  = {0xf8000000, 0x00000000, 0x00000000, 0x00000000};                         // #504
+        int[] fp_ld_neg_snan = {0xfe000000, 0x00000000, 0x00000000, 0x00000000};                         // #504
+        int[] fp_ld_neg_qnan = {0xfc000000, 0x00000000, 0x00000000, 0x00000000};                         // #504
+        int[] fp_ld_neg_nan  = {0xfc000000, 0x00000000, 0x00000000, 0x00000000};                         // #504
         /*
          * follow fp_work_reg used to format
          * edl types to binary storage formats
