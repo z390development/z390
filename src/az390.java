@@ -425,6 +425,7 @@ public  class  az390 implements Runnable {
 		* 2022-08-01 DSH #414 correct instruction formats VRI-f VRR-j and VRR-k 
 		* 2022-10-24 jjg #451 z390 ignores CODEPAGE option for input;
 		*                     replace non-printable with '.' in PRN, BAL, PCH
+    * 2023-07-22 AFK #504 use named constants for floating point 'special values'
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -10947,270 +10948,482 @@ private void fp_get_hex(){
 	}
 	fp_text = remove_blanks(fp_text); // #233 
 	if (fp_text.charAt(0) == '('){ // RPI 367 support (MIN) and (MAX)
-		if (fp_text.toUpperCase().equals("(MAX)")){
+		if (fp_text.toUpperCase().equals("(MAX)") && fp_sign=='+'){        // #504
 			switch (tz390.fp_type){  // gen (max) hex for tz390.fp_type
 			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
-				dc_hex = "7FEFFFFFFFFFFFFF";
+				dc_hex = tz390.fp_db_pos_nmax;                             // #504
 			    break;
 			case 1: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-			    dc_hex = "77FCFF3FCFF3FCFF"; // RPI 407
+			    dc_hex = tz390.fp_dd_pos_nmax;                     // RPI 407 #504
 			    break;
 			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
-				dc_hex = "7FFFFFFFFFFFFFFF";
+				dc_hex = tz390.fp_dh_pos_nmax;                             // #504
 				break;
 			case 3: // tz390.fp_eb_type s1,e8,m23 with assumed 1
-	            dc_hex = "7F7FFFFF";
+	            dc_hex = tz390.fp_eb_pos_nmax;                             // #504
 	            break;
 			case 4: // tz390.fp_ed_type s1,cf5,bxcf8,ccf50
-			    dc_hex = "77F3FCFF"; // RPI 407
+			    dc_hex = tz390.fp_ed_pos_nmax;                     // RPI 407 #504
 			    break;
 			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
-				dc_hex = "7FFFFFFF";
+				dc_hex = tz390.fp_eh_pos_nmax;                             // #504
 				break;
 			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
-				dc_hex = "7FFEFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
+				dc_hex = tz390.fp_lb_pos_nmax;                             // #504
 				break;
 			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
-			    dc_hex = "77FFCFF3FCFF3FCFF3FCFF3FCFF3FCFF"; // RPI 407
+			    dc_hex = tz390.fp_ld_pos_nmax;                     // RPI 407 #504
 			    break;
-			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
-				dc_hex = "7FFFFFFFFFFFFFFF71FFFFFFFFFFFFFF";
+			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex
+				dc_hex = tz390.fp_lh_pos_nmax;                             // #504
 				break;
-			case 9: // tz390.fp_lq_type quad word RPI 1108
-				dc_hex = "00000000000000000000000000000000";
+			case 9: // tz390.fp_lq_type = lh_type, quadword aligned  RPI 1108 #504
+				dc_hex = tz390.fp_lh_pos_nmax;                             // #504
 				break;
-			}
-			if (fp_sign == '-'){
-				dc_hex = "F" + dc_hex.substring(1);
 			}
 			return;
-		} else if (fp_text.toUpperCase().equals("(MIN)")){
+        } else if (fp_text.toUpperCase().equals("(MAX)") && fp_sign=='-'){ // #504
+            switch (tz390.fp_type){ // gen (min) hex for tz390.fp_type     // #504
+            case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1          // #504
+                dc_hex = tz390.fp_db_neg_nmax;                             // #504
+                break;                                                     // #504
+            case 1: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20                 // #504
+                dc_hex = tz390.fp_dd_neg_nmax;                             // #504
+                break;                                                     // #504
+            case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp             // #504
+                dc_hex = tz390.fp_dh_neg_nmax;                             // #504
+                break;                                                     // #504
+            case 3: // tz390.fp_eb_type s1,e8,m23 with assumed 1           // #504
+                dc_hex = tz390.fp_eb_neg_nmax;                             // #504
+                break;                                                     // #504
+            case 4: // tz390.fp_ed_type s1,cf5,bxcf8,ccf50                 // #504
+                dc_hex = tz390.fp_ed_neg_nmax;                             // #504
+                break;                                                     // #504
+            case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp             // #504
+                dc_hex = tz390.fp_eh_neg_nmax;                             // #504
+                break;                                                     // #504
+            case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1         // #504
+                dc_hex = tz390.fp_lb_neg_nmax;                             // #504
+                break;                                                     // #504
+            case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110               // #504
+                dc_hex = tz390.fp_ld_neg_nmax;                             // #504
+                break;                                                     // #504
+            case 8: // tz390.fp_lh_type s1,e7,m112 with split hex          // #504
+                dc_hex = tz390.fp_lh_neg_nmax;                             // #504
+                break;                                                     // #504
+            case 9: // tz390.fp_lq_type = lh_type, quadword aligned  RPI 1108 #504
+                dc_hex = tz390.fp_lh_neg_nmax;                             // #504
+                break;                                                     // #504
+            }                                                              // #504
+            return;                                                        // #504
+		} else if (fp_text.toUpperCase().equals("(MIN)") && fp_sign=='+'){ // #504
 			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
 			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
-				dc_hex = "0010000000000000";
+				dc_hex = tz390.fp_db_pos_nmin;                             // #504
 			    break;
 			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
-				dc_hex = "0000000000000001"; // RPI 407
+				dc_hex = tz390.fp_dd_pos_nmin;                     // RPI 407 #504
 				break;
 			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
-				dc_hex = "0110000000000000";
+				dc_hex = tz390.fp_dh_pos_nmin;                             // #504
 				break;
 			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
-	            dc_hex = "00800000";
+	            dc_hex = tz390.fp_eb_pos_nmin;                             // #504
 	            break;
 			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-				dc_hex = "00000001"; // RPI 407
+				dc_hex = tz390.fp_dd_pos_nmin;                     // RPI 407 #504
 				break;
 			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
-				dc_hex = "01100000";
+				dc_hex = tz390.fp_eh_pos_nmin;                             // #504
 				break;
 			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
-				dc_hex = "00010000000000000000000000000000";
+				dc_hex = tz390.fp_lb_pos_nmin;                             // #504
 				break;
 			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
-				dc_hex = "00000000000000000000000000000001"; // RPI 407
+				dc_hex = tz390.fp_ld_pos_nmin;                     // RPI 407 #504
 				break;
-			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
-				dc_hex = "01100000000000007200000000000000";
+			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex
+				dc_hex = tz390.fp_lh_pos_nmin;                             // #504
 				break;
-			case 9: // tz390.fp_lq_type quad word RPI 1108
-				dc_hex = "00000000000000000000000000000000";
+			case 9: // tz390.fp_lq_type = lh_type, quadword aligned  RPI 1108 #504
+				dc_hex = tz390.fp_lh_pos_nmin;                             // #504
 				break;	
-			}
-			if (fp_sign == '-'){
-				dc_hex = "8" + dc_hex.substring(1);
 			}
 			return;
-
-		} else if (fp_text.toUpperCase().equals("(INF)")){ // #423
-			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
-			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
-				dc_hex = "7FF0000000000000";
-			    break;
-			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
-				dc_hex = "EEEEEEEEEEEEEEEE"; 
-				break;
-			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
-				dc_hex = "EEEEEEEEEEEEEEEE";
-				break;
-			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
-	            dc_hex = "7F000000";
-	            break;
-			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-				dc_hex = "EEEEEEEE"; 
-				break;
-			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
-				dc_hex = "EEEEEEEE";
-				break;
-			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
-				dc_hex = "7FFF0000000000000000000000000000";
-				break;
-			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
-				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"; // RPI 407
-				break;
-			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
-				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE";
-				break;
-			case 9: // tz390.fp_lq_type quad word RPI 1108
-				dc_hex = "00000000000000000000000000000000";
-				break;	
-			}
-			if (fp_sign == '-'){
-				dc_hex = "8" + dc_hex.substring(1);
-			}
-			return;
-
-		} else if (fp_text.toUpperCase().equals("(NAN)")){ // #423
-			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
-			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
-				dc_hex = "7FF8000000000000";
-			    break;
-			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
-				dc_hex = "EEEEEEEEEEEEEEEE"; 
-				break;
-			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
-				dc_hex = "EEEEEEEEEEEEEEEE";
-				break;
-			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
-	            dc_hex = "7F800000";
-	            break;
-			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-				dc_hex = "EEEEEEEE"; // RPI 407
-				break;
-			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
-				dc_hex = "EEEEEEEE";
-				break;
-			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
-				dc_hex = "7FFF8000000000000000000000000000";
-				break;
-			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
-				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"; // RPI 407
-				break;
-			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
-				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE";
-				break;
-			case 9: // tz390.fp_lq_type quad word RPI 1108
-				dc_hex = "00000000000000000000000000000000";
-				break;	
-			}
-			if (fp_sign == '-'){
-				dc_hex = "8" + dc_hex.substring(1);
-			}
-			return;
-
-		} else if (fp_text.toUpperCase().equals("(QNAN)")){ // #423
-			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
-			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
-				dc_hex = "7FF8000000000000";
-			    break;
-			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
-				dc_hex = "EEEEEEEEEEEEEEEE"; 
-				break;
-			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
-				dc_hex = "EEEEEEEEEEEEEEEE";
-				break;
-			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
-	            dc_hex = "7F800000";
-	            break;
-			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-				dc_hex = "EEEEEEEE"; 
-				break;
-			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
-				dc_hex = "EEEEEEEE";
-				break;
-			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
-				dc_hex = "7FFF8000000000000000000000000000";
-				break;
-			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
-				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"; 
-				break;
-			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
-				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE";
-				break;
-			case 9: // tz390.fp_lq_type quad word RPI 1108
-				dc_hex = "00000000000000000000000000000000";
-				break;	
-			}
-			if (fp_sign == '-'){
-				dc_hex = "8" + dc_hex.substring(1);
-			}
-			return;
-			
-		} else if (fp_text.toUpperCase().equals("(SNAN)")){ // #423
-			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
-			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
-				dc_hex = "7FFF7FFFFFFFFFFF";
-			    break;
-			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
-				dc_hex = "EEEEEEEEEEEEEEEE";
-				break;
-			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
-				dc_hex = "EEEEEEEEEEEEEEEE";
-				break;
-			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
-	            dc_hex = "7F7FFFFF";
-	            break;
-			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-				dc_hex = "EEEEEEEE"; // RPI 407
-				break;
-			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
-				dc_hex = "EEEEEEEE";
-				break;
-			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
-				dc_hex = "7FFF7FFFFFFFFFFFFFFFFFFFFFFFFFFF";
-				break;
-			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
-				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"; // RPI 407
-				break;
-			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
-				dc_hex = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE";
-				break;
-			case 9: // tz390.fp_lq_type quad word RPI 1108
-				dc_hex = "00000000000000000000000000000000";
-				break;	
-			}
-			if (fp_sign == '-'){
-				dc_hex = "8" + dc_hex.substring(1);
-			}
-			return;			
-
-		} else if (fp_text.toUpperCase().equals("(DMIN)")){
+        } else if (fp_text.toUpperCase().equals("(MIN)") && fp_sign=='-'){ // #504
+            switch (tz390.fp_type){ // gen (min) hex for tz390.fp_type     // #504
+            case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1          // #504
+                dc_hex = tz390.fp_db_neg_nmin;                             // #504
+                break;                                                     // #504
+            case 1: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20                 // #504
+                dc_hex = tz390.fp_dd_neg_nmin;                             // #504
+                break;                                                     // #504
+            case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp             // #504
+                dc_hex = tz390.fp_dh_neg_nmin;                             // #504
+                break;                                                     // #504
+            case 3: // tz390.fp_eb_type s1,e8,m23 with assumed 1           // #504
+                dc_hex = tz390.fp_eb_neg_nmin;                             // #504
+                break;                                                     // #504
+            case 4: // tz390.fp_ed_type s1,cf5,bxcf8,ccf50                 // #504
+                dc_hex = tz390.fp_ed_neg_nmin;                             // #504
+                break;                                                     // #504
+            case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp             // #504
+                dc_hex = tz390.fp_eh_neg_nmin;                             // #504
+                break;                                                     // #504
+            case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1         // #504
+                dc_hex = tz390.fp_lb_neg_nmin;                             // #504
+                break;                                                     // #504
+            case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110               // #504
+                dc_hex = tz390.fp_ld_neg_nmin;                             // #504
+                break;                                                     // #504
+            case 8: // tz390.fp_lh_type s1,e7,m112 with split hex          // #504
+                dc_hex = tz390.fp_lh_neg_nmin;                             // #504
+                break;                                                     // #504
+            case 9: // tz390.fp_lq_type = lh_type, quadword aligned  RPI 1108 #504
+                dc_hex = tz390.fp_lh_neg_nmin;                             // #504
+                break;                                                     // #504
+            }                                                              // #504
+            return;                                                        // #504
+		} else if (fp_text.toUpperCase().equals("(DMIN)") && fp_sign=='+'){// #504
 			switch (tz390.fp_type){  // gen (DMIN) hex for tz390.fp_type
 			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
-				dc_hex = "0000000000000001";
+				dc_hex = tz390.fp_db_pos_dmin;                             // #504
 			    break;
 			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
-				dc_hex = "0000000000000001"; // RPI 407
+				dc_hex = tz390.fp_dd_pos_dmin;                     // RPI 407 #504
 				break;
 			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
-				dc_hex = "0000000000000001";
+				dc_hex = tz390.fp_dh_pos_dmin;                             // #504
 				break;
 			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
-	            dc_hex = "00000001";
+	            dc_hex = tz390.fp_eb_pos_dmin;                             // #504
 	            break;
 			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-				dc_hex = "00000001"; // RPI 407
+				dc_hex = tz390.fp_dd_pos_dmin;                     // RPI 407 #504
 				break;
 			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
-				dc_hex = "00000001";
+				dc_hex = tz390.fp_eh_pos_dmin;                             // #504
 				break;
 			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
-				dc_hex = "00000000000000000000000000000001";
+				dc_hex = tz390.fp_lb_pos_dmin;                             // #504
 				break;
 			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
-				dc_hex = "00000000000000000000000000000001"; // RPI 407
+				dc_hex = tz390.fp_ld_pos_dmin;                     // RPI 407 #504
 				break;
 			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
-				dc_hex = "00000000000000007200000000000001";
+				dc_hex = tz390.fp_lh_pos_dmin;                             // #504
 				break;
-			case 9: // tz390.fp_lq_type quad word RPI 1108
-				dc_hex = "00000000000000000000000000000000";
+			case 9: // tz390.fp_lq_type = lh_type, quadword aligned  RPI 1108 #504
+				dc_hex = tz390.fp_lh_pos_dmin;                             // #504
 				break;	
 			}
-			if (fp_sign == '-'){
-				dc_hex = "8" + dc_hex.substring(1);
-			}
 			return;	
+        } else if (fp_text.toUpperCase().equals("(DMIN)") && fp_sign=='-'){// #504
+            switch (tz390.fp_type){ // gen (min) hex for tz390.fp_type     // #504
+            case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1          // #504
+                dc_hex = tz390.fp_db_neg_dmin;                             // #504
+                break;                                                     // #504
+            case 1: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20                 // #504
+                dc_hex = tz390.fp_dd_neg_dmin;                             // #504
+                break;                                                     // #504
+            case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp             // #504
+                dc_hex = tz390.fp_dh_neg_dmin;                             // #504
+                break;                                                     // #504
+            case 3: // tz390.fp_eb_type s1,e8,m23 with assumed 1           // #504
+                dc_hex = tz390.fp_eb_neg_dmin;                             // #504
+                break;                                                     // #504
+            case 4: // tz390.fp_ed_type s1,cf5,bxcf8,ccf50                 // #504
+                dc_hex = tz390.fp_ed_neg_dmin;                             // #504
+                break;                                                     // #504
+            case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp             // #504
+                dc_hex = tz390.fp_eh_neg_dmin;                             // #504
+                break;                                                     // #504
+            case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1         // #504
+                dc_hex = tz390.fp_lb_neg_dmin;                             // #504
+                break;                                                     // #504
+            case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110               // #504
+                dc_hex = tz390.fp_ld_neg_dmin;                             // #504
+                break;                                                     // #504
+            case 8: // tz390.fp_lh_type s1,e7,m112 with split hex          // #504
+                dc_hex = tz390.fp_lh_neg_dmin;                             // #504
+                break;                                                     // #504
+            case 9: // tz390.fp_lq_type = lh_type, quadword aligned  RPI 1108 #504
+                dc_hex = tz390.fp_lh_neg_dmin;                             // #504
+                break;                                                     // #504
+            }                                                              // #504
+            return;                                                        // #504
+		} else if (fp_text.toUpperCase().equals("(INF)") && fp_sign=='+'){ // #423 #504
+			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
+			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+				dc_hex = tz390.fp_db_pos_inf;                              // #504
+			    break;
+			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
+				dc_hex = tz390.fp_dd_pos_inf;                              // #504
+				break;
+			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
+				log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;
+			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
+	            dc_hex = tz390.fp_eb_pos_inf;                              // #504
+	            break;
+			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
+				dc_hex = tz390.fp_dd_pos_inf;                              // #504
+				break;
+			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
+				log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;
+			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
+				dc_hex = tz390.fp_lb_pos_inf;                              // #504
+				break;
+			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
+				dc_hex = tz390.fp_ld_pos_inf;                      // RPI 407 #504
+				break;
+			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex
+				log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;
+			case 9: // tz390.fp_lq_type = lh_type, quadword aligned  RPI 1108 #504
+				log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;	
+			}
+			return;
+        } else if (fp_text.toUpperCase().equals("(INF)") && fp_sign=='-'){ // #504
+            switch (tz390.fp_type){ // gen (min) hex for tz390.fp_type     // #504
+            case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1          // #504
+                dc_hex = tz390.fp_db_neg_inf;                              // #504
+                break;                                                     // #504
+            case 1: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20                 // #504
+                dc_hex = tz390.fp_dd_neg_inf;                              // #504
+                break;                                                     // #504
+            case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp             // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            case 3: // tz390.fp_eb_type s1,e8,m23 with assumed 1           // #504
+                dc_hex = tz390.fp_eb_neg_inf;                              // #504
+                break;                                                     // #504
+            case 4: // tz390.fp_ed_type s1,cf5,bxcf8,ccf50                 // #504
+                dc_hex = tz390.fp_ed_neg_inf;                              // #504
+                break;                                                     // #504
+            case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp             // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1         // #504
+                dc_hex = tz390.fp_lb_neg_inf;                              // #504
+                break;                                                     // #504
+            case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110               // #504
+                dc_hex = tz390.fp_ld_neg_inf;                              // #504
+                break;                                                     // #504
+            case 8: // tz390.fp_lh_type s1,e7,m112 with split hex          // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            case 9: // tz390.fp_lq_type = lh_type, quadword aligned        // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            }                                                              // #504
+            return;                                                        // #504
+		} else if (fp_text.toUpperCase().equals("(NAN)") && fp_sign=='+'){ // #423 504
+			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
+			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+				dc_hex = tz390.fp_db_pos_nan;                              // #504
+			    break;
+			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
+				dc_hex = tz390.fp_dd_pos_nan;                              // #504
+				break;
+			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;
+			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
+	            dc_hex = tz390.fp_eb_pos_nan;                              // #504
+	            break;
+			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
+				dc_hex = tz390.fp_dd_pos_nan;                              // #504
+				break;
+			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;
+			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
+				dc_hex = tz390.fp_lb_pos_nan;                              // #504
+				break;
+			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
+				dc_hex = tz390.fp_ld_pos_nan;                      // RPI 407 #504
+				break;
+			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;
+			case 9: // tz390.fp_lq_type quad word RPI 1108
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;	
+			}
+			return;
+        } else if (fp_text.toUpperCase().equals("(NAN)") && fp_sign=='-'){ // #504
+            switch (tz390.fp_type){ // gen (min) hex for tz390.fp_type     // #504
+            case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1          // #504
+                dc_hex = tz390.fp_db_neg_nan;                              // #504
+                break;                                                     // #504
+            case 1: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20                 // #504
+                dc_hex = tz390.fp_dd_neg_nan;                              // #504
+                break;                                                     // #504
+            case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp             // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            case 3: // tz390.fp_eb_type s1,e8,m23 with assumed 1           // #504
+                dc_hex = tz390.fp_eb_neg_nan;                              // #504
+                break;                                                     // #504
+            case 4: // tz390.fp_ed_type s1,cf5,bxcf8,ccf50                 // #504
+                dc_hex = tz390.fp_ed_neg_nan;                              // #504
+                break;                                                     // #504
+            case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp             // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1         // #504
+                dc_hex = tz390.fp_lb_neg_nan;                              // #504
+                break;                                                     // #504
+            case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110               // #504
+                dc_hex = tz390.fp_ld_neg_nan;                              // #504
+                break;                                                     // #504
+            case 8: // tz390.fp_lh_type s1,e7,m112 with split hex          // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            case 9: // tz390.fp_lq_type = lh_type, quadword aligned        // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            }                                                              // #504
+            return;                                                        // #504
+		} else if (fp_text.toUpperCase().equals("(QNAN)") && fp_sign=='+'){// #423 #504
+			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
+			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+				dc_hex = tz390.fp_db_pos_qnan;                             // #504
+			    break;
+			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
+				dc_hex = tz390.fp_dd_pos_qnan;                             // #504
+				break;
+			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;
+			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
+	            dc_hex = tz390.fp_eb_pos_qnan;                             // #504
+	            break;
+			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
+				dc_hex = tz390.fp_dd_pos_qnan;                             // #504
+				break;
+			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;
+			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
+				dc_hex = tz390.fp_lb_pos_qnan;                             // #504
+				break;
+			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
+				dc_hex = tz390.fp_ld_pos_qnan;                             // #504
+				break;
+			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;
+			case 9: // tz390.fp_lq_type quad word RPI 1108
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;	
+			}
+			return;
+        } else if (fp_text.toUpperCase().equals("(QNAN)") && fp_sign=='-'){// #504
+            switch (tz390.fp_type){ // gen (min) hex for tz390.fp_type     // #504
+            case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1          // #504
+                dc_hex = tz390.fp_db_neg_qnan;                             // #504
+                break;                                                     // #504
+            case 1: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20                 // #504
+                dc_hex = tz390.fp_dd_neg_qnan;                             // #504
+                break;                                                     // #504
+            case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp             // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            case 3: // tz390.fp_eb_type s1,e8,m23 with assumed 1           // #504
+                dc_hex = tz390.fp_eb_neg_qnan;                             // #504
+                break;                                                     // #504
+            case 4: // tz390.fp_ed_type s1,cf5,bxcf8,ccf50                 // #504
+                dc_hex = tz390.fp_ed_neg_qnan;                             // #504
+                break;                                                     // #504
+            case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp             // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1         // #504
+                dc_hex = tz390.fp_lb_neg_qnan;                             // #504
+                break;                                                     // #504
+            case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110               // #504
+                dc_hex = tz390.fp_ld_neg_qnan;                             // #504
+                break;                                                     // #504
+            case 8: // tz390.fp_lh_type s1,e7,m112 with split hex          // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            case 9: // tz390.fp_lq_type = lh_type, quadword aligned        // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            }                                                              // #504
+            return;                                                        // #504
+		} else if (fp_text.toUpperCase().equals("(SNAN)") && fp_sign=='+'){// #423 #504
+			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
+			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+				dc_hex = tz390.fp_db_pos_snan;                             // #504
+			    break;
+			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
+				dc_hex = tz390.fp_dd_pos_snan;                             // #504
+				break;
+			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;
+			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
+	            dc_hex = tz390.fp_eb_pos_snan;                             // #504
+	            break;
+			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
+				dc_hex = tz390.fp_dd_pos_snan;                     // RPI 407 #504
+				break;
+			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;
+			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
+				dc_hex = tz390.fp_lb_pos_snan;                             // #504
+				break;
+			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
+				dc_hex = tz390.fp_ld_pos_snan;                     // RPI 407 #504
+				break;
+			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;
+			case 9: // tz390.fp_lq_type quad word RPI 1108
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+				break;
+			}
+			return;
+        } else if (fp_text.toUpperCase().equals("(SNAN)") && fp_sign=='-'){// #504
+            switch (tz390.fp_type){ // gen (min) hex for tz390.fp_type     // #504
+            case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1          // #504
+                dc_hex = tz390.fp_db_neg_snan;                             // #504
+                break;                                                     // #504
+            case 1: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20                 // #504
+                dc_hex = tz390.fp_dd_neg_snan;                             // #504
+                break;                                                     // #504
+            case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp             // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            case 3: // tz390.fp_eb_type s1,e8,m23 with assumed 1           // #504
+                dc_hex = tz390.fp_eb_neg_snan;                             // #504
+                break;                                                     // #504
+            case 4: // tz390.fp_ed_type s1,cf5,bxcf8,ccf50                 // #504
+                dc_hex = tz390.fp_ed_neg_snan;                             // #504
+                break;                                                     // #504
+            case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp             // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1         // #504
+                dc_hex = tz390.fp_lb_neg_snan;                             // #504
+                break;                                                     // #504
+            case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110               // #504
+                dc_hex = tz390.fp_ld_neg_snan;                             // #504
+                break;                                                     // #504
+            case 8: // tz390.fp_lh_type s1,e7,m112 with split hex          // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            case 9: // tz390.fp_lq_type = lh_type, quadword aligned        // #504
+                log_error(112,fp_text + " not defined as hex fp value");   // #504
+                break;                                                     // #504
+            }                                                              // #504
+            return;                                                        // #504
 		} else {
 			log_error(112,"unrecognized floating point constant " + fp_text);
 		}
@@ -11225,7 +11438,7 @@ private void fp_get_hex(){
 	if (dc_exp > 0){ // RPI 368 adj by DC E modifer
 		fp_big_dec1 = fp_big_dec1.movePointLeft(dc_exp);
 	} else if (dc_exp < 0){
-		fp_big_dec1 = fp_big_dec1.movePointRight(-dc_exp);		
+		fp_big_dec1 = fp_big_dec1.movePointRight(-dc_exp);
 	}
 	if (fp_big_dec1.signum() > 0){
 		if (fp_sign == '+'){  // RPI 834
@@ -11236,68 +11449,68 @@ private void fp_get_hex(){
 	} else if (fp_sign == '+'){ // RPI 834
 		switch (tz390.fp_type){  // gen zero hex for tz390.fp_type
 		case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
-			dc_hex = "0000000000000000"; // RPI 384
+			dc_hex = tz390.fp_db_pos_zero;                         // RPI 384 #504
 			return;
 		case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50 // RPI 407
-			dc_hex = "2238000000000000"; // RPI 384 RPI 790
+			dc_hex = tz390.fp_dd_pos_zero;                 // RPI 384 RPI 790 #504
 			return;
 		case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
-			dc_hex = "0000000000000000"; // RPI 384
+			dc_hex = tz390.fp_dh_pos_zero;                         // RPI 384 #504
 			return;
 		case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
-			dc_hex = "00000000"; // RPI 384
+			dc_hex = tz390.fp_eb_pos_zero;                         // RPI 384 #504
 			return;
 		case 4: // tz390.fp_ed_type s1,cf5,bxdf6,ccf20 // RPI 407
-			dc_hex = "22500000"; // RPI 384 RPI 790
+			dc_hex = tz390.fp_ed_pos_zero;                 // RPI 384 RPI 790 #504
 			return;
 		case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
-			dc_hex = "00000000"; // RPI 384
+			dc_hex = tz390.fp_eh_pos_zero;                         // RPI 384 #504
 			return;
 		case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
-			dc_hex = "00000000000000000000000000000000";  // RPI 384
+			dc_hex = tz390.fp_lb_pos_zero;                         // RPI 384 #504
 			return;
 		case 7: // tz390.fp_ld_type s1,cf5,bxdf12,ccf110 // RPI 407	
-			dc_hex = "22080000000000000000000000000000";  // RPI 384 RPI 790
+			dc_hex = tz390.fp_ld_pos_zero;                 // RPI 384 RPI 790 #504
 			return;
-		case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
-			dc_hex = "00000000000000000000000000000000";  // RPI 384
+		case 8: // tz390.fp_lh_type s1,e7,m112 with split hex
+			dc_hex = tz390.fp_lh_pos_zero;                         // RPI 384 #504
 			return;
 		case 9: // tz390.fp_lq_type quad word RPI 1108
-			dc_hex = "00000000000000000000000000000000";
+			dc_hex = tz390.fp_lh_pos_zero;                                 // #504
 			break;	
 		}
 	} else { // RPI 834 negative zero values
 		switch (tz390.fp_type){  // gen zero hex for tz390.fp_type
 		case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
-			dc_hex = "8000000000000000"; // RPI 384
+			dc_hex = tz390.fp_db_neg_zero;                         // RPI 384 #504
 			return;
 		case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50 // RPI 407
-			dc_hex = "A238000000000000"; // RPI 384 RPI 790
+			dc_hex = tz390.fp_dd_neg_zero;                 // RPI 384 RPI 790 #504
 			return;
 		case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
-			dc_hex = "8000000000000000"; // RPI 384
+			dc_hex = tz390.fp_dh_neg_zero;                         // RPI 384 #504
 			return;
 		case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
-			dc_hex = "80000000"; // RPI 384
+			dc_hex = tz390.fp_eb_neg_zero;                         // RPI 384 #504
 			return;
 		case 4: // tz390.fp_ed_type s1,cf5,bxdf6,ccf20 // RPI 407
-			dc_hex = "A2500000"; // RPI 384 RPI 790
+			dc_hex = tz390.fp_ed_neg_zero;                 // RPI 384 RPI 790 #504
 			return;
 		case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
-			dc_hex = "80000000"; // RPI 384
+			dc_hex = tz390.fp_eh_neg_zero;                         // RPI 384 #504
 			return;
 		case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
-			dc_hex = "80000000000000000000000000000000";  // RPI 384
+			dc_hex = tz390.fp_lb_neg_zero;                         // RPI 384 #504
 			return;
 		case 7: // tz390.fp_ld_type s1,cf5,bxdf12,ccf110 // RPI 407	
-			dc_hex = "A2080000000000000000000000000000";  // RPI 384 RPI 790
+			dc_hex = tz390.fp_ld_neg_zero;                 // RPI 384 RPI 790 #504
 			return;
-		case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
-			dc_hex = "80000000000000000000000000000000";  // RPI 384
+		case 8: // tz390.fp_lh_type s1,e7,m112 with split hex
+			dc_hex = tz390.fp_lh_neg_zero;                         // RPI 384 #504
 			return;
 		case 9: // tz390.fp_lq_type quad word RPI 1108
-			dc_hex = "00000000000000000000000000000000";
-			break;	
+			dc_hex = tz390.fp_lh_neg_zero;                                 // #504
+			break;
 		}
 	}
 	/*
