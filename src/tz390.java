@@ -327,6 +327,7 @@ public  class  tz390 {
     * 2023-06-21 AFK #485 fix O attribute value for extended mnemonics
     * 2023-06-22 AFK #495 fix O attribure value for vector instructions
     * 2023-07-02 DSH/AFK #503 add support for new z16 instructions to opcode tables
+    * 2023-07-16 AFK #504 create named constants for floating point 'special values'
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -829,6 +830,165 @@ public  class  tz390 {
         byte fp_ld_digits = 34;
         byte fp_lh_digits = 32; // RPI 821  
         byte fp_guard_digits = 4; // RPI 1124        
+        /*                                                                                               // #504
+         * Constants with special values for various fp formats                                          // #504
+         * Constants are defined as Hex strings, because that is how they are used in az390              // #504
+         * Java has no native types to store 16-byte values, this solution circumvents that limitation   // #504
+         *                                                                                               // #504
+         * A note about nomenclature for below constants:                                                // #504
+         * the first syllable is fp for floating point                                                   // #504
+         * the second syllable encodes the length and type of floating point literal                     // #504
+         *     lengths are modelled after DC/DS: e=short, d=double, x=extended, t=tiny                   // #504
+         *             this contratst with instruction mnemonics. these use e, d, l instead of e, d, x   // #504
+         *     floating point types are encoded as: b=binary, h=hex, d=decimal                           // #504
+         * the third syllable encodes the sign: pos for positive and neg for negative                    // #504
+         * the fourth syllable defines the constant being encoded. The names follow (where possible)     // #504
+         *     the naming in figure 9.1 in Principles of Operation version 13:                           // #504
+         *     nmax = largest  (in magnitude) representable   normalized/   normal number                // #504
+         *     nmin = smallest (in magnitude) representable   normalized/   normal number other than zero// #504
+         *     dmin = smallest (in magnitude) representable unnormalized/subnormal number other than zero// #504
+         *     zero = zero                                                                               // #504
+         *     inf  = infinity                 (bfp/dfp only)                                            // #504
+         *     snan = signalling not-a-number  (bfp/dfp only)                                            // #504
+         *     qnan = quiet not-a-number       (bfp/dfp only)                                            // #504
+         *     nan  = default not-a-number     (bfp/dfp only)                                            // #504
+         */                                                                                              // #504
+        String fp_eh_pos_nmax = "7FFFFFFF";                                      // Ehrman v2 par 33.4.2 // #504
+        String fp_eh_pos_nmin = "00100000";                                      // Ehrman v2 par 33.4.2 // #504
+        String fp_eh_pos_dmin = "00000001";                                      // Ehrman v2 par 33.4.2 // #504
+        String fp_eh_pos_zero = "00000000";                                      // PoP v13 figure 9-2   // #504
+        String fp_eh_neg_nmax = "FFFFFFFF";                                                              // #504
+        String fp_eh_neg_nmin = "80100000";                                                              // #504
+        String fp_eh_neg_dmin = "80000001";                                                              // #504
+        String fp_eh_neg_zero = "80000000";                                      // PoP v13 figure 9-2   // #504
+        String fp_dh_pos_nmax = "7FFFFFFFFFFFFFFF";                              // Ehrman v2 par 33.4.2 // #504
+        String fp_dh_pos_nmin = "0010000000000000";                              // Ehrman v2 par 33.4.2 // #504
+        String fp_dh_pos_dmin = "0000000000000001";                              // Ehrman v2 par 33.4.2 // #504
+        String fp_dh_pos_zero = "0000000000000000";                              // PoP v13 figure 9-2   // #504
+        String fp_dh_neg_nmax = "FFFFFFFFFFFFFFFF";                                                      // #504
+        String fp_dh_neg_nmin = "8010000000000000";                                                      // #504
+        String fp_dh_neg_dmin = "8000000000000001";                                                      // #504
+        String fp_dh_neg_zero = "8000000000000000";                              // PoP v13 figure 9-2   // #504
+        String fp_lh_pos_nmax = "7FFFFFFFFFFFFFFF71FFFFFFFFFFFFFF";              // Ehrman v2 par 33.4.2 // #504
+        String fp_lh_pos_nmin = "00100000000000007200000000000000";              // Ehrman v2 par 33.4.2 // #504
+        String fp_lh_pos_dmin = "00000000000000007200000000000001";              // Ehrman v2 par 33.4.2 // #504
+        String fp_lh_pos_zero = "00000000000000000000000000000000";              // PoP v13 figure 9-2   // #504
+        String fp_lh_neg_nmax = "FFFFFFFFFFFFFFFFF1FFFFFFFFFFFFFF";                                      // #504
+        String fp_lh_neg_nmin = "8010000000000000F200000000000000";                                      // #504
+        String fp_lh_neg_dmin = "8000000000000000F200000000000001";                                      // #504
+        String fp_lh_neg_zero = "80000000000000000000000000000000";              // PoP v13 figure 9-2   // #504
+        String fp_tb_pos_nmax = "7BFF";                                                                  // #504
+        String fp_tb_pos_nmin = "0400";                                          // PoP v13 page 19-3    // #504
+        String fp_tb_pos_dmin = "0001";                                                                  // #504
+        String fp_tb_pos_zero = "0000";                                          // PoP v13 figure 9-2   // #504
+        String fp_tb_pos_inf  = "7C00";                                                                  // #504
+        String fp_tb_pos_snan = "7D00";                                                                  // #504
+        String fp_tb_pos_qnan = "7F00";                                                                  // #504
+        String fp_tb_pos_nan  = "7E00";                                                                  // #504
+        String fp_tb_neg_nmax = "FBFF";                                                                  // #504
+        String fp_tb_neg_nmin = "8400";                                          // PoP v13 page 19-3    // #504
+        String fp_tb_neg_dmin = "8001";                                                                  // #504
+        String fp_tb_neg_zero = "8000";                                          // PoP v13 figure 9-2   // #504
+        String fp_tb_neg_inf  = "FC00";                                                                  // #504
+        String fp_tb_neg_snan = "FD00";                                                                  // #504
+        String fp_tb_neg_qnan = "FF00";                                                                  // #504
+        String fp_tb_neg_nan  = "FE00";                                                                  // #504
+        String fp_eb_pos_nmax = "7F7FFFFF";                                      // Ehrman v2 par 34.2   // #504
+        String fp_eb_pos_nmin = "00800000";                                      // Ehrman v2 par 34.2   // #504
+        String fp_eb_pos_dmin = "00000001";                                      // Ehrman v2 par 34.2   // #504
+        String fp_eb_pos_zero = "00000000";                                      // PoP v13 figure 9-2   // #504
+        String fp_eb_pos_inf  = "7F800000";                                      // Ehrman v2 par 34.2   // #504
+        String fp_eb_pos_snan = "7FA00000";                                      // Ehrman v2 par 34.2   // #504
+        String fp_eb_pos_qnan = "7FE00000";                                      // Ehrman v2 par 34.2   // #504
+        String fp_eb_pos_nan  = "7FC00000";                                      // Ehrman v2 par 34.2   // #504
+        String fp_eb_neg_nmax = "FF7FFFFF";                                                              // #504
+        String fp_eb_neg_nmin = "80800000";                                                              // #504
+        String fp_eb_neg_dmin = "80000001";                                                              // #504
+        String fp_eb_neg_zero = "80000000";                                      // PoP v13 figure 9-2   // #504
+        String fp_eb_neg_inf  = "FF800000";                                                              // #504
+        String fp_eb_neg_snan = "FFA00000";                                                              // #504
+        String fp_eb_neg_qnan = "FFE00000";                                                              // #504
+        String fp_eb_neg_nan  = "FFC00000";                                                              // #504
+        String fp_db_pos_nmax = "7FEFFFFFFFFFFFFF";                              // Ehrman v2 par 34.2   // #504
+        String fp_db_pos_nmin = "0010000000000000";                              // Ehrman v2 par 34.2   // #504
+        String fp_db_pos_dmin = "0000000000000001";                              // Ehrman v2 par 34.2   // #504
+        String fp_db_pos_zero = "0000000000000000";                              // PoP v13 figure 9-2   // #504
+        String fp_db_pos_inf  = "7FF0000000000000";                              // Ehrman v2 par 34.2   // #504
+        String fp_db_pos_snan = "7FF4000000000000";                              // Ehrman v2 par 34.2   // #504
+        String fp_db_pos_qnan = "7FFC000000000000";                              // Ehrman v2 par 34.2   // #504
+        String fp_db_pos_nan  = "7FF8000000000000";                              // Ehrman v2 par 34.2   // #504
+        String fp_db_neg_nmax = "FFEFFFFFFFFFFFFF";                                                      // #504
+        String fp_db_neg_nmin = "8010000000000000";                                                      // #504
+        String fp_db_neg_dmin = "8000000000000001";                                                      // #504
+        String fp_db_neg_zero = "8000000000000000";                              // PoP v13 figure 9-2   // #504
+        String fp_db_neg_inf  = "FFF0000000000000";                                                      // #504
+        String fp_db_neg_snan = "FFF4000000000000";                                                      // #504
+        String fp_db_neg_qnan = "FFFC000000000000";                                                      // #504
+        String fp_db_neg_nan  = "FFF8000000000000";                                                      // #504
+        String fp_lb_pos_nmax = "7FFEFFFFFFFFFFFFFFFFFFFFFFFFFFFF";              // Ehrman v2 par 34.2   // #504
+        String fp_lb_pos_nmin = "00010000000000000000000000000000";              // Ehrman v2 par 34.2   // #504
+        String fp_lb_pos_dmin = "00000000000000000000000000000001";              // Ehrman v2 par 34.2   // #504
+        String fp_lb_pos_zero = "00000000000000000000000000000000";              // PoP v13 figure 9-2   // #504
+        String fp_lb_pos_inf  = "7FFF0000000000000000000000000000";              // Ehrman v2 par 34.2   // #504
+        String fp_lb_pos_snan = "7FFF4000000000000000000000000000";              // Ehrman v2 par 34.2   // #504
+        String fp_lb_pos_qnan = "7FFFC000000000000000000000000000";              // Ehrman v2 par 34.2   // #504
+        String fp_lb_pos_nan  = "7FFF8000000000000000000000000000";              // Ehrman v2 par 34.2   // #504
+        String fp_lb_neg_nmax = "FFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFF";                                      // #504
+        String fp_lb_neg_nmin = "80010000000000000000000000000000";                                      // #504
+        String fp_lb_neg_dmin = "80000000000000000000000000000001";                                      // #504
+        String fp_lb_neg_zero = "80000000000000000000000000000000";              // PoP v13 figure 9-2   // #504
+        String fp_lb_neg_inf  = "FFFF0000000000000000000000000000";                                      // #504
+        String fp_lb_neg_snan = "FFFF4000000000000000000000000000";                                      // #504
+        String fp_lb_neg_qnan = "FFFFC000000000000000000000000000";                                      // #504
+        String fp_lb_neg_nan  = "FFFF8000000000000000000000000000";                                      // #504
+        String fp_ed_pos_nmax = "77F3FCFF";                                      // Ehrman v2 par 35.3   // #504
+        String fp_ed_pos_nmin = "04000000";                                      // Ehrman v2 par 35.3   // #504
+        String fp_ed_pos_dmin = "00000001";                                      // Ehrman v2 par 35.3   // #504
+        String fp_ed_pos_zero = "22500000";                                      // PoP v13 figure 9-2   // #504
+        String fp_ed_pos_inf  = "78000000";                                      // Ehrman v2 par 35.3   // #504
+        String fp_ed_pos_snan = "7E000000";                                      // Ehrman v2 par 35.3   // #504
+        String fp_ed_pos_qnan = "7C000000";                                      // Ehrman v2 par 35.3   // #504
+        String fp_ed_pos_nan  = "7C000000";                                      // Ehrman v2 par 35.3   // #504
+        String fp_ed_neg_nmax = "F7F3FCFF";                                                              // #504
+        String fp_ed_neg_nmin = "84000000";                                                              // #504
+        String fp_ed_neg_dmin = "80000001";                                                              // #504
+        String fp_ed_neg_zero = "A2500000";                                      // PoP v13 figure 9-2   // #504
+        String fp_ed_neg_inf  = "F8000000";                                                              // #504
+        String fp_ed_neg_snan = "FE000000";                                                              // #504
+        String fp_ed_neg_qnan = "FC000000";                                                              // #504
+        String fp_ed_neg_nan  = "FC000000";                                                              // #504
+        String fp_dd_pos_nmax = "77FCFF3FCFF3FCFF";                              // Ehrman v2 par 35.3   // #504
+        String fp_dd_pos_nmin = "0400000000000000";                              // Ehrman v2 par 35.3   // #504
+        String fp_dd_pos_dmin = "0000000000000001";                              // Ehrman v2 par 35.3   // #504
+        String fp_dd_pos_zero = "2238000000000000";                              // PoP v13 figure 9-3   // #504
+        String fp_dd_pos_inf  = "7800000000000000";                              // Ehrman v2 par 35.3   // #504
+        String fp_dd_pos_snan = "7E00000000000000";                              // Ehrman v2 par 35.3   // #504
+        String fp_dd_pos_qnan = "7C00000000000000";                              // Ehrman v2 par 35.3   // #504
+        String fp_dd_pos_nan  = "7C00000000000000";                              // Ehrman v2 par 35.3   // #504
+        String fp_dd_neg_nmax = "F7FCFF3FCFF3FCFF";                                                      // #504
+        String fp_dd_neg_nmin = "8400000000000000";                                                      // #504
+        String fp_dd_neg_dmin = "8000000000000001";                                                      // #504
+        String fp_dd_neg_zero = "A238000000000000";                              // PoP v13 figure 9-3   // #504
+        String fp_dd_neg_inf  = "F800000000000000";                                                      // #504
+        String fp_dd_neg_snan = "FE00000000000000";                                                      // #504
+        String fp_dd_neg_qnan = "FC00000000000000";                                                      // #504
+        String fp_dd_neg_nan  = "FC00000000000000";                                                      // #504
+        String fp_ld_pos_nmax = "77FFCFF3FCFF3FCFF3FCFF3FCFF3FCFF";              // Ehrman v2 par 35.3   // #504
+        String fp_ld_pos_nmin = "04000000000000000000000000000000";              // Ehrman v2 par 35.3   // #504
+        String fp_ld_pos_dmin = "00000000000000000000000000000001";              // Ehrman v2 par 35.3   // #504
+        String fp_ld_pos_zero = "22080000000000000000000000000000";         // PoP v13 figures 20-1+20-3 // #504
+        String fp_ld_pos_inf  = "78000000000000000000000000000000";              // Ehrman v2 par 35.3   // #504
+        String fp_ld_pos_snan = "7E000000000000000000000000000000";              // Ehrman v2 par 35.3   // #504
+        String fp_ld_pos_qnan = "7C000000000000000000000000000000";              // Ehrman v2 par 35.3   // #504
+        String fp_ld_pos_nan  = "7C000000000000000000000000000000";              // Ehrman v2 par 35.3   // #504
+        String fp_ld_neg_nmax = "F7FFCFF3FCFF3FCFF3FCFF3FCFF3FCFF";                                      // #504
+        String fp_ld_neg_nmin = "84000000000000000000000000000000";                                      // #504
+        String fp_ld_neg_dmin = "80000000000000000000000000000001";                                      // #504
+        String fp_ld_neg_zero = "A2080000000000000000000000000000";         // PoP v13 figures 20-1+20-3 // #504
+        String fp_ld_neg_inf  = "F8000000000000000000000000000000";                                      // #504
+        String fp_ld_neg_snan = "FE000000000000000000000000000000";                                      // #504
+        String fp_ld_neg_qnan = "FC000000000000000000000000000000";                                      // #504
+        String fp_ld_neg_nan  = "FC000000000000000000000000000000";                                      // #504
         /*
          * follow fp_work_reg used to format
          * edl types to binary storage formats
