@@ -421,7 +421,7 @@ public  class  az390 implements Runnable {
 		* 2022-06-10 DSH z16 #423 correct rotate instruction errors reported by Dan Greiner
 	    * 2022-06-27 DSH z16 #424 add BFP constants INF, NAN, QNAN, SNAN, DMIN
 	    *                             See POP 13 pages 9-5 and 19-4
-		* 2022-07-03 DSH #414 add 30 new z16 instructions also see
+		* 2022-07-03 DSH #414 add 30 new z16 instructions
 		* 2022-08-01 DSH #414 correct instruction formats VRI-f VRR-j and VRR-k 
 		* 2022-10-24 jjg #451 z390 ignores CODEPAGE option for input;
 		*                     replace non-printable with '.' in PRN, BAL, PCH
@@ -2639,9 +2639,8 @@ private void process_bal_op(){
     	loc_len = 4;
     	get_hex_op(1,4);
     	get_hex_zero(2);
-		if (bal_op.equals("NNPA")){ // DSH #414 z16
-			get_hex_zero(2);
-    	} else if (bal_op.equals("PALB") // RPI 277
+		if (bal_op.equals("NNPA")  // DSH #414 z16 #504
+            || bal_op.equals("PALB") // RPI 277
     		|| bal_op.equals("PCKMO") // RPI 1125
 	        || bal_op.equals("PCC")){ // RPI 1125
     		get_hex_zero(2);
@@ -11030,8 +11029,8 @@ private void fp_get_hex(){
 			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
 	            dc_hex = tz390.fp_eb_pos_nmin;                             // #504
 	            break;
-			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-				dc_hex = tz390.fp_dd_pos_nmin;                     // RPI 407 #504
+			case 4: // tz390.fp_ed_type s1,cf5,bxcf6,ccf20
+				dc_hex = tz390.fp_ed_pos_nmin;                     // RPI 407 #504
 				break;
 			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
 				dc_hex = tz390.fp_eh_pos_nmin;                             // #504
@@ -11098,8 +11097,8 @@ private void fp_get_hex(){
 			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
 	            dc_hex = tz390.fp_eb_pos_dmin;                             // #504
 	            break;
-			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-				dc_hex = tz390.fp_dd_pos_dmin;                     // RPI 407 #504
+			case 4: // tz390.fp_ed_type s1,cf5,bxcf6,ccf20
+				dc_hex = tz390.fp_ed_pos_dmin;                     // RPI 407 #504
 				break;
 			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
 				dc_hex = tz390.fp_eh_pos_dmin;                             // #504
@@ -11166,8 +11165,8 @@ private void fp_get_hex(){
 			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
 	            dc_hex = tz390.fp_eb_pos_inf;                              // #504
 	            break;
-			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-				dc_hex = tz390.fp_dd_pos_inf;                              // #504
+			case 4: // tz390.fp_ed_type s1,cf5,bxcf6,ccf20
+				dc_hex = tz390.fp_ed_pos_inf;                              // #504
 				break;
 			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
 				log_error(112,fp_text + " not defined as hex fp value");   // #504
@@ -11234,8 +11233,8 @@ private void fp_get_hex(){
 			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
 	            dc_hex = tz390.fp_eb_pos_nan;                              // #504
 	            break;
-			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-				dc_hex = tz390.fp_dd_pos_nan;                              // #504
+			case 4: // tz390.fp_ed_type s1,cf5,bxcf6,ccf20
+				dc_hex = tz390.fp_ed_pos_nan;                              // #504
 				break;
 			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
                 log_error(112,fp_text + " not defined as hex fp value");   // #504
@@ -11302,8 +11301,8 @@ private void fp_get_hex(){
 			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
 	            dc_hex = tz390.fp_eb_pos_qnan;                             // #504
 	            break;
-			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-				dc_hex = tz390.fp_dd_pos_qnan;                             // #504
+			case 4: // tz390.fp_ed_type s1,cf5,bxcf6,ccf20
+				dc_hex = tz390.fp_ed_pos_qnan;                             // #504
 				break;
 			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
                 log_error(112,fp_text + " not defined as hex fp value");   // #504
@@ -11370,8 +11369,8 @@ private void fp_get_hex(){
 			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
 	            dc_hex = tz390.fp_eb_pos_snan;                             // #504
 	            break;
-			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-				dc_hex = tz390.fp_dd_pos_snan;                     // RPI 407 #504
+			case 4: // tz390.fp_ed_type s1,cf5,bxcf6,ccf20
+				dc_hex = tz390.fp_ed_pos_snan;                     // RPI 407 #504
 				break;
 			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
                 log_error(112,fp_text + " not defined as hex fp value");   // #504

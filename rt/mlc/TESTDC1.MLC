@@ -50,6 +50,7 @@
 * 01/25/11 RPI 1139 C2X ARG IN QUOTES FOR NOALLOW
 * 2022-05-03 update copyright, add to z390\tests, fix SETC '&&' to '&'
 * 2022-05-07 replace TESTSUB1 with CVTTOHEX to remove dependency
+* 2023-07-30 #504 bring floating point special values in line with HLASM/PoP
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -107,14 +108,14 @@ LEN      EQU   X'5678'
          RT1   CCE,=LS2'1',=X'43100000000000003500000000000000'
 * test (MIN) and (MAX) constants
          RT1   CCE,=DB'(MIN)',=X'0010000000000000'
-         RT1   CCE,=DD'(MIN)',=X'0000000000000001'
-         RT1   CCE,=DH'(MIN)',=X'0110000000000000'
+         RT1   CCE,=DD'(MIN)',=X'0400000000000000'           #504
+         RT1   CCE,=DH'(MIN)',=X'0010000000000000'           #504
          RT1   CCE,=EB'(MIN)',=X'00800000'
-         RT1   CCE,=ED'(MIN)',=X'00000001'
-         RT1   CCE,=EH'(MIN)',=X'01100000'
+         RT1   CCE,=ED'(MIN)',=X'04000000'                   #504
+         RT1   CCE,=EH'(MIN)',=X'00100000'
          RT1   CCE,=LB'(MIN)',=X'00010000000000000000000000000000'
-         RT1   CCE,=LD'(MIN)',=X'00000000000000000000000000000001'
-         RT1   CCE,=LH'(MIN)',=X'01100000000000007200000000000000'
+         RT1   CCE,=LD'(MIN)',=X'04000000000000000000000000000000' #504
+         RT1   CCE,=LH'(MIN)',=X'00100000000000007200000000000000' #504
          RT1   CCE,=DB'(MAX)',=X'7FEFFFFFFFFFFFFF'
          RT1   CCE,=DD'(MAX)',=X'77FCFF3FCFF3FCFF'    
          RT1   CCE,=DH'(MAX)',=X'7FFFFFFFFFFFFFFF'    

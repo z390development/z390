@@ -71,6 +71,7 @@ Action                                    | Command
 ------------------------------------------|------------
 get a list of gradlew command options     | gradlew --help
 force a test run                          | gradlew test -—rerun
+execute a specific test                   | gradlew test --tests RunAsmTests.test_TESTASC1
 
 ## Proposing new functionality
 
