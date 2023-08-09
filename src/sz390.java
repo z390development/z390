@@ -224,6 +224,8 @@ public  class  sz390 implements Runnable {
     * 2023-01-22 RPI 1598 re-implement javadoc changes by Hugh Sweeney
     * 2022-10-24 jjg #451 z390 ignores CODEPAGE option for input;
     *                     replace non-printable with '.' in PRN, BAL, PCH
+    * 2023-08-07 Issue #515. Display FPC contents in interactive debug mode
+    *            and when displaying floating-point registers in SNAP or DUMP.
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -848,6 +850,72 @@ public  class  sz390 implements Runnable {
                "Off",                                    // RPI 1507
                "On",                                     // RPI 1507
                };                                        // RPI 1507
+	/*                                                                       // #515
+	 * Constants used by test command FPC+                                   // #515
+	 */                                                                      // #515
+	// bit masks for byte                                                    // #515
+	final byte[] byte_mask_bit =                                             // #515
+		{                                                                    // #515
+			(byte)0x80,                                                      // #515
+			0x40,                                                            // #515
+			0x20,                                                            // #515
+			0x10,                                                            // #515
+			0x08,                                                            // #515
+			0x04,                                                            // #515
+			0x02,                                                            // #515
+			0x01                                                             // #515
+		};                                                                   // #515
+	// mask names for FPC byte 0 bits 0-5;                                   // #515
+	// from PofOp-13 p9-9 Figure 9-6                                         // #515
+	final String[] mask_name =                                               // #515
+		{                                                                    // #515
+			"IEEE-invalid-operation mask",                                   // #515
+			"IEEE-division-by-zero mask",                                    // #515
+			"IEEE-overflow mask",                                            // #515
+			"IEEE-underflow mask",                                           // #515
+			"IEEE-inexact mask",                                             // #515
+			"Quantum-exception mask"                                         // #515
+		};                                                                   // #515
+	// flag names for FPC byte 1 bits 0-5;                                   // #515
+	// from PofOp-13 p9-9 Figure 9-6                                         // #515
+	final String[] flag_name =                                               // #515
+		{                                                                    // #515
+			"IEEE-invalid-operation flag",                                   // #515
+			"IEEE-division-by-zero flag",                                    // #515
+			"IEEE-overflow flag",                                            // #515
+			"IEEE-underflow flag",                                           // #515
+			"IEEE-inexact flag",                                             // #515
+			"Quantum-exception flag"                                         // #515
+		};                                                                   // #515
+	// DFP rounding method names for FPC byte 3 bits 1-3;                    // #515
+	// from PofOp-13 p9-10 Figure 9-7                                        // #515
+	final String[] DFPRoundingMode_name =                                    // #515
+		{                                                                    // #515
+			"Round to nearest with ties to even",                            // #515
+			"Round toward 0",                                                // #515
+			"Round toward +infinity",                                        // #515
+			"Round toward -infinity",                                        // #515
+			"Round to nearest with ties away from 0",                        // #515
+			"Round to nearest with ties toward 0",                           // #515
+			"Round away from 0",                                             // #515
+			"Round to prepare for shorter precision"                         // #515
+		};                                                                   // #515
+	// BFP rounding method names for FPC byte 3 bits 5-7;                    // #515
+	// from PofOp-13 p9-10 Figure 9-8                                        // #515
+	final String[] BFPRoundingMode_name =                                    // #515
+		{                                                                    // #515
+			"Round to nearest with ties to even",                            // #515
+			"Round toward 0",                                                // #515
+			"Round toward +infinity",                                        // #515
+			"Round toward -infinity",                                        // #515
+			"Reserved/Invalid",                                              // #515
+			"Reserved/Invalid",                                              // #515
+			"Reserved/Invalid",                                              // #515
+			"Round to prepare for shorter precision"                         // #515
+		};                                                                   // #515
+	/*                                                                       // #515
+	 * End constants used by test command FPC+                               // #515
+	 */                                                                      // #515
   /* ********************************************** */   // RPI 1598
   /* Anchor points for globals supporting new zVSAM */   // RPI 1598
   /* ********************************************** */   // RPI 1598
@@ -3018,6 +3086,174 @@ public void dump_ar(int ar_reg_num)                                          // 
                 + tz390.get_hex(pz390.ar_reg.getInt(ar_reg_num * 4),8));     // RPI 2000
     }                                                                        // RPI 2000
 }                                                                            // RPI 2000
+/*                                                                           // #515
+ * Get the FPC (floating-point-control register) value                       // #515
+ *                                                                           // #515
+ * @return the FPC value                                                     // #515
+ */                                                                          // #515
+public int get_fpc(){                                                        // #515
+	// DXC kept in separate field; see pz390.set_fpc_reg()                   // #515
+	// and pz390 implementation of STFPC instruction                         // #515
+	int fpc = pz390.fp_fpc_reg | (pz390.fp_dxc << 8);                        // #515
+	return fpc;                                                              // #515
+}                                                                            // #515
+/*                                                                           // #515
+ * Dump the FPC (floating-point-control register)                            // #515
+ *                                                                           // #515
+ * @param cmd the command; "FPC" or "FPC+"                                   // #515
+ */                                                                          // #515
+public void dump_fpc(String cmd){                                            // #515
+	boolean fpcplus = (cmd.equals("FPC+") ? true : false);                   // #515
+	dump_fpc(fpcplus);                                                       // #515
+}                                                                            // #515
+/*                                                                           // #515
+ * Dump the FPC (floating-point-control register)                            // #515
+ *                                                                           // #515
+ * Summary dump (just the value); if fpcplus is true,                        // #515
+ * a verbose dump is also done.                                              // #515
+ *                                                                           // #515
+ * @param fpcplus  true means verbose FPC; false means summary FPC           // #515
+ */                                                                          // #515
+public void dump_fpc(boolean fpcplus){                                       // #515
+	int fpc = get_fpc();                                                     // #515
+	tz390.put_trace(" FPC  " + tz390.get_hex(fpc,8));                        // #515
+	if (fpcplus) dump_fpcplus(fpc);                                          // #515
+}                                                                            // #515
+/*                                                                           // #515
+ * Verbose dump of the FPC (floating-point-control register)                 // #515
+ *                                                                           // #515
+ * @param fpc  the FPC                                                       // #515
+ */                                                                          // #515
+public void dump_fpcplus(int fpc){                                           // #515
+	byte fpcMask;                                                            // #515
+	byte fpcFlag;                                                            // #515
+	byte fpcDXC;                                                             // #515
+	byte fpcRoundingMode;                                                    // #515
+	String sVal;                                                             // #515
+                                                                             // #515
+    // extract individual FPC bytes                                          // #515
+	fpcMask = (byte)(fpc >>> 24);                                            // #515
+	fpcFlag = (byte)((fpc >> 16) & 0x000000ff);                              // #515
+	fpcDXC = (byte)((fpc >> 8) & 0x000000ff);                                // #515
+	fpcRoundingMode = (byte)(fpc  & 0x000000ff);                             // #515
+                                                                             // #515
+	tz390.put_trace(" Byte 0 bits 0-5; mask bits");                          // #515
+	tz390.put_trace("     bit  Value  Name");                                // #515
+	for (int i = 0; i < 6; i++)                                              // #515
+	{                                                                        // #515
+		sVal = ((fpcMask & byte_mask_bit[i]) != 0) ? "1" : "0";              // #515
+		tz390.put_trace("      "+i+"     "+sVal+"    "+mask_name[i]);        // #515
+	}                                                                        // #515
+                                                                             // #515
+	tz390.put_trace(" Byte 1 bits 0-5; flag bits");                          // #515
+	tz390.put_trace("     bit  Value  Name");                                // #515
+	for (int i = 0; i < 6; i++)                                              // #515 
+	{                                                                        // #515
+		sVal = ((fpcFlag & byte_mask_bit[i]) != 0) ? "1" : "0";              // #515
+		tz390.put_trace("      "+i+"     "+sVal+"    "+flag_name[i]);        // #515
+	}                                                                        // #515
+                                                                             // #515
+	tz390.put_trace(" Byte 2 bits 0-7; DXC byte");                           // #515
+	tz390.put_trace("     Value(hex)  Data Exception");                      // #515
+	sVal = String.format("%02X", fpcDXC);                                    // #515
+	String sDataException;                                                   // #515
+                                                                             // #515
+	// switch uses DXC values in PofOp-13 pp6-17, 6-18 Figure 6-2            // #515
+	switch (fpcDXC)                                                          // #515
+	{                                                                        // #515
+	case 0x00:                                                               // #515
+		sDataException = "General operand";                                  // #515
+		break;                                                               // #515
+	case 0x01:                                                               // #515
+		sDataException = "AFP register";                                     // #515
+		break;                                                               // #515
+	case 0x02:                                                               // #515
+		sDataException = "BFP instruction";                                  // #515
+		break;                                                               // #515
+	case 0x03:                                                               // #515
+		sDataException = "DFP instruction";                                  // #515
+		break;                                                               // #515
+	case 0x04:                                                               // #515
+		sDataException = "Quantum Exception";                                // #515
+		break;                                                               // #515
+	case 0x07:                                                               // #515
+		sDataException = "Simulated Quantum Exception";                      // #515
+		break;                                                               // #515
+	case 0x08:                                                               // #515
+		sDataException = "IEEE inexact and truncated";                       // #515
+		break;                                                               // #515
+	case 0x0B:                                                               // #515
+		sDataException = "Simulated IEEE inexact";                           // #515
+		break;                                                               // #515
+	case 0x0C:                                                               // #515
+		sDataException = "IEEE inexact and incremented";                     // #515
+		break;                                                               // #515
+	case 0x10:                                                               // #515
+		sDataException = "IEEE underflow, exact";                            // #515
+		break;                                                               // #515
+	case 0x13:                                                               // #515
+		sDataException = "Simulated IEEE underflow, exact";                  // #515
+		break;                                                               // #515
+	case 0x18:                                                               // #515
+		sDataException = "IEEE underflow, inexact and truncated";            // #515
+		break;                                                               // #515
+	case 0x1B:                                                               // #515
+		sDataException = "Simulated IEEE underflow, inexact";                // #515
+		break;                                                               // #515
+	case 0x1C:                                                               // #515
+		sDataException = "IEEE underflow, inexact and incremented";          // #515
+		break;                                                               // #515
+	case 0x20:                                                               // #515
+		sDataException = "IEEE overflow, exact";                             // #515
+		break;                                                               // #515
+	case 0x23:                                                               // #515
+		sDataException = "Simulated IEEE overflow, exact";                   // #515
+		break;                                                               // #515
+	case 0x28:                                                               // #515
+		sDataException = "IEEE overflow, inexact and truncated";             // #515
+		break;                                                               // #515
+	case 0x2B:                                                               // #515
+		sDataException = "Simulated IEEE overflow, inexact";                 // #515
+		break;                                                               // #515
+	case 0x2C:                                                               // #515
+		sDataException = "IEEE overflow, inexact and incremented";           // #515
+		break;                                                               // #515
+	case 0x40:                                                               // #515
+		sDataException = "IEEE division by zero";                            // #515
+		break;                                                               // #515
+	case 0x43:                                                               // #515
+		sDataException = "Simulated IEEE division by zero";                  // #515
+		break;                                                               // #515
+	case (byte)0x80:                                                         // #515
+		sDataException = "IEEE invalid operation";                           // #515
+		break;                                                               // #515
+	case (byte)0x83:                                                         // #515
+		sDataException = "Simulated IEEE invalid operation";                 // #515
+		break;                                                               // #515
+	case (byte)0xFE:                                                         // #515
+		sDataException = "Vector instruction";                               // #515
+		break;                                                               // #515
+	case (byte)0xFF:                                                         // #515
+		sDataException = "Compare-and-trap instruction";                     // #515
+		break;                                                               // #515
+	default:                                                                 // #515
+		sDataException = "Invalid DXC value";                                // #515
+		break;                                                               // #515
+	}                                                                        // #515
+	tz390.put_trace("         "+sVal+"      "+sDataException);               // #515
+                                                                             // #515
+	tz390.put_trace(" Byte 3 bits 1-3; DFP Rounding Mode");                  // #515
+	tz390.put_trace("     Value(bin)  Rounding Method");                     // #515
+	int rm = ((int)fpcRoundingMode & 0x00000070) >>> 4;                      // #515
+	sVal = Integer.toBinaryString(rm+8).substring(1);                        // #515
+	tz390.put_trace("        "+sVal+"      "+DFPRoundingMode_name[rm]);      // #515
+                                                                             // #515
+	tz390.put_trace(" Byte 3 bits 5-7; BFP Rounding Mode");                  // #515
+	tz390.put_trace("     Value(bin)  Rounding Method");                     // #515
+	rm = (int)fpcRoundingMode & 0x00000007;                                  // #515
+	sVal = Integer.toBinaryString(rm+8).substring(1);                        // #515
+	tz390.put_trace("        "+sVal+"      "+BFPRoundingMode_name[rm]);      // #515
+}                                                                            // #515
 public void dump_fpr(int reg_offset){
 	/*
 	 * dump specified fp register or all if -1
@@ -3028,6 +3264,7 @@ public void dump_fpr(int reg_offset){
 			pz390.fp_store_reg(pz390.trace_reg,reg_off);
 			reg_off = reg_off + 8;
 		}
+		put_dump("  FPC  " + tz390.get_hex(get_fpc(),8));                    // #515
 		put_dump(" F0-F3 " + pz390.bytes_to_hex(pz390.trace_reg,0,32,8));
 		put_dump(" F4-F7 " + pz390.bytes_to_hex(pz390.trace_reg,32,32,8));
 		put_dump(" F8-FB " + pz390.bytes_to_hex(pz390.trace_reg,64,32,8));
@@ -5902,9 +6139,10 @@ private void exec_test_cmd(){
 	default:
 		test_addr = 0;
         if ((test_token.length() > 1)                                       // RPI 2000
-            && (test_token.toUpperCase().startsWith("AR")))                 // RPI 2000
+            && (test_token.toUpperCase().startsWith("AR")                   // RPI 2000 // #515
+                || test_token.toUpperCase().startsWith("FPC")))                         // #515
         {                                                                   // RPI 2000
-            break;  // no preprocessing for AR request                      // RPI 2000
+            break;  // no preprocessing for AR or FPC request               // RPI 2000 // #515
         }                                                                   // RPI 2000
 		if (test_token.length() > 1
 			|| (test_token.charAt(0) >= '0'
@@ -5988,7 +6226,11 @@ private void exec_test_cmd(){
 	    	}
 	    }
 	    break;
-	case 'F': // dump fp regs
+	case 'F': // dump fp regs or fpc                                         // #515
+		if (test_cmd.toUpperCase().startsWith("FPC")){                       // #515
+			dump_fpc(test_cmd.toUpperCase());                                // #515
+			break;                                                           // #515
+		}                                                                    // #515
 		test_token = get_next_test_token();
 		if (test_token == null){
 			dump_fpr(-1);
@@ -6009,7 +6251,9 @@ private void exec_test_cmd(){
 	    tz390.put_trace("  B=addr      set base for rel addr (ie B=15r% sets base to (r15) 24 bit");
 	    tz390.put_trace("  D           display DCB file status, DDNAME, and DSNAME information");
 	    tz390.put_trace("  E           toggle EBCDIC/ASCII mode for dumping storage etc.");
-	    tz390.put_trace("  F nn        display specified floating point registers else all F0-FF");
+	    tz390.put_trace("  F nn        display specified floating-point register else FPC and all F0-FF"); // #515
+	    tz390.put_trace("  FPC         display floating-point-control register");                           // #515
+	    tz390.put_trace("  FPC+        display floating-point-control register in verbose mode");           // #515
 	    tz390.put_trace("  G nn/adr/op exec n instr. or to hex addr or until next break without trace");
 	    tz390.put_trace("  J addr      jump to new addr and trace instruction");
 	    tz390.put_trace("  L reg       list contents of register (ie l 1r dumps register 1");
