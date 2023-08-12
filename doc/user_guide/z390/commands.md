@@ -78,10 +78,13 @@ The ez390 emulator supports the following interactive test commands when the
 * `addr=sdt` – set memory value  (i.e. 1r?=x'80' changes mem at (r1) 31 bit
 * `reg=sdt` - set register value (i.e. 15r=8 changes reg 15 to 8)
 * `A addr` – set or reset up to 100 instruction address stops with hex address or relative expression such as *+4
+* `AR nn` – display specified access register else all AR 0-15
 * `B=addr` - set base for rel addr (ie B=15r% sets base to (r15) 24 bit
 * `D` – display DCB file information from TIOT
 * `E` – toggle between EBCDIC and ASCII mode
-* `F` – display floating point registers F0-FF
+* `F nn` – display floating point register else FPC and all FPR 0-15
+* `FPC` – display floating-point-control register
+* `FPC+` – display floating-point-control register in verbose mode
 * `G` - nn/addr/opcode - exec nn instr. or until specified instruction address or opcode is found with no trace.  One instruction is always executed before next opcode break even if it’s the same instruction such as a BCT 1,*.  Addresses are distinguished from count by hex . or relative expression term such as *, +, or -.
 * `H`  -  list help command summary
 * `J addr` -  jump to new addr and trace instruction
@@ -89,13 +92,16 @@ The ez390 emulator supports the following interactive test commands when the
 * `L reg` - list contents of register (ie l 1r dumps register 1
 * `L addr len` - list contents of memory area (ie l 10. 4 dumps cvt addr
 * `M` – display total memory in MB and total allocate and free bytes 
-    * `P` – display current loaded program information from CDE including name, entry and length
-    * `Q` - quit execution now
-    * `R` – display general purpose registers R0-RF
+* `P` – display current loaded program information from CDE including name, entry and length
+* `PSW` – display current PSW
+* `PSW+` – display current PSW in verbose mode
+* `PSW16` – display 16 byte current PSW
+* `Q` - quit execution now
+* `R nn` – display specified general purpose register else all GPR 0-15
 * `S`  - clear register, address, and memory breaks
 * `S reg??sdt`  - set break on register change
 * `S addr??sdt` - set break on memory change
-* `T nn/addr/opcode` - trace n instr. or until specified instruction address or opcode is found.  One instruction is always executed before next opcode break even if it’s the same instruction such as a BCT 1,*.  Addresses are distinguished from count by hex . or relative expression term such as *, +, or -.  The symbol EPA may be used in place of address to refer to last program load point address.
+* `T nn/addr/opcode` - trace nn instr. or until specified instruction address or opcode is found.  One instruction is always executed before next opcode break even if it’s the same instruction such as a BCT 1,*.  Addresses are distinguished from count by hex . or relative expression term such as *, +, or -.  The symbol EPA may be used in place of address to refer to last program load point address.
 * `V` - validate/verify
     * `V * nn` - validate nn bytes starting at PSW address
     * `V psw.subfield` - validate PSW subfield
