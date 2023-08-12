@@ -82,7 +82,7 @@ The ez390 emulator supports the following interactive test commands when the
 * `B=addr` - set base for rel addr (ie B=15r% sets base to (r15) 24 bit
 * `D` – display DCB file information from TIOT
 * `E` – toggle between EBCDIC and ASCII mode
-* `F nn` – display floating point register else FPC and all FPR 0-F
+* `F nn` – display floating point register else FPC and all FPR 0-15
 * `FPC` – display floating-point-control register
 * `FPC+` – display floating-point-control register in verbose mode
 * `G` - nn/addr/opcode - exec nn instr. or until specified instruction address or opcode is found with no trace.  One instruction is always executed before next opcode break even if it’s the same instruction such as a BCT 1,*.  Addresses are distinguished from count by hex . or relative expression term such as *, +, or -.
@@ -97,7 +97,7 @@ The ez390 emulator supports the following interactive test commands when the
 * `PSW+` – display current PSW in verbose mode
 * `PSW16` – display 16 byte current PSW
 * `Q` - quit execution now
-* `R nn` – display specified general purpose register else all GPR 0-F
+* `R nn` – display specified general purpose register else all GPR 0-15
 * `S`  - clear register, address, and memory breaks
 * `S reg??sdt`  - set break on register change
 * `S addr??sdt` - set break on memory change

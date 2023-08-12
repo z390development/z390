@@ -6251,7 +6251,7 @@ private void exec_test_cmd(){
 	    tz390.put_trace("  B=addr      set base for rel addr (ie B=15r% sets base to (r15) 24 bit");
 	    tz390.put_trace("  D           display DCB file status, DDNAME, and DSNAME information");
 	    tz390.put_trace("  E           toggle EBCDIC/ASCII mode for dumping storage etc.");
-	    tz390.put_trace("  F nn        display specified floating-point register else FPC & all FPR 0-F");  // #515
+	    tz390.put_trace("  F nn        display specified floating-point register else FPC & all FPR 0-15"); // #515
 	    tz390.put_trace("  FPC         display floating-point-control register");                           // #515
 	    tz390.put_trace("  FPC+        display floating-point-control register in verbose mode");           // #515
 	    tz390.put_trace("  G nn/adr/op exec n instr. or to hex addr or until next break without trace");
@@ -6263,7 +6263,7 @@ private void exec_test_cmd(){
         tz390.put_trace("  PSW         display current PSW");
         tz390.put_trace("  PSW+        display current PSW in verbose mode");
         tz390.put_trace("  PSW16       display 16 byte current PSW");                          // RPI 2008
-	    tz390.put_trace("  R nn        display specified general purpose register else all GPR 0-F");       // #515
+	    tz390.put_trace("  R nn        display specified general purpose register else all GPR 0-15");      // #515
 	    tz390.put_trace("  S           clear all breaks");
 	    tz390.put_trace("  S reg??sdt  set break on register change");
 	    tz390.put_trace("  S addr??sdt set break on memory change");
