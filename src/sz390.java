@@ -6247,11 +6247,11 @@ private void exec_test_cmd(){
 	    tz390.put_trace("  addr=sdt    set memory value  (ie 1r?=x'80' changes mem at (r1) 31 bit");
 	    tz390.put_trace("  reg=sdt     set register value (ie 15r=8 changes reg 15 to 8)");
 	    tz390.put_trace("  A addr      add/remove address stop (ie A FF348. or A *+4 etc.)");  // RPI 395
-	    tz390.put_trace("  AR nn       display specified access register else all AR0-AR15");  // RPI 2000
+	    tz390.put_trace("  AR nn       display specified access register else all AR 0-15");  // RPI 2000 #515
 	    tz390.put_trace("  B=addr      set base for rel addr (ie B=15r% sets base to (r15) 24 bit");
 	    tz390.put_trace("  D           display DCB file status, DDNAME, and DSNAME information");
 	    tz390.put_trace("  E           toggle EBCDIC/ASCII mode for dumping storage etc.");
-	    tz390.put_trace("  F nn        display specified floating-point register else FPC and all F0-FF"); // #515
+	    tz390.put_trace("  F nn        display specified floating-point register else FPC & all FPR 0-F");  // #515
 	    tz390.put_trace("  FPC         display floating-point-control register");                           // #515
 	    tz390.put_trace("  FPC+        display floating-point-control register in verbose mode");           // #515
 	    tz390.put_trace("  G nn/adr/op exec n instr. or to hex addr or until next break without trace");
@@ -6263,7 +6263,7 @@ private void exec_test_cmd(){
         tz390.put_trace("  PSW         display current PSW");
         tz390.put_trace("  PSW+        display current PSW in verbose mode");
         tz390.put_trace("  PSW16       display 16 byte current PSW");                          // RPI 2008
-	    tz390.put_trace("  R nn        display specified general purpose register else all R0-RF");
+	    tz390.put_trace("  R nn        display specified general purpose register else all GPR 0-F");       // #515
 	    tz390.put_trace("  S           clear all breaks");
 	    tz390.put_trace("  S reg??sdt  set break on register change");
 	    tz390.put_trace("  S addr??sdt set break on memory change");
