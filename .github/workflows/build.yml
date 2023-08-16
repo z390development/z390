@@ -68,6 +68,6 @@ jobs:
         run: |
           ls -l dist/z390_${VERSION}
           cp dist/z390_${VERSION}/z390.jar .
-          z390test/gradlew test
+          z390test/gradlew -p z390test test 
         env:
           VERSION: ${{ needs.build-dist.outputs.VERSION }}
