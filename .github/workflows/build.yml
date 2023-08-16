@@ -28,7 +28,7 @@ jobs:
           name: dist
           path: ./dist/z390_${{ steps.version.outputs.version }}.zip
 
-  run-tests:
+  build-libs:
     runs-on: ubuntu-latest
     needs: build-dist
     steps:
@@ -44,5 +44,30 @@ jobs:
         run: unzip z390*.zip
       - name: build libs
         run: echo ${VERSION} && z390_${VERSION}/bash/bldlib
+        env:
+          VERSION: ${{ needs.build-dist.outputs.VERSION }}
+
+  run-tests:
+    runs-on: ubuntu-latest
+    needs: build-dist
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+      - name: get dist artefact
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+      - name: Install dist in dist folder
+        run: |
+          mkdir -p dist
+          unzip z390*.zip -d dist
+      - name: run tests
+        run: |
+          ls -l dist/z390_${VERSION}
+          cp dist/z390_${VERSION}/z390.jar .
+          z390test/gradlew test
         env:
           VERSION: ${{ needs.build-dist.outputs.VERSION }}
