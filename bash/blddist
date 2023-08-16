@@ -13,35 +13,23 @@ dist_folder=dist
 
 if [ "$1" == "clean" ];                 # if "clean" parm passed
 then
-    git clean -dfX                      # delete all git ignored files
+    git clean -dfX                            # delete all git ignored files
 fi
 
-# do the jar build
-bash/bldjar                             # create the z390 jar
+# build jar
+bash/bldjar                                   # create the z390 jar
 
-# Create pdf doc - available in <root>/site/pdf/z390.pdf
-if [ -d "/opt/docenv" ]
-then
-    # the GitHub docker image has the python virtenv prebuilt at this location
-    source /opt/docenv/bin/activate
-else
-    # otherwise create the environment
-    rm -rf docenv/
-    python -m venv docenv
-    source docenv/bin/activate
-    pip install wheel
-    pip install -r doc/requirements.txt
-fi
-ENABLE_PDF_EXPORT=1 Z390_VERSION=${version_tag} mkdocs build
-
-# Create/clean build folder
+# Create/clean dist folder
 mkdir -p ${dist_folder}                       # create dist folder if does not exist
 echo "/**" > ${dist_folder}/.gitignore        # ignore the dist folder
 rm -rf ${dist_folder}/z390_${version_tag}     # delete version dist directory
 rm -f ${dist_folder}/z390_${version_tag}.zip  # delete the zip
 
-bash/bldjar                                   # create the z390 jar
-bash/bldzstrmac 'build/zstrmac'               # generate HLASM compatible SPM's
+# build javadocs
+bash/bldjavadoc 'build/javadoc'               # docs in build/javadocs
+
+# generate HLASM compatible SPM's
+bash/bldzstrmac 'build/zstrmac'
 
 cd ${dist_folder}
 mkdir z390_${version_tag}
@@ -49,7 +37,6 @@ cd z390_${version_tag}
 
 # add core files to the build dir
 cp ${root_dir}/z390.jar .               # jar
-cp ${root_dir}/site/pdf/z390.pdf .      # pdf doc
 core_dirs=( bash bat mac zcobol cics linklib README.txt LICENSE )
 for dir in ${core_dirs[@]}; do
     cp -R ${root_dir}/${dir} .          # unix bash scripts
@@ -66,6 +53,10 @@ done
 mkdir -p mac/spm
 cp -R ${root_dir}/build/zstrmac/* mac/spm
 
+# add javadoc
+mkdir -p javadoc
+cp -R ${root_dir}/build/javadoc/* javadoc
+
 # remove components not required for distribution
 del_items=('bash/bldjar' 'bat/BLDJAR.BAT' 'bash/blddist' 'bash/relver' 'bat/RELVER.BAT')
 for item in ${del_items[@]}; do
@@ -74,4 +65,4 @@ done
 
 # create zip package
 cd ..
-zip -r z390_${version_tag}.zip z390_${version_tag}
+zip -q -dd -r z390_${version_tag}.zip z390_${version_tag}

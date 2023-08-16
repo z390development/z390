@@ -1,0 +1,38 @@
+name: Build z390
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 0
+      - name: version
+        run: echo "version=$(git describe)" >> $GITHUB_OUTPUT
+        id: version
+      - name: Build z390
+        uses: ./.github/actions/build
+      - name: release
+        uses: actions/create-release@v1
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ steps.version.outputs.version }}
+          tag_name: ${{ github.ref }}
+          body_path: release.md
+      - name: upload dist artifact
+        uses: actions/upload-release-asset@v1
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/z390_${{ steps.version.outputs.version }}.zip
+          asset_name: z390_${{ steps.version.outputs.version }}.zip
+          asset_content_type: application/zip

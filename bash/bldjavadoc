@@ -6,16 +6,22 @@
 cd $(dirname $0)    # set to directory of script
 cd ..               # up one to z390 directory
 
-javadocdir=docenv/javadoc  # directory for javadoc files
+DEST=$1
+if [ -z "${DEST}" ]; then 
+    DEST="build/javadoc"
+fi
+mkdir -p "${DEST}"   # create folder if does not exist
 
-mkdir -p "${javadocdir}"   # create directory if it does not exist
+javadocdir=build/javadoc  # directory for javadoc files
+
+mkdir -p "${DEST}"   # create directory if it does not exist
 
 # empty destination directory
-rm -rf ${javadocdir}/*
+rm -rf ${DEST}/*
 
 # build the javadoc
-echo "Building javadoc from src/*.java into ${javadocdir} directory ..."
-javadoc -d ${javadocdir} src/*.java
+echo "Building javadoc from src/*.java into ${DEST} directory ..."
+javadoc -quiet -Xdoclint:none -d ${DEST} src/*.java
 ec=$?
 echo "The exit code of the javadoc command is $ec"
 if [ $ec -ne 0 ]; then echo "bldjavadoc Error encountered building javadoc"; fi
