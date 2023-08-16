@@ -2,6 +2,7 @@ name: Build z390
 on: [push]
 
 jobs:
+
   build-dist:
     runs-on: ubuntu-latest
     steps:
@@ -42,3 +43,5 @@ jobs:
         run: ls -l
       - name: build libs
         run: z390_${VERSION}/bash/bldlib
+        env:
+          VERSION: ${{ steps.build-dist.outputs.VERSION }}
