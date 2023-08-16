@@ -19,6 +19,10 @@ fi
 # build jar
 bash/bldjar                                   # create the z390 jar
 
+# build standard libraries
+bash/bldlib                                   # build standard libs
+bash/bldcbllib                                # build cobol libs
+
 # Create/clean dist folder
 mkdir -p ${dist_folder}                       # create dist folder if does not exist
 echo "/**" > ${dist_folder}/.gitignore        # ignore the dist folder
