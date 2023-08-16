@@ -11,7 +11,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: version
-        run: echo "VERSION=$(git describe)" >> $GITHUB_OUTPUT
+        run: |
+          echo "VERSION=$(git describe)" >> $GITHUB_ENV
+          echo "VERSION=$(git describe)" >> $GITHUB_OUTPUT
         id: version
       - uses: actions/setup-java@v3
         with:
