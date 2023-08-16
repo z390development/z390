@@ -38,10 +38,8 @@ jobs:
         with:
           name: dist
       - name: unzip dist for use
-        run: pwd && ls -l && unzip z390*.zip
-      - name: show dir
-        run: ls -l
+        run: unzip z390*.zip
       - name: build libs
-        run: z390_${VERSION}/bash/bldlib
+        run: echo ${VERSION} && z390_${VERSION}/bash/bldlib
         env:
-          VERSION: ${{ steps.build-dist.outputs.VERSION }}
+          VERSION: ${{ env.VERSION }}
