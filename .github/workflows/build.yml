@@ -6,11 +6,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: version
-        run: echo "version=$(git describe)" >> $GITHUB_OUTPUT
+        run: echo "VERSION=$(git describe)" >> $GITHUB_OUTPUT
         id: version
       - uses: actions/setup-java@v3
         with:
@@ -28,6 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-dist
     steps:
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '8'
       - name: get dist artefact
         uses: actions/download-artifact@v3
         with:
@@ -36,5 +40,5 @@ jobs:
         run: pwd && ls -l && unzip z390*.zip
       - name: show dir
         run: ls -l
-
-  
+      - name: build libs
+        run: z390_${VERSION}/bash/bldlib
