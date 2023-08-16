@@ -5,6 +5,8 @@ jobs:
 
   build-dist:
     runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout main
         uses: actions/checkout@v3
@@ -12,7 +14,6 @@ jobs:
           fetch-depth: 0
       - name: version
         run: |
-          echo "VERSION=$(git describe)" >> $GITHUB_ENV
           echo "VERSION=$(git describe)" >> $GITHUB_OUTPUT
         id: version
       - uses: actions/setup-java@v3
@@ -44,4 +45,4 @@ jobs:
       - name: build libs
         run: echo ${VERSION} && z390_${VERSION}/bash/bldlib
         env:
-          VERSION: ${{ env.VERSION }}
+          VERSION: ${{ needs.build-dist.outputs.VERSION }}
