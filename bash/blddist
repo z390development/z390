@@ -7,9 +7,11 @@ set -e                                  # exit on all errors
 cd $(dirname $0)                        # set to directory of script
 cd ..                                   # cd back to root       
 
-root_dir=$(pwd)
-version_tag=$(git describe)
-dist_folder=dist
+ROOT_DIR=$(pwd)
+VERSION="$(git describe)"
+VERSION="${VERSION//./_}"
+echo "Building z390 ${VERSION}"
+DIST_DIR=dist
 
 if [ "$1" == "clean" ];                 # if "clean" parm passed
 then
@@ -24,10 +26,10 @@ bash/bldlib                                   # build standard libs
 bash/bldcbllib                                # build cobol libs
 
 # Create/clean dist folder
-mkdir -p ${dist_folder}                       # create dist folder if does not exist
-echo "/**" > ${dist_folder}/.gitignore        # ignore the dist folder
-rm -rf ${dist_folder}/z390_${version_tag}     # delete version dist directory
-rm -f ${dist_folder}/z390_${version_tag}.zip  # delete the zip
+mkdir -p ${DIST_DIR}                       # create dist folder if does not exist
+echo "/**" > ${DIST_DIR}/.gitignore        # ignore the dist folder
+rm -rf ${DIST_DIR}/z390_${VERSION}     # delete version dist directory
+rm -f ${DIST_DIR}/z390_${VERSION}.zip  # delete the zip
 
 # build javadocs
 bash/bldjavadoc 'build/javadoc'               # docs in build/javadocs
@@ -35,38 +37,38 @@ bash/bldjavadoc 'build/javadoc'               # docs in build/javadocs
 # generate HLASM compatible SPM's
 bash/bldzstrmac 'build/zstrmac'
 
-cd ${dist_folder}
-mkdir z390_${version_tag}
-cd z390_${version_tag}
+cd ${DIST_DIR}
+mkdir z390_${VERSION}
+cd z390_${VERSION}
 
 # add core files to the build dir
-cp ${root_dir}/z390.jar .               # jar
-core_dirs=( bash bat mac zcobol cics linklib README.txt LICENSE )
-for dir in ${core_dirs[@]}; do
-    cp -R ${root_dir}/${dir} .          # unix bash scripts
+cp ${ROOT_DIR}/z390.jar .               # jar
+CORE_DIRS=( bash bat mac zcobol cics linklib README.txt LICENSE )
+for dir in ${CORE_DIRS[@]}; do
+    cp -R ${ROOT_DIR}/${dir} .          # unix bash scripts
 done
 
 # add test and supplimental components
-supp_dirs=( assist demo guam qsam bsam rt soa sort structuredmacros tests vsam1 
+SUPP_DIRS=( assist demo guam qsam bsam rt soa sort structuredmacros tests vsam1 
 vsam2 vse zopcheck zpar )
-for dir in ${supp_dirs[@]}; do
-    cp -R ${root_dir}/${dir} .          # unix bash scripts
+for dir in ${SUPP_DIRS[@]}; do
+    cp -R ${ROOT_DIR}/${dir} .          # unix bash scripts
 done
 
 # add structured programming macros to mac/spm folder
 mkdir -p mac/spm
-cp -R ${root_dir}/build/zstrmac/* mac/spm
+cp -R ${ROOT_DIR}/build/zstrmac/* mac/spm
 
 # add javadoc
 mkdir -p javadoc
-cp -R ${root_dir}/build/javadoc/* javadoc
+cp -R ${ROOT_DIR}/build/javadoc/* javadoc
 
 # remove components not required for distribution
-del_items=('bash/bldjar' 'bat/BLDJAR.BAT' 'bash/blddist' 'bash/relver' 'bat/RELVER.BAT')
-for item in ${del_items[@]}; do
+DEL_ITEMS=('bash/bldjar' 'bat/BLDJAR.BAT' 'bash/blddist' 'bash/relver' 'bat/RELVER.BAT')
+for item in ${DEL_ITEMS[@]}; do
     rm ${item}        # unix bash scripts
 done
 
 # create zip package
 cd ..
-zip -q -dd -r z390_${version_tag}.zip z390_${version_tag}
+zip -q -dd -r z390_${VERSION}.zip z390_${VERSION}
