@@ -16,6 +16,7 @@ jobs:
         run: |
           echo "VERSION=${$(git describe)//./_}" >> $GITHUB_OUTPUT
         id: version
+        shell: bash
       - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
