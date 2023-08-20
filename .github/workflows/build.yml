@@ -43,14 +43,36 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: dist
-      - name: Install dist in dist folder
+      - name: Install dist and run tests
         run: |
           mkdir -p dist
-          unzip z390*.zip -d dist
-      - name: run tests
-        run: |
+          unzip z390_${VERSION}.zip -d dist
           ls -l dist/z390_${VERSION}
           cp dist/z390_${VERSION}/z390.jar .
           Z390_PROJECT_ROOT="../dist/z390_${VERSION}" z390test/gradlew -p z390test test 
+        env:
+          VERSION: ${{ needs.build-dist.outputs.VERSION }}
+  
+  run-windows:
+    runs-on: windows-latest
+    needs:
+      - build-dist 
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+      - name: get dist artefact
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+      - name: Install dist and run demos
+        shell: cmd
+        run: |
+          tar -xf z390_%VERSION%.zip
+          dir z390_%VERSION%
+          z390_%VERSION%\bat\RUNASMDEMOS.BAT
+          z390_%VERSION%\bat\RUNCBLDEMOS.BAT
         env:
           VERSION: ${{ needs.build-dist.outputs.VERSION }}
