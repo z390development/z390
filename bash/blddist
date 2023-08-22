@@ -8,7 +8,7 @@ cd $(dirname $0)                        # set to directory of script
 cd ..                                   # cd back to root       
 
 ROOT_DIR=$(pwd)
-VERSION="$(git describe)"
+VERSION="$(git describe --tags)"
 VERSION="${VERSION//./_}"
 echo "Building z390 ${VERSION}"
 DIST_DIR=dist
