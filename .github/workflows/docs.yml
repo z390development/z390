@@ -18,9 +18,9 @@ jobs:
       - name: version
         run: echo "version=$(git describe --tags)" >> $GITHUB_OUTPUT
         id: version
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.11
       - run: pip install -r doc/requirements.txt
       - run: mkdocs gh-deploy --force
         env:
