@@ -10,10 +10,6 @@ DEST=$1
 if [ -z "${DEST}" ]; then 
     DEST="build/javadoc"
 fi
-mkdir -p "${DEST}"   # create folder if does not exist
-
-javadocdir=build/javadoc  # directory for javadoc files
-
 mkdir -p "${DEST}"   # create directory if it does not exist
 
 # empty destination directory
