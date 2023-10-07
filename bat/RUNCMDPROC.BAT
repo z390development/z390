@@ -13,9 +13,15 @@ rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..
 
+set RTPATH=rt\test
+
 rem Test one Command Processor
 set z_testID=1
-call bat\asmlg %z_TraceMode% rt\test\TESTCMD3 || goto error
+
+rem name of test file
+set TESTCMDFILE=%RTPATH%\bat\TESTCMD3.BAT
+
+call bat\asmlg %z_TraceMode% %RTPATH%\TESTCMD3 || goto error
 
 rem Test two Command Processors (3 tests)
 rem A. Both have same number of lines of output
@@ -23,11 +29,26 @@ rem B Second CP has more lines of output
 rem C. First CP has more lines of output
 
 set z_testID=2A
-call bat\asmlg %z_TraceMode% rt\test\TESTCMD4 PARM(1) || goto error
+
+rem names of test files for first test
+set TESTCMDFILE1=%RTPATH%\bat\TESTCMD4A.BAT
+set TESTCMDFILE2=%RTPATH%\bat\TESTCMD4B.BAT
+
+call bat\asmlg %z_TraceMode% %RTPATH%\TESTCMD4 || goto error
 set z_testID=2B
-call bat\asmlg %z_TraceMode% rt\test\TESTCMD4 PARM(2) || goto error
+
+rem names of test files for second test
+set TESTCMDFILE1=%RTPATH%\bat\TESTCMD4A.BAT
+set TESTCMDFILE2=%RTPATH%\bat\TESTCMD4C.BAT
+
+call bat\asmlg %z_TraceMode% %RTPATH%\TESTCMD4 || goto error
 set z_testID=2C
-call bat\asmlg %z_TraceMode% rt\test\TESTCMD4 PARM(3) || goto error
+
+rem names of test files for third test
+set TESTCMDFILE1=%RTPATH%\bat\TESTCMD4C.BAT
+set TESTCMDFILE2=%RTPATH%\bat\TESTCMD4B.BAT
+
+call bat\asmlg %z_TraceMode% %RTPATH%\TESTCMD4 || goto error
 set z_ReturnCode=0
 goto return
 
