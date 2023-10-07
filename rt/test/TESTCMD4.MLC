@@ -291,12 +291,6 @@ TstCmd@1 DC    A(0)                A(first test command file name)
 TstCmd@2 DC    A(0)                A(second test command file name)
 *                                  (names terminated with X'00')
 *
-TestCmd1 DS    CL256               Area to contain 1st test file name;
-*                                  terminated with X'00'
-*
-TestCmd2 DS    CL256               Area to contain 2nd test file name;
-*                                  terminated with X'00'
-*
 ***********************************************************************
 *        Environment variables containing test file names
 ***********************************************************************
