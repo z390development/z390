@@ -23,7 +23,7 @@
 # debug flag; 0=no debug, 1=debug
 debug=0
 
-#set -e              # exit on all errors
+set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script
 cd ..
 
