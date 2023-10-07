@@ -23,7 +23,7 @@
 *---------------------------------------------------------------------*
 *                                                                     *
 * Input:  Environment variable TESTCMDFILE contains the name of       *
-*         test file; naximum length of name is 255                    *
+*         the test file                                               *
 *                                                                     *
 *---------------------------------------------------------------------*
 *                                                                     *
@@ -148,7 +148,7 @@ ShowRC   DS    0H
 *        R14 =  return address
 *        R15 =  return code
 *               0  test command file found
-*               4  unable to find TESCMDFILE environment variable
+*               4  unable to find TESTCMDFILE environment variable
 *
 ***********************************************************************
 *
@@ -158,7 +158,7 @@ GetEnv   DS    0H
 *        WARNING: no save area
 *
          GETENV TESTCMDFILE        Get name of test file
-         LTR   R15,R15             Found TESTFILENAME?
+         LTR   R15,R15             Found TESTCMDNAME?
          BNZ   GE8000              No
 *     LA    R3,63(,R2)
 *     SNAP STORAGE=((2),(3)),PDATA=,TEXT='TESTCMDFILE'
