@@ -50,6 +50,8 @@ fi
 export TESTCMDFILE=${rtpath}/bash/testcmd3
 
 bash/exec ${rtpath}/${program}
+rc=$?
+if [ $debug -eq 1 ]; then echo "${program}: rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then
     echo "Error ${program} rc=$rc - exiting"
     exit $rc
@@ -75,7 +77,9 @@ fi
 export TESTCMDFILE1=${rtpath}/bash/testcmd4a
 export TESTCMDFILE2=${rtpath}/bash/testcmd4b
 
-bash/exec ${rtpath}/${program} noinit dump
+bash/exec ${rtpath}/${program}
+rc=$?
+if [ $debug -eq 1 ]; then echo "${program} test 1: rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then
     echo "Error ${program} rc=$rc - exiting"
     exit $rc
@@ -85,7 +89,9 @@ fi
 export TESTCMDFILE1=${rtpath}/bash/testcmd4a
 export TESTCMDFILE2=${rtpath}/bash/testcmd4c
 
-bash/exec ${rtpath}/${program} noinit dump
+bash/exec ${rtpath}/${program}
+rc=$?
+if [ $debug -eq 1 ]; then echo "${program} test 2: rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then
     echo "Error ${program} rc=$rc - exiting"
     exit $rc
@@ -94,7 +100,10 @@ fi
 # names of test files for third test
 export TESTCMDFILE1=${rtpath}/bash/testcmd4c
 export TESTCMDFILE2=${rtpath}/bash/testcmd4b
-bash/exec ${rtpath}/${program} noinit dump
+
+bash/exec ${rtpath}/${program}
+rc=$?
+if [ $debug -eq 1 ]; then echo "${program} test 3: rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then
     echo "Error ${program} rc=$rc - exiting"
     exit $rc
