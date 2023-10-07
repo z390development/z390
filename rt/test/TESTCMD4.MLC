@@ -25,10 +25,10 @@
 *---------------------------------------------------------------------*
 *                                                                     *
 * Input:  Environment variable TESTCMDFILE1 contains the name of      *
-*         first test file; naximum length of name is 255              *
+*         first test file                                             *
 *                                                                     *
 *         Environment variable TESTCMDFILE2 contains the name of      *
-*         second test file; naximum length of name is 255             *
+*         second test file                                            *
 *                                                                     *
 *                                                                     *
 *        Test    What is tested                                       *
@@ -253,14 +253,14 @@ GetEnv   DS    0H
 *        WARNING: no save area
 *
          GETENV TESTCMDFILE1       Get name of first test file
-         LTR   R15,R15             Found TESTFILENAME1?
+         LTR   R15,R15             Found TESTCMDFILE1?
          BNZ   GE8000              No
 *     LA    R3,63(,R2)
 *     SNAP STORAGE=((2),(3)),PDATA=,TEXT='TESTCMDFILE1'
          ST    R2,TstCmd@1         Save A(first test file name)
 *
          GETENV TESTCMDFILE2       Get name of second test file
-         LTR   R15,R15             Found TESTFILENAME2?
+         LTR   R15,R15             Found TESTCMDFILE2?
          BNZ   GE8000              No
 *     LA    R3,63(,R2)
 *     SNAP STORAGE=((2),(3)),PDATA=,TEXT='TESTCMDFILE2'
