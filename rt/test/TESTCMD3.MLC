@@ -22,6 +22,11 @@
 *                                                                     *
 *---------------------------------------------------------------------*
 *                                                                     *
+* Input:  Environment variable TESTCMDFILE contains the name of       *
+*         test file; naximum length of name is 255                    *
+*                                                                     *
+*---------------------------------------------------------------------*
+*                                                                     *
 * Return codes: Value    Meaning                                      *
 *               -----    -------                                      *
 *                 0      Program ended without any errors             *
@@ -30,8 +35,8 @@
 *                16      Command Processor abnormally ended           *
 *                20      Number of CP read attempts exceeds           *
 *                        maximum value                                *
-*                24      Unable to verify run environment is          *
-*                        Windows or Linux/Mac                         *
+*                24      Invalid/missing TESTCMDFILE environment      *
+*                        variable                                     *
 *                                                                     *
 ***********************************************************************
          TITLE 'TESTCMD3 TEST USE OF SVC 34 COMMAND PROCESSOR'
@@ -46,22 +51,14 @@ TESTCMD3 CSECT
 *
          SR    R11,R11             R11 will be the return code
 *
-         BAS   R14,GetEnv          Get runtime environment
-         LTR   R15,R15             Windows or Linux/Mac found?
+         BAS   R14,GetEnv          Get name of test file
+         LTR   R15,R15             Got file name?
          BZ    GetEnvOK            Yes; continue
-         WTO   'TESTCMD3: Error: cannot verify Windows or Linux/Mac'
+         WTO   'TESTCMD3: Error: invalid/missing test file name'
          LA    R11,24              Return code
          B     Exit                Can't continue; exit
 GetEnvOK DS    0H
-         BAS   R14,SetCmd          Set appropriate command to run
-*
-         CLI   ENVFlag,ENVWin      Windows environment?
-         BE    CmdWin              Yes
-         WTO   'TESTCMD3 Linux/Mac test of SVC 34 (Command Processor)'
-         B     CmdStart            Start the command
-CmdWin   DS    0H
-         WTO   'TESTCMD3 Windows test of SVC 34 (Command Processor)'
-CmdStart DS    0H
+         WTO   'TESTCMD3 Test SVC 34 (Command Processor)'
 *
          CMDPROC START,CMDLOG=NO   Start the CP
 *
@@ -145,44 +142,13 @@ ShowRC   DS    0H
          BR    R14                 Return to caller
 *
 ***********************************************************************
-*        Set command to run -- Windows or Linux
-*
-*        ENVFlag has been set to Windows or Linux
+*        Get test command file name
 *
 *        R13 -> usable save area
 *        R14 =  return address
-*        R15 =  return code; always 0
-*
-***********************************************************************
-*
-SetCmd   DS    0H
-         STM   R14,R12,12(R13)     Save caller's registers
-*
-*        WARNING: no save area
-*
-         CLI   ENVFlag,ENVWin      Windows environment?
-         BE    SCWin               Yes; set Windows command
-*                                  No; must be Linux/Mac
-         LA    R0,TestCmdL         Linux/Mac test command
-         ST    R0,TestCmd@         Save the address
-         B     SCExit              All done
-SCWin    DS    0H
-         LA    R0,TestCmdW         Windows test command
-         ST    R0,TestCmd@         Save the address
-*NSI     B     SCExit              All done
-SCExit   DS    0H
-         SR    R15,R15             Set return code; always zero
-*
-         L     R14,12(,R13)        Restore caller's registers
-         LM    R0,R12,20(R13)      ... except for R15
-         BR    R14                 Return to caller
-*
-***********************************************************************
-*        Get runtime environment (set ENVFlag)
-*
-*        R13 -> usable save area
-*        R14 =  return address
-*        R15 =  return code; 0 = env found; 4 = unable to find env
+*        R15 =  return code
+*               0  test command file found
+*               4  unable to find TESCMDFILE environment variable
 *
 ***********************************************************************
 *
@@ -191,48 +157,18 @@ GetEnv   DS    0H
 *
 *        WARNING: no save area
 *
-         MVI   ENVFlag,ENVUnkn     Unknown environment
-*
-         GETENV COMSPEC            Check for Windows
-         LTR   R15,R15             Found COMSPEC?
-         BNZ   GE1000              No; check for Linux/Mac
-         MVI   ENVFlag,ENVWin      Yes; Indicate Windows
+         GETENV TESTCMDFILE        Get name of test file
+         LTR   R15,R15             Found TESTFILENAME?
+         BNZ   GE8000              No
 *     LA    R3,63(,R2)
-*     SNAP STORAGE=((2),(3)),PDATA=,TEXT='Windows COMSPEC'
-         B     GE7000              All done; free GETENV storage
-GE1000   DS    0H
-***********************************************************************
-*        SHELL was not found in Github build environment (Linux)
-*        so the build failed. For now, assume environment is
-*        Linux/Mac if not Windows.
-***********************************************************************
-         MVI   ENVFlag,ENVLinux    Indicate Linux/Mac
-         SR    R15,R15             Set return code
-         B     GE9000              Done; no GETENV storage to free
-*
-         AGO   .skplin             Skip over the Linux check
-         GETENV SHELL              Check for Linux/Mac
-         LTR   R15,R15             Found SHELL?
-         BNZ   GE8000              No; error
-         MVI   ENVFlag,ENVLinux    Yes; Indicate Linux/Mac
-*     LA    R3,63(,R2)
-*     SNAP STORAGE=((2),(3)),PDATA=,TEXT='Linux/Mac SHELL'
-*NSI     B     GE7000              All done; free GETENV storage
-.skplin  ANOP
-*
-GE7000   DS    0H
-         LR    R1,R2               R1 -> null-terminated ENV string
-GE7100   DS    0H
-         LA    R2,1(,R2)           R2 -> next byte; at least 1 non-null
-         CLI   0(R2),X'00'         Found null?
-         BNE   GE7100              No; continue search; must be found
-         AHI   R2,1                One byte beyond the null byte
-         SR    R2,R1               Length to free
-         FREEMAIN R,LV=(2),A=(1)   Free the GETENV storage
-         SR    R15,R15             Set return code
-         B     GE9000              Return
+*     SNAP STORAGE=((2),(3)),PDATA=,TEXT='TESTCMDFILE'
+         ST    R2,TestCmd@         Save A(test file name)
+         B     GE8100              Set return code
 GE8000   DS    0H
          LA    R15,4               Set return code
+         B     GE9000              Return
+GE8100   DS    0H
+         SR    R15,R15             Set return code: success
 *NSI     B     GE9000              Return
 GE9000   DS    0H
          L     R14,12(,R13)        Restore caller's registers
@@ -241,36 +177,22 @@ GE9000   DS    0H
 *
          LTORG ,
 *
-SA       DC    18F'0'              Save area for TESTCMD3
+SA       DC    18F'0'              Current save area
 *
 MAXLPCNT EQU   60                  Maximum loop count
 *
 ***********************************************************************
-*        Fields use to query the runtime environment
+*        Test command file
 ***********************************************************************
 *
-ENVFlag  DS    CL1                 Environment flag
-ENVWin   EQU   C'W'                Windows
-ENVLinux EQU   C'L'                Linux/Mac
-ENVUnkn  EQU   C'Z'                Unknown
-*
-COMSPEC  DC    C'COMSPEC',X'00'    Windows environment variable
-*
-*        Sample: COMSPEC=C:\WINDOWS\system32\cmd.exe
-*
-SHELL    DC    C'SHELL',X'00'      Linux/MacOS environment variable
-*
-*        Sample: SHELL=/bin/bash
+TestCmd@ DC    A(0)                Address of test command file name
+*                                  (name terminated with X'00')
 *
 ***********************************************************************
-*        Test commands; one for Windows, one for Linux/MacOS
+*        Environment variable containing test file name
 ***********************************************************************
 *
-TestCmd@ DC    A(0)                Address of test command to issue
-*
-TestCmdW DC    C'rt\test\bat\TESTCMD3.BAT',X'00'   Windows command
-*
-TestCmdL DC    C'rt/test/bash/testcmd3',X'00'      Linux/Mac command
+TESTCMDFILE    DC    C'TESTCMDFILE',X'00'
 *
 ***********************************************************************
 *        WTOs

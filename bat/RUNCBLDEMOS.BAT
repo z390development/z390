@@ -12,12 +12,19 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..
-call bat\CBLCLG %z_TraceMode% zcobol\demo\HELLO    %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
-call bat\CBLCLG %z_TraceMode% zcobol\demo\DATETIME %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
-call bat\CBLCLG %z_TraceMode% zcobol\demo\POWERS   %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
-call bat\CBLCLG %z_TraceMode% zcobol\demo\COPYFILE %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
-call bat\CBLC   %z_TraceMode% zcobol\demo\COMPSUM  %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
-call bat\ASMLG  %z_TraceMode% zcobol\demo\CALLCOMP SYS390(zcobol\lib) %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+
+set DEMOPATH=zcobol\demo
+
+call bat\CBLCLG %z_TraceMode% %DEMOPATH%\HELLO    %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
+call bat\CBLCLG %z_TraceMode% %DEMOPATH%\DATETIME %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
+call bat\CBLCLG %z_TraceMode% %DEMOPATH%\POWERS   %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
+
+set INFILE=%DEMOPATH%\COPYFILE.IN
+set OUTFILE=%DEMOPATH%\COPYFILE.OUT
+
+call bat\CBLCLG %z_TraceMode% %DEMOPATH%\COPYFILE %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
+call bat\CBLC   %z_TraceMode% %DEMOPATH%\COMPSUM  %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
+call bat\ASMLG  %z_TraceMode% %DEMOPATH%\CALLCOMP SYS390(zcobol\lib) %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 set z_ReturnCode=0
 goto return
 

@@ -23,17 +23,35 @@
 # debug flag; 0=no debug, 1=debug
 debug=0
 
-set -e              # exit on all errors
+#set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script
 cd ..
 
+########################################
+# path
+########################################
+
+rtpath=rt/test
+
 # Test one Command Processor
 
-bash/asmlg rt/test/TESTCMD3
+program=TESTCMD3
+
+# build test program
+bash/asml ${rtpath}/${program}
 rc=$?
-if [ $debug -eq 1 ]; then echo "TESTCMD3: rc=$rc"; fi
+if [ $debug -eq 1 ]; then echo "build ${program}: rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then
-    echo "Error in TESTCMD3 rc=$rc - exiting"
+    echo "Error building ${program} rc=$rc - exiting"
+    exit $rc
+fi
+
+# name of test file
+export TESTCMDFILE=${rtpath}/bash/testcmd3
+
+bash/exec ${rtpath}/${program}
+if [ "$rc" -ne "0" ]; then
+    echo "Error ${program} rc=$rc - exiting"
     exit $rc
 fi
 
@@ -42,27 +60,43 @@ fi
 # 2. Second CP has more lines of output
 # 3. First CP has more lines of output
 
-bash/asmlg rt/test/TESTCMD4 'PARM(1)'
+program=TESTCMD4
+
+# build test program
+bash/asml ${rtpath}/${program}
 rc=$?
-if [ $debug -eq 1 ]; then echo "TESTCMD4 PARM(1): rc=$rc"; fi
+if [ $debug -eq 1 ]; then echo "build ${program}: rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then
-    echo "Error in TESTCMD4 PARM(1) rc=$rc - exiting"
+    echo "Error building ${program} rc=$rc - exiting"
     exit $rc
 fi
 
-bash/asmlg rt/test/TESTCMD4 'PARM(2)'
-rc=$?
-if [ $debug -eq 1 ]; then echo "TESTCMD4 PARM(2): rc=$rc"; fi
+# names of test files for first test
+export TESTCMDFILE1=${rtpath}/bash/testcmd4a
+export TESTCMDFILE2=${rtpath}/bash/testcmd4b
+
+bash/exec ${rtpath}/${program} noinit dump
 if [ "$rc" -ne "0" ]; then
-    echo "Error in TESTCMD4 PARM(2) rc=$rc - exiting"
+    echo "Error ${program} rc=$rc - exiting"
     exit $rc
 fi
 
-bash/asmlg rt/test/TESTCMD4 'PARM(3)'
-rc=$?
-if [ $debug -eq 1 ]; then echo "TESTCMD4 PARM(3): rc=$rc"; fi
+# names of test files for second test
+export TESTCMDFILE1=${rtpath}/bash/testcmd4a
+export TESTCMDFILE2=${rtpath}/bash/testcmd4c
+
+bash/exec ${rtpath}/${program} noinit dump
 if [ "$rc" -ne "0" ]; then
-    echo "Error in TESTCMD4 PARM(3) rc=$rc - exiting"
+    echo "Error ${program} rc=$rc - exiting"
+    exit $rc
+fi
+
+# names of test files for third test
+export TESTCMDFILE1=${rtpath}/bash/testcmd4c
+export TESTCMDFILE2=${rtpath}/bash/testcmd4b
+bash/exec ${rtpath}/${program} noinit dump
+if [ "$rc" -ne "0" ]; then
+    echo "Error ${program} rc=$rc - exiting"
     exit $rc
 fi
 

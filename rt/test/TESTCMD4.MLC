@@ -24,7 +24,12 @@
 *                                                                     *
 *---------------------------------------------------------------------*
 *                                                                     *
-* Input: The PARM=value is a test number; valid values are 1, 2, or 3 *
+* Input:  Environment variable TESTCMDFILE1 contains the name of      *
+*         first test file; naximum length of name is 255              *
+*                                                                     *
+*         Environment variable TESTCMDFILE2 contains the name of      *
+*         second test file; naximum length of name is 255             *
+*                                                                     *
 *                                                                     *
 *        Test    What is tested                                       *
 *        ----    -----------------------------------------------------*
@@ -42,9 +47,8 @@
 *                16      A Command Processor abnormally ended         *
 *                20      Number of CP read attempts exceeds           *
 *                        maximum value                                *
-*                24      Unable to verify run environment is          *
-*                        Windows or Linux/Mac                         *
-*                28      Invalid/missing PARM=value                   *
+*                24      Invalid/missing TESTCMDFILE1 or              *
+*                        TESTCMDFILE2 environment variable            *
 *                                                                     *
 ***********************************************************************
          TITLE 'TESTCMD4 TEST USE OF SVC 34 COMMAND PROCESSOR'
@@ -59,31 +63,14 @@ TESTCMD4 CSECT
 *
          SR    R11,R11             R11 will be the return code
 *
-         BAS   R14,GetParm         Get and verify PARM=value
-         LTR   R15,R15             Valid value?
-         BZ    ParmOK              Yes; continue
-         WTO   'TESTCMD4: Error: invalid PARM value; must be 1,2 or 3'
-         LA    R11,28              Return code
-         B     Exit                Can't continue; exit
-ParmOK   DS    0H
-         BAS   R14,GetEnv          Get runtime environment
-         LTR   R15,R15             Windows or Linux/Mac found?
+         BAS   R14,GetEnv          Get names of test files
+         LTR   R15,R15             Got names?
          BZ    GetEnvOK            Yes; continue
-         WTO   'TESTCMD4: Error: cannot verify Windows or Linux/Mac'
+         WTO   'TESTCMD4: Error: invalid/missing test file name(s)'
          LA    R11,24              Return code
          B     Exit                Can't continue; exit
 GetEnvOK DS    0H
-         BAS   R14,SetCmd          Set appropriate commands to run
-*
-         CLI   ENVFlag,ENVWin      Windows environment?
-         BE    CmdWin              Yes
-         WTO   'TESTCMD4 Linux/Mac test of SVC 34 CMDPROC multitask supp
-               port'
-         B     SetupEnd            Begin testing
-CmdWin   DS    0H
-         WTO   'TESTCMD4 Windows test of SVC 34 CMDPROC multitask suppor
-               rt'
-SetupEnd DS    0H
+         WTO   'TESTCMD4 Test SVC 34 CMDPROC multitask support'
 *
 CmdStart DS    0H
          MVI   EOFFlag,X'00'           Initialize EOF flags
@@ -249,53 +236,14 @@ ShowRC   DS    0H
          BR    R14                     Return to caller
 *
 ***********************************************************************
-*        Set the two commands to run -- Windows or Linux
-*
-*        ParmVal already set to valid Parm=value in binary
-*        ENVFlag already set to Windows or Linux
+*        Get test command file names
 *
 *        R13 -> usable save area
 *        R14 =  return address
-*        R15 =  return code; always 0
-*
-***********************************************************************
-*
-SetCmd   DS    0H
-         STM   R14,R12,12(R13)     Save caller's registers
-*
-*        WARNING: no save area
-*
-         CLI   ENVFlag,ENVWin      Windows environment?
-         BE    SCWin               Yes: set Windows commands
-*                                  No; must be Linux/Mac
-         L     R3,ParmVal          ParmVal is the test number
-         SLL   R3,3                Convert to offset relative to 1
-         LA    R1,TstL-8(R3)       R1 -> A(1st test cmd, 2nd test cmd)
-         LM    R0,R1,0(R1)         R1 -> 1st tst cmd, R1 -> 2nd tst cmd
-         ST    R0,TstCmd@1         Save Linux/Mac 1st test cmd address
-         ST    R1,TstCmd@2         Save Linux/Mac 2nd test cmd address
-         B     SCExit              All done
-SCWin    DS    0H
-         L     R3,ParmVal          ParmVal is the test number
-         SLL   R3,3                Convert to offset relative to 1
-         LA    R1,TstW-8(R3)       R1 -> A(1st test cmd, 2nd test cmd)
-         LM    R0,R1,0(R1)         R1 -> 1st tst cmd, R1 -> 2nd tst cmd
-         ST    R0,TstCmd@1         Save Windows 1st test cmd address
-         ST    R1,TstCmd@2         Save Windows 2nd test cmd address
-*NSI     B     SCExit              All done
-SCExit   DS    0H
-         SR    R15,R15             Set return code; always zero
-*
-         L     R14,12(,R13)        Restore caller's registers
-         LM    R0,R12,20(R13)      ... except for R15
-         BR    R14                 Return to caller
-*
-***********************************************************************
-*        Get runtime environment (set ENVFlag)
-*
-*        R13 -> usable save area
-*        R14 =  return address
-*        R15 =  return code; 0 = env found; 4 = unable find env
+*        R15 =  return code
+*               0  test command file found
+*               4  unable to find TESCMDFILE1 environment variable
+*                  or unable to find TESTCMDFILE2 environment variable
 *
 ***********************************************************************
 *
@@ -304,89 +252,27 @@ GetEnv   DS    0H
 *
 *        WARNING: no save area
 *
-         MVI   ENVFlag,ENVUnkn     Unknown environment
-*
-         GETENV COMSPEC            Check for Windows
-         LTR   R15,R15             Found COMSPEC?
-         BNZ   GE1000              No; check for Linux/Mac
-         MVI   ENVFlag,ENVWin      Yes; Indicate Windows
+         GETENV TESTCMDFILE1       Get name of first test file
+         LTR   R15,R15             Found TESTFILENAME1?
+         BNZ   GE8000              No
 *     LA    R3,63(,R2)
-*     SNAP STORAGE=((2),(3)),PDATA=,TEXT='Windows COMSPEC'
-         B     GE7000              All done; free GETENV storage
-GE1000   DS    0H
-***********************************************************************
-*        SHELL was not found in Github build environment (Linux)
-*        so the build failed. For now, assume environment is
-*        Linux/Mac if not Windows.
-***********************************************************************
-         MVI   ENVFlag,ENVLinux    Indicate Linux/Mac
-         SR    R15,R15             Set return code
-         B     GE9000              Done; no GETENV storage to free
+*     SNAP STORAGE=((2),(3)),PDATA=,TEXT='TESTCMDFILE1'
+         ST    R2,TstCmd@1         Save A(first test file name)
 *
-         AGO   .skplin             Skip over the Linux check
-         GETENV SHELL              Check for Linux/Mac
-         LTR   R15,R15             Found SHELL?
-         BNZ   GE8000              No; error
-         MVI   ENVFlag,ENVLinux    Yes; Indicate Linux/Mac
+         GETENV TESTCMDFILE2       Get name of second test file
+         LTR   R15,R15             Found TESTFILENAME2?
+         BNZ   GE8000              No
 *     LA    R3,63(,R2)
-*     SNAP STORAGE=((2),(3)),PDATA=,TEXT='Linux/Mac SHELL'
-*NSI     B     GE7000              All done; free GETENV storage
-.skplin  ANOP
-*
-GE7000   DS    0H
-         LR    R1,R2               R1 -> null-terminated ENV string
-GE7100   DS    0H
-         LA    R2,1(,R2)           R2 -> next byte; at least 1 non-null
-         CLI   0(R2),X'00'         Found null?
-         BNE   GE7100              No; continue search; must be found
-         AHI   R2,1                One byte beyond the null byte
-         SR    R2,R1               Length to free
-         FREEMAIN R,LV=(2),A=(1)   Free the GETENV storage
-         SR    R15,R15             Set return code
-         B     GE9000              Return
+*     SNAP STORAGE=((2),(3)),PDATA=,TEXT='TESTCMDFILE2'
+         ST    R2,TstCmd@2         Save A(second test file name)
+         B     GE8100              Set return code
 GE8000   DS    0H
          LA    R15,4               Set return code
+         B     GE9000              Return
+GE8100   DS    0H
+         SR    R15,R15             Set return code: success
 *NSI     B     GE9000              Return
 GE9000   DS    0H
-         L     R14,12(,R13)        Restore caller's registers
-         LM    R0,R12,20(R13)      ... except for R15
-         BR    R14                 Return to caller
-*
-***********************************************************************
-*        Get and validate value from PARM=value
-*
-*        R1  -> word -> halfword || value
-*        R13 -> usable save area
-*        R14 =  return address
-*        R15 =  return code; 0 = value valid; 4 = value invalid/missing
-*
-***********************************************************************
-*
-GetParm  DS    0H
-         STM   R14,R12,12(R13)     Save caller's registers
-*
-*        WARNING: no save area
-*
-         L     R2,0(,R1)           R2 --> halfword length
-         LH    R3,0(,R2)           R3 = length of value
-         LTR   R3,R3               Parm supplied?
-         BNP   GP1000              No; parm is invalid
-         CHI   R3,1                Only 1 byte?
-         BNE   GP1000              No; parm is invalid
-         SR    R3,R3               Get the
-         IC    R3,2(,R2)           ... parm value
-         CHI   R3,X'F1'            Smaller than C'1'?
-         BL    GP1000              Yes; invalid
-         CHI   R3,X'F3'            Larger than C'3'?
-         BH    GP1000              Yes; invalid
-         NILL  R3,X'000F'          Valid; remove high nibble
-         ST    R3,ParmVal          Save the value
-         SR    R15,R15             Set return code
-         B     GP9000              Return
-GP1000   DS    0H
-         LA    R15,4               Set return code
-*NSI     B     GP9000              Return
-GP9000   DS    0H
          L     R14,12(,R13)        Restore caller's registers
          LM    R0,R12,20(R13)      ... except for R15
          BR    R14                 Return to caller
@@ -398,51 +284,25 @@ SA       DC    18F'0'              Current save area
 MAXLPCNT EQU   60                  Maximum loop count
 *
 ***********************************************************************
-*        PARM=value converted to binary
+*        Test command files
 ***********************************************************************
 *
-ParmVal  DS    F                   Value is the test number (1,2 or 3)
+TstCmd@1 DC    A(0)                A(first test command file name)
+TstCmd@2 DC    A(0)                A(second test command file name)
+*                                  (names terminated with X'00')
+*
+TestCmd1 DS    CL256               Area to contain 1st test file name;
+*                                  terminated with X'00'
+*
+TestCmd2 DS    CL256               Area to contain 2nd test file name;
+*                                  terminated with X'00'
 *
 ***********************************************************************
-*        Fields use to query the runtime environment
+*        Environment variables containing test file names
 ***********************************************************************
 *
-ENVFlag  DS    CL1                 Environment flag
-ENVWin   EQU   C'W'                Windows
-ENVLinux EQU   C'L'                Linux/Mac
-ENVUnkn  EQU   C'Z'                Unknown
-*
-COMSPEC  DC    C'COMSPEC',X'00'    Windows environment variable
-*
-*        Sample: COMSPEC=C:\WINDOWS\system32\cmd.exe
-*
-SHELL    DC    C'SHELL',X'00'      Linux/MacOS environment variable
-*
-*        Sample: SHELL=/bin/bash
-*
-***********************************************************************
-*        Test commands: three for Windows, three for Linux/MacOS
-***********************************************************************
-TstCmd@1 DC    A(0)                Address of first command to issue
-TstCmd@2 DC    A(0)                Address of second command to issue
-*
-TstW     DS    0D                              Windows tests
-         DC    A(TstCmdW1,TstCmdW2)            Test 1
-         DC    A(TstCmdW1,TstCmdW3)            Test 2
-         DC    A(TstCmdW3,TstCmdW2)            Test 3
-*
-TstCmdW1 DC    C'"rt\test\bat\TESTCMD4A.BAT"'  Windows command 1
-TstCmdW2 DC    C'"rt\test\bat\TESTCMD4B.BAT"'  Windows command 2
-TstCmdW3 DC    C'"rt\test\bat\TESTCMD4C.BAT"'  Windows command 3
-*
-TstL     DS    0D                              Linux/Mac tests
-         DC    A(TstCmdL1,TstCmdL2)            Test 1
-         DC    A(TstCmdL1,TstCmdL3)            Test 2
-         DC    A(TstCmdL3,TstCmdL2)            Test 3
-*
-TstCmdL1 DC    C'"rt/test/bash/testcmd4a"'     Linux/Mac command 1
-TstCmdL2 DC    C'"rt/test/bash/testcmd4b"'     Linux/Mac command 2
-TstCmdL3 DC    C'"rt/test/bash/testcmd4c"'     Linux/Mac command 3
+TESTCMDFILE1   DC    C'TESTCMDFILE1',X'00'
+TESTCMDFILE2   DC    C'TESTCMDFILE2',X'00'
 *
 ***********************************************************************
 *        WTOs

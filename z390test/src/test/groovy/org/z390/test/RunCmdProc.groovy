@@ -3,87 +3,79 @@ package org.z390.test
 import org.junit.jupiter.api.Test
 
 class RunCmdProc extends z390Test {
-    /*
-    Because the source contains hard coded file paths, we need to replace these with a path using basePath method.
-    We load the source into a variable and then update the file paths using a series of regex replacements
-    We then load the source into a temporary file and run it as per inline source process
-     */
 
+    /*
+     * This test set tests the use of "command processors" (CP) that process
+     * "commands" -- bat files for Windows, bash scripts for Linux/MacOS.
+     * Because of this distinction, we must use separate input files that
+     * contain commands based on what operating system is active when running
+     * the tests.
+     */
+     
     var options = ["SYSMAC(${basePath("mac")})"]
     var os = System.getProperty("os.name")
-
-    RunCmdProc() {
-        // This is a hack as the Java process does not set COMSPEC in Windows
-        if (os.startsWith('Windows')) {
-            env.put('COMSPEC', 'Windows')
-        }
-    }
 
     @Test
     void test_TESTCMD3() {
 
-        // regex replacement of batch file locations - use basePath
-        String WinBatOld = "C'rt\\\\test\\\\bat\\\\TESTCMD3\\.BAT',X'00'   Windows command"
-        println(WinBatOld)
-        var WinBatNew = "C'${basePathRelative('rt','test','bat','TESTCMD3.BAT')}',X'00'\n".replaceAll("[\\W|_]", /\\$0/)
-        println(WinBatNew)
-
-        String BashOld = "C'rt/test/bash/testcmd3',X'00'.*\n"
-        var BashNew = "C'${basePathRelative('rt','test','bash','testcmd3')}',X'00'\n"
-
-        // load the original source file
-        loadFile(basePath("rt", "test", "TESTCMD3.MLC"), 'source')
-        String source = fileData['source'].toString()
-
-        // update the bat/bash file locations in source
-        source = source.replaceAll(WinBatOld, WinBatNew)
-        source = source.replaceAll(BashOld, BashNew)
-
-        // Create temp source file containing updated source and run
-        String sourceFilename = createTempFile('TESTCMD3.MLC', source)
-        int rc = this.asmlg(sourceFilename, *options)
+        // Test one command processor
+        if (os.startsWith('Windows')) {
+            this.env.put('TESTCMDFILE', basePath('rt', 'test', 'bat', 'TESTCMD3.BAT'))
+        } 
+        else {
+            this.env.put('TESTCMDFILE', basePath('rt', 'test', 'bash', 'testcmd3'))
+        }
+        int rc = this.asmlg(basePath("rt", "test", "TESTCMD3"), *options)
         this.printOutput()
         assert rc == 0
     }
 
     @Test
     void test_TESTCMD4() {
-        // load the source file
-        loadFile(basePath("rt", "test", "TESTCMD4.MLC"), 'source')
-        String source = fileData['source'].toString()
 
-        // update the bat/bash file locations in source
-        for (let in [[1, 'A'],[2, 'B'] ,[3, 'C']]) {
-            source = source.replaceAll(
-                    "TstCmdW${let[0]} DC    C'\\\"rt\\\\test\\\\bat\\\\TESTCMD4${let[1]}.BAT\\\"'",
-                    "TstCmdW${let[0]} DC    C'\"${basePathRelative('rt', 'test', 'bat', "TESTCMD4${let[1]}").replaceAll("[\\W|_]", /\\$0/)}\"'"
-            )
+        /* Test two command processors (3 tests)
+         * 1. Both have same number of lines of output
+         * 2. Second CP has more lines of output
+         * 3. First CP has more lines of output
+         */
+
+        // test 1
+        if (os.startsWith('Windows')) {
+            this.env.put('TESTCMDFILE1', basePath('rt', 'test', 'bat', 'TESTCMD4A.BAT'))
+            this.env.put('TESTCMDFILE2', basePath('rt', 'test', 'bat', 'TESTCMD4B.BAT'))
+        } 
+        else {
+            this.env.put('TESTCMDFILE1', basePath('rt', 'test', 'bash', 'testcmd4a'))
+            this.env.put('TESTCMDFILE2', basePath('rt', 'test', 'bash', 'testcmd4b'))
         }
+        int rc = this.asmlg(basePath("rt", "test", "TESTCMD4"), *options)
+        this.printOutput()
+        assert rc == 0
 
-        for (let in [[1, 'a'],[2, 'b'] ,[3, 'c']]) {
-            source = source.replaceAll(
-                    "TstCmdL${let[0]} DC    C'\"rt/test/bash/testcmd4${let[1]}\"'.*\n",
-                    "TstCmdL${let[0]} DC    C'\"${basePathRelative('rt', 'test', 'bash', "testcmd4${let[1]}")}\"'\n"
-            )
+        // test 2
+        if (os.startsWith('Windows')) {
+            this.env.put('TESTCMDFILE1', basePath('rt', 'test', 'bat', 'TESTCMD4A.BAT'))
+            this.env.put('TESTCMDFILE2', basePath('rt', 'test', 'bat', 'TESTCMD4C.BAT'))
+        } 
+        else {
+            this.env.put('TESTCMDFILE1', basePath('rt', 'test', 'bash', 'testcmd4a'))
+            this.env.put('TESTCMDFILE2', basePath('rt', 'test', 'bash', 'testcmd4c'))
         }
-
-        // Create temp source file containing updated source and run
-        String sourceFilename = createTempFile('TESTCMD4.MLC', source)
-
-        // Run with PARM(1)
-        int rc = this.asmlg(sourceFilename, *options, 'PARM(1)')
+        rc = this.asmlg(basePath("rt", "test", "TESTCMD4"), *options)
         this.printOutput()
         assert rc == 0
 
-        // Run with PARM(2)
-        rc = this.asmlg(sourceFilename, *options, 'PARM(2)')
+        // test 3
+        if (os.startsWith('Windows')) {
+            this.env.put('TESTCMDFILE1', basePath('rt', 'test', 'bat', 'TESTCMD4C.BAT'))
+            this.env.put('TESTCMDFILE2', basePath('rt', 'test', 'bat', 'TESTCMD4B.BAT'))
+        } 
+        else {
+            this.env.put('TESTCMDFILE1', basePath('rt', 'test', 'bash', 'testcmd4c'))
+            this.env.put('TESTCMDFILE2', basePath('rt', 'test', 'bash', 'testcmd4b'))
+        }
+        rc = this.asmlg(basePath("rt", "test", "TESTCMD4"), *options)
         this.printOutput()
         assert rc == 0
-
-        // Run with PARM(3)
-        rc = this.asmlg(sourceFilename, *options, 'PARM(3)')
-        this.printOutput()
-        assert rc == 0
-
     }
 }

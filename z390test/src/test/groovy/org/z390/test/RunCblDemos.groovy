@@ -29,20 +29,11 @@ class RunCblDemos extends z390Test {
 
     @Test
     void test_COBOL_COPYFILE() {
-        // load the original source file
-        loadFile(basePath('zcobol', 'demo', 'COPYFILE.CBL'), 'source')
-        String source = fileData['source'].toString()
-
-        // update the bat/bash file locations in source
-        String fileOld = Pattern.quote("ASSIGN TO 'zcobol\\demo\\COPYFILE")
-        var fileNew = "ASSIGN TO '${basePathRelative('zcobol','demo', 'COPYFILE')}".replaceAll("[\\W|_]", /\\$0/)
-        source = source.replaceAll(fileOld, fileNew)
-
-        // Create temp source file containing updated file locations
-        String sourceFilename = createTempFile('COPYFILE.CBL', source, false)
-
-        // Now run the program
-        int rc = this.cblclg(sourceFilename)
+        this.env = [
+             'INFILE' : basePath('zcobol', 'demo', 'COPYFILE.IN'),
+             'OUTFILE' : basePath('zcobol', 'demo', 'COPYFILE.OUT')
+        ]
+        int rc = this.cblclg(basePath("zcobol", "demo", "COPYFILE"))
         this.printOutput()
         assert rc == 0
     }
