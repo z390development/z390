@@ -1,0 +1,18 @@
+#!/bin/bash
+# runcbldotdirtest: run z390 zcobol sample regression test 
+#                   when directory with '.' in file path
+
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
+
+rm -rf zcobol/test/cobol.dir
+mkdir -p zcobol/test/cobol.dir
+cp zcobol/demo/HELLO.CBL zcobol/test/cobol.dir
+bash/cblclg zcobol/test/cobol.dir/HELLO $1 $2 $3 $4 $5 $6 $7 $8 $9
+rm -rf zcobol/test/cobol.dir
+# if we get here, there were no errors
+
+echo "Verify ZCOBOL dotdir regression test ran without errors"
+exit 0
