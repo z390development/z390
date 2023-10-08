@@ -103,6 +103,7 @@ public class zc390{
     * 17-01-22 RPI JH 1545 Compiler fails to flag undefined field after test on literal with embedded parenthesis
     * 17-01-22 RPI JH 1546 Test on literal with embedded parenthesis not branching correctly
     * 2021-04-19 jjg Change way init_zc390 obtains program name to allow paths that begin with ".."
+    * 2023-10-07 #518 jjg Setting program name fails when '.' in directory name in file path
     ****************************************************
     *                                         last RPI *
 	****************************************************
@@ -307,22 +308,22 @@ public class zc390{
 			System.out.println("ZCOBOL " + zcobol_parms);
 		}
         // args[0] may be relative path beginning with ".."
-		String wk_name = tz390.fix_file_separators(args[0]);
-		index = wk_name.indexOf('.');
-		if (index == -1){
-			zc_file_name = wk_name + ".CBL";
-			mlc_file_name = wk_name + ".MLC";
-		} else {
-			zc_file_name = wk_name;
-			mlc_file_name = wk_name.substring(0,index) + ".MLC";
-		}
-		index = wk_name.lastIndexOf(File.separator);
+		lab_file_name = tz390.fix_file_separators(args[0]);                                      // #518
+		index = lab_file_name.lastIndexOf(File.separator);                                       // #518
+		// if no (last) '.' to right of last file separator                                      // #518
+		if (lab_file_name.substring(index+1).lastIndexOf('.') == -1) {                           // #518
+            zc_file_name = lab_file_name + ".CBL";                                               // #518
+            mlc_file_name = lab_file_name + ".MLC";                                              // #518
+        } else {                                                                                 // #518
+            zc_file_name = lab_file_name;                                                        // #518
+		    mlc_file_name = lab_file_name.substring(0,lab_file_name.lastIndexOf('.')) + ".MLC";  // #518
+        }                                                                                        // #518
 		if (index >= 0){
-			lab_file_dir = wk_name.substring(0,index+1);
+			lab_file_dir = lab_file_name.substring(0,index+1);                                   // #518
 		} else {
 			lab_file_dir = "";
 		}
-		lab_file_name = wk_name.substring(index+1) + "_ZC_LABELS.CPY";
+		lab_file_name = lab_file_name.substring(index+1) + "_ZC_LABELS.CPY";                     // #518
 	    mlc_file      = new File(mlc_file_name);
 		zc_file              = (File[])Array.newInstance(File.class,tz390.opt_maxfile);
 		zc_file_buff         = (BufferedReader[])Array.newInstance(BufferedReader.class,tz390.opt_maxfile);
