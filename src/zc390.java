@@ -308,22 +308,26 @@ public class zc390{
 			System.out.println("ZCOBOL " + zcobol_parms);
 		}
         // args[0] may be relative path beginning with ".."
-		lab_file_name = tz390.fix_file_separators(args[0]);                                      // #518
-		index = lab_file_name.lastIndexOf(File.separator);                                       // #518
-		// if no (last) '.' to right of last file separator                                      // #518
-		if (lab_file_name.substring(index+1).lastIndexOf('.') == -1) {                           // #518
-            zc_file_name = lab_file_name + ".CBL";                                               // #518
-            mlc_file_name = lab_file_name + ".MLC";                                              // #518
-        } else {                                                                                 // #518
-            zc_file_name = lab_file_name;                                                        // #518
-		    mlc_file_name = lab_file_name.substring(0,lab_file_name.lastIndexOf('.')) + ".MLC";  // #518
-        }                                                                                        // #518
+		lab_file_name = tz390.fix_file_separators(args[0]);                                    // #518
+		index = lab_file_name.lastIndexOf(File.separator);                                     // #518
+		int ixp = lab_file_name.substring(index+1).indexOf('.');                               // #518
+		if (ixp != -1 && lab_file_name.substring(ixp+1).indexOf('.') != -1) {                  // #518
+		    abort_error("zcobol: invalid file name - "+lab_file_name);                         // #518
+		}                                                                                      // #518
+		// if no '.' to right of last file separator                                           // #518
+		if (ixp == -1) {                                                                       // #518
+            zc_file_name = lab_file_name + ".CBL";                                             // #518
+            mlc_file_name = lab_file_name + ".MLC";                                            // #518
+        } else {                                                                               // #518
+            zc_file_name = lab_file_name;                                                      // #518
+		    mlc_file_name = lab_file_name.substring(0,index+1+ixp) + ".MLC";                   // #518
+        }                                                                                      // #518
 		if (index >= 0){
-			lab_file_dir = lab_file_name.substring(0,index+1);                                   // #518
+			lab_file_dir = lab_file_name.substring(0,index+1);                                 // #518
 		} else {
 			lab_file_dir = "";
 		}
-		lab_file_name = lab_file_name.substring(index+1) + "_ZC_LABELS.CPY";                     // #518
+		lab_file_name = lab_file_name.substring(index+1) + "_ZC_LABELS.CPY";                   // #518
 	    mlc_file      = new File(mlc_file_name);
 		zc_file              = (File[])Array.newInstance(File.class,tz390.opt_maxfile);
 		zc_file_buff         = (BufferedReader[])Array.newInstance(BufferedReader.class,tz390.opt_maxfile);
@@ -334,10 +338,13 @@ public class zc390{
 		zc_copy_rep_lst_ix   = (int[])Array.newInstance(int.class,tz390.opt_maxfile);
 		zc_copy_rep_lit1     = (String[])Array.newInstance(String.class,tz390.opt_maxfile);
 		zc_copy_rep_lit2     = (String[])Array.newInstance(String.class,tz390.opt_maxfile);
+		zc_file[cur_zc_file] = new File(zc_file_name);                                         // #518
+		if (!zc_file[cur_zc_file].isFile()) {                                                  // #518
+			abort_error("zcobol: file not found - "+zc_file_name);                             // #518
+		}                                                                                      // #518
 		try {
        		mlc_file_buff  = new BufferedWriter(new FileWriter(mlc_file_name));
        		lab_file_buff  = new BufferedWriter(new FileWriter(lab_file_dir + lab_file_name)); // RPI 1062
-			zc_file[cur_zc_file] = new File(zc_file_name);
 			zc_file_buff[cur_zc_file] = new BufferedReader(new FileReader(zc_file[cur_zc_file]));			
        	} catch (Exception e){
    			abort_error("zcobol file I/O error - " + e.toString());
@@ -487,6 +494,7 @@ public class zc390{
 		/* 
 		 * write text record to MLC or CPY file
 		 */
+		if (file_buff == null) return;   // #518
 		try {
 			if (text.length() >=72){
 				file_buff.write(text.substring(0,71) + "X\r\n");
