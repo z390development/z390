@@ -44,14 +44,14 @@ cd z390_${VERSION}
 cp ${ROOT_DIR}/z390.jar .               # jar
 CORE_DIRS=( bash bat mac zcobol cics linklib README.txt LICENSE )
 for dir in ${CORE_DIRS[@]}; do
-    cp -R ${ROOT_DIR}/${dir} .          # unix bash scripts
+    cp -R ${ROOT_DIR}/${dir} .
 done
 
 # add test and supplimental components
 SUPP_DIRS=( assist demo guam qsam bsam rt soa sort structuredmacros tests vsam1 
 vsam2 vse zopcheck zpar )
 for dir in ${SUPP_DIRS[@]}; do
-    cp -R ${ROOT_DIR}/${dir} .          # unix bash scripts
+    cp -R ${ROOT_DIR}/${dir} .
 done
 
 # add structured programming macros to mac/spm folder
@@ -65,7 +65,7 @@ cp -R ${ROOT_DIR}/build/javadoc/* javadoc
 # remove components not required for distribution
 DEL_ITEMS=('bash/bldjar' 'bat/BLDJAR.BAT' 'bash/blddist' 'bash/relver' 'bat/RELVER.BAT')
 for item in ${DEL_ITEMS[@]}; do
-    rm ${item}        # unix bash scripts
+    rm ${item}
 done
 
 # create zip package
