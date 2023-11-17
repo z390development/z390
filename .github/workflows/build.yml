@@ -15,7 +15,7 @@ jobs:
       - name: version
         run: |
           VERSION=$(git describe --tags)
-          echo "VERSION=${VERSION//./_}" >> $GITHUB_OUTPUT
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
         id: version
         shell: bash
       - uses: actions/setup-java@v3
