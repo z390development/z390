@@ -1,5 +1,9 @@
 name: Publish docs via GitHub Pages
-on: [push]
+on: 
+  push:
+    branches:
+      - main
+      - doc/**
 
 jobs:
   deploy:
@@ -7,16 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           lfs: true
       - name: version
-        run: echo "version=$(git describe)" >> $GITHUB_OUTPUT
+        run: echo "version=$(git describe --tags)" >> $GITHUB_OUTPUT
         id: version
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.11
       - run: pip install -r doc/requirements.txt
       - run: mkdocs gh-deploy --force
         env:

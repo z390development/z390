@@ -30,7 +30,7 @@ if [ -z "${DEST}" ]; then
     DEST="build/zstrmac"
 fi
 mkdir -p "${DEST}"   # create folder if does not exist
-find build/zstrmac -type f -not -name 'README.md' -delete  # clear previous 
+find "$DEST" -type f -not -name 'README.md' -delete  # clear previous 
 
 ZSTR="rt/test/ZSTRMAC2.ZSM"
 
