@@ -226,6 +226,7 @@ public  class  sz390 implements Runnable {
     *                     replace non-printable with '.' in PRN, BAL, PCH
     * 2023-08-07 Issue #515. Display FPC contents in interactive debug mode
     *            and when displaying floating-point registers in SNAP or DUMP.
+    ^ 2024-02-26 Issue #463 Add missing subscript to cmd_read_line reference
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -4402,7 +4403,7 @@ private void svc_cmd(){
 					cmd_read_line[cmd_id] = null;
 				}
 			}
-			if  (cmd_read_line != null){
+			if  (cmd_read_line[cmd_id] != null){  // #463
 				put_ascii_string(cmd_read_line[cmd_id],pz390.reg.getInt(pz390.r1),pz390.reg.getInt(pz390.r2),' ');
 				pz390.reg.putInt(pz390.r15,0);
 			} else if (cmd_proc_running[cmd_id]
