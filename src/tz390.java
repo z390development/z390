@@ -327,6 +327,7 @@ public  class  tz390 {
     * 2023-06-21 AFK #485 fix O attribute value for extended mnemonics
     * 2023-06-22 AFK #495 fix O attribure value for vector instructions
     * 2023-07-02 DSH/AFK #503 add support for new z16 instructions to opcode tables
+    * 2024-05-30 afk #500 List suboption for options optable/machine not implemented correctly
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -1378,6 +1379,8 @@ public  class  tz390 {
          "06=BCTR,RR,20",        //    110 "06"    "BCTR"     "RR"    2 // RPI 1209N
          "07=BCR,RR-m,30",       //    120 "07"    "BCR"      "RR"    2 // RPI 1209N
          "07m=BmR,RR-mx,30;0=NOPR", //     "07m"   "BmR, NOPR" "BRX"  3 // RPI 1209N
+         "08=SSK,RR,20",         //    100 "08"    "SSK"      "RR"    2 // RPI 1209N #500
+         "09=ISK,RR,20",         //    100 "09"    "ISK"      "RR"    2 // RPI 1209N #500
          "0A=SVC,4,40",          //    290 "0A"    "SVC"      "I"     4
          "0E=MVCL,RR-p,22",      //    330 "0E"    "MVCL"     "RR"    2 // RPI 1209N
          "0F=CLCL,RR-p,22",      //    340 "0F"    "CLCL"     "RR"    2 // RPI 1209N
@@ -1479,8 +1482,12 @@ public  class  tz390 {
          "7D=DE,5,58",           //   1500 "7D"    "DE"       "RX"    5
          "7E=AU,5,58",           //   1510 "7E"    "AU"       "RX"    5
          "7F=SU,5,58",           //   1520 "7F"    "SU"       "RX"    5
-         "8000=SSM,7,70",        //   1530 "8000"  "SSM"      "S"     7
-         "8200=LPSW,7,70",       //   1540 "8200"  "LPSW"     "S"     7
+//       "8000=SSM,7,70",        //   1530 "8000"  "SSM"      "S"     7 #500
+         "80=SSM,7,70",          //   1530 "80"    "SSM"      "S"     7 #500
+//       "8200=LPSW,7,70",       //   1540 "8200"  "LPSW"     "S"     7 #500
+         "82=LPSW,SI,110",       //   1540 "82"    "LPSW"     "SI"   11 #500
+         "84=WRD,SI,110",        //        "84"    "WRD"      "SI"   11 #500
+         "85=RDD,SI,110",        //        "85"    "RDD"      "SI"   11 #500
          "86=BXH,10,103",        //   1600 "86"    "BXH"      "RS"   10
          "87=BXLE,10,103",       //   1610 "87"    "BXLE"     "RS"   10
          "88=SRL,10,102",        //   1620 "88"    "SRL"      "RS"   10
@@ -1494,17 +1501,26 @@ public  class  tz390 {
          "90=STM,10,100",        //   1700 "90"    "STM"      "RS"   10
          "91=TM,11,110",         //   1710 "91"    "TM"       "SI"   11
          "92=MVI,11,110",        //   1720 "92"    "MVI"      "SI"   11
-         "9300=TS,7,70",         //   1730 "9300"  "TS"       "S"     7
+//       "9300=TS,7,70",         //   1730 "9300"  "TS"       "S"     7 #500
+         "93=TS,7,70",           //   1730 "93"    "TS"       "S"     7 #500
          "94=NI,11,110",         //   1740 "94"    "NI"       "SI"   11
          "95=CLI,11,110",        //   1750 "95"    "CLI"      "SI"   11
          "96=OI,11,110",         //   1760 "96"    "OI"       "SI"   11
          "97=XI,11,110",         //   1770 "97"    "XI"       "SI"   11
          "98=LM,10,100",         //   1780 "98"    "LM"       "RS"   10
+         "9C00=SIO,64,640",      //        "9C00"  "SIO"      "S"    64 #500
+         "9C01=SIOF,64,640",     //        "9C01"  "SIOF"     "S"    64 #500
+         "9D00=TIO,64,640",      //        "9D00"  "TIO"      "S"    64 #500
+         "9D01=CLRIO,64,640",    //        "9D01"  "CLRIO"    "S"    64 #500
+         "9E00=HIO,64,640",      //        "9E00"  "HIO"      "S"    64 #500
+         "9E01=HDV,64,640",      //        "9E01"  "HDV"      "S"    64 #500
+         "9F00=TCH,64,640",      //        "9F00"  "TCH"      "S"    64 #500
          "AC=STNSM,11,110",      //   2520 "AC"    "STNSM"    "SI"   11
          "AD=STOSM,11,110",      //   2530 "AD"    "STOSM"    "SI"   11
          "AF=MC,11,110",         //   2550 "AF"    "MC"       "SI"   11
          "B1=LRA,5,50",          //   2560 "B1"    "LRA"      "RX"    5
          "B202=STIDP,7,70",      //   2570 "B202"  "STIDP"    "S"     7
+         "B203=STIDC,64,640",    //        "B203"  "STIDC"    "S"    64 #500
          "B204=SCK,7,70",        //   2580 "B204"  "SCK"      "S"     7
          "B205=STCK,7,70",       //   2590 "B205"  "STCK"     "S"     7
          "B206=SCKC,7,70",       //   2600 "B206"  "SCKC"     "S"     7
@@ -1514,6 +1530,7 @@ public  class  tz390 {
          "B20A=SPKA,7,70",       //   2640 "B20A"  "SPKA"     "S"     7
          "B20B=IPK,7,70",        //   2650 "B20B"  "IPK"      "S"     7
          "B20D=PTLB,7,70",       //   2660 "B20D"  "PTLB"     "S"     7
+         "B213=RRB,64,640",      //        "B213"  "RRB"      "S"    64 #500
          "B6=STCTL,10,100",      //   4430 "B6"    "STCTL"    "RS"   10
          "B7=LCTL,10,100",       //   4440 "B7"    "LCTL"     "RS"   10
          "BA=CS,10,100",         //   5120 "BA"    "CS"       "RS"   10
@@ -1593,21 +1610,20 @@ public  class  tz390 {
          };
      String[]   op_table_DOS_obsolete = // Table added for RPI 1209N
          // These instructions are not included in pz390 and therefore cause a S0C1 failure when executed
-        {"08=SSK,RR,20",         //    100 "08"    "SSK"      "RR"    2 // RPI 1209N
-         "09=ISK,RR,20",         //    100 "09"    "ISK"      "RR"    2 // RPI 1209N
-         };
+        {}; // list is empty now, to be removed once we are sure it will not be needed anymore #500
      String[]   op_table_DOS_notsupported = // Table added for RPI 1209A
-        {"WRD      SI   84   D1(B1),I2",
-         "RDD      SI   85   D1(B1),I2",
-         "SIO      S    9C00 D2(B2)",
-         "SIOF     S    9C01 D2(B2)",
-         "TIO      S    9D00 D2(B2)",
-         "CLRIO    S    9D01 D2(B2)",
-         "HIO      S    9E00 D2(B2)",
-         "HDV      S    9E01 D2(B2)",
-         "TCH      S    9F00 D2(B2)",
+        {                                                     // #500
+//       "WRD      SI   84   D1(B1),I2",                         #500
+//       "RDD      SI   85   D1(B1),I2",                         #500
+//       "SIO      S    9C00 D2(B2)",                            #500
+//       "SIOF     S    9C01 D2(B2)",                            #500
+//       "TIO      S    9D00 D2(B2)",                            #500
+//       "CLRIO    S    9D01 D2(B2)",                            #500
+//       "HIO      S    9E00 D2(B2)",                            #500
+//       "HDV      S    9E01 D2(B2)",                            #500
+//       "TCH      S    9F00 D2(B2)",                            #500
          "STIDC    S    B203 D2(B2)",
-         "RRB      S    B213 D2(B2)",
+//       "RRB      S    B213 D2(B2)",                            #500
          "HPR      SI   99   D1(B1)", // model 360/20 only
          "SPSW     SI   81   D1(B1)", // model 360/20 only
          "TIOB     IO   9A   ??", // model 360/20 only

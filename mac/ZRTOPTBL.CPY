@@ -1,0 +1,316 @@
+***********************************************************************
+* Start create : 2024-05-31
+* 1st delivery :
+* Designer     : AF Kornelis
+* Programmer   : AF Kornelis
+* Purpose      : Standard routine to
+*                compare a z390 optable listing
+*                with the HLASM equivalent
+***********************************************************************
+
+***********************************************************************
+*
+* Program initialization
+*
+***********************************************************************
+MAINLINE DS    0H
+*
+* Open all datasets
+         OPEN  (Z390PRN,,HLASMPRN)
+         LTR   R15,R15                 * Check return code
+         BNZ   ERROR01                 * On error exit
+
+         BAL   R14,GETZ390             * Read all z390 opcode entries
+         BAL   R14,GETHLASM            * Read all hlasm opcode entries
+         BAL   R14,COMPARE             * Compare entries in both tables
+*
+* Close all datasets
+CLOSEFILES DS  0H
+         CLOSE (Z390PRN,,HLASMPRN)
+         LTR   R15,R15                 * Check return code
+         BNZ   ERROR02                 * On error exit
+
+***********************************************************************
+*
+* Program exit, returncode in field RETCODE
+*
+***********************************************************************
+EXIT     DS    0H                      * Workarea handling
+         XR    R15,R15                 * Reset for return code
+         IC    R15,RETCODE             * Pick up return code
+         L     R13,4(,R13)             * Get ptr to prev savearea
+         L     R14,12(,R13)            * Retrieve return address
+*******  L     R15,16(,R13)            * Return code already in R15
+         LM    R0,R12,12(R13)          * Reset all other registers
+         BR    R14                     * Return
+
+***********************************************************************
+*
+* Read routine for z390 listing
+*
+***********************************************************************
+GETZ390  DS   0H
+         ST   R14,GETZ390_RET          * Save return address
+*
+* Reset LASTOPCD to spaces
+* We're using the fact that entries are sorted by mnemonic
+* to detect the end of the opcode list
+         MVC   LASTOPCD,=CL8' '        * Set to spaces
+         L     R5,=AL4(Z390TBL)        * Point entries buffer
+
+*
+* Read record, at end set eof indicator
+GETZ390_READ   DS 0H
+         LA    R14,GETZ390_READ2       * counter z390 issue #525
+         GET   Z390PRN,Z390REC         * Retrieve record
+GETZ390_READ2  DS 0H                   * Resume point after EOF
+         LTR   R15,R15                 * Check return code
+         BNZ   ERROR03                 * On error exit
+
+         CLI   Z390EOF,X'FF'           * EOF reached?
+         BE    GETZ390_END             * Okay - we're done
+
+         CLI   Z390EOF,X'10'           * opcode table detected?
+         BE    GETZ390_PROCESS         * Yes: process input record
+
+*
+* Opcode table not yet started: scan for marker
+         CLC   MARKER,Z390REC+1        * Record has marker?
+         BNE   GETZ390_READ            * No: ignore record
+         OI    Z390EOF,X'10'           * Indicate marker found
+         B     GETZ390_READ            * go process the entries
+
+GETZ390_PROCESS DS 0H
+*
+* Ignore any lines that start with a non-blank character
+         CLI   Z390REC,C' '            * blank char in first pos?
+         BNE   GETZ390_READ            * no: get next record
+*
+* Ignore any lines having the marker
+         CLC   MARKER,Z390REC+1        * Record has marker?
+         BE    GETZ390_READ            * Yes: ignore record
+*
+* Should be a valid line with up to three entries
+         LA    R4,Z390REC+1            * point first entry
+GETZ390_PROCENT DS 0H                  * Process an entry
+         CLC   LASTOPCD,0(R4)          * Compare mnemonics
+         BNL   GETZ390_END             * End of list reached!
+         C     R5,=AL4(Z390TBL_END)    * Table overflow?
+         BNL   ERROR05                 * Oh no - need bigger table!
+         MVC   0(L'MARKER,R5),0(R4)    * Copy the entry
+         MVC   LASTOPCD,0(R4)          * update last mnemonic
+         LA    R5,L'MARKER(,R5)        * Bump buffer pointer
+         LA    R4,L'MARKER(,R4)        * Bump input pointer
+         C     R4,=AL4(Z390REC+1+3*L'MARKER) * record done?
+         BL    GETZ390_PROCENT         * no: process next entry
+         B     GETZ390_READ            * yes: get next record
+
+GETZ390_END    DS 0H
+         ST    R5,Z390MPT              * Save ptr to empty entry
+         MVC   0(8,R5),=CL8'99999999'  * terminator mnemonic
+         L     R14,GETZ390_RET         * Get return address
+         BR    R14                     * Return
+
+***********************************************************************
+*
+* Read routine for HLASM listing
+*
+***********************************************************************
+GETHLASM DS   0H
+         ST   R14,GETHLASM_RET         * Save return address
+*
+* Reset LASTOPCD to spaces
+* We're using the fact that entries are sorted by mnemonic
+* to detect the end of the opcode list
+         MVC   LASTOPCD,=CL8' '        * Set to spaces
+         L     R5,=AL4(HLASMTBL)       * Point entries buffer
+
+*
+* Read record, at end set eof indicator
+GETHLASM_READ   DS 0H
+         LA    R14,GETHLASM_READ2      * counter z390 issue #525
+         GET   HLASMPRN,HLASMREC       * Retrieve record
+GETHLASM_READ2  DS 0H                  * Resume point after EOF
+         LTR   R15,R15                 * Check return code
+         BNZ   ERROR04                 * On error exit
+
+         CLI   HLASMEOF,X'FF'          * EOF reached?
+         BE    GETHLASM_END            * Okay - we're done
+
+         CLI   HLASMEOF,X'10'          * opcode table detected?
+         BE    GETHLASM_PROCESS        * Yes: process input record
+
+*
+* Opcode table not yet started: scan for marker
+         CLC   MARKER,HLASMREC+1       * Record has marker?
+         BNE   GETHLASM_READ           * No: ignore record
+         OI    HLASMEOF,X'10'          * Indicate marker found
+         B     GETHLASM_READ           * go process the entries
+
+GETHLASM_PROCESS DS 0H
+*
+* Ignore any lines that have a non-blank character in position 2
+* (column 1 is reserved for the ASA printer control character)
+         CLI   HLASMREC+1,C' '         * blank char in second pos?
+         BE    GETHLASM_READ           * yes: get next record
+*
+* Ignore any lines having the marker
+         CLC   MARKER,HLASMREC+1       * Record has marker?
+         BE    GETHLASM_READ           * Yes: ignore record
+*
+* Should be a valid line with up to three entries
+         LA    R4,HLASMREC+1           * point first entry
+GETHLASM_PROCENT DS 0H                 * Process an entry
+         CLC   LASTOPCD,0(R4)          * Compare mnemonics
+         BNL   GETHLASM_END            * End of list reached!
+         C     R5,=AL4(HLASMTBL_END)   * Table overflow?
+         BNL   ERROR05                 * Oh no - need bigger table!
+         MVC   0(L'MARKER,R5),0(R4)    * Copy the entry
+         MVC   LASTOPCD,0(R4)          * update last mnemonic
+         LA    R5,L'MARKER(,R5)        * Bump buffer pointer
+         LA    R4,L'MARKER(,R4)        * Bump input pointer
+         C     R4,=AL4(HLASMREC+1+3*L'MARKER) * record done?
+         BL    GETHLASM_PROCENT        * no: process next entry
+         B     GETHLASM_READ           * yes: get next record
+
+GETHLASM_END   DS 0H
+         ST    R5,HLASMMPT             * Save ptr to empty entry
+         MVC   0(8,R5),=CL8'99999999'  * terminator mnemonic
+         L     R14,GETHLASM_RET        * Get return address
+         BR    R14                     * Return
+
+***********************************************************************
+*
+* Compare routine for extracted opcode definitions
+*
+***********************************************************************
+COMPARE  DS    0H
+         ST    R14,COMPARE_RET          * Save return address
+
+         L     R4,=AL4(Z390TBL)         * Point entries buffer
+         L     R5,Z390MPT               * end of buffer
+         L     R6,=AL4(HLASMTBL)        * Point entries buffer
+         L     R7,HLASMMPT              * Table overflow?
+
+COMPARE_LOOP   DS 0H
+         CLC   0(8,R4),0(R6)            * Compare mnemonics
+         BL    ERROR06                  * Superfluous z390 opcode
+         BH    ERROR07                  * Missing z390 opcode
+         CLC   0(&ENTRYLEN.,R4),0(R6)   * Compare entire entry
+         BNE   ERROR08                  * Report incorrec definition
+         LA    R4,&ENTRYLEN.(,R4)       * Bump z390 entry pointer
+         LA    R6,&ENTRYLEN.(,R6)       * Bump hlasm entry pointer
+COMPARE_NEXT   DS 0H                    * advance to next entry
+         CLR   R4,R5                    * z390 table exhausted?
+         BL    COMPARE_LOOP             * no: compare next entry
+         CLR   R6,R7                    * hlasm table exhausted?
+         BL    COMPARE_LOOP             * no: compare next entry
+
+*
+* We're done: both tables are exhausted
+         L    R14,COMPARE_RET          * Get return address
+         BR   R14                      * Return
+
+***********************************************************************
+*
+* EOF routines
+*
+***********************************************************************
+Z390END  DS   0H
+         OI   Z390EOF,X'FF'            * switch eof indicator on
+         BR   R14
+
+HLASMEND DS   0H
+         OI   HLASMEOF,X'FF'           * switch eof indicator on
+         BR   R14
+
+***********************************************************************
+*
+* Error routines
+*
+***********************************************************************
+ERROR01  DS    0H
+         WTO   'Error: Open failed',ROUTCDE=11,DESC=(6)
+         MVI   RETCODE,X'08'
+         B     EXIT
+
+ERROR02  DS    0H
+         WTO   'Error: Close failed',ROUTCDE=11,DESC=(6)
+         MVI   RETCODE,8
+         B     EXIT
+
+ERROR03  DS    0H
+         WTO   'Error reading z390 listing',ROUTCDE=11,DESC=(6)
+         MVI   RETCODE,8
+         B     CLOSEFILES
+
+ERROR04  DS    0H
+         WTO   'Error reading HLASM listing',ROUTCDE=11,DESC=(6)
+         MVI   RETCODE,8
+         B     CLOSEFILES
+
+ERROR05  DS    0H
+         WTO   'Error: Internal tables are too small',                 *
+               ROUTCDE=11,DESC=(6)
+         MVI   RETCODE,8
+         B     CLOSEFILES
+
+ERROR06  DS    0H
+         MVC   *+30(8),0(R4)            * insert mnemonic into msg
+         WTO   'Error: mnemonic xxxxxxxx was not expected',            *
+               ROUTCDE=11,DESC=(6)
+         MVI   RETCODE,8
+         LA    R4,&ENTRYLEN.(,R4)       * Bump z390 entry pointer only
+         B     COMPARE_NEXT
+
+ERROR07  DS    0H
+         MVC   *+30(8),0(R6)            * insert mnemonic into msg
+         WTO   'Error: mnemonic xxxxxxxx was expected but not found',  *
+               ROUTCDE=11,DESC=(6)
+         MVI   RETCODE,8
+         LA    R6,&ENTRYLEN.(,R6)       * Bump hlasm entry pointer only
+         B     COMPARE_NEXT
+
+ERROR08  DS    0H
+         MVC   *+30(8),0(R4)            * insert mnemonic into msg
+         WTO   'Error: mnemonic xxxxxxxx incorrectly defined',         *
+               ROUTCDE=11,DESC=(6)
+         MVI   RETCODE,8
+         LA    R4,&ENTRYLEN.(,R4)       * Bump z390 entry pointer
+         LA    R6,&ENTRYLEN.(,R6)       * Bump hlasm entry pointer
+         B     COMPARE_NEXT
+
+***********************************************************************
+*
+* Data areas
+*
+***********************************************************************
+         LTORG ,
+
+SAVEAREA DS    0D
+         DS    18F                     * Savearea for chaining
+GETZ390_RET    DS F                    * Return address
+GETHLASM_RET   DS F                    * Return address
+COMPARE_RET    DS F                    * Return address
+
+Z390PRN  DCB   DSORG=PS,MACRF=GM,DDNAME=Z390PRN,EODAD=Z390END,         *
+               RECFM=FT,LRECL=&Z390LEN
+HLASMPRN DCB   DSORG=PS,MACRF=GM,DDNAME=HLASMPRN,EODAD=HLASMEND,       *
+               RECFM=FT,LRECL=&HLASMLEN
+
+LASTOPCD DS    CL8                     * Last mnemonic processed
+Z390MPT  DS    AL4                     * Ptr to empty entry (=end)
+HLASMMPT DS    AL4                     * Ptr to empty entry (=end)
+
+Z390EOF  DC    XL1'00'
+HLASMEOF DC    XL1'00'
+RETCODE  DC    XL1'00'                 * Return code from program
+Z390REC  DS    CL(&Z390LEN)
+HLASMREC DS    CL(&HLASMLEN)
+
+         DS    0D
+Z390TBL  DS    5000CL(&ENTRYLEN)       * room for 5000 opcodes
+Z390TBL_END    EQU *-1                 * Last byte of table
+         DS    0D
+HLASMTBL DS    5000CL(&ENTRYLEN)       * room for 5000 opcodes
+HLASMTBL_END   EQU *-1                 * Last byte of table

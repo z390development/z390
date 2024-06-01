@@ -1,0 +1,45 @@
+OPCD$DOS  TITLE 'Validate DOS opcode table'
+***********************************************************************
+* Start create : 2024-05-31
+* 1st delivery :
+* Designer     : AF Kornelis
+* Programmer   : AF Kornelis
+* Purpose      : For testing
+***********************************************************************
+
+         YREGS ,                       * register equates
+
+***********************************************************************
+*
+* Program entry and linkage
+*
+***********************************************************************
+OPCD$DOS CSECT ,                       *
+*PCD$DOS AMODE 24                      * Not supported in DOS
+*PCD$DOS RMODE 24                      * Not supported in DOS
+
+         USING OPCD$DOS,R15            * Establish addressability
+         B     START                   * Skip header data
+         DC    AL1(START-*),C'&SYSECT &SYSDATE &SYSTIME'
+START    DS    0H
+         STM   R14,R12,12(R13)         * Save GPRs
+         LR    R12,R15                 * Copy base address
+         DROP  R15                     * No longer needed
+         USING OPCD$DOS,R12            * Re-establish addressability
+
+         LA    R15,SAVEAREA            * Point new savearea
+         ST    R15,8(,R13)             * Set ptr to new savearea
+         ST    R13,4(,R15)             * Set ptr from new to prev save
+         LR    R13,R15                 * Activate new savearea
+
+         B     MAINLINE                * Start the program
+*
+* Major constants for this program
+MARKER   DC    C'Mnemonic Frmt HexOP Operands            '
+&ENTRYLEN SETA (L'MARKER)              * Marker Length = Entry Length
+&Z390LEN  SETA 256                     * Length of z390 listing record
+&HLASMLEN SETA 160                     * Length of HLASM listing record
+
+         COPY  ZRTOPTBL                * Logic to compare optable lists
+
+         END   ,                       *
