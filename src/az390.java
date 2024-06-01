@@ -1831,13 +1831,15 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     ||  my_mnemonic.equals("PTLB"))                                    // #500
                        {my_operands="";                                                // #500
                         }                                                              // #500
-                    else if (my_mnemonic.equals("SSM")                                 // #500
+                    else if (my_mnemonic.equals("LPSW")                                // #500
+                         ||  my_mnemonic.equals("SSM")                                 // #500
                          ||  my_mnemonic.equals("TS"))                                 // #500
                        {my_format="SI";                                                // #500
+                        my_hexop=my_hexop.substring(0,2);                              // #500
                         my_operands="D1(B1)";                                          // #500
                         }                                                              // #500
                     else                                                               // #500
-                       {my_operands="D2(B2)";                                       // #500
+                       {my_operands="D2(B2)";                                          // #500
                         }
                     break;
                 case 8: // Diagnose instruction
