@@ -59,8 +59,11 @@
          AIF   ('&MSG'(1,2) NE '(''').ERR2
 &MSGTEXT SETC  '&MSG'(2,K'&MSG-2)
 .WTOMSG  ANOP
-         BAL   1,*+(WTO#&SYSNDX._EOT-*+1)/2*2                      #500
-         DC    AL2(WTO#&SYSNDX._EOT-*,0),C&MSGTEXT
+         AIF   (O'BRAS NE 'U').GENBRAS  BRAS opcode defined?       #500
+.GENBAL  BAL   1,*+(WTO#&SYSNDX._EOT-*+1)/2*2                      #500
+         AGO   .GENTXT                                             #500
+.GENBRAS BRAS  1,*+(WTO#&SYSNDX._EOT-*+1)/2*2                      #500
+.GENTXT  DC    AL2(WTO#&SYSNDX._EOT-*,0),C&MSGTEXT
 WTO#&SYSNDX._EOT EQU *
          SVC   35
          MEXIT
