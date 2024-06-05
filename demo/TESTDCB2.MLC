@@ -28,6 +28,7 @@ TESTDCB2 SUBENTRY
          MVI   EOFFLAG,C'N'        Set not EOF on input file
 LOOP     DS    0H
          GET   SYSUT1,RECORD       Get next/first record
+AFTERGET DS    0H
          CLI   EOFFLAG,C'Y'        No more records?
          BE    ELOOP               Yes: all done
          AP    PTOT,=P'1'          Count records
@@ -45,8 +46,11 @@ ELOOP    DS    0H
 ***********************************************************************
 EOF      DS    0H
          MVI   EOFFLAG,C'Y'        Set end of file reached on input
-         BR    14                  Return to GET
+         C     14,@AFTERGET        Belt and suspenders test
+         BER   14                  Return to GET
+         DC    H'0'                Should not get here!
 *
+@AFTERGET DC   A(AFTERGET)         For belt and suspenders R14 test
 OFILES   OPEN  MF=L,(SYSUT1,INPUT,SYSUT2,OUTPUT,SYSOUT,OUTPUT)
 CFILES   CLOSE MF=L,(SYSUT1,,SYSUT2,,SYSOUT)
 SYSUT1   DCB   DDNAME=SYSUT1,RECFM=FT,LRECL=80,EODAD=EOF,MACRF=GM
