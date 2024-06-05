@@ -18,5 +18,29 @@ export SYSOUT=demo/TESTDCB1.TF3
 
 bash/asmlg demo/TESTDCB1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 cat demo/TESTDCB1.TF2
+
+diff -q demo/TESTDCB1.TF1 demo/TESTDCB1.TF2 &>/dev/null
+rc1=$?
+if [ $rc1 -eq 0 ]; then x=""; else x=" not"; fi
+echo "TESTDCB1: Copy demo/TESTDCB1.TF1 to demo/TESTDCB1.TF2$x successful"
 echo "Verify demo/TESTDCB1 copied demo/TESTDCB1.TF1 to demo/TESTDCB1.TF2"
 echo "Verify demo/TESTDCB1 wrote to demo/TESTDCB1.TF3"
+
+export SYSUT1=demo/TESTDCB2.TF1
+export SYSUT2=demo/TESTDCB2.TF2
+export SYSOUT=demo/TESTDCB2.TF3
+
+bash/asmlg demo/TESTDCB2 $1 $2 $3 $4 $5 $6 $7 $8 $9
+cat demo/TESTDCB2.TF2
+diff -q demo/TESTDCB2.TF1 demo/TESTDCB2.TF2 &>/dev/null
+rc2=$?
+if [ $rc2 -eq 0 ]; then x=""; else x=" not"; fi
+echo "TESTDCB2: Copy demo/TESTDCB2.TF1 to demo/TESTDCB2.TF2$x successful"
+echo "Verify demo/TESTDCB2 copied demo/TESTDCB2.TF1 to demo/TESTDCB2.TF2"
+echo "Verify demo/TESTDCB2 wrote to demo/TESTDCB2.TF3"
+
+# return code is not zero if either diff return code is not zero
+rc=0
+if [ $rc1 -ne 0 ] || [ $rc2 -ne 0 ]; then rc=1; fi
+
+exit $rc
