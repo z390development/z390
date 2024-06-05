@@ -1,6 +1,6 @@
 *********************************************************************
 * z390 - Mainframe assembler emulator and run-time engine
-* Copyright (C) 2021 z390 Assembler LLC
+* Copyright (C) 2024 z390 Assembler LLC
 *
 * This file is part of z390.
 *
@@ -16,7 +16,7 @@
 * You should have received a copy of the GNU General Public License 
 * along with this program; if not, see https://www.gnu.org/licenses.
 
-* Author - Don Higgins                                              *
+* Author - Don Higgins and John Ganci                               *
 * Date   - 06/04/2024                                               *
 *********************************************************************
 * Same as demo/TESTDCB1 but illustrates EODAD that returns to GET
@@ -26,8 +26,8 @@ TESTDCB2 SUBENTRY
          WTO   'TESTDCB2 Copy SYSUT1 ASC test file to SYSUT2 ASC text'
          OPEN  MF=(E,OFILES)       Open all files
          MVI   EOFFLAG,C'N'        Set not EOF on input file
-         GET   SYSUT1,RECORD       Get first record
 LOOP     DS    0H
+         GET   SYSUT1,RECORD       Get next/first record
          CLI   EOFFLAG,C'Y'        No more records?
          BE    ELOOP               Yes: all done
          AP    PTOT,=P'1'          Count records
@@ -35,7 +35,6 @@ LOOP     DS    0H
          ED    DTOT,PTOT           ... to printable decimal 
          PUT   SYSOUT,MSG          Put rec# || record
          PUT   SYSUT2,RECORD       Put record
-         GET   SYSUT1,RECORD       Next record
          B     LOOP
 ELOOP    DS    0H
          CLOSE MF=(E,CFILES)
