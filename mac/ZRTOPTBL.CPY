@@ -41,7 +41,7 @@ EXIT     DS    0H                      * Workarea handling
          L     R13,4(,R13)             * Get ptr to prev savearea
          L     R14,12(,R13)            * Retrieve return address
 *******  L     R15,16(,R13)            * Return code already in R15
-         LM    R0,R12,12(R13)          * Reset all other registers
+         LM    R0,R12,20(R13)          * Reset all other registers
          BR    R14                     * Return
 
 ***********************************************************************
@@ -64,8 +64,8 @@ GETZ390_READ   DS 0H
          LA    R14,GETZ390_READ2       * counter z390 issue #525
          GET   Z390PRN,Z390REC         * Retrieve record
 GETZ390_READ2  DS 0H                   * Resume point after EOF
-         LTR   R15,R15                 * Check return code
-         BNZ   ERROR03                 * On error exit
+.*       LTR   R15,R15                 * Get does not return error
+.*       BNZ   ERROR03                 *     indicator
 
          CLI   Z390EOF,X'FF'           * EOF reached?
          BE    GETZ390_END             * Okay - we're done
@@ -77,7 +77,7 @@ GETZ390_READ2  DS 0H                   * Resume point after EOF
 * Opcode table not yet started: scan for marker
          CLC   MARKER,Z390REC+1        * Record has marker?
          BNE   GETZ390_READ            * No: ignore record
-         OI    Z390EOF,X'10'           * Indicate marker found
+         MVI   Z390EOF,X'10'           * Indicate marker found
          B     GETZ390_READ            * go process the entries
 
 GETZ390_PROCESS DS 0H
@@ -131,8 +131,8 @@ GETHLASM_READ   DS 0H
          LA    R14,GETHLASM_READ2      * counter z390 issue #525
          GET   HLASMPRN,HLASMREC       * Retrieve record
 GETHLASM_READ2  DS 0H                  * Resume point after EOF
-         LTR   R15,R15                 * Check return code
-         BNZ   ERROR04                 * On error exit
+.*       LTR   R15,R15                 * Get does not return error
+.*       BNZ   ERROR04                 *     indicator
 
          CLI   HLASMEOF,X'FF'          * EOF reached?
          BE    GETHLASM_END            * Okay - we're done
@@ -144,7 +144,7 @@ GETHLASM_READ2  DS 0H                  * Resume point after EOF
 * Opcode table not yet started: scan for marker
          CLC   MARKER,HLASMREC+1       * Record has marker?
          BNE   GETHLASM_READ           * No: ignore record
-         OI    HLASMEOF,X'10'          * Indicate marker found
+         MVI   HLASMEOF,X'10'          * Indicate marker found
          B     GETHLASM_READ           * go process the entries
 
 GETHLASM_PROCESS DS 0H

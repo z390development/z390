@@ -1619,7 +1619,7 @@ public  class  tz390 {
 //       "HIO      S    9E00 D2(B2)",                            #500
 //       "HDV      S    9E01 D2(B2)",                            #500
 //       "TCH      S    9F00 D2(B2)",                            #500
-         "STIDC    S    B203 D2(B2)",
+//       "STIDC    S    B203 D2(B2)",                            #500
 //       "RRB      S    B213 D2(B2)",                            #500
          "HPR      SI   99   D1(B1)", // model 360/20 only
          "SPSW     SI   81   D1(B1)", // model 360/20 only
