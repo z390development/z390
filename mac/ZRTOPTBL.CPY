@@ -61,7 +61,6 @@ GETZ390  DS   0H
 *
 * Read record, at end set eof indicator
 GETZ390_READ   DS 0H
-         LA    R14,GETZ390_READ2       * counter z390 issue #525
          GET   Z390PRN,Z390REC         * Retrieve record
 GETZ390_READ2  DS 0H                   * Resume point after EOF
 .*       LTR   R15,R15                 * Get does not return error
@@ -128,7 +127,6 @@ GETHLASM DS   0H
 *
 * Read record, at end set eof indicator
 GETHLASM_READ   DS 0H
-         LA    R14,GETHLASM_READ2      * counter z390 issue #525
          GET   HLASMPRN,HLASMREC       * Retrieve record
 GETHLASM_READ2  DS 0H                  * Resume point after EOF
 .*       LTR   R15,R15                 * Get does not return error
@@ -217,11 +215,11 @@ COMPARE_NEXT   DS 0H                    * advance to next entry
 *
 ***********************************************************************
 Z390END  DS   0H
-         OI   Z390EOF,X'FF'            * switch eof indicator on
+         MVI  Z390EOF,X'FF'            * switch eof indicator on
          BR   R14
 
 HLASMEND DS   0H
-         OI   HLASMEOF,X'FF'           * switch eof indicator on
+         MVI  HLASMEOF,X'FF'           * switch eof indicator on
          BR   R14
 
 ***********************************************************************
@@ -231,7 +229,7 @@ HLASMEND DS   0H
 ***********************************************************************
 ERROR01  DS    0H
          WTO   'Error: Open failed',ROUTCDE=11,DESC=(6)
-         MVI   RETCODE,X'08'
+         MVI   RETCODE,8
          B     EXIT
 
 ERROR02  DS    0H
@@ -309,8 +307,8 @@ Z390REC  DS    CL(&Z390LEN)
 HLASMREC DS    CL(&HLASMLEN)
 
          DS    0D
-Z390TBL  DS    5000CL(&ENTRYLEN)       * room for 5000 opcodes
+Z390TBL  DS    (&TBLSIZE)CL(&ENTRYLEN) * room for lots of opcodes
 Z390TBL_END    EQU *-1                 * Last byte of table
          DS    0D
-HLASMTBL DS    5000CL(&ENTRYLEN)       * room for 5000 opcodes
+HLASMTBL DS    (&TBLSIZE)CL(&ENTRYLEN) * room for lots of opcodes
 HLASMTBL_END   EQU *-1                 * Last byte of table

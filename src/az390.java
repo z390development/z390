@@ -1982,7 +1982,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     else if (tz390.op_name[index].equals("MVCK")
                     ||  tz390.op_name[index].equals("MVCP")
                     ||  tz390.op_name[index].equals("MVCS"))
-                       {entry=my_operands="D1(R1,B1),D2(B2),R3";                       // #500
+                       {my_operands="D1(R1,B1),D2(B2),R3";                             // #500
                         }
                     else
                        {my_operands="D1(L,B1),D2(B2)";                                 // #500

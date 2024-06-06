@@ -37,6 +37,7 @@ START    DS    0H
 * Major constants for this program
 MARKER   DC    C'Mnemonic Frmt HexOP Operands            '
 &ENTRYLEN SETA (L'MARKER)              * Marker Length = Entry Length
+&TBLSIZE  SETA 5000                    * Max nr of opcodes to expect
 &Z390LEN  SETA 256                     * Length of z390 listing record
 &HLASMLEN SETA 160                     * Length of HLASM listing record
 
