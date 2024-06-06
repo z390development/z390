@@ -8493,7 +8493,7 @@ public  class  mz390 {
 		gbl_setc[gbl_sysm_sev_index] = "000"; // RPI 898
 		add_gbl_sys("&SYSOPT_DBCS",var_setb_type); // set false indicating no DBCS support
 		add_gbl_sys("&SYSOPT_OPTABLE",var_setc_type); // "z390" opcode table name
-        gbl_setc[tot_gbl_setc-1] = tz390.opt_optable; // #527
+		gbl_setc[tot_gbl_setc-1] = tz390.opt_optable; // #527
 		add_gbl_sys("&SYSOPT_RENT",var_setb_type); // set true if RENT option specified
 		add_gbl_sys("&SYSOPT_XOBJECT",var_setb_type); //set true if GOFF or XOBJECT
 		add_gbl_sys("&SYSPARM",var_setc_type);
