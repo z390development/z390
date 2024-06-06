@@ -227,6 +227,10 @@ public  class  sz390 implements Runnable {
     * 2023-08-07 Issue #515. Display FPC contents in interactive debug mode
     *            and when displaying floating-point registers in SNAP or DUMP.
     ^ 2024-02-26 Issue #463 Add missing subscript to cmd_read_line reference
+	* 2024-06-04 Issue #525. DCB or DCBE EODAD routine setup in dcb_eodad_exit()
+	*            does not set R14 as a return address for GET or CHECK (READ/CHECK).
+	*            Similarly, DCB or DCBE SYNAD routine setup in dcb_synad_exit() does
+	*            not set R14 as a return address for GET or CHECK (READ/CHECK).
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -4177,6 +4181,7 @@ private void dcb_synad_error(int error_num,String error_msg){
 		log_error(error_num,error_msg);
 		pz390.set_psw_check(pz390.psw_pic_io); //RPI64
 	} else {
+		pz390.reg.putInt((14<<3)+4,pz390.psw_loc);  // #525
 		pz390.set_psw_loc(cur_dcb_synad);
 	}
 	dcb_synad_recur = false; // RPI 377
@@ -4195,6 +4200,7 @@ private void dcb_eodad_exit(){
 	if (cur_dcb_eodad == 0){
 		abort_error(31,"read at end of file and no EODAD for " + tiot_ddnam[cur_tiot_index]);
 	} else {
+		pz390.reg.putInt((14<<3)+4,pz390.psw_loc);  // #525
 		pz390.set_psw_loc(cur_dcb_eodad);
 	}
 }
