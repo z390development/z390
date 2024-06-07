@@ -445,6 +445,7 @@ public  class  mz390 {
 	 *                     replace non-printable with '.' in PRN, BAL, PCH
 	 * 2023-04-12 #458 B2C issue; insure X2C length is multiple of 2
      * 2023-06-21 #485 fix O attribute value for extended mnemonics
+     * 2024-06-02 #527 set &SYSOPT_OPTABLE to correct value
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -8492,8 +8493,8 @@ public  class  mz390 {
 		gbl_setc[gbl_sysm_sev_index] = "000"; // RPI 898
 		add_gbl_sys("&SYSOPT_DBCS",var_setb_type); // set false indicating no DBCS support
 		add_gbl_sys("&SYSOPT_OPTABLE",var_setc_type); // "z390" opcode table name
-		gbl_setc[tot_gbl_setc-1] = "z390";
-		;	add_gbl_sys("&SYSOPT_RENT",var_setb_type); // set true if RENT option specified
+		gbl_setc[tot_gbl_setc-1] = tz390.opt_optable; // #527
+		add_gbl_sys("&SYSOPT_RENT",var_setb_type); // set true if RENT option specified
 		add_gbl_sys("&SYSOPT_XOBJECT",var_setb_type); //set true if GOFF or XOBJECT
 		add_gbl_sys("&SYSPARM",var_setc_type);
 		gbl_setc[tot_gbl_setc-1] = tz390.opt_sysparm;
