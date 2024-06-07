@@ -1,0 +1,5 @@
+optable(dos,list)
+  stats
+noloadhigh
+  dump
+notest

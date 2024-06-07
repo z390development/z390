@@ -31,6 +31,7 @@
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.* 05/31/24 #500 BRAS not supported when optable DOS is used
 .*********************************************************************
 &N       WTO   &MSG,         'TEXT' OR TEXT= REQUIRED                  X
                &TEXT=,       MULTIPLE QUOTED TEXT ELSE ERROR           X
@@ -58,8 +59,11 @@
          AIF   ('&MSG'(1,2) NE '(''').ERR2
 &MSGTEXT SETC  '&MSG'(2,K'&MSG-2)
 .WTOMSG  ANOP
-         BRAS  1,*+(WTO#&SYSNDX._EOT-*+1)/2*2
-         DC    AL2(WTO#&SYSNDX._EOT-*,0),C&MSGTEXT
+         AIF   (O'BRAS NE 'U').GENBRAS  BRAS opcode defined?       #500
+.GENBAL  BAL   1,*+(WTO#&SYSNDX._EOT-*+1)/2*2                      #500
+         AGO   .GENTXT                                             #500
+.GENBRAS BRAS  1,*+(WTO#&SYSNDX._EOT-*+1)/2*2                      #500
+.GENTXT  DC    AL2(WTO#&SYSNDX._EOT-*,0),C&MSGTEXT
 WTO#&SYSNDX._EOT EQU *
          SVC   35
          MEXIT
