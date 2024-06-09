@@ -12,13 +12,13 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..
-call bat\asm  %z_TraceMode% zcobol\lib\ABORT    sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asm  %z_TraceMode% zcobol\lib\ACCEPT   sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asm  %z_TraceMode% zcobol\lib\CVTTOHEX sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asm  %z_TraceMode% zcobol\lib\DISPLAY  sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asm  %z_TraceMode% zcobol\lib\INSPECT  sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asm  %z_TraceMode% zcobol\lib\ZC390NUC sysmac(mac) syscpy(mac+zcobol\lib)                            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% zcobol\lib\ZC390LIB sysmac(mac) syscpy(mac+zcobol\lib) sys390(zcobol\lib) rmode24 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\ABORT    @zcobol\lib\ZCOBOL.OPT %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\ACCEPT   @zcobol\lib\ZCOBOL.OPT %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\CVTTOHEX @zcobol\lib\ZCOBOL.OPT %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\DISPLAY  @zcobol\lib\ZCOBOL.OPT %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\INSPECT  @zcobol\lib\ZCOBOL.OPT %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm  %z_TraceMode% zcobol\lib\ZC390NUC @zcobol\lib\ZCOBOL.OPT %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% zcobol\lib\ZC390LIB @zcobol\lib\ZCOBOL.OPT %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 if not exist zcobol\lib\ZC390LIB.390 (set z_ReturnCode=12
                                       echo %0 ERROR: ZC390LIB.390 was not created
                                       goto return)

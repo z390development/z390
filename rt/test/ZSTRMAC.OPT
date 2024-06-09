@@ -1,0 +1,4 @@
+noasm
+  optable(Z390)
+  stats
+notiming

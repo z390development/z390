@@ -1,0 +1,5 @@
+noasm
+  bal
+notiming
+  stats
+  sysparm(RTGENCMP)

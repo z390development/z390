@@ -20,13 +20,14 @@ echo Deleting %z_Dest%\*.*
 erase /Q %z_Dest%\*.*
 
 set z_STR=rt\test\ZSTRMAC2.ZSM
+set z_OPT=rt\test\ZSTRMAC.OPT
 
 rem Generate the HLASM versions of the macros
 set z_MACS=( CASE CASENTRY DO ELSE ELSEIF ENDCASE ENDDO ENDIF ENDSEL IF OTHRWISE SELECT WHEN ZSTREQU )
 for %%M in %z_MACS% do (set SYSUT1=mac\%%M.MAC
                         set SYSUT2=%z_Dest%\%%M.MAC
-                        echo SYSUT1=mac\%%M.MAC SYSUT2=%z_Dest%\%%M.MAC bat\MZ390 %z_TraceMode% %z_STR% noasm stats
-                        call bat\MZ390 %z_TraceMode% %z_STR% noasm stats || goto error
+                        echo SYSUT1=mac\%%M.MAC SYSUT2=%z_Dest%\%%M.MAC bat\MZ390 %z_TraceMode% %z_STR% @%z_OPT%
+                        call bat\MZ390 %z_TraceMode% %z_STR% @%z_OPT% || goto error
                         )
 
 rem Copy the static copy files

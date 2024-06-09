@@ -1,0 +1,5 @@
+  optable(Z390)
+  rmode24
+  sysmac(mac)
+  syscpy(mac+zcobol\lib)
+  sys390(zcobol\lib)

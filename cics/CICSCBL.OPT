@@ -1,0 +1,6 @@
+  cics
+  optable(Z390)
+  stats
+  syscpy(cics+zcobol\CPY+zcobol\MAC+MAC+.)
+  sysmac(cics+zcobol\MAC+MAC)
+notime

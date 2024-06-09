@@ -2242,22 +2242,49 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 58:
                     my_format="QST";                                                   // #500
                     my_operands="VR1,QR3,RS2(RT2)";                                    // #500
+                    if (tz390.op_trace_type[index]==581)                               // #533
+                       {my_operands="M1,QR3,RS2(RT2)";                                 // #533
+                        }                                                              // #533
                     break;
                 case 59:
                     my_format="QV";                                                    // #500
                     my_operands="VR1,QR3,VR2";                                         // #500
+                    if (tz390.op_trace_type[index]==591)                               // #533
+                       {my_operands="M1,QR3,VR2";                                      // #533
+                        }                                                              // #533
+                    else if (tz390.op_trace_type[index]==592)                          // #533
+                       {my_operands="VR1,QR2";                                         // #533
+                        }                                                              // #533
                     break;
                 case 60:
                     my_format="VST";                                                   // #500
                     my_operands="VR1,VR3,RS2(RT2)";                                    // #500
+                    if (tz390.op_trace_type[index]==601)                               // #533
+                       {my_operands="VR1,RS2(RT2)";                                    // #533
+                        }                                                              // #533
+                    else if (tz390.op_trace_type[index]==602)                          // #533
+                       {my_operands="M1,VR3,RS2(RT2)";                                 // #533
+                        }                                                              // #533
                     break;
                 case 61:
                     my_format="VV";                                                    // #500
                     my_operands="VR1,VR2";                                             // #500
+                    if (tz390.op_trace_type[index]==611)                               // #533
+                       {my_operands="VR1,VR3,VR2";                                     // #533
+                        }                                                              // #533
+                    else if (tz390.op_trace_type[index]==612)                          // #533
+                       {my_operands="M1,VR3,VR2";                                      // #533
+                        }                                                              // #533
+                    else if (tz390.op_trace_type[index]==613)                          // #533
+                       {my_operands="VR1";                                             // #533
+                        }                                                              // #533
                     break;
                 case 62:
                     my_format="RRE";                                                   // #500
                     my_operands="R1";                                                  // #500
+                    if (tz390.op_trace_type[index]==621)                               // #533
+                       {my_operands="";                                                // #533
+                        }                                                              // #533
                     break;
                 case 63:
                     my_format="RSEv";                                                  // #500
@@ -2270,6 +2297,12 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 65:
                     my_format="VR";                                                    // #500
                     my_operands="VR1,QR3,R2";                                          // #500
+                    if (tz390.op_trace_type[index]==651)                               // #533
+                       {my_operands="VR1,QR2";                                         // #533
+                        }                                                              // #533
+                    if (tz390.op_trace_type[index]==652)                               // #533
+                       {my_operands="VR1";                                             // #533
+                        }                                                              // #533
                     break;
                 case 66:
                     my_format="VS";                                                    // #500

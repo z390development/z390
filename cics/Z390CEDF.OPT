@@ -1,0 +1,5 @@
+  cics
+noedf
+noprolog
+@cics\CICSDFLT.OPT
+  syscpy(+.)

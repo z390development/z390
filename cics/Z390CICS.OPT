@@ -1,0 +1,3 @@
+@cics\CICSDFLT.OPT
+  syscpy(+.)
+  sysmac(+.)

@@ -19,23 +19,23 @@ pushd %~dps0..
 echo Test zstrmac basic structures using bootstrap version 1
 set SYSUT1=rt\test\TESTSPE1.ZSM 
 set SYSUT2=rt\test\TESTSPE1.MLC 
-call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC1     NOASM NOTIMING STATS || goto error
-call bat\ASMLG      %z_TraceMode% rt\test\TESTSPE1       BAL NOTIMING STATS || goto error
+call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC1 @rt\test\ZSTRMAC.OPT || goto error
+call bat\ASMLG      %z_TraceMode% rt\test\TESTSPE1 @rt\test\ZSTRASM.OPT || goto error
 
 set SYSUT1=rt\test\TESTSPE2.ZSM 
 set SYSUT2=rt\test\TESTSPE2.MLC 
-call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC1     NOASM NOTIMING STATS || goto error
-call bat\ASMLG      %z_TraceMode% rt\test\TESTSPE2       BAL NOTIMING STATS || goto error
+call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC1 @rt\test\ZSTRMAC.OPT || goto error
+call bat\ASMLG      %z_TraceMode% rt\test\TESTSPE2 @rt\test\ZSTRASM.OPT || goto error
 
 echo Translate structured version 2 using bootstrap version 1
 set SYSUT1=rt\test\ZSTRMAC2.ZSM 
 set SYSUT2=rt\test\ZSTRMAC2.MLC 
-call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC1     NOASM NOTIMING STATS || goto error
+call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC1 @rt\test\ZSTRMAC.OPT || goto error
 
 echo Verify TESTSPE1.ZSM translation using zstrmac2 matches zstrmac1
 set SYSUT1=rt\test\TESTSPE1.ZSM 
 set SYSUT2=rt\test\TESTSPE1.TXT 
-call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC2     NOASM NOTIMING STATS || goto error
+call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC2 @rt\test\ZSTRMAC.OPT || goto error
 comp /M rt\test\TESTSPE1.MLC rt\test\TESTSPE1.TXT
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% GTR 0 (set z_ReturnCode=8
@@ -46,11 +46,11 @@ if %z_ReturnCode% GTR 0 (set z_ReturnCode=8
 echo Regen ZSTRMAC2 using mz390 support to ver zstrmac2.txt = mlc
 set SYSUT1=rt\test\ZSTRMAC2.ZSM 
 set SYSUT2=rt\test\ZSTRMAC2.MLC 
-call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC2.ZSM NOASM NOTIMING STATS || goto error
+call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC2.ZSM @rt\test\ZSTRMAC.OPT || goto error
 
 set SYSUT1=rt\test\TESTSPE1.ZSM 
 set SYSUT2=rt\test\TESTSPE1.TXT 
-call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC2     NOASM NOTIMING STATS || goto error
+call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC2 @rt\test\ZSTRMAC.OPT || goto error
 comp /M rt\test\TESTSPE1.MLC rt\test\TESTSPE1.TXT
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% GTR 0 (set z_ReturnCode=8
@@ -61,13 +61,13 @@ if %z_ReturnCode% GTR 0 (set z_ReturnCode=8
 echo Test extensions to ACASE added in zstrmac2 C,X,(v1,v2)
 set SYSUT1=rt\test\TESTSPE3.ZSM 
 set SYSUT2=rt\test\TESTSPE3.MLC 
-call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC2.ZSM NOASM NOTIMING STATS || goto error
-call bat\ASMLG      %z_TraceMode% rt\test\TESTSPE3       BAL NOTIMING STATS || goto error
+call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC2.ZSM @rt\test\ZSTRMAC.OPT || goto error
+call bat\ASMLG      %z_TraceMode% rt\test\TESTSPE3     @rt\test\ZSTRASM.OPT || goto error
 
 echo Test zstrmac error messages - expected to fail with RC=8
 set SYSUT1=rt\test\TESTSPE4.ZSM 
 set SYSUT2=rt\test\TESTSPE4.MLC 
-call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC2.ZSM NOASM NOTIMING STATS
+call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC2.ZSM @rt\test\ZSTRMAC.OPT
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 8 (set z_ReturnCode=0
                  ) else (set z_ReturnCode=8
@@ -76,11 +76,11 @@ if %z_ReturnCode% EQU 8 (set z_ReturnCode=0
                          )
 
 echo Test ZSTRMAC SPM's using z390 SPE
-call bat\asmlg      %z_TraceMode% rt\test\TESTSPM1       BAL NOTIMING STATS || goto error
+call bat\asmlg      %z_TraceMode% rt\test\TESTSPM1 @rt\test\ZSTRASM.OPT || goto error
 
 echo Test ZSTRMAC SPM's macros using generated HLASM compatible macros
-call bat\BLDZSTRMAC %z_TraceMode% build\zstrmac                             || goto error
-call bat\ASMLG      %z_TraceMode% rt\test\TESTSPM1 SYSMAC(build\zstrmac+mac) SYSCPY(build\zstrmac+mac) BAL NOTIMING STATS || goto error
+call bat\BLDZSTRMAC %z_TraceMode% build\zstrmac                          || goto error
+call bat\ASMLG      %z_TraceMode% rt\test\TESTSPM1 @rt\test\TESTSPM1.OPT || goto error
 goto return
 
 :error

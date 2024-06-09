@@ -1,0 +1,4 @@
+  ascii
+@cics\CICSDFLT.OPT
+  syscpy(MAC+.)
+  sysmac(+.)
