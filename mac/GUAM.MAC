@@ -24,9 +24,10 @@
 .* 02/21/06 RPI205 RENAME GUI MACRO TO GUAM TO REDUCE CONFUSION
 .* 02/24/06 RPI217 CORRECT GRAPH,TEXT COMMAND TO SET TEXT LENGTH 
 .* 05/08/06 RPI308 FIX WINDOW,VIEW TO SWITCH WITH NO RESET OPTIONS
-.* 05/24/06 RPI227 ADD SCREEN,COLOR TO SET BACKGROUND AND TEXT COLOR              
+.* 05/24/06 RPI227 ADD SCREEN,COLOR TO SET BACKGROUND AND TEXT COLOR
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 06/06/24 #530 Various bugs in GUAM.MAC reported by John Hennesy
 .*********************************************************************
 .* GUI GRAPHICAL USER ACCESS METHOD MACRO FOR Z390
 .*********************************************************************
@@ -92,7 +93,7 @@
         AGO    .SVC
 .WINDOW_FONT ANOP  R1=FONT (8,30)
         LA     0,GUI_WINDOW_FONT
-        LA     15,-A(&SYSLIST(3)) R1=A(FONT SIZE) (8-30)
+        LA     15,=A(&SYSLIST(3)) R1=A(FONT SIZE) (8-30)  #530
         LA     1,=A(*-*)
         ST     15,0(1) R1=A(A(FONT))
         AGO    .SVC
@@ -114,6 +115,11 @@
         LA     15,=A(&SYSLIST(5))
         ST     15,8(1)
 .SKPLIT2 ANOP
+        AIF    ('&SYSLIST(6)'(1,1) LT '0' OR '&SYSLIST(6)'(1,1) GT '8')X
+               .SKPLIT3                      #530
+        LA     15,=A(&SYSLIST(6))            #530
+        ST     15,12(1)                      #530
+.SKPLIT3 ANOP  ,                             #530
         AGO    .SVC
 .WINDOW_GETVIEW ANOP R1=VIEW (0-3)
         LA     0,GUI_WINDOW_GETVIEW SET R0 = CURRENT VIEW (0-3)

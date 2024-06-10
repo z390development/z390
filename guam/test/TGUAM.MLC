@@ -1,0 +1,45 @@
+TGUAM    CSECT
+         STM   14,12,12(13)        save caller's registers
+         LR    12,15               set base register
+         USING TGUAM,12            establish addressability
+         LA    15,SA               usable save area
+         ST    13,4(,15)           chain save areas
+         ST    15,8(,13)
+         LR    13,15               current save area
+*
+         LA    2,A                 begin area to SNAP
+         LA    3,B                 end area to SNAP
+*
+         GUAM  WINDOW,FONT,16
+         ORG   *-2
+         DC    X'0700'             nullify SVC
+         STM   0,1,R0R1            save for SNAP
+
+         SNAP  ID=1,PDATA=,STORAGE=((2),(3))
+*
+         GUAM  WINDOW,VIEW,SCREEN,24,80,3
+         ORG   *-2
+         DC    X'0700'             nullify SVC
+         STM   0,1,R0R1            save for SNAP
+
+         SNAP  ID=2,PDATA=,STORAGE=((2),(3))
+*
+         SR    15,15               set return code
+*
+         L     13,4(,13)           caller's save area
+         L     14,12(,13)          restore caller's registers
+         LM    0,12,20(13)         ... except 15
+         BR    14                  return to caller
+A        DS    0D
+         DC    CL8'Regs0-1'
+R0R1     DS    2F
+         DC    CL8'LitPool'
+*
+         LTORG ,
+*
+B        DS    0D
+SA       DC    18F'0'              usable save area
+*
+         GUAM  SYMBOLS
+*
+         END

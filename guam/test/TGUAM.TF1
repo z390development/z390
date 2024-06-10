@@ -1,0 +1,38 @@
+Expected SNAP output, annotated for clarity.
+
+1. With first GUAM.MAC corrrection, not second correction.
+
+SNAP DUMP ID=1
+ 000FFF80 *D98587A2 F060F140 00000104 000FFF9C* *Regs0-1 ........*  <-- R1 = 000FFF9C = A(1 word parm list)
+ 000FFF90 *D389A3D7 96969340 00000010 000FFF98* *LitPool .......q*  <-- parm 1 value, parm 1 address
+                             ======== --------
+                             fontSize parmList
+ 000FFFA0 *00000002 00000018 00000050 00000003* *...........&....*
+ 000FFFB0 *00000018 00000050                  * *.......&        *
+SNAP DUMP ID=2
+ 000FFF80 *D98587A2 F060F140 00000105 000FFFA0* *Regs0-1 ........*  <-- R1 = 000FFFA0 = A(4 word parm list)
+ 000FFF90 *D389A3D7 96969340 00000010 000FFF98* *LitPool .......q*
+ 000FFFA0 *00000002 000FFFB0 000FFFB4 00000003* *................*  <-- the 4 word parm list; 4th parm not set!
+           -------- -------- -------- --------
+           ------------ parmList -------------
+ 000FFFB0 *00000018 00000050                  * *.......&        *  <-- parm 2 value, parm 3 value; no parm 4
+           ======== ========
+           parm 2   parm 3
+
+2. With second GUAM.MAC correction.
+
+SNAP DUMP ID=2
+ 000FFF78 *D98587A2 F060F140 00000105 000FFF98* *Regs0-1 .......q*  <-- R1 = 000FFF98 = A(4 word parm list)
+ 000FFF88 *D389A3D7 96969340 00000010 000FFF90* *LitPool ........*
+ 000FFF98 *00000002 000FFFA8 000FFFAC 000FFFB0* *.......y........*  <-- the 4 word parm list; all parm addrs set
+           -------- -------- -------- --------
+           ------------ parmList -------------
+ 000FFFA8 *00000018 00000050 00000003 F6F6F6F6* *.......&....6666*  <-- parm 2, parm 3, parm 4 values
+           ======== ======== ========
+           parm 2   parm 3   parm 4
+
+End
+
+
+
+
