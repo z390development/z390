@@ -115,6 +115,10 @@
         LA     15,=A(&SYSLIST(5))
         ST     15,8(1)
 .SKPLIT2 ANOP
+.* This portion of GUAM.MAC is processing a
+.*        "GUAM WINDOW,VIEW,[SCREEN or GRAPH',a,b,c" request.
+.* The existing code properly handles the "a" and "b" operands (above)
+.* but not the "c" operand. (below, until .SKPLIT3)
         AIF    ('&SYSLIST(6)'(1,1) LT '0' OR '&SYSLIST(6)'(1,1) GT '8')X
                .SKPLIT3                      #530
         LA     15,=A(&SYSLIST(6))            #530
