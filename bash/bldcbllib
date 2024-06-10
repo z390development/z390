@@ -8,12 +8,12 @@ cd ..               # go to root
 
 optfile='zcobol/lib/ZCOBOL.OPT'
 
-bash/asm zcobol/lib/ABORT $optfile $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asm zcobol/lib/ACCEPT $optfile $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asm zcobol/lib/CVTTOHEX $optfile $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asm zcobol/lib/DISPLAY $optfile $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asm zcobol/lib/INSPECT $optfile $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asm zcobol/lib/ZC390NUC $optfile $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asml zcobol/lib/ZC390LIB $optfile $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asm zcobol/lib/ABORT @$optfile $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asm zcobol/lib/ACCEPT @$optfile $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asm zcobol/lib/CVTTOHEX @$optfile $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asm zcobol/lib/DISPLAY @$optfile $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asm zcobol/lib/INSPECT @$optfile $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asm zcobol/lib/ZC390NUC @$optfile $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asml zcobol/lib/ZC390LIB @$optfile $1 $2 $3 $4 $5 $6 $7 $8 $9
 
 echo "Verify ZC390LIB.390 build ok"
