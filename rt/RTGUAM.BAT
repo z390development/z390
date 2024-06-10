@@ -17,7 +17,7 @@ call rt\RT1 guam\test\TESTGP1 guam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 guam\test\TESTGP2 guam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 guam\test\TESTGP3 guam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 guam\test\TESTGP4 guam %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RT1 guam\test\TGUAM   @guam\test\TGUAM.OPT
+call rt\RT1 guam\test\TGUAM        %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RTCOMP guam\demo rt\guam\demo\save rt\guam\demo\dif
 call rt\RTCOMP guam\test rt\guam\test\save rt\guam\test\dif
 erase rt\guam\dif\*.* /q
