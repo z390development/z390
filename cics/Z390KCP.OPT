@@ -1,4 +1,4 @@
 noedf
   guam
-@cics\CICSDFLT.OPT
+@cics/CICSDFLT.OPT
   syscpy(+.)

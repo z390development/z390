@@ -1,4 +1,4 @@
   cics
 noprolog
-@cics\CICSDFLT.OPT
+@cics/CICSDFLT.OPT
   syscpy(+.)

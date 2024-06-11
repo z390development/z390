@@ -1,5 +1,5 @@
   cics
 noedf
 noprolog
-@cics\CICSDFLT.OPT
+@cics/CICSDFLT.OPT
   syscpy(+.)

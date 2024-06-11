@@ -1,6 +1,6 @@
   bal
   optable(Z390)
   stats
-  syscpy(build\zstrmac+mac)
-  sysmac(build\zstrmac+mac)
+  syscpy(build/zstrmac+mac)
+  sysmac(build/zstrmac+mac)
 notiming
