@@ -4,11 +4,11 @@ import org.junit.jupiter.api.Test
 
 class RunAsmTests extends z390Test {
 
-    var options = ['trace', 'noloadhigh', "SYSMAC(${basePath("mac")})"]
+    var options = ['trace', 'noloadhigh', 'stats', "SYSMAC(${basePath("mac")})"]
 
     @Test
     void test_TESTINS1() {
-        int rc = this.asm(basePath("tests", "TESTINS1"), *options)
+        int rc = this.asm(basePath("tests", "TESTINS1"), *options, 'optable(z390)')
         this.printOutput()
         assert rc == 0
     }

@@ -70,7 +70,9 @@ The test scripts are in subdirectory z390test\src\test\groovy\org\z390\test
 Action                                    | Command
 ------------------------------------------|------------
 get a list of gradlew command options     | gradlew --help
-force a test run                          | gradlew test -—rerun
+force a test run                          | gradlew test --rerun
+run a specific test/testset               | gradlew test --tests 'pattern'
+run all zCobol tests                      | gradlew test --tests '*cbl*'
 
 ## Proposing new functionality
 
@@ -246,14 +248,14 @@ git documentation:https://git-scm.com/doc
 Action                                    | Command
 ------------------------------------------|------------
 get list of available commands            | git help
-get syntax details for a git command      | git help <command> 
-create local clone of git repo            | git clone <url> <subdir>
+get syntax details for a git command      | git help &lt;command&gt;
+create local clone of git repo            | git clone &lt;url\> &lt;subdir&gt;
 review status of current branch           | git status
 get list of all defined branches          | git branch -v --all
 prepare commit                            | git add .
 commit a set of changes                   | git commit -m"desriptive comments"
 push changes to your own fork             | git push 
 graphical display of branches             | git log --graph --oneline --decorate --all
--- > when viewing the bracnches displayed | <Enter> to scroll 1 line, <PgDn> to scroll a page, q to quit
-go 'back in time' to a specific commit    | git branch -f <new_branch> [<start-point>]
-                                          | git switch <new_branch>
+-- > when viewing the bracnches displayed | <Enter> to scroll 1 line, &lt;PgDn&gt; to scroll a page, q to quit
+go 'back in time' to a specific commit    | git branch -f &lt;new_branch&gt; [&lt;start-point&gt;]
+                                          | git switch &lt;new_branch&gt;

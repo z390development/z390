@@ -3,9 +3,9 @@ package org.z390.test
 import org.junit.jupiter.api.Test
 
 class RunZSTRMacTest extends z390Test {
-    var convertOptions = ['NOASM', 'STATS', 'NOTIMING']
+    var convertOptions = ['NOASM', 'STATS', 'NOTIMING', 'optable(z390)']
     var asmOptions = [
-            'BAL', 'STATS', 'NOTIMING',
+            'BAL', 'STATS', 'NOTIMING', 'optable(z390)',
             "SYSMAC(${basePath("mac")})",
             "SYSCPY(${basePath("mac")})",
     ]
