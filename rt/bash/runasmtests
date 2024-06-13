@@ -10,7 +10,7 @@ cd ..               # up to z390
 sysmac='sysmac(mac)'
 optable='optable(z390)'
 
-bash/asm   tests/TESTINS1 trace noloadhigh $sysmac
+bash/asm   tests/TESTINS1 @tests/TESTINS1.OPT
 bash/asmlg tests/TESTINS2 trace noloadhigh $sysmac
 bash/asmlg tests/TESTINS3 trace noloadhigh $sysmac
 bash/asmlg tests/TESTINS4 trace noloadhigh $sysmac
