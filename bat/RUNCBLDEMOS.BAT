@@ -15,16 +15,16 @@ pushd %~dps0..
 
 set DEMOPATH=zcobol\demo
 
-call bat\CBLCLG %z_TraceMode% %DEMOPATH%\HELLO    %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
-call bat\CBLCLG %z_TraceMode% %DEMOPATH%\DATETIME %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
-call bat\CBLCLG %z_TraceMode% %DEMOPATH%\POWERS   %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
+call bat\CBLCLG %z_TraceMode% %DEMOPATH%\HELLO    @%DEMOPATH%\ZCOBOL.OPT || goto error
+call bat\CBLCLG %z_TraceMode% %DEMOPATH%\DATETIME @%DEMOPATH%\ZCOBOL.OPT || goto error
+call bat\CBLCLG %z_TraceMode% %DEMOPATH%\POWERS   @%DEMOPATH%\ZCOBOL.OPT || goto error
 
 set INFILE=%DEMOPATH%\COPYFILE.IN
 set OUTFILE=%DEMOPATH%\COPYFILE.OUT
 
-call bat\CBLCLG %z_TraceMode% %DEMOPATH%\COPYFILE %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
-call bat\CBLC   %z_TraceMode% %DEMOPATH%\COMPSUM  %1 %2 %3 %4 %5 %6 %7 %8 %9                    || goto error
-call bat\ASMLG  %z_TraceMode% %DEMOPATH%\CALLCOMP SYS390(zcobol\lib) %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% %DEMOPATH%\COPYFILE @%DEMOPATH%\ZCOBOL.OPT || goto error
+call bat\CBLC   %z_TraceMode% %DEMOPATH%\COMPSUM  @%DEMOPATH%\ZCOBOL.OPT || goto error
+call bat\ASMLG  %z_TraceMode% %DEMOPATH%\CALLCOMP @%DEMOPATH%\ZCOBOL.OPT || goto error
 set z_ReturnCode=0
 goto return
 

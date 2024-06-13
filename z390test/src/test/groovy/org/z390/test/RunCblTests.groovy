@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest
 class RunCblTests extends z390Test{
 
     void test_cobol_module(String moduleName) {
-        int rc = this.cblclg(basePath("zcobol", "tests", moduleName), 'TIME(30)')
+        int rc = this.cblclg(basePath("zcobol", "tests", moduleName), 'stats', 'optable(z390)', 'TIME(30)')
         this.printOutput()
         assert rc == 0
     }

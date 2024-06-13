@@ -24,23 +24,23 @@ cd ..               # go to root
 echo "Test zstrmac basic structures using bootstrap version 1"
 export SYSUT1=rt/test/TESTSPE1.ZSM
 export SYSUT2=rt/test/TESTSPE1.MLC
-bash/mz390 rt/test/ZSTRMAC1 NOASM STATS NOTIMING 
-bash/asmlg rt/test/TESTSPE1 BAL NOTIMING STATS
+bash/mz390 rt/test/ZSTRMAC1 @rt/test/ZSTRMAC.OPT
+bash/asmlg rt/test/TESTSPE1 @rt/test/ZSTRASM.OPT
 
 export SYSUT1=rt/test/TESTSPE2.ZSM
 export SYSUT2=rt/test/TESTSPE2.MLC
-bash/mz390 rt/test/ZSTRMAC1 NOASM STATS NOTIMING
-bash/asmlg rt/test/TESTSPE2 BAL NOTIMING STATS
+bash/mz390 rt/test/ZSTRMAC1 @rt/test/ZSTRMAC.OPT
+bash/asmlg rt/test/TESTSPE2 @rt/test/ZSTRASM.OPT
 
 echo "Translate structured version 2 using bootstrap version 1"
 export SYSUT1=rt/test/ZSTRMAC2.ZSM
 export SYSUT2=rt/test/ZSTRMAC2.MLC
-bash/mz390 rt/test/ZSTRMAC1 NOASM STATS NOTIMING
+bash/mz390 rt/test/ZSTRMAC1 @rt/test/ZSTRMAC.OPT
 
 echo "Verify TESTSPE1.ZSM translation using zstrmac2 matches zstrmac1"
 export SYSUT1=rt/test/TESTSPE1.ZSM
 export SYSUT2=rt/test/TESTSPE1.TXT
-bash/mz390 rt/test/ZSTRMAC2 NOASM STATS NOTIMING
+bash/mz390 rt/test/ZSTRMAC2 @rt/test/ZSTRMAC.OPT
 
 # use cmp to compare two files. If variations, will return non zero
 cmp rt/test/TESTSPE1.MLC rt/test/TESTSPE1.TXT
@@ -48,27 +48,27 @@ cmp rt/test/TESTSPE1.MLC rt/test/TESTSPE1.TXT
 echo "Regen ZSTRMAC2 using mz390 support to ver zstrmac2.txt = mlc"
 export SYSUT1=rt/test/ZSTRMAC2.ZSM
 export SYSUT2=rt/test/ZSTRMAC2.MLC
-bash/mz390 rt/test/ZSTRMAC2.ZSM NOASM STATS NOTIMING
+bash/mz390 rt/test/ZSTRMAC2.ZSM @rt/test/ZSTRMAC.OPT
 export SYSUT1=rt/test/TESTSPE1.ZSM
 export SYSUT2=rt/test/TESTSPE1.TXT
-bash/mz390 rt/test/ZSTRMAC2 NOASM STATS NOTIMING
+bash/mz390 rt/test/ZSTRMAC2 @rt/test/ZSTRMAC.OPT
 cmp rt/test/TESTSPE1.MLC rt/test/TESTSPE1.TXT
 
 echo "Test extensions to ACASE added in zstrmac2 C,X,(v1,v2)"
 export SYSUT1=rt/test/TESTSPE3.ZSM
 export SYSUT2=rt/test/TESTSPE3.MLC
-bash/mz390 rt/test/ZSTRMAC2.ZSM NOASM STATS NOTIMING
-bash/asmlg rt/test/TESTSPE3 BAL NOTIMING STATS
+bash/mz390 rt/test/ZSTRMAC2.ZSM @rt/test/ZSTRMAC.OPT
+bash/asmlg rt/test/TESTSPE3 @rt/test/ZSTRASM.OPT
 
 echo "Test zstrmac error messages"
 set +e  # turn off error trap as expected to fail
 export SYSUT1=rt/test/TESTSPE4.ZSM
 export SYSUT2=rt/test/TESTSPE4.MLC
-bash/mz390 rt/test/ZSTRMAC2.ZSM NOASM STATS NOTIMING
+bash/mz390 rt/test/ZSTRMAC2.ZSM @rt/test/ZSTRMAC.OPT
 set -e
 
 echo "Test ZSTRMAC SPM's using z390 SPE"
-bash/asmlg rt/test/TESTSPM1 BAL NOTIMING STATS
+bash/asmlg rt/test/TESTSPM1 @rt/test/ZSTRASM.OPT
 
 echo "Test ZSTRMAC SPM's macros using generated HLASM compatible macros"
 bash/bldzstrmac build/zstrmac

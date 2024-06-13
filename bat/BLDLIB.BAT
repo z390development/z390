@@ -12,20 +12,20 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..
-call bat\asml  %z_TraceMode% linklib\REPRO    bal notiming stats       || goto error
-call bat\asml  %z_TraceMode% linklib\SUPERZAP bal notiming stats       || goto error
-call bat\asml  %z_TraceMode% linklib\UNREF    bal notiming stats ascii || goto error
-call bat\asm   %z_TraceMode% linklib\FPCONVRT bal notiming stats       || goto error
-call bat\asm   %z_TraceMode% linklib\FPCONMFC bal notiming stats       || goto error
-call bat\asm   %z_TraceMode% linklib\CVTTOHEX bal notiming stats       || goto error
-call bat\asm   %z_TraceMode% linklib\SQXTR    bal notiming stats       || goto error
-call bat\asm   %z_TraceMode% linklib\DAT      bal notiming stats       || goto error
-call bat\asmlg %z_TraceMode% linklib\IEFBR14  sysobj(+linklib)         || goto error
-call bat\asmlg %z_TraceMode% linklib\TESTFPC1 sysobj(+linklib)         || goto error
-call bat\asmlg %z_TraceMode% linklib\TESTFPC2 sysobj(+linklib)         || goto error
+call bat\asml  %z_TraceMode% linklib\REPRO    @linklib\LINKLIB.OPT  || goto error
+call bat\asml  %z_TraceMode% linklib\SUPERZAP @linklib\LINKLIB.OPT  || goto error
+call bat\asml  %z_TraceMode% linklib\UNREF    @linklib\UNREF.OPT    || goto error
+call bat\asm   %z_TraceMode% linklib\FPCONVRT @linklib\LINKLIB.OPT  || goto error
+call bat\asm   %z_TraceMode% linklib\FPCONMFC @linklib\LINKLIB.OPT  || goto error
+call bat\asm   %z_TraceMode% linklib\CVTTOHEX @linklib\LINKLIB.OPT  || goto error
+call bat\asm   %z_TraceMode% linklib\SQXTR    @linklib\LINKLIB.OPT  || goto error
+call bat\asm   %z_TraceMode% linklib\DAT      @linklib\LINKLIB.OPT  || goto error
+call bat\asmlg %z_TraceMode% linklib\IEFBR14  @linklib\LINKLIB.OPT  || goto error
+call bat\asmlg %z_TraceMode% linklib\TESTFPC1 @linklib\LINKLIB.OPT  || goto error
+call bat\asmlg %z_TraceMode% linklib\TESTFPC2 @linklib\LINKLIB.OPT  || goto error
 
-call bat\asm   %z_TraceMode% linklib\RTGENDIR noasm bal notiming stats sysparm(RTGENDIR) || goto error
-call bat\asm   %z_TraceMode% linklib\RTGENCMP noasm bal notiming stats sysparm(RTGENCMP) || goto error
+call bat\asm   %z_TraceMode% linklib\RTGENDIR @linklib\RTGENDIR.OPT || goto error
+call bat\asm   %z_TraceMode% linklib\RTGENCMP @linklib\RTGENCMP.OPT || goto error
 set z_ReturnCode=0
 goto return
 

@@ -1,5 +1,6 @@
-optable(dos,list)
+noallow
+  optable(dos,list)
   stats
 noloadhigh
-  dump
+nodump
 notest

@@ -12,11 +12,12 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..
-call bat\asmlg %z_TraceMode% vse\demo\DEMOVSE1 sysmac(vse\mac+mac) || goto error
-call bat\asmlg %z_TraceMode% vse\demo\DEMOVSE2 sysmac(vse\mac+mac) || goto error
-set SYSUT1=vse\demo\DEMOVSE3.TF1
+call bat\asmlg %z_TraceMode% vse\demo\DEMOVSE1 @vse\demo\VSEDEMO.OPT || goto error
+call bat\asmlg %z_TraceMode% vse\demo\DEMOVSE2 @vse\demo\VSEDEMO.OPT || goto error
+
+set SYSUT1=vse\demo\DEMOVSE3.TF
 set SYSUT2=vse\demo\DEMOVSE3.TF2
-call bat\asmlg %z_TraceMode% vse\demo\DEMOVSE3 sysmac(vse\mac+mac) || goto error
+call bat\asmlg %z_TraceMode% vse\demo\DEMOVSE3 @vse\demo\VSEDEMO.OPT || goto error
 comp /M vse\demo\DEMOVSE3.TF1 vse\demo\DEMOVSE3.TF2
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% GTR 0 (set z_ReturnCode=8

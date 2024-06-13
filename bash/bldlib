@@ -6,18 +6,18 @@ set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script
 cd ..               # go to root
 
-bash/asml linklib/REPRO bal notiming stats
-bash/asml linklib/SUPERZAP bal notiming stats
-bash/asml linklib/UNREF ascii bal notiming stats
-bash/asm linklib/FPCONVRT bal notiming stats
-bash/asm linklib/FPCONMFC bal notiming stats
-bash/asm linklib/CVTTOHEX bal notiming stats
-bash/asm linklib/SQXTR bal notiming stats
-bash/asm linklib/DAT bal notiming stats
+bash/asml linklib/REPRO @linklib/LINKLIB.OPT
+bash/asml linklib/SUPERZAP @linklib/LINKLIB.OPT
+bash/asml linklib/UNREF @linklib/UNREF.OPT
+bash/asm linklib/FPCONVRT @linklib/LINKLIB.OPT
+bash/asm linklib/FPCONMFC @linklib/LINKLIB.OPT
+bash/asm linklib/CVTTOHEX @linklib/LINKLIB.OPT
+bash/asm linklib/SQXTR @linklib/LINKLIB.OPT
+bash/asm linklib/DAT @linklib/LINKLIB.OPT
 
-bash/asmlg linklib/IEFBR14 "sysobj(+linklib)"
-bash/asmlg linklib/TESTFPC1 "sysobj(+linklib)"
-bash/asmlg linklib/TESTFPC2 "sysobj(+linklib)"
+bash/asmlg linklib/IEFBR14 @linklib/LINKLIB.OPT
+bash/asmlg linklib/TESTFPC1 @linklib/LINKLIB.OPT
+bash/asmlg linklib/TESTFPC2 @linklib/LINKLIB.OPT
 
-bash/asm  linklib/RTGENDIR noasm bal notiming stats "sysparm(RTGENDIR)"
-bash/asm  linklib/RTGENCMP noasm bal notiming stats "sysparm(RTGENCMP)"
+bash/asm  linklib/RTGENDIR @linklib/RTGENDIR.OPT
+bash/asm  linklib/RTGENCMP @linklib/RTGENCMP.OPT

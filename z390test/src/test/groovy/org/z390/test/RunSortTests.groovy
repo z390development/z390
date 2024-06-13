@@ -21,7 +21,7 @@ class RunSortTests extends z390Test {
 
     @BeforeAll
     void build_sort() {
-        int rc = asml(this.basePath('sort', 'SORT'), *options)
+        int rc = asml(this.basePath('sort', 'SORT'), *options, 'stats', 'optable(z390)')
         this.printOutput()
         if (rc != 0) {
             throw new RuntimeException("Unable to assemble SORT")
@@ -41,7 +41,7 @@ class RunSortTests extends z390Test {
     @Test
     void test_TESTSRT1() {
         env.put("SYSUT2", basePath('sort', 'TESTSRT1.IN'))
-        int rc = this.asmlg(basePath("sort", "TESTSRT1"), *options)
+        int rc = this.asmlg(basePath("sort", "TESTSRT1"), *options, 'stats', 'optable(z390)')
         assert rc == 0
 
         this.env.put('SORTIN', basePath('sort', 'TESTSRT1.IN[RECFM=F,LRECL=20]'))
@@ -52,11 +52,11 @@ class RunSortTests extends z390Test {
         assert rc == 0
 
         env.put("SYSUT1", basePath('sort', 'TESTSRT1.OUT'))
-        rc = this.asmlg(basePath("sort", "TESTSRT2"), *options)
+        rc = this.asmlg(basePath("sort", "TESTSRT2"), *options, 'stats', 'optable(z390)')
         assert rc == 0
 
         env.put("SYSUT2", basePath('sort', 'TESTSRT3.IN'))
-        rc = this.asmlg(basePath("sort", "TESTSRT3"), 'PARM(100000)', *options)
+        rc = this.asmlg(basePath("sort", "TESTSRT3"), 'PARM(100000)', *options, 'stats', 'optable(z390)')
         printOutput()
         assert rc == 0
 
@@ -68,7 +68,7 @@ class RunSortTests extends z390Test {
         assert rc == 0
 
         env.put("SYSUT1", basePath('sort', 'TESTSRT3.OUT'))
-        rc = this.asmlg(basePath("sort", "TESTSRT4"), 'PARM(100000)', *options)
+        rc = this.asmlg(basePath("sort", "TESTSRT4"), 'PARM(100000)', *options, 'stats', 'optable(z390)')
         assert rc == 0
 
     }

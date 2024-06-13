@@ -21,7 +21,7 @@ sysmac='sysmac('${cicspath}'+mac)'
 syscpy='syscpy('${cicspath}'+mac)'
 
 program=DFHFCT
-bash/mz390 ${cicspath}/${program} $sysmac $syscpy
+bash/mz390 ${cicspath}/${program} @${cicspath}/${program}.OPT
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 bash/lz390 ${cicspath}/${program}

@@ -9,14 +9,14 @@ set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script
 cd ..
 
-sysmac='sysmac(vse/mac+mac)'
+sysopt='vse/demo/VSEDEMO.OPT'
 
-bash/asmlg vse/demo/DEMOVSE1 $sysmac
+bash/asmlg vse/demo/DEMOVSE1 @$sysopt
 rc=$?
 if [ $debug -eq 1 ]; then echo "DEMOVSE1: rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then echo "Error in DEMOVSE1"; fi
 
-bash/asmlg vse/demo/DEMOVSE2 $sysmac
+bash/asmlg vse/demo/DEMOVSE2 @$sysopt
 rc=$?
 if [ $debug -eq 1 ]; then echo "DEMOVSE2: rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then echo "Error in DEMOVSE2"; fi
@@ -24,7 +24,7 @@ if [ "$rc" -ne "0" ]; then echo "Error in DEMOVSE2"; fi
 export SYSUT1=vse/demo/DEMOVSE3.TF1
 export SYSUT2=vse/demo/DEMOVSE3.TF2
 
-bash/asmlg vse/demo/DEMOVSE3 $sysmac
+bash/asmlg vse/demo/DEMOVSE3 @$sysopt
 rc=$?
 if [ $debug -eq 1 ]; then echo "DEMOVSE3: rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then echo "Error in DEMOVSE3"; fi

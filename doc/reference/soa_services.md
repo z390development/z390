@@ -182,6 +182,7 @@ GENRUN=    | name of the generated run command file |
     
 #### Usage
 
+```
              SOAGEN MAIN=DEMOMAIN,    MAIN CLIENT APPLICATION PGM          X
                     CLIENT=DEMOCMGR,  SOA CLIENT MSG MGR NAME              X
                     SERVER=DEMOSMGR,  SOA SERVER MSG MGR NAME              X 
@@ -194,6 +195,7 @@ GENRUN=    | name of the generated run command file |
                     GENBLD=DEMOBLD,   GENERATED BUILD BAT FILE             X
                     GENRUN=DEMORUN    GENERATED RUN BAT FILE
              END
+```
 
 The above SOA application generation macro call generates server
 message manager DEMOSMGR to run on the same host as client using

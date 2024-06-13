@@ -3,9 +3,9 @@ package org.z390.test
 import org.junit.jupiter.api.Test
 
 class RunZSTRMacTest extends z390Test {
-    var convertOptions = ['NOASM', 'STATS', 'NOTIMING']
+    var convertOptions = ['NOASM', 'STATS', 'NOTIMING', 'optable(z390)']
     var asmOptions = [
-            'BAL', 'STATS', 'NOTIMING',
+            'BAL', 'STATS', 'NOTIMING', 'optable(z390)',
             "SYSMAC(${basePath("mac")})",
             "SYSCPY(${basePath("mac")})",
     ]
@@ -152,12 +152,12 @@ class RunZSTRMacTest extends z390Test {
     @Test
     void test_mz390_SPM_genned() {
         /*
-        Test ZSTRMAC SPM's macros using gene./rated HLASM compatabile macros
+        Test ZSTRMAC SPM's macros using generated HLASM compatabile macros
         */
         var stepOptions = [
                 "SYSMAC(${basePath('build', 'zstrmac')}+${basePath('mac')})",
                 "SYSCPY(${basePath('build', 'zstrmac')}+${basePath('mac')})",
-                'BAL', 'NOTIMING', 'STATS']
+                'BAL', 'NOTIMING', 'STATS', 'optable(z390)']
         int rc = this.asmlg(basePath('rt', 'test', 'TESTSPM1'), *stepOptions)
         this.printOutput()
         assert rc == 0

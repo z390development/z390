@@ -5,11 +5,11 @@ import org.junit.jupiter.api.Test
 class TestZ390Test extends z390Test {
 
     var sysmac = basePath("mac")
-    var options = ['trace', 'noloadhigh', "SYSMAC(${sysmac})"]
+    var options = ['trace', 'noloadhigh', 'stats', "SYSMAC(${sysmac})"]
 
     @Test
     void testAsm() {
-        int rc = this.asm(basePath("tests", "TESTINS1"), *options)
+        int rc = this.asm(basePath("tests", "TESTINS1"), *options, 'optable(z390)')
         this.printOutput()
         assert rc == 0
     }
@@ -54,7 +54,7 @@ class TestZ390Test extends z390Test {
 
     @Test
     void testCblclg() {
-        int rc = this.cblclg(basePath("zcobol", "demo", "HELLO"))
+        int rc = this.cblclg(basePath("zcobol", "demo", "HELLO"), 'stats', 'optable(z390)')
         this.printOutput()
         assert rc == 0
     }

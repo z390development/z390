@@ -7,25 +7,25 @@ cd ..
 
 demopath=zcobol/demo
 
-bash/cblclg ${demopath}/HELLO $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg ${demopath}/HELLO @${demopath}/ZCOBOL.OPT $1 $2 $3 $4 $5 $6 $7 $8 $9
 echo "Verify Hello World"
 
-bash/cblclg ${demopath}/DATETIME $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg ${demopath}/DATETIME @${demopath}/ZCOBOL.OPT $1 $2 $3 $4 $5 $6 $7 $8 $9
 echo "Verify date and time"
 
-bash/cblclg ${demopath}/POWERS $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg ${demopath}/POWERS @${demopath}/ZCOBOL.OPT $1 $2 $3 $4 $5 $6 $7 $8 $9
 echo "Verify powers"
 
 export INFILE=${demopath}/COPYFILE.IN
 export OUTFILE=${demopath}/COPYFILE.OUT
-bash/cblclg ${demopath}/COPYFILE $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg ${demopath}/COPYFILE @${demopath}/ZCOBOL.OPT $1 $2 $3 $4 $5 $6 $7 $8 $9
 echo "Verify ${demopath}/COPYFILE.IN was copied to ${demopath}/COPYFILE.OUT"
 
-bash/cblc ${demopath}/COMPSUM $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblc ${demopath}/COMPSUM @${demopath}/ZCOBOL.OPT $1 $2 $3 $4 $5 $6 $7 $8 $9
 echo "Verify successful compile of COMPSUM"
 
 sys390='sys390(zcobol/lib)'
 
-bash/asmlg ${demopath}/CALLCOMP $sys390 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg ${demopath}/CALLCOMP @${demopath}/ZCOBOL.OPT $1 $2 $3 $4 $5 $6 $7 $8 $9
 echo "Verify CALLCOMP"
 echo "Verify ZCOBOL demos"
