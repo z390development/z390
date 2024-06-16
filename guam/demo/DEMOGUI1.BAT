@@ -1,1 +1,1 @@
-asmlg demo\demogui1 gui test trace
+bat\asmlg guam\demo\demogui1 guam test trace

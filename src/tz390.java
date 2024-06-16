@@ -3666,7 +3666,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_370_directives);   // #503
             }                                           // #503
         if (opt_optable.equals("UNI")         // #533
-        ||  opt_optable.equals("DFLT"))       // #533
+        ||  opt_optable.equals("DFLT")        // #533
         ||  opt_optable.equals("Z390"))       // #533
            {process_opcodes(op_table_DOS);
             process_opcodes(op_table_370);

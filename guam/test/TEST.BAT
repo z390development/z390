@@ -1,5 +1,5 @@
 rem run the tn3270 test tutorial pgms
-call asmlg tn3270\hello1 guam
-call asmlg tn3270\hello2 guam
-call asmlg tn3270\hello3 guam
-call asmlg tn3270\aid guam
+call bat\asmlg guam\demo\hello1 guam
+call bat\asmlg guam\demo\hello2 guam
+call bat\asmlg guam\demo\hello3 guam
+call bat\asmlg guam\test\aid guam
