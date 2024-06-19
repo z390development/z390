@@ -13,7 +13,6 @@ rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 pushd %~dps0
 call bat\bldjar         %z_TraceMode%          || goto error
 call bat\bldlib         %z_TraceMode%          || goto error
-call bat\bldzstrmac     %z_TraceMode%          || goto error
 call bat\bldcbllib      %z_TraceMode%          || goto error
 
 call z390test\gradlew.bat -p z390test test     || goto error
