@@ -1,0 +1,288 @@
+1                                         High Level Assembler Option Summary                   (PTF UI80020)   Page    1
+-                                                                                            HLASM R6.0  2024/06/06 09.09
+0  No Overriding ASMAOPT Parameters
+   Overriding Parameters-  OPTABLE(370,LIST)
+   No Process Statements
+
+
+   Options for this Assembly
+0                    NOADATA
+                       ALIGN
+                       ASA
+                       BATCH
+                       CODEPAGE(047C)
+                     NOCOMPAT
+                     NODATAMAP
+                     NODBCS
+                     NODECK
+                       DXREF
+                       ESD
+                     NOEXIT
+                       FAIL(NOMSG,NOMNOTE,MAXERRS(500))
+                       FLAG(0,ALIGN,CONT,EXLITW,NOIMPLEN,NOLONGER,NOPAGE0,PUSH,RECORD,RENT,NOSIGNED,NOSUBSTR,NOTRUNC,
+                            USING0)
+                     NOFOLD
+                     NOGOFF
+                       ILMA
+                     NOINFO
+                       LANGUAGE(EN)
+                     NOLIBMAC
+                       LINECOUNT(60)
+                       LIST(121)
+ 3 PARM/OPTION         MACHINE(S370,LIST)
+                       MXREF(SOURCE)
+                       OBJECT
+ 3 PARM/OPTION         OPTABLE(370,LIST)
+                     NOPCONTROL
+                     NOPESTOP
+                     NOPROFILE
+                     NORA2
+                     NORENT
+                       RLD
+                       RXREF
+                       SECTALGN(8)
+                       SIZE(MAX)
+                     NOSUPRWARN
+                       SYSPARM()
+                     NOTERM
+                     NOTEST
+                       THREAD
+                     NOTRANSLATE
+                       TYPECHECK(MAGNITUDE,REGISTER,SIGNED)
+                       USING(NOLIMIT,MAP,WARN(15))
+                     NOWORKFILE
+                       XREF(SHORT,UNREFS)
+
+   No Overriding DD Names
+1                              High Level Assembler Operation Code Table Contents                               Page    2
+-                                                                                            HLASM R6.0  2024/06/06 09.09
+0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
+0A        RX   5A   R1,D2(X2,B2)         ACONTROL HLASM                          ACTR     HLASM
+ AD       RX   6A   R1,D2(X2,B2)         ADATA    HLASM                          ADR      RR   2A   R1,R2
+ AE       RX   7A   R1,D2(X2,B2)         AEJECT   HLASM                          AER      RR   3A   R1,R2
+ AGO      HLASM                          AGOB     HLASM                          AH       RX   4A   R1,D2(X2,B2)
+ AIF      HLASM                          AIFB     HLASM                          AINSERT  HLASM
+ AL       RX   5E   R1,D2(X2,B2)         ALIAS    HLASM                          ALR      RR   1E   R1,R2
+ AMODE    HLASM                          ANOP     HLASM                          AP       SS   FA   D1(L1,B1),D2(L2,B2)
+ AR       RR   1A   R1,R2                AREAD    HLASM                          ASPACE   HLASM
+ AU       RX   7E   R1,D2(X2,B2)         AUR      RR   3E   R1,R2                AW       RX   6E   R1,D2(X2,B2)
+ AWR      RR   2E   R1,R2                AXR      RR   36   R1,R2                B        RX   47F. D2(X2,B2)
+ BAL      RX   45   R1,D2(X2,B2)         BALR     RR   05   R1,R2                BAS      RX   4D   R1,D2(X2,B2)
+ BASR     RR   0D   R1,R2                BC       RX   47   M1,D2(X2,B2)         BCR      RR   07   M1,R2
+ BCT      RX   46   R1,D2(X2,B2)         BCTR     RR   06   R1,R2                BE       RX   478. D2(X2,B2)
+ BER      RR   078. R2                   BH       RX   472. D2(X2,B2)            BHR      RR   072. R2
+ BL       RX   474. D2(X2,B2)            BLR      RR   074. R2                   BM       RX   474. D2(X2,B2)
+ BMR      RR   074. R2                   BNE      RX   477. D2(X2,B2)            BNER     RR   077. R2
+ BNH      RX   47D. D2(X2,B2)            BNHR     RR   07D. R2                   BNL      RX   47B. D2(X2,B2)
+ BNLR     RR   07B. R2                   BNM      RX   47B. D2(X2,B2)            BNMR     RR   07B. R2
+ BNO      RX   47E. D2(X2,B2)            BNOR     RR   07E. R2                   BNP      RX   47D. D2(X2,B2)
+ BNPR     RR   07D. R2                   BNZ      RX   477. D2(X2,B2)            BNZR     RR   077. R2
+ BO       RX   471. D2(X2,B2)            BOR      RR   071. R2                   BP       RX   472. D2(X2,B2)
+ BPR      RR   072. R2                   BR       RR   07F. R2                   BXH      RS   86   R1,R3,D2(B2)
+ BXLE     RS   87   R1,R3,D2(B2)         BZ       RX   478. D2(X2,B2)            BZR      RR   078. R2
+ C        RX   59   R1,D2(X2,B2)         CATTR    HLASM                          CCW      HLASM
+ CCW0     HLASM                          CCW1     HLASM                          CD       RX   69   R1,D2(X2,B2)
+ CDR      RR   29   R1,R2                CDS      RS   BB   R1,R3,D2(B2)         CE       RX   79   R1,D2(X2,B2)
+ CEJECT   HLASM                          CER      RR   39   R1,R2                CH       RX   49   R1,D2(X2,B2)
+ CL       RX   55   R1,D2(X2,B2)         CLC      SS   D5   D1(L,B1),D2(B2)      CLCL     RR   0F   R1,R2
+ CLI      SI   95   D1(B1),I2            CLM      RS   BD   R1,M3,D2(B2)         CLR      RR   15   R1,R2
+ CLRCH    S    9F01 D2(B2)               CLRIO    S    9D01 D2(B2)               CNOP     HLASM
+ COM      HLASM                          CONCS    S    B200 D2(B2)               COPY     HLASM
+ CP       SS   F9   D1(L1,B1),D2(L2,B2)  CR       RR   19   R1,R2                CS       RS   BA   R1,R3,D2(B2)
+ CSECT    HLASM                          CVB      RX   4F   R1,D2(X2,B2)         CVD      RX   4E   R1,D2(X2,B2)
+ CXD      HLASM                          D        RX   5D   R1,D2(X2,B2)         DC       HLASM
+ DD       RX   6D   R1,D2(X2,B2)         DDR      RR   2D   R1,R2                DE       RX   7D   R1,D2(X2,B2)
+ DER      RR   3D   R1,R2                DISCS    S    B201 D2(B2)               DP       SS   FD   D1(L1,B1),D2(L2,B2)
+ DR       RR   1D   R1,R2                DROP     HLASM                          DS       HLASM
+ DSECT    HLASM                          DXD      HLASM                          ED       SS   DE   D1(L,B1),D2(B2)
+ EDMK     SS   DF   D1(L,B1),D2(B2)      EJECT    HLASM                          END      HLASM
+ ENTRY    HLASM                          EPAR     RRE  B226 R1                   EQU      HLASM
+ ESAR     RRE  B227 R1                   EX       RX   44   R1,D2(X2,B2)         EXITCTL  HLASM
+ EXTRN    HLASM                          GBLA     HLASM                          GBLB     HLASM
+ GBLC     HLASM                          HDR      RR   24   R1,R2                HDV      S    9E01 D2(B2)
+ HER      RR   34   R1,R2                HIO      S    9E00 D2(B2)               IAC      RRE  B224 R1
+ IC       RX   43   R1,D2(X2,B2)         ICM      RS   BF   R1,M3,D2(B2)         ICTL     HLASM
+ IPK      S    B20B                      IPTE     RRE  B221 R1,R2                ISEQ     HLASM
+ ISK      RR   09   R1,R2                ISKE     RRE  B229 R1,R2                IVSK     RRE  B223 R1,R2
+ L        RX   58   R1,D2(X2,B2)         LA       RX   41   R1,D2(X2,B2)         LASP     SSE  E500 D1(B1),D2(B2)
+ LCDR     RR   23   R1,R2                LCER     RR   33   R1,R2                LCLA     HLASM
+ LCLB     HLASM                          LCLC     HLASM                          LCR      RR   13   R1,R2
+ LCTL     RS   B7   R1,R3,D2(B2)         LD       RX   68   R1,D2(X2,B2)         LDR      RR   28   R1,R2
+ LE       RX   78   R1,D2(X2,B2)         LER      RR   38   R1,R2                LH       RX   48   R1,D2(X2,B2)
+ LM       RS   98   R1,R3,D2(B2)         LNDR     RR   21   R1,R2                LNER     RR   31   R1,R2
+1                              High Level Assembler Operation Code Table Contents                               Page    3
+-                                                                                            HLASM R6.0  2024/06/06 09.09
+0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
+0LNR      RR   11   R1,R2                LOCTR    HLASM                          LPDR     RR   20   R1,R2
+ LPER     RR   30   R1,R2                LPR      RR   10   R1,R2                LPSW     SI   82   D1(B1)
+ LR       RR   18   R1,R2                LRA      RX   B1   R1,D2(X2,B2)         LRDR     RR   25   R1,R2
+ LRER     RR   35   R1,R2                LTDR     RR   22   R1,R2                LTER     RR   32   R1,R2
+ LTORG    HLASM                          LTR      RR   12   R1,R2                M        RX   5C   R1,D2(X2,B2)
+ MACRO    HLASM                          MC       SI   AF   D1(B1),I2            MD       RX   6C   R1,D2(X2,B2)
+ MDE      RX   7C   R1,D2(X2,B2)         MDER     RR   3C   R1,R2                MDR      RR   2C   R1,R2
+ ME       RX   7C   R1,D2(X2,B2)         MEND     HLASM                          MER      RR   3C   R1,R2
+ MEXIT    HLASM                          MH       RX   4C   R1,D2(X2,B2)         MHELP    HLASM
+ MNOTE    HLASM                          MP       SS   FC   D1(L1,B1),D2(L2,B2)  MR       RR   1C   R1,R2
+ MVC      SS   D2   D1(L,B1),D2(B2)      MVCIN    SS   E8   D1(L,B1),D2(B2)      MVCK     SS   D9   D1(R1,B1),D2(B2),R3
+ MVCL     RR   0E   R1,R2                MVCP     SS   DA   D1(R1,B1),D2(B2),R3  MVCS     SS   DB   D1(R1,B1),D2(B2),R3
+ MVI      SI   92   D1(B1),I2            MVN      SS   D1   D1(L,B1),D2(B2)      MVO      SS   F1   D1(L1,B1),D2(L2,B2)
+ MVZ      SS   D3   D1(L,B1),D2(B2)      MXD      RX   67   R1,D2(X2,B2)         MXDR     RR   27   R1,R2
+ MXR      RR   26   R1,R2                N        RX   54   R1,D2(X2,B2)         NC       SS   D4   D1(L,B1),D2(B2)
+ NI       SI   94   D1(B1),I2            NOP      RX   470. D2(X2,B2)            NOPR     RR   070. R2
+ NR       RR   14   R1,R2                O        RX   56   R1,D2(X2,B2)         OC       SS   D6   D1(L,B1),D2(B2)
+ OI       SI   96   D1(B1),I2            OPSYN    HLASM                          OR       RR   16   R1,R2
+ ORG      HLASM                          PACK     SS   F2   D1(L1,B1),D2(L2,B2)  PC       S    B218 D2(B2)
+ POP      HLASM                          PRINT    HLASM                          PT       RRE  B228 R1,R2
+ PTLB     S    B20D                      PUNCH    HLASM                          PUSH     HLASM
+ RDD      SI   85   D1(B1),I2            REPRO    HLASM                          RIO      S    9C02 D2(B2)
+ RMODE    HLASM                          RRB      S    B213 D2(B2)               RRBE     RRE  B22A R1,R2
+ RSECT    HLASM                          S        RX   5B   R1,D2(X2,B2)         SAC      S    B219 D2(B2)
+ SCK      S    B204 D2(B2)               SCKC     S    B206 D2(B2)               SD       RX   6B   R1,D2(X2,B2)
+ SDR      RR   2B   R1,R2                SE       RX   7B   R1,D2(X2,B2)         SER      RR   3B   R1,R2
+ SETA     HLASM                          SETAF    HLASM                          SETB     HLASM
+ SETC     HLASM                          SETCF    HLASM                          SH       RX   4B   R1,D2(X2,B2)
+ SIGP     RS   AE   R1,R3,D2(B2)         SIO      S    9C00 D2(B2)               SIOF     S    9C01 D2(B2)
+ SL       RX   5F   R1,D2(X2,B2)         SLA      RS   8B   R1,D2(B2)            SLDA     RS   8F   R1,D2(B2)
+ SLDL     RS   8D   R1,D2(B2)            SLL      RS   89   R1,D2(B2)            SLR      RR   1F   R1,R2
+ SP       SS   FB   D1(L1,B1),D2(L2,B2)  SPACE    HLASM                          SPKA     S    B20A D2(B2)
+ SPM      RR   04   R1                   SPT      S    B208 D2(B2)               SPX      S    B210 D2(B2)
+ SR       RR   1B   R1,R2                SRA      RS   8A   R1,D2(B2)            SRDA     RS   8E   R1,D2(B2)
+ SRDL     RS   8C   R1,D2(B2)            SRL      RS   88   R1,D2(B2)            SRP      SS   F0   D1(L1,B1),D2(B2),I3
+ SSAR     RRE  B225 R1                   SSK      RR   08   R1,R2                SSKE     RRE  B22B R1,R2
+ SSM      SI   80   D1(B1)               ST       RX   50   R1,D2(X2,B2)         STAP     S    B212 D2(B2)
+ START    HLASM                          STC      RX   42   R1,D2(X2,B2)         STCK     S    B205 D2(B2)
+ STCKC    S    B207 D2(B2)               STCM     RS   BE   R1,M3,D2(B2)         STCTL    RS   B6   R1,R3,D2(B2)
+ STD      RX   60   R1,D2(X2,B2)         STE      RX   70   R1,D2(X2,B2)         STH      RX   40   R1,D2(X2,B2)
+ STIDC    S    B203 D2(B2)               STIDP    S    B202 D2(B2)               STM      RS   90   R1,R3,D2(B2)
+ STNSM    SI   AC   D1(B1),I2            STOSM    SI   AD   D1(B1),I2            STPT     S    B209 D2(B2)
+ STPX     S    B211 D2(B2)               SU       RX   7F   R1,D2(X2,B2)         SUR      RR   3F   R1,R2
+ SVC      RR   0A   I1                   SW       RX   6F   R1,D2(X2,B2)         SWR      RR   2F   R1,R2
+ SXR      RR   37   R1,R2                TB       RRE  B22C R1,R2                TCH      S    9F00 D2(B2)
+ TIO      S    9D00 D2(B2)               TITLE    HLASM                          TM       SI   91   D1(B1),I2
+ TPROT    SSE  E501 D1(B1),D2(B2)        TR       SS   DC   D1(L,B1),D2(B2)      TRT      SS   DD   D1(L,B1),D2(B2)
+ TS       SI   93   D1(B1)               UNPK     SS   F3   D1(L1,B1),D2(L2,B2)  USING    HLASM
+ VA       VST  A420 VR1,VR3,RS2(RT2)     VACD     VST  A417 VR1,RS2(RT2)         VACDR    VV   A517 VR1,VR2
+ VACE     VST  A407 VR1,RS2(RT2)         VACER    VV   A507 VR1,VR2              VACRS    S    A6CB D2(B2)
+ VACSV    S    A6CA D2(B2)               VAD      VST  A410 VR1,VR3,RS2(RT2)     VADQ     QV   A590 VR1,QR3,VR2
+ VADR     VV   A510 VR1,VR3,VR2          VADS     QST  A490 VR1,QR3,RS2(RT2)     VAE      VST  A400 VR1,VR3,RS2(RT2)
+ VAEQ     QV   A580 VR1,QR3,VR2          VAER     VV   A500 VR1,VR3,VR2          VAES     QST  A480 VR1,QR3,RS2(RT2)
+1                              High Level Assembler Operation Code Table Contents                               Page    4
+-                                                                                            HLASM R6.0  2024/06/06 09.09
+0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
+0VAQ      QV   A5A0 VR1,QR3,VR2          VAR      VV   A520 VR1,VR3,VR2          VAS      QST  A4A0 VR1,QR3,RS2(RT2)
+ VC       VST  A428 M1,VR3,RS2(RT2)      VCD      VST  A418 M1,VR3,RS2(RT2)      VCDQ     QV   A598 M1,QR3,VR2
+ VCDR     VV   A518 M1,VR3,VR2           VCDS     QST  A498 M1,QR3,RS2(RT2)      VCE      VST  A408 M1,VR3,RS2(RT2)
+ VCEQ     QV   A588 M1,QR3,VR2           VCER     VV   A508 M1,VR3,VR2           VCES     QST  A488 M1,QR3,RS2(RT2)
+ VCOVM    RRE  A643 R1                   VCQ      QV   A5A8 M1,QR3,VR2           VCR      VV   A528 M1,VR3,VR2
+ VCS      QST  A4A8 M1,QR3,RS2(RT2)      VCVM     RRE  A641                      VCZVM    RRE  A642 R1
+ VDD      VST  A413 VR1,VR3,RS2(RT2)     VDDQ     QV   A593 VR1,QR3,VR2          VDDR     VV   A513 VR1,VR3,VR2
+ VDDS     QST  A493 VR1,QR3,RS2(RT2)     VDE      VST  A403 VR1,VR3,RS2(RT2)     VDEQ     QV   A583 VR1,QR3,VR2
+ VDER     VV   A503 VR1,VR3,VR2          VDES     QST  A483 VR1,QR3,RS2(RT2)     VL       VST  A409 VR1,RS2(RT2)
+ VLBIX    RSEv E428 VR1,VR3,D2(B2)       VLCDR    VV   A552 VR1,VR2              VLCER    VV   A542 VR1,VR2
+ VLCR     VV   A562 VR1,VR2              VLCVM    VS   A681 RS2                  VLD      VST  A419 VR1,RS2(RT2)
+ VLDQ     QV   A599 VR1,QR2              VLDR     VV   A519 VR1,VR2              VLE      VST  A409 VR1,RS2(RT2)
+ VLEL     VR   A628 VR1,QR3,R2           VLELD    VR   A618 VR1,QR3,R2           VLELE    VR   A608 VR1,QR3,R2
+ VLEQ     QV   A589 VR1,QR2              VLER     VV   A509 VR1,VR2              VLH      VST  A429 VR1,RS2(RT2)
+ VLI      RSEv E400 VR1,VR3,D2(B2)       VLID     RSEv E410 VR1,VR3,D2(B2)       VLIE     RSEv E400 VR1,VR3,D2(B2)
+ VLINT    VST  A42A VR1,RS2(RT2)         VLM      VST  A40A VR1,RS2(RT2)         VLMD     VST  A41A VR1,RS2(RT2)
+ VLMDQ    QV   A59A VR1,QR2              VLMDR    VV   A51A VR1,VR2              VLME     VST  A40A VR1,RS2(RT2)
+ VLMEQ    QV   A58A VR1,QR2              VLMER    VV   A50A VR1,VR2              VLMQ     QV   A5AA VR1,QR2
+ VLMR     VV   A50A VR1,VR2              VLNDR    VV   A551 VR1,VR2              VLNER    VV   A541 VR1,VR2
+ VLNR     VV   A561 VR1,VR2              VLPDR    VV   A550 VR1,VR2              VLPER    VV   A540 VR1,VR2
+ VLPR     VV   A560 VR1,VR2              VLQ      QV   A5A9 VR1,QR2              VLR      VV   A509 VR1,VR2
+ VLVCA    S    A6C4 D2(B2)               VLVCU    RRE  A645 R1                   VLVM     VS   A680 RS2
+ VLVXA    S    A6C7 D2(B2)               VLY      VST  A40B VR1,RS2(RT2)         VLYD     VST  A41B VR1,RS2(RT2)
+ VLYE     VST  A40B VR1,RS2(RT2)         VLZDR    VV   A51B VR1                  VLZER    VV   A50B VR1
+ VLZR     VV   A50B VR1                  VM       VST  A422 VR1,VR3,RS2(RT2)     VMAD     VST  A414 VR1,VR3,RS2(RT2)
+ VMADQ    QV   A594 VR1,QR3,VR2          VMADS    QST  A494 VR1,QR3,RS2(RT2)     VMAE     VST  A404 VR1,VR3,RS2(RT2)
+ VMAEQ    QV   A584 VR1,QR3,VR2          VMAES    QST  A484 VR1,QR3,RS2(RT2)     VMCD     VST  A416 VR1,VR3,RS2(RT2)
+ VMCDR    VV   A516 VR1,VR3,VR2          VMCE     VST  A406 VR1,VR3,RS2(RT2)     VMCER    VV   A506 VR1,VR3,VR2
+ VMD      VST  A412 VR1,VR3,RS2(RT2)     VMDQ     QV   A592 VR1,QR3,VR2          VMDR     VV   A512 VR1,VR3,VR2
+ VMDS     QST  A492 VR1,QR3,RS2(RT2)     VME      VST  A402 VR1,VR3,RS2(RT2)     VMEQ     QV   A582 VR1,QR3,VR2
+ VMER     VV   A502 VR1,VR3,VR2          VMES     QST  A482 VR1,QR3,RS2(RT2)     VMNSD    VR   A611 VR1,QR3,R2
+ VMNSE    VR   A601 VR1,QR3,R2           VMQ      QV   A5A2 VR1,QR3,VR2          VMR      VV   A522 VR1,VR3,VR2
+ VMRRS    S    A6C3 D2(B2)               VMRSV    S    A6C1 D2(B2)               VMS      QST  A4A2 VR1,QR3,RS2(RT2)
+ VMSD     VST  A415 VR1,VR3,RS2(RT2)     VMSDQ    QV   A595 VR1,QR3,VR2          VMSDS    QST  A495 VR1,QR3,RS2(RT2)
+ VMSE     VST  A405 VR1,VR3,RS2(RT2)     VMSEQ    QV   A585 VR1,QR3,VR2          VMSES    QST  A485 VR1,QR3,RS2(RT2)
+ VMXAD    VR   A612 VR1,QR3,R2           VMXAE    VR   A602 VR1,QR3,R2           VMXSD    VR   A610 VR1,QR3,R2
+ VMXSE    VR   A600 VR1,QR3,R2           VN       VST  A424 VR1,VR3,RS2(RT2)     VNQ      QV   A5A4 VR1,QR3,VR2
+ VNR      VV   A524 VR1,VR3,VR2          VNS      QST  A4A4 VR1,QR3,RS2(RT2)     VNVM     VS   A684 RS2
+ VO       VST  A425 VR1,VR3,RS2(RT2)     VOQ      QV   A5A5 VR1,QR3,VR2          VOR      VV   A525 VR1,VR3,VR2
+ VOS      QST  A4A5 VR1,QR3,RS2(RT2)     VOVM     VS   A685 RS2                  VRCL     S    A6C5 D2(B2)
+ VRRS     RRE  A648 R1                   VRSV     RRE  A64A R1                   VRSVC    RRE  A649 R1
+ VS       VST  A421 VR1,VR3,RS2(RT2)     VSD      VST  A411 VR1,VR3,RS2(RT2)     VSDQ     QV   A591 VR1,QR3,VR2
+ VSDR     VV   A511 VR1,VR3,VR2          VSDS     QST  A491 VR1,QR3,RS2(RT2)     VSE      VST  A401 VR1,VR3,RS2(RT2)
+ VSEQ     QV   A581 VR1,QR3,VR2          VSER     VV   A501 VR1,VR3,VR2          VSES     QST  A481 VR1,QR3,RS2(RT2)
+ VSLL     RSEv E425 VR1,VR3,D2(B2)       VSPSD    VR   A61A VR1,QR2              VSQ      QV   A5A1 VR1,QR3,VR2
+ VSQD     VST  A453 VR1,RS2(RT2)         VSQDR    VV   A553 VR1,VR2              VSQE     VST  A443 VR1,RS2(RT2)
+ VSQER    VV   A543 VR1,VR2              VSR      VV   A521 VR1,VR3,VR2          VSRL     RSEv E424 VR1,VR3,D2(B2)
+ VSRRS    S    A6C2 D2(B2)               VSRSV    S    A6C0 D2(B2)               VSS      QST  A4A1 VR1,QR3,RS2(RT2)
+ VST      VST  A40D VR1,RS2(RT2)         VSTD     VST  A41D VR1,RS2(RT2)         VSTE     VST  A40D VR1,RS2(RT2)
+ VSTH     VST  A42D VR1,RS2(RT2)         VSTI     RSEv E401 VR1,VR3,D2(B2)       VSTID    RSEv E411 VR1,VR3,D2(B2)
+ VSTIE    RSEv E401 VR1,VR3,D2(B2)       VSTK     VST  A40F VR1,RS2(RT2)         VSTKD    VST  A41F VR1,RS2(RT2)
+ VSTKE    VST  A40F VR1,RS2(RT2)         VSTM     VST  A40E VR1,RS2(RT2)         VSTMD    VST  A41E VR1,RS2(RT2)
+ VSTME    VST  A40E VR1,RS2(RT2)         VSTVM    VS   A682 RS2                  VSTVP    S    A6C8 D2(B2)
+1                              High Level Assembler Operation Code Table Contents                               Page    5
+-                                                                                            HLASM R6.0  2024/06/06 09.09
+0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
+0VSVMM    S    A6C6 D2(B2)               VTAD     VST  A454 VR1,VR3,RS2(RT2)     VTAE     VST  A444 VR1,VR3,RS2(RT2)
+ VTSD     VST  A455 VR1,VR3,RS2(RT2)     VTSE     VST  A445 VR1,VR3,RS2(RT2)     VTVM     RRE  A640
+ VX       VST  A426 VR1,VR3,RS2(RT2)     VXEL     VR   A629 VR1,QR3,R2           VXELD    VR   A619 VR1,QR3,R2
+ VXELE    VR   A609 VR1,QR3,R2           VXQ      QV   A5A6 VR1,QR3,VR2          VXR      VV   A526 VR1,VR3,VR2
+ VXS      QST  A4A6 VR1,QR3,RS2(RT2)     VXVC     RRE  A644 R1                   VXVM     VS   A686 RS2
+ VXVMM    RRE  A646 R1                   VZPSD    VR   A61B VR1                  WRD      SI   84   D1(B1),I2
+ WXTRN    HLASM                          X        RX   57   R1,D2(X2,B2)         XATTR    HLASM
+ XC       SS   D7   D1(L,B1),D2(B2)      XI       SI   97   D1(B1),I2            XR       RR   17   R1,R2
+ ZAP      SS   F8   D1(L1,B1),D2(L2,B2)
+1                                              External Symbol Dictionary                                       Page    6
+-Symbol   Type   Id     Address  Length   Owner Id Flags Alias-of                            HLASM R6.0  2024/06/06 09.09
+0IEFBR14   SD 00000001 00000000 00000004             00
+1                                                                                                               Page    7
+   Active Usings: None
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2024/06/06 09.09
+0000000                00000 00004     1 IEFBR14  CSECT
+ 000000 1BFF                           2          SR    15,15
+ 000002 07FE                           3          BR    14
+                                       4          END
+1                                  Unreferenced Symbols Defined in CSECTs                                       Page    8
+-  Defn  Symbol                                                                              HLASM R6.0  2024/06/06 09.09
+0     1  IEFBR14
+1                                   General Purpose Register Cross Reference                                    Page    9
+- Register  References (M=modified, B=branch, U=USING, D=DROP, N=index)                      HLASM R6.0  2024/06/06 09.09
+0    0(0)    (no references identified)
+     1(1)    (no references identified)
+     2(2)    (no references identified)
+     3(3)    (no references identified)
+     4(4)    (no references identified)
+     5(5)    (no references identified)
+     6(6)    (no references identified)
+     7(7)    (no references identified)
+     8(8)    (no references identified)
+     9(9)    (no references identified)
+    10(A)    (no references identified)
+    11(B)    (no references identified)
+    12(C)    (no references identified)
+    13(D)    (no references identified)
+    14(E)       3B
+    15(F)       2M    2
+1                                  Diagnostic Cross Reference and Assembler Summary                             Page   10
+-                                                                                            HLASM R6.0  2024/06/06 09.09
+0     No Statements Flagged in this Assembly
+ HIGH LEVEL ASSEMBLER, 5696-234, RELEASE 6.0, PTF UI80020
+0SYSTEM: z/OS 02.05.00              JOBNAME: JGANCI1     STEPNAME: ASM        PROCSTEP: C
+0Unicode Module:   ASMA047C   From Page     1148   To Page    17584           ECECP: International 1
+ Data Sets Allocated for this Assembly
+  Con DDname   Data Set Name                                Volume  Member
+   P1 SYSIN    JGANCI.TEST.SOURCE                           xxxxxx  IEFBR14
+   L1 SYSLIB   JGANCI.TEST.MACRO                            xxxxxx
+   L2          SYS1.MACLIB                                  xxxxxx
+   L3          SYS1.MODGEN                                  xxxxxx
+      SYSLIN   SYS24158.T090935.RA000.JGANCI1.OBJ.H01       xxxxxx
+      SYSPRINT JGANCI.TEST.SYSPRINT                         xxxxxx  IEFBR14
+
+   26600K allocated to Buffer Pool       Storage required     200K
+       4 Primary Input Records Read            0 Library Records Read                  0 Work File Reads
+       0 ASMAOPT Records Read                288 Primary Print Records Written         0 Work File Writes
+       3 Object Records Written                0 ADATA Records Written
+0Assembly Start Time: 09.09.35 Stop Time: 09.09.35 Processor Time: 00.00.00.0005
+ Return Code 000

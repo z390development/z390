@@ -17,12 +17,22 @@ set z_MaxRetCode=0
 rem  Optable DOS
 set Z390PRN=rt\rt\OPCD$DOS.PRN
 set HLASMPRN=rt\rt\OPCD$DOS.TF1
-set SYSOUT=rt\rt\OPCD$DOS.OUT
-call bat\asmlg.bat %z_TraceMode% rt\rt\OPCD$DOS @rt\rt\OPCD$DOS.OPT
+call bat\asmlg.bat %z_TraceMode% rt\rt\OPCD$ @rt\rt\OPCD$DOS.OPT sysprn(rt\rt\OPCD$DOS.PRN)
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPCD$DOS "optable(DOS)" is okay
+if %z_ReturnCode% EQU 0 (echo %0 - OPCD$ "optable(DOS)" is okay
                          ) else (
-                         echo %0 ERROR: OPCD$DOS returned %z_ReturnCode% for "optable(DOS)"
+                         echo %0 ERROR: OPCD$ returned %z_ReturnCode% for "optable(DOS)"
+                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
+                         )
+
+rem  Optable 370
+set Z390PRN=rt\rt\OPCD$370.PRN
+set HLASMPRN=rt\rt\OPCD$370.TF1
+call bat\asmlg.bat %z_TraceMode% rt\rt\OPCD$ @rt\rt\OPCD$370.OPT sysprn(rt\rt\OPCD$370.PRN)
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (echo %0 - OPCD$ "optable(370)" is okay
+                         ) else (
+                         echo %0 ERROR: OPCD$ returned %z_ReturnCode% for "optable(370)"
                          if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
                          )
 :return

@@ -1,6 +1,9 @@
 @if /I "%1" == "tron" (echo on) else (echo off)
 rem create z390 jar file from sources
-rem unless NoDocs is specified as an argument, generate javadoc files
+rem A single parameter is allowed:
+rem - NoDocs specifies to suppress generating javadoc files
+rem - Debug  specifies to generate jar with debug enabled
+rem --> the default is to generate javadoc and suppress debug info
 
 setlocal
 if /I "%1" == "tron" (set z_TraceMode=tron
@@ -31,8 +34,9 @@ copy  src\*.java   jar
 copy  src\z390.man jar
 cd jar
 rem compile z390 java sources to class vm object code
+if /I %1. EQU Debug. (set jvopt=-g) else (set jvopt=-g:none)
 java -version
-javac.exe -g:none *.java
+javac.exe %jvopt% *.java
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: Error compiling z390 java sources
                          goto return

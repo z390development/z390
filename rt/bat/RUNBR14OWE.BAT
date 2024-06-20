@@ -26,17 +26,20 @@ call bat\asm   %z_TraceMode% rt\mlc\IEFBR14E
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 12 (echo %0 ERROR: IEFBR14E did not end with RC=12; RC=%z_ReturnCode%
                           set z_ReturnCode=8
-                          goto return)
+                          goto return) else (
+                          echo %0 OKAY : IEFBR14E ended with RC=12; as expected)
 call bat\asml  %z_TraceMode% rt\mlc\IEFBR14E
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 12 (echo %0 ERROR: IEFBR14E did not end with RC=12; RC=%z_ReturnCode%
                           set z_ReturnCode=8
-                          goto return)
+                          goto return) else (
+                          echo %0 OKAY : IEFBR14E ended with RC=12; as expected)
 call bat\asmlg %z_TraceMode% rt\mlc\IEFBR14E
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 12 (echo %0 ERROR: IEFBR14E did not end with RC=12; RC=%z_ReturnCode%
                           set z_ReturnCode=8
-                          goto return)
+                          goto return) else (
+                          echo %0 OKAY : IEFBR14E ended with RC=12; as expected)
 set z_ReturnCode=0
 goto return
 

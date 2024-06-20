@@ -1,5 +1,5 @@
 noallow
-  optable(dos,list)
+  optable(370,list)
   stats
 noloadhigh
 nodump
