@@ -34,9 +34,9 @@ copy  src\*.java   jar
 copy  src\z390.man jar
 cd jar
 rem compile z390 java sources to class vm object code
+if /I %1. EQU Debug. (set jvopt=-g) else (set jvopt=-g:none)
 java -version
-if /I %1. EQU .Debug. javac.exe -g:none *.java
-if /I %1. NEQ .Debug. javac.exe -g      *.java
+javac.exe %jvopt% *.java
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: Error compiling z390 java sources
                          goto return
