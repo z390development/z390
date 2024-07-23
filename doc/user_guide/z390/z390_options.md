@@ -176,5 +176,7 @@ ZVSAM | E | 0 | ZVSAM 0=no vsam, 1=zvsam1 support, 2=zvsam2 support.
 |           |           | z390    |         | UNI plus all z390 instructions; not compatible with HLASM                    |
 
 Remark: there is no machine option keyword equivalent for optable(DOS).
+
 Remark: option allow adds z390 instructions to specified optable.
+
 Remark: option assist adds ASSIST instructions to specified optable.
