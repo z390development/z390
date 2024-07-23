@@ -1,4 +1,4 @@
-OPCD$DOS  TITLE 'Validate opcode table'
+OPCD$     TITLE 'Validate opcode table'
 ***********************************************************************
 * Start create : 2024-05-31
 * 1st delivery :
@@ -6,13 +6,13 @@ OPCD$DOS  TITLE 'Validate opcode table'
 * Programmer   : AF Kornelis
 * Purpose      : For validating opcode tables. 
 *                For each optable option xxx we have
-*                a separate OPCS$xxx.OPT file and a OPCS$xxx.TF1
+*                a separate OPCD$xxx.OPT file and a OPCD$xxx.TF1
 *                reference file produced by HLASM
 *                Assembling this program using the appropriate .OPT 
 *                file produces a listing that includes a table of
 *                all mnemonics supported for the specified optable.
 *                Running the assembled program will compare the table
-*                of supported menmonics against the reference file.
+*                of supported mnemonics against the reference file.
 ***********************************************************************
 
          YREGS ,                       * register equates
@@ -22,18 +22,22 @@ OPCD$DOS  TITLE 'Validate opcode table'
 * Program entry and linkage
 *
 ***********************************************************************
-OPCD$DOS CSECT ,                       *
-*PCD$DOS AMODE 24                      * Not supported in DOS
-*PCD$DOS RMODE 24                      * Not supported in DOS
+OPCD$    CSECT ,                       *
+         AIF   (NOT D'AMODE).NOAMODE   * Skip amode if mnemonic invalid
+OPCD$    AMODE 24                      * Not supported in DOS
+.NOAMODE ANOP  ,
+         AIF   (NOT D'RMODE).NORMODE   * Skip rmode if mnemonic invalid
+OPCD$    RMODE 24                      * Not supported in DOS
+.NORMODE ANOP  ,
 
-         USING OPCD$DOS,R15            * Establish addressability
+         USING OPCD$,R15               * Establish addressability
          B     START                   * Skip header data
          DC    AL1(START-*),C'&SYSECT &SYSDATE &SYSTIME'
 START    DS    0H
          STM   R14,R12,12(R13)         * Save GPRs
          LR    R12,R15                 * Copy base address
          DROP  R15                     * No longer needed
-         USING OPCD$DOS,R12            * Re-establish addressability
+         USING OPCD$,R12               * Re-establish addressability
 
          LA    R15,SAVEAREA            * Point new savearea
          ST    R15,8(,R13)             * Set ptr to new savearea
