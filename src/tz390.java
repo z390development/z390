@@ -320,14 +320,15 @@ public  class  tz390 {
     * 2021-09-07 dsh #230 fix E7CC option, fix E7C0-E7C7 OR 8 with operand
 	* 2022-01-16 DSH #343 increase maxline from 200000 to 400000 for rpi\zivp.asm from Dan Greiner
 	* 2022-01-22 DSH #335 acall - restored APARM used to set &(acall)(n) just before aentry
-         * 2022-03-26 DSH #375 change APARM opcode directive from APARM to ACALLPRM
+    * 2022-03-26 DSH #375 change APARM opcode directive from APARM to ACALLPRM
     * 2023-01-22 RPI 1598 re-implement javadoc changes by Hugh Sweeney
     * 2022-10-24 jjg #451 z390 ignores CODEPAGE option for input;
     *                     replace non-printable with '.' in PRN, BAL, PCH
     * 2023-06-21 AFK #485 fix O attribute value for extended mnemonics
     * 2023-06-22 AFK #495 fix O attribure value for vector instructions
     * 2023-07-02 DSH/AFK #503 add support for new z16 instructions to opcode tables
-    * 2024-05-30 afk #500 List suboption for options optable/machine not implemented correctly
+    * 2024-05-30 AFK #500 List suboption for options optable/machine not implemented correctly
+    * 2024-06-07 AFK #533 Correct OPTABLE(370,LIST) output to match HLASM
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -1605,23 +1606,8 @@ public  class  tz390 {
          "--=USING,124,--",      //   7370         "USING"          124
          "--=WXTRN,120,--",      //   7330         "WXTRN"          120
          };
-     String[]   op_table_DOS_obsolete = // Table added for RPI 1209N
-         // These instructions are not included in pz390 and therefore cause a S0C1 failure when executed
-        {}; // list is empty now, to be removed once we are sure it will not be needed anymore #500
      String[]   op_table_DOS_notsupported = // Table added for RPI 1209A
-        {                                                     // #500
-//       "WRD      SI   84   D1(B1),I2",                         #500
-//       "RDD      SI   85   D1(B1),I2",                         #500
-//       "SIO      S    9C00 D2(B2)",                            #500
-//       "SIOF     S    9C01 D2(B2)",                            #500
-//       "TIO      S    9D00 D2(B2)",                            #500
-//       "CLRIO    S    9D01 D2(B2)",                            #500
-//       "HIO      S    9E00 D2(B2)",                            #500
-//       "HDV      S    9E01 D2(B2)",                            #500
-//       "TCH      S    9F00 D2(B2)",                            #500
-//       "STIDC    S    B203 D2(B2)",                            #500
-//       "RRB      S    B213 D2(B2)",                            #500
-         "HPR      SI   99   D1(B1)", // model 360/20 only
+        {"HPR      SI   99   D1(B1)", // model 360/20 only
          "SPSW     SI   81   D1(B1)", // model 360/20 only
          "TIOB     IO   9A   ??", // model 360/20 only
          "CIO      IO   9B   ??", // model 360/20 only
@@ -1635,20 +1621,20 @@ public  class  tz390 {
          "A404=VMAE,VST,600",    //        "A404"  "VMAE"     "VST" 60
          "A405=VMSE,VST,600",    //        "A405"  "VMSE"     "VST" 60
          "A406=VMCE,VST,600",    //        "A406"  "VMCE"     "VST" 60
-         "A407=VACE,VST,600",    //        "A407"  "VACE"     "VST" 60
-         "A408=VCE,VST,600",     //        "A408"  "VCE"      "VST" 60
-         "A409=VL,VST,600",      //        "A409"  "VL"       "VST" 60
-         "A409=VLE,VST,600",     //        "A409"  "VLE"      "VST" 60
-         "A40A=VLM,VST,600",     //        "A40A"  "VLM"      "VST" 60
-         "A40A=VLME,VST,600",    //        "A40A"  "VLME"     "VST" 60
-         "A40B=VLY,VST,600",     //        "A40B"  "VLY"      "VST" 60
-         "A40B=VLYE,VST,600",    //        "A40B"  "VLYE"     "VST" 60
-         "A40D=VST,VST,600",     //        "A40D"  "VST"      "VST" 60
-         "A40D=VSTE,VST,600",    //        "A40D"  "VSTE"     "VST" 60
-         "A40E=VSTM,VST,600",    //        "A40E"  "VSTM"     "VST" 60
-         "A40E=VSTME,VST,600",   //        "A40E"  "VSTME"    "VST" 60
-         "A40F=VSTK,VST,600",    //        "A40F"  "VSTK"     "VST" 60
-         "A40F=VSTKE,VST,600",   //        "A40F"  "VSTKE"    "VST" 60
+         "A407=VACE,VST,601",    //        "A407"  "VACE"     "VST" 60 // #533 Omit VR3
+         "A408=VCE,VST,602",     //        "A408"  "VCE"      "VST" 60 // #533 M1 replaces VR1
+         "A409=VL,VST,601",      //        "A409"  "VL"       "VST" 60 // #533 Omit VR3
+         "A409=VLE,VST,601",     //        "A409"  "VLE"      "VST" 60 // #533 Omit VR3
+         "A40A=VLM,VST,601",     //        "A40A"  "VLM"      "VST" 60 // #533 Omit VR3
+         "A40A=VLME,VST,601",    //        "A40A"  "VLME"     "VST" 60 // #533 Omit VR3
+         "A40B=VLY,VST,601",     //        "A40B"  "VLY"      "VST" 60 // #533 Omit VR3
+         "A40B=VLYE,VST,601",    //        "A40B"  "VLYE"     "VST" 60 // #533 Omit VR3
+         "A40D=VST,VST,601",     //        "A40D"  "VST"      "VST" 60 // #533 Omit VR3
+         "A40D=VSTE,VST,601",    //        "A40D"  "VSTE"     "VST" 60 // #533 Omit VR3
+         "A40E=VSTM,VST,601",    //        "A40E"  "VSTM"     "VST" 60 // #533 Omit VR3
+         "A40E=VSTME,VST,601",   //        "A40E"  "VSTME"    "VST" 60 // #533 Omit VR3
+         "A40F=VSTK,VST,601",    //        "A40F"  "VSTK"     "VST" 60 // #533 Omit VR3
+         "A40F=VSTKE,VST,601",   //        "A40F"  "VSTKE"    "VST" 60 // #533 Omit VR3
          "A410=VAD,VST,600",     //        "A410"  "VAD"      "VST" 60
          "A411=VSD,VST,600",     //        "A411"  "VSD"      "VST" 60
          "A412=VMD,VST,600",     //        "A412"  "VMD"      "VST" 60
@@ -1656,28 +1642,28 @@ public  class  tz390 {
          "A414=VMAD,VST,600",    //        "A414"  "VMAD"     "VST" 60
          "A415=VMSD,VST,600",    //        "A415"  "VMSD"     "VST" 60
          "A416=VMCD,VST,600",    //        "A416"  "VMCD"     "VST" 60
-         "A417=VACD,VST,600",    //        "A417"  "VACD"     "VST" 60
-         "A418=VCD,VST,600",     //        "A418"  "VCD"      "VST" 60
-         "A419=VLD,VST,600",     //        "A419"  "VLD"      "VST" 60
-         "A41A=VLMD,VST,600",    //        "A41A"  "VLMD"     "VST" 60
-         "A41B=VLYD,VST,600",    //        "A41B"  "VLYD"     "VST" 60
-         "A41D=VSTD,VST,600",    //        "A41D"  "VSTD"     "VST" 60
-         "A41E=VSTMD,VST,600",   //        "A41E"  "VSTMD"    "VST" 60
-         "A41F=VSTKD,VST,600",   //        "A41F"  "VSTKD"    "VST" 60
+         "A417=VACD,VST,601",    //        "A417"  "VACD"     "VST" 60 // #533 Omit VR3
+         "A418=VCD,VST,602",     //        "A418"  "VCD"      "VST" 60 // #533 M1 replaces VR1
+         "A419=VLD,VST,601",     //        "A419"  "VLD"      "VST" 60 // #533 Omit VR3
+         "A41A=VLMD,VST,601",    //        "A41A"  "VLMD"     "VST" 60 // #533 Omit VR3
+         "A41B=VLYD,VST,601",    //        "A41B"  "VLYD"     "VST" 60 // #533 Omit VR3
+         "A41D=VSTD,VST,601",    //        "A41D"  "VSTD"     "VST" 60 // #533 Omit VR3
+         "A41E=VSTMD,VST,601",   //        "A41E"  "VSTMD"    "VST" 60 // #533 Omit VR3
+         "A41F=VSTKD,VST,601",   //        "A41F"  "VSTKD"    "VST" 60 // #533 Omit VR3
          "A420=VA,VST,600",      //        "A420"  "VA"       "VST" 60
          "A421=VS,VST,600",      //        "A421"  "VS"       "VST" 60
          "A422=VM,VST,600",      //        "A422"  "VM"       "VST" 60
          "A424=VN,VST,600",      //        "A424"  "VN"       "VST" 60
          "A425=VO,VST,600",      //        "A425"  "VO"       "VST" 60
          "A426=VX,VST,600",      //        "A426"  "VX"       "VST" 60
-         "A428=VC,VST,600",      //        "A428"  "VC"       "VST" 60
-         "A429=VLH,VST,600",     //        "A429"  "VLH"      "VST" 60
-         "A42A=VLINT,VST,600",   //        "A42A"  "VLINT"    "VST" 60
-         "A42D=VSTH,VST,600",    //        "A42D"  "VSTH"     "VST" 60
-         "A443=VSQE,VST,600",    //        "A443"  "VSQE"     "VST" 60
+         "A428=VC,VST,602",      //        "A428"  "VC"       "VST" 60 // #533 M1 replaces VR1
+         "A429=VLH,VST,601",     //        "A429"  "VLH"      "VST" 60 // #533 Omit VR3
+         "A42A=VLINT,VST,601",   //        "A42A"  "VLINT"    "VST" 60 // #533 Omit VR3
+         "A42D=VSTH,VST,601",    //        "A42D"  "VSTH"     "VST" 60 // #533 Omit VR3
+         "A443=VSQE,VST,601",    //        "A443"  "VSQE"     "VST" 60 // #533 Omit VR3
          "A444=VTAE,VST,600",    //        "A444"  "VTAE"     "VST" 60
          "A445=VTSE,VST,600",    //        "A445"  "VTSE"     "VST" 60
-         "A453=VSQD,VST,600",    //        "A453"  "VSQE"     "VST" 60
+         "A453=VSQD,VST,601",    //        "A453"  "VSQE"     "VST" 60 // #533 Omit VR3
          "A454=VTAD,VST,600",    //        "A454"  "VTAD"     "VST" 60
          "A455=VTSD,VST,600",    //        "A455"  "VTSD"     "VST" 60
          "A480=VAES,QST,580",    //        "A480"  "VAES"     "QST" 58
@@ -1686,51 +1672,51 @@ public  class  tz390 {
          "A483=VDES,QST,580",    //        "A483"  "VDES"     "QST" 58
          "A484=VMAES,QST,580",   //        "A484"  "VMAES"    "QST" 58
          "A485=VMSES,QST,580",   //        "A485"  "VMSES"    "QST" 58
-         "A488=VCES,QST,580",    //        "A488"  "VCES"     "QST" 58
+         "A488=VCES,QST,581",    //        "A488"  "VCES"     "QST" 58 // #533 M1 replaces VR1
          "A490=VADS,QST,580",    //        "A490"  "VADS"     "QST" 58
          "A491=VSDS,QST,580",    //        "A491"  "VSDS"     "QST" 58
          "A492=VMDS,QST,580",    //        "A492"  "VMDS"     "QST" 58
          "A493=VDDS,QST,580",    //        "A493"  "VDDS"     "QST" 58
          "A494=VMADS,QST,580",   //        "A494"  "VMADS"    "QST" 58
          "A495=VMSDS,QST,580",   //        "A495"  "VMSDS"    "QST" 58
-         "A498=VCDS,QST,580",    //        "A498"  "VCDS"     "QST" 58
+         "A498=VCDS,QST,581",    //        "A498"  "VCDS"     "QST" 58 // #533 M1 replaces VR1
          "A4A0=VAS,QST,580",     //        "A4A0"  "VAS"      "QST" 58
          "A4A1=VSS,QST,580",     //        "A4A1"  "VSS"      "QST" 58
          "A4A2=VMS,QST,580",     //        "A4A2"  "VMS"      "QST" 58
          "A4A4=VNS,QST,580",     //        "A4A4"  "VNS"      "QST" 58
          "A4A5=VOS,QST,580",     //        "A4A5"  "VOS"      "QST" 58
          "A4A6=VXS,QST,580",     //        "A4A6"  "VXS"      "QST" 58
-         "A4A8=VCS,QST,580",     //        "A4A8"  "VCS"      "QST" 58
-         "A500=VAER,VV,610",     //        "A500"  "VAER"     "VV"  61
-         "A501=VSER,VV,610",     //        "A501"  "VSER"     "VV"  61
-         "A502=VMER,VV,610",     //        "A502"  "VMER"     "VV"  61
-         "A503=VDER,VV,610",     //        "A503"  "VDER"     "VV"  61
-         "A506=VMCER,VV,610",    //        "A506"  "VMCER"    "VV"  61
+         "A4A8=VCS,QST,581",     //        "A4A8"  "VCS"      "QST" 58 // #533 M1 replaces VR1
+         "A500=VAER,VV,611",     //        "A500"  "VAER"     "VV"  61 // #533 Add VR3
+         "A501=VSER,VV,611",     //        "A501"  "VSER"     "VV"  61 // #533 Add VR3
+         "A502=VMER,VV,611",     //        "A502"  "VMER"     "VV"  61 // #533 Add VR3
+         "A503=VDER,VV,611",     //        "A503"  "VDER"     "VV"  61 // #533 Add VR3
+         "A506=VMCER,VV,611",    //        "A506"  "VMCER"    "VV"  61 // #533 Add VR3
          "A507=VACER,VV,610",    //        "A507"  "VACER"    "VV"  61
-         "A508=VCER,VV,610",     //        "A508"  "VCER"     "VV"  61
-         //  "A509=VLR,VV,610",      //        "A509"  "VLR"      "VV"  61 removed by dsh RPI 2202
+         "A508=VCER,VV,612",     //        "A508"  "VCER"     "VV"  61 // #533 M1,VR3,VR2
+         "A509=VLR,VV,610",      //        "A509"  "VLR"      "VV"  61 removed by dsh RPI 2202 #533 re-enabled
          "A509=VLER,VV,610",     //        "A509"  "VLER"     "VV"  61
          "A50A=VLMR,VV,610",     //        "A50A"  "VLMR"     "VV"  61
          "A50A=VLMER,VV,610",    //        "A50A"  "VLMER"    "VV"  61
-         "A50B=VLZR,VV,610",     //        "A50B"  "VLZR"     "VV"  61
-         "A50B=VLZER,VV,610",    //        "A50B"  "VLZER"    "VV"  61
-         "A510=VADR,VV,610",     //        "A510"  "VADR"     "VV"  61
-         "A511=VSDR,VV,610",     //        "A511"  "VSDR"     "VV"  61
-         "A512=VMDR,VV,610",     //        "A512"  "VMDR"     "VV"  61
-         "A513=VDDR,VV,610",     //        "A513"  "VDDR"     "VV"  61
-         "A516=VMCDR,VV,610",    //        "A516"  "VMCDR"    "VV"  61
+         "A50B=VLZR,VV,613",     //        "A50B"  "VLZR"     "VV"  61 // #533 Omit VR3
+         "A50B=VLZER,VV,613",    //        "A50B"  "VLZER"    "VV"  61 // #533 Omit VR3
+         "A510=VADR,VV,611",     //        "A510"  "VADR"     "VV"  61 // #533 Add VR3
+         "A511=VSDR,VV,611",     //        "A511"  "VSDR"     "VV"  61 // #533 Add VR3
+         "A512=VMDR,VV,611",     //        "A512"  "VMDR"     "VV"  61 // #533 Add VR3
+         "A513=VDDR,VV,611",     //        "A513"  "VDDR"     "VV"  61 // #533 Add VR3
+         "A516=VMCDR,VV,611",    //        "A516"  "VMCDR"    "VV"  61 // #533 Add VR3
          "A517=VACDR,VV,610",    //        "A517"  "VACDR"    "VV"  61
-         "A518=VCDR,VV,610",     //        "A518"  "VCDR"     "VV"  61
+         "A518=VCDR,VV,612",     //        "A518"  "VCDR"     "VV"  61 // #533 M1,VR3,VR2
          "A519=VLDR,VV,610",     //        "A519"  "VLDR"     "VV"  61
          "A51A=VLMDR,VV,610",    //        "A51A"  "VLMDR"    "VV"  61
-         "A51B=VLZDR,VV,610",    //        "A51B"  "VLZDR"    "VV"  61
-         "A520=VAR,VV,610",      //        "A520"  "VAR"      "VV"  61
-         "A521=VSR,VV,610",      //        "A521"  "VSR"      "VV"  61
-         "A522=VMR,VV,610",      //        "A522"  "VMR"      "VV"  61
-         "A524=VNR,VV,610",      //        "A524"  "VNR"      "VV"  61
-         "A525=VOR,VV,610",      //        "A525"  "VOR"      "VV"  61
-         "A526=VXR,VV,610",      //        "A526"  "VXR"      "VV"  61
-         "A528=VCR,VV,610",      //        "A528"  "VCR"      "VV"  61
+         "A51B=VLZDR,VV,613",    //        "A51B"  "VLZDR"    "VV"  61 // #533 Omit VR2
+         "A520=VAR,VV,611",      //        "A520"  "VAR"      "VV"  61 // #533 Add VR3
+         "A521=VSR,VV,611",      //        "A521"  "VSR"      "VV"  61 // #533 Add VR3
+         "A522=VMR,VV,611",      //        "A522"  "VMR"      "VV"  61 // #533 Add VR3
+         "A524=VNR,VV,611",      //        "A524"  "VNR"      "VV"  61 // #533 Add VR3
+         "A525=VOR,VV,611",      //        "A525"  "VOR"      "VV"  61 // #533 Add VR3
+         "A526=VXR,VV,611",      //        "A526"  "VXR"      "VV"  61 // #533 Add VR3
+         "A528=VCR,VV,612",      //        "A528"  "VCR"      "VV"  61 // #533 M1,VR3,VR2
          "A540=VLPER,VV,610",    //        "A540"  "VLPER"    "VV"  61
          "A541=VLNER,VV,610",    //        "A541"  "VLNER"    "VV"  61
          "A542=VLCER,VV,610",    //        "A542"  "VLCER"    "VV"  61
@@ -1748,27 +1734,27 @@ public  class  tz390 {
          "A583=VDEQ,QV,590",     //        "A583"  "VDEQ"     "QV"  59
          "A584=VMAEQ,QV,590",    //        "A584"  "VMAEQ"    "QV"  59
          "A585=VMSEQ,QV,590",    //        "A585"  "VMSEQ"    "QV"  59
-         "A588=VCEQ,QV,590",     //        "A588"  "VCEQ"     "QV"  59
-         "A589=VLEQ,QV,590",     //        "A589"  "VLEQ"     "QV"  59
-         "A58A=VLMEQ,QV,590",    //        "A58A"  "VLMEQ"    "QV"  59
+         "A588=VCEQ,QV,591",     //        "A588"  "VCEQ"     "QV"  59 // #533 M1 replaces VR1
+         "A589=VLEQ,QV,592",     //        "A589"  "VLEQ"     "QV"  59 // #533 QR2 replaces QR3,VR2
+         "A58A=VLMEQ,QV,592",    //        "A58A"  "VLMEQ"    "QV"  59 // #533 QR2 replaces QR3,VR2
          "A590=VADQ,QV,590",     //        "A590"  "VADQ"     "QV"  59
          "A591=VSDQ,QV,590",     //        "A591"  "VSDQ"     "QV"  59
          "A592=VMDQ,QV,590",     //        "A592"  "VMDQ"     "QV"  59
          "A593=VDDQ,QV,590",     //        "A593"  "VDDQ"     "QV"  59
          "A594=VMADQ,QV,590",    //        "A594"  "VMADQ"    "QV"  59
          "A595=VMSDQ,QV,590",    //        "A595"  "VMSDQ"    "QV"  59
-         "A598=VCDQ,QV,590",     //        "A598"  "VCDQ"     "QV"  59
-         "A599=VLDQ,QV,590",     //        "A599"  "VLDQ"     "QV"  59
-         "A59A=VLMDQ,QV,590",    //        "A59A"  "VLMDQ"    "QV"  59
+         "A598=VCDQ,QV,591",     //        "A598"  "VCDQ"     "QV"  59 // #533 M1 replaces VR1
+         "A599=VLDQ,QV,592",     //        "A599"  "VLDQ"     "QV"  59 // #533 QR2 replaces QR3,VR2
+         "A59A=VLMDQ,QV,592",    //        "A59A"  "VLMDQ"    "QV"  59 // #533 QR2 replaces QR3,VR2
          "A5A0=VAQ,QV,590",      //        "A5A0"  "VAQ"      "QV"  59
          "A5A1=VSQ,QV,590",      //        "A5A1"  "VSQ"      "QV"  59
          "A5A2=VMQ,QV,590",      //        "A5A2"  "VMQ"      "QV"  59
          "A5A4=VNQ,QV,590",      //        "A5A4"  "VNQ"      "QV"  59
          "A5A5=VOQ,QV,590",      //        "A5A5"  "VOQ"      "QV"  59
          "A5A6=VXQ,QV,590",      //        "A5A6"  "VXQ"      "QV"  59
-         "A5A8=VCQ,QV,590",      //        "A5A8"  "VCQ"      "QV"  59
-         "A5A9=VLQ,QV,590",      //        "A5A9"  "VLQ"      "QV"  59
-         "A5AA=VLMQ,QV,590",     //        "A5AA"  "VLMQ"     "QV"  59
+         "A5A8=VCQ,QV,591",      //        "A5A8"  "VCQ"      "QV"  59 // #533 M1 replaces VR1
+         "A5A9=VLQ,QV,592",      //        "A5A9"  "VLQ"      "QV"  59 // #533 QR2 replaces QR3,VR2
+         "A5AA=VLMQ,QV,592",     //        "A5AA"  "VLMQ"     "QV"  59 // #533 QR2 replaces QR3,VR2
          "A600=VMXSE,VR,650",    //        "A600"  "VMXSE"    "VR"  65
          "A601=VMNSE,VR,650",    //        "A601"  "VMNSE"    "VR"  65
          "A602=VMXAE,VR,650",    //        "A602"  "VMXAE"    "VR"  65
@@ -1779,20 +1765,20 @@ public  class  tz390 {
          "A612=VMXAD,VR,650",    //        "A612"  "VMXAD"    "VR"  65
          "A618=VLELD,VR,650",    //        "A618"  "VLELD"    "VR"  65
          "A619=VXELD,VR,650",    //        "A619"  "VXELD"    "VR"  65
-         "A61A=VSPSD,VR,650",    //        "A61A"  "VSPSD"    "VR"  65
-         "A61B=VZPSD,VR,650",    //        "A61B"  "VZPSD"    "VR"  65
+         "A61A=VSPSD,VR,651",    //        "A61A"  "VSPSD"    "VR"  65 // #533 QR2 replaces QR3,VR2
+         "A61B=VZPSD,VR,652",    //        "A61B"  "VZPSD"    "VR"  65 // #533 Omit QR3,R2
          "A628=VLEL,VR,650",     //        "A628"  "VLEL"     "VR"  65
          "A629=VXEL,VR,650",     //        "A629"  "VXEL"     "VR"  65
-         "A640=VTVM,RRE,620",    //        "A640"  "VTVM"     "RRE" 62
-         "A641=VCVM,RRE,620",    //        "A641"  "VCVM"     "RRE" 62
-         "A642=VCZVM,RRE,620",   //        "A642"  "VCZVM"    "RRE" 62
-         "A643=VCOVM,RRE,620",   //        "A643"  "VCOVM"    "RRE" 62
-         "A644=VXVC,RRE,620",    //        "A644"  "VXVC"     "RRE" 62
-         "A645=VLVCU,RRE,620",   //        "A645"  "VLVCU"    "RRE" 62
-         "A646=VXVMM,RRE,620",   //        "A646"  "VXVMM"    "RRE" 62
-         "A648=VRRS,RRE,620",    //        "A648"  "VRRS"     "RRE" 62
-         "A649=VRSVC,RRE,620",   //        "A649"  "VRSVC"    "RRE" 62
-         "A64A=VRSV,RRE,620",    //        "A64A"  "VRSV"     "RRE" 62
+         "A640=VTVM,62,621",     //        "A640"  "VTVM"     "RRE" 62 // #533 no args
+         "A641=VCVM,62,621",     //        "A641"  "VCVM"     "RRE" 62 // #533 no args
+         "A642=VCZVM,62,620",    //        "A642"  "VCZVM"    "RRE" 62 // #533
+         "A643=VCOVM,62,620",    //        "A643"  "VCOVM"    "RRE" 62 // #533
+         "A644=VXVC,62,620",     //        "A644"  "VXVC"     "RRE" 62 // #533
+         "A645=VLVCU,62,620",    //        "A645"  "VLVCU"    "RRE" 62 // #533
+         "A646=VXVMM,62,620",    //        "A646"  "VXVMM"    "RRE" 62 // #533
+         "A648=VRRS,62,620",     //        "A648"  "VRRS"     "RRE" 62 // #533
+         "A649=VRSVC,62,620",    //        "A649"  "VRSVC"    "RRE" 62 // #533
+         "A64A=VRSV,62,620",     //        "A64A"  "VRSV"     "RRE" 62 // #533
          "A680=VLVM,VS,660",     //        "A680"  "VLVM"     "VS"  66
          "A681=VLCVM,VS,660",    //        "A681"  "VLCVM"    "VS"  66
          "A682=VSTVM,VS,660",    //        "A682"  "VSTVM"    "VS"  66
@@ -1823,7 +1809,11 @@ public  class  tz390 {
      String[]   op_table_370 =   // Table added for RPI 1209A
         {"0D=BASR,RR,20",        //    320 "0D"    "BASR"     "RR"    2 // RPI 1209N
          "4D=BAS,5,50",          //   1150 "4D"    "BAS"      "RX"    5
+         "9C02=RIO,7,70",        //        "9C02"  "RIO"      "S"     7 // #533
+         "9F01=CLRCH,7,70",      //        "9F01"  "CLRCH"    "S"     7 // #533
          "AE=SIGP,10,100",       //   2540 "AE"    "SIGP"     "RS"   10
+         "B200=CONCS,7,70",      //        "B200"  "CONCS"    "S"     7 // #533
+         "B201=DISCS,7,70",      //        "B201"  "DISCS"    "S"     7 // #533
          "B210=SPX,7,70",        //   2670 "B210"  "SPX"      "S"     7
          "B211=STPX,7,70",       //   2680 "B211"  "STPX"     "S"     7
          "B212=STAP,7,70",       //   2690 "B212"  "STAP"     "S"     7
@@ -1853,7 +1843,7 @@ public  class  tz390 {
          "--=AINSERT,204,--",    //   7630         "AINSERT"        204
          "--=ALIAS,106,--",      //   7190         "ALIAS"          106
          "--=AMODE,107,--",      //   7200         "AMODE"          107
-         "--=ACALLPRM,228,--",   //   "ACALLPRM" resets ACALL parms just before AENTRY //  DSH #375 rename APARM to ACALLPRM
+//       "--=ACALLPRM,228,--",   //   "ACALLPRM" resets ACALL parms just before AENTRY //  DSH #375 rename APARM to ACALLPRM #533
          "--=AREAD,206,--",      //   7650         "AREAD"          206
          "--=ASPACE,126,--",     //   7390         "ASPACE"         126
          "--=CATTR,108,--",      //   7210         "CATTR"          108
@@ -1873,12 +1863,6 @@ public  class  tz390 {
          "--=SETAF,216,--",      //   7750         "SETAF"          216
          "--=SETCF,219,--",      //   7780         "SETCF"          219
          "--=XATTR,121,--",      //   7340         "XATTR"          121
-         };
-     String[]   op_table_370_notsupported = // Table added for RPI 1209A
-        {"RIO      S    9C02 D2(B2)",
-         "CLRCH    S    9F01 D2(B2)",
-         "CONCS    S    B200 D2(B2)",
-         "DISCS    S    B201 D2(B2)",
          };
      String[]   op_table_XA =    // Table added for RPI 1209A
         {"0102=UPT,1,10",        //     20 "0102"  "UPT"      "E"     1
@@ -3296,12 +3280,17 @@ public  class  tz390 {
          };
      String[]   op_table_z390 =  // Table added for RPI 1209
         {"83=DIAGNOSE,10,100",     // RPI 2213 ADD DIAGNOSE/DIAG RS
-		 "83=DIAG,10,100",         // RPI 2213 ADD DIAGNOSE/DIAG RS
-		 "B214=SIE,7,70",          // RPI 2213 ADD START INTERPRETIVE EXEC S
+         "83=DIAG,10,100",         // RPI 2213 ADD DIAGNOSE/DIAG RS
+         "B214=SIE,7,70",          // RPI 2213 ADD START INTERPRETIVE EXEC S
          "B22E=PGIN,14,140",     //   2860 "B22E"  "PGIN"     "RRE"  14
          "B22F=PGOUT,14,140",    //   2870 "B22F"  "PGOUT"    "RRE"  14
-         "--=,122,--",           //   7350         ""               122
          };
+     String[]   op_table_DFLT_directives = // Split directives from opcodes            #533
+        {"--=ACALLPRM,228,--",   //   "ACALLPRM" resets ACALL parms just before AENTRY #533
+         };                                                                         // #533
+     String[]   op_table_z390_directives = // Split directives from opcodes            #533
+        {"--=,122,--",           //   7350         ""               122                #533
+         };                                                                         // #533
      String[]   opcode_masks = { // Table added for RPI 1209
                "F=",             // Always
                "0=N",            // Never
@@ -3574,47 +3563,33 @@ public void create_opcodes()  // Routine added for RPI 1209
         if (opt_assist == true)               // RPI 1209M
            {process_opcodes(op_table_ASSIST); // RPI 1209M
             }                                 // RPI 1209M
+        if (opt_optable.equals("Z390")       // #533
+        ||  opt_allow)                       // #533
+           {process_opcodes(op_table_z390);  // #533
+            }                                // #533
         if (opt_optable.equals("DOS"))
            {process_opcodes(op_table_DOS);
-            if (opt_allow)                              // RPI 1209N
-               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
-                }                                       // RPI 1209N
             process_opcodes(op_table_DOS_directives);
             }
         if (opt_optable.equals("370"))
            {process_opcodes(op_table_DOS);
-            if (opt_allow)                              // RPI 1209N
-               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
-                }                                       // RPI 1209N
             process_opcodes(op_table_370);
-            if (opt_vector) // RPI VF01
-               {process_opcodes(op_table_vector);
-                }
+            process_opcodes(op_table_vector); // #533
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
         if (opt_optable.equals("XA"))
            {process_opcodes(op_table_DOS);
-            if (opt_allow)                              // RPI 1209N
-               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
-                }                                       // RPI 1209N
             process_opcodes(op_table_370);
-            if (opt_vector) // RPI VF01
-               {process_opcodes(op_table_vector);
-                }
+            process_opcodes(op_table_vector); // #533
             process_opcodes(op_table_XA);
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
         if (opt_optable.equals("ESA"))
            {process_opcodes(op_table_DOS);
-            if (opt_allow)                              // RPI 1209N
-               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
-                }                                       // RPI 1209N
             process_opcodes(op_table_370);
-            if (opt_vector) // RPI VF01
-               {process_opcodes(op_table_vector);
-                }
+            process_opcodes(op_table_vector); // #533
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
             process_opcodes(op_table_DOS_directives);
@@ -3622,9 +3597,6 @@ public void create_opcodes()  // Routine added for RPI 1209
             }
         if (opt_optable.equals("ZOP"))
            {process_opcodes(op_table_DOS);
-            if (opt_allow)                              // RPI 1209N
-               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
-                }                                       // RPI 1209N
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
@@ -3634,9 +3606,6 @@ public void create_opcodes()  // Routine added for RPI 1209
             }
         if (opt_optable.equals("YOP"))
            {process_opcodes(op_table_DOS);
-            if (opt_allow)                              // RPI 1209N
-               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
-                }                                       // RPI 1209N
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
@@ -3647,9 +3616,6 @@ public void create_opcodes()  // Routine added for RPI 1209
             }
         if (opt_optable.equals("Z9"))                   // #503
            {process_opcodes(op_table_DOS);
-            if (opt_allow)                              // RPI 1209N
-               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
-                }                                       // RPI 1209N
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
@@ -3661,9 +3627,6 @@ public void create_opcodes()  // Routine added for RPI 1209
             }
         if (opt_optable.equals("Z10"))                  // #503
            {process_opcodes(op_table_DOS);
-            if (opt_allow)                              // RPI 1209N
-               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
-                }                                       // RPI 1209N
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
@@ -3676,43 +3639,36 @@ public void create_opcodes()  // Routine added for RPI 1209
             }
         // logic for optables Z11-Z14 is missing. See issue #510
         if (opt_optable.equals("Z15"))  // rpi 2202
-        {process_opcodes(op_table_DOS);
-         if (opt_allow)                              // RPI 1209N
-            {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
-             }                                       // RPI 1209N
-         process_opcodes(op_table_370);
-         process_opcodes(op_table_XA);
-         process_opcodes(op_table_ESA);
-         process_opcodes(op_table_ZOP);
-         process_opcodes(op_table_YOP);
-         process_opcodes(op_table_ZS3);
-         process_opcodes(op_table_ZS4);
-         process_opcodes(op_table_Z15);  // rpi 2202
-         process_opcodes(op_table_DOS_directives);
-         process_opcodes(op_table_370_directives);
-         }
+           {process_opcodes(op_table_DOS);
+            process_opcodes(op_table_370);
+            process_opcodes(op_table_XA);
+            process_opcodes(op_table_ESA);
+            process_opcodes(op_table_ZOP);
+            process_opcodes(op_table_YOP);
+            process_opcodes(op_table_ZS3);
+            process_opcodes(op_table_ZS4);
+            process_opcodes(op_table_Z15);  // rpi 2202
+            process_opcodes(op_table_DOS_directives);
+            process_opcodes(op_table_370_directives);
+            }
         if (opt_optable.equals("Z16"))               // #503
-        {process_opcodes(op_table_DOS);              // #503
-         if (opt_allow)                              // #503
-            {process_opcodes(op_table_DOS_obsolete); // #503
-             }                                       // #503
-         process_opcodes(op_table_370);              // #503
-         process_opcodes(op_table_XA);               // #503
-         process_opcodes(op_table_ESA);              // #503
-         process_opcodes(op_table_ZOP);              // #503
-         process_opcodes(op_table_YOP);              // #503
-         process_opcodes(op_table_ZS3);              // #503
-         process_opcodes(op_table_ZS4);              // #503
-         process_opcodes(op_table_Z15);              // #503
-         process_opcodes(op_table_Z16);              // #503
-         process_opcodes(op_table_DOS_directives);   // #503
-         process_opcodes(op_table_370_directives);   // #503
-         }                                           // #503
-        if (opt_optable.equals("UNI"))
+           {process_opcodes(op_table_DOS);              // #503
+            process_opcodes(op_table_370);              // #503
+            process_opcodes(op_table_XA);               // #503
+            process_opcodes(op_table_ESA);              // #503
+            process_opcodes(op_table_ZOP);              // #503
+            process_opcodes(op_table_YOP);              // #503
+            process_opcodes(op_table_ZS3);              // #503
+            process_opcodes(op_table_ZS4);              // #503
+            process_opcodes(op_table_Z15);              // #503
+            process_opcodes(op_table_Z16);              // #503
+            process_opcodes(op_table_DOS_directives);   // #503
+            process_opcodes(op_table_370_directives);   // #503
+            }                                           // #503
+        if (opt_optable.equals("UNI")         // #533
+        ||  opt_optable.equals("DFLT")        // #533
+        ||  opt_optable.equals("Z390"))       // #533
            {process_opcodes(op_table_DOS);
-            if (opt_allow)                              // RPI 1209N
-               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
-                }                                       // RPI 1209N
             process_opcodes(op_table_370);
             if (opt_vector) // RPI VF01
                {process_opcodes(op_table_vector);
@@ -3728,29 +3684,15 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
-        if (opt_optable.equals("Z390"))
-           {process_opcodes(op_table_DOS);
-            if (opt_allow)                              // RPI 1209N
-               {process_opcodes(op_table_DOS_obsolete); // RPI 1209N
-                }                                       // RPI 1209N
-            process_opcodes(op_table_370);
-            if (opt_vector) // RPI VF01
-               {process_opcodes(op_table_vector);
-                }
-            process_opcodes(op_table_XA);
-            process_opcodes(op_table_ESA);
-            process_opcodes(op_table_ZOP);
-            process_opcodes(op_table_YOP);
-            process_opcodes(op_table_ZS3);
-            process_opcodes(op_table_ZS4);
-            process_opcodes(op_table_Z15); // rpi 2202
-            process_opcodes(op_table_Z16); // #503
-            process_opcodes(op_table_UNI);
-//          process_opcodes(op_table_ASSIST); // RPI 1209M
-            process_opcodes(op_table_z390);
-            process_opcodes(op_table_DOS_directives);
-            process_opcodes(op_table_370_directives);
-            }
+        if (opt_optable.equals("DFLT")                  // #533
+        ||  opt_optable.equals("Z390")                  // #533
+        ||  opt_allow)                                  // #533
+           {process_opcodes(op_table_DFLT_directives);  // #533
+            }                                           // #533
+        if (opt_optable.equals("Z390")                  // #533
+        ||  opt_allow)                                  // #533
+           {process_opcodes(op_table_z390_directives);  // #533
+            }                                           // #533
         if (index2 == 0) // only on first pass: allocate tables
            {op_code       = new String[op_code_count]; // no entries allocated for directives
             op_name       = new String[op_code_count+op_directives_count];
@@ -4509,7 +4451,7 @@ private void check_options(){
                {opt_optable="Z390";
                 }
             else
-               {opt_optable="UNI";
+               {opt_optable="DFLT";                                                                     // #533
                 }
             }
     // Suboption LIST for options MACHINE/OPTABLE is disallowed for optable UNI in compatibility mode   // #503

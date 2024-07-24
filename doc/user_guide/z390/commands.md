@@ -110,5 +110,5 @@ The ez390 emulator supports the following interactive test commands when the
 * `* addr` = hex.,+-hex, *+-hex, dec, nnr% (24 bit), nnr? (31 bit)
 * `* reg` = nnr where nn = 0-15
 * `* sdt` = self defining term (b'01',c'ab',f'1',h'2',x'ff')
-* `* ??` = break compare operator (=,!=,<,<=,>,>=)
+* `* ??` = break compare operator (=,!=,&lt;,&lt;=,&gt;,&gt;=)
 
