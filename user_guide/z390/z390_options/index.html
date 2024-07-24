@@ -1094,19 +1094,19 @@ parentheses, then that parameter should be quoted. </p>
 <td>@filename</td>
 <td>MALE</td>
 <td>Options in Z390.OPT file if found.</td>
-<td>Retrieve additional options from free form text file with default suffix OPT.  Options can be specified delimited by spaces on as many lines as required.  All characters on a line following * are ignored as comments. The @file option can be nested.  The default path is the program path.  If a file named Z390.OPT exists in the z390 install directory, these options will be applied first as default options.</td>
+<td>Retrieve additional options from free form text file with default suffix OPT. Options can be specified delimited by spaces on as many lines as required. All characters on a line following * are ignored as comments. The @file option can be nested. The default path is the program path. If a file named Z390.OPT exists in the z390 install directory, these options will be applied first as default options.</td>
 </tr>
 <tr>
 <td>ALIGN</td>
 <td>A</td>
 <td>YES</td>
-<td>Align DS/DC data fields based on type unless explicit length is specified.  If duplication factor is 0, then NOALIGN is ignored.</td>
+<td>Align DS/DC data fields based on type unless explicit length is specified. If duplication factor is 0, then NOALIGN is ignored.</td>
 </tr>
 <tr>
 <td>ALLOW</td>
 <td>M</td>
 <td>NO</td>
-<td>Allow extensions to HLASM syntax including: <br />1) No quotes required for SETC variables.<br />2) Duplication factor does not require (..).<br />3) Array declarations with variables in expression accepted<br />4) Substring starting beyond end returns null string<br />5) Quoted strings allowed in SETA and SETB expressions<br />6) Allow &amp;var as null string if not found during substitution<br />7) Allow duplicate local and global variable declarations<br />8) Allow AREAD and PUNCH file records greater than 80 characters. <br />The default of NOALLOW insures HLASM compatibility.</td>
+<td>Allow extensions to HLASM syntax including: <br />1) No quotes required for SETC variables.<br />2) Duplication factor does not require (..).<br />3) Array declarations with variables in expression accepted<br />4) Substring starting beyond end returns null string<br />5) Quoted strings allowed in SETA and SETB expressions<br />6) Allow &amp;var as null string if not found during substitution<br />7) Allow duplicate local and global variable declarations<br />8) Allow AREAD and PUNCH file records greater than 80 characters.<br />The default of NOALLOW insures HLASM compatibility.</td>
 </tr>
 <tr>
 <td>AMODE24</td>
@@ -1124,19 +1124,19 @@ parentheses, then that parameter should be quoted. </p>
 <td>ASCII</td>
 <td>AE</td>
 <td>NO</td>
-<td>Generate ASCII versus EBCDIC DC character constants, compare character strings in ASCII versus EBCDIC in macro processor, generate ASCII versus EBCDIC output for UNPK, ED, and EDMK. Note ASCII mode is not mainframe compatible and requires careful review of program to insure no EBCDIC immediate compare constants such as X'40', 64, X'F0', 240 etc. are used and that there are no assumptions about EBCDIC versus ASCII collating sequences which have numbers and letters reversed, and EBCDIC letters are non-contiguous. Typically HLASM compatible programs are run in default EBCDIC mode and DCB RECFM=FT|VT or some other translation option is used to convert between EBCDIC and ASCII where necessary.  Note there are a few instructions affected by ASCII mode: <br />1) ED/EDMK generate ASCII versus EBCDIC but the mask must always be in EBCDIC (masks are usually coded in X'...' format)<br />2)  UNPK generates X'3' versus X'F' in zone field (high order nibble).</td>
+<td>Generate ASCII versus EBCDIC DC character constants, compare character strings in ASCII versus EBCDIC in macro processor, generate ASCII versus EBCDIC output for UNPK, ED, and EDMK. Note ASCII mode is not mainframe compatible and requires careful review of program to insure no EBCDIC immediate compare constants such as X'40', 64, X'F0', 240 etc. are used and that there are no assumptions about EBCDIC versus ASCII collating sequences which have numbers and letters reversed, and EBCDIC letters are non-contiguous. Typically HLASM compatible programs are run in default EBCDIC mode and DCB RECFM=FT|VT or some other translation option is used to convert between EBCDIC and ASCII where necessary. Note there are a few instructions affected by ASCII mode: <br />1) ED/EDMK generate ASCII versus EBCDIC but the mask must always be in EBCDIC (masks are usually coded in X'...' format)<br />2) UNPK generates X'3' versus X'F' in zone field (high order nibble).</td>
 </tr>
 <tr>
 <td>ASM</td>
 <td>MA</td>
 <td>YES</td>
-<td>Run az390 assembler as subtask of mz390 passing BAL.  Note NOASM is for use in pure text processing programs which only use conditional macro code and AREAD/PUNCH with extensions to process ASCII text files. NOASM does not support ordinary symbol attribute tests, OPSYN, or lookahead mode, and requires CHKMAC(0) and CHKSRC(0-2).</td>
+<td>Run az390 assembler as subtask of mz390 passing BAL. Note NOASM is for use in pure text processing programs which only use conditional macro code and AREAD/PUNCH with extensions to process ASCII text files. NOASM does not support ordinary symbol attribute tests, OPSYN, or lookahead mode, and requires CHKMAC(0) and CHKSRC(0-2).</td>
 </tr>
 <tr>
 <td>ASSIST</td>
 <td>MAE</td>
 <td>NO</td>
-<td>Enable assembly and execution of ASSIST I/O and debugging instructions. This option also sets NOLOADHIGH.  See <a href="../../../reference/assist/">ASSIST Support</a>.</td>
+<td>Enable assembly and execution of ASSIST I/O and debugging instructions. This option also sets NOLOADHIGH. See <a href="../../../reference/assist/">ASSIST Support</a>.</td>
 </tr>
 <tr>
 <td>AUTOLINK</td>
@@ -1166,25 +1166,25 @@ parentheses, then that parameter should be quoted. </p>
 <td>CHKSRC(0-3)</td>
 <td>MA</td>
 <td>1</td>
-<td>Check input source files as follows:<br />0 - no checking<br />1 - check MLC or BAL input source files for any  non-ASCII characters and issue error<br />2 - check MLC, MAC, CPY, and BAL input source files for any non-ASCII characters and issue error.<br />3 - also check for out of sequence characters in 73-80 or any non-blank characters beyond 80 and issue error.<br />Note this should detect any EBCDIC literal character strings containing non-ASCII characters such as binary 0 byte which must be changed to hex X'00' type strings for portability.</td>
+<td>Check input source files as follows:<br />0 - no checking<br />1 - check MLC or BAL input source files for any non-ASCII characters and issue error<br />2 - check MLC, MAC, CPY, and BAL input source files for any non-ASCII characters and issue error.<br />3 - also check for out of sequence characters in 73-80 or any non-blank characters beyond 80 and issue error.<br />Note this should detect any EBCDIC literal character strings containing non-ASCII characters such as binary 0 byte which must be changed to hex X'00' type strings for portability.</td>
 </tr>
 <tr>
 <td>CICS</td>
 <td>MA</td>
 <td>NO</td>
-<td>Support EXEC CICS pre-processor expansion and constants.  If this option is not on during macro expansion, PROLOG and EPILOG option settings will be ignored.</td>
+<td>Support EXEC CICS pre-processor expansion and constants. If this option is not on during macro expansion, PROLOG and EPILOG option settings will be ignored.</td>
 </tr>
 <tr>
 <td>CODEPAGE(ascii+ebcdic+LIST)</td>
 <td>MALE</td>
 <td>YES</td>
-<td>The default is CODEPAGE(ISO-8859-1+IBM1047).  If +LIST is added the mapping of the 2 codepages along with printable character and Unicode values are displayed on ERR file.  A hex dump of the tables and a list of the valid ASCII and EBCDIC Unicode Charset codepages are listed. You can replace the EBCDIC codepage name with a file specification such as IBM1047.HCP (example included) which is in hex dump format.  The above defaults match z/OS.</td>
+<td>The default is CODEPAGE(ISO-8859-1+IBM1047). If +LIST is added the mapping of the 2 codepages along with printable character and Unicode values are displayed on ERR file. A hex dump of the tables and a list of the valid ASCII and EBCDIC Unicode Charset codepages are listed. You can replace the EBCDIC codepage name with a file specification such as IBM1047.HCP (example included) which is in hex dump format. The above defaults match z/OS.</td>
 </tr>
 <tr>
 <td>CON</td>
 <td>MALE</td>
 <td>YES</td>
-<td>Console output for all start/stop, error, trace, MNOTE's with level &gt; 4, and WTO messages.  When the TRACE??? option is specified, the CON option is turned off so only start/stop and abort error messages appear on console log.  You can specify CON after last TRACE option to turn it back on if you want all display, trace, and error messages displayed on console log.  All the trace messages appear on corresponding TR? file for each z390 program executed.</td>
+<td>Console output for all start/stop, error, trace, MNOTE's with level &gt; 4, and WTO messages. When the TRACE??? option is specified, the CON option is turned off so only start/stop and abort error messages appear on console log. You can specify CON after last TRACE option to turn it back on if you want all display, trace, and error messages displayed on console log. All the trace messages appear on corresponding TR? file for each z390 program executed.</td>
 </tr>
 <tr>
 <td>DUMP</td>
@@ -1214,7 +1214,7 @@ parentheses, then that parameter should be quoted. </p>
 <td>ERRSUM</td>
 <td>M</td>
 <td>NO</td>
-<td>Generate critical error summary on console and ERR file listing missing macros and copybooks. This option requires ASM option and is turned on automatically if missing macros or copybooks are found in the executed macro code path.  When ERRSUM is on, ERR(0) is set to prevent abort prior to finding all macro and copybook references.  All errors are listed on ERR file along with summary report.  Note several iterations may be required to identify and resolve all missing macros and copybooks.</td>
+<td>Generate critical error summary on console and ERR file listing missing macros and copybooks. This option requires ASM option and is turned on automatically if missing macros or copybooks are found in the executed macro code path. When ERRSUM is on, ERR(0) is set to prevent abort prior to finding all macro and copybook references. All errors are listed on ERR file along with summary report. Note several iterations may be required to identify and resolve all missing macros and copybooks.</td>
 </tr>
 <tr>
 <td>GUAM</td>
@@ -1226,13 +1226,13 @@ parentheses, then that parameter should be quoted. </p>
 <td>INIT</td>
 <td>E</td>
 <td>YES</td>
-<td>Initialize all registers to hex x'F4', all memory to hex x'F5', and all uninitialized load module areas to x'F6' for easier identification of access to uninitialized registers, memory or program fields. Use NOINIT to perform low value initialization.</td>
+<td>Initialize all registers to hex x'F4', all memory to hex x'F5', and all uninitialized load module areas to x'F6' for easier identification of access to uninitialized registers, memory or program fields. Use NOINIT to perform low value initialization.</td>
 </tr>
 <tr>
 <td>INSTALL(dir)</td>
 <td>MALE</td>
 <td>NO</td>
-<td>Define alternate z390 install directory to run batch command.  The default is set from Java property "user.dir".</td>
+<td>Define alternate z390 install directory to run batch command. The default is set from Java property "user.dir".</td>
 </tr>
 <tr>
 <td>IPL(pgm)</td>
@@ -1250,7 +1250,7 @@ parentheses, then that parameter should be quoted. </p>
 <td>LISTCALL</td>
 <td>MA</td>
 <td>YES</td>
-<td>Generate level macro call and exit comments in BAL file which are used by assembler to format first level macro calls preceding assembler lines with "+" for macro generated source. </td>
+<td>Generate level macro call and exit comments in BAL file which are used by assembler to format first level macro calls preceding assembler lines with "+" for macro generated source.</td>
 </tr>
 <tr>
 <td>LISTUSE</td>
@@ -1262,13 +1262,19 @@ parentheses, then that parameter should be quoted. </p>
 <td>LOADHIGH</td>
 <td>E</td>
 <td>YES</td>
-<td>Load programs and allocate memory for GETMAIN/STORAGE from high end of first FQE large enough to satisfy request.  The ASSIST option changes this option to NOLOADHIGH causing initial program to load starting at X'8000' which simplifies relative address calculations.</td>
+<td>Load programs and allocate memory for GETMAIN/STORAGE from high end of first FQE large enough to satisfy request. The ASSIST option changes this option to NOLOADHIGH causing initial program to load starting at X'8000' which simplifies relative address calculations.</td>
 </tr>
 <tr>
 <td>LOG(file)</td>
 <td>MALE</td>
 <td>pgm</td>
-<td>Set file name for ERR, TR?, and LOG files.  The default is the program name.  This option is required when running multiple copies of the same program via CMD startup in order to create separate unique  ERR, TR?, and LOG files.  Otherwise duplicate programs running in parallel will mod the same ERR, TR?, and LOG file.</td>
+<td>Set file name for ERR, TR?, and LOG files. The default is the program name. This option is required when running multiple copies of the same program via CMD startup in order to create separate unique ERR, TR?, and LOG files. Otherwise duplicate programs running in parallel will mod the same ERR, TR?, and LOG file.</td>
+</tr>
+<tr>
+<td>MACHINE</td>
+<td>A</td>
+<td>--</td>
+<td>MACHINE / OPTABLE options determine which opcode table is used during assembly. See table below for details,</td>
 </tr>
 <tr>
 <td>MAXCALL(50)</td>
@@ -1328,13 +1334,13 @@ parentheses, then that parameter should be quoted. </p>
 <td>MAXPARM(100000)</td>
 <td>M</td>
 <td>10000</td>
-<td>Maximum length of any string during macro processing.  This is an extension as HLASM limit is currently 1024.</td>
+<td>Maximum length of any string during macro processing. This is an extension as HLASM limit is currently 1024.</td>
 </tr>
 <tr>
 <td>MAXPASS(2)</td>
 <td>A</td>
 <td>2</td>
-<td>Maximum passes of the BAL source by assembler to resolve forward nested symbol references prior to final pass to generate object code.  The number of LOCTR statements is added to this limit in order to resolve the final address of each LOCTR section.</td>
+<td>Maximum passes of the BAL source by assembler to resolve forward nested symbol references prior to final pass to generate object code. The number of LOCTR statements is added to this limit in order to resolve the final address of each LOCTR section.</td>
 </tr>
 <tr>
 <td>MAXPC(50000)</td>
@@ -1388,7 +1394,7 @@ parentheses, then that parameter should be quoted. </p>
 <td>MEM(1)</td>
 <td>E</td>
 <td>1</td>
-<td>Memory allocated for 390 program execution in MB.  Note for RMODE31 loads and GETMAIN's memory above the 16 MB line must be allocated.  For example MEM(32) would provide 16 MB below the line and 16 MB above.</td>
+<td>Memory allocated for 390 program execution in MB. Note for RMODE31 loads and GETMAIN's memory above the 16 MB line must be allocated. For example MEM(32) would provide 16 MB below the line and 16 MB above.</td>
 </tr>
 <tr>
 <td>MINHEIGHT(150)</td>
@@ -1406,13 +1412,13 @@ parentheses, then that parameter should be quoted. </p>
 <td>MNOTE(0)</td>
 <td>MA</td>
 <td>0</td>
-<td>Control MNOTE error/warning messages during macro expansion and assembly: <br/> 0 - default generates MNOTE error/warning during mz390 and az390 <br/> 1 - suppress mz390 error/warning and only pass MNOTE to az390 <br/> 2 - generates MNOTE error/warning during mz390 and suppresses passing them on to az390.</td>
+<td>Control MNOTE error/warning messages during macro expansion and assembly: <br/> 0 - default generates MNOTE error/warning during mz390 and az390 <br/>1 - suppress mz390 error/warning and only pass MNOTE to az390 <br/>2 - generates MNOTE error/warning during mz390 and suppresses passing them on to az390.</td>
 </tr>
 <tr>
 <td>MOD</td>
 <td>L</td>
 <td>NO</td>
-<td>Generate raw code file from lz390 with .MOD suffix and no header or trailer and no RLD's. </td>
+<td>Generate raw code file from lz390 with .MOD suffix and no header or trailer and no RLD's.</td>
 </tr>
 <tr>
 <td>OBJ</td>
@@ -1424,7 +1430,13 @@ parentheses, then that parameter should be quoted. </p>
 <td>OBJHEX</td>
 <td>A</td>
 <td>NO</td>
-<td>Generate ASCII readable form of OBJ file with support for 31 bit long sections.  The default is to generate binary OBJ file which is compatible with mainframe linkers but is limited to 24 bit long sections.</td>
+<td>Generate ASCII readable form of OBJ file with support for 31 bit long sections. The default is to generate binary OBJ file which is compatible with mainframe linkers but is limited to 24 bit long sections.</td>
+</tr>
+<tr>
+<td>OPTABLE</td>
+<td>A</td>
+<td>DFLT</td>
+<td>MACHINE / OPTABLE options determine which opcode table is used during assembly. See table below for details.</td>
 </tr>
 <tr>
 <td>PARM('text')</td>
@@ -1442,7 +1454,7 @@ parentheses, then that parameter should be quoted. </p>
 <td>PCOPT</td>
 <td>M</td>
 <td>YES</td>
-<td>Optimize macro pseudo code by looking for push, add/sub, store sequences and replacing them with inc/dec pseudo code opcodes.  These pseudo codes are maintained in a cache in memory during macro execution only and have no effect on generated object code.</td>
+<td>Optimize macro pseudo code by looking for push, add/sub, store sequences and replacing them with inc/dec pseudo code opcodes. These pseudo codes are maintained in a cache in memory during macro execution only and have no effect on generated object code.</td>
 </tr>
 <tr>
 <td>PRINTALL</td>
@@ -1454,7 +1466,7 @@ parentheses, then that parameter should be quoted. </p>
 <td>PDSMEM8</td>
 <td>M</td>
 <td>NO</td>
-<td>If PDSMEM8 option is specified, error messages will be issued for any macro or copybook file names with length greater than 8.  This option is available to provide compatibility with mainframe PDS libraries that are limited to 8 character names. Note zCOBOL and zCICS use names longer than 8 characters such as zcobol\IDENTIFICATION.MAC and cics\CICS_INQUIRE.MAC.</td>
+<td>If PDSMEM8 option is specified, error messages will be issued for any macro or copybook file names with length greater than 8. This option is available to provide compatibility with mainframe PDS libraries that are limited to 8 character names. Note zCOBOL and zCICS use names longer than 8 characters such as zcobol\IDENTIFICATION.MAC and cics\CICS_INQUIRE.MAC.</td>
 </tr>
 <tr>
 <td>PROFILE(file)</td>
@@ -1466,7 +1478,7 @@ parentheses, then that parameter should be quoted. </p>
 <td>PROLOG</td>
 <td>M</td>
 <td>YES</td>
-<td>Generate CICS prolog macro calls DFHEIGBL, DFHEISTG, and  DFHEIENT if CICS option and PROLOG options are on.</td>
+<td>Generate CICS prolog macro calls DFHEIGBL, DFHEISTG, and DFHEIENT if CICS option and PROLOG options are on.</td>
 </tr>
 <tr>
 <td>PROTECT</td>
@@ -1496,13 +1508,13 @@ parentheses, then that parameter should be quoted. </p>
 <td>RMODE31</td>
 <td>LE</td>
 <td>NO</td>
-<td>Set 390 load module options to load module above the 31 bit address line.  Note this load module option requires option MEM be set to include enough memory above the 31 bit address line.</td>
+<td>Set 390 load module options to load module above the 31 bit address line. Note this load module option requires option MEM be set to include enough memory above the 31 bit address line.</td>
 </tr>
 <tr>
 <td>STATS or STATS(file)</td>
 <td>MALE</td>
 <td>NO</td>
-<td>Generate statistics file STA with final options listing, macro and copybook file listing, plus all program statistics.  If file is omitted the program path and file name are used with STA suffix.</td>
+<td>Generate statistics file STA with final options listing, macro and copybook file listing, plus all program statistics. If file is omitted the program path and file name are used with STA suffix.</td>
 </tr>
 <tr>
 <td>SYS390(dir)</td>
@@ -1514,19 +1526,19 @@ parentheses, then that parameter should be quoted. </p>
 <td>SYSBAL(dir)</td>
 <td>MA</td>
 <td>pgm dir</td>
-<td>Define directory for storing and retrieving generated BAL files.  This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory).</td>
+<td>Define directory for storing and retrieving generated BAL files. This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory).</td>
 </tr>
 <tr>
 <td>SYSCPY(dir)</td>
 <td>MA</td>
 <td>pgm dir</td>
-<td>Define one or more directories for retrieving CPY source input files.  If the option starts with + the directories listed will be concatenated with current list.  Multiple directories are always separated by +.  This option may also override suffix by adding *.sfx.</td>
+<td>Define one or more directories for retrieving CPY source input files. If the option starts with + the directories listed will be concatenated with current list. Multiple directories are always separated by +. This option may also override suffix by adding *.sfx.</td>
 </tr>
 <tr>
 <td>SYSDAT(dir)</td>
 <td>M</td>
 <td>pgm dir</td>
-<td>Define directory for retrieving DAT source input files for AREAD.  Set to SYSDAT(.) for current directory when no path is specified on DSNAME parm for AREAD.</td>
+<td>Define directory for retrieving DAT source input files for AREAD. Set to SYSDAT(.) for current directory when no path is specified on DSNAME parm for AREAD.</td>
 </tr>
 <tr>
 <td>SYSERR(dir)</td>
@@ -1550,13 +1562,13 @@ parentheses, then that parameter should be quoted. </p>
 <td>SYSLST(dir)</td>
 <td>AL</td>
 <td>pgm dir</td>
-<td>Define directory for output LST files.  This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory).</td>
+<td>Define directory for output LST files. This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory).</td>
 </tr>
 <tr>
 <td>SYSMAC(dir)</td>
 <td>M</td>
 <td>mac dir</td>
-<td>Define one or more directories for source MAC files.  If the option starts with + the directories listed will be appended to the maclib list.  Multiple directories can be specified in one parameter and are always separated by +. When you specify this option more than once and want previous parameter instructions to remain in place, ensure that you start parameter with a <code>+</code> otherwise it will drop prior directories.  This option may also override suffix by adding *.sfx.</td>
+<td>Define one or more directories for source MAC files. If the option starts with + the directories listed will be appended to the maclib list. Multiple directories can be specified in one parameter and are always separated by +. When you specify this option more than once and want previous parameter instructions to remain in place, ensure that you start parameter with a <code>+</code> otherwise it will drop prior directories. This option may also override suffix by adding *.sfx.</td>
 </tr>
 <tr>
 <td>SYSMLC(dir)</td>
@@ -1574,7 +1586,7 @@ parentheses, then that parameter should be quoted. </p>
 <td>SYSOPT(dir)</td>
 <td>MALE</td>
 <td>pgm dir</td>
-<td>Define directory for @file option files.  This option may override suffix using *.sfx.</td>
+<td>Define directory for @file option files. This option may override suffix using *.sfx.</td>
 </tr>
 <tr>
 <td>SYSPARM('text')</td>
@@ -1586,19 +1598,19 @@ parentheses, then that parameter should be quoted. </p>
 <td>SYSPCH(dir)</td>
 <td>M</td>
 <td>pgm dir</td>
-<td>Define directory for PCH output files from PUNCH.  This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory).  Note PUNCH output is in ASCII source format and is not directed to the OBJ file.  These files may be used as linker input commands via SYSLKD(file) option.  Set to SYSPCH(.) for current directory when no path is specified on DSNAME parm for PUNCH.</td>
+<td>Define directory for PCH output files from PUNCH. This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory). Note PUNCH output is in ASCII source format and is not directed to the OBJ file. These files may be used as linker input commands via SYSLKD(file) option. Set to SYSPCH(.) for current directory when no path is specified on DSNAME parm for PUNCH.</td>
 </tr>
 <tr>
 <td>SYSPRN(dir)</td>
 <td>A</td>
 <td>pgm dir</td>
-<td>Define directory for assembler listing PRN output files. This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory).</td>
+<td>Define directory for assembler listing PRN output files. This option may also override file name and/or suffix (*.sfx overrides just the suffix in the pgm directory).</td>
 </tr>
 <tr>
 <td>SYSTERM(file)</td>
 <td>MALE</td>
 <td>pgm.ERR</td>
-<td>Define alternate file for all start/end messages plus any error messages, plus related source file statistics for each file containing errors.  The default is the program name with ERR suffix.</td>
+<td>Define alternate file for all start/end messages plus any error messages, plus related source file statistics for each file containing errors. The default is the program name with ERR suffix.</td>
 </tr>
 <tr>
 <td>SYSTRC(dir)</td>
@@ -1616,7 +1628,7 @@ parentheses, then that parameter should be quoted. </p>
 <td>TEST(ddname)</td>
 <td>E</td>
 <td>NO</td>
-<td>Define input command file to run TEST commands. <em>ddname</em> is an environment variable set to the name of the command file.</td>
+<td>Define input command file to run TEST commands.<em>ddname</em> is an environment variable set to the name of the command file.</td>
 </tr>
 <tr>
 <td>THREAD</td>
@@ -1628,25 +1640,25 @@ parentheses, then that parameter should be quoted. </p>
 <td>TIME or TIME(seconds)</td>
 <td>MALE</td>
 <td>YES</td>
-<td>Limit execution time of each program to the number of seconds specified.  The default is 15 seconds. This option is turned off if NOTIMING specified.  Use NOTIME to allow tasks such as SOA servers like z390CICS to run continuously while still supporting application use of timing functions.</td>
+<td>Limit execution time of each program to the number of seconds specified. The default is 15 seconds. This option is turned off if NOTIMING specified. Use NOTIME to allow tasks such as SOA servers like z390CICS to run continuously while still supporting application use of timing functions.</td>
 </tr>
 <tr>
 <td>TIMING</td>
 <td>MALE</td>
 <td>YES</td>
-<td>Calculate elapsed time and instructions per second statistics for display on START/END messages and STA statistics. TIMING also displays current z390 and J2SE version on start message and memory usage on ended message.  Note NOTIMING is used in regression tests to force generated files to be identical by using fixed data/time stamp using GregorianCalendar(2005,0,2,22,33,44).  NOTIMING suppresses versions on start message and memory usage on ended message.  NOTIMING also sets NOTIME which prevents application from using time functions.</td>
+<td>Calculate elapsed time and instructions per second statistics for display on START/END messages and STA statistics. TIMING also displays current z390 and J2SE version on start message and memory usage on ended message. Note NOTIMING is used in regression tests to force generated files to be identical by using fixed data/time stamp using GregorianCalendar(2005,0,2,22,33,44). NOTIMING suppresses versions on start message and memory usage on ended message. NOTIMING also sets NOTIME which prevents application from using time functions.</td>
 </tr>
 <tr>
 <td>TRACE or TRACE(AEGILMPQTV)</td>
 <td>E</td>
 <td>NO</td>
-<td>Turn on ez390 execution trace generation on TRE file and turn off CON. TRACE will display every instruction executed along with address and value of each operand.  Any combination of the following trace options can be set using the TRACE(...) option. TRACE(*) will also set TRACEALL. Note the &amp;SYSTRACE global SETC variable can be used to turn any trace options on or off during execution.</td>
+<td>Turn on ez390 execution trace generation on TRE file and turn off CON. TRACE will display every instruction executed along with address and value of each operand. Any combination of the following trace options can be set using the TRACE(...) option. TRACE(*) will also set TRACEALL. Note the &amp;SYSTRACE global SETC variable can be used to turn any trace options on or off during execution.</td>
 </tr>
 <tr>
 <td>TRACEA or TRACE(A)</td>
 <td>A</td>
 <td>NO</td>
-<td>Turn on az390 assembly trace generation on TRA file and turn off CON.  TRACEA will display each BAL statement during each pass of the assembler.</td>
+<td>Turn on az390 assembly trace generation on TRA file and turn off CON. TRACEA will display each BAL statement during each pass of the assembler.</td>
 </tr>
 <tr>
 <td>TRACEALL</td>
@@ -1658,7 +1670,7 @@ parentheses, then that parameter should be quoted. </p>
 <td>TRACEC or TRACE(C)</td>
 <td>M</td>
 <td>NO</td>
-<td>Trace copy file code for TRACEM and TRACEP.  The default is NOTRACEC to eliminate redundant code that usually just contains global variable declarations.</td>
+<td>Trace copy file code for TRACEM and TRACEP. The default is NOTRACEC to eliminate redundant code that usually just contains global variable declarations.</td>
 </tr>
 <tr>
 <td>TRACEG or TRACE(G)</td>
@@ -1676,19 +1688,19 @@ parentheses, then that parameter should be quoted. </p>
 <td>TRACEL or TRACE(L)</td>
 <td>L</td>
 <td>NO</td>
-<td>Turn on lz390 linker trace generation on TRL file and turn off CON.  TRACEL shows each CSECT, ENTRY, EXTRN and OBJ file being loaded.</td>
+<td>Turn on lz390 linker trace generation on TRL file and turn off CON. TRACEL shows each CSECT, ENTRY, EXTRN and OBJ file being loaded.</td>
 </tr>
 <tr>
 <td>TRACEM or TRACE(M)</td>
 <td>M</td>
 <td>NO</td>
-<td>Turn on mz390 macro processor trace generation on TRM file and turn off CON.  TRACEM displays each conditional macro statement executed plus stored values and AIF compare values.</td>
+<td>Turn on mz390 macro processor trace generation on TRM file and turn off CON. TRACEM displays each conditional macro statement executed plus stored values and AIF compare values.</td>
 </tr>
 <tr>
 <td>TRACEP or TRACE(P)</td>
 <td>M</td>
 <td>NO</td>
-<td>Turn on mz390 macro processor pseudo code generation and execution trace on TRM file and turn off CON.  TRACEP shows each conditional macro pseudo operation performed for each conditional macro statement and the values of all variables.</td>
+<td>Turn on mz390 macro processor pseudo code generation and execution trace on TRM file and turn off CON. TRACEP shows each conditional macro pseudo operation performed for each conditional macro statement and the values of all variables.</td>
 </tr>
 <tr>
 <td>TRACEQ or TRACE(Q)</td>
@@ -1700,7 +1712,7 @@ parentheses, then that parameter should be quoted. </p>
 <td>TRACES or TRACE(S)</td>
 <td>M</td>
 <td>NO</td>
-<td>Display MLC source lines on console regardless of CON setting to help locate any loops, waits, or hangs in large macro process.  If MCALL is also on, then *MCALL and *MEXIT comments will also be displayed to show location with nested macros.</td>
+<td>Display MLC source lines on console regardless of CON setting to help locate any loops, waits, or hangs in large macro process. If MCALL is also on, then *MCALL and *MEXIT comments will also be displayed to show location with nested macros.</td>
 </tr>
 <tr>
 <td>TRACET or TRACE(T)</td>
@@ -1718,7 +1730,7 @@ parentheses, then that parameter should be quoted. </p>
 <td>TRAP</td>
 <td>E</td>
 <td>YES</td>
-<td>Trap any unexpected J2SE program exceptions and generate emulator 0C5 exception which can be handled by SPIE/STAE exits if defined.  NOTRAP can be used with Eclipse source debugger to stop at J2SE statement causing exception.</td>
+<td>Trap any unexpected J2SE program exceptions and generate emulator 0C5 exception which can be handled by SPIE/STAE exits if defined. NOTRAP can be used with Eclipse source debugger to stop at J2SE statement causing exception.</td>
 </tr>
 <tr>
 <td>TS</td>
@@ -1748,7 +1760,7 @@ parentheses, then that parameter should be quoted. </p>
 <td>ZSTRMAC</td>
 <td>M</td>
 <td>YES</td>
-<td>Support expansion of ZSTRMAC structured conditional macro code instructions during loading of MLC, MAC, and CPY files.   Note z390 macros in z390\mac directory now are using zstrmac for structured coding. NOZSTRMAC can only be used with MVS, VSE, or other non-structured macro libraries.</td>
+<td>Support expansion of ZSTRMAC structured conditional macro code instructions during loading of MLC, MAC, and CPY files. Note z390 macros in z390\mac directory now are using zstrmac for structured coding. NOZSTRMAC can only be used with MVS, VSE, or other non-structured macro libraries.</td>
 </tr>
 <tr>
 <td>ZVSAM</td>
@@ -1758,6 +1770,268 @@ parentheses, then that parameter should be quoted. </p>
 </tr>
 </tbody>
 </table>
+<h1 id="machine-and-optable-options-and-equivalences">Machine and optable options and equivalences</h1>
+<table>
+<thead>
+<tr>
+<th>Machine</th>
+<th>Machine</th>
+<th>Optable</th>
+<th>Optable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+<td>DOS</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>S370</td>
+<td></td>
+<td>370</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>S370XA</td>
+<td>ARCH-0</td>
+<td>XA</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>S370ESA</td>
+<td>ARCH-1</td>
+<td>ESA</td>
+<td></td>
+<td>Synonyms for ESA</td>
+</tr>
+<tr>
+<td>S390</td>
+<td>ARCH-2</td>
+<td>ESA</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>S390E</td>
+<td>ARCH-3</td>
+<td>ESA</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>ARCH-4</td>
+<td>ESA</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>zSeries</td>
+<td>ZSeries-1</td>
+<td>ZS1</td>
+<td>ZOP</td>
+<td>Synonyms for ZOP</td>
+</tr>
+<tr>
+<td>ZS</td>
+<td>ZS-1</td>
+<td>ZS1</td>
+<td>ZOP</td>
+<td></td>
+</tr>
+<tr>
+<td>z800</td>
+<td>z900</td>
+<td>ZS1</td>
+<td>ZOP</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>ARCH-5</td>
+<td>ZS1</td>
+<td>ZOP</td>
+<td></td>
+</tr>
+<tr>
+<td>z890</td>
+<td>z990</td>
+<td>ZS2</td>
+<td>YOP</td>
+<td>Synonyms for YOP</td>
+</tr>
+<tr>
+<td>zSeries-2</td>
+<td>ZS-2</td>
+<td>ZS2</td>
+<td>YOP</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>ARCH-6</td>
+<td>ZS2</td>
+<td>YOP</td>
+<td></td>
+</tr>
+<tr>
+<td>zSeries-3</td>
+<td>ZS-3</td>
+<td>ZS3</td>
+<td>Z9</td>
+<td>Synonyms for Z9</td>
+</tr>
+<tr>
+<td>z9</td>
+<td>ARCH-7</td>
+<td>ZS3</td>
+<td>Z9</td>
+<td></td>
+</tr>
+<tr>
+<td>zSeries-4</td>
+<td>ZS-4</td>
+<td>ZS4</td>
+<td>Z10</td>
+<td>Synonyms for Z10</td>
+</tr>
+<tr>
+<td>z10</td>
+<td>ARCH-8</td>
+<td>ZS4</td>
+<td>Z10</td>
+<td></td>
+</tr>
+<tr>
+<td>zSeries-5</td>
+<td>ZS-5</td>
+<td>ZS5</td>
+<td>Z11</td>
+<td>Synonyms for Z11</td>
+</tr>
+<tr>
+<td>z114</td>
+<td>z196</td>
+<td>ZS5</td>
+<td>Z11</td>
+<td></td>
+</tr>
+<tr>
+<td>z11</td>
+<td>ARCH-9</td>
+<td>ZS5</td>
+<td>Z11</td>
+<td></td>
+</tr>
+<tr>
+<td>zSeries-6</td>
+<td>ZS-6</td>
+<td>ZS6</td>
+<td>Z12</td>
+<td>Synonyms for Z12</td>
+</tr>
+<tr>
+<td>zBC12</td>
+<td>zEC12</td>
+<td>ZS6</td>
+<td>Z12</td>
+<td></td>
+</tr>
+<tr>
+<td>z12</td>
+<td>ARCH-10</td>
+<td>ZS6</td>
+<td>Z12</td>
+<td></td>
+</tr>
+<tr>
+<td>zSeries-7</td>
+<td>ZS-7</td>
+<td>ZS7</td>
+<td>Z13</td>
+<td>Synonyms for Z13</td>
+</tr>
+<tr>
+<td>z13</td>
+<td>ARCH-11</td>
+<td>ZS7</td>
+<td>Z13</td>
+<td></td>
+</tr>
+<tr>
+<td>zSeries-8</td>
+<td>ZS-8</td>
+<td>ZS8</td>
+<td>Z14</td>
+<td>Synonyms for Z14</td>
+</tr>
+<tr>
+<td>z14</td>
+<td>ARCH-12</td>
+<td>ZS8</td>
+<td>Z14</td>
+<td></td>
+</tr>
+<tr>
+<td>zSeries-9</td>
+<td>ZS-9</td>
+<td>ZS9</td>
+<td>Z15</td>
+<td>Synonyms for Z15</td>
+</tr>
+<tr>
+<td>z15</td>
+<td>ARCH-13</td>
+<td>ZS9</td>
+<td>Z15</td>
+<td></td>
+</tr>
+<tr>
+<td>zSeries-10</td>
+<td>ZS-10</td>
+<td>ZSA</td>
+<td>Z16</td>
+<td>Synonyms for Z16</td>
+</tr>
+<tr>
+<td>z16</td>
+<td>ARCH-14</td>
+<td>ZSA</td>
+<td>Z16</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>UNI</td>
+<td></td>
+<td>All current instructions from optables above</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>[DFLT]</td>
+<td></td>
+<td>Cannot be specified, same as UNI plus one z390 directive for zCobol support</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>z390</td>
+<td></td>
+<td>UNI plus all z390 instructions; not compatible with HLASM</td>
+</tr>
+</tbody>
+</table>
+<p>Remark: there is no machine option keyword equivalent for optable(DOS).</p>
+<p>Remark: option allow adds z390 instructions to specified optable.</p>
+<p>Remark: option assist adds ASSIST instructions to specified optable.</p>
                 
                   
                 
@@ -1841,7 +2115,7 @@ parentheses, then that parameter should be quoted. </p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.1-40-g3b70952"}</script>
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.1-41-ga73a4f4"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.b1047164.min.js"></script>
