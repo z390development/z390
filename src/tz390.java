@@ -1809,9 +1809,9 @@ public  class  tz390 {
      String[]   op_table_370 =   // Table added for RPI 1209A
         {"0D=BASR,RR,20",        //    320 "0D"    "BASR"     "RR"    2 // RPI 1209N
          "4D=BAS,5,50",          //   1150 "4D"    "BAS"      "RX"    5
-         "AE=SIGP,10,100",       //   2540 "AE"    "SIGP"     "RS"   10
          "9C02=RIO,7,70",        //        "9C02"  "RIO"      "S"     7 // #533
          "9F01=CLRCH,7,70",      //        "9F01"  "CLRCH"    "S"     7 // #533
+         "AE=SIGP,10,100",       //   2540 "AE"    "SIGP"     "RS"   10
          "B200=CONCS,7,70",      //        "B200"  "CONCS"    "S"     7 // #533
          "B201=DISCS,7,70",      //        "B201"  "DISCS"    "S"     7 // #533
          "B210=SPX,7,70",        //   2670 "B210"  "SPX"      "S"     7
