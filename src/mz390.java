@@ -30,6 +30,7 @@ import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;  // #509
 
 import javax.swing.JTextArea;
 
@@ -446,6 +447,7 @@ public  class  mz390 {
 	 * 2023-04-12 #458 B2C issue; insure X2C length is multiple of 2
      * 2023-06-21 #485 fix O attribute value for extended mnemonics
      * 2024-06-02 #527 set &SYSOPT_OPTABLE to correct value
+     * 2024-07-03 #509 fixes for HLASM built-in functions
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -456,6 +458,13 @@ public  class  mz390 {
 	int max_substring_len = 100000;
 	int max_ap_files = 10;     // max concurrent AREAD and PUNCH files
 	int max_lcl_key_root = 47; // hash index for each macro instance
+	/*
+	 * constants                                                       // #509
+	 */
+	int max_mac_dec_digits = 10;                                       // #509
+	int max_mac_bin_digits = 32;                                       // #509
+	int max_mac_hex_digits = 8;                                        // #509
+	String max_pos_int_plus_one = "2147483648";                        // #509
 	/*
 	 * subordinate 
 	 */
@@ -738,6 +747,10 @@ public  class  mz390 {
 	Matcher symbol_match = null;
 	Pattern exec_pattern = null;
 	Matcher exec_match   = null;
+	Pattern signedDecimalPattern = null;  // #509
+	Pattern binDigitsPattern = null;      // #509
+	Pattern decDigitsPattern = null;      // #509
+	Pattern hexDigitsPattern = null;      // #509
 	int label_comma_index = 0; // parm into to comma after macro label else -1
 	int sublist_count = 0;
 	int tot_pos_parm = 0; // cur pos parms on stack
@@ -1520,6 +1533,32 @@ public  class  mz390 {
 		} catch (Exception e){
 			abort_error(4,"expression pattern error - " + e.toString());
 		}
+		/*
+		 * signed or unsigned decimal integer                                    // #509
+		 */
+		try {                                                                    // #509
+			signedDecimalPattern = Pattern.compile("([-+]?)([0-9]+)");           // #509			
+		} catch (PatternSyntaxException e) {                                     // #509
+			abort_error(5,"signed decimal pattern error - " + e.toString());     // #509
+		}                                                                        // #509
+		/*
+		 * binary, decimal and hexadecimal digits                                // #509
+		 */
+		try {                                                                    // #509			
+			binDigitsPattern = Pattern.compile("[01]+");                         // #509
+		} catch (PatternSyntaxException e) {                                     // #509
+			abort_error(6,"binary digits pattern error - " + e.toString());      // #509
+		}                                                                        // #509
+		try {                                                                    // #509			
+			decDigitsPattern = Pattern.compile("[0-9]+");                        // #509
+		} catch (PatternSyntaxException e) {                                     // #509
+			abort_error(7,"decimal digits pattern error - " + e.toString());     // #509
+		}                                                                        // #509
+		try {                                                                    // #509			
+			hexDigitsPattern = Pattern.compile("[0-9a-fA-F]+");                  // #509
+		} catch (PatternSyntaxException e) {                                     // #509
+			abort_error(8,"hexadecimal digits pattern error - " + e.toString()); // #509
+		}                                                                        // #509
 	}
 	private void open_files(){
 		/*
@@ -5829,7 +5868,7 @@ public  class  mz390 {
 		 */
 		exp_pop_op();
 		if (tz390.opt_traceall){
-			tz390.put_trace(" PREFIX OP=" + exp_prev_op + "VARS=" +tot_exp_stk_var);
+			tz390.put_trace(" PREFIX OP=" + exp_prev_op + " VARS=" +tot_exp_stk_var);  // #509
 		}
 		if (tot_exp_stk_var < 1 && exp_stk_op[tot_exp_stk_op].charAt(0) != 'U'){
 			log_error(175,"missing argument for prefix operator");
@@ -7072,11 +7111,93 @@ public  class  mz390 {
 			log_error(35,"expression parsing error - total stack values=" + tot_exp_stk_var + "  total ops=" + tot_exp_stk_op); // RPI 260
 		}
 	}
+	// Begin #509 ////////////////////////////////////////////////////////////////////////
+	/**
+	 * Check if a string is of the form "B'1-32 binary digits'"
+	 *
+	 * @param s the string to check
+	 * @return {@code true} if the string
+	 *                      (1) begins with "B'"
+	 *                      (2) ends with "'"
+	 *                      (3) has 1-32 binary digits between the quotes
+	 *         {@code false} otherwise
+	 */
+	private boolean isQuotedBinInteger(String s) {                         // #509
+		if (s == null || s.length() != s.trim().length()) return false;
+		if (s.length() < 4) return false;
+		if (s.charAt(0) != 'B' || s.charAt(1) != '\'' || s.charAt(s.length()-1) != '\'') return false;
+		return is32BitBinaryInteger(s.substring(2, s.length()-1), 2);
+	}
+	/**
+	 * Check if a string is of the form "X'1-8 hexadecimal digits'"
+	 * 
+	 * @param s the string to check
+	 * @return {@code true} if the string
+	 *                      (1) begins with "X'"
+	 *                      (2) ends with "'"
+	 *                      (3) has 1-8 hexadecimal digits between the quotes
+	 *         {@code false} otherwise
+	 */
+	private boolean isQuotedHexInteger(String s) {                         // #509
+		if (s == null || s.length() != s.trim().length()) return false;
+		if (s.length() < 4) return false;
+		if (s.charAt(0) != 'X' || s.charAt(1) != '\'' || s.charAt(s.length()-1) != '\'') return false;
+		return is32BitBinaryInteger(s.substring(2, s.length()-1), 16);
+	}
+	/**
+	 Validate that a string represents a valid 32-bit binary integer
+
+	 @param s string to validate
+	 @param base number base of the digits in the string; 10, 16 or 2
+	 @return true if valid 32-bit binary integer, false otherwise
+	 */
+	private boolean is32BitBinaryInteger(String s, int base) {             // #509
+		if (s == null || s.length() != s.trim().length()) return false;
+		switch (base)
+		{
+		case 10:
+			if (!isDecDigits(s) || s.length() > 10) return false;
+			try { if (Long.parseUnsignedLong(s) >= Integer.MAX_VALUE + 1L) return false; }
+			catch (NumberFormatException e) { return false;	}
+			break;
+		case 16:
+			return isHexInt(s);
+		case 2:
+			return isBinInt(s);
+		default:
+			return false;
+		}
+		return true;
+	}
+	/**
+	 * Determine whether string is equal to the decimal digits
+	 * representing one more than Integer.MAX_VALUE (2147483647+1)
+	 * @param s string to check
+	 * @return {@code true} if string is "2147483648",
+	 *         {@code false} otherwise
+	 */
+	private boolean isMaxPosIntPlusOne(String s) {                         // #509
+		return s != null && s.equals(max_pos_int_plus_one) ? true : false;
+	}
+	/**
+	 * Determine whether exp_stk_op entry at top
+	 * (most recently added) + offset is unary minus
+	 * @param offset offset from top; less than or equal to zero
+	 * @return {@code true} if unary minus at top + offset
+	 *         {@code false} if not or top + offset out of stack range 
+	 */
+	private boolean isUnaryMinusAtOffset(int offset)                       // #509
+	{
+		int i = tot_exp_stk_op - 1 + offset;
+		if (i < 0 || i >= tot_exp_stk_op) return false;
+		return (exp_stk_op[i].equals("U-") && exp_stk_op_class[i] == exp_class_oper) ? true :false;
+	}
+	// End #509 //////////////////////////////////////////////////////////////////////////
 	private int get_int_from_string(String setc_text,int base){
 		/*
 		 * return integer from string using specified base
 		 * Notes:
-		 *   1.  return numeric value of string base 10 or 16
+		 *   1.  return numeric value of string base 2, 10 or 16  // #509
 		 *   2.  If base 10, ignore trailing non digits
 		 *  
 		 */
@@ -7089,7 +7210,7 @@ public  class  mz390 {
 		        if (index >= 0){
 			       seta_value = az390.sym_loc[index];
 		           if (tz390.opt_traceall){
-				      tz390.put_trace("get_int_from_string(" + setc_value + ")=" + seta_value); // rpi 2210
+				      tz390.put_trace("get_int_from_string(" + setc_value + "," + base + ")=" + seta_value); // rpi 2210  #509
 			       }
 				   return seta_value;
 				}
@@ -7117,7 +7238,8 @@ public  class  mz390 {
 				}
 				return value;
 			} else {
-				log_error(123,"invalid hex string - " + setc_text);
+				String s = (base == 2) ? "binary" : "hex";                 // #509
+				log_error(123,"invalid " + s + " string - " + setc_text);  // #509
 				return 0;
 			}
 		}
@@ -7249,11 +7371,15 @@ public  class  mz390 {
 			exp_stk_val_type[tot_exp_stk_var - 1] = val_seta_type;
 			switch (setc_value.substring(0,1).toUpperCase().charAt(0)){
 			case 'B': // B'11000001' binary
-				seta_value = get_int_from_string(setc_value.substring(2,setc_value.length()-1),2);
-                		if (tz390.opt_traceall){
-						tz390.put_trace(" PUSH SDT B'=" + setc_value + " = "+ seta_value); 
-		                }		
-				exp_stk_seta[tot_exp_stk_var-1] = seta_value;
+				if (isQuotedBinInteger(setc_value)){                                                           // #509
+					seta_value = Integer.parseUnsignedInt(setc_value.substring(2,setc_value.length()-1), 2);   // #509
+					exp_stk_seta[tot_exp_stk_var-1] = seta_value;                                              // #509
+					if (tz390.opt_traceall){                                                                   // #509
+						tz390.put_trace(" PUSH SDT B'=" + setc_value + " = "+ seta_value);                     // #509
+					}                                                                                          // #509
+				} else {                                                                                       // #509
+					log_error(195,"bin invalid self defining term - " + setc_value);                           // #509
+				}                                                                                              // #509
 				break;
 			case 'C': // RPI192 C'..'|C".."|C!..! char sdt 
 				if (!tz390.get_sdt_char_int(setc_value)){
@@ -7263,16 +7389,88 @@ public  class  mz390 {
 				exp_stk_seta[tot_exp_stk_var-1] = seta_value; 
 				break;
 			case 'X': // X'C1' hex
-				seta_value = Long.valueOf(setc_value.substring(2,setc_value.length()-1),16).intValue();
-				exp_stk_seta[tot_exp_stk_var-1] = seta_value; 
+				if (isQuotedHexInteger(setc_value)){                                                           // #509
+					seta_value = Integer.parseUnsignedInt(setc_value.substring(2,setc_value.length()-1), 16);  // #509
+					exp_stk_seta[tot_exp_stk_var-1] = seta_value;                                              // #509
+				} else {                                                                                       // #509
+					log_error(195,"hex invalid self defining term - " + setc_value);                           // #509
+				}                                                                                              // #509
 				break;
 			case '*': // return max substring length
 				seta_value = max_substring_len; 
 				exp_stk_seta[tot_exp_stk_var-1] = seta_value;
 				break;	
 			default:  // must be ascii number
-				seta_value = get_int_from_string(setc_value,10); 
-				exp_stk_seta[tot_exp_stk_var-1] = seta_value;
+				if (is32BitBinaryInteger(setc_value, 10)){                           // #509
+					seta_value = get_int_from_string(setc_value,10);                 // #509
+					exp_stk_seta[tot_exp_stk_var-1] = seta_value;                    // #509
+				} else {                                                             // #509
+					/*
+					 * Special case: SDT started as "-2147483648". This
+					 * results in unary minus ("U-") added to exp_stk_op[],
+					 * followed by new SDT (setc_value) "2147483648". The
+					 * original SDT value is valid -- it represents
+					 * Integer.MIN_VALUE which is -2^31. However,
+					 * setc_value "2147483648" is not a valid 32-bit
+					 * binary integer -- it is one more than
+					 * Integer.MAX_VALUE = 2^31 - 1. 
+					 *
+					 * The following code handles this case. It checks to
+					 * see if setc_value is one more than the maximum
+					 * integer value. If yes, it checks to see if a unary
+					 * minus was the last item added to exp_stk_op[]. If not,
+					 * then the setc_value is invalid. We must also check
+					 * to see if two unary minus values were just added to
+					 * exp_stk_op[]. This is also an error since --2147483648
+					 * is 2147483648, an invalid 32-bit integer. HLASM
+					 * indicates this error as an arithmetic overflow.
+					 * 
+					 * if setc_value = "2147483638" and is preceded by
+					 * exactly one unary minus, then it is considered valid.
+					 * The seta_value is computed as indicated below.
+					 * 
+					 * NOTE THAT THE RETURNED VALUE IS -2147483648 !!!
+					 * 
+					 * The get_int_from_string() method incorrectly computes
+					 * the int value as the minimum integer value. However,
+					 * not to worry. Later on, when the expression stack is
+					 * used to evaluate the expression, the following happens:
+					 *     1. the unary minus is removed from exp_stk_op[]
+					 *     2. the exp_stk_seta[] entry is -2147483648
+					 *     3. seta_value is set to -exp_stk_seta[] entry
+					 *     4. exp_stk_seta[] entry is set to seta_value
+					 * Note that -Integer.MIN_VALUE = Integer.MIN_VALUE !!!
+					 * Therefore, step 3 "corrects" the invalid value
+					 * originally stored in exp_stk_seta[] and step 4 sets
+					 * exp_stk_seta[] to its original value. At this point,
+					 * the unary minus has been processed and the correct
+					 * result is in seta_value and the exp_stk_seta[] entry.
+					 * 
+					 * For a typical SDT like "-1", the unary minus is added
+					 * to exp_stk_op[] and 1 is added to exp_stk_seta[].
+					 * Steps 2,3 and 4 above are
+					 *     2. exp_stk_seta[] entry is 1
+					 *     3. seta_value = -exp_stk_seta[] entry = -1
+					 *     4. exp_stk_seta[] = seta_value = -1
+					 * In both cases, unary minus processing results in
+					 * the unary minus being popped, seta_value being set
+					 * correctly and the exp_stk_seta[] being set correctly.
+					 */
+					if (isMaxPosIntPlusOne(setc_value)) {                                      // #509
+						if (isUnaryMinusAtOffset(0)) {                                         // #509
+							if (!isUnaryMinusAtOffset(-1)) {                                   // #509
+								seta_value = get_int_from_string(setc_value,10);               // #509
+								exp_stk_seta[tot_exp_stk_var-1] = seta_value;                  // #509
+							} else {                                                           // #509
+								log_error(195,"dec-3 arithmetic overflow - " + setc_value);    // #509
+							}                                                                  // #509
+						} else {                                                               // #509
+							log_error(195,"dec-1 invalid self defining term - " + setc_value); // #509
+						}                                                                      // #509
+					} else {                                                                   // #509
+						log_error(195,"dec-2 invalid self defining term - " + setc_value);     // #509
+					}                                                                          // #509
+				}                                                                              // #509
 			}
 		} else {  
 			log_error(195,"invalid self defining term - " + setc_value);
@@ -11862,7 +12060,7 @@ public  class  mz390 {
     private void exec_pc_a2b(){
     	/*
     	 * convert int to binary string with
-    	 * leading zeros to make length mult. 8
+    	 * leading zeros to make length 32     #509
     	 */
 		seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
@@ -11872,7 +12070,7 @@ public  class  mz390 {
     }
     private void exec_pc_a2c(){
     	/*
-    	 * convert int to character string
+    	 * convert int to character string of length 4    #509
     	 */
     	seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
@@ -11886,7 +12084,7 @@ public  class  mz390 {
     }
     private void exec_pc_a2d(){
     	/*
-    	 * convert int to decimal string
+    	 * convert int to decimal string preceded by a plus or minus sign    #509
     	 */
     	seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
@@ -11899,7 +12097,7 @@ public  class  mz390 {
     }
     private void exec_pc_a2x(){
     	/*
-    	 * convert int to hex string
+    	 * convert int to hex string of length 8    #509
     	 */
     	seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
@@ -11913,8 +12111,17 @@ public  class  mz390 {
     	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
-    	setc_value = "B'" + setc_value1 + "'";
-		exp_push_sdt();
+    	if (setc_value1.length() > 0) {                                      // #509
+    		if (isBinInt(setc_value1)) {                                     // #509
+				seta_value = Integer.parseUnsignedInt(setc_value1,2);        // #509
+    		} else {                                                         // #509			
+				create_mnote(8,"B2A invalid operand value - "+setc_value1);  // #509
+				seta_value = 0;                                              // #509
+			}                                                                // #509
+    	} else {                                                             // #509
+    		seta_value = 0;                                                  // #509
+		}                                                                    // #509
+		put_seta_stack_var();                                                // #509
     }
     private void exec_pc_b2c(){
     	/*
@@ -11924,30 +12131,41 @@ public  class  mz390 {
 		setc_value1 = get_setc_stack_value();
 		int j = setc_value1.length();
 		if (j != 0)	{
-		    j = j % 8;
-		    if (j != 0) {
-		    	setc_value1 = "00000000".substring(0,8 - j)+setc_value1;
-	        }
-		}
-		StringBuilder stb = new StringBuilder("");
-		for (int i = 0; i < setc_value1.length(); i += 8) {
-		    String str = setc_value1.substring(i, i + 8);
-			stb.append((char)(((int)tz390.ebcdic_to_ascii[Integer.parseInt(str, 2)]) & 0xff));
-		}
-		setc_value = stb.toString();
+			if (isBinDigits(setc_value1)) {                                  // #509
+			    j = j % 8;
+			    if (j != 0) {
+			    	setc_value1 = "00000000".substring(0,8 - j)+setc_value1;
+		        }
+				StringBuilder stb = new StringBuilder("");
+				for (int i = 0; i < setc_value1.length(); i += 8) {
+				    String str = setc_value1.substring(i, i + 8);
+					stb.append((char)(((int)tz390.ebcdic_to_ascii[Integer.parseInt(str, 2)]) & 0xff));
+				}
+				setc_value = stb.toString();
+			} else {                                                         // #509
+				create_mnote(8,"B2C invalid operand value - "+setc_value1);  // #509
+				setc_value = "";                                             // #509
+			}                                                                // #509
+		} else {                                                             // #509
+			setc_value = "";                                                 // #509
+		}                                                                    // #509
 		put_setc_stack_var();
     }
     private void exec_pc_b2d(){
     	/*
-    	 * convert binary string to decimal string
+    	 * convert binary string to decimal string preceded by plus or minus character    #509
     	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
-		seta_value = Integer.valueOf(setc_value1,2);
-		if (seta_value < 0){
-			seta_value = - seta_value;
-		}
-		setc_value = Integer.toString(seta_value);
+		if (setc_value1.length() == 0) setc_value1 = "0";                // #509
+		if (isBinInt(setc_value1)) {                                     // #509
+			seta_value = Integer.parseUnsignedInt(setc_value1,2);        // #509
+			setc_value = Integer.toString(seta_value);                   // #509
+			if (seta_value >= 0) setc_value = "+"+setc_value;            // #509
+		} else {                                                         // #509
+			create_mnote(8,"B2D invalid operand value - "+setc_value1);  // #509
+			setc_value = "";                                             // #509
+		}                                                                // #509
 		put_setc_stack_var();
     }
     private void exec_pc_b2x(){
@@ -11956,14 +12174,33 @@ public  class  mz390 {
     	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
-    	seta_value = Integer.valueOf(setc_value1,2);
-		setc_value = Integer.toHexString(seta_value).toUpperCase(); // RPI 1101
-		setc_value = ("00000000" + setc_value).substring(setc_value.length());
+		int len = setc_value1.length();                                      // #509
+		if (len == 0) {                                                      // #509
+		    setc_value = "";                                                 // #509
+		} else {                                                             // #509
+			if (isBinDigits(setc_value1)) {                                  // #509
+				len = len % 4;                                               // #509
+				if (len != 0) {                                              // #509
+					setc_value1 = "0000".substring(0,4-len)+setc_value1;     // #509
+				}                                                            // #509
+				StringBuilder stb = new StringBuilder("");                   // #509
+				for (int i = 0; i < setc_value1.length(); i += 4) {          // #509
+					String str = setc_value1.substring(i, i + 4);            // #509
+					int j = Integer.parseInt(str, 2);                        // #509
+					char c = Integer.toHexString(j).toUpperCase().charAt(0); // #509
+					stb.append(c);                                           // #509
+				}                                                            // #509
+				setc_value = stb.toString();                                 // #509
+			} else {                                                         // #509
+				create_mnote(8,"B2X invalid operand value - "+setc_value1);  // #509
+				setc_value = "";                                             // #509
+			}                                                                // #509
+		}                                                                    // #509
 		put_setc_stack_var();
     }
     private void exec_pc_c2a(){
     	/*
-    	 * convert 1-4 character string to int
+    	 * convert 0-4 character string to int    #509
     	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value = "C'" + get_setc_stack_value() + "'";
@@ -11974,35 +12211,60 @@ public  class  mz390 {
     	 * convert char string to binary string
     	 */
     	check_setc_quotes(1); // RPI 1139
-    	setc_value = "C'" + get_setc_stack_value() + "'";
-		setc_value1 = setc_value;
-    	if (!tz390.get_sdt_char_int(setc_value)){
-			log_error(178,"invalid character sdt " + setc_value);
-		}
-		seta_value = tz390.sdt_char_int; 
-		setc_value = Integer.toString(seta_value,2);
-		seta_value = setc_value.length();
-		seta_value = seta_value - seta_value/8*8;
-		if (seta_value != 0){
-			setc_value = "00000000".substring(seta_value) + setc_value;
-		}
+		setc_value1 = get_setc_stack_value();                          // #509
+		if (setc_value1.length() == 0) {                               // #509
+			setc_value = "";                                           // #509
+		} else {                                                       // #509
+			StringBuilder sb = new StringBuilder("");                  // #509
+			for (int i = 0; i < setc_value1.length(); i++) {           // #509
+				byte b = (byte)setc_value1.charAt(i);                  // #509
+				if ( !tz390.opt_ascii ) {                              // #509
+					b = tz390.ascii_to_ebcdic[Byte.toUnsignedInt(b)];  // #509
+				}                                                      // #509
+				String str = byteToBinaryString(b);                    // #509
+				sb.append(str);                                        // #509
+			}                                                          // #509
+			setc_value = sb.toString();                                // #509
+		}                                                              // #509
 		put_setc_stack_var();
     }
+    /**
+     * Convert binary byte to length 8 binary string                   // #509
+     *
+     * @param x byte value to convert
+     * @return value converted to length 8 binary string 
+     */
+	private String byteToBinaryString(byte x)                          // #509
+	{                                                                  // #509
+		String s = Integer.toBinaryString(Byte.toUnsignedInt(x));      // #509
+		int j = s.length() % 8;                                        // #509
+		if (j != 0) s = "0000000".substring(0,8-j)+s;                  // #509
+		return s;                                                      // #509
+	}                                                                  // #509
     private void exec_pc_c2d(){
     	/*
-    	 * convert char string to decimal string
+    	 * convert char string to decimal string prefixed by plus or minus sign    #509
     	 */
     	check_setc_quotes(1); // RPI 1139
-		setc_value = "C'" + get_setc_stack_value() + "'";
-		setc_value1 = setc_value;
-		if (!tz390.get_sdt_char_int(setc_value)){
-			log_error(179,"invalid character sdt " + setc_value);
-		}
-		seta_value = tz390.sdt_char_int; 
-		if (seta_value < 0){
-			seta_value = - seta_value;
-		}
-		setc_value = Integer.toString(seta_value);
+		setc_value1 = get_setc_stack_value();                                                     // #509
+		setc_value = "";                                                                          // #509
+		if (setc_value1.length() > 4) {                                                           // #509
+			create_mnote(8,"C2D invalid operand value; more than 4 characters - " + setc_value1); // #509
+		} else if (setc_value1.length() == 0) {                                                   // #509
+		    setc_value = "+0";                                                                    // #509
+		} else {                                                                                  // #509
+        	int val = 0;                                                                          // #509
+        	for (int i = 0; i < setc_value1.length(); i++)                                        // #509
+        	{                                                                                     // #509
+            	byte b = (byte)setc_value1.charAt(i);                                             // #509
+            	if (!tz390.opt_ascii) {                                                           // #509
+                	b = tz390.ascii_to_ebcdic[Byte.toUnsignedInt(b)];                             // #509
+            	}                                                                                 // #509
+            	val = (val << 8) + Byte.toUnsignedInt(b);                                         // #509
+        	}                                                                                     // #509
+        	setc_value = Integer.toString(val);                                                   // #509
+        	if (val >= 0) setc_value = "+"+setc_value;                                            // #509
+        }                                                                                         // #509
 		put_setc_stack_var();
     }
     private void exec_pc_c2x(){
@@ -12042,29 +12304,48 @@ public  class  mz390 {
     	 * convert decimal string to int
     	 */
     	check_setc_quotes(1); // RPI 1139
-    	boolean save_opt_allow = tz390.opt_allow; // RPI 1204
-    	tz390.opt_allow = true;           // RPI 1204
-    	seta_value = get_seta_stack_value(-1);
-    	tz390.opt_allow = save_opt_allow; // RPI 1204
 		setc_value1 = get_setc_stack_value();
+		if (setc_value1.length() == 0) {                                     // #509
+			// HLASM LR states this case indicates an error.                 // #509
+			// HLASM does not produce an error; returns 0.                   // #509
+			// Comment next line so z390 matches HLASM behavior              // #509
+			//create_mnote(8,"D2A invalid operand value; length is zero");   // #509
+			seta_value = 0;                                                  // #509
+		}                                                                    // #509
+		else {                                                               // #509
+			if (isSignedDecimalInteger(setc_value1)) {                       // #509
+				seta_value = Integer.parseInt(setc_value1);                  // #509
+			}                                                                // #509
+			else {                                                           // #509
+				create_mnote(8,"D2A invalid operand value - "+setc_value1);  // #509
+				seta_value = 0;                                              // #509
+			}                                                                // #509
+		}                                                                    // #509
 		put_seta_stack_var();
     }
     private void exec_pc_d2b(){
     	/*
-    	 * convert decimal string to binary string
+    	 * convert decimal string to binary string of length 32    #509
     	 */
     	check_setc_quotes(1); // RPI 1139
-    	boolean save_opt_allow = tz390.opt_allow; // RPI 1204
-    	tz390.opt_allow = true;           // RPI 1204
-    	seta_value = get_seta_stack_value(-1);
-    	tz390.opt_allow = save_opt_allow; // RPI 1204
 		setc_value1 = get_setc_stack_value();
-		setc_value = Integer.toString(seta_value,2);
-		seta_value = setc_value.length();
-		seta_value = seta_value - seta_value/8*8;
-		if (seta_value != 0){
-			setc_value = "00000000".substring(seta_value) + setc_value;
-		}
+		if (setc_value1.length() == 0) {                                                                 // #509
+			setc_value = "";                                                                             // #509
+		} else {                                                                                         // #509
+			if (isSignedDecimalInteger(setc_value1)) {                                                   // #509
+				seta_value = Integer.parseInt(setc_value1);                                              // #509
+				setc_value = Integer.toBinaryString(seta_value);                                         // #509
+				seta_value = setc_value.length();                                                        // #509
+				seta_value = seta_value - seta_value/32*32;                                              // #509
+				if (seta_value != 0){                                                                    // #509
+					setc_value = "00000000000000000000000000000000".substring(seta_value) + setc_value;  // #509
+				}                                                                                        // #509
+			}                                                                                            // #509
+			else {                                                                                       // #509
+				create_mnote(8,"D2B invalid operand value - "+setc_value1);                              // #509
+				setc_value = "";                                                                         // #509
+			}                                                                                            // #509
+		}                                                                                                // #509
 		put_setc_stack_var();
     }
     private void exec_pc_d2c(){
@@ -12072,17 +12353,29 @@ public  class  mz390 {
     	 * convert decimal string to char string
     	 */
     	check_setc_quotes(1); // RPI 1139
-    	boolean save_opt_allow = tz390.opt_allow; // RPI 1204
-    	tz390.opt_allow = true;           // RPI 1204
-    	seta_value = get_seta_stack_value(-1);
-    	tz390.opt_allow = save_opt_allow; // RPI 1204
 		setc_value1 = get_setc_stack_value();
-		setc_value = ""
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 24]
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 16 & 0xff]         
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 8  & 0xff]
-			       + (char)tz390.ebcdic_to_ascii[seta_value        & 0xff]					                               
-			       ;
+		if (setc_value1.length() == 0) {                                             // #509
+			// HLASM LR states this case indicates an error.                         // #509
+			// HLASM does not produce an error; returns empty string.                // #509
+			// Comment next line so z390 matches HLASM behavior                      // #509
+			//create_mnote(8,"D2C invalid operand value; length is zero");           // #509
+			setc_value = "";                                                         // #509
+		}                                                                            // #509
+		else {                                                                       // #509
+			if (isSignedDecimalInteger(setc_value1)) {                               // #509
+				seta_value = Integer.parseInt(setc_value1);                          // #509
+				setc_value = ""                                                      // #509
+							+ (char)tz390.ebcdic_to_ascii[seta_value >>> 24]         // #509
+							+ (char)tz390.ebcdic_to_ascii[seta_value >>> 16 & 0xff]  // #509         
+							+ (char)tz390.ebcdic_to_ascii[seta_value >>> 8  & 0xff]  // #509
+							+ (char)tz390.ebcdic_to_ascii[seta_value        & 0xff]  // #509
+						   ;                                                         // #509              
+			}                                                                        // #509
+			else {                                                                   // #509
+				create_mnote(8,"D2C invalid operand value - "+setc_value1);          // #509
+				setc_value = "";                                                     // #509
+			}                                                                        // #509
+		}                                                                            // #509
 		put_setc_stack_var();
     }
     private void exec_pc_d2x(){
@@ -12090,13 +12383,25 @@ public  class  mz390 {
     	 * convert decimal string to hex string
     	 */
     	check_setc_quotes(1); // RPI 1139
-    	boolean save_opt_allow = tz390.opt_allow; // RPI 1204
-    	tz390.opt_allow = true;           // RPI 1204
-    	seta_value = get_seta_stack_value(-1);
-    	tz390.opt_allow = save_opt_allow; // RPI 1204
-		setc_value1 = get_setc_stack_value();;
-		setc_value = Integer.toHexString(seta_value).toUpperCase(); // RPI 1101
-		setc_value = ("00000000" + setc_value).substring(setc_value.length());
+		setc_value1 = get_setc_stack_value();                                            // #509
+		if (setc_value1.length() == 0) {                                                 // #509
+			// HLASM LR states this case indicates an error.                             // #509
+			// HLASM does not produce an error; returns empty string.                    // #509
+			// Comment next line so z390 matches HLASM behavior                          // #509
+			//create_mnote(8,"D2X invalid operand value; length is zero");               // #509
+			setc_value = "";                                                             // #509
+		}                                                                                // #509
+		else {                                                                           // #509
+			if (isSignedDecimalInteger(setc_value1)) {                                   // #509
+				seta_value = Integer.parseInt(setc_value1);                              // #509
+				setc_value = Integer.toHexString(seta_value).toUpperCase(); // RPI 1101  // #509
+				setc_value = ("00000000" + setc_value).substring(setc_value.length());   // #509
+			}                                                                            // #509
+			else {                                                                       // #509
+				create_mnote(8,"D2X invalid operand value - "+setc_value1);              // #509
+				setc_value = "";                                                         // #509
+			}                                                                            // #509
+		}                                                                                // #509
 		put_setc_stack_var();
     }
     private void exec_pc_dclen(){
@@ -12157,44 +12462,179 @@ public  class  mz390 {
     }
     private void exec_pc_isbin(){
     	/*
-    	 * return 1 if binary string else 0
+    	 * return 1 if 1-32 binary digits string else 0; error if 0 digits   // #509
     	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
-		try {
-			seta_value = Integer.valueOf(setc_value1,2);
-		    setb_value = 1;
-		} catch (Exception e){
-			setb_value = 0;
-		}
+		setb_value = 0;                                                      // #509
+		if (setc_value1.length() != 0 ) {                                    // #509
+			if (isBinInt(setc_value1))	setb_value = 1;                      // #509
+		} else {                                                             // #509
+			create_mnote(8,"ISBIN invalid operand value; length is zero");   // #509
+		}                                                                    // #509
 		put_setb_stack_var();
     }
+    // Begin #509 ////////////////////////////////////////////////////////////////////////
+	/**
+	 * Check if string is all binary digits
+	 * 
+	 * @param s string to check
+	 * @return {@code true} if all binary digits
+	 *         {@code false} otherwise
+	 */
+	private boolean isBinDigits(String s)              // #509
+	{
+		return (binDigitsPattern.matcher(s).matches()) ? true : false;
+	}
+	/**
+	 * Check if string is 1-32 binary digits
+	 * 
+	 * @param s string to check
+	 * @return {@code true} if 1-32 binary digits
+	 *         {@code false} otherwise
+	 */
+	private boolean isBinInt(String s)                 // #509
+	{
+		return (s != null && s.length() <= 32 && isBinDigits(s)) ? true : false;
+	}
+	/**
+	 * Check if string is 1-10 decimal digits having
+	 * maximum value 2147483647 (Integer.MAX_VALUE)
+	 * 
+	 * @param s string to check
+	 * @return {@code true} if 1-10 decimal digits and value &lt;= 2147483647
+	 *         {@code false} otherwise
+	 */
+	private boolean isdec(String s)                    // #509
+	{
+		if (!isDecDigits(s) || s.length() > 10) return false;
+		try { Integer.parseInt(s); return true;	}
+		catch (NumberFormatException e)	{ return false;	}
+	}
+	/**
+	 * Check if string 1-10 decimal digits, with possible
+	 * leading sign, having value in range
+	 *   [Integer.MIN_VALUE = -2147483648, 2147483647 = Integer.MAX_VALUE]
+	 * @param s String to check
+	 * @return {@code true} if valid
+	 *         {@code false} otherwise 
+	 */
+	private boolean isSignedDecimalInteger(String s)   // #509
+	{
+		if (s == null || s.length() == 0) return false;
+
+		Matcher m;
+
+		m = signedDecimalPattern.matcher(s);
+		if (m.matches())
+		{
+			String sPlusMinus = m.group(1);
+			String sDigits = m.group(2);
+			if (   (sPlusMinus.length() == 1 && sDigits.length() > 10)
+				|| (sPlusMinus.length() == 0 && sDigits.length() > 11)
+				|| sDigits.length() == 0   ) return false;
+			try { Integer.parseInt(s); return true; }
+			catch (NumberFormatException e) { return false; }
+		}
+		return false;
+	}
+	/**
+	 * Check if string is all decimal digits
+	 * 
+	 * @param s string to check
+	 * @return {@code true} if all decimal digits
+	 *         {@code false} otherwise
+	 */
+	private boolean isDecDigits(String s)              // #509
+	{
+		return (decDigitsPattern.matcher(s).matches()) ? true : false;
+	}
+	/**
+	 * Check if string is all hexadecimal digits
+	 * 
+	 * @param s string to check
+	 * @return {@code true} if all hexadecimal digits
+	 *         {@code false} otherwise
+	 */
+	private boolean isHexDigits(String s)              // #509
+	{
+		return (hexDigitsPattern.matcher(s).matches()) ? true : false;
+	}
+	/**
+	 * Check if string is 1-8 hexadecimal digits
+	 * 
+	 * @param s string to check
+	 * @return {@code true} if 1-8 hexadecimal digits
+	 *         {@code false} otherwise
+	 */
+	private boolean isHexInt(String s)                 // #509
+	{
+		return (isHexDigits(s) && s.length() <= 8) ? true : false;
+	}
+	/**
+	 * Check if character is a hexadecimal digit
+	 * 
+	 * @param c character to check
+	 * @return {@code true} if c is a hexadecimal digit
+	 *         {@code false} otherwise
+	 */
+	private boolean isHexChar(char c)                  // #509
+	{
+		switch(c) {
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+			case 'a':
+			case 'b':
+			case 'c':
+			case 'd':
+			case 'e':
+			case 'f':
+			case 'A':
+			case 'B':
+			case 'C':
+			case 'D':
+			case 'E':
+			case 'F':
+				return true;
+			default:
+				return false;
+		}
+	}
+    // End #509 //////////////////////////////////////////////////////////////////////////
     private void exec_pc_isdec(){
     	/*
-    	 * if string decimal return 1 else 0
+    	 * if string 1-10 decimal digits <= 2147483647  return 1 else 0; error if 0 digits  // #509
     	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
-		try {
-			seta_value = Integer.valueOf(setc_value1);
-		    setb_value = 1;
-		} catch (Exception e){
-			setb_value = 0;
-		}
+		setb_value = 0;                                                      // #509
+		if (setc_value1.length() != 0 ) {                                    // #509
+			if (isdec(setc_value1))	setb_value = 1;                          // #509
+		} else {                                                             // #509
+			create_mnote(8,"ISDEC invalid operand value; length is zero");   // #509
+		}                                                                    // #509
 		put_setb_stack_var();
     }
     private void exec_pc_ishex(){
     	/*
-    	 * return 1 if string hex else 0
+    	 * return 1 if string 1-8 hex digits else 0; error if 0 digits       // #509
     	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
-		try {
-			seta_value = Integer.valueOf(setc_value1,16);
-		    setb_value = 1;
-		} catch (Exception e){
-			setb_value = 0;
-		}
+		setb_value = 0;                                                      // #509
+		if (setc_value1.length() != 0 ) {                                    // #509
+			if (isHexInt(setc_value1))	setb_value = 1;                      // #509
+		} else {                                                             // #509
+			create_mnote(8,"ISHEX invalid operand value; length is zero");   // #509
+		}                                                                    // #509
 		put_setb_stack_var();
     }
     private void exec_pc_issym(){
@@ -12213,6 +12653,9 @@ public  class  mz390 {
 			}
 		} else {
 			setb_value = 0;
+			if (setc_value1.length() == 0){                                      // #509
+				create_mnote(8,"ISSYM invalid operand value; length is zero");   // #509
+			}                                                                    // #509
 		}
 		put_setb_stack_var();
     }
@@ -12232,17 +12675,64 @@ public  class  mz390 {
     	seta_value1 = get_seta_stack_value(-2);
     	seta_value2 = get_seta_stack_value(-1);
     	tot_exp_stk_var = tot_exp_stk_var - 2;
-    	seta_value = seta_value1 << seta_value2;
-    	if (seta_value1 >= 0){
-    		seta_value = seta_value & 0x7fffffff;
-    	} else {
-    		seta_value = seta_value | 0x80000000;
-    	}
+    	seta_value = shiftLeftArithmetic(seta_value1, seta_value2);  // #509
 		if (tz390.opt_tracem){ // RPI 1212
 			tz390.put_trace("SLA " + seta_value + " = " + seta_value1  + " SLA " + seta_value2);  
 		}		
-   	put_seta_stack_var();
+		put_seta_stack_var();                                        // #509
     }
+	/**
+	 * Implement HLASM LR SLA built-in function                      // #509
+	 * 
+	 * @param x the number to shift
+	 * @param n the number of bits to shift
+	 * @return x shifted left n bits if no error; else 0
+	 * 
+	 * Note: Only the low 6 bits of n are used. For example,
+	 *       n = -1 = X'FFFFFFFF' is changed to X'0000003F' = 63
+	 *       and n = X'80000000' (Integer.MIN_VALUE) is changed
+	 *       to 0.
+	 *
+	 * Arithmetic overflow error logged if a bit that is not
+	 * the original sign bit is shifted into the sign position.
+	 */
+	private int shiftLeftArithmetic(int x, int n)                    // #509
+	{
+		n &= 0x3F;  // only use the six low-order bits
+		if (n == 0 || x == 0) return x;
+		if (n >= 32)  // shifting non-zero value through the sign bit
+		{
+			create_mnote(8,"SLA: Arithmetic overflow");
+			return 0;
+		}
+		// 1 <= n <= 31
+		// set mask: bits 0..n are 1, n+1..31 are 0
+		int mask = Integer.MIN_VALUE >> n;
+//		System.out.printf("n = %d mask = %08X x = %08X%n",n,mask,x);
+		// flip mask bits if x is non-negative
+		if (x >= 0)  mask = mask ^ 0xFFFFFFFF;
+//		System.out.printf("n = %d mask = %08X x = %08X%n",n,mask,x);
+		mask >>>= 31-n; // move mask bits to right end
+		int xMask = x >>> 31-n; // same bits in x
+//		System.out.printf("x bits for mask = %08X  mask = %08X%n",xMask,mask);
+		if (xMask != mask)
+		{
+			create_mnote(8,"SLA: Arithmetic overflow");
+			return 0;
+		}
+		return x << n;
+	}
+	/**
+	 * Create mask containing n+1 one bits in the leftmost position      // #509
+	 *
+	 * @param n number of one bits (not including sign bit); 1--31
+	 * @return an integer containing n+1 one bits in leftmost position
+	 *         and zero in the remaining bit positions
+	 */
+	private int shiftLeftArithmeticSignMask(int n)                       // #509
+	{
+		return Integer.MIN_VALUE >> n;
+	}   	
     private void exec_pc_sll(){
     	/*
     	 * shift left logical
@@ -12250,7 +12740,8 @@ public  class  mz390 {
     	seta_value1 = get_seta_stack_value(-2);
     	seta_value2 = get_seta_stack_value(-1);
     	tot_exp_stk_var = tot_exp_stk_var - 2;
-    	seta_value = seta_value1 << seta_value2;
+		int n = seta_value2 & 0x3F;                      // #509
+		seta_value = (n <= 31) ? seta_value1 << n : 0;   // #509
 		if (tz390.opt_tracem){ // RPI 1212
 			tz390.put_trace("SLL " + seta_value + " = " + seta_value1  + " SLL " + seta_value2);  
 		}		
@@ -12263,11 +12754,12 @@ public  class  mz390 {
     	seta_value1 = get_seta_stack_value(-2);
     	seta_value2 = get_seta_stack_value(-1);
     	tot_exp_stk_var = tot_exp_stk_var - 2;
-    	seta_value = seta_value1 >> seta_value2;
+		int n = seta_value2 & 0x3F;                      // #509
+    	seta_value = seta_value1 >> Math.min(n,31);      // #509
 		if (tz390.opt_tracem){ // RPI 1212
 			tz390.put_trace("SRA " + seta_value + " = " + seta_value1  + " SRA " + seta_value2);  
 		}		
-   	put_seta_stack_var();
+		put_seta_stack_var();                            // #509
     }
     private void exec_pc_srl(){
     	/*
@@ -12276,11 +12768,12 @@ public  class  mz390 {
     	seta_value1 = get_seta_stack_value(-2);
     	seta_value2 = get_seta_stack_value(-1);
     	tot_exp_stk_var = tot_exp_stk_var - 2;
-    	seta_value = seta_value1 >>> seta_value2;
+		int n = seta_value2 & 0x3F;                      // #509
+    	seta_value = (n <= 31) ? seta_value1 >>> n : 0;  // #509
 		if (tz390.opt_tracem){ // RPI 1212
 			tz390.put_trace("SRL " + seta_value + " = " + seta_value1  + " SRL " + seta_value2);  
 		}		
-   	put_seta_stack_var();
+		put_seta_stack_var();                            // #509
     }
     private void exec_pc_sattra(){
     	/*
@@ -12292,6 +12785,7 @@ public  class  mz390 {
 		int cur_sym = mz390_find_sym(setc_value1);
 		if (cur_sym >= 0){
 			setc_value = az390.sym_attra[cur_sym];
+			if (setc_value == null) setc_value = "";     // #509
 		} else {
 			setc_value = "";
 		}
@@ -12330,11 +12824,16 @@ public  class  mz390 {
     	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
-    	try {
-    		seta_value = Integer.valueOf(setc_value1,16);
-    	} catch (Exception e){
-    		seta_value = 0;  // RPI 1085
-    	}
+    	if (setc_value1.length() > 0) {                                      // #509
+    		if (isHexInt(setc_value1)) {                                     // #509
+				seta_value = Integer.parseUnsignedInt(setc_value1,16);       // #509
+    		} else {                                                         // #509			
+				create_mnote(8,"X2A invalid operand value - "+setc_value1);  // #509
+				seta_value = 0;                                              // #509
+			}                                                                // #509
+    	} else {                                                             // #509
+    		seta_value = 0;                                                  // #509
+		}                                                                    // #509
 		put_seta_stack_var();
     }
     private void exec_pc_x2b(){
@@ -12343,13 +12842,25 @@ public  class  mz390 {
     	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
-    	seta_value1 = Integer.valueOf(setc_value1,16);
-		setc_value = Integer.toString(seta_value1,2);
-		seta_value = setc_value.length();
-		seta_value = seta_value - seta_value/8*8;
-		if (seta_value != 0){
-			setc_value = "00000000".substring(seta_value) + setc_value;
-		}
+		if (setc_value1.length() == 0) {                                             // #509
+			setc_value = "";                                                         // #509
+		} else {                                                                     // #509
+			StringBuilder sb = new StringBuilder("");                                // #509
+			for (int i = 0; i < setc_value1.length(); i++) {                         // #509
+				char c = setc_value1.charAt(i);                                      // #509
+				if (!isHexChar(c)) {                                                 // #509
+					sb = new StringBuilder("");                                      // #509
+					create_mnote(8,"X2B invalid operand value - "+setc_value1);      // #509
+					break;                                                           // #509
+				}                                                                    // #509
+				int val = Integer.parseInt(setc_value1.substring(i, i+1),16);        // #509
+				String str = Integer.toBinaryString(val);                            // #509
+				int j = str.length() % 4;                                            // #509
+				if (j != 0) str = "000".substring(0,4-j)+str;                        // #509
+				sb.append(str);                                                      // #509
+			}                                                                        // #509
+            setc_value = sb.toString();                                              // #509
+		}                                                                            // #509
 		put_setc_stack_var();
     }
 	private void exec_pc_x2c(){
@@ -12363,22 +12874,33 @@ public  class  mz390 {
 		StringBuilder stb = new StringBuilder("");
 		for (int i = 0; i < setc_value1.length(); i += 2) {
 			String str = setc_value1.substring(i, i + 2);
-			stb.append((char)(((int)tz390.ebcdic_to_ascii[Integer.parseInt(str, 16)]) & 0xff));
+			if (isHexInt(str)) {                                                 // #509
+				stb.append((char)(((int)tz390.ebcdic_to_ascii[Integer.parseInt(str, 16)]) & 0xff));
+			} else {                                                             // #509
+				stb = new StringBuilder("");                                     // #509
+				create_mnote(8,"X2C invalid operand value - "+setc_value1);      // #509
+				break;                                                           // #509
+			}                                                                    // #509
 		}
 		setc_value = stb.toString();
 		put_setc_stack_var();
 	}
     private void exec_pc_x2d(){
     	/*
-    	 * convert hex string to decimal string
+    	 * convert hex string to decimal string preceded by plus or minus sign    // #509
     	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
-		seta_value = Integer.valueOf(setc_value1,16);
-		if (seta_value < 0){
-			seta_value = - seta_value;
-		}
-		setc_value = Integer.toString(seta_value);
+		if (setc_value1.length() == 0) setc_value1 = "0";                // #509
+		if (isHexInt(setc_value1)) {                                     // #509
+			seta_value = Integer.parseUnsignedInt(setc_value1,16);       // #509
+			setc_value = Integer.toString(seta_value);                   // #509
+			if (seta_value >= 0) setc_value = "+"+setc_value;            // #509
+		} else {                                                         // #509
+			create_mnote(8,"X2D invalid operand value - "+setc_value1);  // #509
+			setc_value="";                                               // #509
+			seta_value=0;                                                // #509
+		}                                                                // #509
 		put_setc_stack_var();
     }
     private void get_pc_created_var(int offset){

@@ -1,0 +1,1779 @@
+***********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License 
+* along with this program; if not, see https://www.gnu.org/licenses.
+***********************************************************************
+* 2024-07-25 #509 New program
+***********************************************************************
+*
+*
+***********************************************************************
+* Both rt/mlc/TOPR2.MLC and rt/test/TESTOPR2.MLC test the HLASM
+* built-in functions.
+*
+* TOPR2 uses code to test HLASM built-in functions.
+* TESTOPR2, modelled on original rt/test/TESTOPR1.MLC, uses MNOTE,AIF.
+***********************************************************************
+*
+***********************************************************************
+* TESTOPR2 is modeled on the previous TESTOPR1 test program to test
+* the HLASM built-in functions. TESTOPR1 tests a built-in function
+* as follows:
+*     1. Invoke the built-in function
+*     2. Use MNOTE to display the result
+*     3. Check the result using AIF, branching to an error MNOTE
+*        if the generated value is not the expected value.
+* For example, the TESTOPR1 test for the X2C built-in function is
+*
+*     &X2C     SETC  (X2C('F1'))
+*              MNOTE 'X2C(''F1'')=&X2C'
+*              AIF   ('&X2C'(4,1) NE '1').X2ERR
+*              ...
+*     .X2ERR   MNOTE 12,'X2 OPERATOR ERROR'
+*              AGO   .EXIT
+*              ...
+*
+* Note that if a test fails, all remaining tests are skipped.
+*
+*----------------------------------------------------------------------
+*
+* TOPR2 performs tests using assembler code and DC statements to
+* invoke and verify results. In addition, the HLASM Language
+* Reference examples for each built-in function are added as
+* tests (there are a few exceptions). Where a code test
+* completely replaces the corresponding MNOTE.AIF test(s) done
+* in TESTOPR2, the original test(s) are left in place but
+* branched around via AGO.
+*
+* The first version of TOPR2 replaces the tests for the 
+* DCVAL and DEQUOTE built-in functions and adds tests for the
+* DOUBLE built-in function. The tests for each is done in a
+* separate subroutine. The tests write output to a file,
+* TOPR2.TXT, that produces output similar to the TESTOPR2
+* MNOTE,AIF output.
+*
+* If a test case fails, error messages are written and testing
+* continues.
+*
+* Sample output for the DCVAL test and a simulated error.
+*
+*   DCVAL    tests: Begin
+*                DCVAL('') = ""
+*                DCVAL('''') = "'"
+*   *** Fail *** DCVAL('&&') = "&"
+*                Error for test group DCVAL    test number   3
+*                Generated 016E504C
+*                Expected  026E504C00
+*                DCVAL('a''''b') = "a'b"
+*                DCVAL('a''''b&&c') = "a'b&c"
+*                DCVAL('&&&&''''') = "&&''"
+*                DCVAL('''&&1''') = "'&&1'"
+*   DCVAL    tests: num pass     6 num fail     1
+*
+* Tests 1-2 and 4-7 succeed. Test 3 fails.
+*
+* The error shown is artificial. It was forced by changing the
+* expected length, 1, to 2.
+* Note that three error messages follow the "*** Fail ***" line:
+*   1, A message showing the test group and the test number
+*      within the test group.
+*   2. The generated value (the result of the DCVAL invocation) is
+*      shown in printable hexadecimal, as is the expected value.
+*      See the comments for the DCVAL test subroutine, TDCVAL, for
+*      for a description of the displayed values. Briefly, each
+*      is of the form
+*          FL1'length-of-value',C'>value<'
+*      The ">" and "<" delimit the value; they are present in case
+*      the value is null, which avoids an assembly error for C''.
+*   3. The third test is converting two ampersands to one ampersand.
+*      The generated length is 1 and the generated value is
+*      X'50', which is the EBCDIC value of ampersand. Changing the
+*      expected length back to 1 results in all tests succeeding.
+*
+*----------------------------------------------------------------------
+*
+* Registers on entry:
+*     R15  emtry point
+*     R14  return address
+*     R13  usable save area
+*
+* Registers on exit:
+*     R0 -- R14  as at entry
+*     R15  return code
+*            0  all code tests passed
+*            8  at least one code test failed
+* Files:
+*     Input:  none
+*
+*     Output: DDNAME = REPORT  file to contain code tests and results
+*
+***********************************************************************
+*
+TOPR2    CSECT
+         STM   14,12,12(13)        Save caller's registers
+         LR    12,15               R12 = base register
+         USING TOPR2,12            Establish addressability
+         L     11,=A(COMSTOR)      Common storage
+         USING COMSTOR,11          Overly common storage
+         LA    14,SAS              Current save area (1st in SA set)
+         ST    14,8(,13)           Chain
+         ST    13,4(,14)                 save areas
+         LR    13,14               Current save area
+*
+         OPEN  (REPORT,OUTPUT)     Open report file
+*
+         BAS   14,WrtBegCT         Write begin code tests header
+*
+*        Perform tests done with code
+*
+         SR    0,0                 Initialize totals
+         ST    0,Tot#P             Number of tests that pass
+         ST    0,Tot#F             Number of tests that fail
+*
+         LM    3,5,TesTsH          R3 --> first test header entry
+*                                  R4  =  length of entry
+*                                  R5 --> last test header entry
+TLp1     DS    0H
+         L     1,0(,3)             R1 --> parameter list for test group
+         BAS   14,WrtBegHd         Write begin test header
+         L     15,4(,3)            R15 --> A(test code)
+         L     15,0(,15)           R15 --> test code
+         BASR  14,15               Perform tests for test group
+         C     15,MaxRC            New maximum return code?
+         BNH   TLp1A               No
+         ST    15,MaxRC            Save new maximum return code
+TLp1A    DS    0H
+*
+*        Accumulate num pass, num fail totals and write subtotals
+*
+         L     2,4(,1)             R2 --> word = num tests that pass 
+         L     0,Tot#P             Add
+         A     0,0(,2)                 subtotal
+         ST    0,Tot#P                          to total
+*
+         L     2,8(,1)             R2 --> word = num tests that fail 
+         L     0,Tot#F             Add
+         A     0,0(,2)                 subtotal
+         ST    0,Tot#F                          to total
+*
+         BAS   14,WrtSTot          Write subtotals
+*
+         PUT   REPORT,Spaces       Blank line
+*
+         BXLE  3,4,TLp1            Process all test headers
+*
+         BAS   14,WrtGTot          Write grand totals
+*
+         BAS   14,WrtEndCT         Write end code tests trailer
+*
+         CLOSE (REPORT)            Close report file
+*
+         L     15,MaxRC            Set return code
+         L     13,4(,13)           Caller's save area
+         RETURN (14,12),RC=(15)    Restore R14, R0-R12; return
+*
+         LTORG
+*
+*        Pre-chained save area set
+*
+SAS      DS    0D                  Save area set for program
+         DC    F'0'
+         DC    A(0,*-8+72)
+         DC    15F'0'
+*
+         DC    F'0'
+         DC    A(*-4-72,*-8+72)
+         DC    15F'0'
+*
+         DC    F'0'
+         DC    A(*-4-72,*-8+72)
+         DC    15F'0'
+*
+         DC    F'0'
+         DC    A(*-4-72,*-8+72)
+         DC    15F'0'
+*
+         DC    F'0'
+         DC    A(*-4-72,*-8+72)
+         DC    15F'0'
+*
+         DC    F'0'
+         DC    A(*-4-72,0)
+         DC    15F'0'
+*
+***********************************************************************
+*        SYM equate used for SYSATTRA, SYSATTRP tests
+*
+*        RETURN macro in main code used in operator type O tests
+***********************************************************************
+*
+SYM      EQU   1,2,C'3',C'PGMA',gr32
+*
+*SYM EQU   val,len attr val, type attr val, pgm type val, asm type val
+*
+*
+***********************************************************************
+*        Begin internal subroutines for main code
+***********************************************************************
+*
+***********************************************************************
+* WrtBegCT  Write begin code tests header
+*
+* Registers at entry
+*        R11 common area
+*        R12 base register of caller
+*        R13 chained save area
+*        R14 return address
+*
+* Registers at exit
+*        R0-R15 same as at entry
+***********************************************************************
+*
+WrtBegCT DS    0H
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area
+*
+         MVC   RptLn,Spaces        Initialize report line
+         LA    2,L'RLBegCT-1       Length code of begin header line
+         LA    14,RptLn            Destination
+         LA    15,RLBegCT          Source
+         EX    2,CpyVal            Copy to report line
+*
+         PUT   REPORT,RptLn        Write begin header
+         PUT   REPORT,Spaces       Write blank line
+*
+         L     13,4(,13)           Caller's save area
+         LM    14,12,12(13)        Restore caller's registers
+         BR    14                  Return to caller
+*
+***********************************************************************
+* WrtEndCT  Write end code tests trailer
+*
+* Registers at entry
+*        R11 common area
+*        R12 base register of caller
+*        R13 chained save area
+*        R14 return address
+*
+* Registers at exit
+*        R0-R15 same as at entry
+***********************************************************************
+*
+WrtEndCT DS    0H
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area
+*
+         MVC   RptLn,Spaces        Initialize report line
+         PUT   REPORT,RptLn        Write blank line
+*
+         LA    2,L'RLEndCT-1       Length code of end header line
+         LA    14,RptLn            Destination
+         LA    15,RLEndCT          Source
+         EX    2,CpyVal            Copy to report line
+*
+         PUT   REPORT,RptLn        Write end trailer
+*
+         L     13,4(,13)           Caller's save area
+         LM    14,12,12(13)        Restore caller's registers
+         BR    14                  Return to caller
+*
+***********************************************************************
+* WrtBegHd  Write test group begin header
+*
+* Registers at entry
+*        R1  --> test parameter list
+*                +0 --> test group literal; FL1'len-lit',C'literal'
+*                remainder not referenced
+*        R11 common area
+*        R12 base register of caller
+*        R13 chained save area
+*        R14 return address
+*
+* Registers at exit
+*        R0-R15 same as at entry
+***********************************************************************
+*
+WrtBegHd DS    0H
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area
+*
+         L     2,0(,1)             Address of test literal
+         SR    3,3                 Prepare to get length
+         IC    3,0(,2)             Length of literal
+         MVC   RLBegLit,Spaces     Initialize area for literal
+         LA    14,RLBegLit         Destination
+         LA    15,1(,2)            Source
+         BCTR  3,0                 Length code
+         EX    3,CpyVal            Copy literal to buffer
+*
+         MVC   RptLn,Spaces        Initialize report line
+         LA    2,L'RLBeg-1         Length code of begin header line
+         LA    14,RptLn            Destination
+         LA    15,RLBeg            Source
+         EX    2,CpyVal            Copy to report line
+*
+         PUT   REPORT,RptLn        Write begin header
+*
+         L     13,4(,13)           Caller's save area
+         LM    14,12,12(13)        Restore caller's registers
+         BR    14                  Return to caller
+*
+***********************************************************************
+* WrtSTot  Write number pass, number fail subtotals
+*
+* Registers at entry
+*        R1  --> test parameter list
+*                +0 --> test group literal; FL1'len-lit',C'literal'
+*                +4 --> word = number of tests that passed
+*                +8 --> word = number of tests that failed
+*        R11 common area
+*        R12 base register of main code
+*        R13 chained save area
+*        R14 return address
+*
+* Registers at exit
+*        R0-R15 same as at entry
+***********************************************************************
+*
+WrtSTot  DS    0H
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area
+*
+         L     2,0(,1)             Address of test literal
+         SR    3,3                 Prepare to get length
+         IC    3,0(,2)             Length of literal
+         MVC   RLTotLit,Spaces     Initialize area for literal
+         LA    14,RLTotLit         Destination
+         LA    15,1(,2)            Source
+         BCTR  3,0                 Length code
+         EX    3,CpyVal            Copy literal to work area
+*
+         LM    8,9,4(1)            R8 --> number pass subtotal
+*                                  R9 --> number fail subtotal
+         L     0,0(,8)             Number of passed tests
+         CVD   0,DW                Convert to decimal
+         MVC   EDWK1,Pat1          Copy edit pattern
+         ED    EDWK1,DW+5          Convert to printable
+         MVC   RLTot#P,EDWK1+1     Copy to work area
+         L     0,0(,9)             Number of failed tests
+         CVD   0,DW                Convert to decimal
+         MVC   EDWK1,Pat1          Copy edit pattern
+         ED    EDWK1,DW+5          Convert to printable
+         MVC   RLTot#F,EDWK1+1     Copy to work area
+*
+         MVC   RptLn,Spaces        Initialize report line
+         LA    2,L'RLTot-1         Length code of subtotals line
+         LA    14,RptLn            Destination
+         LA    15,RLTot            Source
+         EX    2,CpyVal            Copy to report line
+*
+         PUT   REPORT,RptLn        Write subtotals
+*
+         L     13,4(,13)           Caller's save area
+         LM    14,12,12(13)        Restore caller's registers
+         BR    14                  Return to caller
+*
+***********************************************************************
+* WrtGTot  Write number pass, number fail grand totals
+*
+* Registers at entry
+*        R11 common area
+*        R12 base register of caller
+*        R13 chained save area
+*        R14 return address
+*
+* Registers at exit
+*        R0-R15 same as at entry
+***********************************************************************
+*
+WrtGTot  DS    0H
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area
+*
+         MVC   RLTotLit,Spaces     Initialize area for literal
+         MVC   RLTotLit(L'TotLit),TotLit   Copy literal
+*
+         L     0,Tot#P             Number of passed tests
+         CVD   0,DW                Convert to decimal
+         MVC   EDWK1,Pat1          Copy edit pattern
+         ED    EDWK1,DW+5          Convert to printable
+         MVC   RLTot#P,EDWK1+1     Copy to work area
+         L     0,Tot#F             Number of failed tests
+         CVD   0,DW                Convert to decimal
+         MVC   EDWK1,Pat1          Copy edit pattern
+         ED    EDWK1,DW+5          Convert to printable
+         MVC   RLTot#F,EDWK1+1     Copy to work area
+*
+         MVC   RptLn,Spaces        Initialize report line
+         LA    2,L'RLTot-1         Length code of totals line
+         LA    14,RptLn            Destination
+         LA    15,RLTot            Source
+         EX    2,CpyVal            Copy to report line
+*
+         PUT   REPORT,RptLn        Write grand totals
+*
+         L     13,4(,13)           Caller's save area
+         LM    14,12,12(13)        Restore caller's registers
+         BR    14                  Return to caller
+*
+***********************************************************************
+*        End internal subroutines for main code
+***********************************************************************
+*
+         LTORG ,
+*
+         DROP  12                  End main code 
+*
+***********************************************************************
+*        Begin internal subroutines for tests done with code
+***********************************************************************
+*
+*
+***********************************************************************
+* Chk1CV: Do one check for character valued built-in function
+*
+* Registers at entry
+*        R15  =  entry point
+*        R14  =  return address
+*        R13 --> chained save area
+*        R1  --> parameter block; DSECT CCVPB
+*
+* Registers at exit
+*        R0-R15 same as at entry
+***********************************************************************
+*
+Chk1CV   DS    0H
+         PUSH  USING
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area
+         LR    12,15               R12 = base register
+         USING Chk1CV,12           Establish addressability
+         L     11,=A(COMSTOR)      Common storage
+         USING COMSTOR,11          Overlay common storage
+*
+         LR    10,1                R10 --> parameter block
+         USING CCVPB,10            Overlay parameter block        
+*
+         LM    8,9,CCV#PF@         R8 --> word = number passed tests
+*                                  R9 --? word = number failed tests
+*
+         L     14,CCVT#@           S(word = last test number)
+         L     15,0(,14)           Increment
+         AHI   15,1                          test
+         ST    15,0(,14)                          count
+         LR    1,10                R1 --> parameter block
+         L     15,=A(ChkChVal)     Check one pair
+         BASR  14,15
+         LTR   5,15                Values equal? (save rc)
+         BZ    Chk1CV10            Yes; test passed
+         ST    15,CCVRC            No; save return code
+         L     14,0(,9)            Increment 
+         AHI   14,1                          number
+         ST    14,0(,9)                             failed
+         B     Chk1CV20            Show status
+Chk1CV10 DS    0H
+         L     14,0(,8)            Increment 
+         AHI   14,1                          number
+         ST    14,0(,8)                             passed
+Chk1CV20 DS    0H
+         LR    1,10                    A(parameter block)
+         L     15,=A(BldCVF)           Build "f('arg') = 'gval'"
+         BASR  14,15
+         MVC   RptLn,Spaces            Initialize report line
+         L     2,CCVBLOA@              A(Length of built output)
+         L     2,0(,2)                 Length of built output
+         BCTR  2,0                     Length code
+         LA    14,RptLn+L'ErrMsg1+1    Destination
+         L     15,CCVOA                Source
+         EX    2,CpyVal                Copy built output to report line
+         LTR   5,5                     Did check fail?
+         BZ    Chk1CV30                No; skip error message
+         MVC   RptLn(L'ErrMsg1),ErrMsg1    Copy error message
+Chk1CV30 DS    0H
+         PUT   REPORT,RptLn            Write the built data
+         LTR   5,5                     Error occurred?
+         BZ    Chk1CV40                No
+         LR    1,10                    Parameter block
+         L     15,=A(WrtChVal)         Write values with error message
+         BASR  14,15
+Chk1CV40 DS    0H
+         L     13,4(,13)           Caller's save area
+         LM    14,12,12(13)        Restore all registers
+         BR    14                  Return to caller
+*
+         LTORG  ,
+*
+         POP   USING
+*
+***********************************************************************
+* ChkChVal  Check charVal generated result versus actual result
+*
+* Results of the form
+*     FL1'len-value',C'>value<'
+* Value is delimited by ">" and "<"; value may be null
+*
+* Examples: FL1'1',C'>''<'    value is single apostrophe
+*           FL1'0',C'><'      value is null (empty string)
+*
+* Registers on entry
+*     R15  entry point
+*     R14  return address
+*     R13  usable save area on chain
+*     R1   parameter block; DSECT CCVPB
+*
+* Registers at exit
+*     R0-R14  as at entry
+*     R15     return code
+*             0  generated value same as actual value
+*             8  generated value differs from actual value
+***********************************************************************
+*
+ChkChVal DS    0H
+         PUSH  USING
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area
+         LR    12,15               R12 = base register
+         USING ChkChVal,12         Establish addressability
+*
+         SR    10,10               Initialize return code
+*
+         USING CCVPB,1             Overlay parameter block
+         L     2,CCVLIT@           R2 --> address of test literal
+         L     3,CCVT#@            R3 --> word = test number
+         LM    4,5,CCVGE@          R4 --> generated value
+*                                  R5 --> expected value
+*
+         CLC   0(1,4),0(5)         Lengths the same?
+         BNE   CCVRC8              No; then values are different
+         CLI   0(4),0              Lengths are zero?
+         BE    CCVExit             Yes; then values are equal
+         SR    6,6                 Prepare to get length
+         IC    6,0(,4)             Length of both values
+         BCTR  6,0                 Length code
+         EX    6,CCVComp           Compare values
+         BZ    CCVExit             Equal; done
+*NSI     B     CCVRC8              Not equal
+CCVRC8   DS    0H
+         LA    10,8                Values not equal
+*NSI     B     CCVExit             All done
+CCVExit  DS    0H
+         LR    15,10               Get return code
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except R15
+         BR    14                  Return to caller
+*
+CCVComp  CLC   2(*-*,4),2(5)       Compare the values
+*
+         LTORG ,
+*
+         POP   USING
+*
+***********************************************************************
+* WrtChVal  Write printable hexadecimal values for charVal
+*           generated result and expected result
+*
+* Results of the form
+*     FL1'len-value',C'>value<'
+* Character value is delimited by ">" and "<"; value may be null
+*
+* Examples: FL1'1',C'>''<'    value is single apostrophe
+*           FL1'0',C'><'      value is null (empty string)
+*
+* The printable hexadecimal for the first example above is
+*           016E7D4C
+*              > ' < 
+*
+* Registers on entry
+*     R15  entry point
+*     R14  return address
+*     R13  usable save area on chain
+*     R1   parameter block; DSECT CCVPB
+*
+* Registers at exit
+*     R0-R15  as at entry
+***********************************************************************
+*
+WrtChVal DS    0H
+         PUSH  USING
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area
+         LR    12,15               R12 = base register
+         USING WrtChVal,12         Establish addressability
+         L     11,=A(COMSTOR)      Common storage
+         USING COMSTOR,11          Overlay storage         
+*
+         USING CCVPB,1             Overlay parameter block
+         L     3,CCVLIT@           R3 --> address of test literal
+         L     6,CCVT#@            R6 --> word = test number
+         LM    4,5,CCVGE@          R4 --> generated value
+*                                  R5 --> expected value
+         DROP  1                   End parameter block overlay
+*
+         L     6,0(,6)             Test number
+*
+         SR    1,1                 Prepare to get length
+         IC    1,0(,3)             Length of test group literal
+         CHI   1,L'WCV1TG          Too big?
+         BNH   WCV100              No; use value
+         LA    1,L'WCV1TG          Yes; set to max value
+WCV100   DS    0H
+*
+*        Write test group and test number
+*
+         BCTR  1,0                 Convert to length code
+         MVC   WCV1TG,Spaces       Initialize output area
+         
+         LA    14,WCV1TG           Destination
+         LA    15,1(,3)            Source
+         EX    1,CpyVal            Copy literal to buffer
+*
+         CVD   6,DW                Convert test number to packed dec
+         MVC   WCVEDWk,WCVPAT1     Copy edit pattern
+         ED    WCVEDWk,DW+6        Convert to printable
+         MVC   WCV1T#,WCVEDWk+1    Copy to buffer
+         MVC   RptLn,Spaces        Initialize report line
+         MVC   RptLn+L'ErrMsg1+1(L'WCVRL1),WCVRL1 Copy to report line
+         PUT   REPORT,RptLn        Write error message 1
+*
+*        Write generated value in printable hex
+*
+         MVC   WCV2L,WCV2LG        Copy literal to buffer
+         MVC   WCV2V,Spaces        Initialize output area
+*        
+         MVC   WCVX2PWK,Spaces     Initialize work area
+         SR    1,1                 Prepare to get length
+         IC    1,0(4)              Length of generated value
+         AHI   1,1+2               Account for FL1, >, <
+         BCTR  1,0                 Length code
+         LA    14,WCVX2PWK         Destination
+         LR    15,4                Source
+         EX    1,CpyVal            Copy to work
+         AHI   1,1                 Back to length
+         LA    15,WCVX2PWK         Source
+         LA    14,WCV2V            Destination
+WCVGLp   DS    0H
+         CHI   1,4                 At least 4 bytes?
+         BL    WCVGELp             No; done
+         UNPK  DW(9),0(5,15)       Convert 4 bytes
+         TR    DW,H2P              ... to printable hex
+         MVC   0(8,14),DW          Copy to buffer
+         AHI   1,-4                Decrement length
+         AHI   15,4                Next 4 source bytes
+         AHI   14,8                Next destination area
+         B     WCVGLp              Do all bytes
+WCVGELp  DS    0H
+         LTR   1,1                 1-3 bytes left?
+         BNP   WCVGPRT             No; write message
+         UNPK  DW(9),0(5,15)       Convert 4 bytes
+         TR    DW,H2P              ... to printable hex
+         AR    1,1                 Double number of bytes
+         BCTR  1,0                 Length code
+         LA    15,DW               Final source
+         EX    1,CpyVal            Copy to buffer
+         LA    14,1(1,14)          Past end
+WCVGPRT  DS    0H
+         LR    2,14                Past end of data
+         LA    15,WCVRL2           Begin of buffer
+         SR    2,15                Length of buffer used
+         BCTR  2,0                 Length code
+         MVC   RptLn,Spaces        Initialize report line
+         LA    14,RptLn+L'ErrMsg1+1    Destination
+         EX    2,CpyVal                Copy data to report line
+         PUT   REPORT,RptLn            Show hex generated value
+*
+*        Display expected value in printable hex
+*
+         MVC   WCV2L,WCV2LE        Copy literal to buffer
+         MVC   WCV2V,Spaces        Initialize output area
+*
+         MVC   WCVX2PWK,Spaces     Initialize work area
+         SR    1,1                 Prepare to get length
+         IC    1,0(5)              Length of expected value
+         AHI   1,1+2               Account for FL1, >, <
+         BCTR  1,0                 Length code
+         LA    14,WCVX2PWK         Destination
+         LR    15,5                Source
+         EX    1,CpyVal            Copy to work
+         AHI   1,1                 Back to length
+         LA    15,WCVX2PWK         Source
+         LA    14,WCV2V            Destination
+WCVELp   DS    0H
+         CHI   1,4                 At least 4 bytes?
+         BL    WCVEELp             No; done
+         UNPK  DW(9),0(5,15)       Convert 4 bytes
+         TR    DW,H2P              ... to printable hex
+         MVC   0(8,14),DW          Copy to buffer
+         AHI   1,-4                Decrement length
+         AHI   15,4                Next 4 source bytes
+         AHI   14,8                Next destination area
+         B     WCVELp              Do all bytes
+WCVEELp  DS    0H
+         LTR   1,1                 1-3 bytes left?
+         BNP   WCVEWRT             No; write the report line
+         UNPK  DW(9),0(5,15)       Convert 4 bytes
+         TR    DW,H2P              ... to printable hex
+         AR    1,1                 Double number of bytes
+         BCTR  1,0                 Length code
+         LA    15,DW               Final source
+         EX    1,CpyVal            Copy to buffer
+         LA    14,1(1,14)          Past end
+WCVEWRT  DS    0H
+         LR    2,14                Past end of data
+         LA    15,WCVRL2           Begin of buffer
+         SR    2,15                Length of buffer used
+         BCTR  2,0                 Length code
+         MVC   RptLn,Spaces        Initialize report line
+         LA    14,RptLn+L'ErrMsg1+1    Destination
+         EX    2,CpyVal                Copy data to report line
+         PUT   REPORT,RptLn            Show hex expected value
+*
+*        Exit
+*
+         L     13,4(,13)           Caller's save area
+         LM    14,12,12(13)        Restore caller's registers
+         BR    14                  Return to caller
+*
+WCVDW    DS    D,XL1               Doubleword work and pad
+WCVFW    DS    F,XL1               Fullword work and pad
+WCVPat1  DC    X'40202120'         Edit pattern 3 digits
+WCVEDWk  DS    CL4                 Edit work area
+*
+WCVRL1A  DS    0C
+         DC    C'Error for test group'
+         DC    C' '
+WCV1TG   DS    CL8
+         DC    C' '
+         DC    C'test number'
+         DC    C' '
+WCV1T#   DS    CL3
+WCVRL1B  DS    0C
+WCVRL1   EQU   WCVRL1A,WCVRL1B-WCVRL1A,C'C'
+*
+WCVRL2A  DS    0C
+WCV2L    DS    CL9
+         DC    C' '
+WCV2V    DS    CL80
+WCVRL2B  DS    0C
+WCVRL2   EQU   WCVRL2A,WCVRL2B-WCVRL2A,C'C'
+*
+WCV2LG   DC    CL(L'WCV2L)'Generated'
+WCV2LE   DC    CL(L'WCV2L)'Expected'
+*
+WCVX2PWK DS    CL40
+*
+         LTORG ,
+*
+         POP   USING
+*
+***********************************************************************
+* BldCVF  Build charVal function invocation string
+*
+* Results of the form
+*     FL1'len-value',C'>value<'
+* Value is delimited by ">" and "<"; value may be null
+*
+* Examples: FL1'1',C'>''<'    value is single apostrophe
+*           FL1'0',C'><'      value is null (empty string)
+*
+* Registers on entry
+*     R15  entry point
+*     R14  return address
+*     R13  usable save area on chain
+*     R11  address of common storage
+*     R1   parameter list
+*            +0 --> address of test group litersl
+*            +4 --> word = test number
+*            +8 --> generated value
+*           +12 --> expected value
+*           +16 --> argument value
+*           +20 --> word = length of output area; max = 256
+*           +24 --> output area for printable function and value
+*           +28 --> word to contain length of built output
+*
+* Registers at exit
+*     R0-R15  as at entry
+***********************************************************************
+*
+BldCVF   DS    0H
+         PUSH  USING
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area
+         LR    12,15               R12 = base register
+         USING BldCVF,12           Establish addressability
+         L     11,=a(COMSTOR)      Common storage
+         USING COMSTOR,11          Overlay Common storage         
+*
+         USING CCVPB,1             Overlay parameter block
+*
+         LM    6,10,0(1)           R6  =  address of test group literal
+*                                  R7  --> word = test number
+*                                  R8  --> generated value
+*                                  R9  --> actual value
+*                                  R10 --> function argument value
+         LR    3,6                 Test group literal
+         LR    4,8                 Generated value
+         LR    5,9                 Expected value
+         L     6,0(,7)             Test number
+*
+*        Initialize output area
+*
+         L     2,CCVLOA@           R2 --> word = length of output area
+         L     2,0(,2)             R2 = length of output area
+         CHI   2,L'Spaces          More than max length?
+         BNH   BCVF100             No; length okay
+         LHI   2,L'Spaces          Yes; set maximum length
+BCVF100  DS    0H
+         L     7,CCVOA             R7 --> output area
+         BCTR  2,0                 Length code
+         LR    14,7                Destination
+         LA    15,Spaces           Source
+         EX    2,CpyVal            Initialize output area to spaces
+*
+*        Build report line
+*          1. Function name
+*          2. "('"
+*          3. argument value
+*          4. "')"
+*          5. " = ""
+*          6  generated value
+*          7. """
+*
+*        1. Function name
+*
+         SR    2,2                 Prepare to get length
+         IC    2,0(,3)             Len test grp lit (function name)
+         BCTR  2,0                 Convert to length code
+         LR    14,7                Destination
+         LA    15,1(,3)            Source
+         EX    2,CpyVal            Copy function name to output area
+         LA    7,1(2,7)            Next position
+*
+*        2. "('"
+*
+         MVC   0(L'BCVFOP,7),BCVFOP    Copy open paren and single quote
+         LA    7,L'BCVFOP(,7)          Next position
+*
+*        3. Function argument
+*
+         SR    2,2                 Prepare to get length
+         IC    2,0(,10)            Len function argument value
+         LTR   2,2                 Len might be zero
+         BZ    BCVF200             Skip copy if null argument value
+         BCTR  2,0                 Convert to length code
+         LR    14,7                Destination
+         LA    15,2(,10)           Source (skip over len, '>'
+         EX    2,CpyVal            Copy function name to report line
+         LA    7,1(2,7)            Next position
+BCVF200  DS    0H
+*
+*        4. "')"
+*
+         MVC   0(L'BCVFCP,7),BCVFCP    Copy single quote & close paren
+         LA    7,L'BCVFCP(,7)          Next position
+*
+*        5. " = ""
+*
+         MVC   0(L'BCVFEQ,7),BCVFEQ    Copy equal sign and double quote
+         LA    7,L'BCVFEQ(,7)          Next position
+*
+*        6. Generated function value
+*
+         SR    2,2                 Prepare to get length
+         IC    2,0(,8)             Len generated value
+         LTR   2,2                 Len might be zero
+         BZ    BCVF300             Skip copy if null argument value
+         BCTR  2,0                 Convert to length code
+         LR    14,7                Destination
+         LA    15,2(,4)            Source
+         EX    2,CpyVal            Copy function name to output area
+         LA    7,1(2,7)            Next position
+BCVF300  DS    0H
+*
+*        7. """
+*
+         MVI   0(7),C'"'           Closing double quote
+         LA    7,1(,7)             Next position
+*
+         L     15,CCVBLOA@         A(word for built length)
+         S     7,CCVOA             Built length
+         ST    7,0(,15)            Return built length
+*
+         DROP  1                   Done with parameter list
+*
+*        Exit
+*
+         L     13,4(,13)           Caller's save area
+         LM    14,12,12(13)        Restore caller's registers
+         BR    14                  Return to caller
+*
+BCVFOP   DC    C'('''              Open paren and single quote
+BCVFCP   DC    C''')'              Single quote and close paren
+BCVFEQ   DC    C' = "'             Equal sign, double quote
+*
+         LTORG ,
+*
+         POP   USING
+*
+*
+***********************************************************************
+*        End   internal subroutines for tests done with code
+***********************************************************************
+*
+*
+***********************************************************************
+*        Common storage
+***********************************************************************
+*
+COMSTOR  DS    0D
+         DC    CL8'COMSTOR'        Eyecatcher
+*
+*        Tables for tests that are done using code
+*
+         DS    0D
+*
+*        Header for test headers
+*
+TestsH   DC    A(T01H,8,TNH,0)     1st, len 1, last, unused
+*
+T01H     DS    0D
+         DC    A(T01P,T01@)        Parm list, address of test code
+         DC    A(T02P,T02@)
+         DC    A(T03P,T03@)
+***********************************************************************
+*        Put new entries above this line
+***********************************************************************
+TNH      EQU   *-8
+*
+*        DCVAL tests
+*
+T01P     DS    0D                  Parameter list for test
+         DC    A(T01L)             Test Literal
+         DC    A(T01#P)            Number of tests that pass
+         DC    A(T01#F)            Number of tests that fail
+*
+T01L     DC    AL1(L'T01LV)        Test literal
+T01LV    DC    C'DCVAL'
+T01#P    DC    F'0'                Number of tests that pass
+T01#F    DC    F'0'                Number of tests that fail
+*
+T01@     DC    A(TDCVAL)           Address of test code
+*
+*        DEQUOTE tests
+*
+T02P     DS    0D                  Parameter list for test
+         DC    A(T02L)             Test Literal
+         DC    A(T02#P)            Number of tests that pass
+         DC    A(T02#F)            Number of tests that fail
+*
+T02L     DC    AL1(L'T02LV)
+T02LV    DC    C'DEQUOTE'
+T02#P    DC    F'0'                Number of tests that pass
+T02#F    DC    F'0'                Number of tests that fail
+*
+T02@     DC    A(TDEQUOTE)
+*
+*        DOUBLE tests
+*
+T03P     DS    0D                  Parameter list for test
+         DC    A(T03L)             Test Literal
+         DC    A(T03#P)            Number of tests that pass
+         DC    A(T03#F)            Number of tests that fail
+*
+T03L     DC    AL1(L'T03LV)
+T03LV    DC    C'DOUBLE'
+T03#P    DC    F'0'                Number of tests that pass
+T03#F    DC    F'0'                Number of tests that fail
+*
+T03@     DC    A(TDOUBLE)  
+*
+***********************************************************************
+*        End test data
+***********************************************************************
+*
+Tot#P    DC    F'0'                Total number of tests that pass
+Tot#F    DC    F'0'                Total number of tests that fail
+*
+MaxRC    DC    F'0'                Maximum return code
+*
+Spaces   DC    CL(RptLnLen)' '     Line of spaces
+*
+DW       DS    D,XL1               Doubleword work and pad
+Pat1     DC    X'402020202120'     Edit pattern
+EDWK1    DS    CL(L'Pat1)          Edit work area
+*
+*        Error messages
+*
+ErrMsg1  DC    C'*** Fail ***'     Error message; test failed
+*
+*        Report DCB and records
+*
+RptLnLen EQU   120                 Length of report line
+*
+REPORT   DCB   DDNAME=REPORT,DSORG=PS,RECFM=FT,LRECL=120,MACRF=PM
+*
+RptLn    DS    CL(RptLnLen)        Report line
+*
+TotLit   DC    C'Totals'           Literal for totals
+*
+RLBegCTA DS    0C
+         DC    C'*************** '
+         DC    C'Begin TOPR2 code tests '
+         DC    C'***************'
+RLBegCTB DS    0C
+RLBegCT  EQU   RLBegCTA,RLBegCTB-RLBegCTA,C'C'
+*
+RLEndCTA DS    0C
+         DC    C'*************** '
+         DC    C'End   TOPR2 code tests '
+         DC    C'***************'
+RLEndCTB DS    0C
+RLEndCT  EQU   RLEndCTA,RLEndCTB-RLEndCTA,C'C'
+*
+RLBegA   DS    0C
+RLBegLit DS    CL8
+         DC    CL1' '
+         DC    C'tests: '
+         DC    C'Begin'
+RLBegB   DS    0C
+RLBeg    EQU   RLBegA,RLBegB-RLBegA,C'C'
+*
+RLTotA   DS    0C
+RLTotLit DS    CL8
+         DC    CL1' '
+         DC    C'tests: '
+         DC    C'number pass '
+
+RLTot#P  DS    CL5
+         DC    CL2' '
+         DC    C'number fail '
+RLTot#F  DS    CL5
+RLTotB   DS    0C
+RLTot    EQU   RLTotA,RLTotB-RLTotA,C'C'
+*
+*        Executed instructions
+*
+CpyVal   MVC   0(*-*,14),0(15)     Copy value
+*
+***********************************************************************
+*        HLASM LR uses bold n to represent X'00', bold f for X'FF'
+***********************************************************************
+*
+T00FF2nf DC    256AL1(*-T00FF2nf)  Translate X'00' to n, X'FF' to f
+         ORG   T00FF2nf+0
+         DC    C'n'
+         ORG   T00FF2nf+X'FF'
+         DC    C'f'
+         ORG   ,
+*
+H2P      EQU   *-240               Hex to printable hex
+         DC    C'0123456789ABCDEF'
+         DS    0D                  End on doubleword
+COMSTORL EQU   *-COMSTOR           Length of common storage area
+*
+*
+***********************************************************************
+*        End of main code and storage.
+***********************************************************************
+*
+*
+***********************************************************************
+***********************************************************************
+*        Begin code tests
+***********************************************************************
+***********************************************************************
+*
+*
+***********************************************************************
+*        Begin DCVAL tests
+***********************************************************************
+*
+*
+***********************************************************************
+*        The DCVAL tests use ampersands and apostrophes. The original
+*        z390 test source rt/test/TESTOPR1.MLC uses MNOTE and AIF
+*        to show and verify DCVAL results. The test
+*            &DCVSTR  SETC  '''''&&&&1'''''
+*            &DCVAL   SETC  (DCVAL('&DCVSTR'))
+*                     MNOTE 'DCVAL(&DCVSTR)=&DCVAL'
+*                     AIF   ('&DCVAL' NE '''&&1''').DCVERR  RPI 1080
+*        when run using HLASM generates
+*            ** ASMA163W Operand not properly enclosed in quotes
+*        when processing the MNOTE while z390 does not generate
+*        an error.
+*
+*        The new tests use DC statements of the form
+*              &C       SETC  DCVAL('testString')
+*              &DC      SETC  DOUBLE('&C')
+*              &K       SETA  K'&C
+*                       DC    FL1'&K',C'>&DC<'
+*        The &K value is the actual length of the DCVAL result.
+*        The &DC value is the DCVAL result with doubled
+*        ampersands and apostrophes, making the value
+*        suitable for using in the generated DC statement
+*        shown above. (The enclosing ">", "<" avoid an assembly
+*        error when  &C is the null (empty) string.)
+*
+*        Code validates that the generated value is the expected
+*        value, which appears in a separate similar DC statement.
+*        For example,
+*            &NDX     SETA  &NDX+1           current test
+*                     B     DCVX&NDX         branch to code
+*            &C       SETC  DCVAL('''')      should be one apostrophe
+*            &DC      SETC  DOUBLE('&C')     double the value
+*            &K       SETA  K'&C             should be 1
+*            DCVA&NDX DC    FL1'2',C'>''''<' function argument value
+*            DCVG&NDX DC    FL1'&K',C'>&DC<' generated value
+*            DCVE&NDX DC    FL'1',C'>''<'    expected value
+*            *                               X'016E7D4C'
+*            *                                   --==--
+*            *                                    > ' <
+*            DCVX&NDX DS    0H
+*                     LA    1,DCVG&NDX       generated value 
+*                     LA    2,DCVE&NDX       expected value
+*                     LA    3,DCVA&NDX       function argument value
+*                     STM   1,3,CCVGEF@      put in parameter block
+*                     LR    1,10             parameter block
+*                     L     15,=A(Chk1CV)    generated : actual
+*                     BASR  14,15            perform test
+*
+*        The original DCVAL tests that use the MNOTE and AIF
+*        tests are left in TESTOPR2 but branched around via AGO.
+**********************************************************************
+*
+*
+***********************************************************************
+* TDCVAL  Test DCVAL
+*
+* Registers at entry:
+*        R15     entry point
+*        R14     return address
+*        R13     current chained save area
+*        R1  --> literal for test group; FL1'len-lit',C'lit'
+*        R1  --> parameter list
+*                +0 --> literal for test group; FL1'len-lit',C'lit'
+*                +4 --> word for number of tests that pass
+*                +8 --> word for number of tests that fail
+*        R11 --> common storage
+*
+* Registers at exit:
+*        R0--R14  as at entry
+*        R15      return code
+*                 0  all tests passed
+*                 8  at least one test failed
+***********************************************************************
+TDCVAL   DS    0H
+         PUSH  USING
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area on chain
+         LR    12,15               R12 = base register
+         USING TDCVAL,12           Establish addressability         
+         L     11,=A(COMSTOR)      Common storage area
+         USING COMSTOR,11          Overlay common storage
+*
+         XC    DCVPB,DCVPB         Initialize parameter block storage
+         LA    10,DCVPB            R10 --> parameter block
+         USING CCVPB,10            Overlay parameter block
+*
+         L     0,0(,1)             A(literal for test)
+*
+         ST    0,CCVLIT@           Put in parameter block
+         LA    2,DCVT#             Word = test number
+         ST    2,CCVT#@            Put in parameter block
+         LA    2,DCVLOA            Word = length of output area
+         ST    2,CCVLOA@           Put in parameter block
+         LA    2,DCVOA             Output area
+         ST    2,CCVOA             Put in parameter block
+         LA    2,DCVBLOA           Word to contain built output length
+         ST    2,CCVBLOA@          Put in parameter block
+*
+         LM    8,9,4(1)            R8 --> word = subtotal num pass
+*                                  R9 --> word = subtotal num fail
+         STM   8,9,CCV#PF@         Put in parameter block
+*
+         SR    15,15               Initialize values to zero
+         ST    15,0(,8)            Number tests passed
+         ST    15,0(,9)            Number tests failed
+         ST    15,DCVT#            Current test number
+*
+&NDX     SETA  0                   Test case
+*
+&AMP     SETC  '&&'(1,1)           LR p341; one ampersand
+*
+*----------------------------------------------------------------------
+*        HLASM LR examples
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DCVX&NDX            Branch around test
+*
+*        SETC  DCVAL('')           value is "" (null string)
+&C       SETC  DCVAL('')
+&DC      SETC  DOUBLE('&C')
+&K       SETA  K'&C
+DCVA&NDX DC    FL1'0',C'><'        Function argument value
+DCVG&NDX DC    FL1'&K',C'>&DC<'    Generated value
+DCVE&NDX DC    FL1'0',C'><'        Expected value
+DCVX&NDX DS    0H
+         LA    1,DCVG&NDX          A(generated value)
+         LA    2,DCVE&NDX          A(expected value)
+         LA    3,DCVA&NDX          A(function argument value)
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DCVX&NDX            Branch around test
+*
+*        SETC  DCVAL('''')         value is "'" (single apostrophe)
+&C       SETC  DCVAL('''')
+&DC      SETC  DOUBLE('&C')
+&K       SETA  K'&C
+DCVA&NDX DC    FL1'2',C'>''''<'    Argument value
+DCVG&NDX DC    FL1'&K',C'>&DC<'    Generated value
+DCVE&NDX DC    FL1'1',C'>''''<'    Expected value
+DCVX&NDX DS    0H
+         LA    1,DCVG&NDX
+         LA    2,DCVE&NDX
+         LA    3,DCVA&NDX
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DCVX&NDX            Branch around test
+*
+*        SETC  DCVAL('&&')         value is "&" (single ampersand)
+&C       SETC  DCVAL('&&')
+&DC      SETC  DOUBLE('&C')
+&K       SETA  K'&C
+DCVA&NDX DC    FL1'2',C'>&&&&<'    Argument value
+DCVG&NDX DC    FL1'&K',C'>&DC<'    Generated value
+DCVE&NDX DC    FL1'1',C'>&&<'      Expected value
+DCVX&NDX DS    0H
+         LA    1,DCVG&NDX
+         LA    2,DCVE&NDX
+         LA    3,DCVA&NDX
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DCVX&NDX            Branch around test
+*
+*        SETC  DCVAL('a''''b')     value is "a'b"
+&C       SETC  DCVAL('a''''b')
+&DC      SETC  DOUBLE('&C')
+&K       SETA  K'&C
+DCVA&NDX DC    FL1'6',C'>a''''''''b<'
+DCVG&NDX DC    FL1'&K',C'>&DC<'
+DCVE&NDX DC    FL1'3',C'>a''b<'
+DCVX&NDX DS    0H
+         LA    1,DCVG&NDX
+         LA    2,DCVE&NDX
+         LA    3,DCVA&NDX
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DCVX&NDX            Branch around test
+*
+*        SETC  DCVAL('a''''b&&c')  value is "a'b&c"
+&C       SETC  DCVAL('a''''b&&c')
+&DC      SETC  DOUBLE('&C')
+&K       SETA  K'&C
+DCVA&NDX DC    FL1'9',C'>a''''''''b&&&&c<'
+DCVG&NDX DC    FL1'&K',C'>&DC<'
+DCVE&NDX DC    FL1'5',C'>a''b&&c<'
+DCVX&NDX DS    0H
+         LA    1,DCVG&NDX
+         LA    2,DCVE&NDX
+         LA    3,DCVA&NDX
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*
+*        Preset &C  to "&&&&''''" (4 ampersands and 4 apostrophes)
+&C       SETC  '&AMP'.'&AMP'.'&AMP'.'&AMP'.'''''''''' (4 & 4 ')
+*
+*&DC      SETC  DOUBLE('&C')
+*&K       SETA  K'&C
+*         DC    FL1'&K',C'>&DC<'
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DCVX&NDX            Branch around test
+*
+*        SETC  DCVAL('&C')         value is "&&''" (2 of each)
+&X       SETC  DCVAL('&C')
+&DX      SETC  DOUBLE('&X')
+&K       SETA  K'&X
+DCVA&NDX DC    FL1'8',C'>&&&&&&&&''''''''<'
+DCVG&NDX DC    FL1'&K',C'>&DX<'
+DCVE&NDX DC    FL1'4',C'>&&&&''''<'
+DCVX&NDX DS    0H
+         LA    1,DCVG&NDX
+         LA    2,DCVE&NDX
+         LA    3,DCVA&NDX
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*----------------------------------------------------------------------
+*        z390 tests
+*
+*        Preset &C to "''&&1''"    (4 ', 2 &, digit 1; len 7)
+&C       SETC  '''''&&&&1'''''     string "''&&1''" len 7
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DCVX&NDX            Branch around test
+*
+*        SETC  DCVAL('&C')         value is "'&&1'" len 5
+&X       SETC  DCVAL('&C')
+&DX      SETC  DOUBLE('&X')
+&K       SETA  K'&X
+DCVA&NDX DC    FL1'7',C'>''''&&&&1''''<'
+DCVG&NDX DC    FL1'&K',C'>&DX<'
+DCVE&NDX DC    FL1'5',C'>''&&&&1''<'
+DCVX&NDX DS    0H
+         LA    1,DCVG&NDX
+         LA    2,DCVE&NDX
+         LA    3,DCVA&NDX
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*
+DCVExit  DS    0H
+         L     15,CCVRC            Get return code from parm block
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except R15
+         BR    14                  Return to caller
+*
+         LTORG ,
+*
+         DS    0D
+DCVPB    DS    XL(CCVPBLEN)        Parameter block storage
+*
+DCVT#    DC    F'0'                Test number
+DCVLOA   DC    A(L'DCVOA)          Length of output area
+DCVBLOA  DC    F'0'                Length of built output
+DCVOA    DS    CL80                Output area
+*
+         POP   USING
+*
+*
+***********************************************************************
+*        End   DCVAL tests
+***********************************************************************
+*
+*
+***********************************************************************
+*        Begin DEQUOTE tests
+***********************************************************************
+*
+*
+***********************************************************************
+*        The DEQUOTE tests use ampersands and apostrophes. The same
+*        reasons listed in the DCVAL tests apply here. Similar
+*        processing is done. Read the details in the TDCVAL section.
+*
+*        The original DEQUOTE tests in TESTOPR2 are left in but
+*        branched around via AGO.
+***********************************************************************
+*
+*
+***********************************************************************
+* TDEQUOTE  Test DEQUOTE
+*
+* Registers at entry:
+*        R15     entry point
+*        R14     return address
+*        R13     current chained save area
+*        R1  --> parameter list
+*                +0 --> literal for test group; FL1'len-;it',C'lit'
+*                +4 --> word for number of tests that pass
+*                +8 --> word for number of tests that fail
+*        R11 --> common storage
+*
+* Registers at exit:
+*        R0--R14  as at entry
+*        R15      return code
+*                 0  all tests passed
+*                 8  at least one test failed
+***********************************************************************
+*
+TDEQUOTE DS    0H
+         PUSH  USING
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area on chain
+         LR    12,15               R12 = base register
+         USING TDEQUOTE,12         Establish addressability         
+         L     11,=A(COMSTOR)      Common storage area
+         USING COMSTOR,11          Overlay common storage
+*
+         XC    DEQPB,DEQPB         Initialize parameter block storage
+         LA    10,DEQPB            R10 --> parameter block
+         USING CCVPB,10            Overlay parameter block
+*
+         L     0,0(,1)             A(literal for test)
+         ST    0,CCVLIT@           Put in parameter block
+         LA    2,DEQT#             Word = test number
+         ST    2,CCVT#@            Put in parameter block
+         LA    2,DEQLOA            Word = length of output area
+         ST    2,CCVLOA@           Put in parameter block
+         LA    2,DEQOA             Output area
+         ST    2,CCVOA             Put in parameter block
+         LA    2,DEQBLOA           Word to contain built output length
+         ST    2,CCVBLOA@          Put in parameter block
+*
+         LM    8,9,4(1)            R8 --> word = subtotal num pass
+*                                  R9 --> word = subtotal num fail
+         STM   8,9,CCV#PF@         Put in parameter block
+*
+         SR    15,15               Initialize values to zero
+         ST    15,0(,8)            Number tests passed
+         ST    15,0(,9)            Number tests failed
+         ST    15,DEQT#            Current test number
+*
+&NDX     SETA  0                   Test case
+*
+&AMP     SETC  '&&'(1,1)           LR p341; one ampersand
+*
+*----------------------------------------------------------------------
+*        HLASM LR examples
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DEQX&NDX            Branch around test
+*
+*        SETC  DEQUOTE('charstring')   value is "charstring"
+&C       SETC  DEQUOTE('charstring') 
+&DC      SETC  DOUBLE('&C')
+&K       SETA  K'&C 
+DEQA&NDX DC    FL1'10',C'>charstring<' Argument value
+DEQG&NDX DC    FL1'&K',C'>&C< '        Generated value
+DEQE&NDX DC    FL1'10',C'>charstring<' Expected value
+DEQX&NDX DS    0H
+         LA    1,DEQG&NDX          A(generated value)
+         LA    2,DEQE&NDX          A(expected value)
+         LA    3,DEQA&NDX          A(argument value)
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DEQX&NDX            Branch around test
+*
+*        SETC  DEQUOTE('')         value is ""
+&C       SETC  DEQUOTE('') 
+&DC      SETC  DOUBLE('&C')
+&K       SETA  K'&C 
+DEQA&NDX DC    FL1'0',C'><'        Argument value
+DEQG&NDX DC    FL1'&K',C'>&C< '    Generated value
+DEQE&NDX DC    FL1'0',C'><'        Expected value
+DEQX&NDX DS    0H
+         LA    1,DEQG&NDX          A(generated value)
+         LA    2,DEQE&NDX          A(expected value)
+         LA    3,DEQA&NDX          A(argument value)
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DEQX&NDX            Branch around test
+*
+*        SETC  DEQUOTE('a')        value is "a"
+&C       SETC  DEQUOTE('a') 
+&DC      SETC  DOUBLE('&C')
+&K       SETA  K'&C
+DEQA&NDX DC    FL1'1',C'>a<'       Argument value
+DEQG&NDX DC    FL1'&K',C'>&C< '    Generated value
+DEQE&NDX DC    FL1'1',C'>a<'       Expected value
+DEQX&NDX DS    0H
+         LA    1,DEQG&NDX          A(generated value)
+         LA    2,DEQE&NDX          A(expected value)
+         LA    3,DEQA&NDX          A(argument value)
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DEQX&NDX            Branch around test
+*
+&ARG     SETC  '''a'''
+*&ARG    SETC  '''a'''             &ARG is "'a'"
+*        SETC  DEQUOTE('&ARG')     value is "a"
+&C       SETC  DEQUOTE('&ARG') 
+&DC      SETC  DOUBLE('&C')
+&K       SETA  K'&C
+DEQA&NDX DC    FL1'3',C'>''a''<'   Argument value
+DEQG&NDX DC    FL1'&K',C'>&C< '    Generated value
+DEQE&NDX DC    FL1'1',C'>a<'       Expected value
+DEQX&NDX DS    0H
+         LA    1,DEQG&NDX          A(generated value)
+         LA    2,DEQE&NDX          A(expected value)
+         LA    3,DEQA&NDX          A(argument value)
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DEQX&NDX            Branch around test
+*
+*        SETC  DEQUOTE('a''b')     value is "a'b"
+&C       SETC  DEQUOTE('a''b') 
+&DC      SETC  DOUBLE('&C')
+&K       SETA  K'&C
+DEQA&NDX DC    FL1'4',C'>a''''b<'  Argument value
+DEQG&NDX DC    FL1'&K',C'>&DC< '   Generated value
+DEQE&NDX DC    FL1'3',C'>a''b<'    Expected value
+DEQX&NDX DS    0H
+         LA    1,DEQG&NDX          A(generated value)
+         LA    2,DEQE&NDX          A(expected value)
+         LA    3,DEQA&NDX          A(argument value)
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DEQX&NDX            Branch around test
+*
+&ARG     SETC  ''''''
+*&ARG    SETC  ''''''              &ARG is "''"
+*        SETC  DEQUOTE('&ARG')     value is ""
+&C       SETC  DEQUOTE('&ARG') 
+&DC      SETC  DOUBLE('&C')
+&K       SETA  K'&C
+DEQA&NDX DC    FL1'2',C'>''''<'    Argument value
+DEQG&NDX DC    FL1'&K',C'>&C< '    Generated value
+DEQE&NDX DC    FL1'0',C'><'        Expected value
+DEQX&NDX DS    0H
+         LA    1,DEQG&NDX          A(generated value)
+         LA    2,DEQE&NDX          A(expected value)
+         LA    3,DEQA&NDX          A(argument value)
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*
+*----------------------------------------------------------------------
+*        z390 tests
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DEQX&NDX            Branch around test
+*
+&ARG     SETC  '''ABC'''
+*&ARG    SETC  '''ABC'''           &ARG is "'ABC'"
+*        SETC  DEQUOTE('&ARG')     value is "ABC"
+&C       SETC  DEQUOTE('&ARG') 
+&DC      SETC  DOUBLE('&C')
+&K       SETA  K'&C
+DEQA&NDX DC    FL1'5',C'>''ABC''<' Argument value
+DEQG&NDX DC    FL1'&K',C'>&C< '    Generated value
+DEQE&NDX DC    FL1'3',C'>ABC<'     Expected value
+DEQX&NDX DS    0H
+         LA    1,DEQG&NDX          A(generated value)
+         LA    2,DEQE&NDX          A(expected value)
+         LA    3,DEQA&NDX          A(argument value)
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*
+DEQExit  DS    0H
+         L     15,CCVRC            Get return code from parameter block
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except R15
+         BR    14                  Return to caller
+*
+         LTORG  ,
+*
+         DS    0D
+DEQPB    DS    XL(CCVPBLEN)        Parameter block storage
+*
+DEQT#    DC    F'0'                Test number
+DEQLOA   DC    A(L'DEQOA)          Length of output area
+DEQBLOA  DC    F'0'                Length of built output
+DEQOA    DS    CL80                Output area
+*
+         POP   USING
+*
+*
+***********************************************************************
+*        End   DEQUOTE tests
+***********************************************************************
+*
+*
+***********************************************************************
+*        Begin DOUBLE tests
+***********************************************************************
+*
+*
+***********************************************************************
+* TDOUBLE  Test DOUBLE
+*
+* Registers at entry:
+*        R15     entry point
+*        R14     return address
+*        R13     current chained save area
+*        R1  --> parameter list
+*                +0 --> literal for test group; FL1'len-;it',C'lit'
+*                +4 --> word for number of tests that pass
+*                +8 --> word for number of tests that fail
+*        R11 --> common storage
+*
+* Registers at exit:
+*        R0--R14  as at entry
+*        R15      return code
+*                 0  all tests passed
+*                 8  at least one test failed
+***********************************************************************
+*
+TDOUBLE  DS    0H
+         PUSH  USING
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area on chain
+         LR    12,15               R12 = base register
+         USING TDOUBLE,12          Establish addressability         
+         L     11,=A(COMSTOR)      Common storage area
+         USING COMSTOR,11          Overlay common storage
+*
+         XC    DOUPB,DOUPB         Initialize parameter block storage
+         LA    10,DOUPB            R10 --> parameter block
+         USING CCVPB,10            Overlay parameter block
+*
+         L     0,0(,1)             A(literal for test)
+*
+         ST    0,CCVLIT@           Put in parameter block
+         LA    2,DOUT#             Word = test number
+         ST    2,CCVT#@            Put in parameter block
+         LA    2,DOULOA            Word = length of output area
+         ST    2,CCVLOA@           Put in parameter block
+         LA    2,DOUOA             Output area
+         ST    2,CCVOA             Put in parameter block
+         LA    2,DOUBLOA           Word to contain built output length
+         ST    2,CCVBLOA@          Put in parameter block
+*
+         LM    8,9,4(1)            R8 --> word = subtotal num pass
+*                                  R9 --> word = subtotal num fail
+         STM   8,9,CCV#PF@         Put in parameter block
+*
+         SR    15,15               Initialize values to zero
+         ST    15,0(,8)            Number tests passed
+         ST    15,0(,9)            Number tests failed
+         ST    15,DOUT#            Current test number
+*
+&NDX     SETA  0                   Test case
+*
+&AMP     SETC  '&&'(1,1)           LR p341; one ampersand
+*
+*----------------------------------------------------------------------
+*        HLASM LR examples
+*
+&NDX     SETA  &NDX+1              Current test
+         B     DOUX&NDX            Branch around test
+* 
+*        Preset &C 
+&C       SETC  '&AMP'.'&AMP'.''''''.'&AMP' LR p331 "&&''&"; (2 ', 3 &) 
+* 
+*        &C contains "&&''&" (2 apostrophes, 3 ampersands) 
+*        SETC  DOUBLE('&C') 
+&DC      SETC  DOUBLE('&C')
+&DDC     SETC  DOUBLE('&DC')  
+&K       SETA  K'&DC
+DOUA&NDX DC    FL1'5',C'>&&&&''''&&<'
+DOUG&NDX DC    FL1'&K',C'>&DDC<'
+DOUE&NDX DC    FL1'10',C'>&&&&&&&&''''''''&&&&<'
+DOUX&NDX DS    0H
+         LA    1,DOUG&NDX          A(generated value)
+         LA    2,DOUE&NDX          A(expected value)
+         LA    3,DOUA&NDX          A(argument value)
+         STM   1,3,CCVGEF@         Put in parameter block
+         LR    1,10                R1 --> parameter block
+         L     15,=A(Chk1CV)       Test routine
+         BASR  14,15               Perform test
+*
+*----------------------------------------------------------------------
+*        z390 tests
+*
+*        No z390 tests
+*
+DOUExit  DS    0H
+         L     15,CCVRC            Get return code from parameter block
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except R15
+         BR    14                  Return to caller
+*
+         LTORG  ,
+*
+         DS    0D
+DOUPB    DS    XL(CCVPBLEN)        Parameter block storage
+*
+DOUT#    DC    F'0'                Test number
+DOULOA   DC    A(L'DOUOA)          Length of output area
+DOUBLOA  DC    F'0'                Length of built output
+DOUOA    DS    CL80                Output area
+*
+         POP   USING
+*
+*
+***********************************************************************
+*        End   DOUBLE tests
+***********************************************************************
+*
+*
+***********************************************************************
+***********************************************************************
+*        End   code tests
+***********************************************************************
+***********************************************************************
+*
+         TITLE 'DSECTs'
+***********************************************************************
+*       Parameter block for ChkChVal and subroutines
+***********************************************************************
+*
+CCVPB    DSECT
+CCVLIT@  DS    A                   Test group literal
+CCVT#@   DS    A                   A(word = test number)
+CCVGEF@  DS    0AL12               A(gen,expected,argument values)
+CCVGE@   DS    0AL8                A(generated,expected values)
+CCVGV    DS    A                   A(generated value)
+CCVEV    DS    A                   A(expected value)
+CCVFAV   DS    A                   A(function argument value)
+CCVLOA@  DS    A                   A(word = length output area)
+CCVOA    DS    A                   A(output area)
+CCVBLOA@ DS    A                   A(word = built output length)
+CCVRC    DS    F                   Return code from failed test(s);
+*                                  Zero if all tests passed
+CCV#PF@  DS    0AL8                A(num pass, num fail tests)
+CCV#P@   DS    A                   A(word = number of passed tests)
+CCV#F@   DS    A                   A(word = number of failed tests)
+CCVPBLEN EQU   *-CCVPB             Length of parameter block
+*
+         END

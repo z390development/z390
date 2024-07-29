@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# runhlasmbiftests: regression test HLASM built-in functions
+
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
+
+sysmac='sysmac(mac)'
+optable='optable(z390)'
+
+dir1="rt/test"
+dir2="rt/mlc"
+
+bash/asmlg ${dir1}/TESTOPR2 trace noloadhigh noinit $sysmac
+
+export REPORT=${dir2}/TOPR2.TXT
+bash/asmlg ${dir2}/TOPR2 trace noloadhigh noinit $sysmac
+
+# if we get here, there were no errors
+echo "Verify tests ran without errors"
+echo "  View ${dir1}/TESTOPR2.PRN to see tests checked with MNOTE,AIF"
+echo "  View ${dir2}/TOPR2.TXT to see tests checked with code"
+exit 0
