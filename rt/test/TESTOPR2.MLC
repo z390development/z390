@@ -104,7 +104,7 @@
 *----------------------------------------------------------------------
 *
 * Registers on entry:
-*     R15  emtry point
+*     R15  entry point
 *     R14  return address
 *     R13  usable save area
 *
