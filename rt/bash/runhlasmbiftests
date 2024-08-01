@@ -15,7 +15,7 @@ dir2="rt/mlc"
 
 bash/asmlg ${dir1}/TESTOPR2 trace noloadhigh noinit $sysmac
 
-export REPORT=${dir2}/TOPR2.TXT
+export REPORT=${dir2}/TOPR2.TST
 bash/asmlg ${dir2}/TOPR2 trace noloadhigh noinit $sysmac
 
 # if we get here, there were no errors

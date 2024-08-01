@@ -24,7 +24,7 @@ class RunHLASMBuiltInFunctionsTests extends z390Test {
 
         // File containing report of tests done
         
-        this.env.put('REPORT', basePath('rt', 'mlc', 'TOPR2.TXT'))
+        this.env.put('REPORT', basePath('rt', 'mlc', 'TOPR2.TST'))
         
         int rc = this.asmlg(basePath("rt", "mlc", "TOPR2"), *options)
         this.printOutput()
