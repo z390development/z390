@@ -12306,7 +12306,7 @@ public  class  mz390 {
     	check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();
 		if (setc_value1.length() == 0) {                                     // #509
-			// HLASM LR states this case indicates an error.                 // #509
+			// HLASM LangRef states this case indicates an error.            // #509
 			// HLASM does not produce an error; returns 0.                   // #509
 			// Comment next line so z390 matches HLASM behavior              // #509
 			//create_mnote(8,"D2A invalid operand value; length is zero");   // #509
@@ -12355,7 +12355,7 @@ public  class  mz390 {
     	check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();
 		if (setc_value1.length() == 0) {                                             // #509
-			// HLASM LR states this case indicates an error.                         // #509
+			// HLASM LangRef states this case indicates an error.                    // #509
 			// HLASM does not produce an error; returns empty string.                // #509
 			// Comment next line so z390 matches HLASM behavior                      // #509
 			//create_mnote(8,"D2C invalid operand value; length is zero");           // #509
@@ -12385,7 +12385,7 @@ public  class  mz390 {
     	check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();                                            // #509
 		if (setc_value1.length() == 0) {                                                 // #509
-			// HLASM LR states this case indicates an error.                             // #509
+			// HLASM LangRef states this case indicates an error.                        // #509
 			// HLASM does not produce an error; returns empty string.                    // #509
 			// Comment next line so z390 matches HLASM behavior                          // #509
 			//create_mnote(8,"D2X invalid operand value; length is zero");               // #509
@@ -12682,7 +12682,7 @@ public  class  mz390 {
 		put_seta_stack_var();                                        // #509
     }
 	/**
-	 * Implement HLASM LR SLA built-in function                      // #509
+	 * Implement HLASM LangRef SLA built-in function                 // #509
 	 * 
 	 * @param x the number to shift
 	 * @param n the number of bits to shift
@@ -13026,7 +13026,7 @@ public  class  mz390 {
 			}
     		if  (text.length() < tz390.bal_ictl_end + 1){ // RPI 264, RPI 437 RPI 728
     			tz390.systerm_io++;
-				// HLASM LR says PUNCH can write all 256 EBCDIC characters.
+				// HLASM LangRef says PUNCH can write all 256 EBCDIC characters.
 				// Decide if put_bal_line keeps non-printable text.
 				file_buff.write(text_work + tz390.newline); // RPI 500
     		} else {
