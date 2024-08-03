@@ -329,6 +329,7 @@ public  class  tz390 {
     * 2023-07-02 DSH/AFK #503 add support for new z16 instructions to opcode tables
     * 2024-05-30 AFK #500 List suboption for options optable/machine not implemented correctly
     * 2024-06-07 AFK #533 Correct OPTABLE(370,LIST) output to match HLASM
+    * 2024-08-01 AFK #543 Correct OPTABLE(XA,LIST) output to match HLASM
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -1108,6 +1109,7 @@ public  class  tz390 {
     String[] optables_optable = null; // optable's optable// #503
     String[] optable_optable_equivalence =                // #503
        {"UNI=UNI",                                        // #503
+        "360-20=360-20",                                  // #543
         "DOS=DOS",                                        // #503
         "370=370",                                        // #503
         "XA=XA",                                          // #503
@@ -1137,7 +1139,8 @@ public  class  tz390 {
     String[] machine_option_id = null;                    // #503
     String[] machines_optable = null; // machine's optable// #503
     String[] machine_optable_equivalence =                // #503
-       {"S370=370",                                       // #503
+       {"S360-20=360-20",                                 // #543
+        "S370=370",                                       // #503
         "S370XA=XA",                                      // #503
         "ARCH-0=XA",                                      // #503
         "S390=ESA",                                       // #503
@@ -1374,14 +1377,108 @@ public  class  tz390 {
      String[]   op_table_start = // Table added for RPI 1209A
         {"??=*,0,00",            //     00 comments
          };
+     // Following table has the instructions that are supported for both DOS and the S360/20     // #543
+     String[]   op_table_360_20 =   // Instructions shared with optable(DOS)         #543 
+        {"07=BCR,RR-m,30",       //    120 "07"    "BCR"      "RR"    2 // Extended mnemonics not supported for S360/20 RPI 1209N #543
+         "07m=BmR,RR-mx,30;0=NOPR", //     "07m"   "BmR, NOPR" "BRX"  3 // RPI 1209N #543 Note: S360/20 only defined NOPR and BR we do all extended mnemonics!
+         "1A=AR,RR,20",          //    450 "1A"    "AR"       "RR"    2 // RPI 1209N #543
+         "1B=SR,RR,20",          //    460 "1B"    "SR"       "RR"    2 // RPI 1209N #543
+         "40=STH,5,53",          //    860 "40"    "STH"      "RX"    5 //           #543
+         "47=BC,5,50",           //    930 "47"    "BC"       "RX"    5 //           #543
+         "47m=Bm,6,60;0=NOP",    //        "47m"   "Bm, NOP"  "BRX"   6 //           #543
+         "48=LH,5,53",           //   1100 "48"    "LH"       "RX"    5 //           #543
+         "49=CH,5,53",           //   1110 "49"    "CH"       "RX"    5 //           #543
+         "4A=AH,5,53",           //   1120 "4A"    "AH"       "RX"    5 //           #543
+         "4B=SH,5,53",           //   1130 "4B"    "SH"       "RX"    5 //           #543
+         "91=TM,11,110",         //   1710 "91"    "TM"       "SI"   11 //           #543
+         "92=MVI,11,110",        //   1720 "92"    "MVI"      "SI"   11 //           #543
+         "94=NI,11,110",         //   1740 "94"    "NI"       "SI"   11 //           #543
+         "95=CLI,11,110",        //   1750 "95"    "CLI"      "SI"   11 //           #543
+         "96=OI,11,110",         //   1760 "96"    "OI"       "SI"   11 //           #543
+         "D1=MVN,17,170",        //   5240 "D1"    "MVN"      "SS"   17 //           #543
+         "D2=MVC,17,170",        //   5250 "D2"    "MVC"      "SS"   17 //           #543
+         "D3=MVZ,17,170",        //   5260 "D3"    "MVZ"      "SS"   17 //           #543
+         "D5=CLC,17,170",        //   5280 "D5"    "CLC"      "SS"   17 //           #543
+         "DC=TR,17,170",         //   5340 "DC"    "TR"       "SS"   17 //           #543
+         "DE=ED,17,170",         //   5360 "DE"    "ED"       "SS"   17 //           #543
+         "F1=MVO,26,260",        //   7050 "F1"    "MVO"      "SS2"  26 //           #543
+         "F2=PACK,26,260",       //   7060 "F2"    "PACK"     "SS2"  26 //           #543
+         "F3=UNPK,26,260",       //   7070 "F3"    "UNPK"     "SS2"  26 //           #543
+         "F8=ZAP,26,260",        //   7080 "F8"    "ZAP"      "SS2"  26 //           #543
+         "F9=CP,26,260",         //   7090 "F9"    "CP"       "SS2"  26 //           #543
+         "FA=AP,26,260",         //   7100 "FA"    "AP"       "SS2"  26 //           #543
+         "FB=SP,26,260",         //   7110 "FB"    "SP"       "SS2"  26 //           #543
+         "FC=MP,26,260",         //   7120 "FC"    "MP"       "SS2"  26 //           #543
+         "FD=DP,26,260",         //   7130 "FD"    "DP"       "SS2"  26 //           #543
+         };                         // #543                                          #543
+     // Following table defines five instructions unique to the S360/20              #543
+     //                     and two that share syntax (but not semantics) with 370   #543
+     //                     The difference in semantics make for their definition    #543
+     //                     here, which is okay since S360/20 and 370 cannot be      #543
+     //                     combined.                                                #543
+     String[]   op_table_360_20_only =   // Instructions defined for S360/20 only    #543
+        {"0D=BASR,RR,20",           // shared with 370 (semantics differ)            #543
+         "4D=BAS,5,50",             // shared with 370 (semantics differ)            #543
+         "81=SPSW,11,110",          // S360/20 only                                  #543
+         "99=HPR,11,110",           // S360/20 only                                  #543
+         "9A=TIOB,11,110",          // S360/20 only - format may not be correct      #543
+         "9B=CIO,11,110",           // S360/20 only - format may not be correct      #543
+         "D0=XIO,17,170",           // S360/20 only - format may not be correct      #543
+         };                         //                                               #543
+     // Following table has the directives that are supported for both DOS and the S360/20     #543
+     // Incompatibilites:                                                #543
+     // 1. GBLx/LCLx not supported for S360/20                           #543
+     //    difference is encoded in variable names! see S360/20 docs     #543
+     // 2. Syntax may be shared between optable(DOS) and optable(360-20) #543
+     //    but semantics may differ. We implement semantics for DOS      #543
+     //    even when optable(360-20) or machine(S360-20) is specified    #543
+     String[]   op_table_360_20_directives = // Directives shared with optable(DOS)            #543
+        {"--=AGO,202,--",        //   7610         "AGO"            202  #543
+         "--=AGOB,226,--",       //   7820         "AGOB"           226  #543
+         "--=AIF,203,--",        //   7620         "AIF"            203  #543
+         "--=AIFB,227,--",       //   7830         "AIFB"           227  #543
+         "--=ANOP,205,--",       //   7640         "ANOP"           205  #543
+         "--=CSECT,110,--",      //   7230         "CSECT"          110  #543
+         "--=DC,104,--",         //   7170         "DC"             104  #543
+         "--=DROP,123,--",       //   7360         "DROP"           123  #543
+         "--=DS,105,--",         //   7180         "DS"             105  #543
+         "--=DSECT,112,--",      //   7250         "DSECT"          112  #543
+         "--=EJECT,128,--",      //   7410         "EJECT"          128  #543
+         "--=END,135,--",        //   7480         "END"            135  #543
+         "--=ENTRY,114,--",      //   7270         "ENTRY"          114  #543
+         "--=EQU,136,--",        //   7490         "EQU"            136  #543
+         "--=EXTRN,115,--",      //   7280         "EXTRN"          115  #543
+         "--=ICTL,138,--",       //   7510         "ICTL"           138  #543
+         "--=ISEQ,139,--",       //   7520         "ISEQ"           139  #543
+         "--=LTORG,140,--",      //   7530         "LTORG"          140  #543
+         "--=MACRO,220,--",      //   7790         "MACRO"          220  #543
+         "--=MEND,221,--",       //   7800         "MEND"           221  #543
+         "--=MEXIT,222,--",      //   7810         "MEXIT"          222  #543
+         "--=MNOTE,214,--",      //   7730         "MNOTE"          214  #543
+         "--=ORG,142,--",        //   7550         "ORG"            142  #543
+         "--=PRINT,129,--",      //   7420         "PRINT"          129  #543
+         "--=REPRO,146,--",      //   7590         "REPRO"          146  #543
+         "--=SETA,215,--",       //   7740         "SETA"           215  #543
+         "--=SETB,217,--",       //   7760         "SETB"           217  #543
+         "--=SETC,218,--",       //   7770         "SETC"           218  #543
+         "--=SPACE,130,--",      //   7430         "SPACE"          130  #543
+         "--=START,119,--",      //   7320         "START"          119  #543
+         "--=TITLE,131,--",      //   7440         "TITLE"          131  #543
+         "--=USING,124,--",      //   7370         "USING"          124  #543
+         };             //                                               #543
+     // Following table defines two directives unique to the S360/20     #543
+     // Incompatibilites:                                                #543
+     // 1. DCCW aligns on halfword, but we align on Fullword             #543
+     // 2. XFR is not the same as ENTRY, yet we process it as such       #543
+     String[]   op_table_360_20_only_directives = // Directives shared with optable(DOS) #543 
+        {"--=DCCW,101,--",       //                                 101  #543
+         "--=XFR,114,--",        //                                 114  #543
+         };             //                                               #543
+     // op_table_DOS below contains the instructions NOT shared with S360/20.              #543
      String[]   op_table_DOS =   // Table added for RPI 1209A
         {"04=SPM,RR-n,20",       //     90 "04"    "SPM"      "RR"    2 // RPI 1209N
          "05=BALR,RR,20",        //    100 "05"    "BALR"     "RR"    2 // RPI 1209N
          "06=BCTR,RR,20",        //    110 "06"    "BCTR"     "RR"    2 // RPI 1209N
-         "07=BCR,RR-m,30",       //    120 "07"    "BCR"      "RR"    2 // RPI 1209N
-         "07m=BmR,RR-mx,30;0=NOPR", //     "07m"   "BmR, NOPR" "BRX"  3 // RPI 1209N
-         "08=SSK,RR,20",         //    100 "08"    "SSK"      "RR"    2 // RPI 1209N #500
-         "09=ISK,RR,20",         //    100 "09"    "ISK"      "RR"    2 // RPI 1209N #500
          "0A=SVC,4,40",          //    290 "0A"    "SVC"      "I"     4
          "0E=MVCL,RR-p,22",      //    330 "0E"    "MVCL"     "RR"    2 // RPI 1209N
          "0F=CLCL,RR-p,22",      //    340 "0F"    "CLCL"     "RR"    2 // RPI 1209N
@@ -1395,8 +1492,6 @@ public  class  tz390 {
          "17=XR,RR,20",          //    420 "17"    "XR"       "RR"    2 // RPI 1209N
          "18=LR,RR,20",          //    430 "18"    "LR"       "RR"    2 // RPI 1209N
          "19=CR,RR,20",          //    440 "19"    "CR"       "RR"    2 // RPI 1209N
-         "1A=AR,RR,20",          //    450 "1A"    "AR"       "RR"    2 // RPI 1209N
-         "1B=SR,RR,20",          //    460 "1B"    "SR"       "RR"    2 // RPI 1209N
          "1C=MR,RR,23",          //    470 "1C"    "MR"       "RR"    2 // RPI 1209N
          "1D=DR,RR,23",          //    480 "1D"    "DR"       "RR"    2 // RPI 1209N
          "1E=ALR,RR,20",         //    490 "1E"    "ALR"      "RR"    2 // RPI 1209N
@@ -1434,19 +1529,12 @@ public  class  tz390 {
          "3D=DER,RR-f,21",       //    830 "3D"    "DER"      "RR"    2 // RPI 1209N
          "3E=AUR,RR-f,21",       //    840 "3E"    "AUR"      "RR"    2 // RPI 1209N
          "3F=SUR,RR-f,21",       //    850 "3F"    "SUR"      "RR"    2 // RPI 1209N
-         "40=STH,5,53",          //    860 "40"    "STH"      "RX"    5
          "41=LA,5,52",           //    870 "41"    "LA"       "RX"    5
          "42=STC,5,56",          //    880 "42"    "STC"      "RX"    5
          "43=IC,5,56",           //    890 "43"    "IC"       "RX"    5
          "44=EX,5,59",           //    900 "44"    "EX"       "RX"    5
          "45=BAL,5,51",          //    910 "45"    "BAL"      "RX"    5
          "46=BCT,5,50",          //    920 "46"    "BCT"      "RX"    5
-         "47=BC,5,50",           //    930 "47"    "BC"       "RX"    5
-         "47m=Bm,6,60;0=NOP",    //        "47m"   "Bm, NOP"  "BRX"   6
-         "48=LH,5,53",           //   1100 "48"    "LH"       "RX"    5
-         "49=CH,5,53",           //   1110 "49"    "CH"       "RX"    5
-         "4A=AH,5,53",           //   1120 "4A"    "AH"       "RX"    5
-         "4B=SH,5,53",           //   1130 "4B"    "SH"       "RX"    5
          "4C=MH,5,53",           //   1140 "4C"    "MH"       "RX"    5
          "4E=CVD,5,57",          //   1160 "4E"    "CVD"      "RX"    5
          "4F=CVB,5,57",          //   1170 "4F"    "CVB"      "RX"    5
@@ -1485,8 +1573,6 @@ public  class  tz390 {
          "7F=SU,5,58",           //   1520 "7F"    "SU"       "RX"    5
          "8000=SSM,7,70",        //   1530 "8000"  "SSM"      "S"     7
          "8200=LPSW,7,70",       //   1540 "8200"  "LPSW"     "S"     7
-         "84=WRD,SI,110",        //        "84"    "WRD"      "SI"   11 #500
-         "85=RDD,SI,110",        //        "85"    "RDD"      "SI"   11 #500
          "86=BXH,10,103",        //   1600 "86"    "BXH"      "RS"   10
          "87=BXLE,10,103",       //   1610 "87"    "BXLE"     "RS"   10
          "88=SRL,10,102",        //   1620 "88"    "SRL"      "RS"   10
@@ -1498,27 +1584,14 @@ public  class  tz390 {
          "8E=SRDA,10,102",       //   1680 "8E"    "SRDA"     "RS"   10
          "8F=SLDA,10,102",       //   1690 "8F"    "SLDA"     "RS"   10
          "90=STM,10,100",        //   1700 "90"    "STM"      "RS"   10
-         "91=TM,11,110",         //   1710 "91"    "TM"       "SI"   11
-         "92=MVI,11,110",        //   1720 "92"    "MVI"      "SI"   11
          "9300=TS,7,70",         //   1730 "9300"  "TS"       "S"     7
-         "94=NI,11,110",         //   1740 "94"    "NI"       "SI"   11
-         "95=CLI,11,110",        //   1750 "95"    "CLI"      "SI"   11
-         "96=OI,11,110",         //   1760 "96"    "OI"       "SI"   11
          "97=XI,11,110",         //   1770 "97"    "XI"       "SI"   11
          "98=LM,10,100",         //   1780 "98"    "LM"       "RS"   10
-         "9C00=SIO,64,640",      //        "9C00"  "SIO"      "S"    64 #500
-         "9C01=SIOF,64,640",     //        "9C01"  "SIOF"     "S"    64 #500
-         "9D00=TIO,64,640",      //        "9D00"  "TIO"      "S"    64 #500
-         "9D01=CLRIO,64,640",    //        "9D01"  "CLRIO"    "S"    64 #500
-         "9E00=HIO,64,640",      //        "9E00"  "HIO"      "S"    64 #500
-         "9E01=HDV,64,640",      //        "9E01"  "HDV"      "S"    64 #500
-         "9F00=TCH,64,640",      //        "9F00"  "TCH"      "S"    64 #500
          "AC=STNSM,11,110",      //   2520 "AC"    "STNSM"    "SI"   11
          "AD=STOSM,11,110",      //   2530 "AD"    "STOSM"    "SI"   11
          "AF=MC,11,110",         //   2550 "AF"    "MC"       "SI"   11
          "B1=LRA,5,50",          //   2560 "B1"    "LRA"      "RX"    5
          "B202=STIDP,7,70",      //   2570 "B202"  "STIDP"    "S"     7
-         "B203=STIDC,64,640",    //        "B203"  "STIDC"    "S"    64 #500
          "B204=SCK,7,70",        //   2580 "B204"  "SCK"      "S"     7
          "B205=STCK,7,70",       //   2590 "B205"  "STCK"     "S"     7
          "B206=SCKC,7,70",       //   2600 "B206"  "SCKC"     "S"     7
@@ -1528,7 +1601,6 @@ public  class  tz390 {
          "B20A=SPKA,7,70",       //   2640 "B20A"  "SPKA"     "S"     7
          "B20B=IPK,7,70",        //   2650 "B20B"  "IPK"      "S"     7
          "B20D=PTLB,7,70",       //   2660 "B20D"  "PTLB"     "S"     7
-         "B213=RRB,64,640",      //        "B213"  "RRB"      "S"    64 #500
          "B6=STCTL,10,100",      //   4430 "B6"    "STCTL"    "RS"   10
          "B7=LCTL,10,100",       //   4440 "B7"    "LCTL"     "RS"   10
          "BA=CS,10,100",         //   5120 "BA"    "CS"       "RS"   10
@@ -1536,82 +1608,45 @@ public  class  tz390 {
          "BD=CLM,10,101",        //   5140 "BD"    "CLM"      "RS"   10
          "BE=STCM,10,101",       //   5150 "BE"    "STCM"     "RS"   10
          "BF=ICM,10,101",        //   5160 "BF"    "ICM"      "RS"   10
-         "D1=MVN,17,170",        //   5240 "D1"    "MVN"      "SS"   17
-         "D2=MVC,17,170",        //   5250 "D2"    "MVC"      "SS"   17
-         "D3=MVZ,17,170",        //   5260 "D3"    "MVZ"      "SS"   17
          "D4=NC,17,170",         //   5270 "D4"    "NC"       "SS"   17
-         "D5=CLC,17,170",        //   5280 "D5"    "CLC"      "SS"   17
          "D6=OC,17,170",         //   5290 "D6"    "OC"       "SS"   17
          "D7=XC,17,170",         //   5300 "D7"    "XC"       "SS"   17
-         "DC=TR,17,170",         //   5340 "DC"    "TR"       "SS"   17
          "DD=TRT,17,170",        //   5350 "DD"    "TRT"      "SS"   17
-         "DE=ED,17,170",         //   5360 "DE"    "ED"       "SS"   17
          "DF=EDMK,17,170",       //   5370 "DF"    "EDMK"     "SS"   17
          "E8=MVCIN,17,170",      //   6170 "E8"    "MVCIN"    "SS"   17
          "F0=SRP,29,290",        //   7040 "F0"    "SRP"      "SS5"  29
-         "F1=MVO,26,260",        //   7050 "F1"    "MVO"      "SS2"  26
-         "F2=PACK,26,260",       //   7060 "F2"    "PACK"     "SS2"  26
-         "F3=UNPK,26,260",       //   7070 "F3"    "UNPK"     "SS2"  26
-         "F8=ZAP,26,260",        //   7080 "F8"    "ZAP"      "SS2"  26
-         "F9=CP,26,260",         //   7090 "F9"    "CP"       "SS2"  26
-         "FA=AP,26,260",         //   7100 "FA"    "AP"       "SS2"  26
-         "FB=SP,26,260",         //   7110 "FB"    "SP"       "SS2"  26
-         "FC=MP,26,260",         //   7120 "FC"    "MP"       "SS2"  26
-         "FD=DP,26,260",         //   7130 "FD"    "DP"       "SS2"  26
          };
+     // op_table_DOS below contains the instructions valid from S360-S370    #543
+     String[]   op_table_DOS_370 =                                      //   #543
+        {"08=SSK,RR,20",         //    100 "08"    "SSK"      "RR"    2 // RPI 1209N #500 #543
+         "09=ISK,RR,20",         //    100 "09"    "ISK"      "RR"    2 // RPI 1209N #500 #543
+         "84=WRD,SI,110",        //        "84"    "WRD"      "SI"   11 #500 #543
+         "85=RDD,SI,110",        //        "85"    "RDD"      "SI"   11 #500 #543
+         "9C00=SIO,64,640",      //        "9C00"  "SIO"      "S"    64 #500 #543
+         "9C01=SIOF,64,640",     //        "9C01"  "SIOF"     "S"    64 #500 #543
+         "9D00=TIO,64,640",      //        "9D00"  "TIO"      "S"    64 #500 #543
+         "9D01=CLRIO,64,640",    //        "9D01"  "CLRIO"    "S"    64      #543
+         "9E00=HIO,64,640",      //        "9E00"  "HIO"      "S"    64 #500 #543
+         "9E01=HDV,64,640",      //        "9E01"  "HDV"      "S"    64 #500 #543
+         "9F00=TCH,64,640",      //        "9F00"  "TCH"      "S"    64 #500 #543
+         "B203=STIDC,64,640",    //        "B203"  "STIDC"    "S"    64 #500 #543
+         "B213=RRB,64,640",      //        "B213"  "RRB"      "S"    64 #500 #543
+         };                                                               // #543
+     // op_table_DOS_directives below contains the directives NOT shared with S360/20.     #543
      String[]   op_table_DOS_directives = // Table added for RPI 1209A
-        {"--=ACTR,201,--",       //   7600         "ACTR"           201
-         "--=AGO,202,--",        //   7610         "AGO"            202
-         "--=AGOB,226,--",       //   7820         "AGOB"           226
-         "--=AIF,203,--",        //   7620         "AIF"            203
-         "--=AIFB,227,--",       //   7830         "AIFB"           227
-         "--=ANOP,205,--",       //   7640         "ANOP"           205
-         "--=CCW,101,--",        //   7140         "CCW"            101
-         "--=CNOP,133,--",       //   7460         "CNOP"           133
-         "--=COM,109,--",        //   7220         "COM"            109
-         "--=COPY,224,--",       //   7470         "COPY"           224
-         "--=CSECT,110,--",      //   7230         "CSECT"          110
-         "--=DC,104,--",         //   7170         "DC"             104
-         "--=DROP,123,--",       //   7360         "DROP"           123
-         "--=DS,105,--",         //   7180         "DS"             105
-         "--=DSECT,112,--",      //   7250         "DSECT"          112
-         "--=EJECT,128,--",      //   7410         "EJECT"          128
-         "--=END,135,--",        //   7480         "END"            135
-         "--=ENTRY,114,--",      //   7270         "ENTRY"          114
-         "--=EQU,136,--",        //   7490         "EQU"            136
-         "--=EXTRN,115,--",      //   7280         "EXTRN"          115
-         "--=GBLA,207,--",       //   7660         "GBLA"           207
-         "--=GBLB,208,--",       //   7670         "GBLB"           208
-         "--=GBLC,209,--",       //   7680         "GBLC"           209
-         "--=ICTL,138,--",       //   7510         "ICTL"           138
-         "--=ISEQ,139,--",       //   7520         "ISEQ"           139
-         "--=LCLA,210,--",       //   7690         "LCLA"           210
-         "--=LCLB,211,--",       //   7700         "LCLB"           211
-         "--=LCLC,212,--",       //   7710         "LCLC"           212
-         "--=LTORG,140,--",      //   7530         "LTORG"          140
-         "--=MACRO,220,--",      //   7790         "MACRO"          220
-         "--=MEND,221,--",       //   7800         "MEND"           221
-         "--=MEXIT,222,--",      //   7810         "MEXIT"          222
-         "--=MNOTE,214,--",      //   7730         "MNOTE"          214
-         "--=ORG,142,--",        //   7550         "ORG"            142
-         "--=PRINT,129,--",      //   7420         "PRINT"          129
-         "--=PUNCH,223,--",      //   7570         "PUNCH"          223
-         "--=REPRO,146,--",      //   7590         "REPRO"          146
-         "--=SETA,215,--",       //   7740         "SETA"           215
-         "--=SETB,217,--",       //   7760         "SETB"           217
-         "--=SETC,218,--",       //   7770         "SETC"           218
-         "--=SPACE,130,--",      //   7430         "SPACE"          130
-         "--=START,119,--",      //   7320         "START"          119
-         "--=TITLE,131,--",      //   7440         "TITLE"          131
-         "--=USING,124,--",      //   7370         "USING"          124
-         "--=WXTRN,120,--",      //   7330         "WXTRN"          120
-         };
-     String[]   op_table_DOS_notsupported = // Table added for RPI 1209A
-        {"HPR      SI   99   D1(B1)", // model 360/20 only
-         "SPSW     SI   81   D1(B1)", // model 360/20 only
-         "TIOB     IO   9A   ??", // model 360/20 only
-         "CIO      IO   9B   ??", // model 360/20 only
-         "XIO      IO   D0   ??", // model 360/20 only
+        {"--=ACTR,201,--",       //   7600         "ACTR"           201  
+         "--=CCW,101,--",        //   7140         "CCW"            101  
+         "--=CNOP,133,--",       //   7460         "CNOP"           133  
+         "--=COM,109,--",        //   7220         "COM"            109  
+         "--=COPY,224,--",       //   7470         "COPY"           224  
+         "--=GBLA,207,--",       //   7660         "GBLA"           207  
+         "--=GBLB,208,--",       //   7670         "GBLB"           208  
+         "--=GBLC,209,--",       //   7680         "GBLC"           209  
+         "--=LCLA,210,--",       //   7690         "LCLA"           210  
+         "--=LCLB,211,--",       //   7700         "LCLB"           211  
+         "--=LCLC,212,--",       //   7710         "LCLC"           212  
+         "--=PUNCH,223,--",      //   7570         "PUNCH"          223  
+         "--=WXTRN,120,--",      //   7330         "WXTRN"          120  
          };
      String[]   op_table_vector =   // Table added for RPI 1209A
         {"A400=VAE,VST,600",     //        "A400"  "VAE"      "VST" 60
@@ -1809,11 +1844,7 @@ public  class  tz390 {
      String[]   op_table_370 =   // Table added for RPI 1209A
         {"0D=BASR,RR,20",        //    320 "0D"    "BASR"     "RR"    2 // RPI 1209N
          "4D=BAS,5,50",          //   1150 "4D"    "BAS"      "RX"    5
-         "9C02=RIO,7,70",        //        "9C02"  "RIO"      "S"     7 // #533
-         "9F01=CLRCH,7,70",      //        "9F01"  "CLRCH"    "S"     7 // #533
          "AE=SIGP,10,100",       //   2540 "AE"    "SIGP"     "RS"   10
-         "B200=CONCS,7,70",      //        "B200"  "CONCS"    "S"     7 // #533
-         "B201=DISCS,7,70",      //        "B201"  "DISCS"    "S"     7 // #533
          "B210=SPX,7,70",        //   2670 "B210"  "SPX"      "S"     7
          "B211=STPX,7,70",       //   2680 "B211"  "STPX"     "S"     7
          "B212=STAP,7,70",       //   2690 "B212"  "STAP"     "S"     7
@@ -1836,6 +1867,12 @@ public  class  tz390 {
          "E500=LASP,19,190",     //   6120 "E500"  "LASP"     "SSE"  19
          "E501=TPROT,19,190",    //   6130 "E501"  "TPROT"    "SSE"  19
          };
+     String[]   op_table_370_only = // Instructions for optable 370 only   #543
+        {"9C02=RIO,7,70",        //        "9C02"  "RIO"      "S"     7 // #543
+         "9F01=CLRCH,7,70",      //        "9F01"  "CLRCH"    "S"     7 // #543
+         "B200=CONCS,7,70",      //        "B200"  "CONCS"    "S"     7 // #543
+         "B201=DISCS,7,70",      //        "B201"  "DISCS"    "S"     7 // #543
+         };                                                             // #543
      String[]   op_table_370_directives = // Table added for RPI 1209A
         {"--=ACONTROL,147,--",   //   7595         "ACONTROL"       147 /RPI 368
          "--=ADATA,132,--",      //   7450         "ADATA"          132
@@ -1843,7 +1880,6 @@ public  class  tz390 {
          "--=AINSERT,204,--",    //   7630         "AINSERT"        204
          "--=ALIAS,106,--",      //   7190         "ALIAS"          106
          "--=AMODE,107,--",      //   7200         "AMODE"          107
-//       "--=ACALLPRM,228,--",   //   "ACALLPRM" resets ACALL parms just before AENTRY //  DSH #375 rename APARM to ACALLPRM #533
          "--=AREAD,206,--",      //   7650         "AREAD"          206
          "--=ASPACE,126,--",     //   7390         "ASPACE"         126
          "--=CATTR,108,--",      //   7210         "CATTR"          108
@@ -1869,6 +1905,7 @@ public  class  tz390 {
          "0B=BSM,RR,20",         //    300 "0B"    "BSM"      "RR"    2 // RPI 1209N
          "0C=BASSM,RR,20",       //    310 "0C"    "BASSM"    "RR"    2 // RPI 1209N
          "99=TRACE,10,100",      //   1790 "99"    "TRACE"    "RS"   10
+         "B214=SIE,7,70",        //                                     // #543
          "B21A=CFC,7,70",        //   2720 "B21A"  "CFC"      "S"     7
          "B222=IPM,14,140",      //   2740 "B222"  "IPM"      "RRE"  14
          "B22D=DXR,14,142",      //   2850 "B22D"  "DXR"      "RRE"  14
@@ -3567,66 +3604,90 @@ public void create_opcodes()  // Routine added for RPI 1209
         ||  opt_allow)                       // #533
            {process_opcodes(op_table_z390);  // #533
             }                                // #533
+        if (opt_optable.equals("360-20"))                      // #543
+           {process_opcodes(op_table_360_20);                  // #543
+            process_opcodes(op_table_360_20_only);             // #543
+            process_opcodes(op_table_360_20_directives);       // #543
+            process_opcodes(op_table_360_20_only_directives);  // #543
+            }                                                  // #543
         if (opt_optable.equals("DOS"))
-           {process_opcodes(op_table_DOS);
+           {process_opcodes(op_table_360_20);                  // #543
+            process_opcodes(op_table_DOS);
+            process_opcodes(op_table_DOS_370);                 // #543
+            process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             }
         if (opt_optable.equals("370"))
-           {process_opcodes(op_table_DOS);
+           {process_opcodes(op_table_360_20);                  // #543
+            process_opcodes(op_table_DOS);
+            process_opcodes(op_table_DOS_370);                 // #543
             process_opcodes(op_table_370);
+            process_opcodes(op_table_370_only);
             process_opcodes(op_table_vector); // #533
+            process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
         if (opt_optable.equals("XA"))
-           {process_opcodes(op_table_DOS);
+           {process_opcodes(op_table_360_20);          // #543
+            process_opcodes(op_table_DOS);
             process_opcodes(op_table_370);
             process_opcodes(op_table_vector); // #533
             process_opcodes(op_table_XA);
+            process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
         if (opt_optable.equals("ESA"))
-           {process_opcodes(op_table_DOS);
+           {process_opcodes(op_table_360_20);          // #543
+            process_opcodes(op_table_DOS);
             process_opcodes(op_table_370);
             process_opcodes(op_table_vector); // #533
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
+            process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
         if (opt_optable.equals("ZOP"))
-           {process_opcodes(op_table_DOS);
+           {process_opcodes(op_table_360_20);          // #543
+            process_opcodes(op_table_DOS);
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
             process_opcodes(op_table_ZOP);
+            process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
         if (opt_optable.equals("YOP"))
-           {process_opcodes(op_table_DOS);
+           {process_opcodes(op_table_360_20);          // #543
+            process_opcodes(op_table_DOS);
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
             process_opcodes(op_table_ZOP);
             process_opcodes(op_table_YOP);
+            process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
         if (opt_optable.equals("Z9"))                   // #503
-           {process_opcodes(op_table_DOS);
+           {process_opcodes(op_table_360_20);           // #543
+            process_opcodes(op_table_DOS);
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
             process_opcodes(op_table_ZOP);
             process_opcodes(op_table_YOP);
             process_opcodes(op_table_ZS3);
+            process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
         if (opt_optable.equals("Z10"))                  // #503
-           {process_opcodes(op_table_DOS);
+           {process_opcodes(op_table_360_20);           // #543
+            process_opcodes(op_table_DOS);
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
@@ -3634,12 +3695,14 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_YOP);
             process_opcodes(op_table_ZS3);
             process_opcodes(op_table_ZS4);
+            process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
         // logic for optables Z11-Z14 is missing. See issue #510
         if (opt_optable.equals("Z15"))  // rpi 2202
-           {process_opcodes(op_table_DOS);
+           {process_opcodes(op_table_360_20);          // #543
+            process_opcodes(op_table_DOS);
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
@@ -3648,11 +3711,13 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_ZS3);
             process_opcodes(op_table_ZS4);
             process_opcodes(op_table_Z15);  // rpi 2202
+            process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
         if (opt_optable.equals("Z16"))               // #503
-           {process_opcodes(op_table_DOS);              // #503
+           {process_opcodes(op_table_360_20);           // #543
+            process_opcodes(op_table_DOS);              // #503
             process_opcodes(op_table_370);              // #503
             process_opcodes(op_table_XA);               // #503
             process_opcodes(op_table_ESA);              // #503
@@ -3662,13 +3727,15 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_ZS4);              // #503
             process_opcodes(op_table_Z15);              // #503
             process_opcodes(op_table_Z16);              // #503
+            process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);   // #503
             process_opcodes(op_table_370_directives);   // #503
             }                                           // #503
         if (opt_optable.equals("UNI")         // #533
         ||  opt_optable.equals("DFLT")        // #533
         ||  opt_optable.equals("Z390"))       // #533
-           {process_opcodes(op_table_DOS);
+           {process_opcodes(op_table_360_20); // #543
+            process_opcodes(op_table_DOS);
             process_opcodes(op_table_370);
             if (opt_vector) // RPI VF01
                {process_opcodes(op_table_vector);
@@ -3681,6 +3748,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_ZS4);
             process_opcodes(op_table_Z15); // rpi 2202
             process_opcodes(op_table_UNI);
+            process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
@@ -4456,7 +4524,7 @@ private void check_options(){
             }
     // Suboption LIST for options MACHINE/OPTABLE is disallowed for optable UNI in compatibility mode   // #503
     if (opt_optable.equals("UNI") && opt_optable_list.equals("LIST") && !opt_allow)                     // #503
-       {abort_error(30,"option LIST for optable UNI only allow in non-compatibility mode");             // #503
+       {abort_error(30,"option LIST for optable UNI only allowed in non-compatibility mode");           // #543
         }                                                                                               // #503
     // Check vector support parameters RPI VF01
     if (opt_vsectsize != 8
@@ -4694,7 +4762,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                for(int i = 0; i < machine_option_id.length; i++)                   // #503
                   {if(machine_option_id[i].equals(opt_machine))                    // #503
                      {opt_machine_optable = machines_optable[i];                   // #503
-                      opt_optable         = optables_optable[i];                   // #503
+               //**!!       opt_optable         = optables_optable[i];             // #543 I think this one needs to go ...
                       break;                                                       // #503
                       }                                                            // #503
                    }                                                               // #503
