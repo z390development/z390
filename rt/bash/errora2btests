@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# errora2btests: regression test A2B error
+
+# global variable containing name of script; used by error function
+scriptName="errora2btests"
+
+########################################
+# print error message and exit
+#
+# input:
+#   $1 name of program for the error
+#   $2 program expected return code
+#   $3 program actual return code
+########################################
+
+function error {
+    echo "$scriptName ERROR: $1 expected RC=$2 but actual RC=$3; exiting"
+    exit 8
+}
+
+#set -e             # exit on all errors; not for this script
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
+
+prog="A2BE1"
+bash/asm rt/mlc/$prog
+rc=$?
+if [ $rc -ne 12 ]; then error "$prog" 12 $rc; fi
+
+prog="A2BE2"
+bash/asm rt/mlc/$prog
+rc=$?
+if [ $rc -ne 12 ]; then error "$prog" 12 $rc; fi
+
+# if we get here, there were no errors
+rc=0
+echo "$scriptName exiting with RC=$rc"
+exit $rc

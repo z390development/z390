@@ -184,7 +184,7 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
 &A2B     SETC  A2B(-7)
          MNOTE 'A2B(-7)=&A2B'
          AIF   ('&A2B' NE '11111111111111111111111111111001').A2ERR
-*        TODO Put next in error test; did generate errors
+*        Put next (error) test in separate test  #999
 *&A2B     SETC  A2B(2345678901)         error; too large
 *         MNOTE 'A2B(2345678901)=&A2B'
 ** ASMA037E Illegal self-defining value - 2345678901)
@@ -404,17 +404,7 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
 &C2B     SETC  C2B('')
          MNOTE 'C2B('''')=>&C2B<'
          AIF   (K'&C2B NE 0).C2ERR
-***********************************************************************
-*        TODO how to type the null character?
-*             Was able to do so on z/OS then download file.
-*             See /home/john/z390/tests/JJGOPR3.MLC.
-*             Text editor gedit complained about the 0x00 value.
-*             DO NOT ATTEMPT TO SAVE THE FILE ON A PC!!!
-*
-*             Running "bash/asm JJGOPR3 'chksrc(0)'" with next 3
-*             lines uncommented with null character in place of n
-*             yielded &C2B set to '00000000' as expected.
-***********************************************************************
+*        Put next (successful) test in separate test  #999
 *&C2B     SETC  C2B('n')               n = null char = X'00'
 *         MNOTE 'C2B(''n'')=&C2B'
 *         AIF   ('&C2B' NE '00000000').C2ERR
@@ -450,9 +440,7 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
 &C2D     SETC  C2D('')                 at most 4 characters
          MNOTE 'C2D('''')=&C2D'
          AIF   ('&C2D' NE '+0').C2ERR
-***********************************************************************
-*        TODO: See JJGOPR3.MLC for next test; it succeeded.
-***********************************************************************
+*        Put next (successful) test in separate test  #999
 *&C2D     SETC  C2D('nj')              n = null character = X'00'
 *         MNOTE 'C2D(''nj'')=&C2D'
 *         AIF   ('&C2D' NE '+145').C2ERR
@@ -481,9 +469,7 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
 &C2X     SETC  C2X('')
          MNOTE 'C2X('''')=>&C2X<'
          AIF   (K'&C2X NE 0).C2ERR
-***********************************************************************
-*        TODO: See JJGOPR3.MLC for next test; it succeeded.
-***********************************************************************
+*        Put next (successful) test in separate test  #999
 *&C2X     SETC  C2X('n')                 n = null character = X'00'
 *         MNOTE 'C2X(''n'')=&C2X'
 *         AIF   ('&C2X' NE '00').C2ERR
@@ -899,11 +885,7 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
 &ISBIN   SETA  ISBIN('12121')                         non-binary digits
          MNOTE 'ISBIN(''12121'')=&ISBIN' 
          AIF   (&ISBIN NE 0).ISERR
-***********************************************************************
-*        TODO: Next test now produces
-*                MNOTE 8,'ISBIN invalid operand value; length is zero'
-*              on z390, as it should. Need to add test to error tests
-* 
+*        Put next (error) test in separate test  #999
 *ISBIN   SETA  ISBIN('')                              error condition 
 *        MNOTE 'ISBIN('''')=&ISBIN' 
 *        AIF   (&ISBIN NE 0).ISERR 
@@ -941,11 +923,7 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
 &ISDEC   SETA  ISDEC('00000000005')            too many digits; max 10
          MNOTE 'ISDEC(''00000000005'')=&ISDEC' 
          AIF   (&ISDEC NE 0).ISERR 
-***********************************************************************
-*        TODO: Next test now produces
-*                MNOTE 8,'ISDEC invalid operand value; length is zero'
-*              on z390, as it should. Need to add test to error tests
-* 
+*        Put next (error) test in separate test  #999
 *&ISDEC   SETA  ISDEC('')                      error condition
 *         MNOTE 'ISDEC('''')=&ISDEC' 
 *         AIF   (&ISDEC NE 0).ISERR
@@ -980,11 +958,7 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
 &ISHEX   SETA  ISHEX('123456789')              too many chars; 8 max 
          MNOTE 'ISHEX(''123456789'')=&ISHEX' 
          AIF   (&ISHEX NE 0).ISERR
-***********************************************************************
-*        TODO: Next test now produces
-*                MNOTE 8,'ISHEX invalid operand value; length is zero'
-*              on z390, as it should. Need to add test to error tests
-* 
+*        Put next (error) test in separate test  #999
 *&ISHEX   SETA  ISHEX('')                      error condition
 *         MNOTE 'ISHEX('''')=&ISHEX' 
 *         AIF   (&ISHEX NE 0).ISERR
@@ -1022,11 +996,7 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
 &ISSYM   SETA  ISSYM('1234_Abcd')              invalid initial char
          MNOTE 'ISSYM(''1234_Abcd'')=&ISSYM' 
          AIF   (&ISSYM NE 0).ISERR
-***********************************************************************
-*        TODO: Next test now produces
-*                MNOTE 8,'ISSYM invalid operand value; length is zero'
-*              on z390, as it should. Need to add test to error tests
-* 
+*        Put next (error) test in separate test  #999
 *&ISSYM   SETA  ISSYM('')                      error condition
 *         MNOTE 'ISSYM('''')=&ISSYM' 
 *         AIF   (&ISSYM NE 0).ISERR
@@ -1136,10 +1106,7 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
 &SLA     SETA  (X'3FFFFFFF' SLA 1)
          MNOTE '(X''3FFFFFFF'' SLA 1) = &SLA'
          AIF   (&SLA NE X'7FFFFFFE').SLAERR
-***********************************************************************
-*         TODO: Next 2 tests result in arithmetic overflow
-*               Create error tests
-*
+*        Put next two (error) test in separate tests  #999
 *&SLA     SETA  (X'7FFFFFFF' SLA 1)            ASMA075E arith overflow
 *         MNOTE '(X''7FFFFFFF'' SLA 1) = &SLA'
 *         AIF   (&SLA NE X'7FFFFFFE').SLAERR
