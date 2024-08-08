@@ -139,8 +139,8 @@ ZVSAM | E | 0 | ZVSAM 0=no vsam, 1=zvsam1 support, 2=zvsam2 support.
 
 | Machine   | Machine   | Optable | Optable | Description                                                                  |
 |-----------|-----------|---------|---------|------------------------------------------------------------------------------|
+| S360-20   |           | 360-20  |         | z390 extension: S360-20 specific subset of DOS instructions                  |
 |           |           | DOS     |         |                                                                              |
-| S360-20   |           | 360-20  |         | z390 extension: DOS + S360-20 specific instructions                          |
 | S370      |           | 370     |         |                                                                              |
 | S370XA    | ARCH-0    | XA      |         |                                                                              |
 | S370ESA   | ARCH-1    | ESA     |         | Synonyms for ESA                                                             |
