@@ -74,6 +74,8 @@ force a test run                          | `gradlew test --rerun`
 run a specific test/testset               | `gradlew test --tests 'pattern'`
 run all zCobol tests                      | `gradlew test --tests '*cbl*'`
 
+Please note: to issue any gradlew command, you have to make the z390test subdirectory your current directory.
+
 ## Proposing new functionality
 
 Enhancements are welcome, but be aware that you are stepping into 
