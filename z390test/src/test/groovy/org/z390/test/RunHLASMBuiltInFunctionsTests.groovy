@@ -9,7 +9,6 @@ class RunHLASMBuiltInFunctionsTests extends z390Test {
      */
      
     var options = ["SYSMAC(${basePath("mac")})"]
-    var os = System.getProperty("os.name")
 
     @Test
     void test_TESTOPR2() {
@@ -28,7 +27,7 @@ class RunHLASMBuiltInFunctionsTests extends z390Test {
         
         // Where report of test done using code is written
         
-        this.env.put('REPORT', basePath('rt', 'mlc', 'TOPR2.TXT'))
+        this.env.put('REPORT', basePath('rt', 'mlc', 'TOPR2.TST'))
         
         int rc = this.asmlg(basePath("rt", "mlc", "TOPR2"), *options)
         this.printOutput()
