@@ -1925,9 +1925,6 @@ public  class  tz390 {
          "B244=SQDR,14,142",     //   3030 "B244"  "SQDR"     "RRE"  14
          "B245=SQER,14,142",     //   3040 "B245"  "SQER"     "RRE"  14
          };
-     String[]   op_table_XA_notsupported = // Table added for RPI 1209A, entries removed for RPI 1209J
-        {"SIE      S    B214 D2(B2)",
-         };
      String[]   op_table_ESA =   // Table added for RPI 1209A
         {"0101=PR,1,10",         //     10 "0101"  "PR"       "E"     1
          "0107=SCKPF,1,10",      //     30 "0107"  "SCKPF"    "E"     1
@@ -3318,7 +3315,7 @@ public  class  tz390 {
      String[]   op_table_z390 =  // Table added for RPI 1209
         {"83=DIAGNOSE,10,100",     // RPI 2213 ADD DIAGNOSE/DIAG RS
          "83=DIAG,10,100",         // RPI 2213 ADD DIAGNOSE/DIAG RS
-         "B214=SIE,7,70",          // RPI 2213 ADD START INTERPRETIVE EXEC S
+//       "B214=SIE,7,70",          // RPI 2213 ADD START INTERPRETIVE EXEC S    #543 - moved to optable for XA
          "B22E=PGIN,14,140",     //   2860 "B22E"  "PGIN"     "RRE"  14
          "B22F=PGOUT,14,140",    //   2870 "B22F"  "PGOUT"    "RRE"  14
          };
