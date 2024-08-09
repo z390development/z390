@@ -1,0 +1,34 @@
+* Test HLASM built-in functions that have X'00' in argument string
+C2BDX00  CSECT
+         LCLC  &C2B,&C2D,&C2X
+*
+         LCLC  &NULL,&NULLj
+*
+*        &NULL,&NULLj values taken from HLASM LangRef B2C examples
+&NULL    SETC  B2C('0')    value 'n' = null char = X'00'
+&NULLj   SETC  '&NULL'.'j' value 'nj'
+*
+*        HLASM LangRef examples
+*
+*&C2B    SETC  C2B('n')    n = null char = X'00'
+&C2B     SETC  C2B('&NULL')
+         MNOTE 'C2B(''&NULL'')=&C2B'
+         AIF   ('&C2B' EQ '00000000').OKC2B
+         MNOTE 8,'C2B: Generated value not equal to expected value'
+.OKC2B   ANOP
+*
+*&C2D    SETC  C2D('nj')   n = null char = X'00'
+&C2D     SETC  C2D('&NULLj')
+         MNOTE 'C2D(''&NULLj'')=&C2D'
+         AIF   ('&C2D' EQ '+145').OKC2D
+         MNOTE 8,'C2D: Generated value not equal to expected value'
+.OKC2D   ANOP
+*
+*&C2X    SETC  C2X('n')    n = null char = X'00'
+&C2X     SETC  C2X('&NULL')
+         MNOTE 'C2X(''&NULL'')=&C2X'
+         AIF   ('&C2X' EQ '00').OKC2X
+         MNOTE 8,'C2X: Generated value not equal to expected value'
+.OKC2X   ANOP
+*
+         END

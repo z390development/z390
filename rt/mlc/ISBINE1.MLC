@@ -1,0 +1,20 @@
+* Test ISBIN built-in function error
+ISBINE1  CSECT
+         SR    15,15
+         BR    14
+*
+         LCLA  &A 
+*
+*        HLASM LangRef example
+*
+*&A      SETA  123                 Preset return value
+&A       SETA  123
+*&A      ISBIN('')                 Error
+&A       SETA  ISBIN('')           0
+         MNOTE 'ISBIN('''')=&A'
+         DC    F'&A'
+         AIF   (&A EQ 0).OK
+         MNOTE 12,'Error; expected value is 0'
+.OK      ANOP
+*
+         END 

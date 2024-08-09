@@ -1,0 +1,1410 @@
+***********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License 
+* along with this program; if not, see https://www.gnu.org/licenses.
+***********************************************************************
+* 2024-07-25 #509 New program
+***********************************************************************
+*
+*
+***********************************************************************
+* TESTOPR2 modelled on original rt/test/TESTOPR1.MLC
+***********************************************************************
+*
+*        Generate a box with border character and containing 'text'
+*
+*        MBOX 'Hello World',BORDER=$  gemerates
+*
+*        $$$$$$$$$$$$$$$$$$$$$$$
+*        $$$   Hello World   $$$
+*        $$$$$$$$$$$$$$$$$$$$$$$
+*
+         MACRO
+         MBOX &TEXT,&BORDER=*
+         LCLA &I,&N
+         LCLC &L,&R,&M,&S,&T
+         AIF   (K'&TEXT LT 3).EXIT     No box if no text
+&S       SETC  '*'                     Default border character
+         AIF   (K'&BORDER EQ 0).BOK
+&S       SETC  '&BORDER'(1,1)          Get supplied border character
+.BOK     ANOP
+&M       SETC  '&TEXT'(2,K'&TEXT-2)    Extract message from 'text'
+&L       SETC  '&S'.'&S'.'&S'.'   '  ' Left side and pad
+&R       SETC  '   '.'&S'.'&S'.'&S'    Pad and right side
+&I       SETA  1
+&N       SETA  K'&L+k'&M+K'&R          Width of box (height is 3)
+&T       SETC  ''
+.L1      ANOP                          Build top and bottom border
+         AIF   (&I GT &N).EL1
+&T       SETC  '&T'.'&S'
+&I       SETA  &I+1
+         AGO   .L1
+.EL1     ANOP
+.*       Display the box
+         MNOTE '&T'
+         MNOTE '&L.&M.&R'
+         MNOTE '&T'
+         AGO   .EXIT
+.EXIT    ANOP
+         MEND
+*
+*        Variables used by most of the tests
+*
+         LCLC  &AMP
+         LCLC  &C,&DC,&X,&DX
+         LCLA  &K
+         LCLA  &NDX
+*
+***********************************************************************
+* TESTOPR2 is modelled on the previous TESTOPR1 test program to test
+* the HLASM built-in functions. TESTOPR1 tests a built-in function
+* as follows:
+*     1. Invoke the built-in function
+*     2. Use MNOTE to display the result
+*     3. Check the result using AIF, branching to an error MNOTE
+*        if the generated value is not the expected value.
+* For example, the TESTOPR1 test for the X2C built-in function is
+*
+*     &X2C     SETC  (X2C('F1'))
+*              MNOTE 'X2C(''F1'')=&X2C'
+*              AIF   ('&X2C'(4,1) NE '1').X2ERR
+*              ...
+*     .X2ERR   MNOTE 12,'X2 OPERATOR ERROR'
+*              AGO   .EXIT
+*              ...
+*
+* Note that if a test fails, all remaining tests are skipped. In
+* addition, the assembly of TESTOPR2 fails, so neither the link
+* nor the execution is done.
+*
+*----------------------------------------------------------------------
+*
+* TESTOPR2 also uses this technique. However, some tests have been
+* moved to a new test program, rt/mlc/TOPR2.MLC, which does its
+* tests using assembler code and DC statements to invoke and
+* verify results. In addition, the HLASM Language Reference examples
+* for each built-in function are added as TESTOPR2 tests (there are
+* a few exceptions). Where code tests in TOPR2 completely replace
+* the corresponding MNOTE.AIF tests, the original tests are
+* left in but branched around via AGO.
+*
+*----------------------------------------------------------------------
+*
+* Registers on entry:
+*     R15  entry point
+*     R14  return address
+*     R13  usable save area
+*
+* Registers on exit:
+*     R0 -- R14  as at entry
+*     R15  return code
+*            0  always
+*
+* Note: Since all tests are done via MNOTE and AIF, if a test fails
+*       then the assembly fails due to an error MNOTE. Therefore,
+*       if the assembly succeeds, all tests have succeeded.
+*
+***********************************************************************
+*
+TESTOPR2 CSECT
+         STM   14,12,12(13)        Save caller's registers
+         LR    12,15               R12 = base register
+         USING TESTOPR2,12         Establish addressability
+*
+         WTO   'TESTOPR2  Test HLASM built-in functions via MNOTE,AIF'
+*
+         SR    15,15               Set return code
+         RETURN (14,12),RC=(15)    Restore R14, R0-R12; return
+*
+         LTORG
+*
+***********************************************************************
+*        SYM equate used for SYSATTRA, SYSATTRP tests
+*
+*        RETURN macro in main code used in operator type O tests
+***********************************************************************
+*
+SYM      EQU   1,2,C'3',C'PGMA',gr32
+*
+*SYM EQU   val,len attr val, type attr val, pgm type val, asm type val
+*
+.LOOP    ANOP
+&PASS    SETA  &PASS+1
+         AIF   (&PASS GE 2).ENDLOOP
+         MNOTE 'TESTOPR1 Pass &PASS'
+***********************************************************************
+         MBOX  'Test UPPER and LOWER'
+*AGO .SKPUL
+&MC      SETC  'aBcDeFg'
+&LC      SETC  'abc'
+         AIF   ('&LC' NE 'abc').LCERR
+&LC      SETC  '&MC'
+         AIF   ('&LC' NE 'aBcDeFg').LCERR
+*&UC      SETC  (UPPER '&LC')
+&UC      SETC  (UPPER '&LC')
+         AIF   ('&UC' NE 'ABCDEFG').UCERR
+&UC      SETC  'ABC'
+         AIF   ('&UC' NE 'ABC').UCERR
+&UC      SETC  '&MC'
+         AIF   ('&UC' NE 'aBcDeFg').UCERR
+*&LC      SETC  (LOWER '&UC')
+&LC      SETC  (LOWER '&UC')
+         AIF   ('&LC' NE 'abcdefg').LCERR
+.SKPUL ANOP
+***********************************************************************
+         MBOX  'Test ?2? functions'
+*AGO .SKPX2Y
+*======================================================================
+         MNOTE '********** Begin A2B tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&A2B     SETC  A2B(0)
+         MNOTE 'A2B(0)=&A2B'
+         AIF   ('&A2B' NE '00000000000000000000000000000000').A2ERR
+&A2B     SETC  A2B(5)
+         MNOTE 'A2B(5)=&A2B'
+         AIF   ('&A2B' NE '00000000000000000000000000000101').A2ERR
+&A2B     SETC  A2B(1022)
+         MNOTE 'A2B(1022)=&A2B'
+         AIF   ('&A2B' NE '00000000000000000000001111111110').A2ERR
+&A2B     SETC  A2B(-7)
+         MNOTE 'A2B(-7)=&A2B'
+         AIF   ('&A2B' NE '11111111111111111111111111111001').A2ERR
+*        Put next (error) test in separate test  #999
+*&A2B     SETC  A2B(2345678901)         error; too large
+*         MNOTE 'A2B(2345678901)=&A2B'
+** ASMA037E Illegal self-defining value - 2345678901)
+
+*----------------------------------------------------------------------
+*        z390 tests
+
+&A2B     SETC  A2B(4)
+         MNOTE 'A2B(4)=&A2B'
+         AIF   ('&A2B' NE '00000000000000000000000000000100').A2ERR
+&A2B     SETC  A2B(-4)
+         MNOTE 'A2B(-4)=&A2B'
+         AIF   ('&A2B' NE '11111111111111111111111111111100').A2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   A2B tests **********'
+*======================================================================
+         MNOTE '********** Begin A2C tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&A2C     SETC  A2C(0)
+         MNOTE 'A2C(0)=>&A2C<'
+         AIF   (K'&A2C NE 4).A2ERR
+         DC    C'&A2C'             X'00000000'
+&A2C     SETC  A2C(241)
+         MNOTE 'A2C(241)=>&A2C<'
+         AIF   ('&A2C'(4,1) NE '1').A2ERR
+         DC    C'&A2C'             X'000000',C'1'
+&A2C     SETC  A2C(20046)
+         MNOTE 'A2C(20056)=>&A2C<'
+         AIF   ('&A2C'(3,2) NE '++').A2ERR
+         DC    C'&A2C'             X'0000',C'++'
+&A2C     SETC  A2C(-252645136)
+         MNOTE 'A2C(-252645136)=>&A2C<'
+         AIF   ('&A2C' NE '0000').A2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   A2C tests **********'
+*======================================================================
+         MNOTE '********** Begin A2D tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&A2D     SETC  A2D(0)
+         MNOTE 'A2D(0)=>&A2D<'
+         AIF   ('&A2D' NE '+0').A2ERR
+&A2D     SETC  A2D(241)
+         MNOTE 'A2D(241)=>&A2D<'
+         AIF   ('&A2D' NE '+241').A2ERR
+&A2D     SETC  A2D(16448)
+         MNOTE 'A2D(16448)=>&A2D<'
+         AIF   ('&A2D' NE '+16448').A2ERR
+&A2D     SETC  A2D(-3)
+         MNOTE 'A2D(-3)=>&A2D<'
+         AIF   ('&A2D' NE '-3').A2ERR
+*----------------------------------------------------------------------
+*        z390 tests
+*
+&A2D     SETC  A2D(-241)
+         MNOTE 'A2D(-241)=>&A2D<'
+         AIF   ('&A2D' NE '-241').A2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   A2D tests **********'
+*======================================================================
+         MNOTE '********** Begin A2X tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&A2X     SETC  A2X(0)
+         MNOTE 'A2X(0)=>&A2X<'
+         AIF   ('&A2X' NE '00000000').A2ERR
+&A2X     SETC  A2X(10)
+         MNOTE 'A2X(10)=>&A2X<'
+         AIF   ('&A2X' NE '0000000A').A2ERR
+&A2X     SETC  A2X(257)
+         MNOTE 'A2X(257)=>&A2X<'
+         AIF   ('&A2X' NE '00000101').A2ERR
+&A2X     SETC  A2X(1022)
+         MNOTE 'A2X(1022)=>&A2X<'
+         AIF   ('&A2X' NE '000003FE').A2ERR
+&A2X     SETC  A2X(-7)
+         MNOTE 'A2X(-7)=>&A2X<'
+         AIF   ('&A2X' NE 'FFFFFFF9').A2ERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&A2X     SETC  A2X(241)
+         MNOTE 'A2X(241)=>&A2X<'
+         AIF   ('&A2X' NE '000000F1').A2ERR
+&A2X     SETC  A2X(-241)
+         MNOTE 'A2X(-241)=>&A2X<'
+         AIF   ('&A2X' NE 'FFFFFF0F').A2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   A2X tests **********'
+*======================================================================
+         MNOTE '********** Begin B2A tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&B2A     SETA  B2A('')
+         MNOTE 'B2A('''')=&B2A'
+         AIF   (&B2A NE 0).B2ERR
+&B2A     SETA  B2A('0000000101')
+         MNOTE 'B2A(''0000000101'')=&B2A'
+         AIF   (&B2A NE 5).B2ERR
+&B2A     SETA  B2A('11111111111111111111111111111110')
+&SB2A    SETC  SIGNED(&B2A)
+         MNOTE 'B2A(''11111111111111111111111111111110'')=&SB2A'
+         AIF   (&B2A NE -2).B2ERR
+         AIF   ('&SB2A' NE '-2').B2ERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&B2A     SETA  B2A('100')
+         MNOTE 'B2A(''100'')=&B2A'
+         AIF   (&B2A NE 4).B2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   B2A tests **********'
+*======================================================================
+         MNOTE '********** Begin B2C tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&B2C     SETC  B2C('11110011')
+         MNOTE 'B2C(''11110011'')=&B2C'
+         AIF   ('&B2C' NE '3').B2ERR
+&B2C     SETC  B2C('101110011110001')
+         MNOTE 'B2C(''101110011110001'')=&B2C'
+         AIF   ('&B2C' NE '*1').B2ERR
+&B2C     SETC  B2C('0')                        EBCDIC null character
+         MNOTE 'B2C(''0'')=>&B2C<'
+         AIF   (K'&B2C NE 1).B2ERR
+         DC    C'&B2C'                         value X'00'
+&B2C     SETC  B2C('00010010001')
+         MNOTE 'B2C(''00010010001'')=&B2C'
+         AIF   (K'&B2C NE 2).B2ERR
+         AIF   ('&B2C'(2,1) NE 'j').B2ERR
+         DC    C'&B2C'                         value X'00',C'j'
+&B2C     SETC  B2C('000000000')                two EBCDIC nulls
+         MNOTE 'B2C(''000000000'')=&B2C'
+         AIF   (K'&B2C NE 2).B2ERR
+         DC    C'&B2C'                         value X'0000'
+&B2C     SETC  B2C('')                         null string
+         MNOTE 'B2C('''')=>&B2C<'              null string
+         AIF   (K'&B2C NE 0).B2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   B2C tests **********'
+*======================================================================
+         MNOTE '********** Begin B2D tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&B2D     SETC  B2D('')
+         MNOTE 'B2D('''')=&B2D'
+         AIF   ('&B2D' NE '+0').B2ERR
+&B2D     SETC  B2D('00010010001')
+         MNOTE 'B2D(''00010010001'')=&B2D'
+         AIF   ('&B2D' NE '+145').B2ERR
+&B2D     SETC  B2D('11110001')
+         MNOTE 'B2D(''11110001'')=&B2D'
+         AIF   ('&B2D' NE '+241').B2ERR
+&B2D     SETC  B2D('01111111111111111111111111111111')
+         MNOTE 'B2D(''01111111111111111111111111111111'')=&B2D'
+         AIF   ('&B2D' NE '+2147483647').B2ERR
+&B2D     SETC  B2D('11111111111111111111111111110001')
+         MNOTE 'B2D(''11111111111111111111111111110001'')=&B2D'
+         AIF   ('&B2D' NE '-15').B2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   B2D tests **********'
+*======================================================================
+         MNOTE '********** Begin B2X tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&B2X     SETC  B2X('')
+         MNOTE 'B2X('''')=>&B2X<'
+         AIF   (K'&B2X NE 0).B2ERR
+&B2X     SETC  B2X('00000')
+         MNOTE 'B2X(''00000'')=&B2X'
+         AIF   ('&B2X' NE '00').B2ERR
+&B2X     SETC  B2X('0000010010001')
+         MNOTE 'B2X(''0000010010001'')=&B2X'
+         AIF   ('&B2X' NE '0091').B2ERR
+&B2X     SETC  B2X('11110001')
+         MNOTE 'B2X(''11110001'')=&B2X'
+         AIF   ('&B2X' NE 'F1').B2ERR
+&B2X     SETC  B2X('1111110001')
+         MNOTE 'B2X(''1111110001'')=&B2X'
+         AIF   ('&B2X' NE '3F1').B2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   B2X tests **********'
+*======================================================================
+         MNOTE '********** Begin C2A tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&C2A     SETA  C2A('')
+         MNOTE 'C2A('''')=&C2A'
+         AIF   (&C2A NE 0).C2ERR
+&C2A     SETA  C2A('+')
+         MNOTE 'C2A(''+'')=&C2A'
+         AIF   (&C2A NE 78).C2ERR
+&C2A     SETA  C2A('1')
+         MNOTE 'C2A(''1'')=&C2A'
+         AIF   (&C2A NE 241).C2ERR
+&C2A     SETA  C2A('0000')
+&SC2A    SETC  SIGNED(&C2A)
+         MNOTE 'C2A(''0000'')=&SC2A'
+         AIF   (&C2A NE -252645136).C2ERR
+         AIF   ('&SC2A' NE '-252645136').C2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   C2A tests **********'
+*======================================================================
+         MNOTE '********** Begin C2B tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&C2B     SETC  C2B('')
+         MNOTE 'C2B('''')=>&C2B<'
+         AIF   (K'&C2B NE 0).C2ERR
+*        Put next (successful) test in separate test  #999
+*&C2B     SETC  C2B('n')               n = null char = X'00'
+*         MNOTE 'C2B(''n'')=&C2B'
+*         AIF   ('&C2B' NE '00000000').C2ERR
+&C2B     SETC  C2B(' ')
+         MNOTE 'C2B('' '')=&C2B'
+         AIF   ('&C2B' NE '01000000').C2ERR
+&C2B     SETC  C2B('1')
+         MNOTE 'C2B(''1'')=&C2B'
+         AIF   ('&C2B' NE '11110001').C2ERR         
+&C2B     SETC  C2B('1234')
+         MNOTE 'C2B(''1234'')=&C2B'
+         AIF   ('&C2B' NE '11110001111100101111001111110100').C2ERR
+&C2B     SETC  C2B('A1')           Begin z390 tests
+         MNOTE 'C2B(''A1'')=&C2B'
+         AIF   ('&C2B' NE '1100000111110001').C2ERR
+&C2B     SETC  C2B('+')
+         MNOTE 'C2B(''+'')=&C2B'
+*        AIF   ('&C2B' NE '1100000111110001').C2ERR
+&C2B     SETC  C2B('&&')              error if only 1; returns 2
+         MNOTE 'C2B(''&&&&'')=&C2B' 
+         AIF   ('&C2B' NE '0101000001010000').C2ERR
+*z390         AIF   ('&C2B' NE '01010000').C2ERR  
+&C2B     SETC  C2B('''')              error if only 1; returns 1
+         MNOTE 'C2B('''''''')=&C2B' 
+         AIF   ('&C2B' NE '01111101').C2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   C2B tests **********'
+*======================================================================
+         MNOTE '********** Begin C2D tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&C2D     SETC  C2D('')                 at most 4 characters
+         MNOTE 'C2D('''')=&C2D'
+         AIF   ('&C2D' NE '+0').C2ERR
+*        Put next (successful) test in separate test  #999
+*&C2D     SETC  C2D('nj')              n = null character = X'00'
+*         MNOTE 'C2D(''nj'')=&C2D'
+*         AIF   ('&C2D' NE '+145').C2ERR
+&C2D     SETC  C2D('1')
+         MNOTE 'C2D(''1'')=&C2D'
+         AIF   ('&C2D' NE '+241').C2ERR
+&C2D     SETC  C2D('0000')
+         MNOTE 'C2D(''0000'')=&C2D'
+         AIF   ('&C2D' NE '-252645136').C2ERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&C2D     SETC  C2D('&&')              error if only 1; returns 2 
+         MNOTE 'C2D(''&&&&'')=&C2D' 
+         AIF   ('&C2D' NE '+20560').C2ERR 
+&C2D     SETC  C2D('''')              error if only 1; returns 1 
+         MNOTE 'C2D('''''''')=&C2D' 
+         AIF   ('&C2D' NE '+125').C2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   C2D tests **********'
+*======================================================================
+         MNOTE '********** Begin C2X tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&C2X     SETC  C2X('')
+         MNOTE 'C2X('''')=>&C2X<'
+         AIF   (K'&C2X NE 0).C2ERR
+*        Put next (successful) test in separate test  #999
+*&C2X     SETC  C2X('n')                 n = null character = X'00'
+*         MNOTE 'C2X(''n'')=&C2X'
+*         AIF   ('&C2X' NE '00').C2ERR
+&C2X     SETC  C2X('1')
+         MNOTE 'C2X(''1'')=&C2X'
+         AIF   ('&C2X' NE 'F1').C2ERR
+&C2X     SETC  C2X('a')
+         MNOTE 'C2X(''a'')=&C2X'
+         AIF   ('&C2X' NE '81').C2ERR
+&C2X     SETC  C2X('1234567R')
+         MNOTE 'C2X(''1234567R'')=&C2X'
+         AIF   ('&C2X' NE 'F1F2F3F4F5F6F7D9').C2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   C2X tests **********'
+*======================================================================
+         MNOTE '********** Begin D2A tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&D2A     SETA  D2A('')                 returns 0
+         MNOTE 'D2A('''')=&D2A'
+         AIF   (&D2A NE 0).D2ERR
+&D2A     SETA  D2A('000')
+         MNOTE 'D2A(''000'')=&D2A'
+         AIF   (&D2A NE 0).D2ERR
+&D2A     SETA  D2A('10')
+         MNOTE 'D2A(''10'')=&D2A'
+         AIF   (&D2A NE 10).D2ERR
+&D2A     SETA  D2A('+100')
+         MNOTE 'D2A(''+100'')=&D2A'
+         AIF   (&D2A NE 100).D2ERR
+&D2A     SETA  D2A('-5')
+&SD2A    SETC  SIGNED(&D2A)
+         MNOTE 'D2A(''-5'')=&SD2A'
+         AIF   (&D2A NE -5).D2ERR
+         AIF   ('&SD2A' NE '-5').D2ERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&D2A     SETA  D2A('-10')
+&SD2A    SETC  SIGNED(&D2A)
+         MNOTE 'D2A(''-10'')=&SD2A'
+         AIF   (&D2A NE -10).D2ERR
+         AIF   ('&SD2A' NE '-10').D2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   D2A tests **********'
+*======================================================================
+         MNOTE '********** Begin D2B tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&D2B     SETC  D2B('')
+         MNOTE 'D2B('''')=>&D2B<'
+         AIF   (K'&D2B NE 0).D2ERR
+&D2B     SETC  D2B('0')
+         MNOTE 'D2B(''0'')=&D2B'
+         AIF   ('&D2B' NE '00000000000000000000000000000000').D2ERR
+&D2B     SETC  D2B('+5')
+         MNOTE 'D2B(''5'')=&D2B'
+         AIF   ('&D2B' NE '00000000000000000000000000000101').D2ERR
+&D2B     SETC  D2B('1022')
+         MNOTE 'D2B(''1022'')=&D2B'
+         AIF   ('&D2B' NE '00000000000000000000001111111110').D2ERR
+&D2B     SETC  D2B('-7')
+         MNOTE 'D2B(''-7'')=&D2B'
+         AIF   ('&D2B' NE '11111111111111111111111111111001').D2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   D2B tests **********'
+*======================================================================
+         MNOTE '********** Begin D2C tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+*        For the first example, HLASM LR states "indicates an error".
+*        However, HLASM does not generate an error and returns
+*        an empty string.
+&D2C     SETC  D2C('')                 indicates an error; set to ''
+         MNOTE 'D2C('''')=>&D2C<'
+         AIF   (K'&D2C NE 0).D2ERR
+&D2C     SETC  D2C('0')                four EBCDIC null bytes
+         MNOTE 'D2C(''0'')=&D2C'
+         AIF   (K'&D2C NE 4).D2ERR
+         DC    C'&D2C'                 X'00000000'
+&D2C     SETC  D2C('+126')
+         MNOTE 'D2C(''+126'')=&D2C'
+         AIF   ('&D2C'(4,1) NE '=').D2ERR
+         DC    C'&D2C'                 X'000000',C'='
+&D2C     SETC  D2C('247')
+         MNOTE 'D2C(''247'')=&D2C'
+         AIF   ('&D2C'(4,1) NE '7').D2ERR
+         DC    C'&D2C'                 X'000000',C'7'
+&D2C     SETC  D2C('23793')
+         MNOTE 'D2C(''23793'')=&D2C'
+         AIF   ('&D2C'(3,2) NE '*1').D2ERR
+         DC    C'&D2C'                 X'0000',C'*1'
+&D2C     SETC  D2C('-7')
+         MNOTE 'D2C(''-7'')=&D2C'
+         AIF   ('&D2C'(4,1) NE '9').D2ERR
+         DC    C'&D2C'                 X'FFFFFF',C'9'
+*----------------------------------------------------------------------
+         MNOTE '********** End   D2C tests **********'
+*======================================================================
+         MNOTE '********** Begin D2X tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+*        For the first example, HLASM LR states "indicates an error".
+*        However, HLASM does not generate an error and returns
+*        an empty string.
+&D2X     SETC  D2X('')                indicates an error; set to ''
+         MNOTE 'D2X('''')=>&D2X<'
+         AIF   (K'&D2X NE 0).D2ERR
+&D2X     SETC  D2X('0')
+         MNOTE 'D2X(''0'')=&D2X'
+         AIF   ('&D2X' NE '00000000').D2ERR
+&D2X     SETC  D2X('+5')
+         MNOTE 'D2X(''+5'')=&D2X'
+         AIF   ('&D2X' NE '00000005').D2ERR
+&D2X     SETC  D2X('255')
+         MNOTE 'D2X(''255'')=&D2X'
+         AIF   ('&D2X' NE '000000FF').D2ERR
+&D2X     SETC  D2X('01022')
+         MNOTE 'D2X(''01022'')=&D2X'
+         AIF   ('&D2X' NE '000003FE').D2ERR
+&D2X     SETC  D2X('-7')
+         MNOTE 'D2X(''-7'')=&D2X'
+         AIF   ('&D2X' NE 'FFFFFFF9').D2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   D2X tests **********'
+*======================================================================
+         MNOTE '********** Begin X2A tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&X2A     SETA  X2A('00000101')
+         MNOTE 'X2A(''00000101'')=&X2A'
+         AIF   (&X2A NE 257).X2ERR
+&X2A     SETA  X2A('C1')
+         MNOTE 'X2A(''C1'')=&X2A'
+         AIF   (&X2A NE 193).X2ERR
+&X2A     SETA  X2A('')
+         MNOTE 'X2A('''')=&X2A'
+         AIF   (&X2A NE 0).X2ERR
+&X2A     SETA  X2A('FFFFFFF0')
+&SX2A    SETC  SIGNED(&X2A)
+         MNOTE 'X2A(''FFFFFFF0'')=&SX2A'
+         AIF   (&X2A NE -16).X2ERR
+         AIF   ('&SX2A' NE '-16').X2ERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&X2A     SETA  X2A('F1')
+         MNOTE 'X2A(''F1'')=&X2A'
+         AIF   (&X2A NE 241).X2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   X2A tests **********'
+*======================================================================
+         MNOTE '********** Begin X2B tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&X2B     SETC  X2B('')
+         MNOTE 'X2B('''')=>&X2B<'
+         AIF   (K'&X2B NE 0).X2ERR
+&X2B     SETC  X2B('00')
+         MNOTE 'X2B(''00'')=&X2B'
+         AIF   ('&X2B' NE '00000000').X2ERR
+&X2B     SETC  X2B('1')
+         MNOTE 'X2B(''1'')=&X2B'
+         AIF   ('&X2B' NE '0001').X2ERR
+&X2B     SETC  X2B('F3')
+         MNOTE 'X2B(''F3'')=&X2B'
+         AIF   ('&X2B' NE '11110011').X2ERR
+&X2B     SETC  X2B('00F3')
+         MNOTE 'X2B(''00F3'')=&X2B'
+         AIF   ('&X2B' NE '0000000011110011').X2ERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&X2B     SETC  X2B('1F')
+         MNOTE 'X2B(''1F'')=&X2B'
+         AIF   ('&X2B' NE '00011111').X2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   X2B tests **********'
+*======================================================================
+         MNOTE '********** Begin X2C tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&X2C     SETC  X2C('')
+         MNOTE 'X2C('''')=>&X2C<'
+         AIF   (K'&X2C NE 0).X2ERR
+         DC    C'>&X2C<'               C'><'
+&X2C     SETC  X2C('F3')
+         MNOTE 'X2C(''F3'')=&X2C'
+         AIF   ('&X2C' NE '3').X2ERR
+&X2C     SETC  X2C('0')
+         MNOTE 'X2C(''0'')=&X2C'
+         AIF   (K'&X2C NE 1).X2ERR
+         DC    C'&X2C'                 X'00'
+&X2C     SETC  X2C('F1F2F3F4F5')
+         MNOTE 'X2C(''F1F2F3F4F5'')=&X2C'
+         AIF   ('&X2C' NE '12345').X2ERR
+&X2C     SETC  X2C('000F1')
+         MNOTE 'X2C(''000F1'')=&X2C'
+         AIF   (K'&X2C NE 3).X2ERR
+         AIF   ('&X2C'(3,1) NE '1').X2ERR
+         DC    C'&X2C'                 X'0000',C'1'
+*----------------------------------------------------------------------
+*        z390 tests
+
+&X2C     SETC  X2C('F1')
+         MNOTE 'X2C(''F1'')=&X2C'
+         AIF   ('&X2C' NE '1').X2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   X2C tests **********'
+*======================================================================
+         MNOTE '********** Begin X2D tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&X2D     SETC  X2D('')
+         MNOTE 'X2D('''')=&X2D'
+         AIF   ('&X2D' NE '+0').X2ERR
+&X2D     SETC  X2D('91')
+         MNOTE 'X2D(''91'')=&X2D'
+         AIF   ('&X2D' NE '+145').X2ERR
+&X2D     SETC  X2D('000F1')
+         MNOTE 'X2D(''000F1'')=&X2D'
+         AIF   ('&X2D' NE '+241').X2ERR
+&X2D     SETC  X2D('7FFFFFFF')
+         MNOTE 'X2D(''7FFFFFFF'')=&X2D'
+         AIF   ('&X2D' NE '+2147483647').X2ERR
+&X2D     SETC  X2D('FFFFFFF1')
+         MNOTE 'X2D(''FFFFFFF1'')=&X2D'
+         AIF   ('&X2D' NE '-15').X2ERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&X2D     SETC  X2D('F1')
+         MNOTE 'X2D(''F1'')=&X2D'
+         AIF   ('&X2D' NE '+241').X2ERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   X2D tests **********'
+*======================================================================
+.SKPX2Y ANOP
+***********************************************************************
+*        MBOX  'Test DCLEN, DCVAL, DEQUOTE'
+         MBOX  'Test DCLEN'
+*AGO .SKPDC
+*======================================================================
+         MNOTE '********** Begin DCLEN tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&DCLEN   SETA  DCLEN('')                 null string
+         MNOTE 'DCLEN('''')=&DCLEN'
+         AIF   (&DCLEN NE 0).DCLERR
+&DCLEN   SETA  DCLEN('''')               single apostrophe
+         MNOTE 'DCLEN('''''''')=&DCLEN'
+         AIF   (&DCLEN NE 1).DCLERR
+&DCLEN   SETA  DCLEN('''''')             two apostrophes
+         MNOTE 'DCLEN('''''''''''')=&DCLEN'
+         AIF   (&DCLEN NE 1).DCLERR
+&DCLEN   SETA  DCLEN('&&')               two ampersands
+         MNOTE 'DCLEN(''&&&&'')=&DCLEN'
+         AIF   (&DCLEN NE 1).DCLERR
+&DCLEN   SETA  DCLEN('a''''b')           string is "a'b"
+         MNOTE 'DCLEN(''a''''''''b'')=&DCLEN'
+         AIF   (&DCLEN NE 3).DCLERR
+&DCLEN   SETA  DCLEN('a''''b&&c')        string is "a'b&c""
+         MNOTE 'DCLEN(''a''''''''b&&&&c'')=&DCLEN'
+         AIF   (&DCLEN NE 5).DCLERR
+&DCLEN   SETA  DCLEN('&&&&'.'''''''')    string is "&&''"
+         MNOTE 'DCLEN(''&&&&&&&&''.'''''''''''''''')=&DCLEN'
+         AIF   (&DCLEN NE 4).DCLERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&DCLSTR  SETC  '''''''''&&&&&&&&1'''''''''  len 17; see MNOTE below
+&K       SETA  K'&DCLSTR 
+&DDCLSTR SETC  DOUBLE('&DCLSTR')            double for MNOTE and DC
+*
+         MNOTE 'K''&&DCLSTR=&K  &&DCLSTR = >&DDCLSTR<'
+***********************************************************************
+*        On z390 the preceding MNOTE displays
+*
+*  MNOTE 'K'&DCLSTR=17  &DCLSTR = >''''''''&&&&&&&&&&&&&&&&1''''''''<'
+*
+*        Using HLASM the MNOTE displays
+*
+* +K'&DCLSTR=17  &DCLSTR = >''''&&&&&&&&1''''<           
+*
+*        Looks like mz390 just shows the MNOTE with the message
+*        text doubled, not the actual output of the MNOTE.
+*
+*        The following DC statement is the same for both z390 & HLASM.
+***********************************************************************
+         PUSH  PRINT
+         PRINT DATA
+         DC    FL1'&K',C'>&DDCLSTR<' 
+         POP   PRINT
+*
+&DCLEN   SETA  DCLEN('&DCLSTR') 
+         MNOTE 'DCLEN(''&&DCLSTR'')=&DCLEN' 
+         AIF   (&DCLEN NE 9).DCLERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   DCLEN tests **********'
+*======================================================================
+         AGO   .SKPDCVO    DCVAL tests now done in rt/mlc/TOPR2.MLC
+         MNOTE '********** Begin DCVAL tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+*
+******** old DCVAL tests
+&DCVAL   SETC  DCVAL('')                 null string
+&K       SETA  K'&DCVAL
+         MNOTE 'DCVAL('''')=>&DCVAL<  length = &K'
+         AIF   (K'&DCVAL NE 0).DCVERR
+*
+&DCVAL   SETC  DCVAL('''')               one apostrophe
+&K       SETA  K'&DCVAL
+         MNOTE 'DCVAL('''''''')=>&DCVAL&DCVAL<  length = &K'
+&K       SETA  K'&DCVAL
+         MNOTE 'K''&&DCVAL = &K'
+         AIF   ('&DCVAL' NE '''').DCVERR
+*
+&DCVAL   SETC  DCVAL('&&')               one ampersand
+&K       SETA  K'&DCVAL
+&DCVAL2  SETC  '&DCVAL'.'&DCVAL'
+         MNOTE 'DCVAL(''&&&&'')=>&DCVAL2<'
+         AIF   ('&DCVAL2' NE '&&').DCVERR
+*
+&DCVAL   SETC  DCVAL('a''''b')           string is "a'b"
+&K       SETA  K'&DCVAL
+*        MNOTE 'DCVAL(''a''''''''b'')=>&DCVAL<  length = &K'
+         AIF   ('&DCVAL' NE 'a''b').DCVERR
+* AGO .JJG3
+*
+&DCVAL   SETC  DCVAL('a''''b&&c')        string is "a'b&c"
+&K       SETA  K'&DCVAL
+&W1      SETC  DOUBLE('a''''b&&c')
+&W2      SETC  DOUBLE('&DCVAL')
+&K       SETA  K'&DCVAL
+********       MNOTE 'DCVAL(''a''''''''b&&c'')=>&DCVAL<  length = &K'
+ AGO .JJG3
+         AIF   ('&DCVAL' NE 'a''b&&c').DCVERR
+*
+&DCVAL   SETC  DCVAL('&&&&'.'''''''')    string is "&&''"
+&K       SETA  K'&DCVAL
+*      MNOTE 'DCVAL(''&&&&&&&&''.'''''''''''''''')=&DCVAL  length = &K'
+         AIF   ('&DCVAL' NE '&&&&''''').DCVERR
+.JJG3 ANOP
+*----------------------------------------------------------------------
+*        z390 tests
+
+&DCVSTR  SETC  '''''&&&&1'''''              string "''&&1''" len 7
+&DCVAL   SETC  DCVAL('&DCVSTR')
+         MNOTE 'DCVAL(''&DCVSTR'')=&DCVAL'
+         AIF   ('&DCVAL' NE '''&&1''').DCVERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   DCVAL tests **********'
+.SKPDCVO ANOP
+*======================================================================
+         AGO   .SKPDEQO    DEQUOTE tests now done in rt/mlc/TOPR2.MLC
+         MNOTE '********** Begin DEQUOTE tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&DCESTR  SETC  '''ABC'''
+&DEQUOTE SETC  DEQUOTE('&DCESTR')
+         MNOTE 'DEQUOTE(''&DCESTR'')=&DEQUOTE'
+         AIF   ('&DEQUOTE' NE 'ABC').DCEERR
+          MNOTE 'Examples from HLASM LR' 
+&C       SETC  DEQUOTE('charstring') 
+         MNOTE '&&C       SETC  DEQUOTE(''charstring''); &&C=&C'
+         AIF   ('&C' NE 'charstring').DCEERR 
+&C       SETC  DEQUOTE('') 
+         MNOTE '&&C       SETC  DEQUOTE(''''); &&C=&C' 
+         AIF   (K'&C NE 0).DCEERR 
+&C       SETC  DEQUOTE('a') 
+         MNOTE '&&C       SETC  DEQUOTE(''a''); &&C=&C' 
+         AIF   ('&C' NE 'a').DCEERR 
+&ARG     SETC  '''a''' 
+&C       SETC  DEQUOTE('&ARG') 
+         MNOTE '&&C       SETC  DEQUOTE(''&ARG''); &&C=&C' 
+         AIF   ('&C' NE 'a').DCEERR 
+&C       SETC  DEQUOTE('a''b') 
+         MNOTE '&&C       SETC  DEQUOTE(''a''''b''); &&C=&C' 
+         AIF   ('&C' NE 'a''b').DCEERR 
+&ARG     SETC  '''''' 
+&C       SETC  DEQUOTE('&ARG') 
+         MNOTE '&&C       SETC  DEQUOTE(''&ARG''); &&C=&C' 
+         AIF   (K'&C NE 0).DCEERR 
+.SKPDC ANOP
+*----------------------------------------------------------------------
+         MNOTE '********** End   DEQUOTE tests **********'
+.SKPDEQO ANOP
+*======================================================================
+         MBOX  'Test ISBIN, ISDEC, ISHEX, ISSYM'
+*AGO .SKPIS
+*======================================================================
+         MNOTE '********** Begin ISBIN tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&ISBIN   SETA  ISBIN('10101') 
+         MNOTE 'ISBIN(''10101'')=&ISBIN' 
+         AIF   (&ISBIN NE 1).ISERR 
+&ISBIN   SETA  ISBIN('101010101010101010101010101010101') excess digits
+         MNOTE 'ISBIN(''101010101010101010101010101010101'')=&ISBIN' 
+         AIF   (&ISBIN NE 0).ISERR 
+&ISBIN   SETA  ISBIN('12121')                         non-binary digits
+         MNOTE 'ISBIN(''12121'')=&ISBIN' 
+         AIF   (&ISBIN NE 0).ISERR
+*        Put next (error) test in separate test  #999
+*ISBIN   SETA  ISBIN('')                              error condition 
+*        MNOTE 'ISBIN('''')=&ISBIN' 
+*        AIF   (&ISBIN NE 0).ISERR 
+*----------------------------------------------------------------------
+*        z390 tests
+
+&ISBIN   SETA  ISBIN('100')
+         MNOTE 'ISBIN(''100'')=&ISBIN' 
+         AIF   (&ISBIN NE 1).ISERR 
+&ISBIN   SETA  ISBIN('+100')                           non-bin char 
+         MNOTE 'ISBIN(''+100'')=&ISBIN' 
+*         AIF   (&ISBIN NE 0).ISERR 
+&ISBIN   SETA  ISBIN('123') 
+         MNOTE 'ISBIN(''123'')=&ISBIN' 
+         AIF   (&ISBIN NE 0).ISERR
+&ISBIN   SETA  ISBIN('000000000000000000000000000000000') excess digits
+         MNOTE 'ISBIN(''000000000000000000000000000000000'')=&ISBIN' 
+         AIF   (&ISBIN NE 0).ISERR  
+*----------------------------------------------------------------------
+         MNOTE '********** End   ISBIN tests **********'
+*======================================================================
+         MNOTE '********** Begin ISDEC tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&ISDEC   SETA  ISDEC('12345678')               okay 
+         MNOTE 'ISDEC(''12345678'')=&ISDEC' 
+         AIF   (&ISDEC NE 1).ISERR 
+&ISDEC   SETA  ISDEC('+25')                    non-digit
+         MNOTE 'ISDEC(''+25'')=&ISDEC' 
+         AIF   (&ISDEC NE 0).ISERR 
+&ISDEC   SETA  ISDEC('2147483648')             too large 
+         MNOTE 'ISDEC(''2147483648'')=&ISDEC' 
+         AIF   (&ISDEC NE 0).ISERR 
+&ISDEC   SETA  ISDEC('00000000005')            too many digits; max 10
+         MNOTE 'ISDEC(''00000000005'')=&ISDEC' 
+         AIF   (&ISDEC NE 0).ISERR 
+*        Put next (error) test in separate test  #999
+*&ISDEC   SETA  ISDEC('')                      error condition
+*         MNOTE 'ISDEC('''')=&ISDEC' 
+*         AIF   (&ISDEC NE 0).ISERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&ISDEC   SETA  ISDEC('123') 
+         MNOTE 'ISDEC(''123'')=&ISDEC' 
+         AIF   (&ISDEC NE 1).ISERR 
+&ISDEC   SETA  ISDEC('-123')                   non-digit 
+         MNOTE 'ISDEC(''-123'')=&ISDEC' 
+         AIF   (&ISDEC NE 0).ISERR 
+&ISDEC   SETA  ISDEC('12A') 
+         MNOTE 'ISDEC(''12A'')=&ISDEC' 
+         AIF   (&ISDEC NE 0).ISERR 
+&ISDEC   SETA  ISDEC('00000000000')            too many digits; max 10
+         MNOTE 'ISDEC(''00000000000'')=&ISDEC' 
+         AIF   (&ISDEC NE 0).ISERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   ISDEC tests **********'
+*======================================================================
+         MNOTE '********** Begin ISHEX tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&ISHEX   SETA  ISHEX('ab34CD9F') 
+         MNOTE 'ISHEX(''ab3fCD9F'')=&ISHEX' 
+         AIF   (&ISHEX NE 1).ISERR 
+&ISHEX   SETA  ISHEX('abcdEFGH') 
+         MNOTE 'ISHEX(''abcdEFGH'')=&ISHEX'    non-hexadecimal digits
+         AIF   (&ISHEX NE 0).ISERR 
+&ISHEX   SETA  ISHEX('123456789')              too many chars; 8 max 
+         MNOTE 'ISHEX(''123456789'')=&ISHEX' 
+         AIF   (&ISHEX NE 0).ISERR
+*        Put next (error) test in separate test  #999
+*&ISHEX   SETA  ISHEX('')                      error condition
+*         MNOTE 'ISHEX('''')=&ISHEX' 
+*         AIF   (&ISHEX NE 0).ISERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&ISHEX   SETA  ISHEX('F0') 
+         MNOTE 'ISHEX(''F0'')=&ISHEX' 
+         AIF   (&ISHEX NE 1).ISERR
+&ISHEX   SETA  ISHEX('+F0')                    non-hex char 
+         MNOTE 'ISHEX(''+F0'')=&ISHEX' 
+         AIF   (&ISHEX NE 0).ISERR 
+&ISHEX   SETA  ISHEX('FG') 
+         MNOTE 'ISHEX(''FG'')=&ISHEX' 
+         AIF   (&ISHEX NE 0).ISERR
+&ISHEX   SETA  ISHEX('000000000')              too many chars; 8 max
+         MNOTE 'ISHEX(''000000000'')=&ISHEX' 
+         AIF   (&ISHEX NE 0).ISERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   ISHEX tests **********'
+*======================================================================
+         MNOTE '********** Begin ISSYM tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&ISSYM   SETA  ISSYM('Abcd_1234') 
+         MNOTE 'ISSYM(''Abcd_1234'')=&ISSYM' 
+         AIF   (&ISSYM NE 1).ISERR 
+&ISSYM   SETA  ISSYM('_Abcd1234') 
+         MNOTE 'ISSYM(''_Abcd1234'')=&ISSYM' 
+         AIF   (&ISSYM NE 1).ISERR 
+&ISSYM   SETA  ISSYM('##@$_') 
+         MNOTE 'ISSYM(''##@$_'')=&ISSYM' 
+         AIF   (&ISSYM NE 1).ISERR 
+&ISSYM   SETA  ISSYM('1234_Abcd')              invalid initial char
+         MNOTE 'ISSYM(''1234_Abcd'')=&ISSYM' 
+         AIF   (&ISSYM NE 0).ISERR
+*        Put next (error) test in separate test  #999
+*&ISSYM   SETA  ISSYM('')                      error condition
+*         MNOTE 'ISSYM('''')=&ISSYM' 
+*         AIF   (&ISSYM NE 0).ISERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&ISSYM   SETA  ISSYM('AZ090#$_') 
+         MNOTE 'ISSYM(''AZ090#$_'')=&ISSYM' 
+         AIF   (&ISSYM NE 1).ISERR 
+&ISSYM   SETA  ISSYM('AZ090#$_**') 
+         MNOTE 'ISSYM(''AZ090#$_**'')=&ISSYM' 
+         AIF   (&ISSYM NE 0).ISERR 
+.SKPIS ANOP
+*----------------------------------------------------------------------
+         MNOTE '********** End   ISSYM tests **********'
+***********************************************************************
+         MBOX  'Test AND, NOT, OR, XOR'
+*AGO .SKPLOG
+*======================================================================
+         MNOTE '********** Begin AND, NOT, OR, XOR tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&OP1     SETA  10 
+&OP2     SETA  6                              HLASM LR uses 2
+&BOP1    SETC  A2B(&OP1) 
+&BOP2    SETC  A2B(&OP2) 
+         MNOTE 'OP1 = &OP1 (B''&BOP1'')' 
+         MNOTE 'OP2 =  &OP2 (B''&BOP2'')' 
+* 
+&AND     SETA  (&OP1 AND &OP2) 
+&BAND    SETC  A2B(&AND) 
+         MNOTE '(&OP1 AND &OP2) = &AND (B''&BAND'')' 
+         AIF   (&AND NE 2).LOERR 
+&NOT     SETA  (NOT &OP1) 
+&SNOT    SETC  SIGNED(&NOT) 
+&BNOT    SETC  A2B(&NOT) 
+         MNOTE '(NOT &OP1) = &SNOT (B''&BNOT'')' 
+         AIF   (&NOT NE -11).LOERR 
+&OR      SETA  (&OP1 OR &OP2) 
+&BOR     SETC  A2B(&OR) 
+         MNOTE '(&OP1 OR &OP2) = &OR (B''&BOR'')' 
+         AIF   (&OR NE 14).LOERR 
+&XOR     SETA  (&OP1 XOR &OP2) 
+&BXOR    SETC  A2B(&XOR) 
+         MNOTE '(&OP1 XOR &OP2) = &XOR (B''&BXOR'')' 
+         AIF   (&XOR NE 12).LOERR 
+.SKPLOG  ANOP
+*----------------------------------------------------------------------
+         MNOTE '********** End   AND, NOT,OR, XOR tests **********'
+***********************************************************************
+         MBOX  'Test SIGNED, SYSATTRA, SYSATTRP'
+*AGO .SKPSSS
+*======================================================================
+         MNOTE '********** Begin SIGNED tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&SIGNED  SETC  SIGNED(10)
+         MNOTE 'SIGNED(10)=&SIGNED'
+         AIF   ('&SIGNED' NE '10').SIGNERR
+&SIGNED  SETC  SIGNED(-10)
+         MNOTE 'SIGNED(-10)=&SIGNED'
+         AIF   ('&SIGNED' NE '-10').SIGNERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&SIGNED  SETC  SIGNED(-241)
+         MNOTE 'SIGNED(-241)=&SIGNED'
+         AIF   ('&SIGNED' NE '-241').SIGNERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   SIGNED tests **********'
+*======================================================================
+         MNOTE '********** Begin SYSATTRA, SYSATTRP tests **********'
+*----------------------------------------------------------------------
+*        z390 tests
+
+&SYSATTRA SETC  SYSATTRA('SYM')                 see HLASM LR p339
+         MNOTE 'SYSATTRA(''SYM'')=&SYSATTRA'
+         AIF   ('&SYSATTRA' NE 'GR32').SYERR
+&SYSATTRP SETC  SYSATTRP('SYM')                 see HLASM LR pp339-340
+         MNOTE 'SYSATTRP(''SYM'')=&SYSATTRP'
+         AIF   ('&SYSATTRP' NE 'PGMA').SYERR
+.SKPSSS ANOP
+*----------------------------------------------------------------------
+         MNOTE '********** End   SYSATTRA, SYSATTRP tests **********'
+***********************************************************************
+         MBOX  'Test SLA, SLL, SRA, SRL'
+*AGO .SKPSHFT
+*======================================================================
+         MNOTE '********** Begin SLA tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&OP1S    SETA  2
+&OP2S    SETA  2
+
+&SLA     SETA  (&OP1S SLA &OP2S)
+         MNOTE '(&OP1S SLA &OP2S) = &SLA'
+         AIF   (&SLA NE 8).SLAERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&SLA     SETA  (1 SLA 2)
+         MNOTE '(1 SLA 2) = &SLA'
+         AIF   (&SLA NE 4).SLAERR
+&SLA     SETA  (X'3FFFFFFF' SLA 1)
+         MNOTE '(X''3FFFFFFF'' SLA 1) = &SLA'
+         AIF   (&SLA NE X'7FFFFFFE').SLAERR
+*        Put next two (error) test in separate tests  #999
+*&SLA     SETA  (X'7FFFFFFF' SLA 1)            ASMA075E arith overflow
+*         MNOTE '(X''7FFFFFFF'' SLA 1) = &SLA'
+*         AIF   (&SLA NE X'7FFFFFFE').SLAERR
+*&SLA     SETA  (X'80000001' SLA 1)            ASMA075E arith overflow
+*         MNOTE '(X''80000001'' SLA 1) = &SLA'
+*         AIF   (&SLA NE X'80000002').SLAERR
+&SLA     SETA  (X'C0000001' SLA 1)             okay
+&SSLA    SETC  (SIGNED &SLA)
+&XSLA    SETC  A2X(&SLA)
+         MNOTE '(X''C0000001'' SLA 1) = &SSLA (X''&XSLA'')'
+         AIF   (&SLA NE X'80000002').SLAERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   SLA tests **********'
+*======================================================================
+         MNOTE '********** Begin SLL tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&OP1S    SETA  10
+&OP2S    SETA  2
+
+&SLL     SETA  (&OP1S SLL &OP2S)
+         MNOTE '(&OP1S SLL &OP2S) = &SLL'
+         AIF   (&SLL NE 40).SLLERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&SLL     SETA  (1 SLL 2)
+         MNOTE '(1 SLL 2) = &SLL'
+         AIF   (&SLL NE 4).SLLERR
+&SLL     SETA  (X'7FFFFFFF' SLL 1)
+&SSLL    SETC  (SIGNED &SLL)
+&XSLL    SETC  A2X(&SLL)
+         MNOTE '(X''7FFFFFFF'' SLL 1) = &SSLL (X''&XSLL'')'
+         AIF   (&SLL NE X'FFFFFFFE').SLLERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   SLL tests **********'
+*======================================================================
+         MNOTE '********** Begin SRA tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&OP1S    SETA  10
+&OP2S    SETA  2
+
+&SRA     SETA  (&OP1S SRA &OP2S)
+         MNOTE '(&OP1S SRA &OP2S) = &SRA'
+         AIF   (&SRA NE 2).SRAERR
+
+&OP1S    SETA  -344
+&OP2S    SETA  40
+
+&SRA     SETA  (&OP1S SRA &OP2S)
+&SSRA    SETC  (SIGNED &SRA)
+&SOP1S   SETC  (SIGNED &OP1S)
+         MNOTE '(&SOP1S SRA &OP2S) = &SSRA'
+         AIF   (&SRA NE -1).SRAERR
+ 
+&XSRA    SETC  A2X(&SRA) 
+&XOP1S   SETC  A2X(&OP1S) 
+         MNOTE '(X''&XOP1S'' SRA &OP2S) = &SSRA (X''&XSRA'')'
+*----------------------------------------------------------------------
+*        z390 tests
+
+&SRA     SETA  (4 SRA 2)
+         MNOTE '(4 SRA 2) = &SRA'
+         AIF   (&SRA NE 1).SRAERR
+&SRA     SETA  (X'FFFFFFFE' SRA 1)
+&SSRA    SETC  (SIGNED &SRA)
+         MNOTE '(X''FFFFFFFE'' SRA 1) = &SSRA'
+         AIF   (&SRA NE X'FFFFFFFF').SRAERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   SRA tests **********'
+*======================================================================
+         MNOTE '********** Begin SRL tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&OP1S    SETA  10
+&OP2S    SETA  2
+
+&SRL     SETA  (&OP1S SRL &OP2S)
+         MNOTE '(&OP1S SRL &OP2S) = &SRL'
+         AIF   (&SRL NE 2).SRLERR
+
+&OP1S    SETA  -344
+&OP2S    SETA  40
+
+&SRL     SETA  (&OP1S SRL &OP2S)
+&SSRL    SETC  (SIGNED &SRL)
+&SOP1S   SETC  (SIGNED &OP1S)
+         MNOTE '(&SOP1S SRL &OP2S) = &SSRL'
+         AIF   (&SRL NE 0).SRLERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&SRL     SETA  (4 SRL 2)
+         MNOTE '(4 SRL 2) = &SRL'
+         AIF   (&SRL NE 1).SRLERR
+&SRL     SETA  (X'FFFFFFFE' SRL 1)
+&XSRL    SETC  A2X(&SRL)
+         MNOTE '(X''FFFFFFFE'' SLL 1) = &SRL (X''&XSRL'')'
+         AIF   (&SRL NE X'7FFFFFFF').SRLERR
+.SKPSHFT ANOP
+*----------------------------------------------------------------------
+         MNOTE '********** End   SRL tests **********'
+***********************************************************************
+         MBOX  'Test operator types A,E,M,O,S,U'
+*AGO .SKPOT
+&OT      SETC  O'PUSH 
+         MNOTE 'O''PUSH = &OT' 
+         AIF   (O'PUSH      NE 'A').OTERR  Assembler code 
+&OT      SETC  O'BER 
+         MNOTE 'O''BER = &OT' 
+         AIF   (O'BER       NE 'E').OTERR  Extended mnemonic code
+&OT      SETC  O'BE 
+         MNOTE 'O''BE = &OT' 
+         AIF   (O'BE        NE 'E').OTERR  Extended mnemonic code
+&OT      SETC  O'JE 
+         MNOTE 'O''JE = &OT' 
+         AIF   (O'JE        NE 'E').OTERR  Extended mnemonic code
+&OT      SETC  O'SRNM 
+         MNOTE 'O''SRNM = &OT' 
+         AIF   (O'SRNM      NE 'O').OTERR  Machine code 
+&OT      SETC  O'BCR 
+         MNOTE 'O''BCR = &OT' 
+         AIF   (O'BCR       NE 'O').OTERR  Machine code 
+&OT      SETC  O'BC 
+         MNOTE 'O''BC = &OT' 
+         AIF   (O'BC        NE 'O').OTERR  Machine code 
+&OT      SETC  O'BRC 
+         MNOTE 'O''BRC = &OT' 
+         AIF   (O'BRC       NE 'O').OTERR  Machine code 
+&OT      SETC  O'SAVE 
+         MNOTE 'O''SAVE = &OT' 
+         AIF   (O'SAVE      NE 'S').OTERR  Library macro found
+&OT      SETC  O'RETURN
+         MNOTE 'O''RETURN = &OT' 
+         AIF   (O'RETURN    NE 'M').OTERR  Loaded macro  
+&OT      SETC  O'XXXXX 
+         MNOTE 'O''XXXXX = &OT' 
+         AIF   (O'XXXXX     NE 'U').OTERR  Undefined 
+.SKPOT ANOP
+***********************************************************************
+         MBOX  'Test string duplication in expression'
+&A       SETC  'A'
+         AIF   ('&A'.(2)'B' NE 'ABB').DUPERR
+         AIF   ('A'.(2)'B' NE 'ABB').DUPERR
+***********************************************************************
+         MBOX  'Test FIND, INDEX'
+*======================================================================
+         MNOTE '********** Begin FIND tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&OP1F    SETC  'abcdef'
+&OP2F    SETC  'cde'                           order irrelevant
+&VARF    SETA   ('&OP1F' FIND '&OP2F')
+         MNOTE '''&OP1F'' FIND ''&OP2F'''
+         MNOTE '&&VARF=&VARF'
+         AIF   (&VARF NE 3).FINDERR            finds 'c' in 'abcdef'
+
+&OP1F    SETC  'abcdef' 
+&OP2F    SETC  'gde' 
+&VARF    SETA   ('&OP1F' FIND '&OP2F') 
+         MNOTE '''&OP1F'' FIND ''&OP2F''' 
+         AIF   (&VARF NE 4).FINDERR            finds 'd' in 'abcdef'
+                                                                    
+&OP1F    SETC  'abcdef' 
+&OP2F    SETC  'egd' 
+&VARF    SETA   ('&OP1F' FIND '&OP2F') 
+         MNOTE '''&OP1F'' FIND ''&OP2F''' 
+         AIF   (&VARF NE 4).FINDERR            finds 'd' in 'abcdef'
+*----------------------------------------------------------------------
+*        z390 tests
+
+&IX      SETA  FIND('abc','b')
+         MNOTE 'IX=&IX'
+         AIF   (&IX NE 2).FINDERR
+&IX      SETA  FIND('abc','xb')
+         MNOTE 'IX=&IX'
+         AIF   (&IX NE 2).FINDERR
+&IX      SETA  FIND('abc','cb')
+         MNOTE 'IX=&IX'
+         AIF   (&IX NE 2).FINDERR
+&IX      SETA  FIND('abc','d')
+         MNOTE 'IX=&IX'
+         AIF   (&IX NE 0).FINDERR
+&IX      SETA  FIND('abc','d')
+         MNOTE 'IX=&IX'
+         AIF   (&IX NE 0).FINDERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   FIND tests **********'
+***********************************************************************
+*======================================================================
+         MNOTE '********** Begin INDEX tests **********'
+*----------------------------------------------------------------------
+*        HLASM LR examples
+
+&IX      SETA  INDEX('ABC','B')
+         MNOTE 'IX=&IX'
+         AIF   (&IX NE 2).INDXERR
+&IX      SETA  INDEX('ABC','D')
+         MNOTE 'IX=&IX'
+         AIF   (&IX NE 0).INDXERR
+*----------------------------------------------------------------------
+*        z390 tests
+
+&IX      SETA  INDEX('ABXBC','BC')
+         MNOTE 'IX=&IX'
+         AIF   (&IX NE 4).INDXERR
+&IX      SETA  INDEX('ABC','D')
+         MNOTE 'IX=&IX'
+         AIF   (&IX NE 0).INDXERR
+&IX      SETA  INDEX('ABC','ABC')
+         MNOTE 'IX=&IX'
+         AIF   (&IX NE 1).INDXERR
+&IX      SETA  INDEX('ABC','ABCD')
+         MNOTE 'IX=&IX'
+         AIF   (&IX NE 0).INDXERR
+*----------------------------------------------------------------------
+         MNOTE '********** End   INDEX tests **********'
+***********************************************************************
+         AGO   .LOOP
+.ENDLOOP ANOP
+         MNOTE '*********************************************'
+         MNOTE 'TESTOPR2 MNOTE,AIF section ended successfully'
+         MNOTE '*********************************************'
+         AGO   .EXIT
+***********************************************************************
+*        Error MNOTEs
+***********************************************************************
+.LCERR   ANOP
+         MNOTE 12,'LOWER CASE TEST ERROR'
+         AGO   .EXIT
+.UCERR   ANOP
+         MNOTE 12,'UPPER CASE TEST ERROR'
+         AGO   .EXIT
+.A2ERR   ANOP
+         MNOTE 12,'A2 OPERATOR ERROR'
+         AGO   .EXIT
+.B2ERR   ANOP
+         MNOTE 12,'B2 OPERATOR ERROR'
+         AGO   .EXIT
+.C2ERR   ANOP
+         MNOTE 12,'C2 OPERATOR ERROR'
+         AGO   .EXIT
+.D2ERR   ANOP
+         MNOTE 12,'D2 OPERATOR ERROR'
+         AGO   .EXIT
+.X2ERR   ANOP
+         MNOTE 12,'X2 OPERATOR ERROR'
+         AGO   .EXIT
+.DCLERR  ANOP
+         MNOTE 12,'DCLEN OPERATOR ERROR'
+         AGO   .EXIT
+.DCVERR  ANOP
+         MNOTE 12,'DCVAL OPERATOR ERROR'
+         AGO   .EXIT
+.DCEERR  ANOP
+         MNOTE 12,'DCEQUOTE OPERATOR ERROR'
+         AGO   .EXIT
+.ISERR   ANOP
+         MNOTE 12,'IS??? OPERATOR ERROR'
+         AGO   .EXIT
+.LOERR   ANOP
+         MNOTE 12,'LOGIC OPERATOR ERROR'
+         AGO   .EXIT
+.SIGNERR ANOP
+         MNOTE 12,'SIGNED OPERATOR ERROR'
+         AGO   .EXIT
+.SYERR   ANOP
+         MNOTE 12,'SYSATTR A/P OPERATOR ERROR'
+         AGO   .EXIT
+.SLAERR  ANOP
+         MNOTE 12,'SLA OPERATOR ERROR'
+         AGO   .EXIT
+.SLLERR  ANOP
+         MNOTE 12,'SLL OPERATOR ERROR'
+         AGO   .EXIT
+.SRAERR  ANOP
+         MNOTE 12,'SRA OPERATOR ERROR'
+         AGO   .EXIT
+.SRLERR  ANOP
+         MNOTE 12,'SRL OPERATOR ERROR'
+         AGO   .EXIT
+.OTERR   ANOP
+         MNOTE 12,'OPERATION TYPE TEST ERROR'
+         AGO   .EXIT
+.DUPERR  ANOP
+         MNOTE 12,'DUPLICATION TYPE TEST ERROR'
+         AGO   .EXIT
+.FINDERR ANOP
+         MNOTE 12,'FIND ERROR'
+         AGO   .EXIT
+.INDXERR ANOP
+         MNOTE 12,'INDEX ERROR'
+         AGO   .EXIT
+.EXIT    ANOP
+*
+         END

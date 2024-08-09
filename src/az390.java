@@ -422,6 +422,7 @@ public  class  az390 implements Runnable {
 		* 2022-10-24 jjg #451 z390 ignores CODEPAGE option for input;
 		*                     replace non-printable with '.' in PRN, BAL, PCH
         * 2024-05-29 afk #500 List suboption for options optable/machine not implemented correctly
+        * 2024-07-03 jjg #509 generate error in process_dcc_data if "DC  C''"
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -9414,20 +9415,24 @@ private void process_dcc_data(){
 	}
 	dc_index = dc_index + dcc_next + 1;
 	dcc_len = dcc_text.length();
-	dcc_ascii_req = 
-		 (dcc_quote == '\'' 
-			 && (    (tz390.opt_ascii 
-				      && dc_type_sfx != 'E'
-				     )
-				  || dc_type_sfx == 'A'
-				)
-         )
-	     | dcc_quote == '"';  //RPI5 and RPI73
-	if (dc_bit_len){
-		gen_dcc_bits();
-	} else {
-		gen_dcc_bytes();
-	}
+	if (dcc_len > 0 || dc_len_explicit) {                            // #509
+		dcc_ascii_req = 
+			 (dcc_quote == '\'' 
+				 && (    (tz390.opt_ascii 
+					      && dc_type_sfx != 'E'
+					     )
+					  || dc_type_sfx == 'A'
+					)
+    	     )
+		     | dcc_quote == '"';  //RPI5 and RPI73
+		if (dc_bit_len){
+			gen_dcc_bits();
+		} else {
+			gen_dcc_bytes();
+		}
+	} else {                                                         // #509
+		log_error(88,"invalid data field expression - " + dc_field); // #509
+	}                                                                // #509
 	dc_len = 0;
 }
 private void gen_dcc_bits(){

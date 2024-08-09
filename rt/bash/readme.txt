@@ -14,5 +14,13 @@ runtbrctx   - verify closed issue #238
 runtestopt  - verify indirection usage in options files
 runbr14owe  - verifies test IEFBR14 asm[l[g]] with Okay, Warning, Error variants
 runcodepagetests - verifies usage of CODEPAGE issue #451
+runhlasmbiftests - run HLASM built-in function tests issue 509
+errora2btests    - verify A2B  error tests
+errorisbintests  - verify ISBIN error tests
+errorisdectests  - verify ISDEC error tests
+errorishextests  - verify ISHEX error tests
+errorissymtests  - verify ISSYM error tests
+errorslatests    - verify SLA error tests
+x00c2bdxtests    - verify C2B, C2D, C2X tests that have X'00' in argument
 
 End regression test commands

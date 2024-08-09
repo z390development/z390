@@ -23,6 +23,7 @@
 * 2020/09/19 DSH RPI 2213 REMOVE TYPE DM, ADD DIAGNOSE/DIAG RS, SIE S
 * 2020/10/02 DSH RPI 2212 RESTORE TYPE_VRR FROM V1700, ADD VREGS 0-31
 * 2021/02/08 DSH RPI 2226 FIX VNOT TO GENERATE V3=V2 FOR VNOT V1,V2
+* 2024/04/26 jjg #509 fix bugs with X2A usage due to X2A changes
 ************************************************************
         GBLA &TOT_OPS,&TOT_MASK,&TOT_DUP,&TOT_UND
         GBLA &TOT_PROB,&TOT_SUPR,&TOT_MISSING
@@ -377,7 +378,11 @@
 &HEX	SETC	'&LAB'(3,2)
 &HEX2   SETC    '&LAB'(5,2)
 &HEX3   SETC    '&LAB_OP'(7,1)
+        AIF ('&HEX3' NE '_')                       #509
 &M3     SETA    X2A('&HEX3')
+        AELSE                                      #509
+&M3     SETA    0                                  #509
+        AEND                                       #509
       AIF (N'&SYSLIST EQ 4 AND '&HEX3' NE '_')
         GBLA    &TOT_MASK
 &TOT_MASK SETA &TOT_MASK+1
@@ -580,7 +585,11 @@ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
          AELSE    SELGR R1,R2 OOOO3M12
           GBLA    &TOT_MASK
 &TOT_MASK SETA &TOT_MASK+1
+           AIF ('&LAB_OP'(7,1) NE '_')       #509
 &M3       SETA    X2A('&LAB_OP'(7,1))
+           AELSE                             #509
+&M3       SETA    0                          #509
+           AEND                              #509
 &LAB_OP ORG &OP_LAB+16 
  DC      X'&HEX',AL1(&P3*16+&M3,&P1*16+&P2)
  
@@ -1608,7 +1617,11 @@ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
  DC X'&HEX',AL1(&V1*16+&V2),S(&P3),AL1(&M4*16+&VREG_RXB),X'&HEX2'
   	         AELSEIF ('&LAB'(3,4) EQ 'E736')
 			 VREGS VP1=&P1,VP2=&P2 // RPI 2212 VLM V1,V3,D2(B2),M4
+               AIF ('&LAB'(7,1) NE '_')          #509
 &M3 SETA X2A('&LAB'(7,1))
+               AELSE                             #509
+&M3 SETA 0                                       #509
+               AEND                              #509
 &LAB_OP&LAB_OP ORG &OP_LAB+16
  DC X'&HEX',AL1(&V1*16+&V2),S(&P3),AL1(&M3*16+&VREG_RXB),X'&HEX2'
    	         AELSEIF ('&LAB'(3,4) EQ 'E738' OR '&LAB'(3,4) EQ 'E73A')
@@ -1622,7 +1635,11 @@ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
  DC X'&HEX',AL1(&V1*16+&P2),S(&P3),AL1(&VREG_RXB),X'&HEX2'
      	         AELSEIF ('&LAB'(3,4) EQ 'E73E')
 	VREGS VP1=&P1,VP2=&P2 // RPI 2212 VSTM V1,V3,D2(B2) RPI 2216
+               AIF ('&LAB'(7,1) NE '_')          #509
 &M4 SETA X2A('&LAB'(7,1))
+               AELSE                             #509
+&M4 SETA 0                                       #509
+               AEND                              #509
 &LAB_OP&LAB_OP ORG &OP_LAB+16
  DC X'&HEX',AL1(&V1*16+&V2),S(&P3),AL1(&M4*16+&VREG_RXB),X'&HEX2'
       	        AELSEIF ('&LAB'(3,4) EQ 'E730')
