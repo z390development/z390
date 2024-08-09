@@ -1,0 +1,6 @@
+noallow
+  optable(XA,list)
+  stats
+noloadhigh
+nodump
+notest

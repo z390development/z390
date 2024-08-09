@@ -423,6 +423,7 @@ public  class  az390 implements Runnable {
 		*                     replace non-printable with '.' in PRN, BAL, PCH
         * 2024-05-29 afk #500 List suboption for options optable/machine not implemented correctly
         * 2024-07-03 jjg #509 generate error in process_dcc_data if "DC  C''"
+        * 2024-08-09 AFK #543 Correct OPTABLE(XA,LIST) output to match HLASM
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -1829,7 +1830,13 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 7:
                     my_format="S";                                                     // #500
                     if (my_mnemonic.equals("IPK")                                      // #500
-                    ||  my_mnemonic.equals("PTLB"))                                    // #500
+                    ||  my_mnemonic.equals("PTLB")                                     // #500 #543
+                    ||  my_mnemonic.equals("CSCH")                                     // #543
+                    ||  my_mnemonic.equals("HSCH")                                     // #543
+                    ||  my_mnemonic.equals("RCHP")                                     // #543
+                    ||  my_mnemonic.equals("RSCH")                                     // #543
+                    ||  my_mnemonic.equals("SAL")                                      // #543
+                    ||  my_mnemonic.equals("SCHM"))                                    // #543
                        {my_operands="";                                                // #500
                         }                                                              // #500
                     else if (my_mnemonic.equals("LPSW")                                // #500

@@ -1,0 +1,6 @@
+noallow
+  machine(S360-20,list)
+  stats
+noloadhigh
+nodump
+notest
