@@ -1,0 +1,20 @@
+* Test A2B built-in function error
+A2BE2    CSECT
+         SR    15,15
+         BR    14
+*
+         LCLC  &C
+*
+*        z390 example
+*
+*&C      SETC  'abc'               Preset result field
+&C       SETC  'abc'
+*
+*&C      SETC  A2B(--2147483648)   Error; overflow
+&C       SETC  A2B(--2147483648)
+         MNOTE 'A2B(--2147483648)=&C'
+         AIF   ('&C' EQ 'abc').OK
+         MNOTE 12.'Error; expected value is abc'
+.OK      ANOP
+*
+         END

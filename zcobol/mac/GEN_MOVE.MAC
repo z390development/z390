@@ -54,6 +54,7 @@
 .* 03/27/12 RPI 1182 support variable length RMD move
 .* 04/14/12 RPI 1202 use D2A to retrieve neg &NT_IX and &NS_IX
 .* 04/20/12 RPI 1211 scale value if pic_dec values different
+.* 2024/07/03 #509 correct length in &N_TARGET substring extraction
 .*********************************************************************
          GEN_MOVE &T_NAME,&T_IX,&S_NAME,&S_IX 
          COPY  ZC_WS
@@ -2014,7 +2015,7 @@
                    :&FIELD_OFF SETA D2A('&N_TARGET'(1,&I-1)) RPI 1139
                    :&J SETA ('&N_TARGET' INDEX ',')
                    AIF (&J GT &I+1)
-                       :&FIELD_LEN SETA D2A('&N_TARGET'(&I+1,&J-1)) 
+                       :&FIELD_LEN SETA D2A('&N_TARGET'(&I+1,&J-&I-1)) #509
                        :&FIELD_REG SETC '&N_TARGET'(&J+1,K'&N_TARGET-&JX
                -1)
                        :&N_TARGET SETC '&N_TARGET'(1,&I).'&N_TARGET'(&JX

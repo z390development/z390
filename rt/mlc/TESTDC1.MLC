@@ -50,6 +50,7 @@
 * 01/25/11 RPI 1139 C2X ARG IN QUOTES FOR NOALLOW
 * 2022-05-03 update copyright, add to z390\tests, fix SETC '&&' to '&'
 * 2022-05-07 replace TESTSUB1 with CVTTOHEX to remove dependency
+* 2024-07-24 #509 comment tests that now fail due to #509 changes
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -439,14 +440,20 @@ CVTTOHEX2 RT1   CCE,=VD(CVTTOHEX),=AL8(CVTTOHEX) RPI 1044 DIFF ADDR
 &AVAL    SETA  2147483647
 &CHEX    SETC  A2X(&AVAL)
          RT1   CCE,=C'&CHEX',=C'7FFFFFFF'
+* Next test succeeds; will fail when 2147483648 flagged as error #509
          RT1   CCE,=A(2147483648),=X'80000000'      TEST SETA OVERFLOW
-&AVAL    SETA  2147483648
-&CHEX    SETC  A2X(&AVAL)                     TEST NEG A2X
-         RT1   CCE,=C'&CHEX',=C'80000000'
-         RT1   CCE,=A(2147483649),=X'80000001'      
-&AVAL    SETA  2147483649
-&CHEX    SETC  A2X(&AVAL)
-         RT1   CCE,=C'&CHEX',=C'80000001'
+* Before SETA; now fails, as it should                      #509
+*&AVAL    SETA  2147483648                                  #509
+* After SETA; did the SETA fail? Yes                        #509
+*&CHEX    SETC  A2X(&AVAL)                     TEST NEG A2X #509
+*         RT1   CCE,=C'&CHEX',=C'80000000'                  #509
+* Next test succeeds; will fail when 2147483649 flagged as error #509
+         RT1   CCE,=A(2147483649),=X'80000001'
+* Before SETA; now fails, as it should                      #509
+*&AVAL    SETA  2147483649                                  #509
+* After SETA; did it fail? Yes                              #509
+*CHEX    SETC  A2X(&AVAL)                                   #509
+*        RT1   CCE,=C'&CHEX',=C'80000001'                   #509
 &AVAL    SETA  1/0
          RT1   CCE,=A(&AVAL),=A(0)              TEST SETA DIVIDE BY 0 
 &CVAL    SETC  '12345'                                       

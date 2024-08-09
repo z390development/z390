@@ -1,0 +1,20 @@
+* Test A2B built-in function error
+A2BE1    CSECT
+         SR    15,15
+         BR    14
+*
+         LCLC  &C
+*
+*        HLASM LangRef example
+*
+*&C      SETC  'abc'               Preset result field
+&C       SETC  'abc'
+*
+*&C      SETC  A2B(2345678901)     Error; too large
+&C       SETC  A2B(2345678901)
+         MNOTE 'A2B(2345678901)=&C'
+         AIF   ('&C' EQ 'abc').OK
+         MNOTE 12.'Error; expected value is abc'
+.OK      ANOP
+*        
+         END

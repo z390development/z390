@@ -1,0 +1,192 @@
+* Test SLA built-in function error
+*
+***********************************************************************
+*        Macro to show operands and result of
+*            &SLA SETA (&OP1 SLA &OP2)
+*        in binary, hexadecimal, and signed decimal
+*
+*        Sample output
+*            &OP1     SETA  16+1
+*            &OP2     SETA  31-5
+*            &SLA     SETA  (&OP1 SLA &OP2)  valid; shifts 1 into bit 1
+*                     SHOWSBC
+*          +    MNOTE '(X'00000011' SLA 26) = 1140850688 (X'44000000')'
+*          +    MNOTE 'Binary OP1 00000000000000000000000000010001'
+*          +    MNOTE 'Binary OP2 00000000000000000000000000011010'
+*          +    MNOTE 'Binary SLA 01000100000000000000000000000000'
+***********************************************************************
+*
+         MACRO
+         SHOWSBC
+         GBLA  &OP1,&OP2,&SLA
+         LCLC  &SOP1,&SOP2,&SSLA
+         LCLC  &BOP1,&BOP2,&BSLA
+         LCLC  &XOP1,&XOP2,&XSLA
+.*
+&SSLA    SETC  (SIGNED &SLA)
+&BSLA    SETC  A2B(&SLA)
+&XSLA    SETC  A2X(&SLA)
+.*
+&SOP1    SETC  SIGNED(&OP1)
+&BOP1    SETC  A2B(&OP1)
+&XOP1    SETC  A2X(&OP1)
+.*
+&SOP2    SETC  (SIGNED &OP2)
+&BOP2    SETC  A2B(&OP2)
+&XOP2    SETC  A2X(&OP2)
+.*
+         MNOTE '(X''&XOP1'' SLA &SOP2) = &SSLA (X''&XSLA'')'
+         MNOTE 'Binary OP1 &BOP1'
+         MNOTE 'Binary OP2 &BOP2'
+         MNOTE 'Binary SLA &BSLA'
+.*
+         MEND
+***********************************************************************
+         GBLA  &OP1,&OP2,&SLA
+*
+*        Show SLA results
+*
+*        GBLA &OP1,&OP2,&SLA preset via "&SLA SETA (&OP1 SLA &OP2)"
+*
+***********************************************************************
+SLAE1    CSECT
+         SR    15,15
+         BR    14
+*
+         LCLA  &A 
+*
+*        z390 examples
+*
+***********************************************************************
+&OP1     SETA  1
+&OP2     SETA  -1
+&SLA     SETA  2
+*&OP1    SETA  1
+*&OP2    SETA  -1
+*&SLA    SETA  2                       Preset result
+*&SLA    SETA  (&OP1 SLA &OP2)         Invalid; shifts >= 32 bits
+&SLA     SETA  (&OP1 SLA &OP2)
+         SHOWSBC
+         AIF   (&SLA EQ 0).OK1         Expected value?
+         MNOTE 12,'Expected value is 0'
+.OK1     ANOP
+***********************************************************************
+&OP1     SETA  1
+&OP2     SETA  63
+&SLA     SETA  2
+*&OP1    SETA  1
+*&OP2    SETA  63
+*&SLA    SETA  2                       Preset result
+**SLA    SETA  (&OP1 SLA &OP2)         Invalid; shifts >- 32 bits
+&SLA     SETA  (&OP1 SLA &OP2)
+         SHOWSBC
+         AIF   (&SLA EQ 0).OK2         Expected value?
+         MNOTE 12,'Expected value is 0'
+.OK2     ANOP
+***********************************************************************
+&OP1     SETA  2147483647
+&OP2     SETA  1
+&SLA     SETA  2
+*&OP1    SETA  2147483647
+*&OP2    SETA  1
+*&SLA    SETA  2                       Preset result
+*&SLA    SETA  (&OP1 SLA &OP2)         Invalid; shifts 1 into sign bit
+&SLA     SETA  (&OP1 SLA &OP2)
+         SHOWSBC
+         AIF   (&SLA EQ 0).OK3         Expected value?
+         MNOTE 12,'Expected value is 0'
+.OK3     ANOP
+***********************************************************************
+&OP1     SETA  1
+&OP2     SETA  31
+&SLA     SETA  2
+*&OP1    SETA  1
+*&OP2    SETA  31
+*&SLA    SETA  2                       Preset result
+**SLA    SETA  (&OP1 SLA &OP2)         Invalid; shifts 11 into sign bit
+&SLA     SETA  (&OP1 SLA &OP2)
+         SHOWSBC
+         AIF   (&SLA EQ 0).OK4         Expected value?
+         MNOTE 12,'Expected value is 0'
+.OK4     ANOP
+***********************************************************************
+&OP1     SETA  -1
+&OP2     SETA  32
+&SLA     SETA  2
+*&OP1    SETA  -1
+*&OP2    SETA  32
+*&SLA    SETA  2                       Preset result
+*&SLA    SETA  (&OP1 SLA &OP2)         Invalid; non-zero; >=32 bits
+&SLA     SETA  (&OP1 SLA &OP2)
+         SHOWSBC
+         AIF   (&SLA EQ 0).OK5         Expected value?
+         MNOTE 12,'Expected value is 0'
+.OK5     ANOP
+***********************************************************************
+&OP1     SETA  -2147483647
+&OP2     SETA  1
+&SLA     SETA  2
+*&OP1    SETA  -2147483647
+*&OP2    SETA  1
+*&SLA    SETA  2                       Preset result
+*&SLA    SETA  (&OP1 SLA &OP2)         invalid; shifts 0 to sign bit
+&SLA     SETA  (&OP1 SLA &OP2)
+         SHOWSBC
+         AIF   (&SLA EQ 0).OK6         Expected value?
+         MNOTE 12,'Expected value is 0'
+.OK6     ANOP
+***********************************************************************
+&OP1     SETA  -2147483647
+&OP2     SETA  32
+&SLA     SETA  2
+*&OP1    SETA  -2147483647
+*&OP2    SETA  32
+*&SLA    SETA  2                       Preset result
+*&SLA    SETA  (&OP1 SLA &OP2)         Invalid; non-zero >=32 bits
+&SLA     SETA  (&OP1 SLA &OP2)
+         SHOWSBC
+         AIF   (&SLA EQ 0).OK7         Expected value?
+         MNOTE 12,'Expected value is 0'
+.OK7     ANOP
+***********************************************************************
+&OP1     SETA  -2147483648
+&OP2     SETA  1
+&SLA     SETA  2
+*&OP1    SETA  -2147483648
+*&OP2    SETA  1
+*&SLA    SETA  2                       Preset result
+*&SLA    SETA  (&OP1 SLA &OP2)         Invalid; shift 0 int sign bit
+&SLA     SETA  (&OP1 SLA &OP2)
+         SHOWSBC
+         AIF   (&SLA EQ 0).OK8         Expected value?
+         MNOTE 12,'Expected value is 0'
+.OK8     ANOP
+***********************************************************************
+&OP1     SETA  16+1
+&OP2     SETA  31-4
+&SLA     SETA  2
+*&OP1    SETA  16+1
+*&OP2    SETA  31-4
+*&SLA    SETA  2                       Preset result
+*&SLA    SETA  (&OP1 SLA &OP2)         invalid; shifts 1 into sign bit
+&SLA     SETA  (&OP1 SLA &OP2)
+         SHOWSBC
+         AIF   (&SLA EQ 0).OK9         Expected value?
+         MNOTE 12,'Expected value is 0'
+.OK9     ANOP
+***********************************************************************
+&OP1     SETA  -16-1
+&OP2     SETA  31-4
+&SLA     SETA  2
+*&OP1    SETA  -16-1
+*&OP2    SETA  31-4
+*&SLA    SETA  2                       Preset result
+*&SLA    SETA  (&OP1 SLA &OP2)         invalid; shifts 0 into sigh bit
+&SLA     SETA  (&OP1 SLA &OP2)
+         SHOWSBC
+         AIF   (&SLA EQ 0).OK10        Expected value?
+         MNOTE 12,'Expected value is 0'
+.OK10    ANOP
+***********************************************************************
+*
+         END

@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# x00c2bdxtests: regression test HLASM built-in functions
+
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script
+cd ../..            # up two directories; the z390 directory
+
+sysmac='sysmac(mac)'
+
+# assemble test program
+bash/asm rt/mlc/C2BDX00 trace noloadhigh $sysmac
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Error assembling test program; rc=$rc"
+    exit $rc
+fi
+
+# if we get here, there were no errors
+echo "Verify tests ran without errors"
+echo "  View rt/mlc/C2BDX00.PRN to see tests"
+exit 0
