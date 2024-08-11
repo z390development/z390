@@ -21,11 +21,9 @@ call bat\asm   %z_TraceMode% linklib\CVTTOHEX bal notiming stats       || goto e
 call bat\asm   %z_TraceMode% linklib\SQXTR    bal notiming stats       || goto error
 call bat\asm   %z_TraceMode% linklib\DAT      bal notiming stats       || goto error
 call bat\asmlg %z_TraceMode% linklib\IEFBR14  sysobj(+linklib)         || goto error
-call bat\asmlg %z_TraceMode% linklib\TESTFPC1 sysobj(+linklib)         || goto error
-call bat\asmlg %z_TraceMode% linklib\TESTFPC2 sysobj(+linklib)         || goto error
 
-call bat\asm   %z_TraceMode% linklib\RTGENDIR noasm bal notiming stats sysparm(RTGENDIR) || goto error
-call bat\asm   %z_TraceMode% linklib\RTGENCMP noasm bal notiming stats sysparm(RTGENCMP) || goto error
+rem call bat\asm   %z_TraceMode% linklib\RTGENDIR noasm bal notiming stats sysparm(RTGENDIR) || goto error
+rem call bat\asm   %z_TraceMode% linklib\RTGENCMP noasm bal notiming stats sysparm(RTGENCMP) || goto error
 set z_ReturnCode=0
 goto return
 
