@@ -1,0 +1,6 @@
+noallow
+  machine(ARCH-0,list)
+  stats
+noloadhigh
+nodump
+notest

@@ -1,4 +1,4 @@
-OPCD#     TITLE 'Validate opcode table'
+OPTB#     TITLE 'Validate opcode table'
 ***********************************************************************
 * Start create : 2024-05-31
 * 1st delivery :
@@ -6,7 +6,7 @@ OPCD#     TITLE 'Validate opcode table'
 * Programmer   : AF Kornelis
 * Purpose      : For validating opcode tables. 
 *                For each optable option xxx we have
-*                a separate OPCD#xxx.OPT file and a OPCD#xxx.TF1
+*                a separate OPTB#xxx.OPT file and a OPTB#xxx.TF1
 *                reference file produced by HLASM
 *                Assembling this program using the appropriate .OPT 
 *                file produces a listing that includes a table of
@@ -22,23 +22,23 @@ OPCD#     TITLE 'Validate opcode table'
 * Program entry and linkage
 *
 ***********************************************************************
-OPCD#    CSECT ,                       *
+OPTB#    CSECT ,                       *
          AIF   (O'LM EQ 'U').S36020    * S360/20 cannot assemble pgm
          AIF   (O'AMODE EQ 'U').NOAMOD * Skip amode if mnemonic invalid
-OPCD#    AMODE 24                      * Not supported in DOS
+OPTB#    AMODE 24                      * Not supported in DOS
 .NOAMOD  ANOP  ,
          AIF   (O'RMODE EQ 'U').NORMOD * Skip rmode if mnemonic invalid
-OPCD#    RMODE 24                      * Not supported in DOS
+OPTB#    RMODE 24                      * Not supported in DOS
 .NORMOD  ANOP  ,
 
-         USING OPCD#,R15               * Establish addressability
+         USING OPTB#,R15               * Establish addressability
          B     START                   * Skip header data
          DC    AL1(START-*),C'&SYSECT &SYSDATE &SYSTIME'
 START    DS    0H
          STM   R14,R12,12(R13)         * Save GPRs
          LR    R12,R15                 * Copy base address
          DROP  R15                     * No longer needed
-         USING OPCD#,R12               * Re-establish addressability
+         USING OPTB#,R12               * Re-establish addressability
 
          LA    R15,SAVEAREA            * Point new savearea
          ST    R15,8(,R13)             * Set ptr to new savearea
@@ -363,7 +363,7 @@ HLASMTBL_END   EQU *-1                 * Last byte of table
          AGO   .ENDASM                 * Skip S360/20 code
 
 .S36020  ANOP  ,                       * Special code for S360/20
-         USING OPCD#,R15               * Establish addressability
+         USING OPTB#,R15               * Establish addressability
          LH    R15,H8                  * set RC: cannot execute!
          BR    R14                     * Return
          MNOTE *,'Optable 360-20 cannot be compared against HLASM; HLAS*
