@@ -16,13 +16,17 @@ set z_MaxRetCode=0
 
 rem  Optable 360-20 (cannot compare with HLASM - HLASM does not support this option)
 set Z390PRN=rt\rt\OPCD#320.PRN
-call bat\asml.bat %z_TraceMode% rt\rt\OPCD# @rt\rt\OPCD#320.OPT sysprn(rt\rt\OPCD#320.PRN)
+call bat\asml.bat %z_TraceMode% rt\mlc\OPTB# @rt\rt\OPTB#320.OPT sysprn(OPTB#320.PRN)
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 0 (echo %0 - OPCD# "optable(360-20)" is okay
                          ) else (
                          echo %0 ERROR: OPCD# returned %z_ReturnCode% for "optable(360-20)"
                          if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
                          )
+goto return
+
+
+
 
 rem  Machine S360-20 (cannot compare with HLASM - HLASM does not support this option)
 set Z390PRN=rt\rt\OPCD#M20.PRN
