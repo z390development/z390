@@ -25,8 +25,8 @@ if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "optable(360-20)" is okay
                          )
 
 rem  Machine S360-20 (cannot compare with HLASM - HLASM does not support this option)
-set Z390PRN=rt\mlc\OPTB#S360-20.PRN
-call bat\asml.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#S360-20.OPT sysprn(%Z390PRN%)
+set Z390PRN=rt\mlc\OPTB_S360-20.PRN
+call bat\asml.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_S360-20.OPT sysprn(%Z390PRN%)
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(S360-20)" is okay
                          ) else (
@@ -57,8 +57,8 @@ if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "optable(370)" is okay
                          )
 
 rem  Machine S370
-set Z390PRN=rt\mlc\OPTB#S370.PRN
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#S370.OPT sysprn(%Z390PRN%)
+set Z390PRN=rt\mlc\OPTB_S370.PRN
+call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_S370.OPT sysprn(%Z390PRN%)
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(S370)" is okay
                          ) else (
@@ -78,8 +78,8 @@ if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "optable(XA)" is okay
                          )
 
 rem  Machine S370XA
-set Z390PRN=rt\mlc\OPTB#S370XA.PRN
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#S370XA.OPT sysprn(%Z390PRN%)
+set Z390PRN=rt\mlc\OPTB_S370XA.PRN
+call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_S370XA.OPT sysprn(%Z390PRN%)
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(S370XA)" is okay
                          ) else (
@@ -88,8 +88,8 @@ if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(S370XA)" is okay
                          )
 
 rem  Machine ARCH-0
-set Z390PRN=rt\mlc\OPTB#ARCH-0.PRN
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#ARCH-0.OPT sysprn(%Z390PRN%)
+set Z390PRN=rt\mlc\OPTB_ARCH-0.PRN
+call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_ARCH-0.OPT sysprn(%Z390PRN%)
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(ARCH-0)" is okay
                          ) else (
