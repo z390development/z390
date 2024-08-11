@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 
 class RunAsmTests extends z390Test {
 
-    var options = ['trace', 'noloadhigh', "SYSMAC(${basePath("mac")})"]
+    var options = ['trace', 'noloadhigh', "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
 
     @Test
     void test_TESTINS1() {
@@ -57,6 +57,18 @@ class RunAsmTests extends z390Test {
     @Test
     void test_TEDIT() {
         int rc = this.asmlg(basePath("tests", "TEDIT"), *options, 'optable(z390)')
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_TESTFPC1() {
+        int rc = this.asmlg(basePath("linklib", "TESTFPC1"), *options, 'optable(z390) notrace')
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_TESTFPC2() {
+        int rc = this.asmlg(basePath("linklib", "TESTFPC2"), *options, 'optable(z390) notrace')
         this.printOutput()
         assert rc == 0
     }
