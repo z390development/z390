@@ -65,6 +65,12 @@ class RunAsmTests extends z390Test {
         int rc = this.asmlg(basePath("linklib", "TESTFPC1"), *options, 'optable(z390) notrace')
         this.printOutput()
         assert rc == 0
+        // Load files to fileData
+        loadFile(basePath("linklib", "TESTFPC1.TF1"), 'TF1')
+        loadFile(basePath("linklib", "TESTFPC1.LOG"), 'LOG')
+        // Check files equal
+        assert fileData.get('TF1') == fileData.get('LOG')
+        assert rc == 0
     }
     @Test
     void test_TESTFPC2() {
