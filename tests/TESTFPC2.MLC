@@ -27,6 +27,8 @@
 * Test conversion from and to 128 bit integer and all 6 floating 
 * point types using default svc 170 and 171 and also using 
 * LINKAGE=MF call to FPCONVRT contributed by David Bond.
+* 08/12/24 #540 BUILD procedure contains tests
+*               Converting WTO output to file output
 *********************************************************************
          COPY  ASMMSP
          PRINT DATA
@@ -44,6 +46,7 @@ WTOPRC   DC    AL2(WTOPRC_END-*,0)
          DC    C'ERROR RC ='
 DRC      DC    CL4' '
 WTOPRC_END   EQU   *
+SYSOUT   DCB   DSORG=PS,MACRF=PM,DDNAME=SYSOUT,LRECL=160,RECFM=VT  #540
          EQUREGS
          RT1   START
          MACRO
@@ -73,7 +76,8 @@ WTOPRC_END   EQU   *
          LA    R2,&VAL
          LA    R3,L'&VAL
          CALL  CVTTOHEX,((R2),DHEX,(R3))
-         WTO   MF=(E,WTOMSG)
+*        WTO   MF=(E,WTOMSG)                             #540
+         PUT   SYSOUT,WTOMSG                             #540
          IF    (CP,PRC,NE,=P'0')
                MVC DRC,=X'40202020'
                ED  DRC,PRC+6
@@ -99,11 +103,16 @@ WTOPRC_END   EQU   *
          MVC   DHEX,=CL32' '
          LA    R3,L'&VAL
          CALL  CVTTOHEX,(WORK16,DHEX,(R3))
-         WTO   MF=(E,WTOMSG)
+*        WTO   MF=(E,WTOMSG)                             #540
+         PUT   SYSOUT,WTOMSG                             #540
          B     EXIT&TESTNO
          LTORG
 EXIT&TESTNO DS 0H
          MEND
+*                                                 #540
+* Open DCB for report                             #540
+         OPEN  (SYSOUT,(OUTPUT))                  #540
+*                                                 #540
          TEST   EH,=EH'(MIN)'     
          TEST   EH,=EH'(MAX)'     
          TEST   EB,=EB'(MIN)'     
@@ -123,4 +132,7 @@ EXIT&TESTNO DS 0H
          TEST   LD,=LD'(MIN)'     
          TEST   LD,=LD'(MAX)'     
          RT1   END
+*                                                 #540
+* Close DCB for report                            #540
+         CLOSE (SYSOUT)                           #540
          END         
