@@ -300,8 +300,6 @@ linklib/RTGENDIR
 linklib/rtlink
 linklib/SQXTR
 linklib/SUPERZAP
-linklib/TESTFPC1
-linklib/TESTFPC2
 linklib/UNREF
 linklib/ZSTRMAC
 rt/RTGENCMP
@@ -352,8 +350,6 @@ rt/all/TESTEXT1
 rt/all/TESTEXT2
 rt/all/TESTFP1
 rt/all/TESTFP2
-rt/all/TESTFPC1
-rt/all/TESTFPC2
 rt/all/TESTINS1
 rt/all/TESTINS2
 rt/all/TESTINS3
@@ -419,8 +415,6 @@ rt/linklib/dif/RTLINK
 rt/linklib/dif/SORT
 rt/linklib/dif/SQXTR
 rt/linklib/dif/SUPERZAP
-rt/linklib/dif/TESTFPC1
-rt/linklib/dif/TESTFPC2
 rt/linklib/dif/UNREF
 rt/linklib/dif/ZSTRMAC
 rt/linklib/save/CVTTOHEX
@@ -434,8 +428,7 @@ rt/linklib/save/RTGENDIR
 rt/linklib/save/rtlink
 rt/linklib/save/SQXTR
 rt/linklib/save/SUPERZAP
-rt/linklib/save/TESTFPC2
-rt/linklib/save/UNREF
+\rt/linklib/save/UNREF
 rt/linklib/save/ZSTRMAC
 rt/test/TESTACT1
 rt/test/TESTAIN1
