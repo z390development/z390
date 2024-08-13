@@ -51,7 +51,12 @@ START    DS    0H
 MARKER   DC    C'Mnemonic Frmt HexOP Operands            '
 &ENTRYLEN SETA (L'MARKER)              * Marker Length = Entry Length
 &TBLSIZE  SETA 5000                    * Max nr of opcodes to expect
-&Z390LEN  SETA 256                     * Length of z390 listing record
+&Z390LEN  SETA 512                     * Length of z390 listing record *
+                                         listing contains a single line*
+                                         with paths for multiple options
+                                         Requiring a ridiculous LRECL  *
+                                         especially on the github server
+                                         which generates dirname :-(
 &HLASMLEN SETA 160                     * Length of HLASM listing record
 
 ***********************************************************************
