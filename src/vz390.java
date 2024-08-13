@@ -75,6 +75,7 @@ public class vz390 {
      *            1. Correct three VCLR "control block" offset values to match VCLR DSECT.
      *            2. Add initialization code for all "control blocks". Invoked in open and close.
      *            3, Modify find_vclr() and fetch_vclr_fields() to correctly process "PATH NAMELIST".
+     * 2024-08-12 #545 Extend generated java doco to include private methods
 	 **************************************************************************
 	 *  Global variables                  (last RPI)
 	 **************************************************************************/
@@ -1188,7 +1189,7 @@ public class vz390 {
      * find VCLR/VPTH entry in VCDT
      * <ol>
      * <li> Set cur_vclra_addr </li> 
-     * <li> Set cur_vptha_addr or 0 </li> 
+     * <li> Set cur_vptha_addr or 0
      *    <ol>
      *    <li> If vpth_flag_aixp, set acb_oflgs_aixp else 0 </li> 
      *    <li> If vpth_flag_aixu, set acb_oflgs_aixu else 0 </li> 
@@ -1350,6 +1351,7 @@ public class vz390 {
 
     /**
      * check for consistency between VCDT and ACB options and if
+     * @return true
      */
     private boolean check_acb_macrf() {
 
@@ -1673,9 +1675,11 @@ public class vz390 {
 
     /**
      * <ol>
-     * set RPLLXRBA last rec XRBA
-     * <li> VES for ESDS/RRDS </li>
-     * <li> VX0 for KSDS/VRRDS </li>
+     * <li>set RPLLXRBA last rec XRBA
+     *     <ol>
+     *     <li> VES for ESDS/RRDS </li>
+     *     <li> VX0 for KSDS/VRRDS </li>
+     *     </ol></li>
      * </ol>
      * @param xrba - long
      */
@@ -1700,9 +1704,11 @@ public class vz390 {
 
     /**
      * <ol>
-     * set RPLLXRBA last rec XRBA
-     * <li> VES for ESDS/RRDS </li>
-     * <li> VX0 for KSDS/VRRDS </li>
+     * <li>set RPLLXRBA last rec XRBA
+     *     <ol>
+     *     <li> VES for ESDS/RRDS </li>
+     *     <li> VX0 for KSDS/VRRDS </li>
+     *     </ol></li>
      * </ol>
      */
     private void set_rpl_ksit() {
@@ -2301,11 +2307,11 @@ private boolean get_ksir_rec() {
      /**
       * <ol>
       * <li> if random access by key rec #, then cur_vx0_rba = rec# * 8 else cur_vx0_xrba = cur_rpl_cxrba. </li>
-      * <li> Set cur_ves_xrba as follows if cur_vx0_xrba > eod set cur_vx0_xrba = -1 (not found) and return false </li>
+      * <li> Set cur_ves_xrba as follows if cur_vx0_xrba &gt; eod set cur_vx0_xrba = -1 (not found) and return false </li>
       * <li> Set cur_ves_xrba as follows:
       *    <ol>
       *    <li> -1 if 0 return false (no rec found) </li>
-      *    <li> xrba and return true. </li> </li>
+      *    <li> xrba and return true. </li>
       *    </ol> </li>
       * </ol>
       * Note:
@@ -2607,7 +2613,7 @@ private boolean get_ksir_rec() {
      * add RRDS or KSDS record to VES and update index XRBA address which
      * may be in VX0 or in VES KSIR.
      * @param tiot_index - int
-     * @param index_rba - long
+     * @param index_xrba - long
      * @return boolean to indicate success (true) or failure (false)
      */
     private boolean add_ves_rec(int tiot_index, long index_xrba) {
@@ -3577,9 +3583,9 @@ private boolean get_ksir_rec() {
     /**
      * get VSAM Cache Buffer (VCB) for file tiot_index, xrba, rec_len 
      * <ol>
-     * <li> If rec_len > max_vcb_lrec return false. </li>
-     * <li> search for allocated vcb If not found add new vcb up to  </li>
-     *      max_vcb else replace least recently used allocated vcb. 
+     * <li> If rec_len &gt; max_vcb_lrec return false. </li>
+     * <li> search for allocated vcb If not found add new vcb up to
+     *      max_vcb else replace least recently used allocated vcb.</li>
      * <li> Set vcb_index and return true. </li>
      * </ol>
      * @param tiot_index - int - index into tiot
@@ -3740,6 +3746,7 @@ private boolean get_ksir_rec() {
 
     /**
      * read KSIR int cb and set cur_ksit xrba's
+     * @param xrba long input xrba value
      * @return boolean to indicate success (true) or failure (false)
      */
     private boolean read_ksir(long xrba) {
