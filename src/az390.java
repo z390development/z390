@@ -423,6 +423,7 @@ public  class  az390 implements Runnable {
 		*                     replace non-printable with '.' in PRN, BAL, PCH
         * 2024-05-29 afk #500 List suboption for options optable/machine not implemented correctly
         * 2024-07-03 jjg #509 generate error in process_dcc_data if "DC  C''"
+        * 2024-08-09 AFK #543 Correct OPTABLE(XA,LIST) output to match HLASM
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -1829,7 +1830,13 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 7:
                     my_format="S";                                                     // #500
                     if (my_mnemonic.equals("IPK")                                      // #500
-                    ||  my_mnemonic.equals("PTLB"))                                    // #500
+                    ||  my_mnemonic.equals("PTLB")                                     // #500 #543
+                    ||  my_mnemonic.equals("CSCH")                                     // #543
+                    ||  my_mnemonic.equals("HSCH")                                     // #543
+                    ||  my_mnemonic.equals("RCHP")                                     // #543
+                    ||  my_mnemonic.equals("RSCH")                                     // #543
+                    ||  my_mnemonic.equals("SAL")                                      // #543
+                    ||  my_mnemonic.equals("SCHM"))                                    // #543
                        {my_operands="";                                                // #500
                         }                                                              // #500
                     else if (my_mnemonic.equals("LPSW")                                // #500
@@ -1888,25 +1895,6 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 14:
                     my_format="RRE";                                                   // #500
                     my_operands="R1,R2";                                               // #500
-    //**!!          // in newer optables some were reclassified as RRF                 // #500
-    //**!!          if ((!tz390.opt_optable.equals("DOS")                              // #500
-    //**!!          &&   !tz390.opt_optable.equals("370")                              // #500
-    //**!!          &&   !tz390.opt_optable.equals("XA")                               // #500
-    //**!!          &&   !tz390.opt_optable.equals("ESA")                              // #500
-    //**!!          &&   !tz390.opt_optable.equals("ZOP")                              // #500
-    //**!!          &&   !tz390.opt_optable.equals("YOP")                              // #500
-    //**!!               )                                                             // #500
-    //**!!          &&  (   tz390.op_code[index].equals("B2A6")  // CU21 CUUTF            #500
-    //**!!               || tz390.op_code[index].equals("B2A7")  // CU12 CUTFU            #500
-    //**!!               || tz390.op_name[index].equals("CU14")                        // #500
-    //**!!               || tz390.op_name[index].equals("CU24")                        // #500
-    //**!!               || tz390.op_name[index].equals("LPTEA")                       // #500
-    //**!!               || tz390.op_name[index].equals("SSKE")                        // #500
-    //**!!               || tz390.op_trace_type[index] == 143    // TROO TROT TRTO TRTT   #500
-    //**!!              ))                                                             // #500
-    //**!!             {my_format="RRF";                                               // #500
-    //**!!              my_operands="R1,R2<,M3>";                                      // #500
-    //**!!              }                                                              // #500
                     if (tz390.op_trace_type[index]==140)                               // #500
                        {if (tz390.op_name[index].equals("EPAR")
                         ||  tz390.op_name[index].equals("ESAR")
@@ -2146,7 +2134,6 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 40:
                     my_format="RRF";                                                   // #500
                     my_operands="R1,R2";                                               // #500
-    //**!!          entry=entry+"RRF  "+tz390.op_code[index].substring(0,4)+" R1,R2";  // #500
                     break;
                 case 41:
                     my_format="RIE";                                                   // #500
@@ -2155,7 +2142,6 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 42:
                     my_format="RIE";                                                   // #500
                     my_operands="R1,I2";                                               // #500
-    //**!!          entry=entry+"RIE  "+tz390.op_code[index].substring(0,4)+" R1,I2";  // #500
                     break;
                 case 43:
                     my_format="RIE";                                                   // #500
@@ -2164,7 +2150,6 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 44:
                     my_format="RIE";                                                   // #500
                     my_operands="R1,I2,I4";                                            // #500
-    //**!!          entry=entry+"RIE  "+tz390.op_code[index].substring(0,4)+" R1,I2,I4";  #500
                     break;
                 case 45:
                     my_format="RRS";                                                   // #500
@@ -2173,7 +2158,6 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 46:
                     my_format="RRS";                                                   // #500
                     my_operands="R1,R2,D4(B4)";                                        // #500
-    //**!!          entry=entry+"RRS  "+tz390.op_code[index].substring(0,4)+" R1,R2,D4(B4)"; #500
                     break;
                 case 47:
                     my_format="RIS";                                                   // #500
@@ -2182,7 +2166,6 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 48:
                     my_format="RIS";                                                   // #500
                     my_operands="R1,I2,D4(B4)";                                        // #500
-    //**!!          entry=entry+"RIS  "+tz390.op_code[index].substring(0,4)+" R1,I2,D4(B4)"; #500
                     break;
                 case 49:
                     my_format="RIE";                                                   // #500
@@ -2191,7 +2174,6 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 50:
                     my_format="RIE";                                                   // #500
                     my_operands="R1,R2,I4";                                            // #500
-    //**!!          entry=entry+"RIE  "+tz390.op_code[index].substring(0,4)+" R1,R2,I4";  #500
                     break;
                 case 51:
                     my_format="SIL";                                                   // #500
@@ -2200,7 +2182,6 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 52:
                     my_format="RIE";                                                   // #500
                     my_operands="R1,R2";                                               // #500
-    //**!!          entry=entry+"RIE  "+tz390.op_code[index].substring(0,4);              #500
                     if (my_hexop.indexOf("$") == -1)                                   // #500
                        {my_operands="R1,R2,I3,I4<,I5>";
                         }
@@ -3886,7 +3867,7 @@ private void process_bal_op(){
         loc_start = loc_ctr;
         loc_len = 4;
         get_hex_op(1,4);
-        // Process operands **!!
+        // Process operands
         check_end_parms();
         put_obj_text();
         break;
@@ -3917,7 +3898,7 @@ private void process_bal_op(){
         loc_start = loc_ctr;
         loc_len = 4;
         get_hex_op(1,4);
-        // Process operands **!!
+        // Process operands
         check_end_parms();
         put_obj_text();
         break;
@@ -3927,7 +3908,7 @@ private void process_bal_op(){
         loc_start = loc_ctr;
         loc_len = 4;
         get_hex_op(1,4);
-        // Process operands **!!
+        // Process operands
         check_end_parms();
         put_obj_text();
         break;
@@ -3937,7 +3918,7 @@ private void process_bal_op(){
         loc_start = loc_ctr;
         loc_len = 6;
         get_hex_op(1,4);
-        // Process operands **!!
+        // Process operands
         check_end_parms();
         put_obj_text();
         break;
@@ -3957,7 +3938,7 @@ private void process_bal_op(){
         loc_start = loc_ctr;
         loc_len = 4;
         get_hex_op(1,4);
-        // Process operands **!!
+        // Process operands
         check_end_parms();
         put_obj_text();
         break;
@@ -3967,7 +3948,7 @@ private void process_bal_op(){
         loc_start = loc_ctr;
         loc_len = 4;
         get_hex_op(1,4);
-        // Process operands **!!
+        // Process operands
         check_end_parms();
         put_obj_text();
         break;
