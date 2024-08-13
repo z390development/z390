@@ -1,0 +1,6 @@
+noallow
+  machine(S370XA,list)
+  stats
+noloadhigh
+nodump
+notest
