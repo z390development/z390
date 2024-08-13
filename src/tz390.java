@@ -4759,7 +4759,6 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                for(int i = 0; i < machine_option_id.length; i++)                   // #503
                   {if(machine_option_id[i].equals(opt_machine))                    // #503
                      {opt_machine_optable = machines_optable[i];                   // #503
-               //**!!       opt_optable         = optables_optable[i];             // #543 I think this one needs to go ...
                       break;                                                       // #503
                       }                                                            // #503
                    }                                                               // #503
