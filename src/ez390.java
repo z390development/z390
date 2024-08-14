@@ -295,7 +295,7 @@ public void process_ez390(String[] args,JTextArea log_text,JTextField command_te
     /**
      * execute IPL pgm and/or application pgm
      *
-     * @param zcvt_pgm_addr - function of this parameter is currently unclear
+     * @param zcvt_pgm_addr - address of 8 byte field containing name of program to run
      */
 private void run_pgm(int zcvt_pgm_addr){
 	pz390.reg.putInt(pz390.r13,pz390.zcvt_save);
