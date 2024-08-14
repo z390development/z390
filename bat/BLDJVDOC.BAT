@@ -15,7 +15,7 @@ pushd %~dps0..
 rem generate javadoc
 if not exist ".\docenv\javadoc\" mkdir docenv\javadoc
 cd docenv\javadoc
-call javadoc.exe ..\..\src\*.java || goto error
+call javadoc.exe ..\..\src\*.java -private || goto error
 cd ..\..
 goto return
 

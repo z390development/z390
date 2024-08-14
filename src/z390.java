@@ -94,7 +94,7 @@ public  class  z390
      * 10/04/05 RPI   6 - option ERR nn limit errors
      * 10/04/05 trap any command errors and issue 51
      * 10/09/05 RPI  16 - remove TEST and TRACE dependency bug
-     * 10/12/05 RPI  15 & 17 - fix CMD processing and status line
+     * 10/12/05 RPI  15 and 17 - fix CMD processing and status line
      * 10/18/05 RPI  29 - use Z390E and Z390I prefixes 
      * 10/27/05 RPI  55 - change /SC to execute Z390 GUI commands
      *          which may include batch commands CMD.
@@ -143,6 +143,7 @@ public  class  z390
      * 2021-04-19 jjg Replace Linux/Mac Perl usage with Linux shell
      * 2021-04-21 jjg Add CBLC, CBLCL, CBLCLG as commands
      * 2023-01-25 RPI 1598 re-implement javadoc changes by Hugh Sweeney
+     * 2024-08-12 #545 Extend generated java doco to include private methods
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************

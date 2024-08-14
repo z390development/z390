@@ -129,12 +129,13 @@ public  class  gz390
 	 * 06/22/09 RPI 1061 include PA_MDT in returned TGET fields with SBA's   
 	 * 10/24/09 RPI 1091 remove extra field advance for SFE                             
 	 * 01/01/10 RPI 1094 skip unprotected fields on tab, abort if timeout
-	 * 05/10/11 RPI 1151 correct set field attribute higlight & color
+	 * 05/10/11 RPI 1151 correct set field attribute higlight and color
 	 * 07/30/11 RPI 1175 use tz390.check_java_version()
 	 * 2019-09-20 dsh fix depreciated ALT_MASK to ALT_DOWN_MASK
 	 *                and CTRL_MASK to CTRL_DOWN_MASK
 	 * 2019-09-21 dsh remove getContentPane
 	 *                            replace getModifiers() with getModifiersEx()
+	 * 2024-08-12 #545 Extend generated java doco to include private methods
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -2234,10 +2235,10 @@ public  class  gz390
    //dsh     	System.out.println("componentShown event from "
    //dsh     		       + e.getComponent().getClass().getName());
             }
-     /***********************************************
+     /* **********************************************
       * Private screen, graph, keybaord, mouse, sound 
       * functions
-      ***********************************************/
+      ********************************************** */
 private void tput_edit_buffer(byte[] buff, int lbuff){
 	/*
 	 * update screen from tput ebcdic buffer
