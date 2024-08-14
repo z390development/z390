@@ -424,6 +424,7 @@ public  class  az390 implements Runnable {
         * 2024-05-29 afk #500 List suboption for options optable/machine not implemented correctly
         * 2024-07-03 jjg #509 generate error in process_dcc_data if "DC  C''"
         * 2024-08-09 AFK #543 Correct OPTABLE(XA,LIST) output to match HLASM
+        * 2024-08-12 #545 Extend generated java doco to include private methods
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -1744,10 +1745,7 @@ private void reset_lits(){
      * The report entries are sorted
      * The sorted entries are printed (three on a print line) preceded by a header line
      *
-     * @param (none)
-     * @return (none)
      */
-
 private void gen_list_mnemonics() // Routine added for RPI 1209A
    {int     index;
     String  entry;

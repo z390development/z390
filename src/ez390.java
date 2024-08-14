@@ -175,6 +175,7 @@ import javax.swing.Timer;
     * 05/10/11 RPI 1149 move started msg to put_trace
     * 07/30/11 RPI 1175 use tz390.check_java_version()
     * 2023-01-22 RPI 1598 re-implement javadoc changes by Hugh Sweeney
+    * 2024-08-12 #545 Extend generated java doco to include private methods
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -294,7 +295,7 @@ public void process_ez390(String[] args,JTextArea log_text,JTextField command_te
     /**
      * execute IPL pgm and/or application pgm
      *
-     * @param zcvt_pgm_addr
+     * @param zcvt_pgm_addr - address of 8 byte field containing name of program to run
      */
 private void run_pgm(int zcvt_pgm_addr){
 	pz390.reg.putInt(pz390.r13,pz390.zcvt_save);
@@ -438,7 +439,7 @@ private void monitor_startup(){
 	 *     cmd processes if running with timeout
 	 *  
 	 * 2.  If CMD running and 
-	 *     monitor_wait_total > timeout_interval
+	 *     monitor_wait_total &gt; timeout_interval
 	 *     then abort cmd process with timeout
 	 *  
 	 * 3.  If current time beyond timeout

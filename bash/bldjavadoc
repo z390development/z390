@@ -17,7 +17,7 @@ rm -rf ${DEST}/*
 
 # build the javadoc
 echo "Building javadoc from src/*.java into ${DEST} directory ..."
-javadoc -quiet -Xdoclint:none -d ${DEST} src/*.java
+javadoc -quiet -Xdoclint:none -d ${DEST} -private src/*.java
 ec=$?
 echo "The exit code of the javadoc command is $ec"
 if [ $ec -ne 0 ]; then echo "bldjavadoc Error encountered building javadoc"; fi

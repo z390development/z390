@@ -330,6 +330,7 @@ public  class  tz390 {
     * 2024-05-30 AFK #500 List suboption for options optable/machine not implemented correctly
     * 2024-06-07 AFK #533 Correct OPTABLE(370,LIST) output to match HLASM
     * 2024-08-01 AFK #543 Correct OPTABLE(XA,LIST) output to match HLASM
+    * 2024-08-12 #545 Extend generated java doco to include private methods
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -8022,7 +8023,7 @@ public void init_codepage(String codepage_parm){
      * when using the US-ASCII Charset.
      *
      * @param    c  character to check
-     * @returns  {@code true} if printable, {@code false} if non-printable.
+     * @return  {@code true} if printable, {@code false} if non-printable.
      */
     private boolean isPrintableChar_US_ASCII(char c)
     {
@@ -8038,9 +8039,9 @@ public void init_codepage(String codepage_parm){
 
     /**
      * <ol>
-     * </li> copy test tables to live tables
-     * </li> initialize translate tables
-     * </li> initialize printable character table
+     * <li> copy test tables to live tables</li>
+     * <li> initialize translate tables</li>
+     * <li> initialize printable character table</li>
      * </ol>
      */
 private void init_charset_tables(){
@@ -8098,6 +8099,7 @@ private void init_charset_tables(){
 
     /**
      * report codepage parm error
+     * @param msg String message text
      */
 private void report_codepage_error(String msg){
 
@@ -8132,6 +8134,7 @@ private void list_ebcdic_ascii_unicode(){
 
 
     /**
+     * @param index for codepoint
      * @return text index,hex-ebcdic,hex-ascii,char,U+hex
      */
 private String map_text(int index){
