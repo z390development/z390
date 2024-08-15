@@ -14,6 +14,18 @@ rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 pushd %~dps0..\..
 set z_MaxRetCode=0
 
+rem  Optable ESA
+set Z390PRN=rt\mlc\OPTB#ESA.PRN
+set HLASMPRN=rt\mlc\OPTB#ESA.TF1
+call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#ESA.OPT sysprn(%Z390PRN%)
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "optable(ESA)" is okay
+                         ) else (
+                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "optable(ESA)"
+                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
+                         )
+rem goto return
+
 rem  Optable 360-20 (cannot compare with HLASM - HLASM does not support this option)
 set Z390PRN=rt\mlc\OPTB#320.PRN
 call bat\asml.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#320.OPT sysprn(%Z390PRN%)

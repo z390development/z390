@@ -424,6 +424,7 @@ public  class  az390 implements Runnable {
         * 2024-05-29 afk #500 List suboption for options optable/machine not implemented correctly
         * 2024-07-03 jjg #509 generate error in process_dcc_data if "DC  C''"
         * 2024-08-09 AFK #543 Correct OPTABLE(XA,LIST) output to match HLASM
+        * 2024-08-15 AFK #554 Correct OPTABLE(ESA,LIST) output to match HLASM
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -2320,6 +2321,9 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     break;
                 case 73:
                     my_format="RI";                                                    // #500
+                    if(tz390.opt_optable_optb_nr >= 4)                                 // #554
+                       {my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2,3);  // #554
+                        }                                                              // #554
                     my_operands="R1,I2";                                               // #500
                     break;    
                 case 74:

@@ -330,6 +330,7 @@ public  class  tz390 {
     * 2024-05-30 AFK #500 List suboption for options optable/machine not implemented correctly
     * 2024-06-07 AFK #533 Correct OPTABLE(370,LIST) output to match HLASM
     * 2024-08-01 AFK #543 Correct OPTABLE(XA,LIST) output to match HLASM
+    * 2024-08-15 AFK #554 Correct OPTABLE(ESA,LIST) output to match HLASM
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -396,6 +397,7 @@ public  class  tz390 {
     String  opt_optable  = "*DFLT"; // default optable depends on z390/HLASM mode as indicated by allow option RPI 1209A
     String  opt_optable_list = "NOLIST"; // do not to list instructions RPI 1209A
     String  opt_optable_optable = ""; // effective optable associated with specified optable option #503
+    int     opt_optable_optb_nr = 0 ; // nr associated with effective optable #554
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
     boolean opt_pc       = true;  // generate macro pseudo code
     boolean opt_pcopt    = true;  // optimize pc code for speed
@@ -1103,38 +1105,41 @@ public  class  tz390 {
    * The same goes for table optable_optable_equivalence  // #503
    * which is split into the tables optable_option_id and // #503
    * optables_optable                                     // #503
+   * Additionally, the optables are assigned a sequence   // #554
+   * number for internal identification and processing    // #554
    *                                                      // #503
    */                                                     // #503
+    int[]    optable_option_nr = null;                    // #554
     String[] optable_option_id = null;                    // #503
     String[] optables_optable = null; // optable's optable// #503
     String[] optable_optable_equivalence =                // #503
-       {"UNI=UNI",                                        // #503
-        "360-20=360-20",                                  // #543
-        "DOS=DOS",                                        // #503
-        "370=370",                                        // #503
-        "XA=XA",                                          // #503
-        "ESA=ESA",                                        // #503
-        "ZOP=ZOP",                                        // #503
-        "ZS1=ZOP",                                        // #503
-        "YOP=YOP",                                        // #503
-        "ZS2=YOP",                                        // #503
-        "Z9=Z9",                                          // #503
-        "ZS3=Z9",                                         // #503
-        "Z10=Z10",                                        // #503
-        "ZS4=Z10",                                        // #503
-        "Z11=Z11",                                        // #503
-        "ZS5=Z11",                                        // #503
-        "Z12=Z12",                                        // #503
-        "ZS6=Z12",                                        // #503
-        "Z13=Z13",                                        // #503
-        "ZS7=Z13",                                        // #503
-        "Z14=Z14",                                        // #503
-        "ZS8=Z14",                                        // #503
-        "Z15=Z15",                                        // #503
-        "ZS9=Z15",                                        // #503
-        "Z16=Z16",                                        // #503
-        "ZSA=Z16",                                        // #503
-        "z390=z390",                                      // #503
+       {"00:360-20=360-20",                               // #543 #554
+        "01:DOS=DOS",                                     // #503 #554
+        "02:370=370",                                     // #503 #554
+        "03:XA=XA",                                       // #503 #554
+        "04:ESA=ESA",                                     // #503 #554
+        "05:ZOP=ZOP",                                     // #503 #554
+        "05:ZS1=ZOP",                                     // #503 #554
+        "06:YOP=YOP",                                     // #503 #554
+        "06:ZS2=YOP",                                     // #503 #554
+        "07:Z9=Z9",                                       // #503 #554
+        "07:ZS3=Z9",                                      // #503 #554
+        "08:Z10=Z10",                                     // #503 #554
+        "08:ZS4=Z10",                                     // #503 #554
+        "09:Z11=Z11",                                     // #503 #554
+        "09:ZS5=Z11",                                     // #503 #554
+        "10:Z12=Z12",                                     // #503 #554
+        "10:ZS6=Z12",                                     // #503 #554
+        "11:Z13=Z13",                                     // #503 #554
+        "11:ZS7=Z13",                                     // #503 #554
+        "12:Z14=Z14",                                     // #503 #554
+        "12:ZS8=Z14",                                     // #503 #554
+        "13:Z15=Z15",                                     // #503 #554
+        "13:ZS9=Z15",                                     // #503 #554
+        "14:Z16=Z16",                                     // #503 #554
+        "14:ZSA=Z16",                                     // #503 #554
+        "80:UNI=UNI",                                     // #503 #554
+        "90:z390=z390",                                   // #503 #554
         };                                                // #503
     String[] machine_option_id = null;                    // #503
     String[] machines_optable = null; // machine's optable// #503
@@ -3413,6 +3418,7 @@ public void init_option_tables()                                                
                                                                                                          // #503
     machine_option_id = new String[machine_optable_equivalence.length];                                  // #503
     machines_optable  = new String[machine_optable_equivalence.length];                                  // #503
+    optable_option_nr = new    int[optable_optable_equivalence.length];                                  // #554
     optable_option_id = new String[optable_optable_equivalence.length];                                  // #503
     optables_optable  = new String[optable_optable_equivalence.length];                                  // #503
                                                                                                          // #503
@@ -3420,6 +3426,12 @@ public void init_option_tables()                                                
     while (index < optable_optable_equivalence.length) // for each optable option                        // #503
        {try      // separate entry into optable id part and associated optable value                     // #503
            {entry=optable_optable_equivalence[index].toUpperCase();                                      // #503
+            i=entry.indexOf(":");    // find marker                                                      // #554
+            if (i == -1)                                                                                 // #554
+               {abort_error(40,"Missing colon in optable option definition " + entry);                   // #554
+                }                                                                                        // #554
+            optable_option_nr[index]=Integer.parseInt(entry.substring(0,i));  // extract nr              // #554
+            entry=entry.substring(i+1);                                       // get rest of definition  // #554
             i=entry.indexOf("=");                                                                        // #503
             if (i == -1)                                                                                 // #503
                {abort_error(40,"Missing equal sign in optable option definition " + entry);              // #503
@@ -4878,6 +4890,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                for(int i = 0; i < optable_option_id.length; i++)                    // #503
                   {if(optable_option_id[i].equals(opt_optable))                     // #503
                      {opt_optable_optable = optables_optable[i];                    // #503
+                      opt_optable_optb_nr = optable_option_nr[i];                   // #554
                       opt_optable         = optables_optable[i];                    // #503
                       break;                                                        // #503
                       }                                                             // #503
