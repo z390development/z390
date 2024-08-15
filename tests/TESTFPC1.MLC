@@ -90,7 +90,9 @@ SYSOUT   DCB   DSORG=PS,MACRF=PM,DDNAME=SYSOUT,LRECL=160,RECFM=VT  #540
          IF    (CP,PRC,NE,=P'0')
                MVC DRC,=X'40202020'
                ED  DRC,PRC+6
-               WTO MF=(E,WTOPRC)
+*              WTO MF=(E,WTOPRC)                         #540
+               PUT   SYSOUT,WTOPRC                       #540
+               CLOSE (SYSOUT)                            #540
                ABEND 101
          ENDIF
          XC    WORK16,WORK16
@@ -105,7 +107,9 @@ SYSOUT   DCB   DSORG=PS,MACRF=PM,DDNAME=SYSOUT,LRECL=160,RECFM=VT  #540
          IF    (CP,PRC,NE,=P'0')
                MVC DRC,=X'40202020'
                ED  DRC,PRC+6
-               WTO MF=(E,WTOPRC)
+*              WTO MF=(E,WTOPRC)                         #540
+               PUT   SYSOUT,WTOPRC                       #540
+               CLOSE (SYSOUT)                            #540
                ABEND 102
          ENDIF
          AP    RT1_TOT,=P'1'

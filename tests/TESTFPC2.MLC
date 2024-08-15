@@ -32,7 +32,7 @@
 *********************************************************************
          COPY  ASMMSP
          PRINT DATA
-TESTFPC1 RT1   MAIN
+TESTFPC2 RT1   MAIN                                      #540
 INT128   DC    0XL16,X'80',15X'00'      largest negative 128 bit int
 WORK16   DC    XL16'00'
 WTOMSG   DC    AL2(WTOEND-*,0)
@@ -81,7 +81,9 @@ SYSOUT   DCB   DSORG=PS,MACRF=PM,DDNAME=SYSOUT,LRECL=160,RECFM=VT  #540
          IF    (CP,PRC,NE,=P'0')
                MVC DRC,=X'40202020'
                ED  DRC,PRC+6
-               WTO MF=(E,WTOPRC)
+*              WTO MF=(E,WTOPRC)                         #540
+               PUT   SYSOUT,WTOPRC                       #540
+               CLOSE (SYSOUT)                            #540
                ABEND 101
          ENDIF
          XC    WORK16,WORK16
@@ -95,7 +97,9 @@ SYSOUT   DCB   DSORG=PS,MACRF=PM,DDNAME=SYSOUT,LRECL=160,RECFM=VT  #540
                ELSE
                    MVC DRC,=X'40202020'
                    ED  DRC,PRC+6
-                   WTO MF=(E,WTOPRC)
+*                  WTO MF=(E,WTOPRC)                     #540
+                   PUT   SYSOUT,WTOPRC                   #540
+                   CLOSE (SYSOUT)                        #540
                    ABEND 102
                ENDIF
          ENDIF
