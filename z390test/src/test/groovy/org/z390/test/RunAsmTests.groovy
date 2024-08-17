@@ -62,8 +62,8 @@ class RunAsmTests extends z390Test {
     }
     @Test
     void test_TESTFPC1() {
-        env.put('SYSOUT', basePath('tests', 'TESTFPC1.TST'))
-        int rc = this.asmlg(basePath("tests", "TESTFPC1"), *options, "SYSOBJ(${basePath("linklib")})", 'optable(z390) notrace')
+        env.put('RT1OUT', basePath('tests', 'TESTFPC1.TST'))
+        int rc = this.asmlg(basePath("tests", "TESTFPC1"), *options, "SYSOBJ(+${basePath("linklib")})", 'optable(z390) notrace')
         this.printOutput()
         assert rc == 0
         // Load files to fileData
@@ -75,8 +75,8 @@ class RunAsmTests extends z390Test {
     }
     @Test
     void test_TESTFPC2() {
-        env.put('SYSOUT', basePath('tests', 'TESTFPC2.TST'))
-        int rc = this.asmlg(basePath("tests", "TESTFPC2"), *options, "SYSOBJ(${basePath("linklib")})", 'optable(z390) notrace')
+        env.put('RT1OUT', basePath('tests', 'TESTFPC2.TST'))
+        int rc = this.asmlg(basePath("tests", "TESTFPC2"), *options, "SYSOBJ(+${basePath("linklib")})", 'optable(z390) notrace')
         this.printOutput()
         assert rc == 0
         // Load files to fileData

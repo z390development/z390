@@ -25,12 +25,14 @@
 .* 09/22/06 ADD CCLE AND CCGE OPTIONS FOR USE IN TESTTIM2 TESTS        
 .* 03/05/08 ADD RT1 OK - INC COUNT BY 1                                
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 08/17/24 #540 Add parameter to select either WTO or file output
 .*********************************************************************
-&NAME    RT1   &CMD,&CLC1,&CLC2,&LL  
+&NAME    RT1   &CMD,&CLC1,&CLC2,&LL,&TYPE=WTO                            #540
 .*
 .* REGRESSION TEST V1 COMMAND MACROS
 .* 
 .* 1.  RT1 MAIN  - START PGM AND DISPLAY STARTUP WTO
+.*                 &TYPE=FILE selects output to file
 .* 2,  RT1 START - START OF RT1 TEST MACROS FOLLOWING DATA
 .* 3.  RT1 CCE   - TEST FOR PSW CC EQUAL (OPTIONAL CLC PARMS)
 .* 4.  RT1 CCL   - TEST FOR PSW CC LOW   (OPTIONAL CLC PARMS)
@@ -44,6 +46,7 @@
 .*
          GBLA  &RT1_TOT
          GBLC  &RT1NAME
+         GBLC  &RT1TYPE                WTO / FILE                        #540
          AIF   ('&CMD' EQ 'MAIN').RT1MAIN
          AIF   ('&CMD' EQ 'START').RT1START
          AIF   ('&CMD' EQ 'END').RT1END
@@ -71,32 +74,78 @@
          AIF   ('&CMD' EQ 'CC3').RT1CC3
          MNOTE 8,'RT1 INVALID COMMAND - &CMD'
          MEXIT
+.*                                                                       #540
 .RT1MAIN ANOP
+         AIF   ('&TYPE' EQ 'WTO').TYPE_OK                                #540
+         AIF   ('&TYPE' EQ 'FILE').TYPE_OK                               #540
+         MNOTE 8,'RT1 MAIN,TYPE=&TYPE - Invalid value for Type: should * #540
+               be WTO or FILE'                                           #540
+         MEXIT ,                                                         #540
+.TYPE_OK ANOP  ,                                                         #540
+&RT1TYPE SETC  '&TYPE'                 Save for subsequent invocations   #540
+.*                                                                       #540
+.* Define inner macro to route output to either WTO or file              #540
+         MACRO ,                                                         #540
+         RT1SAY &MSG                                                     #540
+         GBLC  &RT1TYPE                WTO / FILE                        #540
+.*                                                                       #540
+         AIF   ('&RT1TYPE' EQ 'FILE').DO_FILE                            #540
+         AIF   ('&RT1TYPE' EQ 'WTO').DO_WTO                              #540
+         MNOTE 8,'RT1 - internal logic error - TYPE=&RT1TYPE is not sup* #540
+               ported'                                                   #540
+         MEXIT ,                                                         #540
+.DO_FILE ANOP  ,                                                         #540
+         PUT   RT1OUT,&MSG             Write message to file             #540
+         MEXIT ,                                                         #540
+.DO_WTO  ANOP  ,                                                         #540
+         WTO   MF=(E,&MSG)             Write message to log              #540
+         MEND  ,                                                         #540
+.*                                                                       #540
 &RT1NAME SETC  '&NAME'
 &RT1NAME SUBENTRY
-         WTO   '&RT1NAME RT1 STARTED'
+         AIF   ('&RT1TYPE' NE 'FILE').NO_OPEN                            #540
+         OPEN  (RT1OUT,(OUTPUT))       Open output file                  #540
+.NO_OPEN ANOP  ,                                                         #540
+         RT1SAY RT1_WTO0               Write start message               #540
          BRCL    15,RT1_START
+.*                                                                       #540
 RT1_ABORT DS 0H
          MVI   RT1_ABORTED,C'T'
-         WTO   '&RT1NAME RT1 TESTING ABORTED'
+         RT1SAY RT1_WTO9               Write abort message               #540
+.*                                                                       #540
 RT1_END  DS    0H
          MVC   RT1_DTOT,=X'402020202020'
          ED    RT1_DTOT,RT1_TOT
-         WTO   MF=(E,RT1_WTO1)
+         RT1SAY RT1_WTO1               Write test count                  #540
          CLI   RT1_ABORTED,C'T'
          BE    RT1_DUMP
-         WTO   '&RT1NAME RT1 ENDED OK'
+         RT1SAY RT1_WTO8               Write ended okay message          #540
+         AIF   ('&RT1TYPE' NE 'FILE').NO_CLOS                            #540
+         CLOSE (RT1OUT)                Close output file                 #540
+.NO_CLOS ANOP  ,                                                         #540
          SUBEXIT
 RT1_DUMP DS    0H
+         AIF   ('&RT1TYPE' NE 'FILE').NO_CLSE                            #540
+         CLOSE (RT1OUT)                Close output file                 #540
+.NO_CLSE ANOP  ,                                                         #540
          ABEND 101     
 RT1_LINK EQU   11
 RT1_DATA EQU   *
 RT1_TOT  DC    PL3'0' TOTAL RT1 TESTS COMPLETED
 RT1_ONE  DC    P'1'
+RT1_WTO0 DC    AL2(RT1_WTO0_END-*,0),C'&RT1NAME RT1 STARTED'             #540
+RT1_WTO0_END EQU *                                                       #540
 RT1_WTO1 DC    AL2(RT1_WTO_END-*,0),C'&RT1NAME RT1 TESTS COMPLETED = '
 RT1_DTOT DC    CL6' ZZZZZ'
 RT1_WTO_END EQU *         
+RT1_WTO8 DC    AL2(RT1_WTO8_END-*,0),C'&RT1NAME RT1 ENDED OK'            #540
+RT1_WTO8_END EQU *                                                       #540
+RT1_WTO9 DC    AL2(RT1_WTO9_END-*,0),C'&RT1NAME RT1 TESTING ABORTED'     #540
+RT1_WTO9_END EQU *                                                       #540
 RT1_ABORTED DC C'F'
+         AIF   ('&RT1TYPE' NE 'FILE').NO_DCB                             #540
+RT1OUT   DCB   DSORG=PS,MACRF=PM,DDNAME=RT1OUT,LRECL=160,RECFM=VT        #540
+.NO_DCB  ANOP  ,                                                         #540
          LTORG
 RT1_TEST_CC0  DS    0H
          BNE   RT1_ABORT
@@ -127,6 +176,7 @@ RT1_TEST_CCLE  DS    0H
 .RT1START ANOP
 RT1_START DS  0H
          MEXIT
+.*                                                                       #540
 .RT1CCE  ANOP
 .RT1CC0  ANOP
 RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CC0
@@ -135,6 +185,7 @@ RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CC0
          LTORG
 RT1_CCE&RT1_TOT DS 0H
          MEXIT
+.*                                                                       #540
 .RT1CCL  ANOP
 .RT1CC1  ANOP
 RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CC1
@@ -143,6 +194,7 @@ RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CC1
          LTORG
 RT1_CCL&RT1_TOT DS 0H
          MEXIT
+.*                                                                       #540
 .RT1CCH  ANOP
 .RT1CC2  ANOP
 RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CC2
@@ -151,6 +203,7 @@ RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CC2
          LTORG
 RT1_CCH&RT1_TOT DS 0H
          MEXIT
+.*                                                                       #540
 .RT1CC3  ANOP
 RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CC3
          USING *,RT1_LINK
@@ -158,6 +211,7 @@ RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CC3
          LTORG
 RT1_CC3&RT1_TOT DS 0H
          MEXIT
+.*                                                                       #540
 .RT1CCLE ANOP
 RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CCLE
          USING *,RT1_LINK
@@ -165,6 +219,7 @@ RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CCLE
          LTORG
 RT1_CCLE&RT1_TOT DS 0H
          MEXIT
+.*                                                                       #540
 .RT1CCGE ANOP
 RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CCGE
          USING *,RT1_LINK
@@ -172,6 +227,7 @@ RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CCGE
          LTORG
 RT1_CCGE&RT1_TOT DS 0H
          MEXIT
+.*                                                                       #540
 .RT1OK   ANOP
          BAS   RT1_LINK,RT1_OK
          USING *,RT1_LINK
@@ -179,9 +235,11 @@ RT1_CCGE&RT1_TOT DS 0H
          LTORG
 RT1_OK&RT1_TOT DS 0H
          MEXIT
+.*                                                                       #540
 .RT1ABORT ANOP
          B      RT1_ABORT
          MEXIT
+.*                                                                       #540
 .RT1END  ANOP
          B      RT1_END
          MEXIT

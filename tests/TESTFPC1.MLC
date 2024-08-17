@@ -37,7 +37,7 @@
 *********************************************************************
          COPY  ASMMSP
          PRINT DATA
-TESTFPC1 RT1   MAIN
+TESTFPC1 RT1   MAIN,TYPE=FILE           DCB name is RT1OUT               #540
 INT128   DC    0XL16,X'80',15X'00'      largest negative 128 bit int
 WORK16   DC    XL16'00'
 WTOMSG   DC    AL2(WTOEND-*,0)
@@ -54,7 +54,6 @@ WTOPRC_END   EQU   *
 LBT1     DC    LB'-567678867789987898'
 LDT1     DC    LD'-567678867789987898'
 LHT1     DC    LH'-567678867789987898'
-SYSOUT   DCB   DSORG=PS,MACRF=PM,DDNAME=SYSOUT,LRECL=160,RECFM=VT  #540
          EQUREGS
          MACRO
          TEST  &TYPE,&VAL
@@ -85,15 +84,12 @@ SYSOUT   DCB   DSORG=PS,MACRF=PM,DDNAME=SYSOUT,LRECL=160,RECFM=VT  #540
          LA    R2,&VAL
          LA    R3,L'&VAL
          CALL  CVTTOHEX,((R2),DHEX,(R3))
-*        WTO   MF=(E,WTOMSG)                             #540
-         PUT   SYSOUT,WTOMSG                             #540
+         PUT   RT1OUT,WTOMSG                                             #540
          IF    (CP,PRC,NE,=P'0')
                MVC DRC,=X'40202020'
                ED  DRC,PRC+6
-*              WTO MF=(E,WTOPRC)                         #540
-               PUT   SYSOUT,WTOPRC                       #540
-               CLOSE (SYSOUT)                            #540
-               ABEND 101
+               PUT RT1OUT,WTOPRC                                         #540
+               RT1 ABORT               Close file and abend              #540
          ENDIF
          XC    WORK16,WORK16
          CFD   CFD_&TYPE,OUT=WORK16,IN=DECIMAL,LINKAGE=&LINKAGE
@@ -102,15 +98,12 @@ SYSOUT   DCB   DSORG=PS,MACRF=PM,DDNAME=SYSOUT,LRECL=160,RECFM=VT  #540
          MVC   DHEX,=CL32' '
          LA    R3,L'&VAL
          CALL  CVTTOHEX,(WORK16,DHEX,(R3))
-*        WTO   MF=(E,WTOMSG)                             #540
-         PUT   SYSOUT,WTOMSG                             #540
+         PUT   RT1OUT,WTOMSG                                             #540
          IF    (CP,PRC,NE,=P'0')
                MVC DRC,=X'40202020'
                ED  DRC,PRC+6
-*              WTO MF=(E,WTOPRC)                         #540
-               PUT   SYSOUT,WTOPRC                       #540
-               CLOSE (SYSOUT)                            #540
-               ABEND 102
+               PUT RT1OUT,WTOPRC                                         #540
+               RT1 ABORT               Close file and abend              #540
          ENDIF
          AP    RT1_TOT,=P'1'
 * RPI 786 START TEST FOR DFP
@@ -155,9 +148,6 @@ EXIT&TESTNO DS 0H
          IIHL  R&I,0            RPI 819 FIX
 &I       SETA  &I+1
          AIF   (&I LT 16).HL
-*                                                 #540
-* Open DCB for report                             #540
-         OPEN  (SYSOUT,(OUTPUT))                  #540
 * DB
          TEST   DB,=DB'0'
          TEST   DB,=DB'1E-307'     
@@ -296,7 +286,4 @@ EXIT&TESTNO DS 0H
          TEST   INT128,=FL16'-1E38'     
          TEST   INT128,INT128 MAX NEG
          RT1   END
-*                                                 #540
-* Close DCB for report                            #540
-         CLOSE (SYSOUT)                           #540
          END         
