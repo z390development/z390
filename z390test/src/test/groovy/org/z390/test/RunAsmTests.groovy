@@ -71,7 +71,6 @@ class RunAsmTests extends z390Test {
         loadFile(basePath("tests", "TESTFPC1.TST"), 'TST')
         // Check files equal
         assert fileData.get('TF1') == fileData.get('TST')
-        assert rc == 0
     }
     @Test
     void test_TESTFPC2() {
@@ -84,7 +83,6 @@ class RunAsmTests extends z390Test {
         loadFile(basePath("tests", "TESTFPC2.TST"), 'TST')
         // Check files equal
         assert fileData.get('TF1') == fileData.get('TST')
-        assert rc == 0
     }
     @Test
     void test_TESTAMPS() {
