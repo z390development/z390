@@ -89,7 +89,7 @@ LHT1     DC    LH'-567678867789987898'
                MVC DRC,=X'40202020'
                ED  DRC,PRC+6
                PUT RT1OUT,WTOPRC                                         #540
-               RT1 ABORT               Close file and abend              #540
+               RT1 ABEND,ABEND=102     Close file and abend              #540
          ENDIF
          XC    WORK16,WORK16
          CFD   CFD_&TYPE,OUT=WORK16,IN=DECIMAL,LINKAGE=&LINKAGE
@@ -103,7 +103,7 @@ LHT1     DC    LH'-567678867789987898'
                MVC DRC,=X'40202020'
                ED  DRC,PRC+6
                PUT RT1OUT,WTOPRC                                         #540
-               RT1 ABORT               Close file and abend              #540
+               RT1 ABEND,ABEND=103     Close file and abend              #540
          ENDIF
          AP    RT1_TOT,=P'1'
 * RPI 786 START TEST FOR DFP

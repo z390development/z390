@@ -27,7 +27,7 @@
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .* 08/17/24 #540 Add parameter to select either WTO or file output
 .*********************************************************************
-&NAME    RT1   &CMD,&CLC1,&CLC2,&LL,&TYPE=WTO                            #540
+&NAME    RT1   &CMD,&CLC1,&CLC2,&LL,&TYPE=WTO,&ABEND=101                 #540
 .*
 .* REGRESSION TEST V1 COMMAND MACROS
 .* 
@@ -43,6 +43,7 @@
 .* 9.  RT1 OK    - INC TEST COUNT BY 1                                    
 .* 9.  RT1 ABORT - ABORT WITH TOTAL TESTS TO FAILURE AND USER 101 DUMP
 .*10.  RT1 END   - DISPLAY TOTAL TESTS AND ENDED OK WTO
+.*11   RT1 ABEND - Abend with specified abend code                       #540
 .*
          GBLA  &RT1_TOT
          GBLC  &RT1NAME
@@ -53,6 +54,7 @@
 &NAME    DS    0H
 &RT1_TOT SETA  &RT1_TOT+1
          AIF   ('&CMD' EQ 'OK').RT1OK
+         AIF   ('&CMD' EQ 'ABEND').RT1ABEND                              #540
          AIF   ('&CMD' EQ 'ABORT').RT1ABORT
          AIF   ('&CLC1' EQ '').NOCLC
          AIF   ('&LL'   EQ '').NOCLCLL
@@ -235,6 +237,14 @@ RT1_CCGE&RT1_TOT DS 0H
          LTORG
 RT1_OK&RT1_TOT DS 0H
          MEXIT
+.*                                                                       #540
+.RT1ABEND ANOP  ,                                                        #540
+         AIF   ('&RT1TYPE' NE 'FILE').NO_CLS                             #540
+         CLOSE (RT1OUT)                Close output file                 #540
+.NO_CLS  ANOP  ,                                                         #540
+         LA    6,&ABEND                Pick up abend code                #540
+         ABEND (6)                                                       #540
+         MEXIT  ,                                                        #540
 .*                                                                       #540
 .RT1ABORT ANOP
          B      RT1_ABORT
