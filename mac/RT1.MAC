@@ -33,7 +33,7 @@
 .* REGRESSION TEST V1 COMMAND MACROS
 .* 
 .* 1.  RT1 MAIN  - START PGM AND DISPLAY STARTUP WTO
-.*                 &TYPE=FILE selects output to file
+.*                 &TYPE=FILE selects output to file                     #540
 .* 2,  RT1 START - START OF RT1 TEST MACROS FOLLOWING DATA
 .* 3.  RT1 CCE   - TEST FOR PSW CC EQUAL (OPTIONAL CLC PARMS)
 .* 4.  RT1 CCL   - TEST FOR PSW CC LOW   (OPTIONAL CLC PARMS)
@@ -45,6 +45,7 @@
 .*10.  RT1 ABORT - ABORT WITH TOTAL TESTS TO FAILURE AND USER 101 DUMP   #540
 .*11.  RT1 END   - DISPLAY TOTAL TESTS AND ENDED OK WTO                  #540
 .*12   RT1 ABEND - Abend with specified abend code                       #540
+.*                 &ABEND=nnnn specifies desired user abend code         #540
 .*
          GBLA  &RT1_TOT
          GBLC  &RT1NAME
