@@ -26,6 +26,7 @@
 .* 03/05/08 ADD RT1 OK - INC COUNT BY 1                                
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .* 08/17/24 #540 Add parameter to select either WTO or file output
+.*               Add option to request a user abend nnnn
 .*********************************************************************
 &NAME    RT1   &CMD,&CLC1,&CLC2,&LL,&TYPE=WTO,&ABEND=101                 #540
 .*
@@ -41,9 +42,9 @@
 .* 7.  RT1 CCLE  - TEST FOR PSW CC HIGH  (OPTIONAL CLC PARMS) RPI 461
 .* 8.  RT1 CC?   - TEST FOR PSW CC = CC0-CC3     
 .* 9.  RT1 OK    - INC TEST COUNT BY 1                                    
-.* 9.  RT1 ABORT - ABORT WITH TOTAL TESTS TO FAILURE AND USER 101 DUMP
-.*10.  RT1 END   - DISPLAY TOTAL TESTS AND ENDED OK WTO
-.*11   RT1 ABEND - Abend with specified abend code                       #540
+.*10.  RT1 ABORT - ABORT WITH TOTAL TESTS TO FAILURE AND USER 101 DUMP   #540
+.*11.  RT1 END   - DISPLAY TOTAL TESTS AND ENDED OK WTO                  #540
+.*12   RT1 ABEND - Abend with specified abend code                       #540
 .*
          GBLA  &RT1_TOT
          GBLC  &RT1NAME
