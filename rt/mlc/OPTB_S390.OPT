@@ -1,0 +1,6 @@
+noallow
+  machine(S390,list)
+  stats
+noloadhigh
+nodump
+notest

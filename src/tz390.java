@@ -1953,7 +1953,7 @@ public  class  tz390 {
          "A71=TMLL,73,730",      //   2000 "A71"   "TMLL"     "RI"   12 // RPI 1522
          "A74=BRC,13,130",       //   2040 "A74"   "BRC"      "RI"   12 // RPI 2225
          "A74m=BRm,13,130;0=;F=BRU", //    "A74m"  "BRm, BRU" "BRCX" 13
-		 "A74=JC,13,130;*Extended", //       "A74"  "JC" "BRCX" 13 RPI 2221  #485
+         "A74=JC,13,130;*Extended", //       "A74"  "JC" "BRCX" 13 RPI 2221  #485
          "A74m=Jm,13,130;0=JNOP", //       "A74m"  "Jm, JNOP" "BRCX" 13
          "A75=BRAS,13,121",      //   2360 "A75"   "BRAS"     "RI"   12 RPI 2225
          "A75=JAS,13,121;*Extended",       //   2370 "A75"   "JAS"      "RI"   12 RPI 2225 #485
@@ -1991,12 +1991,6 @@ public  class  tz390 {
          "B278=STCKE,7,70",      //   3270 "B278"  "STCKE"    "S"     7
          "B279=SACF,7,70",       //   3280 "B279"  "SACF"     "S"     7
          "B27D=STSI,7,70",       //   3290 "B27D"  "STSI"     "S"     7
-		 "B280=LPP,7,70",   // S,LPP,D1(B1)   RPI 2221
-         "B284=LCCTL,7,70", // S,LCCTL,D1(B1) RPI 2221
-         "B285=LPCTL,7,70", // S,LPCTL,D1(B1) RPI 2221
-		 "B286=QSI,7,70",   // S,QSI,D1(B1)   RPI 2221
-         "B287=LSCTL,7,70", // S,LSCTL,D1(B1) RPI 2221
-         "B28E=QCTRI,7,70", // S,QCTRI,D1(B1) RPI 2221
          "B299=SRNM,7,71",       //   3300 "B299"  "SRNM"     "S"     7
          "B29C=STFPC,7,72",      //   3310 "B29C"  "STFPC"    "S"     7
          "B29D=LFPC,7,72",       //   3320 "B29D"  "LFPC"     "S"     7
@@ -2146,10 +2140,10 @@ public  class  tz390 {
          "ED37=MEE,24,240",      //   6950 "ED37"  "MEE"      "RXE"  24
          "EE=PLO,27,270",        //   7020 "EE"    "PLO"      "SS3"  27
          };
-     String[]   op_table_ESA_notsupported = // Table added for RPI 1209A
-        {"JLC      RIL  C0.4 M1,I2",     // supported for ZOP, not ESA #486
-         "JLNOP    RIL  C004 I2",        // supported for ZOP, not ESA #486
-         };                                                              // #486
+     String[]   op_table_ESA_only =   // Table added for RPI 1209A      #554
+        {"C04=JLC,16,330",       //   5180 "C04"   "BRCL"     "RIL"  16 #554
+         "C004=JLNOP,16,330",    //   5180 "C04"   "BRCL"     "RIL"  16 #554
+         };                                                          // #554
      String[]   op_table_ZOP =   // Table added for RPI 1209A
         {"010E=SAM64,1,10",      //     70 "010E"  "SAM64"    "E"     1
          "A50=IIHH,73,730",      //   1820 "A50"   "IIHH"     "RI"   12 // RPI 1522
@@ -2177,6 +2171,12 @@ public  class  tz390 {
          "A7D=MGHI,73,731",      //   2470 "A7D"   "MGHI"     "RI"   12 // RPI 1522
          "A7F=CGHI,73,731",      //   2490 "A7F"   "CGHI"     "RI"   12 // RPI 1522
          "B250=CSP,14,140",      //   3150 "B250"  "CSP"      "RRE"  14
+         "B280=LPP,7,70",   // S,LPP,D1(B1)   RPI 2221
+         "B284=LCCTL,7,70", // S,LCCTL,D1(B1) RPI 2221
+         "B285=LPCTL,7,70", // S,LPCTL,D1(B1) RPI 2221
+         "B286=QSI,7,70",   // S,QSI,D1(B1)   RPI 2221
+         "B287=LSCTL,7,70", // S,LSCTL,D1(B1) RPI 2221
+         "B28E=QCTRI,7,70", // S,QCTRI,D1(B1) RPI 2221
          "B2B2=LPSWE,7,70",      //   3390 "B2B2"  "LPSWE"    "S"     7
 		 "B2E0=SCCTR,14,142",    //   RRE,SCCTR,R1,R2 RPI 2221
 		 "B2E1=SPCTR,14,142",    //   RRE,SPCTR,R1,R2 RPI 2221
@@ -3654,6 +3654,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_vector); // #533
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
+            process_opcodes(op_table_ESA_only); // #554
             process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
@@ -4771,6 +4772,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                for(int i = 0; i < machine_option_id.length; i++)                   // #503
                   {if(machine_option_id[i].equals(opt_machine))                    // #503
                      {opt_machine_optable = machines_optable[i];                   // #503
+                      opt_optable_optb_nr = i;                                     // #554
                       break;                                                       // #503
                       }                                                            // #503
                    }                                                               // #503

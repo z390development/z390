@@ -1772,6 +1772,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
     int    operand_len=20;                  // length of operands column               // #500
     String my_prn_line;                     // print line being constructed            // #500
     int    my_entry_count;                  // nr of entries on current print line     // #500
+    int    short_op;                        // short or full opcode                    // #554
     report_entries = new String[tz390.op_name.length];
     index=0;
     while (index < tz390.op_name.length)
@@ -1837,7 +1838,9 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     ||  my_mnemonic.equals("RCHP")                                     // #543
                     ||  my_mnemonic.equals("RSCH")                                     // #543
                     ||  my_mnemonic.equals("SAL")                                      // #543
-                    ||  my_mnemonic.equals("SCHM"))                                    // #543
+                    ||  my_mnemonic.equals("SCHM")                                     // #543 #554
+                    ||  my_mnemonic.equals("XSCH")                                     // #554
+                        )                                                              // #554
                        {my_operands="";                                                // #500
                         }                                                              // #500
                     else if (my_mnemonic.equals("LPSW")                                // #500
@@ -1881,17 +1884,28 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 12:
                     my_format="RI";                                                    // #500
                     my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2);        // #500
-                    if (tz390.op_name[index].equals("BRC"))
-                       {my_operands="M1,I2";                                           // #500
-                        }
-                    else
-                       {my_operands="R1,I2";                                           // #500
-                        }
+                    my_operands="R1,I2";                                               // #554
                     break;
                 case 13:
                     // Our op_code table has the last two nibbles swapped
                     my_format="RI";                                                    // #500
-                    my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(3)+my_hexop.substring(2,3); // #500
+                    if (my_hexop.length() == 3) // mask excluded?                      // #554
+                       {my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2,3);  // #554
+                        short_op = 1;           // mark short opcode                   // #554
+                        }                                                              // #554
+                    else                        // mask included!                      // #554
+                       {my_hexop=my_hexop.substring(0,2)+my_hexop.substring(3)+my_hexop.substring(2,3); // #554
+                        short_op = 0;           // mark full opcode                    // #554
+                        }                                                              // #554
+                    if (tz390.op_trace_type[index]==130)                               // #554
+                       {if (short_op == 1)      // short opcode                        // #554
+                           my_operands="M1,RI2";                                       // #554
+                        else                    // full opcode                         // #554
+                           my_operands="RI2";   // mask implied by menmonic            // #554
+                        }
+                    else                                                               // #554
+                       {my_operands="R1,RI2";                                          // #554
+                        }                                                              // #554
                     break;
                 case 14:
                     my_format="RRE";                                                   // #500
@@ -1907,7 +1921,8 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                            {my_operands="R1";                                          // #500
                             }
                         else if (tz390.op_name[index].equals("PALB"))
-                           {}
+                           {my_operands="";                                            // #554
+                            }                                                          // #554
                         }
                     else if (tz390.op_trace_type[index]==142)
                        {if (tz390.op_name[index].equals("EFPC")
@@ -1949,20 +1964,32 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                         }
                     break;
                 case 15:
-                    my_format="RRF";                                                   // #500
+                    my_format="RRD";                                                   // #500 #554
                     my_operands="R1,R3,R2";                                            // #500
                     break;
                 case 16:
                     my_format="RIL";                                                   // #500
-                    my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2);        // #500
-                    if (tz390.op_name[index].equals("BRCL")
-                    ||  tz390.op_name[index].equals("PFDRL")
-                        )
-                       {my_operands="M1,I2";                                           // #500
-                        }
-                    else
-                       {my_operands="R1,I2";                                           // #500
-                        }
+                    if (my_hexop.length() == 3) // mask excluded?                      // #554
+                       {my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2,3);  // #554
+                        short_op = 1;           // mark short opcode                   // #554
+                        }                                                              // #554
+                    else                        // mask included!                      // #554
+                       {short_op = 0;           // mark full opcode                    // #554
+                        }                                                              // #554
+                    if (tz390.op_trace_type[index]==330)                               // #554
+                       {if (short_op == 1)      // short opcode                        // #554
+                           my_operands="M1,RI2";                                       // #554
+                        else                    // full opcode                         // #554
+                           my_operands="RI2";   // mask implied by menmonic            // #554
+                        }                                                              // #554
+                    else if (tz390.op_trace_type[index]==163)                          // #554
+                       {my_operands="R1,RI2";                                          // #554
+                        }                                                              // #554
+                    else                                                               // #554
+                       if(tz390.opt_optable_optb_nr >= 4) // ESA and above             // #554
+                          my_operands="R1,RI2";                                        // #554
+                       else                                                            // #554
+                          my_operands="R1,I2";                                         // #500
                     break;
                 case 17:
                     my_format="SS";                                                    // #500
@@ -1980,11 +2007,9 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     break;
                 case 18:
                     my_format="RXY";                                                   // #500
-    //**!!          if (tz390.opt_optable.equals("ESA")                                // #500
-    //**!!          ||  tz390.opt_optable.equals("ZOP")                                // #500
-    //**!!              )                                                              // #500
-    //**!!             {my_format="RXE";                                               // #500
-    //**!!              }                                                              // #500
+                    if(tz390.opt_optable_optb_nr >= 4) // ESA and above                // #554
+                       {my_format="RXE";                                               // #554
+                        }                                                              // #554
                     if (tz390.op_trace_type[index]==189)
                        {my_operands="M1,D2(X2,B2)";                                    // #500
                         }
@@ -1997,20 +2022,15 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     my_operands="D1(B1),D2(B2)";                                       // #500
                     break;
                 case 20:
-                    my_format="RSY";                                                   // #500
+                    my_format="RSE";                                                   // #500 #554
                     my_operands="D1(B1),D2(B2)";                                       // #500
-    //**!!          if (tz390.opt_optable.equals("ESA")                                // #500
-    //**!!          ||  tz390.opt_optable.equals("ZOP")                                // #500
-    //**!!              )                                                              // #500
-    //**!!             {entry=entry+"RSE  "+tz390.op_code[index];                      // #500
-    //**!!              }                                                              // #500
                     if (tz390.op_trace_type[index]==201
                     ||  tz390.op_trace_type[index]==202
                         )
                        {my_operands="R1,M3,D2(B2)";                                    // #500
                         }
                     else
-                       {my_operands=" R1,R3,D2(B2)";                                   // #500
+                       {my_operands="R1,R3,D2(B2)";                                    // #500 #554
                         }
                     break;
                 case 21:
@@ -2051,7 +2071,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     break;
                 case 30:
                     my_format="RRF";                                                   // #500
-                    my_operands="R1,M3,R2,M4";                                         // #500
+                    my_operands="R1,R3,R2,M4";                                         // #554
                     break;
                 case 31:
                     my_format="SS";                                                    // #500
@@ -2321,7 +2341,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     break;
                 case 73:
                     my_format="RI";                                                    // #500
-                    if(tz390.opt_optable_optb_nr >= 4)                                 // #554
+                    if(tz390.opt_optable_optb_nr >= 4)  // ESA and above               // #554
                        {my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2,3);  // #554
                         }                                                              // #554
                     my_operands="R1,I2";                                               // #500
