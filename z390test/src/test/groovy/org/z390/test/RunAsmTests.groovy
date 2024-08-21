@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 
 class RunAsmTests extends z390Test {
 
-    var options = ['trace', 'noloadhigh', "SYSMAC(${basePath("mac")})"]
+    var options = ['trace', 'noloadhigh', "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
 
     @Test
     void test_TESTINS1() {
@@ -59,6 +59,30 @@ class RunAsmTests extends z390Test {
         int rc = this.asmlg(basePath("tests", "TEDIT"), *options, 'optable(z390)')
         this.printOutput()
         assert rc == 0
+    }
+    @Test
+    void test_TESTFPC1() {
+        env.put('RT1OUT', basePath('tests', 'TESTFPC1.TST'))
+        int rc = this.asmlg(basePath("tests", "TESTFPC1"), *options, "SYSOBJ(+${basePath("linklib")})", 'optable(z390) notrace')
+        this.printOutput()
+        assert rc == 0
+        // Load files to fileData
+        loadFile(basePath("tests", "TESTFPC1.TF1"), 'TF1')
+        loadFile(basePath("tests", "TESTFPC1.TST"), 'TST')
+        // Check files equal
+        assert fileData.get('TF1') == fileData.get('TST')
+    }
+    @Test
+    void test_TESTFPC2() {
+        env.put('RT1OUT', basePath('tests', 'TESTFPC2.TST'))
+        int rc = this.asmlg(basePath("tests", "TESTFPC2"), *options, "SYSOBJ(+${basePath("linklib")})", 'optable(z390) notrace')
+        this.printOutput()
+        assert rc == 0
+        // Load files to fileData
+        loadFile(basePath("tests", "TESTFPC2.TF1"), 'TF1')
+        loadFile(basePath("tests", "TESTFPC2.TST"), 'TST')
+        // Check files equal
+        assert fileData.get('TF1') == fileData.get('TST')
     }
     @Test
     void test_TESTAMPS() {

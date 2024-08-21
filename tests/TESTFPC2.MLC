@@ -27,10 +27,12 @@
 * Test conversion from and to 128 bit integer and all 6 floating 
 * point types using default svc 170 and 171 and also using 
 * LINKAGE=MF call to FPCONVRT contributed by David Bond.
+* 08/12/24 #540 BUILD procedure contains tests
+*               Converting WTO output to file output
 *********************************************************************
          COPY  ASMMSP
          PRINT DATA
-TESTFPC1 RT1   MAIN
+TESTFPC2 RT1   MAIN,TYPE=FILE           DCB name is RT1OUT               #540
 INT128   DC    0XL16,X'80',15X'00'      largest negative 128 bit int
 WORK16   DC    XL16'00'
 WTOMSG   DC    AL2(WTOEND-*,0)
@@ -46,6 +48,7 @@ DRC      DC    CL4' '
 WTOPRC_END   EQU   *
          EQUREGS
          RT1   START
+.*                                                                       #540
          MACRO
          TEST  &TYPE,&VAL
          AIF   ('&TYPE'(2,1) EQ 'D').SKPMF SKIP DFP MF FOR NOW (BUG?)
@@ -59,6 +62,7 @@ WTOPRC_END   EQU   *
 .SKPMF   ANOP  dshx test
          TEST1 SVC,&TYPE,&VAL
          MEND
+.*                                                                       #540
          MACRO
          TEST1 &LINKAGE,&TYPE,&VAL
          GBLA  &TESTNO
@@ -73,12 +77,12 @@ WTOPRC_END   EQU   *
          LA    R2,&VAL
          LA    R3,L'&VAL
          CALL  CVTTOHEX,((R2),DHEX,(R3))
-         WTO   MF=(E,WTOMSG)
+         PUT   RT1OUT,WTOMSG                                             #540
          IF    (CP,PRC,NE,=P'0')
                MVC DRC,=X'40202020'
                ED  DRC,PRC+6
-               WTO MF=(E,WTOPRC)
-               ABEND 101
+               PUT RT1OUT,WTOPRC                                         #540
+               RT1 ABEND,ABEND=102     Close file and abend              #540
          ENDIF
          XC    WORK16,WORK16
          CFD   CFD_&TYPE,OUT=WORK16,IN=DECIMAL,LINKAGE=&LINKAGE
@@ -91,19 +95,20 @@ WTOPRC_END   EQU   *
                ELSE
                    MVC DRC,=X'40202020'
                    ED  DRC,PRC+6
-                   WTO MF=(E,WTOPRC)
-                   ABEND 102
+                   PUT RT1OUT,WTOPRC                                     #540
+                   RT1 ABEND,ABEND=103 Close file and abend              #540
                ENDIF
          ENDIF
          MVC   DTYPE,=CL6'&LK.<D &TYPE'
          MVC   DHEX,=CL32' '
          LA    R3,L'&VAL
          CALL  CVTTOHEX,(WORK16,DHEX,(R3))
-         WTO   MF=(E,WTOMSG)
+         PUT   RT1OUT,WTOMSG                                             #540
          B     EXIT&TESTNO
          LTORG
 EXIT&TESTNO DS 0H
          MEND
+.*                                                                       #540
          TEST   EH,=EH'(MIN)'     
          TEST   EH,=EH'(MAX)'     
          TEST   EB,=EB'(MIN)'     
