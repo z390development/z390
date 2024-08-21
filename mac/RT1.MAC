@@ -26,7 +26,7 @@
 .* 03/05/08 ADD RT1 OK - INC COUNT BY 1                                
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .* 08/17/24 #540 Add parameter to select either WTO or file output
-.*               Add option to request a user abend nnnn
+.*               Add option to request a user abend nnnn or (reg)
 .*********************************************************************
 &NAME    RT1   &CMD,&CLC1,&CLC2,&LL,&TYPE=WTO,&ABEND=101                 #540
 .*
@@ -244,8 +244,7 @@ RT1_OK&RT1_TOT DS 0H
          AIF   ('&RT1TYPE' NE 'FILE').NO_CLS                             #540
          CLOSE (RT1OUT)                Close output file                 #540
 .NO_CLS  ANOP  ,                                                         #540
-         LA    6,&ABEND                Pick up abend code                #540
-         ABEND (6)                                                       #540
+         ABEND &ABEND                                                    #540
          MEXIT  ,                                                        #540
 .*                                                                       #540
 .RT1ABORT ANOP
