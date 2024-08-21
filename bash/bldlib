@@ -16,8 +16,6 @@ bash/asm linklib/SQXTR bal notiming stats
 bash/asm linklib/DAT bal notiming stats
 
 bash/asmlg linklib/IEFBR14 "sysobj(+linklib)"
-bash/asmlg linklib/TESTFPC1 "sysobj(+linklib)"
-bash/asmlg linklib/TESTFPC2 "sysobj(+linklib)"
 
 bash/asm  linklib/RTGENDIR noasm bal notiming stats "sysparm(RTGENDIR)"
 bash/asm  linklib/RTGENCMP noasm bal notiming stats "sysparm(RTGENCMP)"
