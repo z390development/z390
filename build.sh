@@ -9,6 +9,7 @@ fi
 
 # build the jar and required libs
 bash/bldjar
+bash/bldzstrmac
 bash/bldlib
 bash/bldcbllib
 
