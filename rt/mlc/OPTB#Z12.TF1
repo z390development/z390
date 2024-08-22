@@ -1,0 +1,607 @@
+1                                         High Level Assembler Option Summary                   (PTF UI93396)   Page    1
+-                                                                                            HLASM R6.0  2024/08/13 17.00
+0  No Overriding ASMAOPT Parameters
+   Overriding Parameters-  OPTABLE(Z12,LIST)
+   No Process Statements
+
+
+   Options for this Assembly
+0                    NOADATA
+                       ALIGN
+                       ASA
+                       ASCII(00819)
+                       BATCH
+                       CA(LOCAL)
+                       CE(LOCAL)
+                       CODEPAGE(01148)
+                     NOCOMPAT
+                       CU(LOCAL)
+                     NODATAMAP
+                     NODBCS
+                     NODECK
+                       DXREF
+                       EBCDIC(00037)
+                       ESD
+                     NOEXIT
+                       FAIL(NOMSG,NOMNOTE,MAXERRS(500))
+                       FLAG(0,ALIGN,CONT,EXLITW,NOIMPLEN,NOLONGER,NOPAGE0,PUSH,RECORD,RENT,NOSIGNED,NOSUBSTR,NOTRUNC,
+                            USING0)
+                     NOFOLD
+                     NOGOFF
+                       ILMA
+                     NOINFO
+                       LANGUAGE(EN)
+                     NOLIBMAC
+                       LINECOUNT(60)
+                       LIST(121)
+ 3 PARM/OPTION         MACHINE(z12,LIST)
+                       MXREF(SOURCE)
+                       OBJECT
+ 3 PARM/OPTION         OPTABLE(Z12,LIST)
+                     NOPCONTROL
+                     NOPESTOP
+                     NOPROFILE
+                     NORA2
+                     NORENT
+                       RLD
+                       RXREF
+                       SECTALGN(8)
+                       SIZE(MAX)
+                     NOSUPRWARN
+                       SYSPARM()
+                     NOTERM
+                     NOTEST
+                       THREAD
+                     NOTRANSLATE
+                       TYPECHECK(MAGNITUDE,REGISTER,SIGNED)
+                       UNICODE(01200)
+1                                         High Level Assembler Option Summary                   (PTF UI93396)   Page    2
+-                                                                                            HLASM R6.0  2024/08/13 17.00
+0                      USING(NOLIMIT,MAP,WARN(15))
+                     NOWORKFILE
+                       XREF(SHORT,UNREFS)
+
+   No Overriding DD Names
+1                              High Level Assembler Operation Code Table Contents                               Page    3
+-                                                                                            HLASM R6.0  2024/08/13 17.00
+0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
+0A        RX   5A   R1,D2(X2,B2)         ACONTROL HLASM                          ACTR     HLASM
+ AD       RX   6A   R1,D2(X2,B2)         ADATA    HLASM                          ADB      RXE  ED1A R1,D2(X2,B2)
+ ADBR     RRE  B31A R1,R2                ADR      RR   2A   R1,R2                ADTR     RRF  B3D2 R1,R2,R3
+ ADTRA    RRF  B3D2 R1,R2,R3,M4          AE       RX   7A   R1,D2(X2,B2)         AEB      RXE  ED0A R1,D2(X2,B2)
+ AEBR     RRE  B30A R1,R2                AEJECT   HLASM                          AER      RR   3A   R1,R2
+ AFI      RIL  C2.9 R1,I2                AG       RXY  E308 R1,D2(X2,B2)         AGF      RXY  E318 R1,D2(X2,B2)
+ AGFI     RIL  C2.8 R1,I2                AGFR     RRE  B918 R1,R2                AGHI     RI   A7.B R1,I2
+ AGHIK    RIE  ECD9 R1,R3,I2             AGO      HLASM                          AGOB     HLASM
+ AGR      RRE  B908 R1,R2                AGRK     RRF  B9E8 R1,R2,R3             AGSI     SIY  EB7A D1(B1),I2
+ AH       RX   4A   R1,D2(X2,B2)         AHHHR    RRF  B9C8 R1,R2,R3             AHHLR    RRF  B9D8 R1,R2,R3
+ AHI      RI   A7.A R1,I2                AHIK     RIE  ECD8 R1,R3,I2             AHY      RXY  E37A R1,D2(X2,B2)
+ AIF      HLASM                          AIFB     HLASM                          AIH      RIL  CC.8 R1,I2
+ AINSERT  HLASM                          AL       RX   5E   R1,D2(X2,B2)         ALC      RXY  E398 R1,D2(X2,B2)
+ ALCG     RXY  E388 R1,D2(X2,B2)         ALCGR    RRE  B988 R1,R2                ALCR     RRE  B998 R1,R2
+ ALFI     RIL  C2.B R1,I2                ALG      RXY  E30A R1,D2(X2,B2)         ALGF     RXY  E31A R1,D2(X2,B2)
+ ALGFI    RIL  C2.A R1,I2                ALGFR    RRE  B91A R1,R2                ALGHSIK  RIE  ECDB R1,R3,I2
+ ALGR     RRE  B90A R1,R2                ALGRK    RRF  B9EA R1,R2,R3             ALGSI    SIY  EB7E D1(B1),I2
+ ALHHHR   RRF  B9CA R1,R2,R3             ALHHLR   RRF  B9DA R1,R2,R3             ALHSIK   RIE  ECDA R1,R3,I2
+ ALIAS    HLASM                          ALR      RR   1E   R1,R2                ALRK     RRF  B9FA R1,R2,R3
+ ALSI     SIY  EB6E D1(B1),I2            ALSIH    RIL  CC.A R1,I2                ALSIHN   RIL  CC.B R1,I2
+ ALY      RXY  E35E R1,D2(X2,B2)         AMODE    HLASM                          ANOP     HLASM
+ AP       SS   FA   D1(L1,B1),D2(L2,B2)  AR       RR   1A   R1,R2                AREAD    HLASM
+ ARK      RRF  B9F8 R1,R2,R3             ASI      SIY  EB6A D1(B1),I2            ASPACE   HLASM
+ AU       RX   7E   R1,D2(X2,B2)         AUR      RR   3E   R1,R2                AW       RX   6E   R1,D2(X2,B2)
+ AWR      RR   2E   R1,R2                AXBR     RRE  B34A R1,R2                AXR      RR   36   R1,R2
+ AXTR     RRF  B3DA R1,R2,R3             AXTRA    RRF  B3DA R1,R2,R3,M4          AY       RXY  E35A R1,D2(X2,B2)
+ B        RX   47F. D2(X2,B2)            BAKR     RRE  B240 R1,R2                BAL      RX   45   R1,D2(X2,B2)
+ BALR     RR   05   R1,R2                BAS      RX   4D   R1,D2(X2,B2)         BASR     RR   0D   R1,R2
+ BASSM    RR   0C   R1,R2                BC       RX   47   M1,D2(X2,B2)         BCR      RR   07   M1,R2
+ BCT      RX   46   R1,D2(X2,B2)         BCTG     RXY  E346 R1,D2(X2,B2)         BCTGR    RRE  B946 R1,R2
+ BCTR     RR   06   R1,R2                BE       RX   478. D2(X2,B2)            BER      RR   078. R2
+ BH       RX   472. D2(X2,B2)            BHR      RR   072. R2                   BL       RX   474. D2(X2,B2)
+ BLR      RR   074. R2                   BM       RX   474. D2(X2,B2)            BMR      RR   074. R2
+ BNE      RX   477. D2(X2,B2)            BNER     RR   077. R2                   BNH      RX   47D. D2(X2,B2)
+ BNHR     RR   07D. R2                   BNL      RX   47B. D2(X2,B2)            BNLR     RR   07B. R2
+ BNM      RX   47B. D2(X2,B2)            BNMR     RR   07B. R2                   BNO      RX   47E. D2(X2,B2)
+ BNOR     RR   07E. R2                   BNP      RX   47D. D2(X2,B2)            BNPR     RR   07D. R2
+ BNZ      RX   477. D2(X2,B2)            BNZR     RR   077. R2                   BO       RX   471. D2(X2,B2)
+ BOR      RR   071. R2                   BP       RX   472. D2(X2,B2)            BPP      SMI  C7   M1,RI2,D3(B3)
+ BPR      RR   072. R2                   BPRP     MII  C5   M1,RI2,RI3           BR       RR   07F. R2
+ BRAS     RI   A7.5 R1,RI2               BRASL    RIL  C0.5 R1,RI2               BRC      RI   A7.4 M1,RI2
+ BRCL     RIL  C0.4 M1,RI2               BRCT     RI   A7.6 R1,RI2               BRCTG    RI   A7.7 R1,RI2
+ BRCTH    RIL  CC.6 R1,RI2               BRE      RI   A784 RI2                  BREL     RIL  C084 RI2
+ BRH      RI   A724 RI2                  BRHL     RIL  C024 RI2                  BRL      RI   A744 RI2
+ BRLL     RIL  C044 RI2                  BRM      RI   A744 RI2                  BRML     RIL  C044 RI2
+ BRNE     RI   A774 RI2                  BRNEL    RIL  C074 RI2                  BRNH     RI   A7D4 RI2
+ BRNHL    RIL  C0D4 RI2                  BRNL     RI   A7B4 RI2                  BRNLL    RIL  C0B4 RI2
+ BRNM     RI   A7B4 RI2                  BRNML    RIL  C0B4 RI2                  BRNO     RI   A7E4 RI2
+ BRNOL    RIL  C0E4 RI2                  BRNP     RI   A7D4 RI2                  BRNPL    RIL  C0D4 RI2
+ BRNZ     RI   A774 RI2                  BRNZL    RIL  C074 RI2                  BRO      RI   A714 RI2
+ BROL     RIL  C014 RI2                  BRP      RI   A724 RI2                  BRPL     RIL  C024 RI2
+ BRU      RI   A7F4 RI2                  BRUL     RIL  C0F4 RI2                  BRXH     RSI  84   R1,R3,I2
+ BRXHG    RIE  EC44 R1,R3,RI2            BRXLE    RSI  85   R1,R3,I2             BRXLG    RIE  EC45 R1,R3,RI2
+1                              High Level Assembler Operation Code Table Contents                               Page    4
+-                                                                                            HLASM R6.0  2024/08/13 17.00
+0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
+0BRZ      RI   A784 RI2                  BRZL     RIL  C084 RI2                  BSA      RRE  B25A R1,R2
+ BSG      RRE  B258 R1,R2                BSM      RR   0B   R1,R2                BXH      RS   86   R1,R3,D2(B2)
+ BXHG     RSY  EB44 R1,R3,D2(B2)         BXLE     RS   87   R1,R3,D2(B2)         BXLEG    RSY  EB45 R1,R3,D2(B2)
+ BZ       RX   478. D2(X2,B2)            BZR      RR   078. R2                   C        RX   59   R1,D2(X2,B2)
+ CATTR    HLASM                          CCW      HLASM                          CCW0     HLASM
+ CCW1     HLASM                          CD       RX   69   R1,D2(X2,B2)         CDB      RXE  ED19 R1,D2(X2,B2)
+ CDBR     RRE  B319 R1,R2                CDFBR    RRE  B395 R1,R2                CDFBRA   RRF  B395 R1,M3,R2,M4
+ CDFR     RRE  B3B5 R1,R2                CDFTR    RRF  B951 R1,M3,R2,M4          CDGBR    RRE  B3A5 R1,R2
+ CDGBRA   RRF  B3A5 R1,M3,R2,M4          CDGR     RRE  B3C5 R1,R2                CDGTR    RRE  B3F1 R1,R2
+ CDGTRA   RRF  B3F1 R1,M3,R2,M4          CDLFBR   RRF  B391 R1,M3,R2,M4          CDLFTR   RRF  B953 R1,M3,R2,M4
+ CDLGBR   RRF  B3A1 R1,M3,R2,M4          CDLGTR   RRF  B952 R1,M3,R2,M4          CDR      RR   29   R1,R2
+ CDS      RS   BB   R1,R3,D2(B2)         CDSG     RSY  EB3E R1,R3,D2(B2)         CDSTR    RRE  B3F3 R1,R2
+ CDSY     RSY  EB31 R1,R3,D2(B2)         CDTR     RRE  B3E4 R1,R2                CDUTR    RRE  B3F2 R1,R2
+ CDZT     RSL  EDAA R1,D2(L2,B2),M3      CE       RX   79   R1,D2(X2,B2)         CEB      RXE  ED09 R1,D2(X2,B2)
+ CEBR     RRE  B309 R1,R2                CEDTR    RRE  B3F4 R1,R2                CEFBR    RRE  B394 R1,R2
+ CEFBRA   RRF  B394 R1,M3,R2,M4          CEFR     RRE  B3B4 R1,R2                CEGBR    RRE  B3A4 R1,R2
+ CEGBRA   RRF  B3A4 R1,M3,R2,M4          CEGR     RRE  B3C4 R1,R2                CEJECT   HLASM
+ CELFBR   RRF  B390 R1,M3,R2,M4          CELGBR   RRF  B3A0 R1,M3,R2,M4          CER      RR   39   R1,R2
+ CEXTR    RRE  B3FC R1,R2                CFC      S    B21A D2(B2)               CFDBR    RRF  B399 R1,M3,R2
+ CFDBRA   RRF  B399 R1,M3,R2,M4          CFDR     RRF  B3B9 R1,M3,R2             CFDTR    RRF  B941 R1,M3,R2,M4
+ CFEBR    RRF  B398 R1,M3,R2             CFEBRA   RRF  B398 R1,M3,R2,M4          CFER     RRF  B3B8 R1,M3,R2
+ CFI      RIL  C2.D R1,I2                CFXBR    RRF  B39A R1,M3,R2             CFXBRA   RRF  B39A R1,M3,R2,M4
+ CFXR     RRF  B3BA R1,M3,R2             CFXTR    RRF  B949 R1,M3,R2,M4          CG       RXY  E320 R1,D2(X2,B2)
+ CGDBR    RRF  B3A9 R1,M3,R2             CGDBRA   RRF  B3A9 R1,M3,R2,M4          CGDR     RRF  B3C9 R1,M3,R2
+ CGDTR    RRF  B3E1 R1,M3,R2             CGDTRA   RRF  B3E1 R1,M3,R2,M4          CGEBR    RRF  B3A8 R1,M3,R2
+ CGEBRA   RRF  B3A8 R1,M3,R2,M4          CGER     RRF  B3C8 R1,M3,R2             CGF      RXY  E330 R1,D2(X2,B2)
+ CGFI     RIL  C2.C R1,I2                CGFR     RRE  B930 R1,R2                CGFRL    RIL  C6.C R1,RI2
+ CGH      RXY  E334 R1,D2(X2,B2)         CGHI     RI   A7.F R1,I2                CGHRL    RIL  C6.4 R1,RI2
+ CGHSI    SIL  E558 D1(B1),I2            CGIB     RIS  ECFC R1,I2,M3,D4(B4)      CGIBE    RIS  ECFC R1,I2,D4(B4)
+ CGIBH    RIS  ECFC R1,I2,D4(B4)         CGIBL    RIS  ECFC R1,I2,D4(B4)         CGIBNE   RIS  ECFC R1,I2,D4(B4)
+ CGIBNH   RIS  ECFC R1,I2,D4(B4)         CGIBNL   RIS  ECFC R1,I2,D4(B4)         CGIJ     RIE  EC7C R1,I2,M3,RI4
+ CGIJE    RIE  EC7C R1,I2,RI4            CGIJH    RIE  EC7C R1,I2,RI4            CGIJL    RIE  EC7C R1,I2,RI4
+ CGIJNE   RIE  EC7C R1,I2,RI4            CGIJNH   RIE  EC7C R1,I2,RI4            CGIJNL   RIE  EC7C R1,I2,RI4
+ CGIT     RIE  EC70 R1,I2,M3             CGITE    RIE  EC70 R1,I2                CGITH    RIE  EC70 R1,I2
+ CGITL    RIE  EC70 R1,I2                CGITNE   RIE  EC70 R1,I2                CGITNH   RIE  EC70 R1,I2
+ CGITNL   RIE  EC70 R1,I2                CGR      RRE  B920 R1,R2                CGRB     RRS  ECE4 R1,R2,M3,D4(B4)
+ CGRBE    RRS  ECE4 R1,R2,D4(B4)         CGRBH    RRS  ECE4 R1,R2,D4(B4)         CGRBL    RRS  ECE4 R1,R2,D4(B4)
+ CGRBNE   RRS  ECE4 R1,R2,D4(B4)         CGRBNH   RRS  ECE4 R1,R2,D4(B4)         CGRBNL   RRS  ECE4 R1,R2,D4(B4)
+ CGRJ     RIE  EC64 R1,R2,M3,RI4         CGRJE    RIE  EC64 R1,R2,RI4            CGRJH    RIE  EC64 R1,R2,RI4
+ CGRJL    RIE  EC64 R1,R2,RI4            CGRJNE   RIE  EC64 R1,R2,RI4            CGRJNH   RIE  EC64 R1,R2,RI4
+ CGRJNL   RIE  EC64 R1,R2,RI4            CGRL     RIL  C6.8 R1,RI2               CGRT     RRF  B960 R1,R2,M3
+ CGRTE    RRF  B960 R1,R2                CGRTH    RRF  B960 R1,R2                CGRTL    RRF  B960 R1,R2
+ CGRTNE   RRF  B960 R1,R2                CGRTNH   RRF  B960 R1,R2                CGRTNL   RRF  B960 R1,R2
+ CGXBR    RRF  B3AA R1,M3,R2             CGXBRA   RRF  B3AA R1,M3,R2,M4          CGXR     RRF  B3CA R1,M3,R2
+ CGXTR    RRF  B3E9 R1,M3,R2             CGXTRA   RRF  B3E9 R1,M3,R2,M4          CH       RX   49   R1,D2(X2,B2)
+ CHF      RXY  E3CD R1,D2(X2,B2)         CHHR     RRE  B9CD R1,R2                CHHSI    SIL  E554 D1(B1),I2
+ CHI      RI   A7.E R1,I2                CHLR     RRE  B9DD R1,R2                CHRL     RIL  C6.5 R1,RI2
+ CHSI     SIL  E55C D1(B1),I2            CHY      RXY  E379 R1,D2(X2,B2)         CIB      RIS  ECFE R1,I2,M3,D4(B4)
+ CIBE     RIS  ECFE R1,I2,D4(B4)         CIBH     RIS  ECFE R1,I2,D4(B4)         CIBL     RIS  ECFE R1,I2,D4(B4)
+ CIBNE    RIS  ECFE R1,I2,D4(B4)         CIBNH    RIS  ECFE R1,I2,D4(B4)         CIBNL    RIS  ECFE R1,I2,D4(B4)
+ CIH      RIL  CC.D R1,I2                CIJ      RIE  EC7E R1,I2,M3,RI4         CIJE     RIE  EC7E R1,I2,RI4
+ CIJH     RIE  EC7E R1,I2,RI4            CIJL     RIE  EC7E R1,I2,RI4            CIJNE    RIE  EC7E R1,I2,RI4
+ CIJNH    RIE  EC7E R1,I2,RI4            CIJNL    RIE  EC7E R1,I2,RI4            CIT      RIE  EC72 R1,I2,M3
+1                              High Level Assembler Operation Code Table Contents                               Page    5
+-                                                                                            HLASM R6.0  2024/08/13 17.00
+0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
+0CITE     RIE  EC72 R1,I2                CITH     RIE  EC72 R1,I2                CITL     RIE  EC72 R1,I2
+ CITNE    RIE  EC72 R1,I2                CITNH    RIE  EC72 R1,I2                CITNL    RIE  EC72 R1,I2
+ CKSM     RRE  B241 R1,R2                CL       RX   55   R1,D2(X2,B2)         CLC      SS   D5   D1(L,B1),D2(B2)
+ CLCL     RR   0F   R1,R2                CLCLE    RS   A9   R1,R3,D2(B2)         CLCLU    RSY  EB8F R1,R3,D2(B2)
+ CLFDBR   RRF  B39D R1,M3,R2,M4          CLFDTR   RRF  B943 R1,M3,R2,M4          CLFEBR   RRF  B39C R1,M3,R2,M4
+ CLFHSI   SIL  E55D D1(B1),I2            CLFI     RIL  C2.F R1,I2                CLFIT    RIE  EC73 R1,I2,M3
+ CLFITE   RIE  EC73 R1,I2                CLFITH   RIE  EC73 R1,I2                CLFITL   RIE  EC73 R1,I2
+ CLFITNE  RIE  EC73 R1,I2                CLFITNH  RIE  EC73 R1,I2                CLFITNL  RIE  EC73 R1,I2
+ CLFXBR   RRF  B39E R1,M3,R2,M4          CLFXTR   RRF  B94B R1,M3,R2,M4          CLG      RXY  E321 R1,D2(X2,B2)
+ CLGDBR   RRF  B3AD R1,M3,R2,M4          CLGDTR   RRF  B942 R1,M3,R2,M4          CLGEBR   RRF  B3AC R1,M3,R2,M4
+ CLGF     RXY  E331 R1,D2(X2,B2)         CLGFI    RIL  C2.E R1,I2                CLGFR    RRE  B931 R1,R2
+ CLGFRL   RIL  C6.E R1,RI2               CLGHRL   RIL  C6.6 R1,RI2               CLGHSI   SIL  E559 D1(B1),I2
+ CLGIB    RIS  ECFD R1,I2,M3,D4(B4)      CLGIBE   RIS  ECFD R1,I2,D4(B4)         CLGIBH   RIS  ECFD R1,I2,D4(B4)
+ CLGIBL   RIS  ECFD R1,I2,D4(B4)         CLGIBNE  RIS  ECFD R1,I2,D4(B4)         CLGIBNH  RIS  ECFD R1,I2,D4(B4)
+ CLGIBNL  RIS  ECFD R1,I2,D4(B4)         CLGIJ    RIE  EC7D R1,I2,M3,RI4         CLGIJE   RIE  EC7D R1,I2,RI4
+ CLGIJH   RIE  EC7D R1,I2,RI4            CLGIJL   RIE  EC7D R1,I2,RI4            CLGIJNE  RIE  EC7D R1,I2,RI4
+ CLGIJNH  RIE  EC7D R1,I2,RI4            CLGIJNL  RIE  EC7D R1,I2,RI4            CLGIT    RIE  EC71 R1,I2,M3
+ CLGITE   RIE  EC71 R1,I2                CLGITH   RIE  EC71 R1,I2                CLGITL   RIE  EC71 R1,I2
+ CLGITNE  RIE  EC71 R1,I2                CLGITNH  RIE  EC71 R1,I2                CLGITNL  RIE  EC71 R1,I2
+ CLGR     RRE  B921 R1,R2                CLGRB    RRS  ECE5 R1,R2,M3,D4(B4)      CLGRBE   RRS  ECE5 R1,R2,D4(B4)
+ CLGRBH   RRS  ECE5 R1,R2,D4(B4)         CLGRBL   RRS  ECE5 R1,R2,D4(B4)         CLGRBNE  RRS  ECE5 R1,R2,D4(B4)
+ CLGRBNH  RRS  ECE5 R1,R2,D4(B4)         CLGRBNL  RRS  ECE5 R1,R2,D4(B4)         CLGRJ    RIE  EC65 R1,R2,M3,RI4
+ CLGRJE   RIE  EC65 R1,R2,RI4            CLGRJH   RIE  EC65 R1,R2,RI4            CLGRJL   RIE  EC65 R1,R2,RI4
+ CLGRJNE  RIE  EC65 R1,R2,RI4            CLGRJNH  RIE  EC65 R1,R2,RI4            CLGRJNL  RIE  EC65 R1,R2,RI4
+ CLGRL    RIL  C6.A R1,RI2               CLGRT    RRF  B961 R1,R2,M3             CLGRTE   RRF  B961 R1,R2
+ CLGRTH   RRF  B961 R1,R2                CLGRTL   RRF  B961 R1,R2                CLGRTNE  RRF  B961 R1,R2
+ CLGRTNH  RRF  B961 R1,R2                CLGRTNL  RRF  B961 R1,R2                CLGT     RSY  EB2B R1,M3,D2(B2)
+ CLGTE    RSY  EB2B R1,D2(B2)            CLGTH    RSY  EB2B R1,D2(B2)            CLGTL    RSY  EB2B R1,D2(B2)
+ CLGTNE   RSY  EB2B R1,D2(B2)            CLGTNH   RSY  EB2B R1,D2(B2)            CLGTNL   RSY  EB2B R1,D2(B2)
+ CLGXBR   RRF  B3AE R1,M3,R2,M4          CLGXTR   RRF  B94A R1,M3,R2,M4          CLHF     RXY  E3CF R1,D2(X2,B2)
+ CLHHR    RRE  B9CF R1,R2                CLHHSI   SIL  E555 D1(B1),I2            CLHLR    RRE  B9DF R1,R2
+ CLHRL    RIL  C6.7 R1,RI2               CLI      SI   95   D1(B1),I2            CLIB     RIS  ECFF R1,I2,M3,D4(B4)
+ CLIBE    RIS  ECFF R1,I2,D4(B4)         CLIBH    RIS  ECFF R1,I2,D4(B4)         CLIBL    RIS  ECFF R1,I2,D4(B4)
+ CLIBNE   RIS  ECFF R1,I2,D4(B4)         CLIBNH   RIS  ECFF R1,I2,D4(B4)         CLIBNL   RIS  ECFF R1,I2,D4(B4)
+ CLIH     RIL  CC.F R1,I2                CLIJ     RIE  EC7F R1,I2,M3,RI4         CLIJE    RIE  EC7F R1,I2,RI4
+ CLIJH    RIE  EC7F R1,I2,RI4            CLIJL    RIE  EC7F R1,I2,RI4            CLIJNE   RIE  EC7F R1,I2,RI4
+ CLIJNH   RIE  EC7F R1,I2,RI4            CLIJNL   RIE  EC7F R1,I2,RI4            CLIY     SIY  EB55 D1(B1),I2
+ CLM      RS   BD   R1,M3,D2(B2)         CLMH     RSY  EB20 R1,M3,D2(B2)         CLMY     RSY  EB21 R1,M3,D2(B2)
+ CLR      RR   15   R1,R2                CLRB     RRS  ECF7 R1,R2,M3,D4(B4)      CLRBE    RRS  ECF7 R1,R2,D4(B4)
+ CLRBH    RRS  ECF7 R1,R2,D4(B4)         CLRBL    RRS  ECF7 R1,R2,D4(B4)         CLRBNE   RRS  ECF7 R1,R2,D4(B4)
+ CLRBNH   RRS  ECF7 R1,R2,D4(B4)         CLRBNL   RRS  ECF7 R1,R2,D4(B4)         CLRJ     RIE  EC77 R1,R2,M3,RI4
+ CLRJE    RIE  EC77 R1,R2,RI4            CLRJH    RIE  EC77 R1,R2,RI4            CLRJL    RIE  EC77 R1,R2,RI4
+ CLRJNE   RIE  EC77 R1,R2,RI4            CLRJNH   RIE  EC77 R1,R2,RI4            CLRJNL   RIE  EC77 R1,R2,RI4
+ CLRL     RIL  C6.F R1,RI2               CLRT     RRF  B973 R1,R2,M3             CLRTE    RRF  B973 R1,R2
+ CLRTH    RRF  B973 R1,R2                CLRTL    RRF  B973 R1,R2                CLRTNE   RRF  B973 R1,R2
+ CLRTNH   RRF  B973 R1,R2                CLRTNL   RRF  B973 R1,R2                CLST     RRE  B25D R1,R2
+ CLT      RSY  EB23 R1,M3,D2(B2)         CLTE     RSY  EB23 R1,D2(B2)            CLTH     RSY  EB23 R1,D2(B2)
+ CLTL     RSY  EB23 R1,D2(B2)            CLTNE    RSY  EB23 R1,D2(B2)            CLTNH    RSY  EB23 R1,D2(B2)
+ CLTNL    RSY  EB23 R1,D2(B2)            CLY      RXY  E355 R1,D2(X2,B2)         CMPSC    RRE  B263 R1,R2
+ CNOP     HLASM                          COM      HLASM                          COPY     HLASM
+ CP       SS   F9   D1(L1,B1),D2(L2,B2)  CPSDR    RRF  B372 R1,R3,R2             CPYA     RRE  B24D R1,R2
+ CR       RR   19   R1,R2                CRB      RRS  ECF6 R1,R2,M3,D4(B4)      CRBE     RRS  ECF6 R1,R2,D4(B4)
+ CRBH     RRS  ECF6 R1,R2,D4(B4)         CRBL     RRS  ECF6 R1,R2,D4(B4)         CRBNE    RRS  ECF6 R1,R2,D4(B4)
+1                              High Level Assembler Operation Code Table Contents                               Page    6
+-                                                                                            HLASM R6.0  2024/08/13 17.00
+0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
+0CRBNH    RRS  ECF6 R1,R2,D4(B4)         CRBNL    RRS  ECF6 R1,R2,D4(B4)         CRDTE    RRF  B98F R1,R3,R2<,M4>
+ CRJ      RIE  EC76 R1,R2,M3,RI4         CRJE     RIE  EC76 R1,R2,RI4            CRJH     RIE  EC76 R1,R2,RI4
+ CRJL     RIE  EC76 R1,R2,RI4            CRJNE    RIE  EC76 R1,R2,RI4            CRJNH    RIE  EC76 R1,R2,RI4
+ CRJNL    RIE  EC76 R1,R2,RI4            CRL      RIL  C6.D R1,RI2               CRT      RRF  B972 R1,R2,M3
+ CRTE     RRF  B972 R1,R2                CRTH     RRF  B972 R1,R2                CRTL     RRF  B972 R1,R2
+ CRTNE    RRF  B972 R1,R2                CRTNH    RRF  B972 R1,R2                CRTNL    RRF  B972 R1,R2
+ CS       RS   BA   R1,R3,D2(B2)         CSCH     S    B230                      CSDTR    RRF  B3E3 R1,R2,M4
+ CSECT    HLASM                          CSG      RSY  EB30 R1,R3,D2(B2)         CSP      RRE  B250 R1,R2
+ CSPG     RRE  B98A R1,R2                CSST     SSF  C8.2 D1(B1),D2(B2),R3     CSXTR    RRF  B3EB R1,R2,M4
+ CSY      RSY  EB14 R1,R3,D2(B2)         CUDTR    RRE  B3E2 R1,R2                CUSE     RRE  B257 R1,R2
+ CUTFU    RRF  B2A7 R1,R2<,M3>           CUUTF    RRF  B2A6 R1,R2<,M3>           CUXTR    RRE  B3EA R1,R2
+ CU12     RRF  B2A7 R1,R2<,M3>           CU14     RRF  B9B0 R1,R2<,M3>           CU21     RRF  B2A6 R1,R2<,M3>
+ CU24     RRF  B9B1 R1,R2<,M3>           CU41     RRE  B9B2 R1,R2                CU42     RRE  B9B3 R1,R2
+ CVB      RX   4F   R1,D2(X2,B2)         CVBG     RXY  E30E R1,D2(X2,B2)         CVBY     RXY  E306 R1,D2(X2,B2)
+ CVD      RX   4E   R1,D2(X2,B2)         CVDG     RXY  E32E R1,D2(X2,B2)         CVDY     RXY  E326 R1,D2(X2,B2)
+ CXBR     RRE  B349 R1,R2                CXD      HLASM                          CXFBR    RRE  B396 R1,R2
+ CXFBRA   RRF  B396 R1,M3,R2,M4          CXFR     RRE  B3B6 R1,R2                CXFTR    RRF  B959 R1,M3,R2,M4
+ CXGBR    RRE  B3A6 R1,R2                CXGBRA   RRF  B3A6 R1,M3,R2,M4          CXGR     RRE  B3C6 R1,R2
+ CXGTR    RRE  B3F9 R1,R2                CXGTRA   RRF  B3F9 R1,M3,R2,M4          CXLFBR   RRF  B392 R1,M3,R2,M4
+ CXLFTR   RRF  B95B R1,M3,R2,M4          CXLGBR   RRF  B3A2 R1,M3,R2,M4          CXLGTR   RRF  B95A R1,M3,R2,M4
+ CXR      RRE  B369 R1,R2                CXSTR    RRE  B3FB R1,R2                CXTR     RRE  B3EC R1,R2
+ CXUTR    RRE  B3FA R1,R2                CXZT     RSL  EDAB R1,D2(L2,B2),M3      CY       RXY  E359 R1,D2(X2,B2)
+ CZDT     RSL  EDA8 R1,D2(L2,B2),M3      CZXT     RSL  EDA9 R1,D2(L2,B2),M3      D        RX   5D   R1,D2(X2,B2)
+ DC       HLASM                          DD       RX   6D   R1,D2(X2,B2)         DDB      RXE  ED1D R1,D2(X2,B2)
+ DDBR     RRE  B31D R1,R2                DDR      RR   2D   R1,R2                DDTR     RRF  B3D1 R1,R2,R3
+ DDTRA    RRF  B3D1 R1,R2,R3,M4          DE       RX   7D   R1,D2(X2,B2)         DEB      RXE  ED0D R1,D2(X2,B2)
+ DEBR     RRE  B30D R1,R2                DER      RR   3D   R1,R2                DIDBR    RRF  B35B R1,R3,R2,M4
+ DIEBR    RRF  B353 R1,R3,R2,M4          DL       RXY  E397 R1,D2(X2,B2)         DLG      RXY  E387 R1,D2(X2,B2)
+ DLGR     RRE  B987 R1,R2                DLR      RRE  B997 R1,R2                DP       SS   FD   D1(L1,B1),D2(L2,B2)
+ DR       RR   1D   R1,R2                DROP     HLASM                          DS       HLASM
+ DSECT    HLASM                          DSG      RXY  E30D R1,D2(X2,B2)         DSGF     RXY  E31D R1,D2(X2,B2)
+ DSGFR    RRE  B91D R1,R2                DSGR     RRE  B90D R1,R2                DXBR     RRE  B34D R1,R2
+ DXD      HLASM                          DXR      RRE  B22D R1,R2                DXTR     RRF  B3D9 R1,R2,R3
+ DXTRA    RRF  B3D9 R1,R2,R3,M4          EAR      RRE  B24F R1,R2                ECAG     RSY  EB4C R1,R3,D2(B2)
+ ECCTR    RRE  B2E4 R1,R2                ECPGA    RRE  B2ED R1,R2                ECTG     SSF  C8.1 D1(B1),D2(B2),R3
+ ED       SS   DE   D1(L,B1),D2(B2)      EDMK     SS   DF   D1(L,B1),D2(B2)      EEDTR    RRE  B3E5 R1,R2
+ EEXTR    RRE  B3ED R1,R2                EFPC     RRE  B38C R1                   EJECT    HLASM
+ END      HLASM                          ENTRY    HLASM                          EPAIR    RRE  B99A R1
+ EPAR     RRE  B226 R1                   EPCTR    RRE  B2E5 R1,R2                EPSW     RRE  B98D R1,R2
+ EQU      HLASM                          EREG     RRE  B249 R1,R2                EREGG    RRE  B90E R1,R2
+ ESAIR    RRE  B99B R1                   ESAR     RRE  B227 R1                   ESDTR    RRE  B3E7 R1,R2
+ ESEA     RRE  B99D R1                   ESTA     RRE  B24A R1,R2                ESXTR    RRE  B3EF R1,R2
+ ETND     RRE  B2EC R1                   EX       RX   44   R1,D2(X2,B2)         EXITCTL  HLASM
+ EXRL     RIL  C6.0 R1,RI2               EXTRN    HLASM                          FIDBR    RRF  B35F R1,M3,R2
+ FIDBRA   RRF  B35F R1,M3,R2,M4          FIDR     RRE  B37F R1,R2                FIDTR    RRF  B3D7 R1,M3,R2,M4
+ FIEBR    RRF  B357 R1,M3,R2             FIEBRA   RRF  B357 R1,M3,R2,M4          FIER     RRE  B377 R1,R2
+ FIXBR    RRF  B347 R1,M3,R2             FIXBRA   RRF  B347 R1,M3,R2,M4          FIXR     RRE  B367 R1,R2
+ FIXTR    RRF  B3DF R1,M3,R2,M4          FLOGR    RRE  B983 R1,R2                GBLA     HLASM
+ GBLB     HLASM                          GBLC     HLASM                          HDR      RR   24   R1,R2
+ HER      RR   34   R1,R2                HSCH     S    B231                      IAC      RRE  B224 R1
+ IC       RX   43   R1,D2(X2,B2)         ICM      RS   BF   R1,M3,D2(B2)         ICMH     RSY  EB80 R1,M3,D2(B2)
+ ICMY     RSY  EB81 R1,M3,D2(B2)         ICTL     HLASM                          ICY      RXY  E373 R1,D2(X2,B2)
+ IDTE     RRF  B98E R1,R3,R2<,M4>        IEDTR    RRF  B3F6 R1,R3,R2             IEXTR    RRF  B3FE R1,R3,R2
+1                              High Level Assembler Operation Code Table Contents                               Page    7
+-                                                                                            HLASM R6.0  2024/08/13 17.00
+0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
+0IIHF     RIL  C0.8 R1,I2                IIHH     RI   A5.0 R1,I2                IIHL     RI   A5.1 R1,I2
+ IILF     RIL  C0.9 R1,I2                IILH     RI   A5.2 R1,I2                IILL     RI   A5.3 R1,I2
+ IPK      S    B20B                      IPM      RRE  B222 R1                   IPTE     RRF  B221 R1,R2<,R3<,M4>>
+ ISEQ     HLASM                          ISKE     RRE  B229 R1,R2                IVSK     RRE  B223 R1,R2
+ J        RI   A7F4 RI2                  JAS      RI   A7.5 R1,RI2               JASL     RIL  C0.5 R1,RI2
+ JC       RI   A7.4 M1,RI2               JCT      RI   A7.6 R1,RI2               JCTG     RI   A7.7 R1,RI2
+ JCTH     RIL  CC.6 R1,RI2               JE       RI   A784 RI2                  JH       RI   A724 RI2
+ JL       RI   A744 RI2                  JLC      RIL  C0.4 M1,RI2               JLE      RIL  C084 RI2
+ JLH      RIL  C024 RI2                  JLL      RIL  C044 RI2                  JLM      RIL  C044 RI2
+ JLNE     RIL  C074 RI2                  JLNH     RIL  C0D4 RI2                  JLNL     RIL  C0B4 RI2
+ JLNM     RIL  C0B4 RI2                  JLNO     RIL  C0E4 RI2                  JLNOP    RIL  C004 RI2
+ JLNP     RIL  C0D4 RI2                  JLNZ     RIL  C074 RI2                  JLO      RIL  C014 RI2
+ JLP      RIL  C024 RI2                  JLU      RIL  C0F4 RI2                  JLZ      RIL  C084 RI2
+ JM       RI   A744 RI2                  JNE      RI   A774 RI2                  JNH      RI   A7D4 RI2
+ JNL      RI   A7B4 RI2                  JNM      RI   A7B4 RI2                  JNO      RI   A7E4 RI2
+ JNOP     RI   A704 RI2                  JNP      RI   A7D4 RI2                  JNZ      RI   A774 RI2
+ JO       RI   A714 RI2                  JP       RI   A724 RI2                  JXH      RSI  84   R1,R3,I2
+ JXHG     RIE  EC44 R1,R3,RI2            JXLE     RSI  85   R1,R3,I2             JXLEG    RIE  EC45 R1,R3,RI2
+ JZ       RI   A784 RI2                  KDB      RXE  ED18 R1,D2(X2,B2)         KDBR     RRE  B318 R1,R2
+ KDTR     RRE  B3E0 R1,R2                KEB      RXE  ED08 R1,D2(X2,B2)         KEBR     RRE  B308 R1,R2
+ KIMD     RRE  B93E R1,R2                KLMD     RRE  B93F R1,R2                KM       RRE  B92E R1,R2
+ KMAC     RRE  B91E R1,R2                KMC      RRE  B92F R1,R2                KMCTR    RRF  B92D R1,R3,R2
+ KMF      RRE  B92A R1,R2                KMO      RRE  B92B R1,R2                KXBR     RRE  B348 R1,R2
+ KXTR     RRE  B3E8 R1,R2                L        RX   58   R1,D2(X2,B2)         LA       RX   41   R1,D2(X2,B2)
+ LAA      RSY  EBF8 R1,R3,D2(B2)         LAAG     RSY  EBE8 R1,R3,D2(B2)         LAAL     RSY  EBFA R1,R3,D2(B2)
+ LAALG    RSY  EBEA R1,R3,D2(B2)         LAE      RX   51   R1,D2(X2,B2)         LAEY     RXY  E375 R1,D2(X2,B2)
+ LAM      RS   9A   R1,R3,D2(B2)         LAMY     RSY  EB9A R1,R3,D2(B2)         LAN      RSY  EBF4 R1,R3,D2(B2)
+ LANG     RSY  EBE4 R1,R3,D2(B2)         LAO      RSY  EBF6 R1,R3,D2(B2)         LAOG     RSY  EBE6 R1,R3,D2(B2)
+ LARL     RIL  C0.0 R1,RI2               LASP     SSE  E500 D1(B1),D2(B2)        LAT      RXY  E39F R1,D2(X2,B2)
+ LAX      RSY  EBF7 R1,R3,D2(B2)         LAXG     RSY  EBE7 R1,R3,D2(B2)         LAY      RXY  E371 R1,D2(X2,B2)
+ LB       RXY  E376 R1,D2(X2,B2)         LBH      RXY  E3C0 R1,D2(X2,B2)         LBR      RRE  B926 R1,R2
+ LCCTL    S    B284 D2(B2)               LCDBR    RRE  B313 R1,R2                LCDFR    RRE  B373 R1,R2
+ LCDR     RR   23   R1,R2                LCEBR    RRE  B303 R1,R2                LCER     RR   33   R1,R2
+ LCGFR    RRE  B913 R1,R2                LCGR     RRE  B903 R1,R2                LCLA     HLASM
+ LCLB     HLASM                          LCLC     HLASM                          LCR      RR   13   R1,R2
+ LCTL     RS   B7   R1,R3,D2(B2)         LCTLG    RSY  EB2F R1,R3,D2(B2)         LCXBR    RRE  B343 R1,R2
+ LCXR     RRE  B363 R1,R2                LD       RX   68   R1,D2(X2,B2)         LDE      RXE  ED24 R1,D2(X2,B2)
+ LDEB     RXE  ED04 R1,D2(X2,B2)         LDEBR    RRE  B304 R1,R2                LDER     RRE  B324 R1,R2
+ LDETR    RRF  B3D4 R1,R2,M4             LDGR     RRE  B3C1 R1,R2                LDR      RR   28   R1,R2
+ LDXBR    RRE  B345 R1,R2                LDXBRA   RRF  B345 R1,M3,R2,M4          LDXR     RR   25   R1,R2
+ LDXTR    RRF  B3DD R1,M3,R2,M4          LDY      RXY  ED65 R1,D2(X2,B2)         LE       RX   78   R1,D2(X2,B2)
+ LEDBR    RRE  B344 R1,R2                LEDBRA   RRF  B344 R1,M3,R2,M4          LEDR     RR   35   R1,R2
+ LEDTR    RRF  B3D5 R1,M3,R2,M4          LER      RR   38   R1,R2                LEXBR    RRE  B346 R1,R2
+ LEXBRA   RRF  B346 R1,M3,R2,M4          LEXR     RRE  B366 R1,R2                LEY      RXY  ED64 R1,D2(X2,B2)
+ LFAS     S    B2BD D2(B2)               LFH      RXY  E3CA R1,D2(X2,B2)         LFHAT    RXY  E3C8 R1,D2(X2,B2)
+ LFPC     S    B29D D2(B2)               LG       RXY  E304 R1,D2(X2,B2)         LGAT     RXY  E385 R1,D2(X2,B2)
+ LGB      RXY  E377 R1,D2(X2,B2)         LGBR     RRE  B906 R1,R2                LGDR     RRE  B3CD R1,R2
+ LGF      RXY  E314 R1,D2(X2,B2)         LGFI     RIL  C0.1 R1,I2                LGFR     RRE  B914 R1,R2
+ LGFRL    RIL  C4.C R1,RI2               LGH      RXY  E315 R1,D2(X2,B2)         LGHI     RI   A7.9 R1,I2
+ LGHR     RRE  B907 R1,R2                LGHRL    RIL  C4.4 R1,RI2               LGR      RRE  B904 R1,R2
+ LGRL     RIL  C4.8 R1,RI2               LH       RX   48   R1,D2(X2,B2)         LHH      RXY  E3C4 R1,D2(X2,B2)
+ LHHR     RIE  EC5D R1,R2                LHI      RI   A7.8 R1,I2                LHLR     RIE  EC5D R1,R2
+ LHR      RRE  B927 R1,R2                LHRL     RIL  C4.5 R1,RI2               LHY      RXY  E378 R1,D2(X2,B2)
+1                              High Level Assembler Operation Code Table Contents                               Page    8
+-                                                                                            HLASM R6.0  2024/08/13 17.00
+0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
+0LLC      RXY  E394 R1,D2(X2,B2)         LLCH     RXY  E3C2 R1,D2(X2,B2)         LLCHHR   RIE  EC5D R1,R2
+ LLCHLR   RIE  EC5D R1,R2                LLCLHR   RIE  EC51 R1,R2                LLCR     RRE  B994 R1,R2
+ LLGC     RXY  E390 R1,D2(X2,B2)         LLGCR    RRE  B984 R1,R2                LLGF     RXY  E316 R1,D2(X2,B2)
+ LLGFAT   RXY  E39D R1,D2(X2,B2)         LLGFR    RRE  B916 R1,R2                LLGFRL   RIL  C4.E R1,RI2
+ LLGH     RXY  E391 R1,D2(X2,B2)         LLGHR    RRE  B985 R1,R2                LLGHRL   RIL  C4.6 R1,RI2
+ LLGT     RXY  E317 R1,D2(X2,B2)         LLGTAT   RXY  E39C R1,D2(X2,B2)         LLGTR    RRE  B917 R1,R2
+ LLH      RXY  E395 R1,D2(X2,B2)         LLHFR    RIE  EC51 R1,R2                LLHH     RXY  E3C6 R1,D2(X2,B2)
+ LLHHHR   RIE  EC5D R1,R2                LLHHLR   RIE  EC5D R1,R2                LLHLHR   RIE  EC51 R1,R2
+ LLHR     RRE  B995 R1,R2                LLHRL    RIL  C4.2 R1,RI2               LLIHF    RIL  C0.E R1,I2
+ LLIHH    RI   A5.C R1,I2                LLIHL    RI   A5.D R1,I2                LLILF    RIL  C0.F R1,I2
+ LLILH    RI   A5.E R1,I2                LLILL    RI   A5.F R1,I2                LM       RS   98   R1,R3,D2(B2)
+ LMD      SS   EF   R1,R3,D2(B2),D4(B4)  LMG      RSY  EB04 R1,R3,D2(B2)         LMH      RSY  EB96 R1,R3,D2(B2)
+ LMY      RSY  EB98 R1,R3,D2(B2)         LNDBR    RRE  B311 R1,R2                LNDFR    RRE  B371 R1,R2
+ LNDR     RR   21   R1,R2                LNEBR    RRE  B301 R1,R2                LNER     RR   31   R1,R2
+ LNGFR    RRE  B911 R1,R2                LNGR     RRE  B901 R1,R2                LNR      RR   11   R1,R2
+ LNXBR    RRE  B341 R1,R2                LNXR     RRE  B361 R1,R2                LOC      RSY  EBF2 R1,D2(B2),M3
+ LOCE     RSY  EBF2 R1,D2(B2)            LOCG     RSY  EBE2 R1,D2(B2),M3         LOCGE    RSY  EBE2 R1,D2(B2)
+ LOCGH    RSY  EBE2 R1,D2(B2)            LOCGL    RSY  EBE2 R1,D2(B2)            LOCGNE   RSY  EBE2 R1,D2(B2)
+ LOCGNH   RSY  EBE2 R1,D2(B2)            LOCGNL   RSY  EBE2 R1,D2(B2)            LOCGR    RRF  B9E2 R1,R2,M3
+ LOCGRE   RRF  B9E2 R1,R2                LOCGRH   RRF  B9E2 R1,R2                LOCGRL   RRF  B9E2 R1,R2
+ LOCGRNE  RRF  B9E2 R1,R2                LOCGRNH  RRF  B9E2 R1,R2                LOCGRNL  RRF  B9E2 R1,R2
+ LOCH     RSY  EBF2 R1,D2(B2)            LOCL     RSY  EBF2 R1,D2(B2)            LOCNE    RSY  EBF2 R1,D2(B2)
+ LOCNH    RSY  EBF2 R1,D2(B2)            LOCNL    RSY  EBF2 R1,D2(B2)            LOCR     RRF  B9F2 R1,R2,M3
+ LOCRE    RRF  B9F2 R1,R2                LOCRH    RRF  B9F2 R1,R2                LOCRL    RRF  B9F2 R1,R2
+ LOCRNE   RRF  B9F2 R1,R2                LOCRNH   RRF  B9F2 R1,R2                LOCRNL   RRF  B9F2 R1,R2
+ LOCTR    HLASM                          LPCTL    S    B285 D2(B2)               LPD      SSF  C8.4 R3,D1(B1),D2(B2)
+ LPDBR    RRE  B310 R1,R2                LPDFR    RRE  B370 R1,R2                LPDG     SSF  C8.5 R3,D1(B1),D2(B2)
+ LPDR     RR   20   R1,R2                LPEBR    RRE  B300 R1,R2                LPER     RR   30   R1,R2
+ LPGFR    RRE  B910 R1,R2                LPGR     RRE  B900 R1,R2                LPP      S    B280 D2(B2)
+ LPQ      RXY  E38F R1,D2(X2,B2)         LPR      RR   10   R1,R2                LPSW     SI   82   D1(B1)
+ LPSWE    S    B2B2 D2(B2)               LPTEA    RRF  B9AA R1,R3,R2,M4          LPXBR    RRE  B340 R1,R2
+ LPXR     RRE  B360 R1,R2                LR       RR   18   R1,R2                LRA      RX   B1   R1,D2(X2,B2)
+ LRAG     RXY  E303 R1,D2(X2,B2)         LRAY     RXY  E313 R1,D2(X2,B2)         LRDR     RR   25   R1,R2
+ LRER     RR   35   R1,R2                LRL      RIL  C4.D R1,RI2               LRV      RXY  E31E R1,D2(X2,B2)
+ LRVG     RXY  E30F R1,D2(X2,B2)         LRVGR    RRE  B90F R1,R2                LRVH     RXY  E31F R1,D2(X2,B2)
+ LRVR     RRE  B91F R1,R2                LSCTL    S    B287 D2(B2)               LT       RXY  E312 R1,D2(X2,B2)
+ LTDBR    RRE  B312 R1,R2                LTDR     RR   22   R1,R2                LTDTR    RRE  B3D6 R1,R2
+ LTEBR    RRE  B302 R1,R2                LTER     RR   32   R1,R2                LTG      RXY  E302 R1,D2(X2,B2)
+ LTGF     RXY  E332 R1,D2(X2,B2)         LTGFR    RRE  B912 R1,R2                LTGR     RRE  B902 R1,R2
+ LTORG    HLASM                          LTR      RR   12   R1,R2                LTXBR    RRE  B342 R1,R2
+ LTXR     RRE  B362 R1,R2                LTXTR    RRE  B3DE R1,R2                LURA     RRE  B24B R1,R2
+ LURAG    RRE  B905 R1,R2                LXD      RXE  ED25 R1,D2(X2,B2)         LXDB     RXE  ED05 R1,D2(X2,B2)
+ LXDBR    RRE  B305 R1,R2                LXDR     RRE  B325 R1,R2                LXDTR    RRF  B3DC R1,R2,M4
+ LXE      RXE  ED26 R1,D2(X2,B2)         LXEB     RXE  ED06 R1,D2(X2,B2)         LXEBR    RRE  B306 R1,R2
+ LXER     RRE  B326 R1,R2                LXR      RRE  B365 R1,R2                LY       RXY  E358 R1,D2(X2,B2)
+ LZDR     RRE  B375 R1                   LZER     RRE  B374 R1                   LZXR     RRE  B376 R1
+ M        RX   5C   R1,D2(X2,B2)         MACRO    HLASM                          MAD      RXF  ED3E R1,R3,D2(X2,B2)
+ MADB     RXF  ED1E R1,R3,D2(X2,B2)      MADBR    RRD  B31E R1,R3,R2             MADR     RRD  B33E R1,R3,R2
+ MAE      RXF  ED2E R1,R3,D2(X2,B2)      MAEB     RXF  ED0E R1,R3,D2(X2,B2)      MAEBR    RRD  B30E R1,R3,R2
+ MAER     RRD  B32E R1,R3,R2             MAY      RXF  ED3A R1,R3,D2(X2,B2)      MAYH     RXF  ED3C R1,R3,D2(X2,B2)
+ MAYHR    RRD  B33C R1,R3,R2             MAYL     RXF  ED38 R1,R3,D2(X2,B2)      MAYLR    RRD  B338 R1,R3,R2
+ MAYR     RRD  B33A R1,R3,R2             MC       SI   AF   D1(B1),I2            MD       RX   6C   R1,D2(X2,B2)
+ MDB      RXE  ED1C R1,D2(X2,B2)         MDBR     RRE  B31C R1,R2                MDE      RX   7C   R1,D2(X2,B2)
+1                              High Level Assembler Operation Code Table Contents                               Page    9
+-                                                                                            HLASM R6.0  2024/08/13 17.00
+0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
+0MDEB     RXE  ED0C R1,D2(X2,B2)         MDEBR    RRE  B30C R1,R2                MDER     RR   3C   R1,R2
+ MDR      RR   2C   R1,R2                MDTR     RRF  B3D0 R1,R2,R3             MDTRA    RRF  B3D0 R1,R2,R3,M4
+ ME       RX   7C   R1,D2(X2,B2)         MEE      RXE  ED37 R1,D2(X2,B2)         MEEB     RXE  ED17 R1,D2(X2,B2)
+ MEEBR    RRE  B317 R1,R2                MEER     RRE  B337 R1,R2                MEND     HLASM
+ MER      RR   3C   R1,R2                MEXIT    HLASM                          MFY      RXY  E35C R1,D2(X2,B2)
+ MGHI     RI   A7.D R1,I2                MH       RX   4C   R1,D2(X2,B2)         MHELP    HLASM
+ MHI      RI   A7.C R1,I2                MHY      RXY  E37C R1,D2(X2,B2)         ML       RXY  E396 R1,D2(X2,B2)
+ MLG      RXY  E386 R1,D2(X2,B2)         MLGR     RRE  B986 R1,R2                MLR      RRE  B996 R1,R2
+ MNOTE    HLASM                          MP       SS   FC   D1(L1,B1),D2(L2,B2)  MR       RR   1C   R1,R2
+ MS       RX   71   R1,D2(X2,B2)         MSCH     S    B232 D2(B2)               MSD      RXF  ED3F R1,R3,D2(X2,B2)
+ MSDB     RXF  ED1F R1,R3,D2(X2,B2)      MSDBR    RRD  B31F R1,R3,R2             MSDR     RRD  B33F R1,R3,R2
+ MSE      RXF  ED2F R1,R3,D2(X2,B2)      MSEB     RXF  ED0F R1,R3,D2(X2,B2)      MSEBR    RRD  B30F R1,R3,R2
+ MSER     RRD  B32F R1,R3,R2             MSFI     RIL  C2.1 R1,I2                MSG      RXY  E30C R1,D2(X2,B2)
+ MSGF     RXY  E31C R1,D2(X2,B2)         MSGFI    RIL  C2.0 R1,I2                MSGFR    RRE  B91C R1,R2
+ MSGR     RRE  B90C R1,R2                MSR      RRE  B252 R1,R2                MSTA     RRE  B247 R1
+ MSY      RXY  E351 R1,D2(X2,B2)         MVC      SS   D2   D1(L,B1),D2(B2)      MVCDK    SSE  E50F D1(B1),D2(B2)
+ MVCIN    SS   E8   D1(L,B1),D2(B2)      MVCK     SS   D9   D1(R1,B1),D2(B2),R3  MVCL     RR   0E   R1,R2
+ MVCLE    RS   A8   R1,R3,D2(B2)         MVCLU    RSY  EB8E R1,R3,D2(B2)         MVCOS    SSF  C8.0 D1(B1),D2(B2),R3
+ MVCP     SS   DA   D1(R1,B1),D2(B2),R3  MVCS     SS   DB   D1(R1,B1),D2(B2),R3  MVCSK    SSE  E50E D1(B1),D2(B2)
+ MVGHI    SIL  E548 D1(B1),I2            MVHHI    SIL  E544 D1(B1),I2            MVHI     SIL  E54C D1(B1),I2
+ MVI      SI   92   D1(B1),I2            MVIY     SIY  EB52 D1(B1),I2            MVN      SS   D1   D1(L,B1),D2(B2)
+ MVO      SS   F1   D1(L1,B1),D2(L2,B2)  MVPG     RRE  B254 R1,R2                MVST     RRE  B255 R1,R2
+ MVZ      SS   D3   D1(L,B1),D2(B2)      MXBR     RRE  B34C R1,R2                MXD      RX   67   R1,D2(X2,B2)
+ MXDB     RXE  ED07 R1,D2(X2,B2)         MXDBR    RRE  B307 R1,R2                MXDR     RR   27   R1,R2
+ MXR      RR   26   R1,R2                MXTR     RRF  B3D8 R1,R2,R3             MXTRA    RRF  B3D8 R1,R2,R3,M4
+ MY       RXF  ED3B R1,R3,D2(X2,B2)      MYH      RXF  ED3D R1,R3,D2(X2,B2)      MYHR     RRD  B33D R1,R3,R2
+ MYL      RXF  ED39 R1,R3,D2(X2,B2)      MYLR     RRD  B339 R1,R3,R2             MYR      RRD  B33B R1,R3,R2
+ N        RX   54   R1,D2(X2,B2)         NC       SS   D4   D1(L,B1),D2(B2)      NG       RXY  E380 R1,D2(X2,B2)
+ NGR      RRE  B980 R1,R2                NGRK     RRF  B9E4 R1,R2,R3             NHHR     RIE  EC54 R1,R2
+ NHLR     RIE  EC54 R1,R2                NI       SI   94   D1(B1),I2            NIAI     IE   B2FA I1,I2
+ NIHF     RIL  C0.A R1,I2                NIHH     RI   A5.4 R1,I2                NIHL     RI   A5.5 R1,I2
+ NILF     RIL  C0.B R1,I2                NILH     RI   A5.6 R1,I2                NILL     RI   A5.7 R1,I2
+ NIY      SIY  EB54 D1(B1),I2            NLHR     RIE  EC54 R1,R2                NOP      RX   470. D2(X2,B2)
+ NOPR     RR   070. R2                   NR       RR   14   R1,R2                NRK      RRF  B9F4 R1,R2,R3
+ NTSTG    RXY  E325 R1,D2(X2,B2)         NY       RXY  E354 R1,D2(X2,B2)         O        RX   56   R1,D2(X2,B2)
+ OC       SS   D6   D1(L,B1),D2(B2)      OG       RXY  E381 R1,D2(X2,B2)         OGR      RRE  B981 R1,R2
+ OGRK     RRF  B9E6 R1,R2,R3             OHHR     RIE  EC56 R1,R2                OHLR     RIE  EC56 R1,R2
+ OI       SI   96   D1(B1),I2            OIHF     RIL  C0.C R1,I2                OIHH     RI   A5.8 R1,I2
+ OIHL     RI   A5.9 R1,I2                OILF     RIL  C0.D R1,I2                OILH     RI   A5.A R1,I2
+ OILL     RI   A5.B R1,I2                OIY      SIY  EB56 D1(B1),I2            OLHR     RIE  EC56 R1,R2
+ OPSYN    HLASM                          OR       RR   16   R1,R2                ORG      HLASM
+ ORK      RRF  B9F6 R1,R2,R3             OY       RXY  E356 R1,D2(X2,B2)         PACK     SS   F2   D1(L1,B1),D2(L2,B2)
+ PALB     RRE  B248                      PC       S    B218 D2(B2)               PCC      RRE  B92C
+ PCKMO    RRE  B928                      PFD      RXY  E336 M1,D2(X2,B2)         PFDRL    RIL  C6.2 M1,RI2
+ PFMF     RRE  B9AF R1,R2                PFPO     E    010A                      PKA      SS   E9   D1(B1),D2(L2,B2)
+ PKU      SS   E1   D1(B1),D2(L2,B2)     PLO      SS   EE   R1,D2(B2),R3,D4(B4)  POP      HLASM
+ POPCNT   RRE  B9E1 R1,R2                PPA      RRF  B2E8 R1,R2,M3             PPNO     RRE  B93C R1,R2
+ PR       E    0101                      PRINT    HLASM                          PT       RRE  B228 R1,R2
+ PTF      RRE  B9A2 R1                   PTFF     E    0104                      PTI      RRE  B99E R1,R2
+ PTLB     S    B20D                      PUNCH    HLASM                          PUSH     HLASM
+ QADTR    RRF  B3F5 R1,R3,R2,M4          QAXTR    RRF  B3FD R1,R3,R2,M4          QCTRI    S    B28E D2(B2)
+ QSI      S    B286 D2(B2)               RCHP     S    B23B                      REPRO    HLASM
+ RISBG    RIE  EC55 R1,R2,I3,I4<,I5>     RISBGN   RIE  EC59 R1,R2,I3,I4<,I5>     RISBGNZ  RIE  EC59 R1,R2,I3,I4<,I5>
+1                              High Level Assembler Operation Code Table Contents                               Page   10
+-                                                                                            HLASM R6.0  2024/08/13 17.00
+0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
+0RISBGZ   RIE  EC55 R1,R2,I3,I4<,I5>     RISBHG   RIE  EC5D R1,R2,I3,I4<,I5>     RISBHGZ  RIE  EC5D R1,R2,I3,I4<,I5>
+ RISBLG   RIE  EC51 R1,R2,I3,I4<,I5>     RISBLGZ  RIE  EC51 R1,R2,I3,I4<,I5>     RLL      RSY  EB1D R1,R3,D2(B2)
+ RLLG     RSY  EB1C R1,R3,D2(B2)         RMODE    HLASM                          RNSBG    RIE  EC54 R1,R2,I3,I4<,I5>
+ RNSBGT   RIE  EC54 R1,R2,I3,I4<,I5>     ROSBG    RIE  EC56 R1,R2,I3,I4<,I5>     ROSBGT   RIE  EC56 R1,R2,I3,I4<,I5>
+ RP       S    B277 D2(B2)               RRBE     RRE  B22A R1,R2                RRBM     RRE  B9AE R1,R2
+ RRDTR    RRF  B3F7 R1,R3,R2,M4          RRXTR    RRF  B3FF R1,R3,R2,M4          RSCH     S    B238
+ RSECT    HLASM                          RXSBG    RIE  EC57 R1,R2,I3,I4<,I5>     RXSBGT   RIE  EC57 R1,R2,I3,I4<,I5>
+ S        RX   5B   R1,D2(X2,B2)         SAC      S    B219 D2(B2)               SACF     S    B279 D2(B2)
+ SAL      S    B237                      SAM24    E    010C                      SAM31    E    010D
+ SAM64    E    010E                      SAR      RRE  B24E R1,R2                SCCTR    RRE  B2E0 R1,R2
+ SCHM     S    B23C                      SCK      S    B204 D2(B2)               SCKC     S    B206 D2(B2)
+ SCKPF    E    0107                      SD       RX   6B   R1,D2(X2,B2)         SDB      RXE  ED1B R1,D2(X2,B2)
+ SDBR     RRE  B31B R1,R2                SDR      RR   2B   R1,R2                SDTR     RRF  B3D3 R1,R2,R3
+ SDTRA    RRF  B3D3 R1,R2,R3,M4          SE       RX   7B   R1,D2(X2,B2)         SEB      RXE  ED0B R1,D2(X2,B2)
+ SEBR     RRE  B30B R1,R2                SER      RR   3B   R1,R2                SETA     HLASM
+ SETAF    HLASM                          SETB     HLASM                          SETC     HLASM
+ SETCF    HLASM                          SFASR    RRE  B385 R1                   SFPC     RRE  B384 R1
+ SG       RXY  E309 R1,D2(X2,B2)         SGF      RXY  E319 R1,D2(X2,B2)         SGFR     RRE  B919 R1,R2
+ SGR      RRE  B909 R1,R2                SGRK     RRF  B9E9 R1,R2,R3             SH       RX   4B   R1,D2(X2,B2)
+ SHHHR    RRF  B9C9 R1,R2,R3             SHHLR    RRF  B9D9 R1,R2,R3             SHY      RXY  E37B R1,D2(X2,B2)
+ SIE      S    B214 D2(B2)               SIGP     RS   AE   R1,R3,D2(B2)         SL       RX   5F   R1,D2(X2,B2)
+ SLA      RS   8B   R1,D2(B2)            SLAG     RSY  EB0B R1,R3,D2(B2)         SLAK     RSY  EBDD R1,R3,D2(B2)
+ SLB      RXY  E399 R1,D2(X2,B2)         SLBG     RXY  E389 R1,D2(X2,B2)         SLBGR    RRE  B989 R1,R2
+ SLBR     RRE  B999 R1,R2                SLDA     RS   8F   R1,D2(B2)            SLDL     RS   8D   R1,D2(B2)
+ SLDT     RXF  ED40 R1,R3,D2(X2,B2)      SLFI     RIL  C2.5 R1,I2                SLG      RXY  E30B R1,D2(X2,B2)
+ SLGF     RXY  E31B R1,D2(X2,B2)         SLGFI    RIL  C2.4 R1,I2                SLGFR    RRE  B91B R1,R2
+ SLGR     RRE  B90B R1,R2                SLGRK    RRF  B9EB R1,R2,R3             SLHHHR   RRF  B9CB R1,R2,R3
+ SLHHLR   RRF  B9DB R1,R2,R3             SLL      RS   89   R1,D2(B2)            SLLG     RSY  EB0D R1,R3,D2(B2)
+ SLLK     RSY  EBDF R1,R3,D2(B2)         SLR      RR   1F   R1,R2                SLRK     RRF  B9FB R1,R2,R3
+ SLXT     RXF  ED48 R1,R3,D2(X2,B2)      SLY      RXY  E35F R1,D2(X2,B2)         SP       SS   FB   D1(L1,B1),D2(L2,B2)
+ SPACE    HLASM                          SPCTR    RRE  B2E1 R1,R2                SPKA     S    B20A D2(B2)
+ SPM      RR   04   R1                   SPT      S    B208 D2(B2)               SPX      S    B210 D2(B2)
+ SQD      RXE  ED35 R1,D2(X2,B2)         SQDB     RXE  ED15 R1,D2(X2,B2)         SQDBR    RRE  B315 R1,R2
+ SQDR     RRE  B244 R1,R2                SQE      RXE  ED34 R1,D2(X2,B2)         SQEB     RXE  ED14 R1,D2(X2,B2)
+ SQEBR    RRE  B314 R1,R2                SQER     RRE  B245 R1,R2                SQXBR    RRE  B316 R1,R2
+ SQXR     RRE  B336 R1,R2                SR       RR   1B   R1,R2                SRA      RS   8A   R1,D2(B2)
+ SRAG     RSY  EB0A R1,R3,D2(B2)         SRAK     RSY  EBDC R1,R3,D2(B2)         SRDA     RS   8E   R1,D2(B2)
+ SRDL     RS   8C   R1,D2(B2)            SRDT     RXF  ED41 R1,R3,D2(X2,B2)      SRK      RRF  B9F9 R1,R2,R3
+ SRL      RS   88   R1,D2(B2)            SRLG     RSY  EB0C R1,R3,D2(B2)         SRLK     RSY  EBDE R1,R3,D2(B2)
+ SRNM     S    B299 D2(B2)               SRNMB    S    B2B8 D2(B2)               SRNMT    S    B2B9 D2(B2)
+ SRP      SS   F0   D1(L1,B1),D2(B2),I3  SRST     RRE  B25E R1,R2                SRSTU    RRE  B9BE R1,R2
+ SRXT     RXF  ED49 R1,R3,D2(X2,B2)      SSAIR    RRE  B99F R1                   SSAR     RRE  B225 R1
+ SSCH     S    B233 D2(B2)               SSKE     RRF  B22B R1,R2<,M3>           SSM      SI   80   D1(B1)
+ ST       RX   50   R1,D2(X2,B2)         STAM     RS   9B   R1,R3,D2(B2)         STAMY    RSY  EB9B R1,R3,D2(B2)
+ STAP     S    B212 D2(B2)               START    HLASM                          STC      RX   42   R1,D2(X2,B2)
+ STCH     RXY  E3C3 R1,D2(X2,B2)         STCK     S    B205 D2(B2)               STCKC    S    B207 D2(B2)
+ STCKE    S    B278 D2(B2)               STCKF    S    B27C D2(B2)               STCM     RS   BE   R1,M3,D2(B2)
+ STCMH    RSY  EB2C R1,M3,D2(B2)         STCMY    RSY  EB2D R1,M3,D2(B2)         STCPS    S    B23A D2(B2)
+ STCRW    S    B239 D2(B2)               STCTG    RSY  EB25 R1,R3,D2(B2)         STCTL    RS   B6   R1,R3,D2(B2)
+ STCY     RXY  E372 R1,D2(X2,B2)         STD      RX   60   R1,D2(X2,B2)         STDY     RXY  ED67 R1,D2(X2,B2)
+ STE      RX   70   R1,D2(X2,B2)         STEY     RXY  ED66 R1,D2(X2,B2)         STFH     RXY  E3CB R1,D2(X2,B2)
+ STFL     S    B2B1 D2(B2)               STFLE    S    B2B0 D2(B2)               STFPC    S    B29C D2(B2)
+ STG      RXY  E324 R1,D2(X2,B2)         STGRL    RIL  C4.B R1,RI2               STH      RX   40   R1,D2(X2,B2)
+1                              High Level Assembler Operation Code Table Contents                               Page   11
+-                                                                                            HLASM R6.0  2024/08/13 17.00
+0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
+0STHH     RXY  E3C7 R1,D2(X2,B2)         STHRL    RIL  C4.7 R1,RI2               STHY     RXY  E370 R1,D2(X2,B2)
+ STIDP    S    B202 D2(B2)               STM      RS   90   R1,R3,D2(B2)         STMG     RSY  EB24 R1,R3,D2(B2)
+ STMH     RSY  EB26 R1,R3,D2(B2)         STMY     RSY  EB90 R1,R3,D2(B2)         STNSM    SI   AC   D1(B1),I2
+ STOC     RSY  EBF3 R1,D2(B2),M3         STOCE    RSY  EBF3 R1,D2(B2)            STOCG    RSY  EBE3 R1,D2(B2),M3
+ STOCGE   RSY  EBE3 R1,D2(B2)            STOCGH   RSY  EBE3 R1,D2(B2)            STOCGL   RSY  EBE3 R1,D2(B2)
+ STOCGNE  RSY  EBE3 R1,D2(B2)            STOCGNH  RSY  EBE3 R1,D2(B2)            STOCGNL  RSY  EBE3 R1,D2(B2)
+ STOCH    RSY  EBF3 R1,D2(B2)            STOCL    RSY  EBF3 R1,D2(B2)            STOCNE   RSY  EBF3 R1,D2(B2)
+ STOCNH   RSY  EBF3 R1,D2(B2)            STOCNL   RSY  EBF3 R1,D2(B2)            STOSM    SI   AD   D1(B1),I2
+ STPQ     RXY  E38E R1,D2(X2,B2)         STPT     S    B209 D2(B2)               STPX     S    B211 D2(B2)
+ STRAG    SSE  E502 D1(B1),D2(B2)        STRL     RIL  C4.F R1,RI2               STRV     RXY  E33E R1,D2(X2,B2)
+ STRVG    RXY  E32F R1,D2(X2,B2)         STRVH    RXY  E33F R1,D2(X2,B2)         STSCH    S    B234 D2(B2)
+ STSI     S    B27D D2(B2)               STURA    RRE  B246 R1,R2                STURG    RRE  B925 R1,R2
+ STY      RXY  E350 R1,D2(X2,B2)         SU       RX   7F   R1,D2(X2,B2)         SUR      RR   3F   R1,R2
+ SVC      RR   0A   I1                   SW       RX   6F   R1,D2(X2,B2)         SWR      RR   2F   R1,R2
+ SXBR     RRE  B34B R1,R2                SXR      RR   37   R1,R2                SXTR     RRF  B3DB R1,R2,R3
+ SXTRA    RRF  B3DB R1,R2,R3,M4          SY       RXY  E35B R1,D2(X2,B2)         TABORT   S    B2FC D2(B2)
+ TAM      E    010B                      TAR      RRE  B24C R1,R2                TB       RRE  B22C R1,R2
+ TBDR     RRF  B351 R1,M3,R2             TBEDR    RRF  B350 R1,M3,R2             TBEGIN   SIL  E560 D1(B1),I2
+ TBEGINC  SIL  E561 D1(B1),I2            TCDB     RXE  ED11 R1,D2(X2,B2)         TCEB     RXE  ED10 R1,D2(X2,B2)
+ TCXB     RXE  ED12 R1,D2(X2,B2)         TDCDT    RXE  ED54 R1,D2(X2,B2)         TDCET    RXE  ED50 R1,D2(X2,B2)
+ TDCXT    RXE  ED58 R1,D2(X2,B2)         TDGDT    RXE  ED55 R1,D2(X2,B2)         TDGET    RXE  ED51 R1,D2(X2,B2)
+ TDGXT    RXE  ED59 R1,D2(X2,B2)         TEND     S    B2F8                      THDER    RRE  B358 R1,R2
+ THDR     RRE  B359 R1,R2                TITLE    HLASM                          TM       SI   91   D1(B1),I2
+ TMH      RI   A7.0 R1,I2                TMHH     RI   A7.2 R1,I2                TMHL     RI   A7.3 R1,I2
+ TML      RI   A7.1 R1,I2                TMLH     RI   A7.0 R1,I2                TMLL     RI   A7.1 R1,I2
+ TMY      SIY  EB51 D1(B1),I2            TP       RSL  EBC0 D1(L1,B1)            TPI      S    B236 D2(B2)
+ TPROT    SSE  E501 D1(B1),D2(B2)        TR       SS   DC   D1(L,B1),D2(B2)      TRACE    RS   99   R1,R3,D2(B2)
+ TRACG    RSY  EB0F R1,R3,D2(B2)         TRAP2    E    01FF                      TRAP4    S    B2FF D2(B2)
+ TRE      RRE  B2A5 R1,R2                TROO     RRF  B993 R1,R2<,M3>           TROT     RRF  B992 R1,R2<,M3>
+ TRT      SS   DD   D1(L,B1),D2(B2)      TRTE     RRF  B9BF R1,R2<,M3>           TRTO     RRF  B991 R1,R2<,M3>
+ TRTR     SS   D0   D1(L,B1),D2(B2)      TRTRE    RRF  B9BD R1,R2<,M3>           TRTT     RRF  B990 R1,R2<,M3>
+ TS       SI   93   D1(B1)               TSCH     S    B235 D2(B2)               UNPK     SS   F3   D1(L1,B1),D2(L2,B2)
+ UNPKA    SS   EA   D1(L,B1),D2(B2)      UNPKU    SS   E2   D1(L,B1),D2(B2)      UPT      E    0102
+ USING    HLASM                          WXTRN    HLASM                          X        RX   57   R1,D2(X2,B2)
+ XATTR    HLASM                          XC       SS   D7   D1(L,B1),D2(B2)      XG       RXY  E382 R1,D2(X2,B2)
+ XGR      RRE  B982 R1,R2                XGRK     RRF  B9E7 R1,R2,R3             XHHR     RIE  EC57 R1,R2
+ XHLR     RIE  EC57 R1,R2                XI       SI   97   D1(B1),I2            XIHF     RIL  C0.6 R1,I2
+ XILF     RIL  C0.7 R1,I2                XIY      SIY  EB57 D1(B1),I2            XLHR     RIE  EC57 R1,R2
+ XR       RR   17   R1,R2                XRK      RRF  B9F7 R1,R2,R3             XSCH     S    B276
+ XY       RXY  E357 R1,D2(X2,B2)         ZAP      SS   F8   D1(L1,B1),D2(L2,B2)
+1                                              External Symbol Dictionary                                       Page   12
+-Symbol   Type   Id     Address  Length   Owner Id Flags Alias-of                            HLASM R6.0  2024/08/13 17.00
+0IEFBR14   SD 00000001 00000000 00000004             00
+1                                                                                                               Page   13
+   Active Usings: None
+0  Loc  Object Code    Addr1 Addr2  Stmt   Source Statement                                  HLASM R6.0  2024/08/13 17.00
+0000000                00000 00004     1 IEFBR14  CSECT
+ 000000 1BFF                           2          SR    15,15
+ 000002 07FE                           3          BR    14
+                                       4          END
+1                                  Unreferenced Symbols Defined in CSECTs                                       Page   14
+-  Defn  Symbol                                                                              HLASM R6.0  2024/08/13 17.00
+0     1  IEFBR14
+1                                   General Purpose Register Cross Reference                                    Page   15
+- Register  References (M=modified, B=branch, U=USING, D=DROP, N=index)                      HLASM R6.0  2024/08/13 17.00
+0    0(0)    (no references identified)
+     1(1)    (no references identified)
+     2(2)    (no references identified)
+     3(3)    (no references identified)
+     4(4)    (no references identified)
+     5(5)    (no references identified)
+     6(6)    (no references identified)
+     7(7)    (no references identified)
+     8(8)    (no references identified)
+     9(9)    (no references identified)
+    10(A)    (no references identified)
+    11(B)    (no references identified)
+    12(C)    (no references identified)
+    13(D)    (no references identified)
+    14(E)       3B
+    15(F)       2M    2
+1                                  Diagnostic Cross Reference and Assembler Summary                             Page   16
+-                                                                                            HLASM R6.0  2024/08/13 17.00
+0     No Statements Flagged in this Assembly
+ HIGH LEVEL ASSEMBLER, 5696-234, RELEASE 6.0, PTF UI93396
+0SYSTEM: z/OS 03.01.00              JOBNAME: JGANCI1     STEPNAME: ASM        PROCSTEP: C
+0Unicode Module:   ASMA047C   From Page     1148   To Page    17584           ECECP: International 1
+ Data Sets Allocated for this Assembly
+  Con DDname   Data Set Name                                Volume  Member
+   P1 SYSIN    JGANCI.TEST.SOURCE                           CBTU02  IEFBR14
+   L1 SYSLIB   JGANCI.TEST.MACRO                            CBTU05
+   L2          SYS1.MACLIB                                  CBTRSB
+   L3          SYS1.MODGEN                                  CBTRSB
+      SYSLIN   SYS24226.T170056.RA000.JGANCI1.OBJ.H01       WORK0A
+      SYSPRINT JGANCI.TEST.SYSPRINT                         CBTU01  Z12
+
+   26592K allocated to Buffer Pool       Storage required     200K
+       4 Primary Input Records Read            0 Library Records Read                  0 Work File Reads
+       0 ASMAOPT Records Read                607 Primary Print Records Written         0 Work File Writes
+       3 Object Records Written                0 ADATA Records Written
+0Assembly Start Time: 17.00.56 Stop Time: 17.00.56 Processor Time: 01.11.34.9672
+ Return Code 000

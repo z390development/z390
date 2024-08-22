@@ -331,6 +331,7 @@ public  class  tz390 {
     * 2024-06-07 AFK #533 Correct OPTABLE(370,LIST) output to match HLASM
     * 2024-08-01 AFK #543 Correct OPTABLE(XA,LIST) output to match HLASM
     * 2024-08-12 #545 Extend generated java doco to include private methods
+    * 2024-08-15 AFK #554 Correct OPTABLE(ESA,LIST) output to match HLASM
 	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -397,6 +398,7 @@ public  class  tz390 {
     String  opt_optable  = "*DFLT"; // default optable depends on z390/HLASM mode as indicated by allow option RPI 1209A
     String  opt_optable_list = "NOLIST"; // do not to list instructions RPI 1209A
     String  opt_optable_optable = ""; // effective optable associated with specified optable option #503
+    int     opt_optable_optb_nr = 0 ; // nr associated with effective optable #554
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
     boolean opt_pc       = true;  // generate macro pseudo code
     boolean opt_pcopt    = true;  // optimize pc code for speed
@@ -1104,38 +1106,41 @@ public  class  tz390 {
    * The same goes for table optable_optable_equivalence  // #503
    * which is split into the tables optable_option_id and // #503
    * optables_optable                                     // #503
+   * Additionally, the optables are assigned a sequence   // #554
+   * number for internal identification and processing    // #554
    *                                                      // #503
    */                                                     // #503
+    int[]    optable_option_nr = null;                    // #554
     String[] optable_option_id = null;                    // #503
     String[] optables_optable = null; // optable's optable// #503
     String[] optable_optable_equivalence =                // #503
-       {"UNI=UNI",                                        // #503
-        "360-20=360-20",                                  // #543
-        "DOS=DOS",                                        // #503
-        "370=370",                                        // #503
-        "XA=XA",                                          // #503
-        "ESA=ESA",                                        // #503
-        "ZOP=ZOP",                                        // #503
-        "ZS1=ZOP",                                        // #503
-        "YOP=YOP",                                        // #503
-        "ZS2=YOP",                                        // #503
-        "Z9=Z9",                                          // #503
-        "ZS3=Z9",                                         // #503
-        "Z10=Z10",                                        // #503
-        "ZS4=Z10",                                        // #503
-        "Z11=Z11",                                        // #503
-        "ZS5=Z11",                                        // #503
-        "Z12=Z12",                                        // #503
-        "ZS6=Z12",                                        // #503
-        "Z13=Z13",                                        // #503
-        "ZS7=Z13",                                        // #503
-        "Z14=Z14",                                        // #503
-        "ZS8=Z14",                                        // #503
-        "Z15=Z15",                                        // #503
-        "ZS9=Z15",                                        // #503
-        "Z16=Z16",                                        // #503
-        "ZSA=Z16",                                        // #503
-        "z390=z390",                                      // #503
+       {"00:360-20=360-20",                               // #543 #554
+        "01:DOS=DOS",                                     // #503 #554
+        "02:370=370",                                     // #503 #554
+        "03:XA=XA",                                       // #503 #554
+        "04:ESA=ESA",                                     // #503 #554
+        "05:ZOP=ZOP",                                     // #503 #554
+        "05:ZS1=ZOP",                                     // #503 #554
+        "06:YOP=YOP",                                     // #503 #554
+        "06:ZS2=YOP",                                     // #503 #554
+        "07:Z9=Z9",                                       // #503 #554
+        "07:ZS3=Z9",                                      // #503 #554
+        "08:Z10=Z10",                                     // #503 #554
+        "08:ZS4=Z10",                                     // #503 #554
+        "09:Z11=Z11",                                     // #503 #554
+        "09:ZS5=Z11",                                     // #503 #554
+        "10:Z12=Z12",                                     // #503 #554
+        "10:ZS6=Z12",                                     // #503 #554
+        "11:Z13=Z13",                                     // #503 #554
+        "11:ZS7=Z13",                                     // #503 #554
+        "12:Z14=Z14",                                     // #503 #554
+        "12:ZS8=Z14",                                     // #503 #554
+        "13:Z15=Z15",                                     // #503 #554
+        "13:ZS9=Z15",                                     // #503 #554
+        "14:Z16=Z16",                                     // #503 #554
+        "14:ZSA=Z16",                                     // #503 #554
+        "80:UNI=UNI",                                     // #503 #554
+        "90:z390=z390",                                   // #503 #554
         };                                                // #503
     String[] machine_option_id = null;                    // #503
     String[] machines_optable = null; // machine's optable// #503
@@ -1949,7 +1954,7 @@ public  class  tz390 {
          "A71=TMLL,73,730",      //   2000 "A71"   "TMLL"     "RI"   12 // RPI 1522
          "A74=BRC,13,130",       //   2040 "A74"   "BRC"      "RI"   12 // RPI 2225
          "A74m=BRm,13,130;0=;F=BRU", //    "A74m"  "BRm, BRU" "BRCX" 13
-		 "A74=JC,13,130;*Extended", //       "A74"  "JC" "BRCX" 13 RPI 2221  #485
+         "A74=JC,13,130;*Extended", //       "A74"  "JC" "BRCX" 13 RPI 2221  #485
          "A74m=Jm,13,130;0=JNOP", //       "A74m"  "Jm, JNOP" "BRCX" 13
          "A75=BRAS,13,121",      //   2360 "A75"   "BRAS"     "RI"   12 RPI 2225
          "A75=JAS,13,121;*Extended",       //   2370 "A75"   "JAS"      "RI"   12 RPI 2225 #485
@@ -1987,12 +1992,6 @@ public  class  tz390 {
          "B278=STCKE,7,70",      //   3270 "B278"  "STCKE"    "S"     7
          "B279=SACF,7,70",       //   3280 "B279"  "SACF"     "S"     7
          "B27D=STSI,7,70",       //   3290 "B27D"  "STSI"     "S"     7
-		 "B280=LPP,7,70",   // S,LPP,D1(B1)   RPI 2221
-         "B284=LCCTL,7,70", // S,LCCTL,D1(B1) RPI 2221
-         "B285=LPCTL,7,70", // S,LPCTL,D1(B1) RPI 2221
-		 "B286=QSI,7,70",   // S,QSI,D1(B1)   RPI 2221
-         "B287=LSCTL,7,70", // S,LSCTL,D1(B1) RPI 2221
-         "B28E=QCTRI,7,70", // S,QCTRI,D1(B1) RPI 2221
          "B299=SRNM,7,71",       //   3300 "B299"  "SRNM"     "S"     7
          "B29C=STFPC,7,72",      //   3310 "B29C"  "STFPC"    "S"     7
          "B29D=LFPC,7,72",       //   3320 "B29D"  "LFPC"     "S"     7
@@ -2142,10 +2141,10 @@ public  class  tz390 {
          "ED37=MEE,24,240",      //   6950 "ED37"  "MEE"      "RXE"  24
          "EE=PLO,27,270",        //   7020 "EE"    "PLO"      "SS3"  27
          };
-     String[]   op_table_ESA_notsupported = // Table added for RPI 1209A
-        {"JLC      RIL  C0.4 M1,I2",     // supported for ZOP, not ESA #486
-         "JLNOP    RIL  C004 I2",        // supported for ZOP, not ESA #486
-         };                                                              // #486
+     String[]   op_table_ESA_only =   // Table added for RPI 1209A      #554
+        {"C04=JLC,16,330",       //   5180 "C04"   "BRCL"     "RIL"  16 #554
+         "C004=JLNOP,16,330",    //   5180 "C04"   "BRCL"     "RIL"  16 #554
+         };                                                          // #554
      String[]   op_table_ZOP =   // Table added for RPI 1209A
         {"010E=SAM64,1,10",      //     70 "010E"  "SAM64"    "E"     1
          "A50=IIHH,73,730",      //   1820 "A50"   "IIHH"     "RI"   12 // RPI 1522
@@ -2173,6 +2172,12 @@ public  class  tz390 {
          "A7D=MGHI,73,731",      //   2470 "A7D"   "MGHI"     "RI"   12 // RPI 1522
          "A7F=CGHI,73,731",      //   2490 "A7F"   "CGHI"     "RI"   12 // RPI 1522
          "B250=CSP,14,140",      //   3150 "B250"  "CSP"      "RRE"  14
+         "B280=LPP,7,70",   // S,LPP,D1(B1)   RPI 2221
+         "B284=LCCTL,7,70", // S,LCCTL,D1(B1) RPI 2221
+         "B285=LPCTL,7,70", // S,LPCTL,D1(B1) RPI 2221
+         "B286=QSI,7,70",   // S,QSI,D1(B1)   RPI 2221
+         "B287=LSCTL,7,70", // S,LSCTL,D1(B1) RPI 2221
+         "B28E=QCTRI,7,70", // S,QCTRI,D1(B1) RPI 2221
          "B2B2=LPSWE,7,70",      //   3390 "B2B2"  "LPSWE"    "S"     7
 		 "B2E0=SCCTR,14,142",    //   RRE,SCCTR,R1,R2 RPI 2221
 		 "B2E1=SPCTR,14,142",    //   RRE,SPCTR,R1,R2 RPI 2221
@@ -3414,6 +3419,7 @@ public void init_option_tables()                                                
                                                                                                          // #503
     machine_option_id = new String[machine_optable_equivalence.length];                                  // #503
     machines_optable  = new String[machine_optable_equivalence.length];                                  // #503
+    optable_option_nr = new    int[optable_optable_equivalence.length];                                  // #554
     optable_option_id = new String[optable_optable_equivalence.length];                                  // #503
     optables_optable  = new String[optable_optable_equivalence.length];                                  // #503
                                                                                                          // #503
@@ -3421,6 +3427,12 @@ public void init_option_tables()                                                
     while (index < optable_optable_equivalence.length) // for each optable option                        // #503
        {try      // separate entry into optable id part and associated optable value                     // #503
            {entry=optable_optable_equivalence[index].toUpperCase();                                      // #503
+            i=entry.indexOf(":");    // find marker                                                      // #554
+            if (i == -1)                                                                                 // #554
+               {abort_error(40,"Missing colon in optable option definition " + entry);                   // #554
+                }                                                                                        // #554
+            optable_option_nr[index]=Integer.parseInt(entry.substring(0,i));  // extract nr              // #554
+            entry=entry.substring(i+1);                                       // get rest of definition  // #554
             i=entry.indexOf("=");                                                                        // #503
             if (i == -1)                                                                                 // #503
                {abort_error(40,"Missing equal sign in optable option definition " + entry);              // #503
@@ -3643,6 +3655,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_vector); // #533
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
+            process_opcodes(op_table_ESA_only); // #554
             process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
@@ -4760,6 +4773,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                for(int i = 0; i < machine_option_id.length; i++)                   // #503
                   {if(machine_option_id[i].equals(opt_machine))                    // #503
                      {opt_machine_optable = machines_optable[i];                   // #503
+                      opt_optable_optb_nr = i;                                     // #554
                       break;                                                       // #503
                       }                                                            // #503
                    }                                                               // #503
@@ -4879,6 +4893,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                for(int i = 0; i < optable_option_id.length; i++)                    // #503
                   {if(optable_option_id[i].equals(opt_optable))                     // #503
                      {opt_optable_optable = optables_optable[i];                    // #503
+                      opt_optable_optb_nr = optable_option_nr[i];                   // #554
                       opt_optable         = optables_optable[i];                    // #503
                       break;                                                        // #503
                       }                                                             // #503

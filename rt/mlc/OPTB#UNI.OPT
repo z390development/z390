@@ -1,0 +1,6 @@
+  allow
+  optable(UNI,list)
+  stats
+noloadhigh
+nodump
+notest

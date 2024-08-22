@@ -1,0 +1,6 @@
+noallow
+  optable(ESA,list)
+  stats
+noloadhigh
+nodump
+notest
