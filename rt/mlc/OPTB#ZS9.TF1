@@ -924,16 +924,16 @@
 -                                                                                            HLASM R6.0  2024/08/13 17.03
 0     No Statements Flagged in this Assembly
  HIGH LEVEL ASSEMBLER, 5696-234, RELEASE 6.0, PTF UI93396
-0SYSTEM: z/OS 03.01.00              JOBNAME: JGANCI1     STEPNAME: ASM        PROCSTEP: C
+0SYSTEM: z/OS 03.01.00              JOBNAME: xxxxxx1     STEPNAME: ASM        PROCSTEP: C
 0Unicode Module:   ASMA047C   From Page     1148   To Page    17584           ECECP: International 1
  Data Sets Allocated for this Assembly
   Con DDname   Data Set Name                                Volume  Member
-   P1 SYSIN    JGANCI.TEST.SOURCE                           CBTU02  IEFBR14
-   L1 SYSLIB   JGANCI.TEST.MACRO                            CBTU05
-   L2          SYS1.MACLIB                                  CBTRSB
-   L3          SYS1.MODGEN                                  CBTRSB
-      SYSLIN   SYS24226.T170344.RA000.JGANCI1.OBJ.H01       WORK0B
-      SYSPRINT JGANCI.TEST.SYSPRINT                         CBTU01  ZS9
+   P1 SYSIN    xxxxxx.TEST.SOURCE                           xxxxxx  IEFBR14
+   L1 SYSLIB   xxxxxx.TEST.MACRO                            xxxxxx
+   L2          SYS1.MACLIB                                  xxxxxx
+   L3          SYS1.MODGEN                                  xxxxxx
+      SYSLIN   SYS24226.T170344.RA000.xxxxxx1.OBJ.H01       xxxxxx
+      SYSPRINT xxxxxx.TEST.SYSPRINT                         xxxxxx  ZS9
 
    26592K allocated to Buffer Pool       Storage required     200K
        4 Primary Input Records Read            0 Library Records Read                  0 Work File Reads
