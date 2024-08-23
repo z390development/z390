@@ -101,6 +101,21 @@ if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "optable(ESA)" is okay
                          )
 if %1. NEQ . if /I %1. NEQ /Q. goto return
 
+rem  Optable ZOP
+:ZOP
+set Z390PRN=rt\mlc\OPTB#ZOP.PRN
+set HLASMPRN=rt\mlc\OPTB#ZOP.TF1
+call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#ZOP.OPT sysprn(%Z390PRN%)
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "optable(ZOP)" is okay
+                         set /A count_ok=%count_ok%+1
+                         ) else (
+                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "optable(ZOP)"
+                         set /A count_err=%count_err%+1
+                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
+                         )
+if %1. NEQ . if /I %1. NEQ /Q. goto return
+
 rem  Optable uni
 :uni
 set Z390PRN=rt\mlc\OPTB#UNI.PRN
