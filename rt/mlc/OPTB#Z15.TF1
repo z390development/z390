@@ -1,67 +1,6 @@
-1                                         High Level Assembler Option Summary                   (PTF UI93396)   Page    1
--                                                                                            HLASM R6.0  2024/08/13 17.03
 0  No Overriding ASMAOPT Parameters
    Overriding Parameters-  OPTABLE(Z15,LIST)
    No Process Statements
-
-
-   Options for this Assembly
-0                    NOADATA
-                       ALIGN
-                       ASA
-                       ASCII(00819)
-                       BATCH
-                       CA(LOCAL)
-                       CE(LOCAL)
-                       CODEPAGE(01148)
-                     NOCOMPAT
-                       CU(LOCAL)
-                     NODATAMAP
-                     NODBCS
-                     NODECK
-                       DXREF
-                       EBCDIC(00037)
-                       ESD
-                     NOEXIT
-                       FAIL(NOMSG,NOMNOTE,MAXERRS(500))
-                       FLAG(0,ALIGN,CONT,EXLITW,NOIMPLEN,NOLONGER,NOPAGE0,PUSH,RECORD,RENT,NOSIGNED,NOSUBSTR,NOTRUNC,
-                            USING0)
-                     NOFOLD
-                     NOGOFF
-                       ILMA
-                     NOINFO
-                       LANGUAGE(EN)
-                     NOLIBMAC
-                       LINECOUNT(60)
-                       LIST(121)
- 3 PARM/OPTION         MACHINE(z15,LIST)
-                       MXREF(SOURCE)
-                       OBJECT
- 3 PARM/OPTION         OPTABLE(Z15,LIST)
-                     NOPCONTROL
-                     NOPESTOP
-                     NOPROFILE
-                     NORA2
-                     NORENT
-                       RLD
-                       RXREF
-                       SECTALGN(8)
-                       SIZE(MAX)
-                     NOSUPRWARN
-                       SYSPARM()
-                     NOTERM
-                     NOTEST
-                       THREAD
-                     NOTRANSLATE
-                       TYPECHECK(MAGNITUDE,REGISTER,SIGNED)
-                       UNICODE(01200)
-1                                         High Level Assembler Option Summary                   (PTF UI93396)   Page    2
--                                                                                            HLASM R6.0  2024/08/13 17.03
-0                      USING(NOLIMIT,MAP,WARN(15))
-                     NOWORKFILE
-                       XREF(SHORT,UNREFS)
-
-   No Overriding DD Names
 1                              High Level Assembler Operation Code Table Contents                               Page    3
 -                                                                                            HLASM R6.0  2024/08/13 17.03
 0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
@@ -923,21 +862,3 @@
 1                                  Diagnostic Cross Reference and Assembler Summary                             Page   22
 -                                                                                            HLASM R6.0  2024/08/13 17.03
 0     No Statements Flagged in this Assembly
- HIGH LEVEL ASSEMBLER, 5696-234, RELEASE 6.0, PTF UI93396
-0SYSTEM: z/OS 03.01.00              JOBNAME: JGANCI1     STEPNAME: ASM        PROCSTEP: C
-0Unicode Module:   ASMA047C   From Page     1148   To Page    17584           ECECP: International 1
- Data Sets Allocated for this Assembly
-  Con DDname   Data Set Name                                Volume  Member
-   P1 SYSIN    JGANCI.TEST.SOURCE                           CBTU02  IEFBR14
-   L1 SYSLIB   JGANCI.TEST.MACRO                            CBTU05
-   L2          SYS1.MACLIB                                  CBTRSB
-   L3          SYS1.MODGEN                                  CBTRSB
-      SYSLIN   SYS24226.T170312.RA000.JGANCI1.OBJ.H01       WORK0B
-      SYSPRINT JGANCI.TEST.SYSPRINT                         CBTU01  Z15
-
-   26592K allocated to Buffer Pool       Storage required     200K
-       4 Primary Input Records Read            0 Library Records Read                  0 Work File Reads
-       0 ASMAOPT Records Read                943 Primary Print Records Written         0 Work File Writes
-       3 Object Records Written                0 ADATA Records Written
-0Assembly Start Time: 17.03.12 Stop Time: 17.03.12 Processor Time: 01.11.34.9672
- Return Code 000

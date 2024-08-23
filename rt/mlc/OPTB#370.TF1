@@ -1,59 +1,6 @@
-1                                         High Level Assembler Option Summary                   (PTF UI80020)   Page    1
--                                                                                            HLASM R6.0  2024/06/06 09.09
 0  No Overriding ASMAOPT Parameters
    Overriding Parameters-  OPTABLE(370,LIST)
    No Process Statements
-
-
-   Options for this Assembly
-0                    NOADATA
-                       ALIGN
-                       ASA
-                       BATCH
-                       CODEPAGE(047C)
-                     NOCOMPAT
-                     NODATAMAP
-                     NODBCS
-                     NODECK
-                       DXREF
-                       ESD
-                     NOEXIT
-                       FAIL(NOMSG,NOMNOTE,MAXERRS(500))
-                       FLAG(0,ALIGN,CONT,EXLITW,NOIMPLEN,NOLONGER,NOPAGE0,PUSH,RECORD,RENT,NOSIGNED,NOSUBSTR,NOTRUNC,
-                            USING0)
-                     NOFOLD
-                     NOGOFF
-                       ILMA
-                     NOINFO
-                       LANGUAGE(EN)
-                     NOLIBMAC
-                       LINECOUNT(60)
-                       LIST(121)
- 3 PARM/OPTION         MACHINE(S370,LIST)
-                       MXREF(SOURCE)
-                       OBJECT
- 3 PARM/OPTION         OPTABLE(370,LIST)
-                     NOPCONTROL
-                     NOPESTOP
-                     NOPROFILE
-                     NORA2
-                     NORENT
-                       RLD
-                       RXREF
-                       SECTALGN(8)
-                       SIZE(MAX)
-                     NOSUPRWARN
-                       SYSPARM()
-                     NOTERM
-                     NOTEST
-                       THREAD
-                     NOTRANSLATE
-                       TYPECHECK(MAGNITUDE,REGISTER,SIGNED)
-                       USING(NOLIMIT,MAP,WARN(15))
-                     NOWORKFILE
-                       XREF(SHORT,UNREFS)
-
-   No Overriding DD Names
 1                              High Level Assembler Operation Code Table Contents                               Page    2
 -                                                                                            HLASM R6.0  2024/06/06 09.09
 0Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands            Mnemonic Frmt HexOP Operands
@@ -268,21 +215,3 @@
 1                                  Diagnostic Cross Reference and Assembler Summary                             Page   10
 -                                                                                            HLASM R6.0  2024/06/06 09.09
 0     No Statements Flagged in this Assembly
- HIGH LEVEL ASSEMBLER, 5696-234, RELEASE 6.0, PTF UI80020
-0SYSTEM: z/OS 02.05.00              JOBNAME: JGANCI1     STEPNAME: ASM        PROCSTEP: C
-0Unicode Module:   ASMA047C   From Page     1148   To Page    17584           ECECP: International 1
- Data Sets Allocated for this Assembly
-  Con DDname   Data Set Name                                Volume  Member
-   P1 SYSIN    JGANCI.TEST.SOURCE                           xxxxxx  IEFBR14
-   L1 SYSLIB   JGANCI.TEST.MACRO                            xxxxxx
-   L2          SYS1.MACLIB                                  xxxxxx
-   L3          SYS1.MODGEN                                  xxxxxx
-      SYSLIN   SYS24158.T090935.RA000.JGANCI1.OBJ.H01       xxxxxx
-      SYSPRINT JGANCI.TEST.SYSPRINT                         xxxxxx  IEFBR14
-
-   26600K allocated to Buffer Pool       Storage required     200K
-       4 Primary Input Records Read            0 Library Records Read                  0 Work File Reads
-       0 ASMAOPT Records Read                288 Primary Print Records Written         0 Work File Writes
-       3 Object Records Written                0 ADATA Records Written
-0Assembly Start Time: 09.09.35 Stop Time: 09.09.35 Processor Time: 00.00.00.0005
- Return Code 000
