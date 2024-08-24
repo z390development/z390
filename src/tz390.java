@@ -3766,7 +3766,7 @@ public void create_opcodes()  // Routine added for RPI 1209
                 }
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
-            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
+            if (opt_optable.equals("DFLT") ||  opt_optable.equals("Z390") ||  opt_allow) process_opcodes(op_table_ESA_allow); // #561
             process_opcodes(op_table_ZOP);
             process_opcodes(op_table_YOP);
             process_opcodes(op_table_ZS3);
