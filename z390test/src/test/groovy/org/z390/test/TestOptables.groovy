@@ -18,8 +18,8 @@ class TestOptables extends z390Test {
          * test 1A - optable(360-20)
          *           this optable cannot be compared with HLASM - HLASM does not support this option
          */
-        var z390prn = basePath("rt", "mlc", "OPTB#320.PRN")
-        int rc = this.asml(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB#320.OPT")}")
+        var z390prn = basePath("rt", "mlc", "OPTB#360-20.PRN")
+        int rc = this.asml(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB#360-20.OPT")}")
         this.printOutput()
         assert rc == 0
     }
@@ -98,6 +98,32 @@ class TestOptables extends z390Test {
         env = ['Z390PRN': basePath("rt", "mlc", "OPTB#ZS1.PRN"),
                'HLASMPRN': basePath("rt", "mlc", "OPTB#ZS1.TF1")]
         int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB#ZS1.OPT")}")
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_optable_YOP() {
+        /**
+         * test 7A - optable(YOP)
+         */
+        var z390prn = basePath("rt", "mlc", "OPTB#YOP.PRN")
+        env = ['Z390PRN': basePath("rt", "mlc", "OPTB#YOP.PRN"),
+               'HLASMPRN': basePath("rt", "mlc", "OPTB#YOP.TF1")]
+        int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB#YOP.OPT")}")
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_optable_ZS2() {
+        /**
+         * test 7B - optable(ZS2)
+         */
+        var z390prn = basePath("rt", "mlc", "OPTB#ZS2.PRN")
+        env = ['Z390PRN': basePath("rt", "mlc", "OPTB#ZS2.PRN"),
+               'HLASMPRN': basePath("rt", "mlc", "OPTB#ZS2.TF1")]
+        int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB#ZS2.OPT")}")
         this.printOutput()
         assert rc == 0
     }
@@ -349,6 +375,71 @@ class TestOptables extends z390Test {
         env = ['Z390PRN': basePath("rt", "mlc", "OPTB_ARCH-5.PRN"),
                'HLASMPRN': basePath("rt", "mlc", "OPTB#ZOP.TF1")]
         int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB_ARCH-5.OPT")}")
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_machine_z890() {
+        /**
+         * test 7C - machine(z890)
+         */
+        var z390prn = basePath("rt", "mlc", "OPTB_z890.PRN")
+        env = ['Z390PRN': basePath("rt", "mlc", "OPTB_z890.PRN"),
+               'HLASMPRN': basePath("rt", "mlc", "OPTB#YOP.TF1")]
+        int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB_z890.OPT")}")
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_machine_z990() {
+        /**
+         * test 7D - machine(z990)
+         */
+        var z390prn = basePath("rt", "mlc", "OPTB_z990.PRN")
+        env = ['Z390PRN': basePath("rt", "mlc", "OPTB_z990.PRN"),
+               'HLASMPRN': basePath("rt", "mlc", "OPTB#YOP.TF1")]
+        int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB_z990.OPT")}")
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_machine_zSeries2() {
+        /**
+         * test 7E - machine(zSeries-2)
+         */
+        var z390prn = basePath("rt", "mlc", "OPTB_zSeries-2.PRN")
+        env = ['Z390PRN': basePath("rt", "mlc", "OPTB_zSeries-2.PRN"),
+               'HLASMPRN': basePath("rt", "mlc", "OPTB#YOP.TF1")]
+        int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB_zSeries-2.OPT")}")
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_machine_ZS2() {
+        /**
+         * test 7F - machine(ZS-2)
+         */
+        var z390prn = basePath("rt", "mlc", "OPTB_ZS-2.PRN")
+        env = ['Z390PRN': basePath("rt", "mlc", "OPTB_ZS-2.PRN"),
+               'HLASMPRN': basePath("rt", "mlc", "OPTB#YOP.TF1")]
+        int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB_ZS-2.OPT")}")
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_machine_ARCH6() {
+        /**
+         * test 7G - machine(ARCH-6)
+         */
+        var z390prn = basePath("rt", "mlc", "OPTB_ARCH-6.PRN")
+        env = ['Z390PRN': basePath("rt", "mlc", "OPTB_ARCH-6.PRN"),
+               'HLASMPRN': basePath("rt", "mlc", "OPTB#YOP.TF1")]
+        int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB_ARCH-6.OPT")}")
         this.printOutput()
         assert rc == 0
     }

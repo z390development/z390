@@ -29,130 +29,94 @@ rem ****************************************************************************
 rem  Optable 360-20
 rem  this optable cannot be compared with HLASM - HLASM does not support this option
 :360-20
-set optb=320
-set opt=360-20
-set Z390PRN=rt\mlc\OPTB#%optb%.PRN
-call bat\asml.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#%optb%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% optable 360-20 *None
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "optable(%opt%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "optable(%opt%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . if /I %1. NEQ /Q. goto return
 
 rem  Optable DOS
 :DOS
-set optb=DOS
-set Z390PRN=rt\mlc\OPTB#%optb%.PRN
-set HLASMPRN=rt\mlc\OPTB#%optb%.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#%optb%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% optable DOS
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "optable(%optb%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "optable(%optb%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . if /I %1. NEQ /Q. goto return
 
 rem  Optable 370
 :370
-set optb=370
-set Z390PRN=rt\mlc\OPTB#%optb%.PRN
-set HLASMPRN=rt\mlc\OPTB#%optb%.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#%optb%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% optable 370
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "optable(%optb%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "optable(%optb%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . if /I %1. NEQ /Q. goto return
 
 rem  Optable XA
 :XA
-set optb=XA
-set Z390PRN=rt\mlc\OPTB#%optb%.PRN
-set HLASMPRN=rt\mlc\OPTB#%optb%.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#%optb%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% optable XA
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "optable(%optb%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "optable(%optb%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . if /I %1. NEQ /Q. goto return
 
 rem  Optable ESA
 :ESA
-set optb=ESA
-set Z390PRN=rt\mlc\OPTB#%optb%.PRN
-set HLASMPRN=rt\mlc\OPTB#%optb%.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#%optb%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% optable ESA
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "optable(%optb%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "optable(%optb%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . if /I %1. NEQ /Q. goto return
 
 rem  Optable ZOP - Synonym of ZS1
 :ZOP
 if %1. NEQ . if /I %1. EQU /Q. goto ZS1
-set optb=ZOP
-set Z390PRN=rt\mlc\OPTB#%optb%.PRN
-set HLASMPRN=rt\mlc\OPTB#%optb%.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#%optb%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% optable ZOP
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "optable(%optb%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "optable(%optb%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . if /I %1. NEQ /Q. goto return
 
 rem  Optable ZS1 - Synonym of ZOP
 :ZS1
-set optb=ZS1
-set Z390PRN=rt\mlc\OPTB#%optb%.PRN
-set HLASMPRN=rt\mlc\OPTB#%optb%.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#%optb%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% optable ZS1
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "optable(%optb%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "optable(%optb%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . if /I %1. NEQ /Q. goto return
 
-rem  Optable uni
-:uni
-set optb=UNI
-set Z390PRN=rt\mlc\OPTB#%optb%.PRN
-call bat\asml.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB#%optb%.OPT sysprn(%Z390PRN%)
+rem  Optable YOP - Synonym of ZS2
+:YOP
+if %1. NEQ . if /I %1. EQU /Q. goto ZS2
+call rt\bat\RUNOPTABLE %z_TraceMode% optable YOP
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "optable(%optb%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "optable(%optb%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . if /I %1. NEQ /Q. goto return
+
+rem  Optable ZS2 - Synonym of YOP
+:ZS2
+call rt\bat\RUNOPTABLE %z_TraceMode% optable ZS2
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . if /I %1. NEQ /Q. goto return
+
+rem  Optable uni **!! comparison to be enabled when optable(uni) has been fixed **!!
+:uni
+call rt\bat\RUNOPTABLE %z_TraceMode% optable UNI *None
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . if /I %1. NEQ /Q. goto return
 
 rem -- end of optables. Quick run ends here
@@ -167,293 +131,213 @@ rem ****************************************************************************
 rem  Machine S360-20 - equivalent of Optable(360-20)
 rem  this optable cannot be compared with HLASM - HLASM does not support this option
 :S360-20
-set mac=S360-20
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-call bat\asml.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine S360-20 *None
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine S370 - equivalent of Optable(370)
 :S370
-set mac=S370
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#370.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine S370 370
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine S370XA - equivalent of Optable(XA)
 :S370XA
-set mac=S370XA
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#XA.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine S370XA XA
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine ARCH-0 - equivalent of Optable(XA)
 :ARCH-0
-set mac=ARCH-0
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#XA.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine ARCH-0 XA
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine S370ESA - equivalent of Optable(ESA)
 :S370ESA
-set mac=S370ESA
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#ESA.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine S370ESA ESA
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine S390 - equivalent of Optable(ESA)
 :S390
-set mac=S390
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#ESA.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine S390 ESA
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine S390E - equivalent of Optable(ESA)
 :S390E
-set mac=S390E
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#ESA.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine S390E ESA
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine ARCH-1 - equivalent of Optable(ESA)
 :ARCH-1
-set mac=ARCH-1
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#ESA.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine ARCH-1 ESA
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine ARCH-2 - equivalent of Optable(ESA)
 :ARCH-2
-set mac=ARCH-2
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#ESA.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine ARCH-2 ESA
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine ARCH-3 - equivalent of Optable(ESA)
 :ARCH-3
-set mac=ARCH-3
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#ESA.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine ARCH-3 ESA
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine ARCH-4 - equivalent of Optable(ESA)
 :ARCH-4
-set mac=ARCH-4
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#ESA.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine ARCH-4 ESA
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine zSeries - equivalent of Optable(ZS1)
 :zSeries
-set mac=zSeries
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#ZS1.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine zSeries ZS1
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine zSeries-1 - equivalent of Optable(ZS1)
 :zSeries-1
-set mac=zSeries-1
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#ZS1.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine zSeries-1 ZS1
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine ZS - equivalent of Optable(ZS1)
 :ZS
-set mac=ZS
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#ZS1.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine ZS ZS1
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine ZS-1 - equivalent of Optable(ZS1)
 :ZS-1
-set mac=ZS-1
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#ZS1.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine ZS-1 ZS1
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine z800 - equivalent of Optable(ZS1)
 :z800
-set mac=z800
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#ZS1.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine z800 ZS1
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine z900 - equivalent of Optable(ZS1)
 :z900
-set mac=z900
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#ZS1.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine z900 ZS1
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 rem  Machine ARCH-5 - equivalent of Optable(ZS1)
 :ARCH-5
-set mac=ARCH-5
-set Z390PRN=rt\mlc\OPTB_%mac%.PRN
-set HLASMPRN=rt\mlc\OPTB#ZS1.TF1
-call bat\asmlg.bat %z_TraceMode% rt\mlc\OPTB# @rt\mlc\OPTB_%mac%.OPT sysprn(%Z390PRN%)
+call rt\bat\RUNOPTABLE %z_TraceMode% machine ARCH-5 ZS1
 set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% EQU 0 (echo %0 - OPTB# "machine(%mac%)" is okay
-                         set /A count_ok=%count_ok%+1
-                         ) else (
-                         echo %0 ERROR: OPTB# returned %z_ReturnCode% for "machine(%mac%)"
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         if (%z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%)
-                         )
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . goto return
+
+rem  Machine z890 - equivalent of Optable(ZS2)
+:z890
+call rt\bat\RUNOPTABLE %z_TraceMode% machine z890 ZS2
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . goto return
+
+rem  Machine z990 - equivalent of Optable(ZS2)
+:z990
+call rt\bat\RUNOPTABLE %z_TraceMode% machine z990 ZS2
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . goto return
+
+rem  Machine zSeries-2 - equivalent of Optable(ZS2)
+:zSeries-2
+call rt\bat\RUNOPTABLE %z_TraceMode% machine zSeries-2 ZS2
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . goto return
+
+rem  Machine ZS-2 - equivalent of Optable(ZS2)
+:ZS-2
+call rt\bat\RUNOPTABLE %z_TraceMode% machine ZS-2 ZS2
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . goto return
+
+rem  Machine ARCH-6 - equivalent of Optable(ZS2)
+:ARCH-6
+call rt\bat\RUNOPTABLE %z_TraceMode% machine ARCH-6 ZS2
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
 :report
-echo %count_ok% tests were okay and %count_err% failed
+echo %count_ok% tests were okay and %count_err% failed. Returncode is %z_MaxRetCode%
 
 :return
 popd
