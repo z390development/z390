@@ -333,7 +333,8 @@ public  class  tz390 {
     * 2024-08-12 #545 Extend generated java doco to include private methods
     * 2024-08-15 AFK #554 Correct OPTABLE(ESA,LIST) output to match HLASM
     * 2024-08-23 AFK #561 Correct OPTABLE(ZOP,LIST) output to match HLASM
-	********************************************************
+    * 2024-09-04 #564 fix invalid argument in String compare
+    ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
 	/*
@@ -4102,7 +4103,7 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
                 if (i == -1) // No separator!
                    {abort_error(56,"Missing equal-sign in second override in opcode definition " + op_tables[index]);
                     }
-                else if (override.substring(0,i).equals(mask_char))  // #495
+                else if (override.substring(0,i).equals(String.valueOf(mask_char)))  // #495 #564
                    {override_masks=override.substring(i+1);          // #495
                     }                                                // #495
                 else
