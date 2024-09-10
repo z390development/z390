@@ -334,6 +334,7 @@ public  class  tz390 {
     * 2024-08-15 AFK #554 Correct OPTABLE(ESA,LIST) output to match HLASM
     * 2024-08-23 AFK #561 Correct OPTABLE(ZOP,LIST) output to match HLASM
     * 2024-09-04 #564 fix invalid argument in String compare
+    * 2024-09-09 AFK #568 Correct OPTABLE(YOP,LIST) output to match HLASM
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -1144,7 +1145,7 @@ public  class  tz390 {
         "80:UNI=UNI",                                     // #503 #554
         "90:z390=z390",                                   // #503 #554
         };                                                // #503
-    int[]    machine_option_nr = null;  
+    int[]    machine_option_nr = null;                    // #568
     String[] machine_option_id = null;                    // #503
     String[] machines_optable = null; // machine's optable// #503
     String[] machine_optable_equivalence =                // #503
@@ -3425,7 +3426,7 @@ public void init_option_tables()                                                
     int     i;                                                                                           // #503
     String  entry;                                                                                       // #503
                                                                                                          // #503
-    machine_option_nr = new    int[machine_optable_equivalence.length];                                  // #554
+    machine_option_nr = new    int[machine_optable_equivalence.length];                                  // #554 #568
     machine_option_id = new String[machine_optable_equivalence.length];                                  // #503
     machines_optable  = new String[machine_optable_equivalence.length];                                  // #503
     optable_option_nr = new    int[optable_optable_equivalence.length];                                  // #554
@@ -3488,7 +3489,7 @@ public void init_option_tables()                                                
             if (index2 >= optables_optable.length) // invalid index indicates not-found condition        // #503
                {abort_error(41,"Optable not defined for machine definition " + entry);                   // #503
                 }                                                                                        // #503
-            else machine_option_nr[index] = optable_option_nr[index2];
+            else machine_option_nr[index] = optable_option_nr[index2];                                   // #568
             }                                                                                            // #503
         catch (Exception e)                                                                              // #503
            {abort_error(41,"Error in machine option definition " + machine_optable_equivalence[index] + " - " + e.toString()); // #503
@@ -4791,7 +4792,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                for(int i = 0; i < machine_option_id.length; i++)                   // #503
                   {if(machine_option_id[i].equals(opt_machine))                    // #503
                      {opt_machine_optable = machines_optable[i];                   // #503
-                      opt_optable_optb_nr = machine_option_nr[i];                                     // #554
+                      opt_optable_optb_nr = machine_option_nr[i];                  // #554 #568
                       break;                                                       // #503
                       }                                                            // #503
                    }                                                               // #503
