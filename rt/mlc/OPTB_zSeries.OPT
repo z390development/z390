@@ -1,0 +1,6 @@
+noallow
+  machine(ZSERIES,list)
+  stats
+noloadhigh
+nodump
+notest
