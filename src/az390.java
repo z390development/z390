@@ -426,6 +426,7 @@ public  class  az390 implements Runnable {
         * 2024-08-09 AFK #543 Correct OPTABLE(XA,LIST) output to match HLASM
         * 2024-08-12 #545 Extend generated java doco to include private methods
         * 2024-08-15 AFK #554 Correct OPTABLE(ESA,LIST) output to match HLASM
+        * 2024-08-23 AFK #561 Correct OPTABLE(ZOP,LIST) output to match HLASM
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -2041,7 +2042,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     break;
                 case 23:
                     my_format="RIE";                                                   // #500
-                    my_operands="R1,R3,I2";                                            // #500
+                    my_operands="R1,R3,RI2";                                           // #500 #561
                     break;
                 case 24:
                     my_format="RXE";                                                   // #500
@@ -2083,8 +2084,18 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 33:
                     // Our op_code table has the last two nibbles swapped
                     my_format="RIL";                                                   // #500
-                    my_hexop=my_hexop.substring(0,2)+my_hexop.substring(3)+my_hexop.substring(2,3); // #500
-                    my_operands="I2";                                                  // #500
+                    if (my_hexop.length() == 3) // mask excluded?                      // #561
+                       {my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2,3);  // #561
+                        short_op = 1;           // mark short opcode                   // #561
+                        }                                                              // #561
+                    else                        // mask included!                      // #561
+                       {my_hexop=my_hexop.substring(0,2)+my_hexop.substring(3)+my_hexop.substring(2,3); // #500 #561
+                        short_op = 0;           // mark full opcode                    // #561
+                        }                                                              // #561
+                    if (short_op == 1)          // short opcode                        // #561
+                       my_operands="M1,RI2";                                           // #561
+                    else                        // full opcode                         // #561
+                       my_operands="RI2";       // mask implied by menmonic            // #561
                     break;
                 case 34:
                     my_format="RRF";                                                   // #500

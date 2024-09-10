@@ -1,0 +1,6 @@
+noallow
+  machine(Z800,list)
+  stats
+noloadhigh
+nodump
+notest

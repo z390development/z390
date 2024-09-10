@@ -332,8 +332,9 @@ public  class  tz390 {
     * 2024-08-01 AFK #543 Correct OPTABLE(XA,LIST) output to match HLASM
     * 2024-08-12 #545 Extend generated java doco to include private methods
     * 2024-08-15 AFK #554 Correct OPTABLE(ESA,LIST) output to match HLASM
+    * 2024-08-23 AFK #561 Correct OPTABLE(ZOP,LIST) output to match HLASM
     * 2024-09-04 #564 fix invalid argument in String compare
-	********************************************************
+  	********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
 	/*
@@ -2146,6 +2147,13 @@ public  class  tz390 {
         {"C04=JLC,16,330",       //   5180 "C04"   "BRCL"     "RIL"  16 #554
          "C004=JLNOP,16,330",    //   5180 "C04"   "BRCL"     "RIL"  16 #554
          };                                                          // #554
+     // Instructions PGIN and PGOUT were introduced with the ESA architecture #561
+     // But HLASM has never supported these instructions                      #561
+     // See Jonathan Scott's contribution to the ASSEMBLER-LIST 2024-04-06    #561
+     String[]   op_table_ESA_allow =   // Instructions defined for ESA but never supported by HLASM #561
+        {"B22E=PGIN,14,140",     //   2860 "B22E"  "PGIN"     "RRE"  14 #561
+         "B22F=PGOUT,14,140",    //   2870 "B22F"  "PGOUT"    "RRE"  14 #561
+         };                                                          // #561
      String[]   op_table_ZOP =   // Table added for RPI 1209A
         {"010E=SAM64,1,10",      //     70 "010E"  "SAM64"    "E"     1
          "A50=IIHH,73,730",      //   1820 "A50"   "IIHH"     "RI"   12 // RPI 1522
@@ -2173,18 +2181,7 @@ public  class  tz390 {
          "A7D=MGHI,73,731",      //   2470 "A7D"   "MGHI"     "RI"   12 // RPI 1522
          "A7F=CGHI,73,731",      //   2490 "A7F"   "CGHI"     "RI"   12 // RPI 1522
          "B250=CSP,14,140",      //   3150 "B250"  "CSP"      "RRE"  14
-         "B280=LPP,7,70",   // S,LPP,D1(B1)   RPI 2221
-         "B284=LCCTL,7,70", // S,LCCTL,D1(B1) RPI 2221
-         "B285=LPCTL,7,70", // S,LPCTL,D1(B1) RPI 2221
-         "B286=QSI,7,70",   // S,QSI,D1(B1)   RPI 2221
-         "B287=LSCTL,7,70", // S,LSCTL,D1(B1) RPI 2221
-         "B28E=QCTRI,7,70", // S,QCTRI,D1(B1) RPI 2221
          "B2B2=LPSWE,7,70",      //   3390 "B2B2"  "LPSWE"    "S"     7
-		 "B2E0=SCCTR,14,142",    //   RRE,SCCTR,R1,R2 RPI 2221
-		 "B2E1=SPCTR,14,142",    //   RRE,SPCTR,R1,R2 RPI 2221
-		 "B2E4=ECCTR,14,142",    //   RRE   B2E4 R1,R2", // RPI 2221
-         "B2E5=EPCTR,14,142",    //   RRE   B2E5 R1,R2", // RPI 2221
-         "B2ED=ECPGA,14,142",    //   RRE   B2ED R1,R2", // RPI 2221
          "B3A4=CEGBR,53,141",    //   4250 "B3A4"  "CEGBR"    "RRE"  53 RPI 1125 Z196
          "B3A5=CDGBR,53,141",    //   4260 "B3A5"  "CDGBR"    "RRE"  53 RPI 1125 Z196
          "B3A6=CXGBR,53,141",    //   4270 "B3A6"  "CXGBR"    "RRE"  53 RPI 1125 Z196
@@ -2318,8 +2315,19 @@ public  class  tz390 {
          "EF=LMD,28,280",        //   7030 "EF"    "LMD"      "SS4"  28
          };
      String[]   op_table_YOP =   // Table added for RPI 1209A
-        {"B2A6=CU21,14,140",     //   3350 "B2A6"  "CU21"     "RRE"  14
+        {"B280=LPP,7,70",   // S,LPP,D1(B1)   RPI 2221
+         "B284=LCCTL,7,70", // S,LCCTL,D1(B1) RPI 2221
+         "B285=LPCTL,7,70", // S,LPCTL,D1(B1) RPI 2221
+         "B286=QSI,7,70",   // S,QSI,D1(B1)   RPI 2221
+         "B287=LSCTL,7,70", // S,LSCTL,D1(B1) RPI 2221
+         "B28E=QCTRI,7,70", // S,QCTRI,D1(B1) RPI 2221
+         "B2A6=CU21,14,140",     //   3350 "B2A6"  "CU21"     "RRE"  14
          "B2A7=CU12,14,140",     //   3370 "B2A7"  "CU12"     "RRE"  14
+         "B2E0=SCCTR,14,142",    //   RRE,SCCTR,R1,R2 RPI 2221
+         "B2E1=SPCTR,14,142",    //   RRE,SPCTR,R1,R2 RPI 2221
+         "B2E4=ECCTR,14,142",    //   RRE   B2E4 R1,R2", // RPI 2221
+         "B2E5=EPCTR,14,142",    //   RRE   B2E5 R1,R2", // RPI 2221
+         "B2ED=ECPGA,14,142",    //   RRE   B2ED R1,R2", // RPI 2221
          "B32E=MAER,15,150",     //   3760 "B32E"  "MAER"     "RRF1" 15
          "B32F=MSER,15,150",     //   3770 "B32F"  "MSER"     "RRF1" 15
          "B33E=MADR,15,150",     //   3800 "B33E"  "MADR"     "RRF1" 15
@@ -3323,8 +3331,6 @@ public  class  tz390 {
         {"83=DIAGNOSE,10,100",     // RPI 2213 ADD DIAGNOSE/DIAG RS
          "83=DIAG,10,100",         // RPI 2213 ADD DIAGNOSE/DIAG RS
 //       "B214=SIE,7,70",          // RPI 2213 ADD START INTERPRETIVE EXEC S    #543 - moved to optable for XA
-         "B22E=PGIN,14,140",     //   2860 "B22E"  "PGIN"     "RRE"  14
-         "B22F=PGOUT,14,140",    //   2870 "B22F"  "PGOUT"    "RRE"  14
          };
      String[]   op_table_DFLT_directives = // Split directives from opcodes            #533
         {"--=ACALLPRM,228,--",   //   "ACALLPRM" resets ACALL parms just before AENTRY #533
@@ -3657,6 +3663,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
             process_opcodes(op_table_ESA_only); // #554
+            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
             process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
@@ -3667,6 +3674,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
+            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
             process_opcodes(op_table_ZOP);
             process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
@@ -3678,6 +3686,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
+            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
             process_opcodes(op_table_ZOP);
             process_opcodes(op_table_YOP);
             process_opcodes(op_table_360_20_directives);       // #543
@@ -3690,6 +3699,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
+            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
             process_opcodes(op_table_ZOP);
             process_opcodes(op_table_YOP);
             process_opcodes(op_table_ZS3);
@@ -3703,6 +3713,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
+            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
             process_opcodes(op_table_ZOP);
             process_opcodes(op_table_YOP);
             process_opcodes(op_table_ZS3);
@@ -3718,6 +3729,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_370);
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
+            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
             process_opcodes(op_table_ZOP);
             process_opcodes(op_table_YOP);
             process_opcodes(op_table_ZS3);
@@ -3733,6 +3745,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_370);              // #503
             process_opcodes(op_table_XA);               // #503
             process_opcodes(op_table_ESA);              // #503
+            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
             process_opcodes(op_table_ZOP);              // #503
             process_opcodes(op_table_YOP);              // #503
             process_opcodes(op_table_ZS3);              // #503
@@ -3754,6 +3767,7 @@ public void create_opcodes()  // Routine added for RPI 1209
                 }
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
+            if (opt_optable.equals("DFLT") ||  opt_optable.equals("Z390") ||  opt_allow) process_opcodes(op_table_ESA_allow); // #561
             process_opcodes(op_table_ZOP);
             process_opcodes(op_table_YOP);
             process_opcodes(op_table_ZS3);
