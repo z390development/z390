@@ -1,0 +1,7 @@
+
+noallow
+  optable(YOP,list)
+  stats
+noloadhigh
+nodump
+notest
