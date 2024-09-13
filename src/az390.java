@@ -2433,11 +2433,11 @@ public class ReportEntryComparator implements Comparator<String>                
    {// special case: entries consisting of a single space sort first!              // #568
     if (str1.charAt(0) == ' ') return 1;  // blank entry always smaller            // #568
     if (str2.charAt(0) == ' ') return -1; // blank entry always smaller            // #568
-    for (int i=0; i<7; i++)                                                        // #568
+    for (int i=0; i<8; i++)                                                        // #568
      {char c1 = str1.charAt(i);                                                    // #568
       char c2 = str2.charAt(i);                                                    // #568
-      if (c1 == c2) {} // continue on to next char                                 // #568
-      else // we found different characters                                        // #568
+      // if c1 == c2 then we continue on to the next character                     // #568
+      if (c1 != c2)                                                                // #568
        {if (c1 == ' ') return -1; // Mnemonic 2 is longer                          // #568
         if (c2 == ' ') return 1;  // Mnemonic 1 is longer                          // #568
         if (c1 <= '9')                                                             // #568
