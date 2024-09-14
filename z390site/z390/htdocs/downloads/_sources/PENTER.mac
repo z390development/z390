@@ -1,0 +1,356 @@
+.* COPYRIGHT (C) 1988, PAUL A. SCOTT, ALL RIGHTS RESERVED               00010000
+.*                                                                      00020000
+         MACRO                                                          00030000
+&NAME    PENTER &TYPE,             PROCEDURE TYPE                      X00040000
+               &BASE=12,           BASE REGISTER(S)                    X00050000
+               &VARS=,             LOCAL VARIABLE STORAGE              X00060000
+               &STACK=,            SIZE OF STACK IN 1K BLOCKS          X00070000
+               &PREFIX=PSM         LABEL PREFIX FOR MACRO EXPANSION     00080000
+.*                                                                      00090000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       00100000
+.*       VARIABLE DEFINITIONS                                           00110000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       00120000
+.*                                                                      00130000
+         COPY  PSMGBL00                                                 00140000
+         COPY  PSMGBL01                                                 00150000
+         COPY  PSMGBL02                                                 00160000
+.*                                                                      00170000
+         LCLA  &I                  INDEX AND COUNTER                    00180000
+         LCLA  &K                  STACK SIZE                           00190000
+         LCLA  &N                  NUMBER OF PARAMETERS (REUSED)        00200000
+         LCLA  &S                  HIGHEST REGISTER USED                00210000
+.*                                                                      00220000
+         LCLB  &B0                 STACK DEFINED FLAG                   00230000
+         LCLB  &B1                 PSM MAIN LINKAGE                     00240000
+         LCLB  &B2                 PSM CMAIN LINKAGE                    00250000
+         LCLB  &B3                 PSM FUNCTION LINKAGE                 00260000
+         LCLB  &B4                 STANDARD LINKAGE                     00270000
+.*                                                                      00280000
+         LCLC  &C                  CHARACTER STRING (REUSED)            00290000
+         LCLC  &P                  EXPANSION PREFIX                     00300000
+.*                                                                      00310000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       00320000
+.*       VALIDATE &STACK PARAMETER                                      00330000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       00340000
+.*                                                                      00350000
+         AIF   ((T'&STACK EQ 'O') OR (&STACK EQ 0)).L0010               00360000
+&K       SETA  ((&STACK*4)*1024)                                        00370000
+&B0      SETB  ('&TYPE' EQ 'CMAIN')                                     00380000
+&B0      SETB  (('&TYPE' EQ 'MAIN') OR &B0)                             00390000
+         AIF   (&B0).L0010                                              00400000
+         MNOTE 4,'INVALID STACK USAGE - STACK=&STACK IGNORED'           00410000
+.L0010   ANOP                                                           00420000
+.*                                                                      00430000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       00440000
+.*       VALIDATE &TYPE PARAMETER                                       00450000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       00460000
+.*                                                                      00470000
+&B1      SETB  ('&TYPE' EQ 'MAIN')                                      00480000
+&B2      SETB  ('&TYPE' EQ 'CMAIN')                                     00490000
+&B3      SETB  ('&TYPE' EQ 'FUNC')                                      00500000
+&B4      SETB  (T'&TYPE EQ 'O')                                         00510000
+         AIF   (NOT (&B1 OR &B2)).L0020                                 00520000
+.*                                                                      00530000
+         AIF   (&B0).L0030                                              00540000
+         MNOTE 4,'TYPE &TYPE REQUIRES STACK - 4K ASSUMMED'              00550000
+&K       SETA  4096                                                     00560000
+&B0      SETB  1                                                        00570000
+         AGO   .L0030                                                   00580000
+.*                                                                      00590000
+.L0020   ANOP                                                           00600000
+         AIF   (&B1 OR &B2 OR &B3 OR &B4).L0030                         00610000
+         MNOTE 4,'INVALID TYPE &TYPE - STANDARD LINKAGE ASSUMED '       00620000
+&B4      SETA  1                                                        00630000
+.L0030   ANOP                                                           00640000
+         AIF   (NOT &B4).L0040                                          00650000
+&K       SETA  64                      MINIMAL STACK FOR PCALL, ETC.    00660000
+&B0      SETB  1                       FORCE MINIMAL STACK              00670000
+.L0040   ANOP                                                           00680000
+.*                                                                      00690000
+.*                                                                      00700000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       00710000
+.*       MAKE EXPANSION PREFIX SHORTER FOR CLEANER EXPANSION            00720000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       00730000
+.*                                                                      00740000
+&P       SETC  '&PREFIX'           SHORTEN THE VARIABLE NAME            00750000
+.*                                                                      00760000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       00770000
+.*       SAVE AREA STRUCTURE DEFINITION                                 00780000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       00790000
+.*                                                                      00800000
+         AIF   (&PSMSVA AND ('&P' EQ 'PSM')).L0060                      00810000
+.L0050   ANOP                                                           00820000
+.*      - - - - - - - - - - - - - - - - - - - - - - - - - - - - -       00830000
+.*       S T A R T   O F   S A V E   A R E A   S T R U C T U R E        00840000
+.*      - - - - - - - - - - - - - - - - - - - - - - - - - - - - -       00850000
+&PSMSVA  SETB  1                                                        00860000
+&P.SVA   DSECT ,                   SAVE AREA STRUCTURE                  00870000
+&P.PLI   DS    F                   UNUSED                               00880000
+&P.HSA   DS    A                   HIGH SAVE AREA PTR                   00890000
+&P.LSA   DS    A                   LOW SAVE AREA PTR                    00900000
+&P.RET   DS    A                   RETURN ADDRESS                       00910000
+&P.EPA   DS    A                   ENTRY POINT ADDRESS                  00920000
+&P.GPR0  DS    A                   REGISTER 0                           00930000
+&P.GPR1  DS    A                   REGISTER 1                           00940000
+&P.GPR2  DS    A                   REGISTER 2                           00950000
+&P.GPR3  DS    A                   REGISTER 3                           00960000
+&P.GPR4  DS    A                   REGISTER 4                           00970000
+&P.GPR5  DS    A                   REGISTER 5                           00980000
+&P.GPR6  DS    A                   REGISTER 6                           00990000
+&P.GPR7  DS    A                   REGISTER 7                           01000000
+&P.GPR8  DS    A                   REGISTER 8                           01010000
+&P.GPR9  DS    A                   REGISTER 9                           01020000
+&P.GPR10 DS    A                   REGISTER 10                          01030000
+&P.GPR11 DS    A                   REGISTER 11                          01040000
+&P.GPR12 DS    A                   REGISTER 12                          01050000
+&P.GDS   DS    A                   GLOBAL DATA STRUCTURE PTR            01060000
+&P.LDS   DS    A                   LOCAL DATA STRUCTURE PTR             01070000
+&P.TOS   DS    A                   TOP OF STACK PTR                     01080000
+&P.BOS   DS    A                   BOTTOM OF STACK PTR                  01090000
+&P.SVALN EQU   *-&P.SVA            LENGTH OF SAVE AREA STRUCTURE        01100000
+&P.LVARS DS    0F                  START OF LOCAL VARIABLES             01110000
+.*      - - - - - - - - - - - - - - - - - - - - - - - - - - - - -       01120000
+.*       E N D   O F   S A V E   A R E A   S T R U C T U R E            01130000
+.*      - - - - - - - - - - - - - - - - - - - - - - - - - - - - -       01140000
+.L0060   ANOP                                                           01150000
+.*                                                                      01160000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       01170000
+.*       COMPUTE HIGHEST REGISTER USED (FROM BASE REGS DEFINED)         01180000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       01190000
+.*                                                                      01200000
+&S       SETA  0                   START WITH NO HIGHEST                01210000
+.*                                                                      01220000
+.*       SCAN THE CODE BASE REGISTERS                                   01230000
+.*                                                                      01240000
+&N       SETA  N'&BASE             NUMBER OF BASE REGISTERS             01250000
+&I       SETA  1                   START WITH FIRST ONE                 01260000
+.*                                                                      01270000
+.L0070   ANOP                                                           01280000
+         AIF   (&I GT &N).L0090    WHILE (UNSCANNED REGISTERS)          01290000
+         PSMRVAL &BASE(&I)              GET VALUE OF REGISTER           01300000
+         AIF   (&S GE &PSMRVAL).L0080   IF HIGHER THAN PREVIOUS         01310000
+&S       SETA  &PSMRVAL                    SAVE REGISTER                01320000
+.L0080   ANOP                           ENDIF                           01330000
+&I       SETA  &I+1                     INCREMENT REGISTER INDEX        01340000
+         AGO   .L0070              END WHILE                            01350000
+.L0090   ANOP                                                           01360000
+.*                                                                      01370000
+.*       SCAN THE DATA BASE REGISTERS                                   01380000
+.*                                                                      01390000
+&N       SETA  N'&VARS(3)          NUMBER OF BASE REGISTERS             01400000
+&I       SETA  1                   START WITH FIRST ONE                 01410000
+.*                                                                      01420000
+.L0100   ANOP                                                           01430000
+         AIF   (&I GT &N).L0120    WHILE (UNSCANNED REGISTERS)          01440000
+         PSMRVAL &VARS(3,&I)            GET VALUE OF REGISTER           01450000
+         AIF   (&S GE &PSMRVAL).L0110   IF HIGHER THAN PREVIOUS         01460000
+&S       SETA  &PSMRVAL                    SAVE REGISTER                01470000
+.L0110   ANOP                           ENDIF                           01480000
+&I       SETA  &I+1                     INCREMENT REGISTER INDEX        01490000
+         AGO   .L0100              END WHILE                            01500000
+.L0120   ANOP                                                           01510000
+.*                                                                      01520000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       01530000
+.*       GENERATE REGISTER EQUATES                                      01540000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       01550000
+.*                                                                      01560000
+         AIF   (&PSMREGS).L0170    SKIP IF ALREADY DEFINED              01570000
+         AIF   (&REGS).L0160       ISSUE WARNING IF EXTERNALLY DEFINED  01580000
+.*                                                                      01590000
+&PSMREGS SETB  1                   MARK AS DEFINED                      01600000
+&REGS    SETB  1                   MARK AS DEFINED                      01610000
+.*                                                                      01620000
+&I       SETA  0                                                        01630000
+.L0140   ANOP                         REPEAT                            01640000
+.*                                       IF ( NOT SPECIAL REGISTER )    01650000
+         AIF   ((&I EQ &SP) OR (&I EQ &BP)).L0150                       01660000
+.*       AIF   ((&I GT &S) AND NOT (&I LT &BP)).L0150                   01670000
+R&I      EQU   &I                           GENERATE REGISTER EQUATE    01680000
+.L0150   ANOP                            ENDIF                          01690000
+&I       SETA  &I+1                      BUMP TO NEXT REGISTER          01700000
+         AIF   (&I LE &HIREG).L0140   UNTIL ( NO MORE REGISTERS )       01710000
+         AGO   .L0170                 SKIP WARNING                      01720000
+.*                                                                      01730000
+.L0160   ANOP                                                           01740000
+         MNOTE 4,'USE REGISTERS &SP AND &BP WITH CAUTION!!!'            01750000
+.*                                                                      01760000
+.L0170   ANOP                                                           01770000
+.*                                                                      01780000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       01790000
+.*       DROP PREVIOUS BASE REGISTERS                                   01800000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       01810000
+.*                                                                      01820000
+.*       DROP CODE BASE REGISTERS                                       01830000
+.*                                                                      01840000
+         AIF   ('&PSMBSEC(2)' EQ '').L0180                              01850000
+         DROP  &PSMBSEC(2)                                              01860000
+.*                                                                      01870000
+.*       DROP DATA BASE REGISTERS                                       01880000
+.*                                                                      01890000
+.L0180   ANOP                                                           01900000
+         AIF   ('&PSMBSED' EQ '').L0190                                 01910000
+         DROP  &PSMBSED                                                 01920000
+.*                                                                      01930000
+.L0190   ANOP                                                           01940000
+.*                                                                      01950000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       01960000
+.*       INITIALIZE THE PENTER/PEXIT GLOBAL VARIABLES                   01970000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       01980000
+.*                                                                      01990000
+&PSMCNAM SETC  ''                  CLEAR THE CSECT NAME                 02000000
+&PSMBSEC(1) SETC ''                CLEAR THE FIRST CODE BASE REGISTER   02010000
+&PSMBSEC(2) SETC ''                CLEAR THE CODE BASE REGISTER LIST    02020000
+&PSMBSED SETC  ''                  CLEAR THE DATA BASE                  02030000
+&PSMBSEH SETC  ''                  CLEAR THE HIGHEST REGISTER USED      02040000
+&PSMSTKS SETC  ''                  CLEAR THE STACK SIZE                 02050000
+.*                                                                      02060000
+&PSMCNAM SETC  '&NAME'             INITIALIZE THE CSECT NAME            02070000
+.*                                                                      02080000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       02090000
+.*       GENERATE THE CSECT PREFACE AREA                                02100000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       02110000
+.*                                                                      02120000
+         PSMRLSE ,                                                      02130000
+&N       SETA  (K'&PSMRLSE+3)/4*4                                       02140000
+.*                                                                      02150000
+.*      - - - - - - - - - - - - - - - - - - - - - - - - - - - - -       02160000
+.*       S T A R T   O F   C S E C T   P R E F A C E                    02170000
+.*      - - - - - - - - - - - - - - - - - - - - - - - - - - - - -       02180000
+.*       THE CSECT ID SECTION IS MAPPED BY MACRO PSMCPREF               02190000
+.*       ANY CHANGES TO HERE SHOULD BE DUPLICATED THERE                 02200000
+.*                                                                      02210000
+&NAME    CSECT ,                                                        02220000
+.*                                                                      02230000
+&C       SETC  ''                                                       02240000
+         AIF   (NOT &B2).L0200                                          02250000
+         ENTRY MAIN                                                     02260000
+&C       SETC  'MAIN'                                                   02270000
+.L0200   ANOP                                                           02280000
+.*                                                                      02290000
+&I       SETA  36+&N+(&B0*4)+(&B2*4)                                    02300000
+&C       B     &I.(,15)            BRANCH AROUND CSECT PREFACE          02310000
+&I       SETA  27+&N                                                    02320000
+         DC    AL1(&I.)            . LENGTH OF DUMP TEXT                02330000
+         DC    CL9'&NAME'          . CSECT NAME                         02340000
+         DC    CL9'&SYSDATE'       . ASSEMBLY DATE                      02350000
+         DC    CL9'&SYSTIME'       . ASSEMBLY TIME                      02360000
+         AIF   (&N LT 1).L0210                                          02370000
+         DC    CL&N.'&PSMRLSE'     . PRODUCT RELEASE ID                 02380000
+.L0210   ANOP                                                           02390000
+&C       SETC  '0'                                                      02400000
+         AIF   (T'&VARS(2) EQ 'O').L0220                                02410000
+&C       SETC  '&VARS(2)'                                               02420000
+.L0220   ANOP                                                           02430000
+&C       SETC  '((&P.SVALN+&C+7)/8)*8'                                  02440000
+         DC    A(&C)               . INITIAL STACK OFFSET               02450000
+.*                                                                      02460000
+.*       GENERATE STACK CONSTANTS                                       02470000
+.*                                                                      02480000
+         AIF   (NOT &B0).L0230                                          02490000
+&PSMSTKS SETC '&K'                                                      02500000
+         DC    AL1(&SSID),AL3(&K)  . STACK ALLOCATION                   02510000
+.*                                                                      02520000
+.*       GENERATE PSM INITIALIZATION MODULE ADDRESS CONSTANT            02530000
+.*                                                                      02540000
+         AIF   (NOT &B2).L0230                                          02550000
+         DC    V(PSMINIT)          . PSM INITIALIZATION                 02560000
+.*      - - - - - - - - - - - - - - - - - - - - - - - - - - - - -       02570000
+.*       E N D   O F   C S E C T   P R E F A C E                        02580000
+.*      - - - - - - - - - - - - - - - - - - - - - - - - - - - - -       02590000
+.L0230   ANOP                                                           02600000
+.*                                                                      02610000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       02620000
+.*       SAVE REGISTERS FOR STANDARD LINKAGE                            02630000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       02640000
+.*                                                                      02650000
+         STM   14,&S,12(&BP)                                            02660000
+.*                                                                      02670000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       02680000
+.*       ESTABLISH CODE BASE REGISTERS                                  02690000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       02700000
+.*                                                                      02710000
+&N       SETA  N'&BASE             NUMBER OF BASE REGISTERS             02720000
+&C       SETC  '&BASE(1)'          FIRST BASE REGISTER                  02730000
+&PSMBSEC(1) SETC '&C'              SAVE FIRST BASE REGISTER             02740000
+.*                                                                      02750000
+         LR    &BASE(1),15                                              02760000
+         AIF   (&N LE 1).L0250     IF ( MORE THAN ONE REGISTER)         02770000
+&I       SETA  1                      SET INDEX TO FIRST REGISTER       02780000
+         LA    &BASE(&N),4095                                           02790000
+.L0240   ANOP                                                           02800000
+         AIF   (&I+1 GT &N).L0250     WHILE ( MORE REGISTERS )          02810000
+&I       SETA  &I+1                      GET NEXT REGISTER              02820000
+         LA    &BASE(&I),1(&BASE(&N),&BASE(&I-1))                       02830000
+&C       SETC  '&C.,&BASE(&I)'           COLLECT REGISTERS              02840000
+         AGO   .L0240                 END WHILE                         02850000
+.L0250   ANOP                      ENDIF                                02860000
+&PSMBSEC(2) SETC '&C'              SAVE BASE REGISTER LIST              02870000
+         USING &NAME,&C                                                 02880000
+.*                                                                      02890000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       02900000
+.*       COMPLETE STANDARD LINKAGE                                      02910000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       02920000
+.*                                                                      02930000
+         LR    2,&BP                                                    02940000
+&N       SETA  (K'&PSMRLSE+3)/4*4                                       02950000
+         AIF   (&B1 OR &B4).L0260                                       02960000
+         LR    &BP,&SP                                                  02970000
+         AGO   .L0270                                                   02980000
+.*                                                                      02990000
+.L0260   ANOP                                                           03000000
+&I       SETA  36+&N                                                    03010000
+         L     0,&I.(,&BASE(1))                                         03020000
+&I       SETA  &I-4                                                     03030000
+         AL    0,&I.(,&BASE(1))                                         03040000
+         GETMAIN R,LV=(0)                                               03050000
+         LR    &BP,1                                                    03060000
+         LR    &SP,1                                                    03070000
+.*                                                                      03080000
+.L0270   ANOP                                                           03090000
+         LA    0,0(,&BP)                                                03100000
+&I       SETA  32+&N                                                    03110000
+         L     1,&I.(,&BASE(1))                                         03120000
+         LR    14,0                                                     03130000
+         SR    15,15                                                    03140000
+         MVCL  0,14                                                     03150000
+.*                                                                      03160000
+         AIF   (&B1 OR &B4).L0280                                       03170000
+         MVC   &P.GDS-&P.SVA(&P.LVARS-&P.GDS,&BP),&P.GDS-&P.SVA(2)      03180000
+.L0280   ANOP                                                           03190000
+.*                                                                      03200000
+         ST    2,4(,&BP)                                                03210000
+         ST    &BP,8(,2)                                                03220000
+         LM    1,2,24(2)                                                03230000
+         AIF   (&B4).L0290                                              03240000
+         A     &SP,&I.(,&BASE(1))                                       03250000
+.L0290   ANOP                                                           03260000
+.*                                                                      03270000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       03280000
+.*       ESTABLISH DATA BASE REGISTERS                                  03290000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       03300000
+.*                                                                      03310000
+         AIF   (T'&VARS EQ 'O').L0340                                   03320000
+&C       SETC  '&BP'                                                    03330000
+&N       SETA  N'&VARS(3)                                               03340000
+         AIF   (&N LT 1).L0330                                          03350000
+&I       SETA  0                                                        03360000
+         LA    &VARS(3,&N),4095                                         03370000
+.L0300   ANOP                                                           03380000
+&I       SETA  &I+1                                                     03390000
+         AIF   (&I GT &N).L0330                                         03400000
+         AIF   (&I GT 1).L0310                                          03410000
+         LA    &VARS(3,&I),1(&VARS(3,&N),&BP)                           03420000
+         AGO   .L0320                                                   03430000
+.L0310   ANOP                                                           03440000
+         LA    &VARS(3,&I),1(&VARS(3,&N),&VARS(3,&I-1))                 03450000
+.L0320   ANOP                                                           03460000
+&C       SETC  '&C.,&VARS(3,&I)'                                        03470000
+         AGO   .L0300                                                   03480000
+.L0330   ANOP                                                           03490000
+         USING &VARS(1)-&P.SVALN,&C                                     03500000
+&PSMBSED SETC  '&C'                                                     03510000
+.L0340   ANOP                                                           03520000
+.*                                                                      03530000
+&PSMBSEH SETC  '&S'                                                     03540000
+.*                                                                      03550000
+         MEND                                                           03560000

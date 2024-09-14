@@ -1,0 +1,17 @@
+.* COPYRIGHT (C) 1988, PAUL A. SCOTT, ALL RIGHTS RESERVED               00010000
+.*                                                                      00020000
+         MACRO                                                          00030000
+         PSMRLSE                                                        00040000
+.*                                                                      00050000
+         COPY  PSMGBL02                                                 00060000
+.*                                                                      00070000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       00080000
+.*       THIS MACRO DEFINES THE PRODUCT NAME AND RELEASE DATA           00090000
+.*       WHICH WILL BE INCLUDED IN THE CSECT PREFIX AREA.               00100000
+.*       KEEP A COPY OF THIS MACRO IN EACH PRODUCT MACRO LIBRARY        00110000
+.*       AND CHANGE THE GLOBAL VARIABLE &PSMRLSE AS APPROPRIATE.        00120000
+.*      /*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/       00130000
+.*                                                                      00140000
+&PSMRLSE SETC  'PSM 1.0.0'                                              00150000
+.*                                                                      00160000
+         MEND                                                           00170000

@@ -1,0 +1,814 @@
+*                                                                       00050000
+*        test program to display instruction execution speeds           00060000
+*                                                                       00070000
+*        written by Gary Brabiner                                       00080000
+*                                                                       00090000
+*        *** ignore assembler WARNINGS ***                              00100000
+*
+* parameters:
+*     first char is test to run. currently supports:
+*       ' ' standard test simmilar to MIPS370 (default)
+*       '1' top 50 or so instructions by usage (reportedly)
+*       'X' test instructions
+*     following text is displayed as information
+*                                                                       00120000
+* register usage                                                        00130000
+*        R0-R1      work, can be destroyed at any time                  00140000
+*        R2-R6      available                                           00150000
+*        R7-R9      used in instruction test routine                    00160000
+*        R10        pointer to instruction test table                   00170000
+*        R11        program base2                                       00180000
+*        R12        program base                                        00190000
+*        R13        savearea                                            00200000
+*        R14-R15    work, can be destroyed at any time                  00210000
+*                                                                       00220000
+INSTRATE CSECT                                                          00230000
+ENTRY    DS     0H                                                      00240000
+         USING  ENTRY,R15                                               00250000
+         STM    R14,R12,12(R13)        save regs                        00260000
+         LA     R1,SAVEAREA                                             00270000
+         ST     R13,8(R1)                                               00280000
+         ST     R1,4(R13)              link saveareas                   00290000
+         LR     R13,R1                                                  00300000
+         DROP   R15                                                     00310000
+         LR     R12,R15                copy basereg to Reg12            00320000
+         USING  ENTRY,R12                                               00330000
+         LA     R11,2048(R12)                                           00340000
+         LA     R11,2048(R11)                                           00350000
+         USING  ENTRY+4096,R11         second base register             00360000
+*                                                                       00370000
+         WTO    'INSTRATE STARTED'                                      00380000
+*                                                                       00390000
+*        display configuration details                                  00400000
+*                                                                       00410000
+         MVI    TESTTYPE,C' '           default instruction table       00420000
+         L      R1,8(,R13)              get previous savearea           00430000
+         L      R1,12+4+4+4(,R1)        get R1 from savearea            00440000
+         L      R1,0(,R1)               get parm address                00450000
+         LH     R2,0(,R1)               get parm length                 00460000
+         LTR    R2,R2                   anything?                       00470000
+         BZ     NOPARM                  no, skip display                00480000
+         MVC    TESTTYPE,2(R1)          set inst table from parm        00490000
+         CH     R2,=AL2(L'WTOCP)        is it too long?                 00500000
+         BNH    PARMLOK                 no                              00510000
+         LH     R2,=AL2(L'WTOCP)        yes, set to max                 00520000
+PARMLOK  DS     0H                                                      00530000
+         BCTR   R2,0                    dec length for EX               00540000
+         EX     R2,MVCC                 copy parm                       00550000
+MVCC     MVC    WTOCP(1),2(R1)          copy parm                       00560000
+WTOC     WTO   '                                                       *00570000
+                                          '                             00580000
+WTOCP    EQU   WTOC+8+2,80                                              00590000
+NOPARM   DS     0H                                                      00600000
+*                                                                       00610000
+         L      R10,=A(TESTI)           use default table               00680000
+TYPEOKAY DS     0H                                                      00690000
+         MVC    WTOC1D,0(R10)           copy type description           00700000
+         LA     R10,80(,R10)            point to instructions           00710000
+         USING  TESTIDS,R10                                             00720000
+WTOC1    WTO   '                                                       *00730000
+                                            '                           00740000
+WTOC1D   EQU   WTOC1+8+2,80                                             00750000
+*                                                                       00760000
+         L      R1,SAMPNUM                                              00770000
+         CVD    R1,DW                                                   00780000
+         MVC    WTOC2N,=X'40202120'                                     00790000
+         ED     WTOC2N,DW+L'DW-2        to display                      00800000
+WTOC2    WTO   '  Samples   = 123'                                      00810000
+WTOC2N   EQU   WTOC2+8+13,4                                             00820000
+         L      R1,LOOPNUM                                              00830000
+         CVD    R1,DW                                                   00840000
+         MVC    WTOC3N,=X'40202020202020202120'                         00850000
+         ED     WTOC3N,DW+L'DW-5        to display                      00860000
+WTOC3    WTO   '  Loops     = 123456789'                                00870000
+WTOC3N   EQU   WTOC3+8+13,10                                            00880000
+         L      R1,REPLNUM                                              00890000
+         CVD    R1,DW                                                   00900000
+         MVC    WTOC4N,=X'40202120'                                     00910000
+         ED     WTOC4N,DW+L'DW-2        to display                      00920000
+WTOC4    WTO   '  Replicate = 123'                                      00930000
+WTOC4N   EQU   WTOC4+8+13,4                                             00940000
+         L      R1,TOLPCT                                               00950000
+         CVD    R1,DW                                                   00960000
+         MVC    WTOC5N,=X'40202120'                                     00970000
+         ED     WTOC5N,DW+L'DW-2        to display                      00980000
+WTOC5    WTO   '  Tolerate% = 123'                                      00990000
+WTOC5N   EQU   WTOC5+8+13,4                                             01000000
+         LA     R1,ENTRY                                                01010000
+         ST     R1,DW                                                   01020000
+         MVI    DW+4,X'0C'                                              01030000
+         UNPK   HEXDISP,DW(5)                                           01040000
+         TR     HEXDISP,HEXTABLE-C'0'                                   01050000
+         MVC    WTOC6A,HEXDISP                                          01060000
+WTOC6    WTO   '  Pgm addr   = 12345678'                                01070000
+WTOC6A   EQU   WTOC6+8+15,8                                             01080000
+         LA     R1,DATA                                                 01090000
+         ST     R1,DW                                                   01100000
+         MVI    DW+4,X'0C'                                              01110000
+         UNPK   HEXDISP,DW(5)                                           01120000
+         TR     HEXDISP,HEXTABLE-C'0'                                   01130000
+         MVC    WTOC7A,HEXDISP                                          01140000
+WTOC7    WTO   '  DATA  addr = 12345678'                                01150000
+WTOC7A   EQU   WTOC7+8+15,8                                             01160000
+         LA     R1,DATAB                                                01170000
+         ST     R1,DW                                                   01180000
+         MVI    DW+4,X'0C'                                              01190000
+         UNPK   HEXDISP,DW(5)                                           01200000
+         TR     HEXDISP,HEXTABLE-C'0'                                   01210000
+         MVC    WTOC8A,HEXDISP                                          01220000
+WTOC8    WTO   '  DATAB addr = 12345678'                                01230000
+WTOC8A   EQU   WTOC8+8+15,8                                             01240000
+         LA     R1,DATAP                                                01250000
+         ST     R1,DW                                                   01260000
+         MVI    DW+4,X'0C'                                              01270000
+         UNPK   HEXDISP,DW(5)                                           01280000
+         TR     HEXDISP,HEXTABLE-C'0'                                   01290000
+         MVC    WTOC9A,HEXDISP                                          01300000
+WTOC9    WTO   '  DATAP addr = 12345678'                                01310000
+WTOC9A   EQU   WTOC9+8+15,8                                             01320000
+         L      R1,=A(TSTAREA)                                          01330000
+         LA     R1,PREINSTL(,R1)                                        01340000
+         ST     R1,DW                                                   01350000
+         MVI    DW+4,X'0C'                                              01360000
+         UNPK   HEXDISP,DW(5)                                           01370000
+         TR     HEXDISP,HEXTABLE-C'0'                                   01380000
+         MVC    WTOC10A,HEXDISP                                         01390000
+WTOC10   WTO   '  Instruction addr = 12345678'                          01400000
+WTOC10A  EQU   WTOC10+8+20,8                                            01410000
+*                                                                       01420000
+*                                                                       01430000
+*        display msg heading                                            01440000
+*                                                                       01450000
+WTO1     WTO   'Description                        MIPS     nS Samples' 01460000
+*                                                                       01470000
+TEST     DS     0H                                                      01480000
+         CLI    TIINSL,0               is this the refference loop?     01490000
+         BNE    NOTREF1                no                               01500000
+         XC     REFFER,REFFER          clear REFFER                     01510000
+NOTREF1  DS     0H                                                      01520000
+         TM     TIFLAG1,TIFLAG1C       is this a comment only?          01530000
+         BO     COMMENT                yes                              01540000
+*                                                                       01550000
+*        build test instructions at TSTAREA                             01560000
+*                                                                       01570000
+         L      R1,=A(TSTAREA)                                          01580000
+         MVC    0(PREINSTL,R1),PREINST copy pre instructions            01590000
+         LA     R1,PREINSTL(R1)                                         01600000
+*                                                                       01610000
+         SLR    R15,R15                                                 01620000
+         IC     R15,TIINSL             get length of instruction(s)     01630000
+         LTR    R15,R15                is there any length value?       01640000
+         BZ     NOINST                 no, no instruction, skip copy    01650000
+         BCTR   R15,0                  dec for EX of MVC                01660000
+         L      R0,REPLNUM             number of times to replicate     01670000
+ANOTHER  DS     0H                                                      01680000
+         EX     R15,MVCINST            copy instruction(s) to test area 01690000
+MVCINST  MVC    0(1,R1),TIINS          copy instruction(s) to test area 01700000
+         LA     R1,1(R15,R1)           inc pointer                      01710000
+         BCT    R0,ANOTHER             loop for REPLNUM                 01720000
+NOINST   DS     0H                                                      01730000
+*                                                                       01740000
+         MVC    0(PSTINSTL,R1),PSTINST copy post instructions           01750000
+         LA     R1,PSTINSTL(R1)                                         01760000
+*                                                                       01770000
+*                                                                       01780000
+*        execute test instructions                                      01790000
+*                                                                       01800000
+         XC     SAMPLE,SAMPLE          reset SAMPLE to 0                01810000
+         XC     SAMPLET,SAMPLET        reset SAMPLET to 0               01820000
+         XC     RESULT,RESULT          clear RESULT array               01830000
+DOTEST   DS     0H                                                      01840000
+         L      RTBASE,=A(TSTAREA)                                      01850000
+         BR     RTBASE                                                  01860000
+TESTRET  DS     0H                     get control back from test rtn   01870000
+         LA     R15,1                                                   01880000
+         A      R15,SAMPLET                                             01890000
+         ST     R15,SAMPLET            increment SAMPLET                01900000
+*                                                                       01910000
+*                                                                       01920000
+*        take a rest, let someone else use the processor                01930000
+*                                                                       01940000
+*        STIMER WAIT,BINTVL=PAUSEINT                                    01950000
+*                                                                       01960000
+*                                                                       01970000
+*        calc END-START                                                 01980000
+*                                                                       01990000
+         LM     R2,R3,START                                             02000000
+         LM     R4,R5,END                                               02010000
+         SLR    R5,R3                  subtract low word                02020000
+         BC     3,NOC1                                                  02030000
+         BCTR   R4,0                   do the carry to the high word    02040000
+NOC1     DS     0H                                                      02050000
+         SLR    R4,R2                  subtract high word               02060000
+*                                                                       02070000
+*        if not refference loop, then subtract REFFER                   02080000
+*                                                                       02090000
+         LM     R2,R3,REFFER                                            02100000
+         SLR    R5,R3                  subtract low word                02110000
+         BC     3,NOC2                                                  02120000
+         BCTR   R4,0                   do the carry to the high word    02130000
+NOC2     DS     0H                                                      02140000
+         SLR    R4,R2                  subtract high word               02150000
+*                                                                       02160000
+*        save in ELAPSED                                                02170000
+*                                                                       02180000
+         STM    R4,R5,ELAPSED          save elapsed STCK                02190000
+*                                                                       02200000
+*        ensure sample is within acceptable range                       02210000
+*                                                                       02220000
+         CLC   ELAPSED,STCKMIN         enough to work with?             02230000
+         BNL   MINOKAY                 yes, good                        02240000
+         WTO   'ELAPSED time less than 100 uS'                          02250000
+         DC    H'0'                    abend                            02260000
+MINOKAY  DS    0H                                                       02270000
+         CLC   ELAPSED,STCKMAX         will uS fit in a FW?             02280000
+         BL    MAXOKAY                 yes, good                        02290000
+         WTO   'ELAPSED time exceeds 128 seconds'                       02300000
+         DC    H'0'                    abend                            02310000
+MAXOKAY  DS    0H                                                       02320000
+*                                                                       02330000
+*        also save in result array                                      02340000
+*                                                                       02350000
+         L      R15,SAMPLE                                              02360000
+         MH     R15,=AL2(L'ELAPSED)                                     02370000
+         A      R15,=A(RESULT)         calc RESULT entry to use         02380000
+         MVC    0(L'ELAPSED,R15),ELAPSED copy ELAPSED to RESULT entry   02390000
+*                                                                       02400000
+*        if not done all the samples, then do again                     02410000
+*                                                                       02420000
+         LA     R15,1                                                   02430000
+         A      R15,SAMPLE                                              02440000
+         ST     R15,SAMPLE             increment SAMPLE                 02450000
+         C      R15,SAMPNUM            have we done all the samples?    02460000
+         BL     DOTEST                 no, do another test              02470000
+*                                                                       02480000
+*        calculate the average                                          02490000
+*                                                                       02500000
+         L      R15,SAMPNUM            entries to process               02510000
+         LA     R1,RESULT              start of table                   02520000
+         LM     R2,R3,0(R1)            get first entry                  02530000
+         SRDL   R2,12                  drop down to nS resolution       02540000
+         LA     R1,8(,R1)              inc to second entry              02550000
+         BCTR   R15,0                  dec                              02560000
+TOTLOOP  DS     0H                                                      02570000
+         LM     R4,R5,0(R1)            get next entry                   02580000
+         SRDL   R4,12                  drop down to nS resolution       02590000
+         ALR    R3,R5                  add low word                     02600000
+         BC     12,NOC3                                                 02610000
+         A      R2,=F'1'               do the carry to the high word    02620000
+NOC3     DS     0H                                                      02630000
+         ALR    R2,R4                  add high word                    02640000
+         LA     R1,8(,R1)              inc to next entry                02650000
+         BCT    R15,TOTLOOP            loop for all entries             02660000
+         D      R2,SAMPNUM             divide by number of samples      02670000
+         SLR    R2,R2                  ensure high word is clear        02680000
+         SLDL   R2,12                  shift up to STCK value           02690000
+         STM    R2,R3,ELAPSED          save the average                 02700000
+*                                                                       02710000
+*        test samples for repeatability                                 02720000
+*                                                                       02730000
+         XC     DIFFLVAL,DIFFLVAL      clear difference values          02740000
+         XC     DIFFLNUM,DIFFLNUM                                       02750000
+         XC     DIFFHVAL,DIFFHVAL                                       02760000
+         XC     DIFFHNUM,DIFFHNUM                                       02770000
+         L      R15,SAMPNUM            entries to process               02780000
+         LA     R1,RESULT              start of table                   02790000
+DIFLOOP  DS     0H                                                      02800000
+         LM     R2,R3,ELAPSED          get average                      02810000
+         SRDL   R2,12                  drop down to nS resolution       02820000
+         LM     R4,R5,0(R1)            get RESULT                       02830000
+         SRDL   R4,12                  drop down to nS resolution       02840000
+         SR     R3,R5                  calc difference                  02850000
+         BP     DIFHIGH                difference is positive           02860000
+         C      R3,DIFFLVAL            is this more negative?           02870000
+         BNL    DIFNEXT                no, skip                         02880000
+         ST     R3,DIFFLVAL            update difference value          02890000
+         L      R0,SAMPNUM             get number of samples            02900000
+         SR     R0,R15                 calc relative entry number       02910000
+         ST     R0,DIFFLNUM            save relative entry number       02920000
+         B      DIFNEXT                                                 02930000
+DIFHIGH  DS     0H                                                      02940000
+         C      R3,DIFFHVAL            is this greater?                 02950000
+         BNH    DIFNEXT                no, skip                         02960000
+         ST     R3,DIFFHVAL            update difference value          02970000
+         L      R0,SAMPNUM             get number of samples            02980000
+         SR     R0,R15                 calc relative entry number       02990000
+         ST     R0,DIFFHNUM            save relative entry number       03000000
+DIFNEXT  DS     0H                                                      03010000
+         LA     R1,8(R1)               inc to next entry                03020000
+         BCT    R15,DIFLOOP            loop till done                   03030000
+*                                                                       03040000
+         LM     R2,R3,ELAPSED          get average                      03050000
+         SRDL   R2,12                  drop down to nS resolution       03060000
+         L      R5,DIFFLVAL            get low value                    03070000
+         LPR    R5,R5                  make positive                    03080000
+         C      R5,DIFFHVAL            is it bigger than high value?    03090000
+         BNL    DIFFMAXV               yes, use it                      03100000
+         L      R5,DIFFHVAL            get high value                   03110000
+DIFFMAXV DS     0H                                                      03120000
+         M      R4,=F'100'             increase for percentage result   03130000
+         DR     R4,R3                  calc percentage                  03140000
+         C      R5,TOLPCT              does this exceed tolerance?      03150000
+         BNH    DIFOKAY                no, accept average               03160000
+*                                                                       03170000
+         CLI    QUIET,0                are we running in quiet mode?    03180000
+         BNE    NOWTOA                 yes, skip WTOA                   03190000
+         L      R2,DIFFLNUM            get relative number              03200000
+         LA     R2,1(R2)               convert to absolute              03210000
+         CVD    R2,DW                                                   03220000
+         MVC    WTOAL,=X'40202120'                                      03230000
+         ED     WTOAL,DW+L'DW-2        to display                       03240000
+         L      R2,DIFFHNUM            get relative number              03250000
+         LA     R2,1(R2)               convert to absolute              03260000
+         CVD    R2,DW                                                   03270000
+         MVC    WTOAH,=X'40202120'                                      03280000
+         ED     WTOAH,DW+L'DW-2        to display                       03290000
+         CVD    R5,DW                                                   03300000
+         MVC    WTOAP,=X'40202120'                                      03310000
+         ED     WTOAP,DW+L'DW-2        to display                       03320000
+WTOA     WTO    'Dropping samples nnn and nnn, error is nnn%'           03330000
+WTOAL    EQU    WTOA+8+16,4                                             03340000
+WTOAH    EQU    WTOA+8+24,4                                             03350000
+WTOAP    EQU    WTOA+8+38,4                                             03360000
+NOWTOA   DS     0H                                                      03370000
+*                                                                       03380000
+         L      R15,SAMPLE             number of samples                03390000
+         BCTR   R15,0                  do one loop less                 03400000
+         L      R2,DIFFLNUM            get relative entry number        03410000
+         BCTR   R2,0                   minus value is the trigger       03420000
+         LA     R1,RESULT              start of table                   03430000
+DROPLLOP DS     0H                                                      03440000
+         LTR    R2,R2                  are we upto entry to be dropped? 03450000
+         BNM    DROPLNOT               no, keep this entry              03460000
+         MVC    0(8,R1),8(R1)          copy next entry down             03470000
+DROPLNOT DS     0H                                                      03480000
+         LA     R1,8(R1)               inc pointer to next entry        03490000
+         BCTR   R2,0                   dec relative entry number        03500000
+         BCT    R15,DROPLLOP           loop till done                   03510000
+*                                                                       03520000
+         L      R15,SAMPLE             number of samples                03530000
+         BCTR   R15,0                  do one loop less                 03540000
+         L      R2,DIFFHNUM            get relative entry number        03550000
+         BCTR   R2,0                   minus value is the trigger       03560000
+         LA     R1,RESULT              start of table                   03570000
+DROPHLOP DS     0H                                                      03580000
+         LTR    R2,R2                  are we upto entry to be dropped? 03590000
+         BNM    DROPHNOT               no, keep this entry              03600000
+         MVC    0(8,R1),8(R1)          copy next entry down             03610000
+DROPHNOT DS     0H                                                      03620000
+         LA     R1,8(R1)               inc pointer to next entry        03630000
+         BCTR   R2,0                   dec relative entry number        03640000
+         BCT    R15,DROPHLOP           loop till done                   03650000
+*                                                                       03660000
+         L      R15,SAMPLE             get number of samples            03670000
+         BCTR   R15,0                  dec for dropped low              03680000
+         BCTR   R15,0                  dec for dropped high             03690000
+         ST     R15,SAMPLE             update SAMPLE                    03700000
+         B      DOTEST                 go fill RESULT again             03710000
+*                                                                       03720000
+DIFOKAY  DS     0H                                                      03730000
+*                                                                       03740000
+*                                                                       03750000
+*        calc MIPS                                                      03760000
+*                                                                       03770000
+         LM    R2,R3,STCK1SEC          get 1 second of STCK time        03780000
+         SRDL  R2,12                   drop down to nS resolution       03790000
+         L     R4,LOOPNUM              get number of inst executed      03800000
+         CLI   TIINSL,0                any instructions?                03810000
+         BE    NOINS1                  no, only one per loop            03820000
+         MH    R4,REPLNUM+2            multiply by number within loop   03830000
+NOINS1   DS    0H                                                       03840000
+         MR    R2,R4                                                    03850000
+         LM    R4,R5,ELAPSED           get ELAPSED time                 03860000
+         SRDL  R4,12                   drop down to nS resolution       03870000
+         DR    R2,R5                   calculate IPS                    03880000
+         SLR   R2,R2                                                    03890000
+         L     R4,=F'10000'                                             03900000
+         DR    R2,R4                   convert to 1/100ths of a MIPS    03910000
+         CVD   R3,DW                   to packed                        03920000
+         MVC   MIPSDSP,=X'40402021204B2020'                             03930000
+         ED    MIPSDSP,DW+L'DW-3       to display                       03940000
+*                                                                       03950000
+*                                                                       03960000
+*        calc TIME                                                      03970000
+*                                                                       03980000
+         LM    R2,R3,ELAPSED           get elapsed time for test        03990000
+         L     R4,LOOPNUM              get number of inst executed      04000000
+         CLI   TIINSL,0                any instructions?                04010000
+         BE    NOINS2                  no, only one per loop            04020000
+         MH    R4,REPLNUM+2            multiply by number within loop   04030000
+NOINS2   DS    0H                                                       04040000
+         DR    R2,R4                   calc time pre instruction        04050000
+         SRL   R3,2                    shift STCK down to nS value      04060000
+         CVD   R3,DW                   to packed                        04070000
+         MVC   TIMEDSP,=X'4020202020202120'                             04080000
+         ED    TIMEDSP,DW+L'DW-4       to display                       04090000
+*                                                                       04100000
+*                                                                       04110000
+*        display                                                        04120000
+*                                                                       04130000
+DISPLAY  DS     0H                                                      04140000
+         MVC   WTO2D,TITXT             copy text to msg area            04150000
+         MVC   WTO2M,MIPSDSP+2                                          04160000
+         MVC   WTO2T,TIMEDSP+2                                          04170000
+         L     R1,SAMPLET                                               04180000
+         CVD   R1,DW                                                    04190000
+         MVC   WTO2S-1(L'WTO2S+1),=X'4020202020202120'                  04200000
+         ED    WTO2S-1(L'WTO2S+1),DW+L'DW-4       to display            04210000
+WTO2     WTO   '12345678901234567890123456789012 123456 123456 1234567' 04220000
+WTO2D    EQU   WTO2+8,32                                                04230000
+WTO2M    EQU   WTO2+8+33,6                                              04240000
+WTO2T    EQU   WTO2+8+33+7,6                                            04250000
+WTO2S    EQU   WTO2+8+33+7+7,7                                          04260000
+*                                                                       04270000
+*                                                                       04280000
+*        if this is refference loop, then save time                     04290000
+*                                                                       04300000
+         CLI    TIINSL,0               any instructions?                04310000
+         BNE    NOTREF2                yes, not refference loop         04320000
+         MVC    REFFER,ELAPSED         save refference loop time        04330000
+NOTREF2  DS     0H                                                      04340000
+         B      NEXT                                                    04350000
+*                                                                       04360000
+*                                                                       04370000
+*        comment only                                                   04380000
+*                                                                       04390000
+COMMENT  DS     0H                                                      04400000
+         MVC    WTO3D,TITXT                                             04410000
+WTO3     WTO   '12345678901234567890123456789012'                       04420000
+WTO3D    EQU    WTO3+8,32                                               04430000
+         B      NEXT                                                    04440000
+*                                                                       04450000
+*                                                                       04460000
+*        do next test                                                   04470000
+*                                                                       04480000
+NEXT     DS     0H                                                      04490000
+         LA     R10,TILEN(R10)         point to next entry              04500000
+         CLI    0(R10),X'FF'           end of table?                    04510000
+         BNE    TEST                   no, process this entry           04520000
+EXIT     DS     0H                                                      04530000
+         WTO    'INSTRATE FINISHED'                                     04540000
+*                                                                       04550000
+         L      R13,8(R13)             get previous savearea            04560000
+         LM     R14,R12,12(R13)        restore regs                     04570000
+         SLR    R15,R15                set rc=0                         04580000
+         BR     R14                    return to caller                 04590000
+*                                                                       04600000
+*        test register definitions                                      04610000
+RTBASE   EQU    9                                                       04620000
+RTLOOP   EQU    8                                                       04630000
+RTNUM    EQU    7                                                       04640000
+*                                                                       04650000
+*        these instructions are executed prior to the test instruction  04660000
+PREINST  L      RTNUM,LOOPNUM                                           04670000
+         LA     RTLOOP,PREINSTL(RTBASE)                                 04680000
+         STM    R0,R15,SAVEREGS                                         04690000
+         STM    R0,R15,SAVEREGS+(16*4)    and second set                04700000
+         STCK   START                     alse set cc=1000              04710000
+PREINSTL EQU    *-PREINST                                               04720000
+*                                                                       04730000
+*        these instructions are executed after the test instruction     04740000
+PSTINST  BCTR   RTNUM,RTLOOP              BCTR does not change cc       04750000
+         STCK   END                                                     04760000
+         B      TESTRET                                                 04770000
+PSTINSTL EQU    *-PSTINST                                               04780000
+*                                                                       04790000
+*                                                                       04800000
+*        constants                                                      04810000
+*                                                                       04820000
+*                                                                       04830000
+QUIET    DC     AL1(0)                 0 for all msgs                   04840000
+*                                      1 to suppress WTOA               04850000
+SAMPNUM  DC     F'9'                   number of tests to be done       04860000
+LOOPNUM  DC     F'2000000'             number of times thru BCTR loop   04870000
+REPLNUM  DC     F'1'                   number of instructs per loop     04880000
+TOLPCT   DC     F'30'                  error tolerance as a percentage  04890000
+*                                                                       04900000
+PAUSEINT DC     F'40'                  pause interval in 1/100ths sec   04910000
+STCK1SEC DC     X'00000000F4240000'    STCK value for 1 second          04920000
+STCKMIN  DC     X'0000000000064000'    100 uS                           04930000
+STCKMAX  DC     X'0000007FFFFFF000'    maximum uS to fit in 4 bytes     04940000
+*                                                                       04950000
+         LTORG                                                          04960000
+*                                                                       04970000
+*                                                                       04980000
+*        working storage area                                           04990000
+*                                                                       05000000
+SAVEAREA DS     18F                                                     05010000
+*                                                                       05020000
+SAVEREGS DS     32F                    register contents for test loop  05030000
+*                                                                       05040000
+DW       DS     D                                                       05050000
+MIPSDSP  DS     CL8                    '  nnn.nn'                       05060000
+TIMEDSP  DS     CL8                    ' nnnnnnn'                       05070000
+HEXDISP  DS     CL9                    'xxxxxxxx?'                      05080000
+HEXTABLE DC     C'0123456789ABCDEF'                                     05090000
+TESTTYPE DS     C                                                       05100000
+*                                                                       05110000
+SAMPLE   DS     F                      sample being run (0 to n-1)      05120000
+SAMPLET  DS     F                      total number of samples taken    05130000
+*                                                                       05140000
+DIFFLVAL DS     F                      low difference value in nS       05150000
+DIFFLNUM DS     F                      low relative entry number        05160000
+DIFFHVAL DS     F                      high difference value in nS      05170000
+DIFFHNUM DS     F                      high relative entry number       05180000
+*                                                                       05190000
+         DS     0D                                                      05200000
+START    DS     XL8                    stck for start of loop           05210000
+END      DS     XL8                    stck for end of loop             05220000
+ELAPSED  DS     XL8                    stck elapsed time                05230000
+REFFER   DS     XL8                    stck of refference loop          05240000
+*                                                                       05250000
+RESULT   DS     16XL8                  enough room for a maximum of 16  05260000
+*                                                                       05270000
+*                                                                       05280000
+*        'user' data                                                    05290000
+*                                                                       05300000
+CHAR     EQU    C'?'                                                    05310000
+BIT0     EQU    B'10000000'                                             05320000
+BIT1     EQU    B'01000000'                                             05330000
+BIT2     EQU    B'00100000'                                             05340000
+BIT3     EQU    B'00010000'                                             05350000
+BIT4     EQU    B'00001000'                                             05360000
+BIT5     EQU    B'00000100'                                             05370000
+BIT6     EQU    B'00000010'                                             05380000
+BIT7     EQU    B'00000001'                                             05390000
+F1       DC     F'1'                                                    05400000
+FMINUS1  DC     F'-1'                                                   05410000
+H1       DC     H'1'                                                    05420000
+HMINUS1  DC     H'-1'                                                   05430000
+NOPR0    NOP    R0                                                      05440000
+*                                                                       05450000
+         DS     0D                                                      05460000
+DATA     DS     XL1024                                                  05470000
+PL4      DC     PL4'1'                                                  05480000
+PL16     DC     PL16'1'
+PLF      DC     PL16'1'
+PL7      DC     PL8'1'
+PL8      DC     PL8'1'
+DBL      DS     D
+         DS     0D
+DEC1     DC     X'000000000000012F'
+DEC2     DC     X'000000000000012F'
+DEC3     DC     X'000000000000012F'
+DEC4     DC     X'000000000000012F'
+*                                                                       05500000
+         ORG    INSTRATE+4096-8        Force it to cross page           05510000
+DATAP    DS     XL1024                                                  05520000
+*                                                                       05530000
+         DS     0D                                                      05540000
+DATAB    DS     XL1024                                                  05550000
+PL4B     DC     PL4'1'                                                  05560000
+PL16B    DC     PL16'1'                                                 05570000
+*                                                                       05580000
+*        area in which test instruction loop is built                   05590000
+*                                                                       05600000
+         ORG    INSTRATE+4096+4096                                      05610000
+TSTAREA  DS     0D                                                      05620000
+         DS     XL4096                                                  05630000
+*                                                                       05640000
+*        test instruction definitions                                   05650000
+*                x'??',x'??'           2 bytes of flags                 05660000
+*                al1(x),cl32           text description                 05670000
+*                al1(x),xl40           instruction(s)                   05680000
+TESTIDS  DSECT                                                          05690000
+TIFLAG1  DS      X                                                      05700000
+TIFLAG1C EQU     X'80'                 comment only, no instruction     05710000
+TIFLAG1S EQU     X'01'                 special setup rtn @ at TIINS     05720000
+TIFLAG2  DS      X                                                      05730000
+TITXTL   DS      AL1                   length of used text              05740000
+TITXT    DS      CL32                  text                             05750000
+TIINSL   DS      AL1                   length of used instruction       05760000
+TIINS    DS      XL40                  instruction                      05770000
+TILEN    EQU     *-TESTIDS                                              05780000
+INSTRATE CSECT                                                          05790000
+*                                                                       05800000
+TESTI    DS     0D                                                      06680000
+         DC     CL80'Ranked by usage (general)'                         06690000
+         DC     X'00',X'00'                                             06700000
+         DC     AL1(4),CL32'BCTR Rx,Rloop (refference loop)'            06710000
+         DC     AL1(0),XL40'00'                                         06720000
+*
+         TESTI  'A R1,F1      Add           5A-RX'
+         TESTI  'AD R0,DEC1   Add Norm Long 6A-RX'
+         TESTI  'ADR F0,F4    Add Norm Long 2A-RR'
+         TESTI  'AE F0,F4     Add Norm Long 7A-RX'
+         TESTI  'AER F0,F4    Add Norm Shor 3A-RR'
+         TESTI  'AH R1,H1     Add Halfword  4A-RX'
+         TESTI  'AL R1,F1     Add Logical   5E-RX'
+         TESTI  'ALR R1,R0    Add Logical   1E-RR'
+         TESTI  'ALR R1,R2'                                             06940000
+         TESTI  'AP PL4,PL4   Add Decimal   FA-SS'
+         TESTI  'AP PL4,PL4B'
+         TESTI  'AP PL16,PL16'
+         TESTI  'AP PL16,PL16B'
+         TESTI  'AR R1,R0     Add           1A-RR'
+         TESTI  'AU R2,R4     Add Unorm Sho 7E-RX'
+         TESTI  'AUR F0,F4    Add Unorm Sho 3E-RR'
+         TESTI  'AW F0,DEC1   Add Unorm Lon 6E-RX'
+         TESTI  'AWR F0,F4    Add Unorm Lon 2E-RR'
+         TESTI  'AXR F0,F4    Add Norm Exte 36-RR'
+         TESTI  'BAL R14,PREINSTL+4(,RTBASE)',                         *
+               'BAL R14,*+4  Branch and Li 45-RX'
+         TESTI  'LA R15,PREINSTL+4+2(RTBASE);BALR R14,R15',            *
+               'BALR R14,R15 Branch and Li 05-RR'
+         TESTI  'BC 1,PREINSTL+4(,RTBASE)',                            *
+               'BC 1,*+4     Branch Cond n 47-RX'
+         TESTI  'BC 8,PREINSTL+4(,RTBASE)',                            *
+               'BC 8,*+4     Branch Cond y 47-RX'
+         TESTI  'LA R15,PREINSTL+4+2(RTBASE);BCR 1,R15',               *
+               'BCR 1,R15    Branch Cond n 07-RR'
+         TESTI  'LA R15,PREINSTL+4+2(RTBASE);BCR 8,R15',               *
+               'BCR 8,R15    Branch Cond y 07-RR'
+*         TESTI  'BCT tested in refference loop'
+*         TESTI  'BCTR tested in refference loop'
+*         TESTI  'BXH' No test yet  Branch Index 86-RS'
+*         TESTI  'BXLE No test yet  Branch Index 87-RS'
+         TESTI  'C R1,F1      Compare Algeb 59-RX'
+         TESTI  'CD R0,F1     Compare Long  69-RX'
+         TESTI  'CDR R0,R2    Compare long  29-RR'
+         TESTI  'CDS R2,R4,DEC1 Compare Do  BB-RS'
+         TESTI  'CE R0,F1     Compare Short 79-RX'
+         TESTI  'CER R0,R2    Compare Short 39-RR'
+         TESTI  'CH R0,H1     Compare Half  49-RX'
+         TESTI  'CH R1,H1'
+         TESTI  'CL R1,DATA  Compare Logica 55-RX'
+         TESTI  'CLC DATA(8),DATA Compare L D5-SS'
+         TESTI  'CLC DATA(8),DATAB'
+         TESTI  'CLC DATA(32),DATA'
+         TESTI  'CLC DATA(32),DATAB'
+         TESTI  'CLC DATA(32),0'
+         TESTI  'CLC DATA(256),DATA'
+         TESTI  'CLC DATA(256),DATAB'
+         TESTI  'LA R2,DATA;LA R3,256;LA R4,DATAB;LR R5,R3;CLCL R0,R2',*06590000
+               'CLCL R0,R2 Compare Logical 0F-RR'
+         TESTI  'CLI DATA,CHAR  Compare Log 95-SI'
+         TESTI  'CLM R1,R2,DEC1 Compare Log BD-RS'
+         TESTI  'CLR R1,R2   Compare Logica 15-RR'
+         TESTI  'CP PL4,PL4B Compare Decima F9-SS'
+         TESTI  'CR R1,R2    Compare Algebr 19-RR'
+         TESTI  'CS R1,R2,DEC1  Compare Swa BA-RS'
+         TESTI  'CVB R1,DEC2    Convert Bin 4F-RX'
+         TESTI  'CVD R1,PL4B    Convert Dec 4E-RX'
+         TESTI  'CVD R1,DATA'
+         TESTI  'CVD R15,DATAB'
+         TESTI  'SR R2,R2;LA R3,DEC1;D R2,F1',                         *
+               'D R2,F1      Divide        5D-RX'
+         TESTI  'DD R2,F1     Divide Long   6D-RX'
+         TESTI  'LD F0,DEC1;LD F4,DEC1;DDR F0,F4',                     *
+               'DDR F0,F4    Divide Long   2D-RR'
+         TESTI  'DE R2,H1     Divide Short  7D-RX'
+         TESTI  'LD F0,H1;LD F4,H1;DER F0,F4',                         *
+               'DER F0,F4   Divide Short   3D-RR'
+         TESTI  'ZAP DEC2,DEC3;DP DEC2,PL4',                           *
+               'DP DEC2,PL4 Divide Decimal FD-SS'
+         TESTI  'SR R2,R2;LA R3,DEC1;DR R2,R1',                        *
+               'DR R2,R1    Divide         1D-RR'
+         TESTI  'ED PL8,DBL+2  Edit         DE-SS'
+         TESTI  'EDMK PL8,DBL+2  Edit       DF-SS'
+         TESTI  'EX R15,NOPR0' Execute      44-RX'
+         TESTI  'HDR F0,F4    Halve long    24-RR'
+         TESTI  'HER F0,F4    Halve short   34-RR'
+         TESTI  'IC R1,DATA Insert Charcter 43-RX'
+         TESTI  'ICM R1,15,DATA Insert Char BF-RS'
+         TESTI  'ICM R1,1,DATA  low byte '
+         TESTI  'L R1,0       Load          58-RX'
+         TESTI  'L R1,DATA    Load          58-RX'
+         TESTI  'L R1,DATA+1'
+         TESTI  'LA R1,1(R1)  Load Addres   41-RX'
+         TESTI  'LA R1,1(,R1)'
+         TESTI  'LCDR F0,F4 Load complement 23-RR'
+         TESTI  'LCER F0,F4 Load complement 33-RR'
+         TESTI  'LCR R1,R2  Load complement 13-RR'
+         TESTI  'LD F0,DATA Load Long       68-RX'
+         TESTI  'LDR R0,R2  Load Long       28-RR'
+         TESTI  'LE R2,F1   Load Short      78-RX'
+         TESTI  'LER R2,R4  Load Short      38-RR'
+         TESTI  'LH R1,H1   Load Half       48-RX'
+         TESTI  'LH R1,HMINUS1',                                       *06920000
+               'LH R1,HMINUS1   propagate sign'                         06930000
+         TESTI  'LH R1,DATA'                                            05970000
+         TESTI  'LM 8,6,SAVEREGS+(8*4) Load 98-RS'
+         TESTI  'LNR R1,R2  Load negative   11-RR'
+         TESTI  'LNDR F0,F4 Load negative   21-RR'
+         TESTI  'LNER F0,F4 Load negative   31-RR'
+         TESTI  'LPDR F0,F4 Load positive   20-RR'
+         TESTI  'LPER F0,F4 Load positive   30-RR'
+         TESTI  'LPR R1,R2  Load positive   10-RR'
+         TESTI  'LRDR F0,F4 Load rounded    25-RR'
+         TESTI  'LRER F0,F4 Load rounded    35-RR'
+         TESTI  'LR R1,R0                   18-RR'
+         TESTI  'LTDR F0,F4 Load and test l 22-RR'
+         TESTI  'LTER F0,F4 Load and test s 32-RR'
+         TESTI  'LTR R1,R2  Load and test   12-RR'
+         TESTI  'M R2,R4        Multiply    5C-RX'
+*         TESTI  'MC No test   Monitor Call  AF-SI'
+         TESTI  'MD F0,F1  Multiply Long    6C-RX'
+         TESTI  'MDR F0,F4 Multiply long    2C-RR'
+         TESTI  'ME F0,H1  Multiply short   7C-RX'
+         TESTI  'MER F0,F4 Multiply short   3C-RR'
+         TESTI  'MH F0,H1  Multiply half    4C-RX'
+         TESTI  'MP PLF,PL7 Multiply Decim  FC-SS'
+         TESTI  'MR R0,R2  Multiply         1C-RR'
+         TESTI  'MVC DATA(8),DATA   Move    D2-SS'
+         TESTI  'MVC DATA(8),DATAB'                                     06820000
+         TESTI  'MVC DATA(32),0'                                        06200000
+         TESTI  'MVC DATA(32),DATA'                                     06180000
+         TESTI  'MVC DATA(32),DATAB'                                    06190000
+         TESTI  'MVC DATA(256),DATA'                                    06210000
+         TESTI  'MVC DATA(256),DATAB'                                   06220000
+         TESTI  'MVC DATA(256),DATAB',                                 *06570000
+               'Move 256 bytes by MVC'                                  06580000
+         TESTI  'LA R2,DATA;LA R3,256;LA R4,DATAB;LR R5,R3;MVCL R2,R4',*06590000
+               'Move 256 bytes by MVCL     0E-RR'
+         TESTI  'MVI DATA,0;MVC DATA+1(255),DATA',                     *06610000
+               'Clear 256 bytes by MVC'
+         TESTI  'LA R2,DATA;LA R3,256;LR R4,R4;SLR R5,R5;MVCL R2,R4',  *06630000
+               'Clear 256 bytes by MVCL'                                06640000
+         TESTI  'MVI DATA,CHAR     Move     92-SI'
+         TESTI  'MVN DATA(8),DATAB Move num D1-SS'
+         TESTI  'MVO DEC1,DEC2  Move offset F1-SS'
+         TESTI  'MVZ DATA(8),DATAB Move zon D3-SS'
+         TESTI  'MXR F0,F4   Multiply Exten 26-RR'
+         TESTI  'MXD F0,H1   Multiply Long  67-RX'
+         TESTI  'MXDR F0,F4  Multiply long  27-RR'
+         TESTI  'N R1,DATA   And Logical    54-RX'
+         TESTI  'NC PL4,PL4B And Logical    D4-SS'
+         TESTI  'NI DATA,BIT7 And Logical I 94-SI'
+         TESTI  'NOP R0      No op          47-RX'
+         TESTI  'NR R1,R2    And Logical    14-RR'
+         TESTI  'O R1,DATA   Or Logical     56-RX'
+         TESTI  'OC DATA(8),DATAB Or Logica D6-SS'
+         TESTI  'OI DATA,BIT3+BIT7          96-SI'
+         TESTI  'OR R1,R2  Or logical       16-RR'
+         TESTI  'PACK DATA(8),F1    Pack De FS-SS'
+         TESTI  'S R1,DATA  Subtract        5B-RX'
+         TESTI  'SD F0,F1   Subtract        6B-RX'
+         TESTI  'SDR F0,F4  Subtract        2B-RR'
+         TESTI  'SE F0,H1   Subtract        7B-RX'
+         TESTI  'SER F0,F4  Subtract        3B-RR'
+         TESTI  'SH R1,H1   Subtract Half   4B-RX'
+         TESTI  'SL R1,DATA Subtract Logica 5F-RX'
+         TESTI  'SLA R1,1    mini shift     8B-RS'
+         TESTI  'SLA R1,31   maxi shift'
+         TESTI  'SLDA R2,63 Shift left      8F-RS'
+         TESTI  'SLDL R2,63 Shift left      8D-RS'
+         TESTI  'SLL R1,1   Shift left      89-RS'
+         TESTI  'SLL R1,31  Shift left max  89-RS'
+         TESTI  'SLR R1,R2    Subtract Logi 1F-RR'
+         TESTI  'SP DEC3,DEC4 Subtract Deci FB-SS'
+         TESTI  'SPM R1    Set program mask 04-RR'
+         TESTI  'SR R1,R2   Subtract        1B-RR'
+         TESTI  'SRA R1,31  Shift right max 8A-RS'
+         TESTI  'SRA R1,1   Shift right min 8A-RS'
+         TESTI  'SRDA R2,63 Shift right     8E-RS'
+         TESTI  'SRDL R2,63 Shift right     8C-RS'
+         TESTI  'SRL R2,1   Shift right min 88-RS'
+         TESTI  'SRL R2,31  Shift right max 88-RS'
+         TESTI  'SRP DEC3,DEC4,2 Shift Roun F0-SS'
+         TESTI  'ST R1,DATA Store           50-RX'
+         TESTI  'STC R1,DATA Store Characte 42-RX'
+         TESTI  'STD R2,DATA Store Long     60-RX'
+         TESTI  'STE R2,DATA Store Short    70-RX'
+         TESTI  'STCM R1,1,DATA Store Char  BE-RS'
+         TESTI  'STCM R1,8,DATA'                                        06120000
+         TESTI  'STCM R1,15,DATA'                                       06100000
+         TESTI  'STH R1,DATA    Store Half  40-RX'
+         TESTI  'STM 1,14,DATA  Store Multi 90-RS'
+         TESTI  'SU F0,F1   Subtract        7F-RX'
+         TESTI  'SUR F0,F4  Subtract        3F-RR'
+         TESTI  'SW F0,F1   Subtract        6F-RX'
+         TESTI  'SWR F0,F4  Subtract        2F-RR'
+         TESTI  'SXR F0,F4  Subtract        37-RR'
+         TESTI  'TM DATA,BIT0 Test Mask     91-SI'
+         TESTI  'TR DATA(8),DATAB Translate DC-SS'
+         TESTI  'TRT DATA(8),DATAB Translat DD-SS'
+         TESTI  'UNPK F1,DATA(8) Unpack     F3-SS'
+         TESTI  'X R1,DATA    Exclusive Or  57-RX'
+         TESTI  'XC DATA(4),DATA Exclusive  D7-SS'
+         TESTI  'XC DATA(4),DATAB'                                      06240000
+         TESTI  'XI DATA,BIT7 Exclusive Or  97-SI'
+         TESTI  'XR R1,R2   Exclusive Or    17-RR'
+         TESTI  'ZAP DEC2,DEC3 Zero add dec F8-SS'
+         TESTI  END
+*                                                                       08460000
+R0       EQU    0                                                       08470000
+R1       EQU    1                                                       08480000
+R2       EQU    2                                                       08490000
+R3       EQU    3                                                       08500000
+R4       EQU    4                                                       08510000
+R5       EQU    5                                                       08520000
+R6       EQU    6                                                       08530000
+R7       EQU    7                                                       08540000
+R8       EQU    8                                                       08550000
+R9       EQU    9                                                       08560000
+R10      EQU    10                                                      08570000
+R11      EQU    11                                                      08580000
+R12      EQU    12                                                      08590000
+R13      EQU    13                                                      08600000
+R14      EQU    14                                                      08610000
+R15      EQU    15                                                      08620000
+F0       EQU    0                                                       08630000
+F4       EQU    4                                                       08640000
+*                                                                       08650000
+         END                                                            08660000

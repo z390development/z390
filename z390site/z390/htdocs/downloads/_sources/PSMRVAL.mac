@@ -1,0 +1,25 @@
+.* COPYRIGHT (C) 1988, PAUL A. SCOTT, ALL RIGHTS RESERVED               00010000
+.*                                                                      00020000
+         MACRO                                                          00030000
+         PSMRVAL                                                        00040000
+.*                                                                      00050000
+         COPY  PSMGBL02                                                 00060000
+         LCLC  &C                                                       00070000
+.*                                                                      00080000
+&C       SETC  '&SYSLIST(1,1)'                                          00090000
+         AIF   ('&C'(1,1) NE 'R').A010                                  00100000
+&C       SETC  '&C'(2,K'&C-1)                                           00110000
+.*                                                                      00120000
+.A010    ANOP                                                           00130000
+         PSMASYM &C                                                     00140000
+.*                                                                      00150000
+&PSMRVAL SETA  &PSMASYM                                                 00160000
+.*                                                                      00170000
+         AIF   (&PSMRVAL GT 15).MSG1                                    00180000
+         MEXIT                                                          00190000
+.*                                                                      00200000
+.*  ERROR PROCESSING                                                    00210000
+.*                                                                      00220000
+.MSG1    MNOTE 8,'OOPS, ONLY 15 REGISTERS ON THIS MACHINE'              00230000
+         MNOTE 8,'PARM 1 CAN BE 0-15 (R1-R15)'                          00240000
+         MEND                                                           00250000

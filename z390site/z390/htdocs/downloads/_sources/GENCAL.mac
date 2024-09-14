@@ -1,0 +1,11 @@
+PROC 0 YEAR()                                                           00010000
+/*                                                                      00020000
+/* GENERATE CALENDAR FOR CURRENT (OR SPECIFIED) YEAR                    00030000
+/* AUTHOR: P. SCOTT                                                     00040000
+/*                                                                      00050000
+CONTROL NOMSG NOLIST NOFLUSH                                            00060000
+ALLOC F(SYSOUT) UNIT(SYSDA) TRACKS SPACE(1) DELETE REUSE                00070000
+CALL 'SBGOLOB.PSM.RUNLIB(PSU004)' '&YEAR'                               00080000
+ISPEXEC  LMINIT DATAID(SYSOUT) DDNAME(SYSOUT) ENQ(SHR)                  00090000
+ISPEXEC  EDIT   DATAID(&SYSOUT)                                         00100000
+FREE F(SYSOUT)                                                          00110000

@@ -1,0 +1,70 @@
+         MACRO                                                          00010000
+         PSMGDS &PREFIX=GDS                                             00020000
+         LCLC   &P                                                      00030000
+&P       SETC   '&PREFIX'                                               00040000
+.*****************************************************************      00050000
+.*       PSEUDO-STACK MACHINE GLOBAL DATA STRUCTURE              *      00060000
+.*---------------------------------------------------------------*      00070000
+.* NAME:            GDS                                          *      00080000
+.* POINTED TO BY:   LABEL PSMGDS IN PSMSVA (SAVE AREA +72)       *      00090000
+.* DESCRIPTION:     THE GDS IS GENERATED DURING PENTER PROCESSING*      00100000
+.*                  IF  TYPE HAS BEEN CODED AS MAIN.  IN THEORY  *      00110000
+.*                  THE GDS IS AN ADDRESS SPACE LEVEL CONTROL    *      00120000
+.*                  BLOCK WHILE THE LDS IS AT THE TASK LEVEL.    *      00130000
+.*                  INFORMATION IN THE GDS IS LIMITED TO THAT    *      00140000
+.*                  WHICH COULD BE CONSIDERED APPLICABLE OR      *      00150000
+.*                  COMMON TO ALL TASKS WITHIN THE ADDRESS SPACE *      00160000
+.*                                                               *      00170000
+.*                MAIN TASK                                      *      00180000
+.*                 ________                   SUB TASK           *      00190000
+.*                | GDS    |<-----.  <--------------------.      *      00200000
+.*                |--------|      |           ________    |      *      00210000
+.*                | LDS    |<----.|          | LDS    |   |      *      00220000
+.*                |--------|     ||          |--------|   |      *      00230000
+.*                | PSMSVA |=====-'          | PSMSVA |---'      *      00240000
+.*                |--------|                 |--------|          *      00250000
+.*                | STACK  |                 | STACK  |          *      00260000
+.*                |________|                 |________|          *      00270000
+.*                                                               *      00280000
+.*                                                               *      00290000
+.*****************************************************************      00300000
+GDS      DSECT ,                                                        00310000
+*                                                                       00320000
+&P.ID    DS    CL8'PSMGDS'         EYE CATCHER                          00330000
+*                                                                       00340000
+&P.IN    DS    A(0)                STANDARD INPUT WORK AREA             00350000
+&P.OUT   DS    A(0)                STANDARD OUTPUT WORK AREA            00360000
+&P.ERROR DS    A(0)                STANDARD ERROR WORK AREA             00370000
+&P.PRINT DS    A(0)                STANDARD PRINT WORK AREA             00380000
+*                                                                       00390000
+&P.ARGC  DS    F'0'                ARGUMENT COUNT                       00400000
+&P.ARGV  DS    A(0)                PTR TO LIST OF ARGUMENT PTRS         00410000
+&P.ENVPT DS    A(0)                PTR TO ENVIRONMENT STRINGS           00420000
+*                                                                       00430000
+&P.HEAPF DS    A(0)                PTR TO FIRST HEAP BLOCK (PSMHEAP)    00440000
+&P.HEAPL DS    A(0)                PTR TO LAST  HEAP BLOCK              00450000
+&P.HLOCK DS    A(0)                HEAP LOCK (SERIALIZATION WITH CS)    00460000
+*                                                                       00470000
+&P.ENVSW DS    X                   ENVIRONMENT SWITCH                   00480000
+&P.ESXA  DS    X'01'               .... ...1   MVS/XA (SP VERSION 2)    00490000
+&P.ESJ2  DS    X'02'               .... ..1.   JES2                     00500000
+&P.ESJ3  DS    X'04'               .... .1..   JES3                     00510000
+&P.ESTSO DS    X'08'               .... 1...   TSO                      00520000
+&P.ESSPF DS    X'10'               ...1 ....   TSO/ISPF                 00530000
+&P.ESJOB DS    X'20'               ..1. ....   JOB                      00540000
+&P.ESSTC DS    X'40'               .1.. ....   STARTED TASK             00550000
+&P.NAME  DS    CL8                 ADDRESS SPACE NAME                   00560000
+&P.JOBID DS    CL8                 ADDRESS SPACE JOBID                  00570000
+&P.SSNAM DS    CL4                 SUBSYSTEM NAME                       00580000
+&P.SPVER DS    CL8                 MVS/SP VERSION (CVTPRODN)            00590000
+*                                                                       00600000
+*  PSM LOCKS ARE SERIALIZED USING COMPARE AND SWAP.  THE VALUE          00610000
+*  SWAPPED IN X'FFFFFFFF' IF THE LOCK IS HELD AND ZERO IF IT IS         00620000
+*  NOT.  ALL LOCKS MUST PROVIDE 2 WORDS.                                00630000
+*                                                                       00640000
+&P.LOCKS DS    CL8'LOCKS>'         START OF PSM LOCKS SECTION           00650000
+&P.HPLOC DS    F                   HEAP LOCK                            00660000
+&P.HPECB DS    F                   HEAP LOCK ECB IF QUEUED              00670000
+*                                                                       00680000
+&P.LENG  EQU   *-PSMGDS            LENGTH OF GLOBAL DATA AREA           00690000
+         MEND                                                           00700000

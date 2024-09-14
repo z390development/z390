@@ -1,0 +1,186 @@
+**********************************************************************  11800000
+**********************************************************************  11810000
+********* MVS TEST PROGRAM FOR THE 'STRING' MACRO ********************  11820017
+**********************************************************************  11830000
+**********************************************************************  11840000
+**       STRING (GENERATE,AR_MODE)                                      11850007
+**       END                                                            11860007
+         LCLA  &ASMH_HLASM                                              11870007
+         AIF   (T'&ASMH_HLASM EQ 'N').ASMH1X                            11880007
+&SYSVER  SETC  'ASMH'                                                   11890007
+&SYSDATC SETC  '20'.'&SYSDATE'(7,2)'&SYSDATE'(1,2)'&SYSDATE'(4,2)       11900007
+.ASMH1X  ANOP                                                           11910007
+TESTPGM  START X'027000'                                                11920002
+TESTPGM  AMODE 24                      (PRE-SMS PUT)                    11930008
+         BALR  R12,0                                                    11940000
+         USING *,R12                                                    11950000
+         OPEN  (SYSPRINT,OUTPUT)                                        12020000
+         STRING 'Assembler is MZ390 &SYSVER, DATE is &SYSDATC',INTO=XXX 12030007
+         PUT   SYSPRINT,XXX                                             12040007
+         STRING 'AMPERSAND=&& AND APOSTROPHE='' ',INTO=XXX              12050014
+         PUT   SYSPRINT,XXX                                             12060014
+RBPREFIX EQU   *                                                        12070002
+RBINTCOD EQU   *+6,2,C'H'                                               12080002
+         L     R1,PSATOLD-PSA(0,0)     TCB                              12090008
+         L     R1,0(,R1)               TCBRBP                           12100002
+         L     R2,PSAAOLD-PSA(0,0)     ASCB                             12110014
+R2ASCB   USING ASCB,R2                                                  12120014
+         L     R8,=X'88888888'                                          12130017
+         STRING 'SVC',(RBINTCOD-RBPREFIX(R1),H,R3Z),                   X12140002
+               1X,(WWWW,,T),' - ',     VV.MM OF SVC RTNE               X12150002
+               ((R8),,X),1X,           COM-REG ADDR                    X12160002
+               'ASID=',(R2ASCB.ASCBASID,,X),1X,                        X12170014
+               PARM1,1X,               MAIN PGM NAME                   X12180002
+               INTO=XXX                                                 12190002
+         PUT   SYSPRINT,XXX                                             12200002
+*                                                                       12210002
+         LA    R2,XXX                                                   12220002
+         STRING 1X,INTO=((R2),8)                                        12230002
+         MACRO                                       JDATE MACRO        12240000
+        @JDATE &DATE                                 JDATE MACRO        12250000
+         LA    R1,=P'&DATE'                          JDATE MACRO        12260000
+*** STRING ((R1),P),2X,((R1),P),INTO=XXX                                12270000
+         STRING ((R1),P,R5Z),                        JDATE MACRO       X12280000
+               2X,((R1),P,YYMMDD),                   JDATE MACRO       X12290000
+               2X,((R1),P,YY/MM/DD),                 JDATE MACRO       X12300000
+               2X,((R1),P,DD/MM/YY),                 JDATE MACRO       X12310000
+               2X,((R1),P,MM/DD/YY),                 JDATE MACRO       X12320000
+               2X,((R1),P,YYYYMMDD),                 JDATE MACRO       X12330000
+               2X,((R1),P,YYYY-MM-DD),               JDATE MACRO       X12340000
+               INTO=XXX                              JDATE MACRO        12350000
+         PUT   SYSPRINT,XXX                          JDATE MACRO        12360000
+         MEND                                        JDATE MACRO        12370000
+        @JDATE 90058                                                    12380000
+        @JDATE 91059                                                    12390000
+        @JDATE 93060                                                    12400000
+        @JDATE 94365                                                    12410000
+        @JDATE 80058                                                    12420000
+        @JDATE 84059                                                    12430000
+        @JDATE 88060                                                    12440000
+        @JDATE 92061                                                    12450000
+        @JDATE 00366                                                    12460000
+         LA    R2,1234                                                  12470000
+         STRING 'CVTPTR=X''',(CVTPTR,4,X),'''',INTO=XXX,               X12480000
+               ' 1234=',((R2),,R4Z)                                     12490000
+         PUT   SYSPRINT,XXX                                             12500000
+         L     R1,CVTPTR(0,0)                                           12510008
+         STRING 'CVTDATE=',(56(R1),P,YYMMDD),INTO=XXX                   12520000
+         PUT   SYSPRINT,XXX                                             12530000
+         LA    R0,1000                                                  12540000
+         LA    R3,0033                                                  12550000
+         STRING 'D1=/',D1,'/,WWWW=/',WWWW,'/',                         X12560000
+               ((R3),,L),'/',((R3),,X),'/',((R0),,L),'/',              X12570000
+               ((R3),,R9B),'/',INTO=XXX                                 12580000
+         LR    R4,R15                   LENGTH USED                     12590000
+         PUT   SYSPRINT,XXX                                             12600000
+         STRING WWWW,                                                  X12610000
+               (4(R13),4,X),'''',(4(R13),F),'''',                      X12620000
+               (4(R13),F,L),'''',                                      X12630000
+               (4(R13),F,L11),'''',                                    X12640000
+               (4(R13),F,Z9),'''',                                     X12650000
+               8X,'R4=',((R4),,L),      LENGTH USED                    X12660000
+               INTO=XXX                                                 12670000
+         PUT   SYSPRINT,XXX                                             12680000
+         STRING %TIME,D1,'B12345678B',5X,(CTR1,P),1X,PARM1,1X,PARM2,   X12690000
+               INTO=XXX                                                 12700000
+         PUT   SYSPRINT,XXX                                             12710000
+         STRING (%TIME,5),'|',(%TIME,8),'|',(%TIME,11),'|',(%TIME,12), X12720018
+               '|',INTO=XXX                                             12730018
+         PUT   SYSPRINT,XXX                                             12740018
+         LA    R3,17                                                    12750000
+         STRING INTO=XXX,'CCC1234A',(D1,(R3)),'.',(CTR1,P,R7Z)          12760000
+         PUT   SYSPRINT,XXX                                             12770000
+         STRING C'DDN2(',(D1,,T),')',X'40C1C2,C3C4',                   +12780009
+               ' PSATOLD=',(PSATOLD-PSA,,X),                           +12790000
+               INTO=XXX                                                 12800000
+         PUT   SYSPRINT,XXX                                             12810000
+         AIF   ('&SYSVER' EQ 'ASMH').HLASM99                            12820007
+PSABASE  USING PSA,R0                                                   12830000
+         STRING 'PSATOLD=',(PSABASE.PSATOLD,,X),                       +12840000
+               ' PSATOLD=',(PSATOLD-PSA,,X),                           +12850000
+               INTO=XXX                                                 12860000
+         PUT   SYSPRINT,XXX                                             12870000
+.HLASM99 ANOP                                                           12880000
+         BALR  R0,0                                                     12890000
+         STRING 'R0=',((R0),,X),'   16(R0)=',(16(R0),4,X),INTO=XXX      12900000
+         PUT   SYSPRINT,XXX                                             12910000
+         STRING 'R0=',((R0),,X),'   CTR1=',(CTR1,P,R5B),INTO=XXX        12920012
+         PUT   SYSPRINT,XXX                                             12930012
+         SLR   R0,R0                                                    12940012
+         STRING 'R0=',((R0),,X),'   CTR2=',(CTR2,P,L),'.',INTO=XXX      12950015
+         PUT   SYSPRINT,XXX                                             12960012
+*                                                                       12970016
+         CALL  TCSECT2              <- 2nd CSECT                        12980016
+*                                                                       12990016
+         CALL  TCSECT3              <- 3rd CSECT                        13000016
+*                                                                       13010002
+AMODE31  LA    R12,0(,R12)             BALR->BASR                       13020002
+         L     R15,=A(*+X'80000006')   AMODE=31                         13030002
+         BSM   0,R15                   AMODE=31                         13040002
+         L     R1,=A(@STRING)          point at CSECT                   13050007
+         CLC   =C'/390',11(R1)         (GENERATE,AR_MODE) ?             13060007
+*                                                                       13240002
+EXIT     SLR   R15,R15                                                  13250007
+         SVC   3                       GOBACK                           13260002
+*                                                                       13270016
+*        2ND CSECT                                                      13280018
+*                                                                       13290018
+TCSECT2  CSECT                                                          13300016
+         BAKR  R14,0                                                    13310016
+         LR    R10,R15                                                  13320016
+         USING TCSECT2,R10                                              13330016
+         STRING '----> TCSECT2 STRING <----  R516',INTO=XXX             13340016
+         PUT   SYSPRINT,XXX                                             13350016
+         L     R1,CVTPTR(0,0)                                           13360016
+         STRING 'CVTDATE=',(56(R1),4,X),',R8=',((R8),,L),INTO=XXX       13370016
+         PUT   SYSPRINT,XXX                                             13380016
+         PR                                                             13390016
+         DROP                                                           13400017
+*                                                                       13410016
+*        3RD CSECT with NO name                                         13420018
+*                                                                       13430018
+         CSECT                           no-name                        13440016
+         ENTRY TCSECT3                                                  13450016
+TCSECT3  BAKR  R14,0                                                    13460016
+         LR    R12,R15                                                  13470017
+         USING TCSECT3,R12                                              13480017
+         L     R10,PRT3ADDR                                             13490017
+         USING SYSPRINT,R10                                             13500017
+         STRING '----> TCSECT3 STRING <----  R517',INTO=XXX             13510017
+         PUT   SYSPRINT,XXX                                             13520017
+         L     R1,CVTPTR(0,0)                                           13530016
+         STRING 'CVTDATE=',(56(R1),4,X),',R9=',((R9),,L),INTO=XXX       13540017
+         PUT   SYSPRINT,XXX                                             13550017
+         PR                                                             13560016
+         DS    0F                                                       13570017
+PRT3ADDR DC    A(SYSPRINT)                                              13580017
+*                                                                       13590016
+TESTPGM  CSECT                                                          13600016
+D1       DC    C'D1-----D1    '                                         13610000
+WWWW     DC    C'WWWW'                                                  13620000
+CTR1     DC    P'1'                                                     13630000
+CTR2     DC    P'-33'                                                   13640015
+PARM1    DC    C'<-PARM1->'                                             13650000
+PARM2    DC    C'<-PARM2->'                                             13660000
+DSPCSTKN DS    XL8                  0  AS TOKEN                         13670002
+DSPCALET DS    F                    8  ALET                             13680002
+DSPCORG  DS    F                   12  ORIGIN                           13690002
+HDRBLKS  DC    F'100'                                                   13700002
+CVTPTR   EQU   0016,4,C'A'                                              13710000
+SYSPRINT DCB   DSORG=PS,DDNAME=SYSPRINT,MACRF=PM,RECFM=FT,LRECL=121     13720000
+XXX      DS    CL121                                                    13730017
+*                                                                       13740016
+XYZ      DSECT                                                          13750000
+         STRING GENERATE                                                13760007
+**       STRING (GENERATE,NO_CSECT) -\                                  13770007
+**       STRING (GENERATE,AR_MODE)  -/                                  13780007
+**       STRING (GENERATE,,LOCTR)                                       13790007
+**       STRING (GENERATE,AR_MODE,LOCTR)                                13800007
+**       STRING (GENERATE,NO_CSECT,LOCTR)    invalid combination        13810007
+         YREGS                                                          13820000
+PSA      DSECT                                                          13830000
+PSATOLD  EQU   *+X'21C',4,C'A'                                          13840000
+PSAAOLD  EQU   *+X'224',4,C'A'                                          13850014
+ASCB     DSECT                                                          13860014
+ASCBASID EQU   *+36,2,C'X'                                              13870014
+         END                                                            13880000

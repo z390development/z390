@@ -1,0 +1,57 @@
+.* COPYRIGHT (C) 1988, PAUL A. SCOTT, ALL RIGHTS RESERVED               00010000
+.*                                                                      00020000
+         MACRO                                                          00030000
+&NAME    POPREG                                                         00040000
+.*                                                                      00050000
+         COPY  PSMGBL01                                                 00060000
+         COPY  PSMGBL02                                                 00070000
+         LCLA  &I,&J,&K,&N                                              00080000
+.*                                                                      00090000
+         AIF   (T'&NAME EQ 'O').A000                                    00100000
+&NAME    DS    0H                                                       00110000
+.A000    ANOP                                                           00120000
+.*                                                                      00130000
+&N       SETA  N'&SYSLIST                                               00140000
+         AIF   (&N GT 0).A010                                           00150000
+         MEXIT                                                          00160000
+.*                                                                      00170000
+.* COMPUTE AMOUNT OF STACK SPACE TO RELEASE                             00180000
+.*                                                                      00190000
+.A010    ANOP                                                           00200000
+&I       SETA  1                                                        00210000
+&K       SETA  0                                                        00220000
+.A020    ANOP                                                           00230000
+         PSMROP &SYSLIST(&I)                                            00240000
+&I       SETA  &I+1                                                     00250000
+&K       SETA  &K+&PSMROPC                                              00260000
+         AIF   (&I LE &N).A020                                          00270000
+.*                                                                      00280000
+.* RELEASE STACK SPACE                                                  00290000
+.*                                                                      00300000
+.B010    ANOP                                                           00310000
+         PSMRVAL &SYSLIST(1,1)                                          00320000
+&PSMROP1 SETA  &PSMRVAL                                                 00330000
+         LA    &PSMROP1,4*&K                                            00340000
+         SR    &SP,&PSMROP1                                             00350000
+.*                                                                      00360000
+.* POP REGISTERS FROM STACK                                             00370000
+.*                                                                      00380000
+.C010    ANOP                                                           00390000
+&I       SETA  &N                                                       00400000
+&J       SETA  4*&K                                                     00410000
+.C020    ANOP                                                           00420000
+         PSMROP &SYSLIST(&I)                                            00430000
+         AIF   (&PSMROPC GT 1).C030                                     00440000
+&J       SETA  &J-4                                                     00450000
+         L     &PSMROP1,&J.(,&SP)                                       00460000
+         AGO   .C060                                                    00470000
+.*                                                                      00480000
+.C030    ANOP                                                           00490000
+&J       SETA  &J-(4*&PSMROPC)                                          00500000
+         LM    &PSMROP1,&PSMROP2,&J.(&SP)                               00510000
+.*                                                                      00520000
+.C060    ANOP                                                           00530000
+&I       SETA  &I-1                                                     00540000
+         AIF   (&I GE 1).C020                                           00550000
+.*                                                                      00560000
+         MEND                                                           00570000

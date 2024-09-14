@@ -1,0 +1,1402 @@
+*/GILBERTS JOB (ACCT#),STRING-MACRO,                                    00010017
+*/ NOTIFY=&SYSUID,                                                      00020017
+*/ CLASS=A,MSGCLASS=H,COND=(0,NE)                                       00030018
+*/HLASM EXEC PGM=ASMA90,PARM=(OBJECT,NODECK,NOESD,NORLD,NOXREF,         00040017
+*/*FLAG(PAGE0),NORXREF,NODXREF,                   HLASM R3              00050017
+*/ NOBATCH)                                                             00060017
+*********************************************************************** 00070000
+*                                                                     * 00080000
+*            COPYRIGHT (C) 1989-2010 GILBERT SAINT-FLOUR              * 00090018
+*                       ALL RIGHTS RESERVED                           * 00100000
+*                                                                     * 00110000
+* MACRO NAME = STRING                                                 * 00120000
+*                                                                     * 00130000
+* DESCRIPTIVE NAME = STRING Macro Instruction.                        * 00140007
+*                                                                     * 00150000
+* FUNCTION = Provide capabilities similar to PUT EDIT (of PL/I)       * 00160007
+*            or STRING (of COBOL) to assembler programs.              * 00170007
+*                                                                     * 00180000
+* STATUS = R518                                                       * 00190018
+*                                                                     * 00200000
+* AUTHOR = Gilbert Saint-Flour <carlos@gsf-soft.com>                  * 00210006
+*          http://gsf-soft.com/Freeware/STRING.shtml                  * 00220014
+*                                                                     * 00230000
+* ENVIRONMENT = SEE BELOW                                             * 00240000
+*                                                                     * 00250000
+*     AMODE = ANY                                                     * 00260000
+*     RMODE = ANY                                                     * 00270014
+*     SCP   = OS/360, OS/VS, MVS/370, MVS/XA, MVS/ESA, OS/390 or z/OS * 00280010
+*     KEY   = ANY                                                     * 00290000
+*     MODE  = ANY                                                     * 00300000
+*     APF   = ANY                                                     * 00310014
+*                                                                     * 00320000
+* Processor = Assembler H, High-Level Assembler                       * 00330014
+*                                                                     * 00340000
+* OPERATION = SEE DOCUMENTATION AT THE END OF THIS FILE               * 00350000
+*                                                                     * 00360000
+* INVOCATION = SEE DOCUMENTATION AT THE END OF THIS FILE              * 00370000
+*                                                                     * 00380000
+* NOTES = SEE DOCUMENTATION AT THE END OF THIS FILE                   * 00390000
+*                                                                     * 00400000
+* CHANGE ACTIVITY                                                     * 00410000
+*                                                                     * 00420000
+*200 Build STRING macro based on $PUNCH,$FIELD,@PRTPUN            1989* 00430000
+*300 @STRING always runs with AMODE31                             1992* 00440000
+*    Make slight modifications to the SCON2A routine                  * 00450000
+*    Length used in output field returned in R15                      * 00460000
+*    @JDATE routine integrated into @STRING CSECT                     * 00470000
+*301 FIX BUGS WITH (XYZ,,L8) AND INTO=((R1),(R2))                 1993* 00480000
+*302 GENERATE $DEBUG BOOT-STRAP IN FINAL_CALL INVOCATION              * 00490000
+*303 REPLACE @STRPAD WITH @STRBLANKS                              1994* 00500000
+*304 USE @00-@15 INSTEAD OF R0-R15 FOR REGISTER EQUATES               * 00510000
+*306 TAILOR @STRING CSECT TO PROGRAM'S REQUIREMENTS                   * 00520000
+*    LITERALS CAN BE CODED AS 'ABC' OR C'ABC' OR X'C1C2C3'            * 00530000
+*    USE L'PSATOLD AS IMPLICIT LENGTH FOR (PSATOLD-PSA,,X)            * 00540000
+*307 "FINAL_CALL" OPTION CHANGED TO "GENERATE"                        * 00550000
+*    ADD NOCSECT AND LOCTR OPTIONS TO "GENERATE" CALL                 * 00560000
+*308 USE L'RBCDE AS IMPLICIT LENGTH FOR (PRB.RBCDE,,X)                * 00570000
+*    PREVENT S0C4 WHEN ADDR IS BAD AND LENGTH IS ZERO                 * 00580000
+*400 Reorg the code to simplify feature selection                 1995* 00590000
+*    BLANKS no longer used or generated                               * 00600000
+*401 Generate @STRHEXT when ((REG),,X) only hex field                 * 00610001
+*502 @STRING Routine rewritten for MVS/ESA:                       1996* 00620002
+*    . Use linkage stack to store caller's registers                  * 00630002
+*    . Add support for AR Mode                                        * 00640002
+*    . @STRING now executes in caller's AMODE                         * 00650002
+*    . Rename previous version to STRINGXA                            * 00660002
+*503 Date Conversion to YYYY-MM-DD Format (ISO Standard)              * 00670003
+*    Improve Support for AR mode                                      * 00680003
+*504 Set &STRBLANKS to 10 when processing dates                   1997* 00690004
+*505 Allow for 128K-offset                                        1998* 00700005
+*506 Remove literal from BAL instruction for HLASM R3             1999* 00710006
+*507 Merge STRINGXA code, add AR_MODE option                      2000* 00720007
+*    Change syntax of GENERATE call                                   * 00730007
+*508 Compatibility with FLAG(PAGE0) in HLASM R3                       * 00740008
+*    Compatibility with pre-XA version of the SAVE macro              * 00750008
+*    Remove AMODE-based R2 cleanup in 370 mode                        * 00760008
+*509 Hex string can contain commas, e.g. X'12,3456,7890'          2001* 00770009
+*    Length of parm-list entries can vary between 2 and 6 bytes       * 00780009
+*    Short literals (up to 5 bytes) are generated in parm list        * 00790009
+*510 JDATE=90366 produces 90/13/01 instead of S0C7                2002* 00800010
+*511 Prevent ACTR error with long literals                        2003* 00810011
+*512 Packed fields no longer ignored when R0=0                        * 00820012
+*513 Local base not needed for (GENERATE,,LOCTR)                  2004* 00830013
+*514 '&&'(1,1) at .LIT11C                                         2005* 00840014
+*515 Negative Value: -12345678 (Tim Alpaerts)                     2007* 00850015
+*516 STRING may be present in multiple CSECTs in same assembly    2009* 00860016
+*    One of the CSECTs that use STRING may have no name               * 00870016
+*517 Fix addressability error in CSECT23/CSECT28 reported by IBM/AU   * 00880017
+*518 %TIME hh:mm:ss.hh instead of hh:mm:ss:hh                     2010* 00890018
+*    (%TIME,5) or (%TIME,8) or (%TIME,11) or (%TIME,12)               * 00900018
+*    Fix bug near GENL2D reported by IBM/AU                           * 00910018
+* Juergen Winkelmann   Circumvention of not PoP compliant      @JW-Z390 00913019
+* 2014/10/05           MVZ instruction emulation in z390       @JW-Z390 00917019
+*                                                                     * 00920000
+*********************************************************************** 00930000
+         MACRO                                                          00940000
+&NAME    STRING &INTO=,&PRINT=NOGEN,&STRING_MACRO_VERSION=518           00950017
+         AIF   ('&PRINT' EQ 'NOGEN').NOGEN                              00960000
+         PUSH  PRINT                                                    00970000
+         PRINT GEN                                                      00980000
+.NOGEN   GBLA  &$_LIT                                                   00990000
+         GBLA  &$_CSECT_NO             Number of CSECTs                 01000016
+         GBLB  &$_FEAT(16)             FEATURES                         01010000
+.*                                       1 LITERALS                     01020000
+.*                                       2 REGISTER (BIN)               01030000
+.*                                       3 REGISTER (HEX)               01040000
+.*                                       4 PACKED                       01050000
+.*                                       5 JDATE                        01060000
+.*                                       6 BINARY                       01070000
+.*                                       7 HEX                          01080000
+.*                                       8 NUMERIC                      01090000
+.*                                       9 LEFT JUST (NUMERIC)          01100000
+.*                                       10 LEADING ZEROES              01110000
+.*                                       11 TRUNCATE (CHAR STRING)      01120000
+.*                                       12 %TIME                       01130000
+         GBLC  &$_LITS(9999)           LITERALS                         01140000
+         GBLC  &$_CSECT(99)            CSECTs                           01150016
+         GBLC  &$_LITS_CSECT(9999)     CSECT OF LITERALS                01160016
+         LCLA  &I,&J,&L,&N,&FLAG,&LEN2,&STRBLANKS                       01170014
+         LCLB  &LAST,&BIN,&HEX,&REG,&PACKED,&LEFT,&ZERO,&TRUNC,&NUMERIC 01180014
+         LCLC  &LABEL,&LQ,&STR,&TO1,&TO2,&P1S,&P2C,&P2L,&P3C,&P3L       01190014
+         LCLC  &LIT,&ALLFEAT,&OPT2,&OPT3                                01200014
+         LCLC  &LOCTR1,&SYSECT2                                         01210016
+.* MNOTE *,'CSECT_NO=&$_CSECT_NO CSECT1=&$_CSECT(1) CSECT2=&$_CSECT(2) X01220016
+               CSECT3=&$_CSECT(3) .'                                    01230016
+         AIF   (T'&INTO EQ 'O' AND N'&SYSLIST EQ 1                     X01240007
+               AND '&SYSLIST(1,1)' EQ 'GENERATE').GENL                  01250007
+&LABEL   SETC  'IHB&SYSNDX'            STEM FOR LOCAL LABELS            01260000
+&LQ      SETC  'L'''                   LENGTH ATTRIBUTE                 01270000
+&STR     SETC  '  R&STRING_MACRO_VERSION'                               01280003
+.*MNOTE ' &$_CSECT_NO &$_CSECT(&$_CSECT_NO) .'                          01290016
+&SYSECT2 SETC  '&SYSECT'                                                01300016
+         AIF   ('&SYSECT' NE '').CSECT21                                01310016
+&SYSECT2 SETC  'NO_NAME'                                                01320016
+.CSECT21 ANOP                                                           01330016
+         AIF   (&$_CSECT_NO GT 0).CSECT22                               01340016
+&$_CSECT_NO SETA 1                                                      01350016
+&$_CSECT(1) SETC '&SYSECT2'                                             01360016
+.CSECT22 ANOP                                                           01370016
+&I       SETA  1                                                        01380016
+.*loop                                                                  01390016
+.CSECT23 ANOP                                                           01400016
+         AIF   ('&$_CSECT(&I)' EQ '&SYSECT2').CSECT27                   01410017
+&I       SETA  1+&I                                                     01420016
+         AIF   (&I LE &$_CSECT_NO).CSECT23                              01430016
+.*endloop                                                               01440016
+&$_CSECT_NO SETA &I                                                     01450016
+&$_CSECT(&I) SETC '&SYSECT2'                                            01460016
+.*MNOTE ' &$_CSECT_NO &$_CSECT(&I) .'                                   01470016
+.CSECT27 ANOP                                         <=== New line     01480017
+         AIF   (&I EQ 1).CSECT28                      <=== New line     01490017
+.**      AIF   ('&SYSECT' EQ '&$_CSECT(&I)').CSECT28                    01500016
+&STR     SETC  '_'.'&SYSECT2'          $STRING_CSECT2                   01510016
+.CSECT28 ANOP                                                           01520016
+&NAME    BAS   R14,$STRING&STR         CALL @STRING SUB-ROUTINE         01530000
+         AIF   (N'&SYSLIST EQ 0).ERR1  NO POSITIONAL OPERANDS, ERROR    01540000
+         AIF   (T'&INTO EQ 'O').ERR2   NO RECEIVING FIELD, ERROR        01550000
+         AIF   (N'&INTO GT 2).ERR2     INTO=(A,32,BLURB)                01560000
+         DC    AL2((&LABEL.P-*)/2)     OFFSET TO FIELD DESCRIPTORS      01570005
+&LOCTR1  SETC  '&SYSLOC'                                                01580016
+         AIF   ('&SYSLOC' NE '').LOCTR1X                                01590016
+&LOCTR1  SETC  'LOCTR_'.'NO_NAME'                                       01600016
+&LOCTR1  LOCTR                         IN-LINE CODE IN FIRST CSECT      01610016
+.*MNOTE 1,'LOCTR1=&LOCTR1'                                              01620016
+.LOCTR1X ANOP                                                           01630016
+         AIF   (D'$LITERAL).LOCTR2     NOT FIRST TIME, JUMP             01640016
+$LTORG   LOCTR                         ADDRESSABLE CONSTANTS            01650000
+$FARRTNE LOCTR                         FAR ROUTINES                     01660000
+.LOCTR2  AIF   ('&SYSECT2' NE '&$_CSECT(1)').LOCTR3                     01670016
+$LITERAL LOCTR                         NON-ADDRESSABLE CONSTANTS        01680000
+.LOCTR3  AIF   ('&SYSECT2' EQ '&$_CSECT(1)').LOCTR5                     01690016
+&STR     SETC  '$LTORG_&$_CSECT(&I)'                                    01700016
+         AIF   (D'&STR).LOCTR4         NOT FIRST TIME, JUMP             01710016
+&STR     LOCTR                         ADDRESSABLE CONSTANTS            01720016
+&STR     SETC  '$FARRTNE_&$_CSECT(&I)'                                  01730016
+&STR     LOCTR                         FAR ROUTINES                     01740016
+.LOCTR4  ANOP                                                           01750016
+&STR     SETC  '$LITERAL_&$_CSECT(&I)'                                  01760016
+&STR     LOCTR                         NON-ADDRESSABLE CONSTANTS        01770016
+.LOCTR5  ANOP                                                           01780016
+.*once   DS    0H                                                       01790016
+&TO1     SETC  '&INTO(1)'                                               01800000
+&TO2     SETC  '&LQ&INTO'                                               01810000
+         AIF   (N'&INTO EQ 1).PUNTO8            JUMP IF INTO=XXX        01820000
+         AIF   ('&INTO(1)'(1,1) NE '(').PUNTO3  JUMP IF INTO=(XXX,44)   01830000
+&TO1     SETC  '0&INTO(1)'                              INTO=((R3),44)  01840000
+.PUNTO3  ANOP                                                           01850000
+&TO2     SETC  '&INTO(2)'                               INTO=(XXX,LL)   01860000
+         AIF   ('&INTO(2)'(1,1) NE '(').PUNTO8  JUMP IF INTO=(XXX,44)   01870000
+&TO2     SETC  '0&INTO(2)'                              INTO=(XXX,(R1)) 01880000
+.PUNTO8  ANOP                                                           01890000
+&LABEL.P DC    S(&TO1,&TO2)                                             01900000
+.*--------------------------------------------------------------------* 01910002
+.*-------      FIELDS       ------------------------------------------* 01920002
+.*--------------------------------------------------------------------* 01930002
+&I       SETA  1                                                        01940000
+.*LOOP                                                                  01950000
+.LOOP1   ANOP                                                           01960000
+         ACTR  200                            SYSDEBUG/DIAG055          01970010
+         AIF   (N'&SYSLIST(&I) GT 3).FLD990   TOO MANY SUB-OPERANDS     01980003
+&LAST    SETB  (&I EQ N'&SYSLIST)                LOOP                   01990000
+         AIF   ('&SYSLIST(&I)'(1,1) EQ '''').LIT00                      02000000
+         AIF   ('&SYSLIST(&I)'(K'&SYSLIST(&I),1) EQ '''').LIT01         02010000
+.*--------------------------------------------------------------------* 02020000
+.*       PROCESS FIRST SUBPARAMETER (ADDRESS)                         * 02030000
+.*--------------------------------------------------------------------* 02040000
+&P1S     SETC  '&SYSLIST(&I,1)'                                         02050000
+&P2L     SETC  '0'                     INPUT LENGTH                     02060000
+&P3L     SETC  '0'                     OUTPUT LENGTH                    02070000
+         AIF   ('&SYSLIST(&I)'(1,1) GE '0').FLD180 SPACES               02080000
+         AIF   ('&SYSLIST(&I,1)' EQ '%TIME').FLD190 %TIME               02090018
+         AIF   ('&SYSLIST(&I,1)'(1,1) NE '(').FLD115 (R2)               02100000
+         AIF   (T'&SYSLIST(&I,2) EQ 'O').FLD250                         02110000
+&P1S     SETC  '0&SYSLIST(&I,1)'       CHANGE (R1) TO 0(R1)             02120000
+.FLD115  ANOP                                                           02130000
+.*                                                                      02140000
+         AIF   (T'&SYSLIST(&I,2) NE 'O').FLD200                         02150000
+.*                                                                      02160000
+.*       EXTRACT RBCDE FROM PRB.RBCDE (HLASM)                           02170000
+.*                                                                      02180000
+&L       SETA  1                                                        02190000
+.*--LOOP                                                                02200000
+.FLD131  AIF   ('&P1S'(&L,1) EQ '.').FLD133                             02210000
+&L       SETA  &L+1                                                     02220000
+         AIF   (&L LT K'&P1S).FLD131                                    02230000
+.*--ENDLOOP                                                             02240000
+&P2L     SETC  '&P1S'                    ABCDEF FROM ABCDEF             02250000
+         AGO   .FLD134                                                  02260000
+.FLD133  ANOP                                                           02270000
+&P2L     SETC  '&P1S'(&L+1,K'&P1S-&L)    RBCDE FROM PRB.RBCDE           02280000
+.FLD134  ANOP                                                           02290000
+.*                                                                      02300000
+         AIF   (NOT D'&P2L).FLD140                                      02310000
+&P2C     SETC  T'&P2L                                                   02320000
+.*MNOTE *,'&P1 &P2C'                                                    02330000
+         AIF   ('&P2C' EQ 'F' OR '&P2C' EQ 'H' OR '&P2C' EQ 'P').FLD220 02340000
+         AIF   ('&P2C' EQ 'G').FLD210  FL2                              02350000
+.FLD140  ANOP                                                           02360000
+.*                                                                      02370000
+.*       EXTRACT PSATOLD FROM PSATOLD-PSA                               02380000
+.*                                                                      02390000
+&L       SETA  1                                                        02400000
+.*--LOOP                                                                02410000
+.FLD141  AIF   ('&P2L'(&L,1) EQ '-').FLD143                             02420000
+         AIF   ('&P2L'(&L,1) EQ '+').FLD143                             02430000
+&L       SETA  &L+1                                                     02440000
+         AIF   (&L LT K'&P2L).FLD141                                    02450000
+.*--ENDLOOP                                                             02460000
+&P2L     SETC  '&LQ&P2L'               L'ABCDEF                         02470000
+         AGO   .FLD300                                                  02480000
+.FLD143  ANOP                                                           02490000
+&P2L     SETC  '&LQ'.'&P2L'(1,&L-1)    L'PSATOLD FROM PSATOLD-PSA       02500000
+         AGO   .FLD300                                                  02510000
+.*                                                                      02520000
+.FLD180  AIF   ('&SYSLIST(&I)'(K'&SYSLIST(&I),1) NE 'X').FLD800         02530000
+&P2L     SETC  '&SYSLIST(&I)'(1,K'&SYSLIST(&I)-1) 12                    02540000
+         AIF   (&LAST).FLD186                                           02550009
+         DC    X'60',AL1(&P2L)         BLANKS                           02560009
+         AGO   .LIT90                                                   02570009
+.FLD186  DC    X'E0',AL1(&P2L),0S(0)   BLANKS                           02580009
+         AGO   .LIT90                                                   02590009
+.*                                                                      02600000
+.FLD190  AIF   (N'&SYSLIST(&I) GT 2).FLD992                             02610018
+&P1S     SETC  '1(14)'                 %TIME                            02620000
+&$_FEAT(12) SETB 1                     %TIME                            02630000
+&P2L     SETC  '12'                    hh:mm:ss.hh                      02640018
+         AIF   (N'&SYSLIST(&I) EQ 1).FLD1905                            02650018
+         AIF   (T'&SYSLIST(&I,2) NE 'N').FLD1904                        02660018
+&P2L     SETC  '&SYSLIST(&I,2)'        5,8,11,12                        02670018
+&L       SETA  &SYSLIST(&I,2)                                           02680018
+         AIF   (&L EQ 5 OR &L EQ 8 OR &L EQ 11 OR &L EQ 12).FLD1905     02690018
+.FLD1904 MNOTE 8,'Second sub-parameter is invalid: &SYSLIST(&I)'        02700018
+.FLD1905 ANOP                                                           02710018
+.*MNOTE 1,'FLD1905 &SYSLIST(&I) &P1S &P2L '                             02720018
+         AGO   .FLD800                                                  02730000
+.*--------------------------------------------------------------------* 02740000
+.*       PROCESS SECOND SUBPARAMETER (LENGTH/TYPE)                    * 02750000
+.*--------------------------------------------------------------------* 02760000
+.FLD200  AIF   (T'&SYSLIST(&I,2) EQ 'O').FLD300 NO LENGTH SPECIFIED     02770000
+&P2C     SETC  '&SYSLIST(&I,2)'                                         02780000
+         AGO   .FLD220                                                  02790000
+.*T'&P1=G                                                               02800000
+.FLD210  ANOP                                                           02810000
+&L       SETA  L'&SYSLIST(&I)          T'&P1 = 'G'                      02820000
+&P2C     SETC  'FL&L'                  T'&P1 = 'G'                      02830000
+.*                                                                      02840000
+.FLD220  ANOP                                                           02850000
+&P2L     SETC  '0&P2C'                 (R2) LENGTH                      02860000
+         AIF   ('&P2C'(1,1) EQ '(').FLD300                              02870000
+&P2L     SETC  '&P2C'                  3(R2) LENGTH                     02880000
+         AIF   ('&P2C'(K'&P2C,1) EQ ')').FLD300                         02890000
+&P2L     SETC  '0'                                                      02900000
+&PACKED  SETB  ('&P2C' EQ 'P')                                          02910000
+         AIF   (&PACKED).FLD290                                         02920012
+&P2L     SETC  '1'                                                      02930000
+         AIF   ('&P2C' EQ 'FL1').FLD240                                 02940000
+&P2L     SETC  '3'                                                      02950000
+         AIF   ('&P2C' EQ 'FL2' OR '&P2C' EQ 'H').FLD240                02960000
+&P2L     SETC  '7'                                                      02970000
+         AIF   ('&P2C' EQ 'FL3').FLD240                                 02980000
+&P2L     SETC  '15'                                                     02990000
+         AIF   ('&P2C' EQ 'F').FLD240                                   03000000
+&P2L     SETC  '&P2C'                  IMMEDIATE LENGTH, FIELD          03010000
+         AGO   .FLD300                                                  03020000
+.*                                                                      03030000
+.FLD240  ANOP                          BINARY VARIABLE                  03040000
+&BIN     SETB  1                                                        03050000
+         AGO   .FLD300                                                  03060000
+.*                                                                      03070000
+.FLD250  ANOP                          REGISTER CONTENT                 03080000
+&REG     SETB  1                                                        03090000
+         AGO   .FLD300                                                  03100012
+.*                                                                      03110012
+.FLD290  ANOP                          PACKED                           03120012
+&P2L     SETC  '1'                                                      03130012
+.*--------------------------------------------------------------------* 03140000
+.*       PROCESS THIRD SUBPARAMETER (OUTPUT FORMAT)                   * 03150000
+.*--------------------------------------------------------------------* 03160000
+.FLD300  AIF   (T'&SYSLIST(&I,3) EQ 'O').FLD800                         03170000
+&HEX     SETB  ('&SYSLIST(&I,3)' EQ 'X') HEXADECIMAL                    03180000
+&TRUNC   SETB  ('&SYSLIST(&I,3)' EQ 'T') TRUNCATE                       03190000
+         AIF   (&HEX OR &TRUNC).FLD800                                  03200000
+.*                                                                      03210000
+&P3C     SETC  '&SYSLIST(&I,3)'                                         03220000
+&P3L     SETC  '248'                                                    03230003
+         AIF   ('&P3C' EQ 'YYYY-MM-DD' AND &PACKED).FLD308              03240003
+&P3L     SETC  '249'                                                    03250003
+         AIF   ('&P3C' EQ 'YYYYMMDD' AND &PACKED).FLD308                03260003
+&P3L     SETC  '250'                                                    03270000
+         AIF   ('&P3C' EQ 'YY/MM/DD' AND &PACKED).FLD308                03280000
+&P3L     SETC  '251'                                                    03290000
+         AIF   ('&P3C' EQ 'DD/MM/YY' AND &PACKED).FLD308                03300000
+&P3L     SETC  '252'                                                    03310000
+         AIF   ('&P3C' EQ 'MM/DD/YY' AND &PACKED).FLD308                03320000
+&P3L     SETC  '253'                                                    03330000
+         AIF   ('&P3C' EQ 'YYMMDD'   AND &PACKED).FLD308                03340000
+&P3L     SETC  '0'                                                      03350000
+         AIF   (T'&SYSLIST(&I,2) NE 'N').FLD310                         03360000
+         MNOTE 8,'EDIT PATTERN NOT ALLOWED WITH CHARACTER STRING'       03370000
+         AGO   .FLD310                                                  03380000
+.FLD308  ANOP                                                           03390000
+&$_FEAT(5) SETB 1                      JDATE                            03400000
+         AGO   .FLD800                                                  03410000
+.*--LOOP                                                                03420000
+.FLD310  AIF   ('&P3C'(1,1) EQ 'R').FLD318       DEFAULT                03430000
+         AIF   ('&P3C'(1,1) EQ 'B').FLD318       DEFAULT                03440000
+         AIF   ('&P3C'(1,1) NE 'L').FLD311                              03450000
+&LEFT    SETB  1                                                        03460000
+         AGO   .FLD318                                                  03470000
+.FLD311  AIF   ('&P3C'(1,1) NE 'Z').FLD312                              03480000
+&ZERO    SETB  1                                                        03490000
+         AGO   .FLD318                                                  03500000
+.FLD312  AIF   ('&P3C'(1,1) LT '0').FLD993       nn in RnnB is not num  03510000
+         AIF   ('&P3C'(1,1) GT '9').FLD993       nn in RnnB is not num  03520014
+&P3L     SETC  '&P3L'.'&P3C'(1,1)                                       03530000
+.FLD318  ANOP                                                           03540000
+.*MNOTE *,'&SYSLIST(&I) P3C=/&P3C/ P3L=/&P3L/'                          03550000
+&P3C     SETC  '&P3C '(2,K'&P3C-1)     STRIP OFF FIRST CHARACTER        03560014
+         AIF   (K'&P3C GT 0).FLD310                                     03570000
+.*--ENDLOOP                                                             03580000
+         AIF   (&P3L GT 16).FLD993               nn in RnnB is too big  03590014
+.*--------------------------------------------------------------------* 03600003
+.FLD800  ANOP                                                           03610000
+&NUMERIC SETB  (&BIN OR &PACKED OR (&REG AND NOT &HEX))                 03620000
+&TRUNC   SETB  (&TRUNC OR (&LEFT AND NOT &NUMERIC))                     03630000
+&LEFT    SETB  (&LEFT AND &NUMERIC)                                     03640000
+         AIF   (NOT &NUMERIC).FLD810                                    03650000
+         AIF   (&LEFT OR '&P3L' NE '0').FLD810                          03660000
+&P3L     SETC  '7'                     DEFAULT OUTPUT LENGTH ((R3))     03670000
+         AIF   (&REG).FLD810                                            03680000
+&P3L     SETC  '3'                     DEFAULT OUTPUT LENGTH            03690000
+         AIF   ('&P2C' EQ 'FL1').FLD810                                 03700000
+&P3L     SETC  '5'                     DEFAULT OUTPUT LENGTH            03710000
+         AIF   ('&P2C' EQ 'H' OR '&P2C' EQ 'FL2').FLD810                03720000
+&P3L     SETC  '7'                     DEFAULT OUTPUT LENGTH            03730000
+.FLD810  ANOP                                                           03740000
+&FLAG    SETA  &HEX*8+&BIN*4+&PACKED*2+&REG*1                           03750009
+&LEN2    SETA  &TRUNC*128+&LEFT*128+&ZERO*64+&P3L                       03760000
+&$_FEAT(2) SETB (&$_FEAT(2) OR (&REG AND NOT &HEX))   REGISTER (BIN)    03770000
+&$_FEAT(3) SETB (&$_FEAT(3) OR (&REG AND &HEX))       REGISTER (HEX)    03780000
+&$_FEAT(4) SETB (&$_FEAT(4) OR &PACKED)               PACKED            03790000
+&$_FEAT(6) SETB (&$_FEAT(6) OR &BIN)                  BINARY            03800000
+&$_FEAT(7) SETB (&$_FEAT(7) OR (&HEX AND NOT &REG))   HEX               03810000
+&$_FEAT(8) SETB (&$_FEAT(8) OR &NUMERIC)              BIN,PACKED        03820000
+&$_FEAT(9) SETB (&$_FEAT(9) OR (&LEFT AND &NUMERIC))                    03830000
+&$_FEAT(10) SETB (&$_FEAT(10) OR &ZERO)                                 03840000
+&$_FEAT(11) SETB (&$_FEAT(11) OR &TRUNC)                                03850000
+&BIN     SETB  0                    RESET FLAGS                         03860000
+&HEX     SETB  0                    RESET FLAGS                         03870000
+&REG     SETB  0                    RESET FLAGS                         03880000
+&PACKED  SETB  0                    RESET FLAGS                         03890000
+&LEFT    SETB  0                    RESET FLAGS                         03900000
+&ZERO    SETB  0                    RESET FLAGS                         03910000
+&TRUNC   SETB  0                    RESET FLAGS                         03920000
+         AIF   (&FLAG GE 10).FLD995                                     03930009
+         AIF   (&LAST).FLD816                                           03940009
+         DC    X'0&FLAG',AL1(&LEN2),SL2(&P1S,&P2L)                      03950009
+         AGO   .LIT99                                                   03960009
+.FLD816  DC    X'8&FLAG',AL1(&LEN2),SL2(&P1S,&P2L),0S(0)                03970009
+         AGO   .LIT99                                                   03980000
+.FLD990  MNOTE 12,'OPERAND &I HAS TOO MANY SUB-OPERANDS'                03990003
+         AGO   .LIT99                                                   04000000
+.FLD992  MNOTE 12,'Too many sub-operands: &SYSLIST,(&I)'                04010018
+         AGO   .LIT99                                                   04020018
+.FLD993  MNOTE 8,'THIRD SUBPARAMETER IS INVALID: ''&SYSLIST(&I,3)'''    04030000
+         AGO   .LIT99                                                   04040000
+.FLD995  MNOTE 8,'Invalid Combination of Attributes: &SYSLIST(&I)'      04050009
+         AGO   .LIT99                                                   04060009
+.*--------------------------------------------------------------------* 04070000
+.*------------ LITERALS ----------------------------------------------* 04080000
+.*--------------------------------------------------------------------* 04090000
+.LIT00   ANOP                                                           04100000
+&LIT     SETC  'C&SYSLIST(&I)'                                          04110000
+         AGO   .LIT09                                                   04120000
+.LIT01   ANOP                                                           04130000
+&LIT     SETC  '&SYSLIST(&I)'                                           04140000
+.LIT09   ANOP                              calculate length of literal  04150009
+&J       SETA  3                                                        04160009
+&L       SETA  0                                                        04170009
+         ACTR  K'&LIT+K'&LIT+100                                        04180011
+         AIF   ('&LIT'(1,1) EQ 'X').LIT11X                              04190009
+.*--LOOP                                                                04200009
+.LIT11C AIF ('&LIT'(&J,1) NE '''' AND '&LIT'(&J,1) NE '&&'(1,1)).LIT12C 04210014
+&J       SETA  &J+1                                                     04220009
+.LIT12C  ANOP                                                           04230009
+&J       SETA  &J+1                                                     04240009
+&L       SETA  &L+1                                                     04250009
+         AIF   (&J LT K'&LIT).LIT11C                                    04260009
+.*--ENDLOOP                                                             04270009
+         AGO   .LIT15                                                   04280009
+.*--LOOP                                                                04290009
+.LIT11X  AIF   ('&LIT'(&J,1) EQ ',').LIT12X                             04300009
+&L       SETA  &L+1                                                     04310009
+.LIT12X  ANOP                                                           04320009
+&J       SETA  &J+1                                                     04330009
+         AIF   (&J LT K'&LIT).LIT11X                                    04340009
+.*--ENDLOOP                                                             04350009
+&L       SETA  (&L+1)/2                                                 04360009
+.LIT15   ANOP                               generate in-line literal    04370009
+         AIF   (&L GT 5).LIT40                                          04380009
+         AIF   (&LAST).LIT16                                            04390009
+         DC    X'4&L',&LIT                                              04400009
+         AGO   .LIT90                                                   04410009
+.LIT16   DC    X'C&L',&LIT,0S(0)                                        04420009
+         AGO   .LIT90                                                   04430009
+.LIT40   ANOP                                  check literal table      04440009
+         AIF   (&$_LIT EQ 0).LIT50                                      04450009
+&N       SETA  1                                                        04460000
+         ACTR  &$_LIT*3+200                                             04470003
+         AIF   (&$_CSECT_NO GT 1).LIT42                                 04480016
+.*--loop                                                                04490016
+.LIT41   AIF   ('&LIT' EQ '&$_LITS(&N)').LIT80       LOOP               04500016
+&N       SETA  &N+1                                  LOOP               04510000
+         AIF   (&N LE &$_LIT).LIT41                  LOOP               04520009
+.*--endloop                                                             04530016
+         AGO   .LIT50                                                   04540016
+.LIT42   ANOP                                                           04550016
+.*--loop                                                                04560016
+.LIT422  AIF   ('&$_LITS_CSECT(&N)' EQ '&SYSECT2' AND                  X04570016
+               '&LIT' EQ '&$_LITS(&N)').LIT80 LOOP                      04580016
+&N       SETA  &N+1                                  LOOP               04590016
+         AIF   (&N LE &$_LIT).LIT422                 LOOP               04600016
+.*--endloop                                                             04610016
+.LIT50   ANOP                                                           04620000
+&$_LIT   SETA  &$_LIT+1                                                 04630000
+&$_LITS(&$_LIT) SETC '&LIT'                                             04640000
+&$_LITS_CSECT(&$_LIT) SETC '&SYSECT2'                                   04650016
+.LIT55   ANOP                                                           04660016
+.*NOTE 0,' &$_LIT &$_LITS_CSECT(&$_LIT) &SYSECT'                        04670016
+.*NOTE 0,'&$_CSECT_NO &$_CSECT(1) &$_CSECT(2) &$_CSECT(3) &$_CSECT(4)'  04680016
+.**            &$_LITS(9999)           LITERALS                         04690016
+&N       SETA  &$_LIT                                                   04700009
+.LIT80   ANOP                               generate remote literal     04710009
+&N       SETA  &N+1000                                                  04720009
+         AIF   (&LAST).LIT86                                            04730009
+         DC    X'40',AL1(&L),AL2($LIT&N-*)                              04740009
+         AGO   .LIT90                                                   04750009
+.LIT86   DC    X'C0',AL1(&L),AL2($LIT&N-*),0S(0)                        04760009
+.LIT90   ANOP                                                           04770009
+&$_FEAT(1) SETB 1                      LITERAL                          04780000
+.LIT99   ANOP                                                           04790000
+.*--------------------------------------------------------------------* 04800003
+&I       SETA  1+&I                              LOOP                   04810000
+         AIF   (&I LE N'&SYSLIST).LOOP1          LOOP                   04820000
+.*ENDLOOP                                                               04830000
+&LOCTR1  LOCTR                                                          04840016
+         AGO   .MEND                                                    04850000
+.ERR1    MNOTE 12,'AT LEAST ONE INPUT FIELD MUST BE SPECIFIED'          04860000
+         AGO   .MEND                                                    04870000
+.ERR2    MNOTE 12,'INVALID OUTPUT AREA SPECIFICATION'                   04880000
+         AGO   .MEND                                                    04890000
+.********************************************************************** 04900000
+.*       GENERATE: GENERATE LITERALS AND PROCESSING ROUTINE           * 04910000
+.********************************************************************** 04920000
+.GENL    ANOP                                                           04930000
+         AIF   (N'&SYSLIST(1) GT 3).GENL1R                              04940007
+&OPT2    SETC  '&SYSLIST(1,2)'                                          04950007
+         AIF   ('&OPT2' NE '' AND '&OPT2' NE 'AR_MODE'                 X04960007
+               AND '&OPT2' NE 'NO_CSECT').GENL1R                        04970007
+&OPT3    SETC  '&SYSLIST(1,3)'                                          04980007
+         AIF   ('&OPT3' NE '' AND '&OPT3' NE 'LOCTR').GENL1R            04990007
+         AIF   ('&OPT2' EQ 'NO_CSECT' AND '&OPT3' EQ 'LOCTR').GENL1R    05000007
+         AGO   .GENL1D                                                  05010007
+.GENL1R  MNOTE 12,'Invalid GENERATE options, default used'              05020007
+&OPT2    SETC  ''                                                       05030007
+&OPT3    SETC  ''                                                       05040007
+.GENL1D  ANOP                                                           05050007
+&STRBLANKS SETA 2                                                       05060000
+         AIF   (D'$LTORG).GENL1F             CSECT-ONLY                 05070007
+&$_FEAT(1) SETB 1,1,1,1,1,1,1,1,1,1,1,1                                 05080000
+.GENL1F  ANOP                                                           05090000
+&ALLFEAT SETC  '&$_FEAT(1)&$_FEAT(2)&$_FEAT(3)&$_FEAT(4)'               05100000
+&ALLFEAT SETC  '&ALLFEAT&$_FEAT(5)&$_FEAT(7)&$_FEAT(6)&$_FEAT(8)'       05110000
+&ALLFEAT SETC  '&ALLFEAT&$_FEAT(9)&$_FEAT(10)&$_FEAT(11)&$_FEAT(12)'    05120000
+&STR     SETC  '&STRING_MACRO_VERSION'                                  05130003
+         MNOTE *,'STRING R&STR - FEATURES GENERATED: &ALLFEAT'          05140007
+         AIF   (&$_LIT EQ 0).GENL3                                      05150000
+&STR     SETC  '*CSECT'                                                 05160016
+.*LOOP                                                                  05170016
+.GENL2   ANOP                                LOOP                       05180000
+&N       SETA  &N+1                          LOOP                       05190000
+&I       SETA  &N+1000                       LOOP                       05200000
+.*MNOTE *,'&$_LITS_CSECT(1) &$_LITS_CSECT(&N) &N &I'                    05210016
+         AIF   ('&STR' EQ '&$_LITS_CSECT(&N)').GENL2L                   05220016
+&STR     SETC  '&$_LITS_CSECT(&N)'           LOOP                       05230016
+&LOCTR1  SETC  '$LITERAL'                    LOOP                       05240018
+         AIF   ('&$_CSECT(1)' EQ '&$_LITS_CSECT(&N)').GENL2D            05250018
+&LOCTR1  SETC  '$LITERAL_&STR'               LOOP                       05260018
+.GENL2D  ANOP                                LOOP                       05270016
+&LOCTR1  LOCTR                                                          05280018
+.GENL2L  ANOP                                LOOP                       05290016
+$LIT&I   DC    &$_LITS(&N)                                              05300000
+         AIF   (&N LT &$_LIT).GENL2          LOOP                       05310000
+.*ENDLOOP                                                               05320016
+.GENL3   ANOP                                                           05330000
+         AIF   ('&OPT2' EQ 'NO_CSECT').GENL8                            05340007
+&ARMODE  SETB  ('&OPT2' EQ 'AR_MODE')                                   05350007
+.********************************************************************** 05360000
+.*                                                                    * 05370000
+.*       STRING SUB-ROUTINE                                           * 05380000
+.*                                                                    * 05390000
+.*             CAUTION: BYTES 49-72 OF THE CALLER'S SAVE AREA         * 05400000
+.*                      (R7-R12 SLOTS) ARE USED AS WORK SPACE         * 05410000
+.*                                                                    * 05420000
+.********************************************************************** 05430000
+         AIF   ('&OPT3' EQ 'LOCTR').GENL4L                              05440007
+@STRING  CSECT                                                          05450000
+@STRING  RMODE ANY                                                      05460000
+         AGO   .GENL4X                                                  05470000
+.GENL4L  PUSH  USING                   GENERATE,LOCTR                   05480002
+         DROP                                                           05490002
+@STRING@ LOCTR                                                          05500000
+@STRING  DS    0H                      ALIGNMENT                        05510000
+.GENL4X  ANOP                                                           05520000
+@00      EQU   0                       WORK REGISTER                    05530000
+@01      EQU   1                       WORK REGISTER                    05540000
+@02      EQU   2                       WORK REGISTER                    05550000
+@03      EQU   3                       WORK REGISTER                    05560000
+@04      EQU   4                       WORK REGISTER                    05570000
+@05      EQU   5                       WORK REGISTER                    05580000
+@06      EQU   6                       WORK REGISTER                    05590000
+         AIF   (NOT &ARMODE).ARMODE1X                                   05600008
+@07      EQU   7                       WORK REGISTER                    05610008
+@08      EQU   8                       WORK REGISTER                    05620008
+@09      EQU   9                       WORK REGISTER                    05630008
+@10      EQU   10                      WORK REGISTER                    05640008
+@11      EQU   11                      WORK REGISTER                    05650008
+@12      EQU   12                      WORK REGISTER                    05660008
+.ARMODE1X ANOP                                                          05670008
+@13      EQU   13                      CALLER'S SAVE AREA               05680007
+@14      EQU   14                      WORK REGISTER                    05690007
+@15      EQU   15                      BASE REG                         05700007
+         USING @STRING,@15                                              05710007
+         USING @STRSAVE,@13                                             05720008
+         B     @STR003                 BRANCH AROUND EYE-CATCHER        05730008
+         AIF   (&ARMODE).ARMODE2Y                                       05740008
+         DC    C'@STRING/370 R&STRING_MACRO_VERSION &ALLFEAT',0H'0'     05750008
+@STR003  STM   @14,@06,12(@13)         Save caller's registers          05760008
+         SLR   @06,@06                 R6=0                             05770007
+&LAE     SETC  'LA'                                                     05780007
+         AGO   .ARMODE2X                                                05790008
+.ARMODE2Y ANOP                                                          05800008
+         DC    C'@STRING/390 R&STRING_MACRO_VERSION &ALLFEAT',0H'0'     05810007
+@STR002  DC    H'2'                                                     05820002
+@STR003  STM   @14,@12,12(@13)         SAVE REGS (DEBUGGING ONLY)       05830005
+.*+++    BSM   @14,0                   Set AMODE when invoked via BAL   05840008
+         AH    @14,@STR002-@STRING(@15,0) POINT PAST PARM-LIST OFFSET   05850008
+         BAKR  @14,0                   SAVE REGS AND RETURN ADDRESS     05860002
+         BCTR  @14,0                   ADJUST ADDR OF PARM LIST OFFSET  05870002
+         BCTR  @14,0                   ADJUST ADDR OF PARM LIST OFFSET  05880002
+         LAE   @06,0                   R6=0 AR6=0                       05890003
+         CPYA  @14,@06                 AR14=0                           05900003
+         CPYA  @15,@06                 AR15=0                           05910003
+&LAE     SETC  'LAE'                                                    05920007
+.ARMODE2X ANOP                                                          05930008
+         ICM   @06,B'0011',0(@14)      PICK UP PARM-LIST 1/2 OFFSET     05940005
+         ALR   @06,@06                 PICK UP PARM-LIST OFFSET         05950005
+         ALR   @06,@14                 R6 NOW POINTS TO PARM LIST       05960002
+         USING @STRSCON,@06                                             05970009
+         &LAE  @02,@STRSCON            RESOLVE FIRST SCON (ADDR)        05980007
+         BAL   @14,@STRS2A             GET ADDRESS IN R2                05990000
+         &LAE  @04,0(,@02)             KEEP ADDRESS OF "INTO" FIELD     06000007
+         L     @14,12(,@13)            RESTORE ADDR OF STRING MACRO     06010007
+         OI    0(@04),0                GET CLEAN S0C4 IF ADDRESS IS BAD 06020000
+         &LAE  @02,@STRFLEN            RESOLVE SECOND S-CON (LEN)       06030007
+         BAL   @14,@STRS2A             GET LENGTH IN R2                 06040000
+         LR    @05,@02                 KEEP LENGTH OF "INTO" FIELD      06050000
+         CR    @05,@04                 END ADDRESS?                     06060000
+         BL    @STR282                 NO, JUMP                         06070000
+         SR    @05,@04                 CALCULATE LENGTH                 06080000
+         AIF   (NOT &ARMODE).ARMODE5N                                   06090007
+@STR282  MSTA  @04                     SAVE R4,R5 ON LINKAGE STACK      06100002
+.*SLAC   DC    X'B247,0040'            SLAC assembler error             06110002
+         AGO   .ARMODE5X                                                06120007
+.ARMODE5N ANOP                                                          06130007
+@STR282  ST    @04,8(,@13)             SAVE ADDRESS FOR LATER           06140007
+.ARMODE5X ANOP                                                          06150007
+.********************************************************************** 06160000
+.*       MOVE FIELDS TO OUTPUT AREA                                   * 06170000
+.********************************************************************** 06180000
+         &LAE  @06,@STRNEXT            POINT TO 1ST FIELD DESC          06190009
+         USING @STRPARM,@06                                             06200009
+.*LOOP                                                                  06210000
+@STR310  EQU   *                                                        06220000
+         AIF   (NOT &$_FEAT(1)).FEAT1A                                  06230000
+         TM    @STRFLAG,@STRLIT        IS THIS A LITERAL?               06240000
+         BO    @STR372                 YES, JUMP                        06250000
+.FEAT1A  ANOP                                                           06260000
+         AIF   (NOT &$_FEAT(2) AND NOT &$_FEAT(3)).FEAT23A              06270000
+         TM    @STRFLAG,@STRREG        REGISTER?                        06280000
+         BO    @STR323                 YES, JUMP                        06290000
+.FEAT23A ANOP                                                           06300000
+         AIF   (NOT &$_FEAT(12)).FEAT12A                                06310000
+         CLI   @STRSCON,X'E0'          IS IT %TIME ?                    06320000
+         BE    @STR378                 YES, JUMP                        06330000
+.FEAT12A ANOP                                                           06340000
+.*                                                                      06350000
+.*       IT'S A FIELD (SCON)                                            06360000
+.*                                                                      06370000
+         &LAE  @02,@STRFLEN            RESOLVE SECOND S-CON (LEN)       06380007
+         BAL   @14,@STRS2A             GET LENGTH IN R2                 06390000
+         AIF   (&$_FEAT(9)).FEAT9E1    (LEFT JUSTIFICATION, NUMERIC)    06400000
+         LTR   @03,@02                 KEEP/TEST LENGTH                 06410000
+         BZ    @STR398                 ZERO LENGTH, DO NOT EDIT         06420000
+         AGO   .FEAT9E2                                                 06430000
+.FEAT9E1 LTR   @03,@02                 KEEP/TEST LENGTH                 06440000
+         BP    @STR313                 LENGTH POSITIVE, JUMP            06450000
+         TM    @STRLEN2,@STRLEFT       LEFT JUSTIFICATION?              06460000
+         BNO   @STR398                 NO, ZERO LENGTH IS NOT OK        06470000
+@STR313  EQU   *                                                        06480000
+.FEAT9E2 ANOP                                                           06490000
+         &LAE  @02,@STRSCON            RESOLVE FIRST SCON (ADDR)        06500007
+         BAL   @14,@STRS2A             GET ADDRESS IN R2                06510000
+         L     @14,12(,@13)            RESTORE ADDR OF STRING MACRO     06520007
+         CLI   0(@02),0                GET CLEAN S0C4 IF ADDRESS IS BAD 06530000
+         CR    @03,@02                 END ADDRESS?                     06540000
+         BL    @STR314                 NO, JUMP                         06550000
+         LA    @00,X'0080'             PSA ADDRESS                      06560000
+         CLR   @02,@00                 PSA REFERENCE?                   06570000
+         BL    @STR314                 YES, JUMP                        06580000
+         SR    @03,@02                 CALCULATE LENGTH                 06590000
+@STR314  EQU   *                                                        06600000
+         AIF   (NOT &$_FEAT(6)).FEAT6A                                  06610000
+         TM    @STRFLAG,@STRBIN        BINARY FIELD?                    06620000
+         BO    @STR328                 YES, JUMP                        06630000
+.FEAT6A  ANOP                                                           06640000
+         AIF   (NOT &$_FEAT(4)).FEAT4A                                  06650000
+         TM    @STRFLAG,@STRPACK       PACKED FIELD?                    06660000
+         BO    @STR351                 YES, JUMP                        06670000
+.FEAT4A  ANOP                                                           06680000
+         AIF   (NOT &$_FEAT(7)).FEAT7A                                  06690000
+         TM    @STRFLAG,@STRHEX        EDIT IN HEX?                     06700000
+         BO    @STR376                 YES, JUMP                        06710000
+.FEAT7A  ANOP                                                           06720000
+.*                                                                      06730000
+.*       TRUNCATE CHARACTER STRING                                      06740000
+.*                                                                      06750000
+         AIF   (NOT &$_FEAT(11)).FEAT11A                                06760000
+         CLI   @STRLEN2,@STRLEFT       CHECK JUSTIFICATION, OUTPUT LEN  06770000
+         BNE   @STR390                 NO STRING TRUNCATION, JUMP       06780000
+         &LAE  @01,0(@03,@02)          FIRST BYTE AFTER FIELD           06790007
+@STR318  BCTR  @01,0                   DOWN 1 BYTE                 LOOP 06800000
+         CLI   0(@01),C' '             IS IT A SPACE ?             LOOP 06810000
+         BNE   @STR390                 LAST NON-BLANK BYTE         LOOP 06820000
+         BCT   @03,@STR318             LOOP UNTIL 1ST NON-BLANK    LOOP 06830000
+         B     @STR398                 BLANK FIELD, DO NOT EDIT         06840000
+         AGO   .FEAT11B                                                 06850000
+.FEAT11A ANOP                                                           06860000
+         AIF (&$_FEAT(2)+&$_FEAT(3)+&$_FEAT(4)+&$_FEAT(6) EQ 0).FEAT11B 06870000
+         B     @STR390                 EDIT                             06880000
+.FEAT11B ANOP                                                           06890000
+.*                                                                      06900000
+.*       REGISTER (R0-R13)                                              06910000
+.*                                                                      06920000
+         AIF   (NOT &$_FEAT(2) AND NOT &$_FEAT(3)).FEAT23B              06930000
+         AIF   (NOT &ARMODE).ARMODE7N                                   06940007
+@STR323  LH    @01,@STRSCON            REG NUMBER IN BITS 28-31         06950000
+         CLI   @STRSCON+1,@06          IS THIS R7-R13?                  06960002
+         BH    @STR323R                YES, JUMP                        06970002
+         LR    @07,@01                 SAVE R1 (R)                      06980002
+         LAE   @10,0(,@04)             SAVE R4                          06990003
+         LR    @11,@05                 SAVE R5                          07000002
+         LAE   @12,0(,@06)             SAVE R6                          07010003
+         EREG  @00,@06                 RELOAD CALLER'S R0-R6            07020002
+         EX    @07,@STR323L            COPY R0-R6 VALUE                 07030002
+         LAE   @04,0(,@10)             RESTORE R4                       07040003
+         LR    @05,@11                 RESTORE R5                       07050002
+         LAE   @06,0(,@12)             RESTORE R6                       07060003
+         B     @STR323T                                                 07070002
+@STR323L LR    @00,*-*                 COPY VALUE FOR EDIT              07080002
+@STR323R EQU   *                                                        07090002
+         EREG  @07,@12                 RESTORE CALLER'S R7-R12          07100002
+         EX    @01,@STR323L            COPY R7-R13 INTO R0              07110002
+         AGO   .ARMODE7X                                                07120007
+.ARMODE7N ANOP                                                          07130007
+@STR323L LR    @00,*-*                 COPY VALUE FOR EDIT              07140007
+@STR323  LH    @01,@STRSCON            REG NUMBER IN BITS 28-31         07150007
+         EX    @01,@STR323L            COPY R7-R13 INTO R0              07160007
+         CLI   @STRSCON+1,@06+1        IS THIS R7-R13?                  07170007
+         BNL   @STR323T                YES, JUMP                        07180007
+         SLL   @01,2                   R1= 000000BB BASE * 4            07190007
+         L     @00,20(@01,@13)         PICK UP VALUE FOR R0-R6          07200007
+.ARMODE7X ANOP                                                          07210007
+@STR323T EQU   *                                                        07220000
+         AIF   (NOT &$_FEAT(3)).FEAT3R REG,HEX                          07230000
+         AIF   (NOT &$_FEAT(2)).FEAT2H REG,BIN                          07240000
+         TM    @STRFLAG,@STRHEX        EDIT IN HEX?                     07250000
+         BNO   @STR330                 NO, EDIT FWD                     07260000
+.FEAT2H  ANOP                                                           07270000
+         STCM  @00,B'1111',@STRDWD-1   STORE IT FOR CVD/UNPK            07280000
+         LA    @03,8                   OUTPUT LENGTH                    07290000
+         B     @STR376X                EDIT IN HEX                      07300000
+.FEAT3R  ANOP                                                           07310000
+         AIF   (NOT &$_FEAT(6)).FEAT23B                                 07320000
+         B     @STR330                 EDIT R0                          07330000
+.FEAT23B ANOP                                                           07340000
+.*                                                                      07350000
+.*       BINARY VARIABLE: @03 CONTAINS THE ICM MASK (1 3 7 F)           07360000
+.*                                                                      07370000
+         AIF   (NOT &$_FEAT(6)).FEAT6B                                  07380000
+@STR328M ICM   @00,*-*,0(@02)          **EXECUTED INSTRUCTION**         07390000
+@STR328  SLR   @00,@00                                                  07400000
+         EX    @03,@STR328M            LOAD THE BINARY VARIABLE         07410000
+.FEAT6B  ANOP                                                           07420000
+.*                                                                      07430000
+         AIF   (NOT &$_FEAT(2) AND NOT &$_FEAT(6)).FEAT6C               07440000
+@STR330  CVD   @00,@STRDWD             CONVERT VALUE TO DECIMAL         07450000
+         AIF   (NOT &$_FEAT(4)).FEAT6C                                  07460000
+         B     @STR361                 EDIT DWD                         07470000
+.FEAT6C  ANOP                                                           07480000
+.*                                                                      07490000
+.*       PACKED FIELD                                                   07500000
+.*                                                                      07510000
+         AIF   (NOT &$_FEAT(4)).FEAT4B                                  07520000
+@STRZAP  ZAP   @STRDWD,0(*-*,@02)      MOVE TO @STRDWD                  07530000
+@STR351  &LAE  @03,0(,@02)             FIRST BYTE OF PACKED FIELD       07540007
+         BALR  @14,0                                                    07550000
+         TM    0(@03),X'0C'            IS THIS THE SIGN BYTE?           07560000
+         LA    @03,1(,@03)              (NEXT BYTE)                     07570000
+         BNOR  @14                     NO, LOOP MORE                    07580000
+         SLR   @03,@02                 GET LENGTH OF PACKED FIELD       07590000
+         BCTR  @03,0                                                    07600000
+         EX    @03,@STRZAP             EXECUTE ZAP                      07610000
+         AIF   (NOT &$_FEAT(5)).FEAT4B                                  07620000
+         CLI   @STRLEN2,248            JULIAN-TO-YYMMDD CONV?           07630003
+         BNL   @STR375                 YES, JUMP                        07640000
+.FEAT4B  ANOP                          PACKED                           07650000
+.*                                                                      07660000
+.*       EDIT @STRDWD (BIN, REG, PACKED)                                07670000
+.*                                                                      07680000
+         AIF   (NOT &$_FEAT(8)).FEAT8B                                  07690000
+@STR361  IC    @00,@STRLEN2            OUTPUT LENGTH                    07700000
+         LA    @03,X'003F'             MASK FOR "AND"                   07710000
+         NR    @03,@00                 OUTPUT LENGTH                    07720000
+         MVC   @STRWK16(16),@STRMASK   EDIT MASK                        07730000
+.*                                                                      07740000
+.*       LEFT-JUSTIFICATION (NUMERIC)                                   07750000
+.*                                                                      07760000
+         AIF   (NOT &$_FEAT(9)).FEAT9B                                  07770000
+         TM    @STRLEN2,@STRLEFT       LEFT JUSTIFICATION?              07780000
+         BNO   @STR367                 NO, JUMP                         07790000
+         &LAE  @01,@STRWK16+15         PREVENT BAD R1                   07800007
+         EDMK  @STRWK16(16),@STRDWD    ZONED DECIMAL                    07810000
+         BNM   @STR362                 skip if not a negative number    07820015
+         BCTR  @01,0                   R1 = significance start ptr -1   07830015
+         MVI   0(@01),C'-'             sink negative sign in front      07840015
+@STR362  &LAE  @02,0(,@01)             FIRST STRING POSITION            07850015
+         LTR   @03,@03                 CHECK OUTPUT LENGTH              07860000
+         BNZ   @STR363                 JUMP IF NOT ZERO                 07870000
+.*       L0    (LEFT JUSTIFIED, NO PADDING)                             07880000
+         &LAE  @03,@STRWK16+16         FIRST POSITION AFTER STRING      07890007
+         SR    @03,@02                 COMPUTE STRING LENGTH            07900000
+         B     @STR390                 MOVE FIELD TO OUTPUT LINE        07910000
+.*       L1-L63 (LEFT JUSTIFIED, PADDING)                               07920000
+@STR363  CR    @03,@05                 COMPARE LENGTH TO REMAINING LEN  07930000
+         BNH   @STR364                 LARGE ENOUGH, JUMP               07940000
+         LR    @03,@05                 TOO BIG, TRUNCATE TO REM. LEN.   07950000
+@STR364  SR    @05,@03                 COMPUTE REMAINING LENGTH         07960000
+         AIF   (NOT &ARMODE).ARMODE8N                                   07970007
+         LAE   @08,0(,@04)             POINTER IN OUTPUT LINE           07980002
+         LR    @09,@03                 LENGTH WITH PADDING              07990002
+         AGO   .ARMODE8X                                                08000007
+.ARMODE8N ANOP                                                          08010007
+         LR    @00,@04                 POINTER IN OUTPUT LINE           08020007
+         LR    @01,@03                 LENGTH WITH PADDING              08030007
+.ARMODE8X ANOP                                                          08040007
+         LA    @03,@STRWK16+16         FIRST POSITION AFTER STRING      08050000
+         SR    @03,@02                 COMPUTE STRING LENGTH            08060000
+         B     @STR392                 MOVE FIELD TO OUTPUT LINE        08070000
+@STR367  EQU   *                                                        08080000
+.FEAT9B  ANOP                                                           08090000
+         AIF   (NOT &$_FEAT(10)).FEAT10B                                08100000
+         TM    @STRLEN2,@STRZERO       LEADING ZEROES REQ'D?            08110000
+         BNO   @STR368                 NO, JUMP                         08120000
+         MVI   @STRWK16,C'0'           YES, CHANGE X'40' TO C'0'        08130000
+@STR368  EQU   *                                                        08140000
+.FEAT10B ANOP                                                           08150000
+         &LAE  @01,@STRWK16+15         PREVENT BAD R1                   08160015
+         EDMK  @STRWK16(16),@STRDWD    ZONED DECIMAL                    08170015
+         BNM   @STR369                 skip if not a negative number    08180015
+         BCTR  @01,0                   R1 = significance start ptr -1   08190015
+         MVI   0(@01),C'-'             sink negative sign in front      08200015
+@STR369  &LAE  @02,@STRWK16+16         FIRST POSITION AFTER STRING      08210015
+         SR    @02,@03                 FIRST STRING POSITION            08220000
+.FEAT8B  ANOP                                                           08230000
+.*                                                                      08240000
+.*       LITERAL (@STRSCON IS A 16-BIT OFFSET)                          08250000
+.*       Short Literal (low-order 4 bits of @STRFLAG contains length)   08260009
+.*       BLANKS  (@STRSCON=ZERO)                                        08270000
+.*                                                                      08280000
+         AIF   (NOT &$_FEAT(1)).FEAT1B                                  08290000
+         B     @STR390                 MOVE STRING TO OUTPUT LINE       08300000
+@STR372  LA    @01,7                   mask for NR                      08310009
+         &LAE  @02,@STRLEN2            1st byte of short literal        08320009
+         IC    @03,@STRFLAG            pick up flags+length             08330009
+         NR    @03,@01                 R3 has length of short literal   08340009
+         BNZ   @STR390                 short literal, go move it        08350009
+         SLR   @02,@02                 Clear Address Register           08360009
+         IC    @03,@STRLEN2            GET LITERAL LENGTH               08370009
+         TM    @STRFLAG,@STRX40        string of spaces?                08380009
+         BO    @STR390                 yes, go move them                08390009
+         ICM   @02,B'0011',@STRSCON    LOAD LITERAL OFFSET              08400000
+         LA    @02,@STRSCON(@02)       CONVERT OFFSET TO FULL ADDRESS   08410000
+.FEAT1B  ANOP                                                           08420000
+.*                                                                      08430000
+.*       CONVERT JULIAN DATE TO YYMMDD                                  08440000
+.*                                                                      08450000
+         AIF   (NOT &$_FEAT(5)).FEAT5F                                  08460000
+         B     @STR390                 MOVE STRING TO OUTPUT LINE       08470000
+@STR375  LA    @00,248                 MASK FOR 'SLR'                   08480003
+         SLR   @01,@01                                                  08490003
+         IC    @01,@STRLEN2            248-255                          08500003
+         SLR   @01,@00                 000-007                          08510003
+         LA    @00,12                  L'@STR375W                       08520003
+         MR    @00,@00                 COMPUTE OFFSET                   08530003
+         &LAE  @01,@STR375W(@01)       ENTRY IN "TR" MASK TABLE         08540007
+         SLR   @03,@03                                                  08550003
+         IC    @03,0(,@01)             LENGTH OF DATE (6, 8 OR 10)      08560004
+         ZAP   @STRDWD,@STRDWD         DATE=0000000?               @JDT 08570003
+         BNZ   @STR375B                NO, JUMP                    @JDT 08580000
+@STR375Z &LAE  @02,@STRBLANKS          WORK AREA                        08590007
+&STRBLANKS SETA 10                     WE NEED AT LEAST 10 BLANKS       08600004
+         B     @STR390                 MOVE FIELD TO OUTPUT LINE        08610000
+@STR375W DC    AL1(10,C'-',0,1,2,3,8,4,5,8,6,7) YYYY-MM-DD   248        08620003
+         DC    AL1(8,C' ',0,1,2,3,4,5,6,7,8,8)  YYYYMMDD//   249        08630003
+         DC    AL1(8,C'/',2,3,8,4,5,8,6,7,8,8)  YY/MM/DD//   250        08640003
+         DC    AL1(8,C'/',6,7,8,4,5,8,2,3,8,8)  DD/MM/YY//   251        08650003
+         DC    AL1(8,C'/',4,5,8,6,7,8,2,3,8,8)  MM/DD/YY//   252        08660003
+         DC    AL1(6,C' ',2,3,4,5,6,7,8,8,8,8)  YYMMDD       253        08670003
+.*       DC    AL1(6,C' ',6,7,4,5,2,3,8,8,8,8)  DDMMYY       254        08680003
+.*       DC    AL1(6,C' ',4,5,6,7,2,3,8,8,8,8)  MMDDYY       255        08690003
+@STR375T DC    P'59,31,29,31,30,31,30,31,31,30,31,30,31'                08700002
+         DC    P'999'                  Prevent S0C7 with 90366          08710010
+@STR375B CLI   @STRDWD+4,X'01'         YEAR 2000 OR ABOVE?              08720003
+         BH    @STR375C                CC>01, JUMP (MUST BE 19 OR 20)   08730003
+         MVI   @STRDWD+4,X'20'         CC=01, CHANGE TO CC=20           08740003
+         BE    @STR375C                CC=01, USE CC=20                 08750003
+         CLI   @STRDWD+4+1,X'50'       YY<50?                           08760003
+         BL    @STR375C                YES, USE CC=20                   08770003
+         MVI   @STRDWD+4,X'19'         NO, FORCE CC=19                  08780003
+@STR375C UNPK  @STRWK16(5),@STRDWD+4(3) CCYY?                           08790003
+         ZAP   @STRDWD+1(2),@STR375T+9(1) INIT MONTH COUNTER            08800003
+         &LAE  @02,@STR375T            TABLE OF MONTHS (NUMBER OF DAYS) 08810007
+         TM    @STRDWD+4+1,X'01'       ODD YEARS                        08820000
+         BO    @STR375N                  AREN'T LEAP YEARS              08830000
+         TM    @STRDWD+4+1,X'12'       ZEROES IN 1980, ALL ONES IN 1992 08840000
+         BNM   @STR375L                MIXED IN 1982/1990               08850000
+.*       IF IT'S NOT A LEAP YEAR AND DDD>59, THEN ADD 1 TO DDD          08860000
+@STR375N CP    @STRDWD+4+2(2),@STR375T ARE WE PAST FEB 28 (DDD>59) ?    08870000
+         BNH   @STR375L                NO, JUMP                         08880000
+         AP    @STRDWD+4+2(2),@STR375T+3(1) ADD 1 (FROM 31) TO DDD      08890000
+.*--LOOP WHILE DDD > 0                                                  08900000
+@STR375L AP    @STRDWD+1(2),@STR375T+3(1)   ADD 1 (FROM 31) TO MONTH    08910000
+         LA    @02,2(,@02)             NEXT ENTRY IN "MONTHS" TABLE     08920003
+         SP    @STRDWD+4+2(2),0(2,@02) SUB DAYS-IN-MONTH FROM DDD       08930003
+         BP    @STR375L                                                 08940000
+.*--ENDLOOP                                                             08950000
+         AP    @STRDWD+4+2(2),0(2,@02) UNDO LAST "SP" INSTRUCTION       08960003
+         UNPK  @STRWK16+4(2),@STRDWD+1(2) FYFYFYFY,FMCM??               08970003
+         UNPK  @STRWK16+6(2),@STRDWD+6(2) FYFYFYFY,FMCMFDCD             08980003
+         MVZ   @STRWK16+1(5),@STRWK16  temporary circumvention @JW-Z390 08990019
+         MVZ   @STRWK16+6(2),@STRWK16  of MVZ bug under z390   @JW-Z390 08995019
+         MVC   @STRWK16+8(1),1(@01)    SEPARATOR                        09000003
+         &LAE  @02,@STRWK16+9          WORK AREA                        09010007
+         MVC   0(10,@02),2(@01)        MOVE CORRESPONDING MASK          09020003
+         TR    0(10,@02),@STRWK16      CONVERT DATE TO THE RIGHT FORMAT 09030003
+.FEAT5F  ANOP                          JDATE                            09040000
+.*                                                                      09050000
+.*       HEX STRING                                                     09060000
+.*                                                                      09070000
+         AIF   (NOT &$_FEAT(7)).FEAT7B                                  09080000
+         B     @STR390                 MOVE STRING TO OUTPUT LINE       09090000
+@STR376M MVC   @STRDWD-1(*-*),0(@02)   PREVENT S0C4 IN UNPK             09100000
+@STR376  LA    @00,8                   MAX LENGTH                       09110000
+         CLR   @03,@00                 CHECK LENGTH                     09120000
+         BNH   @STR376B                JUMP IF LE 8                     09130000
+         LR    @03,@00                 TRUNCATE TO MAXIMUM LENGTH       09140000
+@STR376B LR    @01,@03                 INPUT LENGTH                     09150000
+         BCTR  @01,0                                                    09160000
+         EX    @01,@STR376M            MOVE DATA TO SAFE STORAGE        09170000
+         ALR   @03,@03                 OUTPUT LENGTH                    09180000
+         AGO   .FEAT37B                                                 09190000
+.FEAT7B  ANOP                                                           09200000
+         AIF   (NOT &$_FEAT(3)).FEAT37C                                 09210000
+         B     @STR390                 MOVE STRING TO OUTPUT LINE       09220000
+.FEAT37B ANOP                                                           09230000
+@STR376X &LAE  @02,@STRWK16            WORK AREA                        09240007
+         UNPK  0(9,@02),@STRDWD-1(5)   EXPAND SOURCE BYTES FOR "TR"     09250000
+         UNPK  8(9,@02),@STRDWD+3(5)   EXPAND SOURCE BYTES FOR "TR"     09260000
+         TR    0(16,@02),@STRHEXT-240  =C'0123456789ABCDEF'             09270000
+.FEAT37C ANOP                                                           09280000
+.*                                                                      09290000
+.*       %TIME                                                          09300000
+.*                                                                      09310000
+         AIF   (NOT &$_FEAT(12)).FEAT12B                                09320000
+         B     @STR390                 MOVE STRING TO OUTPUT LINE       09330000
+@STRTIME DC    X'4021207A20207A20204B20204000' 0X:XX:XX.XX              09340018
+@STR378  LR    @02,@15                 SAVE BASE REG                    09350007
+         TIME  DEC                     GET HHMMSSHH                     09360007
+         LR    @15,@02                 RESTORE BASE REG                 09370007
+         ST    @00,@STRDWD             STORE HHMMSSHH                   09380000
+         MVC   @STRWK16(13),@STRTIME   MOVE EDIT MASK                   09390000
+         ED    @STRWK16(13),@STRDWD    EDIT HH:MM:SS.HH                 09400018
+         &LAE  @02,@STRWK16+1          WORK AREA                        09410007
+         LA    @03,12                  HH:MM:SS.HH+ SPACE               09420018
+ ORG *-4                                                                09430018
+         LH    @03,@STRFLEN            length is 5 8 11 12              09440018
+.FEAT12B ANOP                                                           09450000
+.*MOVE                                                                  09460000
+@STR390  CR    @03,@05                 COMPARE LENGTH TO REMAINING LEN  09470000
+         BNH   @STR391                 LARGE ENOUGH, JUMP               09480000
+         LR    @03,@05                 TOO BIG, TRUNCATE TO REM. LEN.   09490000
+@STR391  SR    @05,@03                 COMPUTE REMAINING LENGTH         09500000
+         AIF   (NOT &ARMODE).ARMODE39N                                  09510007
+         LAE   @08,0(,@04)             POINTER IN OUTPUT LINE           09520002
+         LR    @09,@03                 PASS REMAINING LENGTH            09530002
+         AGO   .ARMODE39X                                               09540007
+.ARMODE39N ANOP                                                         09550007
+         LR    @00,@04                 POINTER IN OUTPUT LINE           09560007
+         LR    @01,@03                 PASS REMAINING LENGTH            09570007
+.ARMODE39X ANOP                                                         09580007
+         LTR   @02,@02                 BLANKS?                          09590000
+         BNZ   @STR392                 NO, JUMP                         09600000
+         SLR   @03,@03                 YES, ZERO LENGTH                 09610000
+@STR392  ICM   @03,B'1000',@STRBLANKS  PAD WITH BLANKS                  09620000
+         AIF   (NOT &ARMODE).ARMODE44N                                  09630007
+         MVCL  @08,@02                 MOVE FIELD TO OUTPUT LINE        09640002
+         LR    @04,@08                 NEW POINTER IN OUTPUT LINE       09650002
+         AGO   .ARMODE44X                                               09660007
+.ARMODE44N ANOP                                                         09670007
+         MVCL  @00,@02                 MOVE FIELD TO OUTPUT LINE        09680007
+         LR    @04,@00                 NEW POINTER IN OUTPUT LINE       09690007
+.ARMODE44X ANOP                                                         09700007
+@STR398  TM    @STRFLAG,@STRLAST       TEST LAST-ENTRY INDICATOR        09710000
+         BO    @STR399                 Done, exit                       09720009
+         AIF   (NOT &$_FEAT(1)).FEAT1C                                  09730009
+         TM    @STRFLAG,@STRLIT+@STRX40 literal or spaces?              09740009
+         BM    @STR398L                Literal, not spaces              09750009
+         BZ    @STR398X                Neither literal nor spaces       09760009
+         LA    @06,@STRSCON            2-byte entry for blank spaces    09770009
+         B     @STR310                 PROCESS NEXT ENTRY               09780009
+@STR398L LA    @01,7                   mask for NR                      09790009
+         IC    @03,@STRFLAG            pick up flags+length             09800009
+         NR    @03,@01                 R3 has length of short literal   09810009
+         BZ    @STR398T                not an in-line literal, jump     09820009
+         LA    @06,@STRLEN2(@03)       Skip VL parm for in-line literal 09830009
+         B     @STR310                 PROCESS NEXT ENTRY               09840009
+@STR398T LA    @06,@STRFLEN            4-byte parm for remote literal   09850009
+         B     @STR310                 PROCESS NEXT ENTRY               09860009
+.FEAT1C  ANOP                                                           09870009
+@STR398X LA    @06,@STRNEXT            BUMP UP TO NEXT ENTRY            09880009
+         B     @STR310                 PROCESS NEXT ENTRY               09890009
+.*ENDLOOP                                                               09900000
+.*                                                                      09910000
+.*       END-OF-LINE PROCESSING - PAD WITH BLANKS                       09920000
+.*                                                                      09930000
+@STR399  SLR   @01,@01                 SET UP R1 FOR PADDING            09940009
+         ICM   @01,B'1000',@STRBLANKS  SET UP R1 FOR PADDING            09950000
+.***     DROP  @06,@13,@15                                              09960002
+         AIF   (&ARMODE).ARMODE52Y                                      09970007
+         LA    @14,2                   INCREMENT                        09980007
+         AL    @14,12(,@13)            RETURN ADDRESS                   09990007
+         LR    @15,@04                 CURRENT POINTER IN OUTPUT FIELD  10000007
+         SL    @15,8(,@13)             CALCULATE LENGTH USED            10010007
+         MVCL  @04,@00                 PAD WITH BLANKS                  10020007
+         LM    @00,@06,20(@13)         RESTORE WORK REGISTERS           10030007
+         STM   @06+1,@13-1,48(@13)     MAKE SAVE AREA LOOK NORMAL       10040007
+         OI    15(@13),1               SIMULATE "T" OPTION OF RETURN    10050007
+         BR    @14                     RETURN TO CALLER                 10060007
+         AGO   .ARMODE52X                                               10070007
+.ARMODE52Y ANOP                                                         10080007
+         LA    @15,3                   MODIFIABLE AREA                  10090002
+         ESTA  @14,@15                 R14 = START OF OUTPUT AREA       10100002
+         LR    @15,@04                 END OF OUTPUT AREA               10110002
+         SR    @15,@14                 R15 = LENGTH USED IN OUTPUT AREA 10120002
+         MVCL  @04,@00                 PAD WITH BLANKS                  10130000
+         EREG  @00,@14                 RESTORE WORK REGISTERS           10140002
+         STM   @14,@12,12(@13)         MAKE SAVE AREA LOOK NORMAL       10150002
+         OI    15(@13),1               SIMULATE "T" OPTION OF RETURN    10160000
+         PR                            RETURN TO CALLER                 10170002
+.ARMODE52X ANOP                                                         10180007
+.*                                                                      10190000
+         AIF   (NOT (&$_FEAT(3) OR &$_FEAT(7))).FEAT37T                 10200001
+@STRHEXT DC    C'0123456789ABCDEF'     HEX-TO-EBCDIC CONVERSION         10210000
+.FEAT37T ANOP                                                           10220001
+         AIF   (NOT &$_FEAT(8)).FEAT8T                                  10230000
+@STRMASK DC    X'4020202020202020,2020202020202120'                     10240000
+.FEAT8T  ANOP                                                           10250000
+.********************************************************************** 10260000
+.*       Convert S-con to address                                     * 10270008
+.*             Input: GPR2 points to an S-CON in the remote parm list * 10280008
+.*             Output: GPR2 contains the address                      * 10290008
+.********************************************************************** 10300000
+@STRS2A  SLR   @00,@00                                                  10310000
+         ICM   @00,B'0011',0(@02)      R0 = 0000BDDD                    10320000
+         SRDL  @00,12                  R0 = 0000000B, R1= DDD.....      10330000
+         SRL   @01,20                  R1 = 00000DDD (DISPLACEMENT)     10340000
+         AIF   (&ARMODE).ARMODE88Y                                      10350007
+         CLI   0(@02),@06*16+15        R7-R13?                          10360009
+         BH    @STRS2A3                YES, JUMP                        10370007
+.*BASE REG IS R0-R6                                                     10380007
+         LTR   @02,@00                 IS R0 THE BASE REG?              10390007
+         BNZ   @STRS2A2                NO, JUMP                         10400007
+         LTR   @02,@01                 IS THIS A PSA ADDRESS?           10410007
+         BNZR  @14                     YES, GOBACK                      10420007
+@STRS2A2 SLL   @02,2                   R2= 000000BB BASE * 4            10430007
+         L     @02,20(@02,@13)         PICK UP BASE REG VALUE           10440007
+         LA    @02,0(@02,@01)          ADD BASE REG VALUE TO DISPL      10450007
+         BR    @14                                                      10460007
+.*BASE REG IS R7-R13                                                    10470007
+@STRS2A3 LR    @02,@00                 R2= 0000000B (BASE REG NUMBER)   10480007
+         EX    @02,@STRS2A4            ADD BASE REG VALUE TO DISPL      10490007
+         BR    @14                                                      10500008
+@STRS2A4 LA    @02,0(*-*,@01)          ADD BASE REG VALUE TO DISPL      10510007
+         AGO   .ARMODE88X                                               10520007
+.ARMODE88Y ANOP                        AR_MODE=YES                      10530007
+         SLL   @00,2                   MULT BY 4                        10540002
+         CLI   0(@02),@06*16+15        R7-R13?                          10550009
+         BH    @STRS2A6                YES, JUMP                        10560002
+.*BASE REG IS R0-R6                                                     10570000
+         LTR   @02,@00                 IS R0 THE BASE REG?              10580002
+         BNZ   @STRS2A5                NO, JUMP                         10590002
+         LTR   @02,@01                 IS THIS A PSA ADDRESS?           10600002
+         BNZR  @14                     YES, GOBACK                      10610002
+         EREG  @00,@00                 POP R0                           10620002
+         LAE   @02,0                   R2=0 AR2=0                       10630007
+         LR    @02,@00                 PASS R0 VALUE                    10640002
+         LA    @02,0(,@02)             CLEAN UP                         10650002
+         BR    @14                     GOBACK                           10660002
+.*BASE REG IS R1-R6                                                     10670008
+@STRS2A5 LR    @07,@00                 SAVE R0 (B*4)                    10680002
+         LR    @08,@01                 SAVE R1 (DDD)                    10690002
+         LR    @09,@03                 SAVE R3                          10700002
+         LAE   @10,0(,@04)             SAVE R4                          10710002
+         LR    @11,@05                 SAVE R5                          10720002
+         LAE   @12,0(,@06)             SAVE R6                          10730002
+         EREG  @01,@06                 RELOAD CALLER'S R1-R6            10740002
+         EX    0,@STRS2A7-4(@07)       ADD BASE REG VALUE TO DISPL      10750002
+         LR    @03,@09                 RESTORE R3                       10760002
+         LAE   @04,0(,@10)             RESTORE R4                       10770002
+         LR    @05,@11                 RESTORE R5                       10780002
+         LAE   @06,0(,@12)             RESTORE R6                       10790002
+         BR    @14                     GOBACK                           10800002
+.*BASE REG IS R7-R13                                                    10810002
+@STRS2A6 LR    @02,@00                 R2= 0000000B (BASE REG NUMBER)   10820002
+         EREG  @07,@12                 RESTORE CALLER'S R7-R12          10830002
+         EX    0,@STRS2A7-4(@02)       ADD BASE REG VALUE TO DISPL      10840002
+         BR    @14                     GOBACK                           10850007
+@STRS2A7 LAE   @02,0(@08,@01)          ADD BASE REG VALUE TO DISPL      10860002
+         LAE   @02,0(@08,@02)          ADD BASE REG VALUE TO DISPL      10870002
+         LAE   @02,0(@08,@03)          ADD BASE REG VALUE TO DISPL      10880002
+         LAE   @02,0(@08,@04)          ADD BASE REG VALUE TO DISPL      10890002
+         LAE   @02,0(@08,@05)          ADD BASE REG VALUE TO DISPL      10900002
+         LAE   @02,0(@08,@06)          ADD BASE REG VALUE TO DISPL      10910002
+         LAE   @02,0(@01,@07)          ADD BASE REG VALUE TO DISPL      10920002
+         LAE   @02,0(@01,@08)          ADD BASE REG VALUE TO DISPL      10930002
+         LAE   @02,0(@01,@09)          ADD BASE REG VALUE TO DISPL      10940002
+         LAE   @02,0(@01,@10)          ADD BASE REG VALUE TO DISPL      10950002
+         LAE   @02,0(@01,@11)          ADD BASE REG VALUE TO DISPL      10960002
+         LAE   @02,0(@01,@12)          ADD BASE REG VALUE TO DISPL      10970002
+         LAE   @02,0(@01,@13)          ADD BASE REG VALUE TO DISPL      10980002
+.ARMODE88X ANOP                                                         10990007
+         AIF   ('&OPT3' EQ 'LOCTR').GENL7L                              11000007
+@STRBLANKS DC  CL((((*+&STRBLANKS+7-@STRING)/8)*8)-(*-@STRING))' '      11010000
+         AGO   .GENL7X                                                  11020000
+.GENL7L  ANOP                                                           11030000
+@STRBLANKS DC  CL&STRBLANKS.' '                                         11040000
+.GENL7X  ANOP                                                           11050000
+@STRING_SIZE EQU *-@STRING             SIZE OF GENERATED CSECT          11060000
+         DROP  @06,@13,@15                                              11070010
+.********************************************************************** 11080000
+.*       WORK AREA (CALLER'S SAVE AREA)                               * 11090000
+.********************************************************************** 11100000
+@STRSAVE DSECT                         24-BYTE WORK AREA                11110000
+         DS    A(0,@STRSAVE,@STRSAVE,14,15,0,1,2,3,4,5,6)               11120000
+@STRWK16 DS    F'7,8,9,10'             WORK AREA                        11130000
+@STRDWD  DS    D'1112'                 WORK AREA                        11140000
+@STRPARM DSECT                                                          11150000
+@STRFLAG DS    B                   +0  FORMAT, FLAGS                    11160009
+@STRLAST EQU   X'80'                     LAST ENTRY                     11170000
+@STRLIT  EQU   X'40'                     LITERAL, @STRSCON IS AN OFFSET 11180000
+@STRX40  EQU   X'20'                   String of Spaces                 11190009
+.*             X'0F'                   CONVERSION REQUIRED              11200009
+.*                                     or length of short literal       11210009
+@STRHEX  EQU   X'08'                     HEXADECIMAL                    11220000
+@STRBIN  EQU   X'04'                     BINARY                         11230000
+@STRPACK EQU   X'02'                     PACKED                         11240000
+@STRREG  EQU   X'01'                     REGISTER                       11250000
+@STRLEN2 DS    B                   +1  FORMAT, OUTPUT LENGTH            11260009
+.*                                     or start of short literal        11270009
+@STRLEFT EQU   X'80'                     LEFT JUSTIFICATION             11280000
+@STRZERO EQU   X'40'                     LEADING ZEROES                 11290000
+.*             X'3F'                     OUTPUT LENGTH, 0 MEANS TRUNC.  11300000
+@STRSCON DS    S                   +2  FIELD ADDRESS                    11310009
+@STRFLEN DS    S                   +4  FIELD LENGTH                     11320009
+@STRNEXT EQU   *                   +6                                   11330000
+         AIF   (NOT D'$LTORG).MEND99   CSECT-ONLY                       11340007
+         AIF   (D'$STRING).MEND99      CSECT-ONLY                       11350007
+$LTORG   LOCTR                                                          11360000
+         AIF   ('&OPT3' EQ 'LOCTR').GENL9L                              11370007
+         CNOP  0,4                                                      11380000
+$STRING  BALR  @15,0                   LOCAL BASE                       11390003
+         L     @15,6(@15,0)            ROUTINE ADDRESS           00     11400003
+         BR    @15                     GO TO @STRING             04     11410002
+         AGO   .GENL9                                                   11420000
+.GENL8   ANOP                          GENERATE,NOCSECT                 11430000
+&$_LIT   SETA  0                       DO NOT GENERATE LITERALS TWICE   11440007
+&$_FEAT(1) SETB 1,1,1,1,1,1,1,1,1,1,1,1   GENERATE=FULL                 11450007
+$LTORG   LOCTR                                                          11460000
+         CNOP  0,4                                                      11470000
+$STRING  BALR  R15,0                   LOCAL BASE                       11480002
+         L     R15,6(R15,0)            ROUTINE ADDRESS           00     11490003
+         BR    R15                     GO TO @STRING             04     11500002
+.GENL9   ANOP                                                           11510000
+         DC    V(@STRING)              ROUTINE ADDRESS           06     11520002
+.* MNOTE   1,'&$_CSECT_NO '                                             11530016
+         AIF   (&$_CSECT_NO EQ 1).MEND                                  11540016
+&I       SETA  2                                                        11550016
+.*loop                                                                  11560016
+.GENL8K  ANOP                                                           11570016
+.* MNOTE   1,'&$_CSECT(&I) '                                            11580016
+         AIF   ('&$_CSECT(&I)' EQ '').MEND                              11590016
+&STR     SETC  '&$_CSECT(&I)'                                           11600018
+$LTORG_&STR LOCTR                                                       11610018
+         CNOP  0,4                                                      11620016
+$STRING_&STR BALR R15,0                LOCAL BASE                       11630018
+         L     R15,6(R15,0)            ROUTINE ADDRESS           00     11640016
+         BR    R15                     GO TO @STRING             04     11650016
+         DC    V(@STRING)              ROUTINE ADDRESS           06     11660016
+&I       SETA  1+&I                                                     11670016
+         AGO   .GENL8K                                                  11680016
+.*endloop                                                               11690016
+         AGO   .MEND                                                    11700000
+.GENL9L  POP   USING                   GENERATE,LOCTR                   11710002
+$STRING  BASR  R15,0                   Local Base                       11720013
+         AH    R15,6(R15,0)            Add offset to @STRING routine    11730013
+         BR    R15                     Branch to @STRING                11740013
+         DC    Y(@STRING-$STRING-2)    Offset to @STRING Routine        11750013
+.MEND    AIF   ('&PRINT' EQ 'NOGEN').MEND99                             11760000
+         POP   PRINT                                                    11770000
+.MEND99  MEND                                                           11780000
+         EJECT                                                          11790000
+**********************************************************************  11800000
+**********************************************************************  11810000
+********* MVS TEST PROGRAM FOR THE 'STRING' MACRO ********************  11820017
+**********************************************************************  11830000
+**********************************************************************  11840000
+**       STRING (GENERATE,AR_MODE)                                      11850007
+**       END                                                            11860007
+         LCLA  &ASMH_HLASM                                              11870007
+         AIF   (T'&ASMH_HLASM EQ 'N').ASMH1X                            11880007
+&SYSVER  SETC  'ASMH'                                                   11890007
+&SYSDATC SETC  '20'.'&SYSDATE'(7,2)'&SYSDATE'(1,2)'&SYSDATE'(4,2)       11900007
+.ASMH1X  ANOP                                                           11910007
+TESTPGM  START X'027000'                                                11920002
+TESTPGM  AMODE 24                      (PRE-SMS PUT)                    11930008
+         BALR  R12,0                                                    11940000
+         USING *,R12                                                    11950000
+ LOAD EP=SYSDEBUG,ERRET=DEBUG111                                        11960015
+ LR R15,R0                                                              11970002
+ BASSM R14,R15                                                          11980002
+DEBUG111 EQU *                                                          11990015
+*STRING 1X,INTO=XXX                                                     12000002
+*RC8     STRING ((R1),,R**B),((R1),,R22Z),((R1),,R16B),INTO=XXX         12010014
+         OPEN  (SYSPRINT,OUTPUT)                                        12020000
+         STRING 'Assembler is &SYSVER, DATE is &SYSDATC',INTO=XXX       12030007
+         PUT   SYSPRINT,XXX                                             12040007
+         STRING 'AMPERSAND=&& AND APOSTROPHE='' ',INTO=XXX              12050014
+         PUT   SYSPRINT,XXX                                             12060014
+RBPREFIX EQU   *                                                        12070002
+RBINTCOD EQU   *+6,2,C'H'                                               12080002
+         L     R1,PSATOLD-PSA(0,0)     TCB                              12090008
+         L     R1,0(,R1)               TCBRBP                           12100002
+         L     R2,PSAAOLD-PSA(0,0)     ASCB                             12110014
+R2ASCB   USING ASCB,R2                                                  12120014
+         L     R8,=X'88888888'                                          12130017
+         STRING 'SVC',(RBINTCOD-RBPREFIX(R1),H,R3Z),                   X12140002
+               1X,(WWWW,,T),' - ',     VV.MM OF SVC RTNE               X12150002
+               ((R8),,X),1X,           COM-REG ADDR                    X12160002
+               'ASID=',(R2ASCB.ASCBASID,,X),1X,                        X12170014
+               PARM1,1X,               MAIN PGM NAME                   X12180002
+               INTO=XXX                                                 12190002
+         PUT   SYSPRINT,XXX                                             12200002
+*                                                                       12210002
+         LA    R2,XXX                                                   12220002
+         STRING 1X,INTO=((R2),8)                                        12230002
+         MACRO                                       JDATE MACRO        12240000
+        @JDATE &DATE                                 JDATE MACRO        12250000
+         LA    R1,=P'&DATE'                          JDATE MACRO        12260000
+*** STRING ((R1),P),2X,((R1),P),INTO=XXX                                12270000
+         STRING ((R1),P,R5Z),                        JDATE MACRO       X12280000
+               2X,((R1),P,YYMMDD),                   JDATE MACRO       X12290000
+               2X,((R1),P,YY/MM/DD),                 JDATE MACRO       X12300000
+               2X,((R1),P,DD/MM/YY),                 JDATE MACRO       X12310000
+               2X,((R1),P,MM/DD/YY),                 JDATE MACRO       X12320000
+               2X,((R1),P,YYYYMMDD),                 JDATE MACRO       X12330000
+               2X,((R1),P,YYYY-MM-DD),               JDATE MACRO       X12340000
+               INTO=XXX                              JDATE MACRO        12350000
+         PUT   SYSPRINT,XXX                          JDATE MACRO        12360000
+         MEND                                        JDATE MACRO        12370000
+        @JDATE 90058                                                    12380000
+        @JDATE 91059                                                    12390000
+        @JDATE 93060                                                    12400000
+        @JDATE 94365                                                    12410000
+        @JDATE 80058                                                    12420000
+        @JDATE 84059                                                    12430000
+        @JDATE 88060                                                    12440000
+        @JDATE 92061                                                    12450000
+        @JDATE 00366                                                    12460000
+         LA    R2,1234                                                  12470000
+         STRING 'CVTPTR=X''',(CVTPTR,4,X),'''',INTO=XXX,               X12480000
+               ' 1234=',((R2),,R4Z)                                     12490000
+         PUT   SYSPRINT,XXX                                             12500000
+         L     R1,CVTPTR(0,0)                                           12510008
+         STRING 'CVTDATE=',(56(R1),P,YYMMDD),INTO=XXX                   12520000
+         PUT   SYSPRINT,XXX                                             12530000
+         LA    R0,1000                                                  12540000
+         LA    R3,0033                                                  12550000
+         STRING 'D1=/',D1,'/,WWWW=/',WWWW,'/',                         X12560000
+               ((R3),,L),'/',((R3),,X),'/',((R0),,L),'/',              X12570000
+               ((R3),,R9B),'/',INTO=XXX                                 12580000
+         LR    R4,R15                   LENGTH USED                     12590000
+         PUT   SYSPRINT,XXX                                             12600000
+         STRING WWWW,                                                  X12610000
+               (4(R13),4,X),'''',(4(R13),F),'''',                      X12620000
+               (4(R13),F,L),'''',                                      X12630000
+               (4(R13),F,L11),'''',                                    X12640000
+               (4(R13),F,Z9),'''',                                     X12650000
+               8X,'R4=',((R4),,L),      LENGTH USED                    X12660000
+               INTO=XXX                                                 12670000
+         PUT   SYSPRINT,XXX                                             12680000
+         STRING %TIME,D1,'B12345678B',5X,(CTR1,P),1X,PARM1,1X,PARM2,   X12690000
+               INTO=XXX                                                 12700000
+         PUT   SYSPRINT,XXX                                             12710000
+         STRING (%TIME,5),'|',(%TIME,8),'|',(%TIME,11),'|',(%TIME,12), X12720018
+               '|',INTO=XXX                                             12730018
+         PUT   SYSPRINT,XXX                                             12740018
+         LA    R3,17                                                    12750000
+         STRING INTO=XXX,'CCC1234A',(D1,(R3)),'.',(CTR1,P,R7Z)          12760000
+         PUT   SYSPRINT,XXX                                             12770000
+         STRING C'DDN2(',(D1,,T),')',X'40C1C2,C3C4',                   +12780009
+               ' PSATOLD=',(PSATOLD-PSA,,X),                           +12790000
+               INTO=XXX                                                 12800000
+         PUT   SYSPRINT,XXX                                             12810000
+         AIF   ('&SYSVER' EQ 'ASMH').HLASM99                            12820007
+PSABASE  USING PSA,R0                                                   12830000
+         STRING 'PSATOLD=',(PSABASE.PSATOLD,,X),                       +12840000
+               ' PSATOLD=',(PSATOLD-PSA,,X),                           +12850000
+               INTO=XXX                                                 12860000
+         PUT   SYSPRINT,XXX                                             12870000
+.HLASM99 ANOP                                                           12880000
+         BALR  R0,0                                                     12890000
+         STRING 'R0=',((R0),,X),'   16(R0)=',(16(R0),4,X),INTO=XXX      12900000
+         PUT   SYSPRINT,XXX                                             12910000
+         STRING 'R0=',((R0),,X),'   CTR1=',(CTR1,P,R5B),INTO=XXX        12920012
+         PUT   SYSPRINT,XXX                                             12930012
+         SLR   R0,R0                                                    12940012
+         STRING 'R0=',((R0),,X),'   CTR2=',(CTR2,P,L),'.',INTO=XXX      12950015
+         PUT   SYSPRINT,XXX                                             12960012
+*                                                                       12970016
+         CALL  TCSECT2              <- 2nd CSECT                        12980016
+*                                                                       12990016
+         CALL  TCSECT3              <- 3rd CSECT                        13000016
+*                                                                       13010002
+AMODE31  LA    R12,0(,R12)             BALR->BASR                       13020002
+         L     R15,=A(*+X'80000006')   AMODE=31                         13030002
+         BSM   0,R15                   AMODE=31                         13040002
+         L     R1,=A(@STRING)          point at CSECT                   13050007
+         CLC   =C'/390',11(R1)         (GENERATE,AR_MODE) ?             13060007
+         BNE   EXIT                    no, prevent S0E0                 13070007
+         DSPSERV CREATE,                                               X13080002
+               NAME==CL8'STRING00',    C'STRING00'                     X13090002
+               BLOCKS=HDRBLKS,         SIZE IN PAGES                   X13100002
+               STOKEN=DSPCSTKN,                                        X13110002
+               ORIGIN=DSPCORG                                           13120002
+         ALESERV ADD,STOKEN=DSPCSTKN,ALET=DSPCALET                      13130002
+         LAM   R8,R8,DSPCALET          POINT TO THE DATA SPACE          13140002
+         L     R8,DSPCORG              SPACE ORIGIN (0 OR 4096)         13150002
+         SAC   512                     MODE=AR                          13160002
+ LAM R14,R6,TESTPGM+40                 S0E0-28                          13170003
+         STRING WWWW,'AR_MODE WORKED OK',INTO=(2048(R8),100)            13180007
+         LAM   R2,R2,DSPCALET          POINT TO THE DATA SPACE          13190007
+         LR    R2,R8                   SPACE ORIGIN (0 OR 4096)         13200007
+         STRING (2048+L'WWWW(R2),30,T),INTO=XXX                         13210007
+         SAC   0                       MODE=AR OFF                      13220007
+         PUT   SYSPRINT,XXX            AR_MODE WORKS OK                 13230007
+*                                                                       13240002
+EXIT     SLR   R15,R15                                                  13250007
+         SVC   3                       GOBACK                           13260002
+*                                                                       13270016
+*        2ND CSECT                                                      13280018
+*                                                                       13290018
+TCSECT2  CSECT                                                          13300016
+         BAKR  R14,0                                                    13310016
+         LR    R10,R15                                                  13320016
+         USING TCSECT2,R10                                              13330016
+         STRING '----> TCSECT2 STRING <----  R516',INTO=XXX             13340016
+         PUT   SYSPRINT,XXX                                             13350016
+         L     R1,CVTPTR(0,0)                                           13360016
+         STRING 'CVTDATE=',(56(R1),4,X),',R8=',((R8),,L),INTO=XXX       13370016
+         PUT   SYSPRINT,XXX                                             13380016
+         PR                                                             13390016
+         DROP                                                           13400017
+*                                                                       13410016
+*        3RD CSECT with NO name                                         13420018
+*                                                                       13430018
+         CSECT                           no-name                        13440016
+         ENTRY TCSECT3                                                  13450016
+TCSECT3  BAKR  R14,0                                                    13460016
+         LR    R12,R15                                                  13470017
+         USING TCSECT3,R12                                              13480017
+         L     R10,PRT3ADDR                                             13490017
+         USING SYSPRINT,R10                                             13500017
+         STRING '----> TCSECT3 STRING <----  R517',INTO=XXX             13510017
+         PUT   SYSPRINT,XXX                                             13520017
+         L     R1,CVTPTR(0,0)                                           13530016
+         STRING 'CVTDATE=',(56(R1),4,X),',R9=',((R9),,L),INTO=XXX       13540017
+         PUT   SYSPRINT,XXX                                             13550017
+         PR                                                             13560016
+         DS    0F                                                       13570017
+PRT3ADDR DC    A(SYSPRINT)                                              13580017
+*                                                                       13590016
+TESTPGM  CSECT                                                          13600016
+D1       DC    C'D1-----D1    '                                         13610000
+WWWW     DC    C'WWWW'                                                  13620000
+CTR1     DC    P'1'                                                     13630000
+CTR2     DC    P'-33'                                                   13640015
+PARM1    DC    C'<-PARM1->'                                             13650000
+PARM2    DC    C'<-PARM2->'                                             13660000
+DSPCSTKN DS    XL8                  0  AS TOKEN                         13670002
+DSPCALET DS    F                    8  ALET                             13680002
+DSPCORG  DS    F                   12  ORIGIN                           13690002
+HDRBLKS  DC    F'100'                                                   13700002
+CVTPTR   EQU   0016,4,C'A'                                              13710000
+SYSPRINT DCB   DSORG=PS,DDNAME=SYSPRINT,MACRF=PM,RECFM=FB,LRECL=121     13720000
+XXX      DS    CL121                                                    13730017
+*                                                                       13740016
+XYZ      DSECT                                                          13750000
+         STRING GENERATE                                                13760007
+**       STRING (GENERATE,NO_CSECT) -\                                  13770007
+**       STRING (GENERATE,AR_MODE)  -/                                  13780007
+**       STRING (GENERATE,,LOCTR)                                       13790007
+**       STRING (GENERATE,AR_MODE,LOCTR)                                13800007
+**       STRING (GENERATE,NO_CSECT,LOCTR)    invalid combination        13810007
+         YREGS                                                          13820000
+PSA      DSECT                                                          13830000
+PSATOLD  EQU   *+X'21C',4,C'A'                                          13840000
+PSAAOLD  EQU   *+X'224',4,C'A'                                          13850014
+ASCB     DSECT                                                          13860014
+ASCBASID EQU   *+36,2,C'X'                                              13870014
+         END                                                            13880000
+//SYSPRINT DD SYSOUT=*                                                  13890000
+//SYSLIB   DD DSN=SYS1.MACLIB,DISP=SHR                                  13900000
+//SYSUT1   DD UNIT=VIO,SPACE=(CYL,2)                                    13910000
+//SYSLIN   DD UNIT=VIO,SPACE=(TRK,1),DISP=(,PASS),DCB=BLKSIZE=3200      13920000
+//*                                                                     13930000
+//GO      EXEC PGM=LOADER,PARM=PRINT,TIME=(,2)                          13940009
+//SYSLIN   DD DSN=*.HLASM.SYSLIN,DISP=(OLD,DELETE)                      13950013
+//SYSLOUT  DD SYSOUT=*                                                  13960007
+//SYSPRINT DD SYSOUT=*                                                  13970000
+//SYSDEBUG DD SYSOUT=*                                                  13980002
+//SYSUDUMP DD SYSOUT=*                                                  13990000

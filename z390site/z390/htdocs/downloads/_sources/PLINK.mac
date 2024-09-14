@@ -1,0 +1,17 @@
+.* COPYRIGHT (C) 1988, PAUL A. SCOTT, ALL RIGHTS RESERVED               00010000
+.*                                                                      00020000
+         MACRO                                                          00030000
+&NAME    PLINK                                                          00040000
+.*                                                                      00050000
+         COPY  PSMGBL01                                                 00060000
+.*                                                                      00070000
+         LCLA  &A                                                       00080000
+&A       SETA  N'&SYSLIST(2)                                            00090000
+.*                                                                      00100000
+&NAME    LR    1,&SP                                                    00110000
+         LA    &SP,4*&A.(,&SP)                                          00120000
+         LINK  EP=&SYSLIST(1),PARAM=&SYSLIST(2),VL=1,MF=(E,(1))         00130000
+         LA    14,4*&A                                                  00140000
+         SR    &SP,14                                                   00150000
+.*                                                                      00160000
+         MEND                                                           00170000

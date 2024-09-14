@@ -1,0 +1,144 @@
+**********************************************************************  08320000
+**********************************************************************  08330000
+********* TEST PROGRAM FOR THE 'STRING' MACRO ************************  08340000
+**********************************************************************  08350000
+**********************************************************************  08360000
+         MACRO                                            JDATE MACRO   08370001
+        @JDATE &DATE                                      JDATE MACRO   08380001
+         LA    R1,=P'&DATE'                               JDATE MACRO   08390001
+*** STRING ((R1),P),2X,((R1),P),INTO=XXX                  JDATE MACRO   08400001
+         STRING ((R1),P),2X,((R1),P,YYMMDD),INTO=XXX,     JDATE MACRO  X08410001
+               3X,((R1),P,YY/MM/DD),                      JDATE MACRO  X08420001
+               3X,((R1),P,DD/MM/YY),                      JDATE MACRO  X08430001
+               3X,((R1),P,MM/DD/YY),                      JDATE MACRO  X08440001
+               3X,((R1),P,YYYYMMDD),                      JDATE MACRO  X08450001
+               3X,((R1),P,YYYY-MM-DD),                    JDATE MACRO  X08460001
+               3X,((R1),P,DD.MM.YYYY)                     JDATE MACRO   08460001
+         PUT   SYSPRINT,XXX                               JDATE MACRO   08470001
+         MEND                                             JDATE MACRO   08480001
+**********************************************************************  08490001
+         LCLC  &SYSVER,&SYSDATC                                         08500001
+&SYSVER  SETC  'MZ390'                                                  08510001
+&SYSDATC SETC  '20'.'&SYSDATE'(7,2).'&SYSDATE'(1,2).'&SYSDATE'(4,2)     08520000
+TESTPGM  START X'015000'                                                08530001
+         BALR  R12,0                                                    08540000
+         USING *,R12                                                    08550000
+         OPEN  (SYSPRINT,OUTPUT)                                        08610000
+         STRING 'Assembler is &SYSVER, DATE is &SYSDATC',INTO=XXX       08620000
+         PUT   SYSPRINT,XXX                                             08630000
+         STRING 'AMPERSAND=&& AND APOSTROPHE='' ',INTO=XXX              08640000
+         PUT   SYSPRINT,XXX                                             08650000
+RBPREFIX EQU   *                                                        08660000
+RBINTCOD EQU   *+6,2,C'H'                                               08670000
+         L     R1,PSATOLD-PSA(0,0)                                      08680000
+         L     R1,0(,R1)               TCBRBP                           08690000
+         L     R2,PSAAOLD-PSA(0,0)     ASCB                             08700000
+         STRING 'SVC',(RBINTCOD-RBPREFIX(R1),H,R3Z),                   X08710000
+               1X,(WWWW,,T),' - ',     VV.MM OF SVC RTNE               X08720000
+               ((R8),,X),1X,           COM-REG ADDR                    X08730000
+               'ASID=',(ASCBASID-ASCB(R2),,X),1X,                      X08740001
+               PARM1,1X,               MAIN PGM NAME                   X08750000
+               INTO=XXX                                                 08760000
+         PUT   SYSPRINT,XXX                                             08770000
+*                                                                       08780000
+         LA    R2,XXX                                                   08790000
+         STRING 1X,INTO=((R2),8)                                        08800000
+        @JDATE 90058                                                    08810000
+        @JDATE 91059                                                    08820000
+        @JDATE 93060                                                    08830000
+        @JDATE 94365                                                    08840000
+        @JDATE 80058                                                    08850000
+        @JDATE 84059                                                    08860000
+        @JDATE 88060                                                    08870000
+        @JDATE 92061                                                    08880000
+        @JDATE 00366                                                    08890000
+        @JDATE 06057                                                    08890000
+        @JDATE 12059                                                    08890000
+        @JDATE 12060                                                    08890000
+        @JDATE 12061                                                    08890000
+         L     R1,CVTPTR(0,0)                                           08940000
+         STRING (56(R1),P),2X,(56(R1),P,YYMMDD),INTO=XXX,              X
+               3X,(56(R1),P,YY/MM/DD),                                 X
+               3X,(56(R1),P,DD/MM/YY),                                 X
+               3X,(56(R1),P,MM/DD/YY),                                 X
+               3X,(56(R1),P,YYYYMMDD),                                 X
+               3X,(56(R1),P,YYYY-MM-DD),                               X
+               3X,(56(R1),P,DD.MM.YYYY)
+         PUT   SYSPRINT,XXX
+         LA    R2,1234                                                  08900000
+         STRING 'CVTPTR=X''',(CVTPTR,4,X),'''',INTO=XXX,               X08910000
+               ' 1234=',((R2),,R4Z)                                     08920000
+         PUT   SYSPRINT,XXX                                             08930000
+         L     R1,CVTPTR(0,0)                                           08940000
+         STRING 'CVTDATE=',(56(R1),P,YYMMDD),INTO=XXX                   08950000
+         PUT   SYSPRINT,XXX                                             08960000
+         LA    R0,1000                                                  08970000
+         LA    R3,0033                                                  08980000
+         STRING 'D1=/',D1,'/,WWWW=/',WWWW,'/',                         X08990000
+               ((R3),,L),'/',((R3),,X),'/',((R0),,L),'/',              X09000000
+               ((R3),,R9B),'/',INTO=XXX                                 09010000
+         LR    R4,R15                   LENGTH USED                     09020000
+         PUT   SYSPRINT,XXX                                             09030000
+         STRING WWWW,                                                  X09040000
+               (4(R13),4,X),'''',(4(R13),F),'''',                      X09050000
+               (4(R13),F,L),'''',                                      X09060000
+               (4(R13),F,L11),'''',                                    X09070000
+               (4(R13),F,Z9),'''',                                     X09080000
+               8X,'R4=',((R4),,L),      LENGTH USED                    X09090000
+               INTO=XXX                                                 09100000
+         PUT   SYSPRINT,XXX                                             09110000
+         STRING %TIME,D1,'B12345678B',5X,(CTR1,P),1X,PARM1,1X,PARM2,   X09120000
+               INTO=XXX                                                 09130000
+         PUT   SYSPRINT,XXX                                             09140000
+         STRING (%TIME,5),'|',(%TIME,8),'|',(%TIME,11),'|',(%TIME,12), X09143018
+               '|',INTO=XXX                                             09145018
+         PUT   SYSPRINT,XXX                                             09147018
+         LA    R3,17                                                    09150001
+         STRING INTO=XXX,'CCC1234A',(D1,(R3)),'.',(CTR1,P,R7Z)          09160000
+         PUT   SYSPRINT,XXX                                             09170000
+         STRING C'DDN2(',(D1,,T),')',X'40C1C2,C3C4',                   +09180000
+               ' PSATOLD=',(PSATOLD-PSA,,X),                           +09190000
+               INTO=XXX                                                 09200000
+         PUT   SYSPRINT,XXX                                             09210000
+         BALR  R0,0                                                     09220000
+         STRING 'R0=',((R0),,X),'   16(R0)=',(16(R0),4,X),INTO=XXX      09230000
+         PUT   SYSPRINT,XXX                                             09240000
+         STRING 'R0=',((R0),,X),'   CTR1=',(CTR1,P,R5B),INTO=XXX        09250000
+         PUT   SYSPRINT,XXX                                             09260000
+         SLR   R0,R0                                                    09270000
+         STRING 'R0=',((R0),,X),'   CTR1=',(CTR1,P,R5B),INTO=XXX        09280000
+         PUT   SYSPRINT,XXX                                             09290000
+*                                                                       09300000
+EXIT     SLR   R15,R15                                                  09310000
+         SVC   3                       GOBACK                           09320000
+D1       DC    C'D1-----D1    '                                         09330000
+WWWW     DC    C'WWWW'                                                  09340000
+CTR1     DC    P'1'                                                     09350000
+PARM1    DC    C'<-PARM1->'                                             09360000
+PARM2    DC    C'<-PARM2->'                                             09370000
+XXX      DS    CL132                                                    09380000
+CVTPTR   EQU   0016,4,C'A'                                              09390000
+SYSPRINT DCB   DSORG=PS,DDNAME=SYSPRINT,MACRF=PM,RECFM=FT,LRECL=121     09400000
+         STRING GENERATE                                                09410000
+R0       EQU   0                                                        09420001
+R1       EQU   1                                                        09430001
+R2       EQU   2                                                        09440001
+R3       EQU   3                                                        09450001
+R4       EQU   4                                                        09460001
+R5       EQU   5                                                        09470001
+R6       EQU   6                                                        09480001
+R7       EQU   7                                                        09490001
+R8       EQU   8                                                        09500001
+R9       EQU   9                                                        09510001
+R10      EQU   10                                                       09520001
+R11      EQU   11                                                       09530001
+R12      EQU   12                                                       09540001
+R13      EQU   13                                                       09550001
+R14      EQU   14                                                       09560001
+R15      EQU   15                                                       09570001
+PSA      DSECT                                                          09580000
+PSATOLD  EQU   *+X'21C',4,C'A'                                          09590000
+PSAAOLD  EQU   *+X'224',4,C'A'                                          09600000
+ASCB     DSECT                                                          09610000
+ASCBASID EQU   *+36,2,C'X'                                              09620000
+         END                                                            09630000

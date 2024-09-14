@@ -1,0 +1,10 @@
+22:18:53 strngtst  EZ390 START USING z390 V1.5.06 ON J2SE 1.7.0_67 10/07/14
+EZ390I Copyright 2011 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = C:\Users\juergen\Desktop\string\string_test_program\strngtst.390
+EZ390I options = IPL(TESTIPL1)
+TESTIPL1 IPL STARTING
+TESTIPL1 IPL COMPLETE
+EZ390I instructions/sec     = 302019
+EZ390I total errors         = 0
+22:18:53 strngtst  EZ390 ENDED   RC= 0 SEC= 0 MEM(MB)= 19 IO=78 INS=15403

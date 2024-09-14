@@ -1,0 +1,22 @@
+.* COPYRIGHT (C) 1988, PAUL A. SCOTT, ALL RIGHTS RESERVED               00010000
+.*                                                                      00020000
+         MACRO                                                          00030000
+&NAME    PCALL                                                          00040000
+.*                                                                      00050000
+         COPY  PSMGBL01                                                 00060000
+.*                                                                      00070000
+         LCLA  &A                                                       00080000
+&A       SETA  N'&SYSLIST(2)                                            00090000
+.*                                                                      00100000
+         AIF   (&A GT 0).L00100                                         00110000
+&NAME    CALL  &SYSLIST(1)                                              00120000
+         MEXIT                                                          00130000
+.*                                                                      00140000
+.L00100  ANOP                                                           00150000
+&NAME    LR    1,&SP                                                    00160000
+         LA    &SP,4*&A.(,&SP)                                          00170000
+         CALL  &SYSLIST(1),&SYSLIST(2),VL,MF=(E,(1))                    00180000
+         LA    14,4*&A                                                  00190000
+         SR    &SP,14                                                   00200000
+.*                                                                      00210000
+         MEND                                                           00220000

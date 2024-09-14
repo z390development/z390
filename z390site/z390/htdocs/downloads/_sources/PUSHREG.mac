@@ -1,0 +1,39 @@
+.* COPYRIGHT (C) 1988, PAUL A. SCOTT, ALL RIGHTS RESERVED               00010000
+.*                                                                      00020000
+         MACRO                                                          00030000
+&NAME    PUSHREG                                                        00040000
+.*                                                                      00050000
+         COPY  PSMGBL01                                                 00060000
+         COPY  PSMGBL02                                                 00070000
+         LCLA  &I,&J,&K,&N                                              00080000
+.*                                                                      00090000
+         AIF   (T'&NAME EQ 'O').A000                                    00100000
+&NAME    DS    0H                                                       00110000
+.A000    ANOP                                                           00120000
+.*                                                                      00130000
+&N       SETA  N'&SYSLIST                                               00140000
+         AIF   (&N GT 0).A010                                           00150000
+         MEXIT                                                          00160000
+.*                                                                      00170000
+.A010    ANOP                                                           00180000
+&I       SETA  1                                                        00190000
+&J       SETA  0                                                        00200000
+&K       SETA  0                                                        00210000
+.A020    ANOP                                                           00220000
+         PSMROP &SYSLIST(&I)                                            00230000
+         AIF   (&PSMROPC GT 1).A030                                     00240000
+         ST    &PSMROP1,&J.(,&SP)                                       00250000
+         AGO   .A040                                                    00260000
+.*                                                                      00270000
+.A030    ANOP                                                           00280000
+         STM   &PSMROP1,&PSMROP2,&J.(&SP)                               00290000
+.*                                                                      00300000
+.A040    ANOP                                                           00310000
+&I       SETA  &I+1                                                     00320000
+&J       SETA  &J+(4*&PSMROPC)                                          00330000
+&K       SETA  &K+&PSMROPC                                              00340000
+         AIF   (&I LE &N).A020                                          00350000
+.*                                                                      00360000
+         LA    &SP,4*&K.(,&SP)                                          00370000
+.*                                                                      00380000
+         MEND                                                           00390000

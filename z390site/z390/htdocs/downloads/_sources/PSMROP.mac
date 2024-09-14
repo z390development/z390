@@ -1,0 +1,37 @@
+.* COPYRIGHT (C) 1988, PAUL A. SCOTT, ALL RIGHTS RESERVED               00010000
+.*                                                                      00020000
+         MACRO                                                          00030000
+         PSMROP                                                         00040000
+.*                                                                      00050000
+         COPY  PSMGBL02                                                 00060000
+         LCLA  &A                                                       00070000
+.*                                                                      00080000
+.A010    ANOP                                                           00090000
+.*                                                                      00100000
+&PSMROPC SETA  0                                                        00110000
+&PSMROP1 SETA  17                                                       00120000
+&PSMROP2 SETA  17                                                       00130000
+&A       SETA  N'&SYSLIST(1)                                            00140000
+         AIF   (&A LT 1).A040                                           00150000
+.*                                                                      00160000
+         AIF   (&A GT 1).A020                                           00170000
+         PSMRVAL &SYSLIST(1,1)                                          00180000
+&PSMROP1 SETA  &PSMRVAL                                                 00190000
+&PSMROP2 SETA  &PSMRVAL                                                 00200000
+&PSMROPC SETA  1                                                        00210000
+         AGO   .A040                                                    00220000
+.*                                                                      00230000
+.A020    ANOP                                                           00240000
+         PSMRVAL &SYSLIST(1,1)                                          00250000
+&PSMROP1 SETA  &PSMRVAL                                                 00260000
+         PSMRVAL &SYSLIST(1,2)                                          00270000
+&PSMROP2 SETA  &PSMRVAL                                                 00280000
+         AIF   (&PSMROP1 GT &PSMROP2).A030                              00290000
+&PSMROPC SETA  1+(&PSMROP2-&PSMROP1)                                    00300000
+         AGO   .A040                                                    00310000
+.A030    ANOP                                                           00320000
+&PSMROPC SETA  (1+(15-&PSMROP1))+(1+&PSMROP2)                           00330000
+.*                                                                      00340000
+.A040    ANOP                                                           00350000
+.*                                                                      00360000
+         MEND                                                           00370000

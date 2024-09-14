@@ -1,0 +1,68 @@
+         MACRO                                                          00010000
+         TESTI  &INS,&TXT,&O                                            00020000
+         LCLA   &L,&I,&J,&K                                             00030000
+         LCLC   &S,&OP,&OPR                                             00040000
+         AIF    ('&INS' EQ 'END').ENDTAB                                00050000
+         AIF    ('&INS' EQ '').COMMENT                                  00060000
+         DC     X'00',X'00'                                             00070000
+         AIF    ('&TXT' EQ '').DEFTXT                                   00080000
+&L       SETA   K'&TXT-2                                                00090000
+         DC     AL1(&L),CL32&TXT                                        00100000
+         AGO    .DONETXT                                                00110000
+.DEFTXT  ANOP                                                           00120000
+&L       SETA   K'&INS-2                                                00130000
+         DC     AL1(&L),CL32&INS                                        00140000
+.DONETXT ANOP                                                           00150000
+         DC     AL1(TI&SYSNDX.L)                                        00160000
+TI&SYSNDX DC     XL40'00'                                               00170000
+         ORG    TI&SYSNDX                                               00180000
+&I       SETA   2                                                       00190000
+.NEXTINS ANOP                                                           00200000
+&J       SETA   &I                                                      00210000
+.NEXTCHR ANOP                                                           00220000
+         AIF    (&J GE K'&INS).GENINS                                   00230000
+         AIF    ('&INS'(&J,1) EQ ';').GENINS                            00240000
+&J       SETA   &J+1                                                    00250000
+         AGO    .NEXTCHR                                                00260000
+.GENINS  ANOP                                                           00270000
+         AIF    (&J EQ &I).DONEINS                                      00280000
+&K       SETA   &I                                                      00290000
+.NEXTOP  ANOP                                                           00300000
+         AIF    (&K GE K'&INS).GOTOP                                    00310000
+         AIF    ('&INS'(&K,1) EQ ' ').GOTOP                             00320000
+&K       SETA   &K+1                                                    00330000
+         AGO    .NEXTOP                                                 00340000
+.GOTOP   ANOP                                                           00350000
+&OP      SETC   '&INS'(&I,&K-&I)                                        00360000
+&OPR     SETC   ''                                                      00370000
+         AIF    (&K GE &J).DOINS                                        00380000
+&OPR     SETC   '&INS'(&K+1,&J-&K-1)                                    00390000
+.DOINS   ANOP                                                           00400000
+         &OP &OPR                                                       00410000
+.DONEINS ANOP                                                           00420000
+&I       SETA   &J+1                                                    00430000
+         AIF    (&I LT K'&INS).NEXTINS                                  00440000
+.ENDINS  ANOP                                                           00450000
+TI&SYSNDX.L EQU  *-TI&SYSNDX                                            00460000
+         ORG                                                            00470000
+         MEXIT                                                          00480000
+.COMMENT ANOP                                                           00490000
+         DC     AL1(TIFLAG1C),X'00'                                     00500000
+&L       SETA   K'&TXT-2                                                00510000
+         DC     AL1(&L),CL32&TXT                                        00520000
+         DC     AL1(0),XL40'00'                                         00530000
+         MEXIT                                                          00540000
+.ENDTAB  ANOP                                                           00550000
+         DC     X'FF'                                                   00560000
+         MEND                                                           00570000
+         MACRO
+&NM      BAS   &R,&A
+.*
+.*       THIS MODULE GENERATES THE BAS OP CODE
+.*
+         GBLB  &MVT
+&NM      BAL   &R,&A
+         ORG   *-4
+         DC    X'4D'         BAS
+         ORG   *+3
+         MEND

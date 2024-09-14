@@ -1,0 +1,10 @@
+.* COPYRIGHT (C) 1988, PAUL A. SCOTT, ALL RIGHTS RESERVED               00010000
+.*                                                                      00020000
+         MACRO                                                          00030000
+         PSMASYM                                                        00040000
+.*                                                                      00050000
+         COPY  PSMGBL02                                                 00060000
+.*                                                                      00070000
+&PSMASYM SETA  &SYSLIST(1,1)                                            00080000
+.*                                                                      00090000
+         MEND                                                           00100000

@@ -1,0 +1,39 @@
+.* COPYRIGHT (C) 1988, PAUL A. SCOTT, ALL RIGHTS RESERVED               00010000
+.*                                                                      00020000
+         MACRO                                                          00030000
+&NAME    PSMCPREF &PREFIX=PSM                                           00040000
+.*                                                                      00050000
+         LCLA  &N                                                       00060000
+         LCLC  &P                                                       00070000
+.*                                                                      00080000
+&P       SETC  '&PREFIX'                                                00090000
+.*                                                                      00100000
+         AIF   (T'&NAME NE 'O').L0100                                   00110000
+&NAME    SETC  '&P'.'CPREF'                                             00120000
+.L0100   ANOP                                                           00130000
+.*                                                                      00140000
+.L0200   ANOP                                                           00150000
+.*                                                                      00160000
+&NAME    DSECT ,                                                        00170000
+&P.PJUMP DS    F                   BRANCH AROUND CSECT PREFIX           00180000
+*                                                                       00190000
+*                                  ID STRING                            00200000
+&P.PLENG DS    FL1                 LENGTH OF IDENTIFIER STRING          00210000
+&P.PID   DS    0C                  . S                                  00220000
+&P.PNAME DS    CL8,CL1             . CSECT NAME                         00230000
+&P.PDATE DS    0CL8                . ASSEMBLY DATE                      00240000
+&P.PDTEM DS    CL2,CL1               . MONTH                            00250000
+&P.PDTED DS    CL2,CL1               . DAY                              00260000
+&P.PDTEY DS    CL2,CL1               . YEAR                             00270000
+&P.PTIME DS    0CL8                . ASSEMBLY TIME                      00280000
+&P.PTMEH DS    CL2,CL1               . HOUR                             00290000
+&P.PTMEM DS    CL2,CL1               . MINUTES                          00300000
+&P.PTMES DS    CL2,CL1               . SECONDS                          00310000
+.*                                                                      00320000
+&P.PRLSE DS    0C                  . PRODUCT RELEASE                    00330000
+.*                                                                      00340000
+&P.PLOCL DS    FL4                 SIZE OF SVA PLUS LOCAL VARIABLES     00350000
+         DS    FL1                 STACK SUBPOOL ID                     00360000
+         DS    FL3                 SIZE OF STACK                        00370000
+         DS    A                   PTR TO PSMINIT MODULE                00380000
+.*                                                                      00390000
