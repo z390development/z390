@@ -1,0 +1,1137 @@
+solp06    MZ390 STARTED USING z390 V1.4.01x2 ON J2SE 1.6.0_04
+AZ390I Copyright 2008 Automated Software Tools Corporation
+AZ390I z390 is licensed under GNU General Public License
+AZ390I program = assist\solp06
+AZ390I options = sysmac(w:\work\z390\mac+.) 
+  syscpy(w:\work\z390\mac+.) assist notiming stats
+External Symbol Definitions
+ ESD=0001 LOC=00000000 LEN=00001968 TYPE=CST NAME=MAIN
+Assembler Listing
+000000                                        (1/1)1          TITLE 'Solution to Program 6, CSCI 360, Spring 2007 - M Stack'
+000000                                        (1/2)2 *
+000000                                        (1/3)3 *********0*****6*******************6**********************************1
+000000                                        (1/4)4 *
+000000                                        (1/5)5 * Function:    This program demonstrates a solution to the Program 6
+000000                                        (1/6)6 *              assignment for CSCI 360, Spring semester 2007. It builds
+000000                                        (1/7)7 *              on Programs 4 and 5.
+000000                                        (1/8)8 *
+000000                                        (1/9)9 * Input:       Three groups of input records, separated by a record
+000000                                      (1/10)10 *              with a zero publisher prefix.  Each of the first two
+000000                                      (1/11)11 *              groups has no more than twenty records, each including
+000000                                      (1/12)12 *              the ISBN Publisher Prefix, the number of titles
+000000                                      (1/13)13 *              currently published, the number of titles being prepared
+000000                                      (1/14)14 *              for publication, and the name of the publisher.
+000000                                      (1/15)15 *
+000000                                      (1/16)16 *              The third group of records is update transactions.
+000000                                      (1/17)17 *              Each record represents a change in either or both the
+000000                                      (1/18)18 *              titles published or titles in preparation, and each may
+000000                                      (1/19)19 *              be a positive or negative value.
+000000                                      (1/20)20 *
+000000                                      (1/21)21 * Process:     This program will build a table of titles from each of
+000000                                      (1/22)22 *              the first two groups of input records.  The tables are
+000000                                      (1/23)23 *              then sorted and printed.  Following that, a merged
+000000                                      (1/24)24 *              table is created and printed.  Finally, update
+000000                                      (1/25)25 *              transactions are applied to the merge table, which is
+000000                                      (1/26)26 *              printed once more at the end.
+000000                                      (1/27)27 *
+000000                                      (1/28)28 * Output:      1,2 - A report of each input table after sorting
+000000                                      (1/29)29 *              3 - A report of the merged tables
+000000                                      (1/30)30 *              4 - A report of transactions appied, with totals
+000000                                      (1/31)31 *              5 - A report of the merged tables after transactions
+000000                                      (1/32)32 *
+000000                                      (1/33)33 *  Logic:
+000000                                      (1/34)34 *  [1] Perform entry processing
+000000                                      (1/35)35 *  [2] Call BUILD to read and construct first table
+000000                                      (1/36)36 *  [3] Call SORT to sort first table by Publisher Name
+000000                                      (1/37)37 *  [4] Print headers for display of first table
+000000                                      (1/38)38 *  [5] Call PRINT to display the first table entries
+000000                                      (1/39)39 *  [6] Call BUILD to read and construct the second table
+000000                                      (1/40)40 *  [7] Call SORT to sort second table by Publisher Name
+000000                                      (1/41)41 *  [8] Print headers for display of second table
+000000                                      (1/42)42 *  [9] Call PRINT to display the second table entries
+000000                                      (1/43)43 * [10] Call MERGE to merge the two tables into a third table
+000000                                      (1/44)44 * [11] Print headers for display of merged table
+000000                                      (1/45)45 * [12] Call PRINT to display the merged table
+000000                                      (1/46)46 * [13] Print headers for the transaction report
+000000                                      (1/47)47 * [14] Call UPDATE to read, process, and report any updates
+000000                                      (1/48)48 * [15] Print headers for display of updated table
+000000                                      (1/49)49 * [16] Call PRINT to display the updated table
+000000                                      (1/50)50 * [17] Perform exit processing
+000000                                      (1/51)51 *
+000000                                      (1/52)52 *********0*****6*******************6**********************************1
+000000                                      (1/53)53 *
+000000                                      (1/54)54 *  [1] Perform entry processing
+000000                                      (1/55)55 *
+000000                                      (1/56)56 MAIN     CSECT ,
+000000                                      (1/57)57          USING MAIN,15             Temporary base
+LISTUSE MAIN     ESD=0001 LOC=00000000 LEN=01000 REG=F OFF=00000 LAB=
+000000 900FF520                000520       (1/58)58          STM   0,15,MAINSAVE       Save all registers at entry
+000004 18BF                                 (1/59)59          LR    11,15               Set program base register
+000006 41C0BFFF                             (1/60)60          LA    12,4095(,11)        Get second base reg
+00000A 41C0C001                             (1/61)61          LA    12,1(,12)            at MAIN+4096
+00000E                                      (1/62)62          USING MAIN,11,12            and tell assembler
+LISTUSE MAIN     ESD=0001 LOC=00000000 LEN=01000 REG=F OFF=00000 LAB=
+LISTUSE MAIN     ESD=0001 LOC=00000000 LEN=01000 REG=B OFF=00000 LAB=
+LISTUSE MAIN     ESD=0001 LOC=00001000 LEN=01000 REG=C OFF=00000 LAB=
+00000E                                      (1/63)63          DROP  15
+LISTUSE MAIN     ESD=0001 LOC=00001000 LEN=01000 REG=C OFF=00000 LAB=
+LISTUSE MAIN     ESD=0001 LOC=00000000 LEN=01000 REG=B OFF=00000 LAB=
+00000E                                      (1/64)64 *
+00000E                                      (1/65)65 *  [2] Call BUILD to read and construct first table
+00000E                                      (1/66)66 *
+00000E 4110B0FC                0000FC       (1/67)67          LA    1,PLST1A            Get parameter list for BUILD
+000012 45E0C34C                00134C       (1/68)68          BAL   14,BUILD            Call BUILD
+000016                                      (1/69)69 *
+000016                                      (1/70)70 *  [3] Call SORT to sort first table by ticket property ID
+000016                                      (1/71)71 *
+000016 4110B0F8                0000F8       (1/72)72          LA    1,PLST1             Get parameter list for SORT
+00001A 45E0C3E4                0013E4       (1/73)73          BAL   14,SORT             Call SORT
+00001E                                      (1/74)74 *
+00001E                                      (1/75)75 *  [4] Print headers for display of first table
+00001E                                      (1/76)76 *
+00001E D206B1E2C330     0001E2 001330       (1/77)77          MVC   HDR2STAT,=C'  First' Set indicator
+000024 E020B12C0085            00012C       (1/78)78          XPRNT HDR1,133            Print
+00002A E020B1B10085            0001B1       (1/79)79          XPRNT HDR2,133             all four
+000030 E020B2370085            000237       (1/80)80          XPRNT HDR3,133              headers
+000036 E020B2BC0085            0002BC       (1/81)81          XPRNT HDR4,133
+00003C                                      (1/82)82 *
+00003C                                      (1/83)83 *  [5] Call PRINT to display the first table entries
+00003C                                      (1/84)84 *
+00003C 4110B0F8                0000F8       (1/85)85          LA    1,PLST1             Get parameter list for PRINT
+000040 45E0C4B4                0014B4       (1/86)86          BAL   14,PRINT            Call PRINT
+000044                                      (1/87)87 *
+000044                                      (1/88)88 *  [6] Call BUILD to read and construct the second table
+000044                                      (1/89)89 *
+000044 4110B108                000108       (1/90)90          LA    1,PLST2A            Get parameter list for BUILD
+000048 45E0C34C                00134C       (1/91)91          BAL   14,BUILD            Call BUILD
+00004C                                      (1/92)92 *
+00004C                                      (1/93)93 *  [7] Call SORT to sort second table by ticket request ID
+00004C                                      (1/94)94 *
+00004C 4110B104                000104       (1/95)95          LA    1,PLST2             Get parameter list for SORT
+000050 45E0C3E4                0013E4       (1/96)96          BAL   14,SORT             Call SORT
+000054                                      (1/97)97 *
+000054                                      (1/98)98 *  [8] Print headers for display of second table
+000054                                      (1/99)99 *
+000054 D206B1E2C337     0001E2 001337     (1/100)100          MVC   HDR2STAT,=C' Second' Set indicator
+00005A E020B12C0085            00012C     (1/101)101          XPRNT HDR1,133            Print
+000060 E020B1B10085            0001B1     (1/102)102          XPRNT HDR2,133             all four
+000066 E020B2370085            000237     (1/103)103          XPRNT HDR3,133              headers
+00006C E020B2BC0085            0002BC     (1/104)104          XPRNT HDR4,133
+000072                                    (1/105)105 *
+000072                                    (1/106)106 *  [9] Call PRINT to display the second table entries
+000072                                    (1/107)107 *
+000072 4110B104                000104     (1/108)108          LA    1,PLST2             Get parameter list for PRINT
+000076 45E0C4B4                0014B4     (1/109)109          BAL   14,PRINT            Call PRINT
+00007A                                    (1/110)110 *
+00007A                                    (1/111)111 * [10] Call MERGE to merge the two tables into a third table
+00007A                                    (1/112)112 *
+00007A 4110B110                000110     (1/113)113          LA    1,PLST3             Get parameter list for MERGE
+00007E 45E0C5BE                0015BE     (1/114)114          BAL   14,MERGE            Call MERGE
+000082                                    (1/115)115 *
+000082                                    (1/116)116 * [11] Print headers for display of merged table
+000082                                    (1/117)117 *
+000082 D206B1E2C33E     0001E2 00133E     (1/118)118          MVC   HDR2STAT,=C' Merged' Set indicator
+000088 E020B12C0085            00012C     (1/119)119          XPRNT HDR1,133            Print
+00008E E020B1B10085            0001B1     (1/120)120          XPRNT HDR2,133             all four
+000094 E020B2370085            000237     (1/121)121          XPRNT HDR3,133              headers
+00009A E020B2BC0085            0002BC     (1/122)122          XPRNT HDR4,133
+0000A0                                    (1/123)123 *
+0000A0                                    (1/124)124 * [12] Call PRINT to display the merged table
+0000A0                                    (1/125)125 *
+0000A0 4110B120                000120     (1/126)126          LA    1,PLST3A            Get parameter list for PRINT
+0000A4 45E0C4B4                0014B4     (1/127)127          BAL   14,PRINT            Call PRINT
+0000A8                                    (1/128)128 *
+0000A8                                    (1/129)129 * [13] Print headers for the transaction report
+0000A8                                    (1/130)130 *
+0000A8 E020B12C0085            00012C     (1/131)131          XPRNT HDR1,133            Print
+0000AE E020B3410085            000341     (1/132)132          XPRNT HDR5,133             all four
+0000B4 E020B3C60085            0003C6     (1/133)133          XPRNT HDR6,133              headers
+0000BA E020B44B0085            00044B     (1/134)134          XPRNT HDR7,133
+0000C0                                    (1/135)135 *
+0000C0                                    (1/136)136 * [14] Call UPDATE to read, process, and report any updates
+0000C0                                    (1/137)137 *
+0000C0 4110B120                000120     (1/138)138          LA    1,PLST3A            Get parameter list for UPDATE
+0000C4 45E0C6A0                0016A0     (1/139)139          BAL   14,UPDATE           Call UPDATE
+0000C8                                    (1/140)140 *
+0000C8                                    (1/141)141 * [15] Print headers for display of updated table
+0000C8                                    (1/142)142 *
+0000C8 D206B1E2C345     0001E2 001345     (1/143)143          MVC   HDR2STAT,=C'Updated' Set indicator
+0000CE E020B12C0085            00012C     (1/144)144          XPRNT HDR1,133            Print
+0000D4 E020B1B10085            0001B1     (1/145)145          XPRNT HDR2,133             all four
+0000DA E020B2370085            000237     (1/146)146          XPRNT HDR3,133              headers
+0000E0 E020B2BC0085            0002BC     (1/147)147          XPRNT HDR4,133
+0000E6                                    (1/148)148 *
+0000E6                                    (1/149)149 * [16] Call PRINT to display the updated table
+0000E6                                    (1/150)150 *
+0000E6 4110B120                000120     (1/151)151          LA    1,PLST3A            Get parameter list for PRINT
+0000EA 45E0C4B4                0014B4     (1/152)152          BAL   14,PRINT            Call PRINT
+0000EE                                    (1/153)153 *
+0000EE                                    (1/154)154 * [17] Perform exit processing
+0000EE                                    (1/155)155 *
+0000EE 980FB520                000520     (1/156)156          LM    0,15,MAINSAVE       Restore all registers
+0000F2 07FE                               (1/157)157          BR    14                  Return to caller
+0000F4 0000                               (1/158)158          DC    H'0'
+0000F6                                    (1/159)159 *
+0000F6                                    (1/160)160 *********0*****6*******************6**********************************1
+0000F6                                    (1/161)161 *
+0000F6                                    (1/162)162 *  Parameter lists
+0000F6                                    (1/163)163 *
+0000F8 0000056C                           (1/164)164 PLST1    DC    A(TABLE1)           Parameter list
+0000FC 00000560                           (1/165)165 PLST1A   DC    A(NAV1)              for TABLE1
+000100 000004D0                           (1/166)166          DC    A(INPUT)              processing
+000104                                    (1/167)167 *
+000104 000008DC                           (1/168)168 PLST2    DC    A(TABLE2)           Parameter list
+000108 00000564                           (1/169)169 PLST2A   DC    A(NAV2)              for TABLE2
+00010C 000004D0                           (1/170)170          DC    A(INPUT)              processing
+000110                                    (1/171)171 *
+000110 0000056C                           (1/172)172 PLST3    DC    A(TABLE1)           Parameter list
+000114 00000560                           (1/173)173          DC    A(NAV1)              for merged table
+000118 000008DC                           (1/174)174          DC    A(TABLE2)             processing
+00011C 00000564                           (1/175)175          DC    A(NAV2)
+000120 00000C4C                           (1/176)176 PLST3A   DC    A(TABLE3)           Parameter list
+000124 00000568                           (1/177)177          DC    A(NAV3)              for TABLE3
+000128 000004D0                           (1/178)178          DC    A(INPUT)              PRINT
+00012C                                    (1/179)179 *
+00012C                                    (1/180)180 *  Report Headers
+00012C                                    (1/181)181 *
+00012C F1                                 (1/182)182 HDR1     DC    C'1'                First report header
+00012D 4040404040404040                   (1/183)183          DC    51C' '
+000160 C296969240E389A3                   (1/184)184          DC    CL30'Book Title Counts by Publisher'
+00017E 4040404040404040                   (1/185)185          DC    51C' '
+0001B1                                    (1/186)186 *
+0001B1 40                                 (1/187)187 HDR2     DC    C' '                Second report header
+0001B2 4040404040404040                   (1/188)188          DC    48C' '
+0001E2                                    (1/189)189 HDR2STAT DS    CL7
+0001E9 40D389A2A3409686                   (1/190)190          DC    CL30' List of Publishers and Titles'
+000207 4040404040404040                   (1/191)191          DC    48C' '
+000237                                    (1/192)192 *
+000237 F0                                 (1/193)193 HDR3     DC    C'0'                Third report header
+000238 4040404040404040                   (1/194)194          DC    9C' '
+000241 D7A4829389A28885                   (1/195)195          DC    CL30'Publisher Name'
+00025F 4040404040404040                   (1/196)196          DC    10C' '
+000269 D7A4829389A28885                   (1/197)197          DC    CL16'Publisher Prefix'
+000279 4040404040404040                   (1/198)198          DC    10C' '
+000283 E389A39385A24089                   (1/199)199          DC    CL15'Titles in Print'
+000292 4040404040404040                   (1/200)200          DC    10C' '
+00029C E389A39385A24089                   (1/201)201          DC    CL21'Titles in Preparation'
+0002B1 4040404040404040                   (1/202)202          DC    11C' '
+0002BC                                    (1/203)203 *
+0002BC 40                                 (1/204)204 HDR4     DC    C' '                Fourth report header
+0002BD 4040404040404040                   (1/205)205          DC    9C' '
+0002C6 6060606060606060                   (1/206)206          DC    30C'-'
+0002E4 4040404040404040                   (1/207)207          DC    10C' '
+0002EE 6060606060606060                   (1/208)208          DC    16C'-'
+0002FE 4040404040404040                   (1/209)209          DC    10C' '
+000308 6060606060606060                   (1/210)210          DC    15C'-'
+000317 4040404040404040                   (1/211)211          DC    10C' '
+000321 6060606060606060                   (1/212)212          DC    21C'-'
+000336 4040404040404040                   (1/213)213          DC    11C' '
+000341                                    (1/214)214 *
+000341 40                                 (1/215)215 HDR5     DC    C' '                Transaction report header
+000342 4040404040404040                   (1/216)216          DC    45C' '
+00036F E4978481A385A240                   (1/217)217          DC    CL42'Updates to Titles in Print and Preparation'
+000399 4040404040404040                   (1/218)218          DC    45C' '
+0003C6                                    (1/219)219 *
+0003C6 F0                                 (1/220)220 HDR6     DC    C'0'                Sixth report header
+0003C7 4040404040404040                   (1/221)221          DC    9C' '
+0003D0 D7A4829389A28885                   (1/222)222          DC    CL30'Publisher Name'
+0003EE 4040404040404040                   (1/223)223          DC    10C' '
+0003F8 C18484858440A396                   (1/224)224          DC    CL24'Added to Titles in Print'
+000410 4040404040404040                   (1/225)225          DC    10C' '
+00041A C18484858440A396                   (1/226)226          DC    CL30'Added to Titles in Preparation'
+000438 4040404040404040                   (1/227)227          DC    19C' '
+00044B                                    (1/228)228 *
+00044B 40                                 (1/229)229 HDR7     DC    C' '                Seventh report header
+00044C 4040404040404040                   (1/230)230          DC    9C' '
+000455 6060606060606060                   (1/231)231          DC    30C'-'
+000473 4040404040404040                   (1/232)232          DC    10C' '
+00047D 6060606060606060                   (1/233)233          DC    24C'-'
+000495 4040404040404040                   (1/234)234          DC    10C' '
+00049F 6060606060606060                   (1/235)235          DC    30C'-'
+0004BD 4040404040404040                   (1/236)236          DC    19C' '
+0004D0                                    (1/237)237 *********0*****6*******************6**********************************1
+0004D0                                    (1/238)238 *
+0004D0                                    (1/239)239 *  Table entry format (eleven fullwords):
+0004D0                                    (1/240)240 *
+0004D0                                    (1/241)241 *PUBPREF DS    F                   ISBN publisher identifier
+0004D0                                    (1/242)242 *PUBNAME DS    CL30                Publisher Name
+0004D0                                    (1/243)243 *PUBTITL DS    F                   Number of titles currently published
+0004D0                                    (1/244)244 *PUBPREP DS    F                   Number of titles being prepared
+0004D0                                    (1/245)245 *
+0004D0                                    (1/246)246 *********0*****6*******************6**********************************1
+0004D0                                    (1/247)247 *
+0004D0                                    (1/248)248 INPUT    DS    CL80                Input buffer
+000520                                    (1/249)249 MAINSAVE DS    16F                 Save area
+000560                                    (1/250)250 *
+000560 0000056C                           (1/251)251 NAV1     DC    A(TABLE1)           Next available entry in TABLE1
+000564 000008DC                           (1/252)252 NAV2     DC    A(TABLE2)           Next available entry in TABLE2
+000568 00000C4C                           (1/253)253 NAV3     DC    A(TABLE3)           Next available entry in TABLE3
+00056C                                    (1/254)254 TABLE1   DS    (20*11)F            First table
+0008DC                                    (1/255)255 TABLE2   DS    (20*11)F            Second table
+000C4C                                    (1/256)256 TABLE3   DS    (40*11)F            Merged table
+00132C                                    (1/257)257 *
+00132C                                    (1/258)258          LTORG ,
+001330 4040C68999A2A3   =C'  First'
+001337 40E28583969584   =C' Second'
+00133E 40D48599878584   =C' Merged'
+001345 E4978481A38584   =C'Updated'
+00134C                                    (1/260)260 *
+00134C                                    (1/261)261 *********0*****6*******************6**********************************1
+00134C                                    (1/262)262 *
+00134C                                    (1/263)263 *  Name:  BUILD
+00134C                                    (1/264)264 *
+00134C                                    (1/265)265 *  Function:  This routine reads the input file until EOF or a record
+00134C                                    (1/266)266 *    with Publisher ID = 0000000 is encountered. Each record forms an
+00134C                                    (1/267)267 *    entry in the table passed to the routine.
+00134C                                    (1/268)268 *
+00134C                                    (1/269)269 *  Entry Cond: 0(1) - Address of the next available entry address
+00134C                                    (1/270)270 *              4(1) - Address of an input buffer
+00134C                                    (1/271)271 *
+00134C                                    (1/272)272 *  Register Usage:
+00134C                                    (1/273)273 *      0 - Scratch
+00134C                                    (1/274)274 *      1 - Input parameters
+00134C                                    (1/275)275 *      8 - Address of current table entry
+00134C                                    (1/276)276 *      9 - Address of ptr to next available
+00134C                                    (1/277)277 *     10 - Input buffer
+00134C                                    (1/278)278 *     11 - Program base
+00134C                                    (1/279)279 *     12 - Program base
+00134C                                    (1/280)280 *
+00134C                                    (1/281)281 *  Logic:
+00134C                                    (1/282)282 *  [1] Perform entry processing, read first record
+00134C                                    (1/283)283 *  [2] Do While (NOT End-of-File and NOT ID=0000000)
+00134C                                    (1/284)284 *  [3]    Save Pub ID, Pub Name, Pub Titles, and Pub Preps in table
+00134C                                    (1/285)285 *  [4]    Update pointer to next available entry
+00134C                                    (1/286)286 *  [5]    Read the next record
+00134C                                    (1/287)287 *  [6] End Do
+00134C                                    (1/288)288 *  [7] Perform exit processing
+00134C                                    (1/289)289 *
+00134C                                    (1/290)290 *********0*****6*******************6**********************************1
+00134C                                    (1/291)291 *
+00134C                                    (1/292)292 *  [1] Perform entry processing, read first record
+00134C                                    (1/293)293 *
+00134C                                    (1/294)294 BUILD    DS    0H
+00134C 900FC3A0                0013A0     (1/295)295          STM   0,15,BLDSAVE        Save all registers
+001350                                    (1/296)296 *
+001350 989A1000                           (1/297)297          LM    9,10,0(1)           R9 = NAV Ptr, R10 = Input buffer
+001354 58809000                           (1/298)298          L     8,0(,9)             R8 = Next available table entry
+001358                                    (1/299)299 *
+001358 E000A0000050                       (1/300)300          XREAD 0(,10),80           Perform initial read
+00135E                                    (1/301)301 *
+00135E                                    (1/302)302 *  [2] Do While (NOT End-of-File and NOT ID=0000000)
+00135E                                    (1/303)303 *
+00135E 4740C396                001396     (1/304)304 BLDLOOP  BM    BLDEOF              Check for EOF
+001362                                    (1/305)305 *
+001362 5300A000                           (1/306)306          XDECI 0,0(,10)            Get req no
+001366 5900C3E0                0013E0     (1/307)307          C     0,=F'0'             Is this the delimiter?
+00136A 4780C396                001396     (1/308)308          BE    BLDEOF              Branch if so, done
+00136E                                    (1/309)309 *
+00136E                                    (1/310)310 *  [3]    Save Pub ID, Pub Name, Pub Titles, and Pub Preps in table
+00136E                                    (1/311)311 *
+00136E 50008000                           (1/312)312          ST    0,0(,8)             Else put Pub ID in table entry
+001372 D21D8004A01C                       (1/313)313          MVC   4(30,8),28(10)      Put Pub Name in table entry
+001378 53001000                           (1/314)314          XDECI 0,0(,1)             Get number of titles in print
+00137C 50008024                           (1/315)315          ST    0,36(,8)             and place in table entry
+001380 53001000                           (1/316)316          XDECI 0,0(,1)             Get number of titles in prep
+001384 50008028                           (1/317)317          ST    0,40(,8)             and place in table entry
+001388                                    (1/318)318 *
+001388                                    (1/319)319 *  [4]    Update pointer to next available entry
+001388                                    (1/320)320 *
+001388 4180802C                           (1/321)321          LA    8,44(,8)            Move to next table entry
+00138C                                    (1/322)322 *
+00138C                                    (1/323)323 *  [5]    Read the next record
+00138C                                    (1/324)324 *
+00138C E000A0000050                       (1/325)325          XREAD 0(,10),80           Get next input record
+001392                                    (1/326)326 *
+001392                                    (1/327)327 *  [6] End Do
+001392                                    (1/328)328 *
+001392 47F0C35E                00135E     (1/329)329          B     BLDLOOP             Continue
+001396                                    (1/330)330 *
+001396                                    (1/331)331 BLDEOF   DS    0H
+001396                                    (1/332)332 *
+001396                                    (1/333)333 *  [7] Perform exit processing
+001396                                    (1/334)334 *
+001396 50809000                           (1/335)335          ST    8,0(,9)            Return updated NAV value
+00139A 980FC3A0                0013A0     (1/336)336          LM    0,15,BLDSAVE        Restore all registers
+00139E 07FE                               (1/337)337          BR    14                  Return to caller
+0013A0                                    (1/338)338 *
+0013A0                                    (1/339)339 BLDSAVE  DS    16F
+0013E0                                    (1/340)340          LTORG ,
+0013E0 00000000         =F'0'
+0013E4                                    (1/342)342 *********0*****6*******************6**********************************1
+0013E4                                    (1/343)343 *
+0013E4                                    (1/344)344 * Name:        SORT
+0013E4                                    (1/345)345 *
+0013E4                                    (1/346)346 * Function:    Sort the table using the Insertion Sort algorithm
+0013E4                                    (1/347)347 *
+0013E4                                    (1/348)348 * Entry Cond: 0(1) - Address of the table
+0013E4                                    (1/349)349 *             4(1) - Address of the next available entry address
+0013E4                                    (1/350)350 *
+0013E4                                    (1/351)351 * Register Usage:
+0013E4                                    (1/352)352 *      1 - Input parameters
+0013E4                                    (1/353)353 *      7 - J
+0013E4                                    (1/354)354 *      8 - I
+0013E4                                    (1/355)355 *      9 - Table address
+0013E4                                    (1/356)356 *     10 - Address of ptr to next available
+0013E4                                    (1/357)357 *     11 - Program Base
+0013E4                                    (1/358)358 *     12 - Program Base
+0013E4                                    (1/359)359 *
+0013E4                                    (1/360)360 * Logic (from Notes and Examples):
+0013E4                                    (1/361)361 *  [0] Perform entry processing and initialization
+0013E4                                    (1/362)362 *  [1] For ( J = 2 to N by 1 )
+0013E4                                    (1/363)363 *  [2]     I = J - 1            Records up to I are already sorted
+0013E4                                    (1/364)364 *  [3]     Key = Key(J)         Key portion of record to insert
+0013E4                                    (1/365)365 *  [4]     Rec = Rec(J)         Record to insert at correct place
+0013E4                                    (1/366)366 *  [5]     While ( Key < Key(I) and I > 0 )
+0013E4                                    (1/367)367 *  [6]       Rec(I+1) = Rec(I)  Move Ith record up
+0013E4                                    (1/368)368 *  [7]       I = I - 1
+0013E4                                    (1/369)369 *  [8]     EndWhile
+0013E4                                    (1/370)370 *  [9]     Rec (I+1) = Rec      Insert the new record and key
+0013E4                                    (1/371)371 * [10] EndFor
+0013E4                                    (1/372)372 * [11] Perform exit processing
+0013E4                                    (1/373)373 *
+0013E4                                    (1/374)374 *********0*****6*******************6**********************************1
+0013E4                                    (1/375)375 *
+0013E4                                    (1/376)376 *  [0] Perform entry processing and initialization
+0013E4                                    (1/377)377 *
+0013E4                                    (1/378)378 SORT     DS    0H
+0013E4 900FC43C                00143C     (1/379)379          STM   0,15,SORTSAVE       Save all registers
+0013E8                                    (1/380)380 *
+0013E8 989A1000                           (1/381)381          LM    9,10,0(1)           R9 -> TABLE, R10 -> NAV
+0013EC 5800A000                           (1/382)382          L     0,0(,10)            Get address of next available entry
+0013F0 5000C47C                00147C     (1/383)383          ST    0,N                 Save address of last entry
+0013F4                                    (1/384)384 *
+0013F4                                    (1/385)385 *  [1] For ( J = 2 to N by 1 )
+0013F4                                    (1/386)386 *
+0013F4 1879                               (1/387)387          LR    7,9                 Get first entry in table
+0013F6                                    (1/388)388 *
+0013F6 4170702C                           (1/389)389 INSFOR   LA    7,44(,7)            R7 = J ( = 2 )
+0013FA 5970C47C                00147C     (1/390)390          C     7,N                 Are we past the last entry?
+0013FE 47B0C436                001436     (1/391)391          BNL   INSFORND            Done if so
+001402                                    (1/392)392 *
+001402                                    (1/393)393 *  [2]     I = J - 1            Records up to I are already sorted
+001402                                    (1/394)394 *
+001402 1887                               (1/395)395          LR    8,7                 R8 = I
+001404 5B80C4B0                0014B0     (1/396)396          S     8,=F'44'            Set to J - 1
+001408                                    (1/397)397 *
+001408                                    (1/398)398 *  [3]     Key = Key(J)         Key portion of record to insert
+001408                                    (1/399)399 *  [4]     Rec = Rec(J)         Record to insert at correct place
+001408                                    (1/400)400 *
+001408 D22BC4807000     001480            (1/401)401          MVC   REC,0(7)            Move both key and data
+00140E                                    (1/402)402 *
+00140E                                    (1/403)403 *  [5]     While ( Key < Key(I) and I > 0 )
+00140E                                    (1/404)404 *
+00140E D51DC4848004     001484            (1/405)405 INSWHILE CLC   KEY,4(8)            Is Key < Key(J) ?
+001414 47B0C42C                00142C     (1/406)406          BNL   INSWHEND            Branch if not
+001418 1989                               (1/407)407          CR    8,9                 Is I > 0 ? (1 is first entry)
+00141A 4740C42C                00142C     (1/408)408          BL    INSWHEND            Branch if not
+00141E                                    (1/409)409 *
+00141E                                    (1/410)410 *  [6]       Rec(I+1) = Rec(I)  Move Ith record up
+00141E                                    (1/411)411 *
+00141E D22B802C8000                       (1/412)412          MVC   44(44,8),0(8)       Copy REC(I) to REC(I+1)
+001424                                    (1/413)413 *
+001424                                    (1/414)414 *  [7]       I = I - 1
+001424                                    (1/415)415 *
+001424 5B80C4B0                0014B0     (1/416)416          S     8,=F'44'            Set I to I - 1
+001428                                    (1/417)417 *
+001428                                    (1/418)418 *  [8]     EndWhile
+001428                                    (1/419)419 *
+001428 47F0C40E                00140E     (1/420)420          B     INSWHILE            Continue
+00142C                                    (1/421)421 *
+00142C                                    (1/422)422 INSWHEND DS    0H                  End of WHILE
+00142C                                    (1/423)423 *
+00142C                                    (1/424)424 *  [9]     Rec (I+1) = Rec      Insert the new record and key
+00142C                                    (1/425)425 *
+00142C D22B802CC480            001480     (1/426)426          MVC   44(44,8),REC        Copy saved REC to REC(I+1)
+001432                                    (1/427)427 *
+001432                                    (1/428)428 * [10] EndFor
+001432                                    (1/429)429 *
+001432 47F0C3F6                0013F6     (1/430)430          B     INSFOR              Continue
+001436                                    (1/431)431 *
+001436                                    (1/432)432 INSFORND DS    0H                  Done with insertion sort
+001436                                    (1/433)433 *
+001436                                    (1/434)434 * [11] Perform exit processing
+001436                                    (1/435)435 *
+001436 980FC43C                00143C     (1/436)436          LM    0,15,SORTSAVE       Restore all registers
+00143A 07FE                               (1/437)437          BR    14                  Return to caller
+00143C                                    (1/438)438 *
+00143C                                    (1/439)439 *    Data areas for insertion sort only
+00143C                                    (1/440)440 *
+00143C                                    (1/441)441 SORTSAVE DS    16F                 Reg save area
+00147C                                    (1/442)442 N        DS    F
+001480                                    (1/443)443 *
+001480                                    (1/444)444 REC      DS    CL44
+0014AC                  001484            (1/445)445          ORG   REC+4
+001484                                    (1/446)446 KEY      DS    CL30
+0014A2                  0014AC            (1/447)447          ORG   ,
+0014AC                                    (1/448)448          LTORG ,
+0014B0 0000002C         =F'44'
+0014B4                                    (1/450)450 *
+0014B4                                    (1/451)451 *********0*****6*******************6**********************************1
+0014B4                                    (1/452)452 *
+0014B4                                    (1/453)453 *  Name:  PRINT
+0014B4                                    (1/454)454 *
+0014B4                                    (1/455)455 *  Function:  This routine prints each entry of the table passed to it.
+0014B4                                    (1/456)456 *      (The headers are printed before PRINT is called.)
+0014B4                                    (1/457)457 *
+0014B4                                    (1/458)458 *  Entry Cond: 0(1) - Address of the table
+0014B4                                    (1/459)459 *              4(1) - Address of the next available entry address
+0014B4                                    (1/460)460 *
+0014B4                                    (1/461)461 *  Register Usage:
+0014B4                                    (1/462)462 *      0 - Scratch
+0014B4                                    (1/463)463 *      1 - Input parameters
+0014B4                                    (1/464)464 *      9 - Table Address
+0014B4                                    (1/465)465 *     10 - Address of ptr to next available
+0014B4                                    (1/466)466 *     11 - Program base
+0014B4                                    (1/467)467 *     12 - Program base
+0014B4                                    (1/468)468 *
+0014B4                                    (1/469)469 *  Logic:
+0014B4                                    (1/470)470 *  [1] Perform entry processing
+0014B4                                    (1/471)471 *  [2] Do While (NOT End-of-Table)
+0014B4                                    (1/472)472 *  [3]    Place Publisher Name in output line
+0014B4                                    (1/473)473 *  [4]    Place Publisher Prefix in output line
+0014B4                                    (1/474)474 *  [5]    Place Titles in Print in output line
+0014B4                                    (1/475)475 *  [6]    Place Titles in Preparation in output line
+0014B4                                    (1/476)476 *  [7]    Print report line
+0014B4                                    (1/477)477 *  [8]    Get to the next table entry
+0014B4                                    (1/478)478 *  [9] End Do
+0014B4                                    (1/479)479 * [10] Perform exit processing
+0014B4                                    (1/480)480 *
+0014B4                                    (1/481)481 *********0*****6*******************6**********************************1
+0014B4                                    (1/482)482 *
+0014B4                                    (1/483)483 *  [1] Perform entry processing
+0014B4                                    (1/484)484 *
+0014B4                                    (1/485)485 PRINT    DS    0H
+0014B4 900FC4F8                0014F8     (1/486)486          STM   0,15,PRTSAVE        Save all registers
+0014B8                                    (1/487)487 *
+0014B8 989A1000                           (1/488)488          LM    9,10,0(1)           R9->Table  R10->NAV
+0014BC                                    (1/489)489 *
+0014BC                                    (1/490)490 *  [2] Do While (NOT End-of-Table)
+0014BC                                    (1/491)491 *
+0014BC 5990A000                           (1/492)492 PRTLOOP  C     9,0(,10)            Check address of next available
+0014C0 47B0C4F0                0014F0     (1/493)493          BNL   PRTEND              Return if all done
+0014C4                                    (1/494)494 *
+0014C4                                    (1/495)495 *  [3]    Place Publisher Name in output line
+0014C4                                    (1/496)496 *
+0014C4 D21DC5429004     001542            (1/497)497          MVC   PRTNAME,4(9)        Publisher Name to line
+0014CA                                    (1/498)498 *
+0014CA                                    (1/499)499 *  [4]    Place Publisher Prefix in output line
+0014CA                                    (1/500)500 *
+0014CA 58009000                           (1/501)501          L     0,0(,9)             Get Publisher Prefix
+0014CE 5200C56E                00156E     (1/502)502          XDECO 0,PRTPREF            to report line
+0014D2                                    (1/503)503 *
+0014D2                                    (1/504)504 *  [5]    Place Titles in Print in output line
+0014D2                                    (1/505)505 *
+0014D2 58009024                           (1/506)506          L     0,36(,9)            Get Titles in Print
+0014D6 5200C587                001587     (1/507)507          XDECO 0,PRTINPRT           to report line
+0014DA                                    (1/508)508 *
+0014DA                                    (1/509)509 *  [6]    Place Titles in Preparation in output line
+0014DA                                    (1/510)510 *
+0014DA 58009028                           (1/511)511          L     0,40(,9)            Get Titles in Preparation
+0014DE 5200C5A6                0015A6     (1/512)512          XDECO 0,PRTPREP            to report line
+0014E2                                    (1/513)513 *
+0014E2                                    (1/514)514 *  [7]    Print report line
+0014E2                                    (1/515)515 *
+0014E2 E020C5380085            001538     (1/516)516          XPRNT PRTLINE,133         Print report line
+0014E8                                    (1/517)517 *
+0014E8                                    (1/518)518 *  [8]    Get to the next table entry
+0014E8                                    (1/519)519 *
+0014E8 4190902C                           (1/520)520          LA    9,44(,9)            Get to next table entry
+0014EC                                    (1/521)521 *
+0014EC                                    (1/522)522 *  [9] End Do
+0014EC                                    (1/523)523 *
+0014EC 47F0C4BC                0014BC     (1/524)524          B     PRTLOOP             Continue with next entry
+0014F0                                    (1/525)525 *
+0014F0                                    (1/526)526 PRTEND   DS    0H
+0014F0                                    (1/527)527 *
+0014F0                                    (1/528)528 * [10] Perform standard exit linkage
+0014F0                                    (1/529)529 *
+0014F0 980FC4F8                0014F8     (1/530)530          LM    0,15,PRTSAVE        Restore all registers
+0014F4 07FE                               (1/531)531          BR    14                  Return to caller
+0014F6                                    (1/532)532 *
+0014F8                                    (1/533)533 PRTSAVE  DS    16F                 Save area
+001538                                    (1/534)534          LTORG ,
+001538                                    (1/535)535 *
+001538 F0                                 (1/536)536 PRTLINE  DC    C'0'                Item report line
+001539 4040404040404040                   (1/537)537          DC    9C' '
+001542                                    (1/538)538 PRTNAME  DS    CL30                Publisher Name
+001560 4040404040404040                   (1/539)539          DC    14C' '
+00156E                                    (1/540)540 PRTPREF  DS    CL12                Publisher Prefix
+00157A 4040404040404040                   (1/541)541          DC    13C' '
+001587                                    (1/542)542 PRTINPRT DS    CL12                Number of titles in print
+001593 4040404040404040                   (1/543)543          DC    19C' '
+0015A6                                    (1/544)544 PRTPREP  DS    CL12                Number of titles in preparation
+0015B2 4040404040404040                   (1/545)545          DC    11C' '
+0015BD                                    (1/546)546 *
+0015BD                                    (1/548)548 *
+0015BD                                    (1/549)549 *********0*****6*******************6**********************************1
+0015BD                                    (1/550)550 *
+0015BD                                    (1/551)551 *  Name:   MERGE
+0015BD                                    (1/552)552 *
+0015BD                                    (1/553)553 *  Function:  This routine merges two sorted tables into one.
+0015BD                                    (1/554)554 *
+0015BD                                    (1/555)555 *  Entry Cond: 0(1) - Address of the first table
+0015BD                                    (1/556)556 *              4(1) - Address of its next available entry address
+0015BD                                    (1/557)557 *              8(1) - Address of the second table
+0015BD                                    (1/558)558 *             12(1) - Address of its next available entry address
+0015BD                                    (1/559)559 *             16(1) - Address of the third (merged) table
+0015BD                                    (1/560)560 *             20(1) - Address of its next available entry address
+0015BD                                    (1/561)561 *
+0015BD                                    (1/562)562 *  Register Usage:
+0015BD                                    (1/563)563 *      1 - Input parameters
+0015BD                                    (1/564)564 *      5 - Address of current entry in TABLE1
+0015BD                                    (1/565)565 *      6 - Address of NAV1
+0015BD                                    (1/566)566 *      7 - Address of current entry in TABLE2
+0015BD                                    (1/567)567 *      8 - Address of NAV2
+0015BD                                    (1/568)568 *      9 - Address of current entry in TABLE3
+0015BD                                    (1/569)569 *     10 - Address of NAV3
+0015BD                                    (1/570)570 *     11 - Program base
+0015BD                                    (1/571)571 *     12 - Program base
+0015BD                                    (1/572)572 *
+0015BD                                    (1/573)573 *  Logic (from Notes and Examples):
+0015BD                                    (1/574)574 *  [1] Perform entry processing
+0015BD                                    (1/575)575 *  [2] Do While (NOT End-of-TABLE1 AND NOT End-of-TABLE2)
+0015BD                                    (1/576)576 *  [3]    If (TABLE1 KEY < TABLE2 KEY)
+0015BD                                    (1/577)577 *  [4]       Copy TABLE1 entry to TABLE3
+0015BD                                    (1/578)578 *  [5]       Increment TABLE1 pointer
+0015BD                                    (1/579)579 *  [6]    Else
+0015BD                                    (1/580)580 *  [7]       If (TABLE1 KEY > TABLE2 KEY)
+0015BD                                    (1/581)581 *  [8]          Copy TABLE2 entry to TABLE3
+0015BD                                    (1/582)582 *  [9]          Increment TABLE2 pointer
+0015BD                                    (1/583)583 * [10]       Else
+0015BD                                    (1/584)584 * [11]          Copy TABLE1 (or TABLE2) entry to TABLE3
+0015BD                                    (1/585)585 * [12]          Increment TABLE1 pointer
+0015BD                                    (1/586)586 * [13]          Increment TABLE2 pointer
+0015BD                                    (1/587)587 * [14]       End If
+0015BD                                    (1/588)588 * [15]    End If
+0015BD                                    (1/589)589 * [16]    Increment TABLE3 pointer
+0015BD                                    (1/590)590 * [17] End Do
+0015BD                                    (1/591)591 * [18] Do While (NOT End-of-TABLE1)
+0015BD                                    (1/592)592 * [19]    Copy TABLE1 entry to TABLE3
+0015BD                                    (1/593)593 * [20]    Increment TABLE1 pointer
+0015BD                                    (1/594)594 * [21]    Increment TABLE3 pointer
+0015BD                                    (1/595)595 * [22] End Do
+0015BD                                    (1/596)596 * [23] Do While (NOT End-of-TABLE2)
+0015BD                                    (1/597)597 * [24]    Copy TABLE2 entry to TABLE3
+0015BD                                    (1/598)598 * [25]    Increment TABLE2 pointer
+0015BD                                    (1/599)599 * [26]    Increment TABLE3 pointer
+0015BD                                    (1/600)600 * [27] End Do
+0015BD                                    (1/601)601 * [28] Return address of next entry in TABLE3 as NAV3
+0015BD                                    (1/602)602 * [29] Perform exit processing
+0015BD                                    (1/603)603 *
+0015BD                                    (1/604)604 *********0*****6*******************6**********************************1
+0015BD                                    (1/605)605 *
+0015BD                                    (1/606)606 *  [1] Perform entry processing
+0015BD                                    (1/607)607 *
+0015BD                                    (1/608)608 *
+0015BE                                    (1/609)609 MERGE    DS    0H
+0015BE 900FC65C                00165C     (1/610)610          STM   0,15,MERGSAVE       Save all registers
+0015C2                                    (1/611)611 *
+0015C2 985A1000                           (1/612)612          LM    5,10,0(1)           R5 -> TABLE1, R6 -> NAV1
+0015C6                                    (1/613)613 *                                  R7 -> TABLE2, R8 -> NAV2
+0015C6                                    (1/614)614 *                                  R9 -> TABLE3, R10-> NAV3
+0015C6                                    (1/615)615 *
+0015C6                                    (1/616)616 *  [2] Do While (NOT End-of-TABLE1 AND NOT End-of-TABLE2)
+0015C6                                    (1/617)617 *
+0015C6 59506000                           (1/618)618 MGDO1    C     5,0(,6)             Check for end of TABLE1
+0015CA 47B0C61C                00161C     (1/619)619          BNL   MGDO1END            Yes, end of phase 1
+0015CE 59708000                           (1/620)620          C     7,0(,8)             Else check for end of TABLE2
+0015D2 47B0C61C                00161C     (1/621)621          BNL   MGDO1END            Yes, end of phase 1
+0015D6                                    (1/622)622 *
+0015D6                                    (1/623)623 *  [3]    If (TABLE1 KEY < TABLE2 KEY)
+0015D6                                    (1/624)624 *
+0015D6 D51D50047004                       (1/625)625          CLC   4(30,5),4(7)        Compare keys
+0015DC 47B0C5EE                0015EE     (1/626)626          BNL   MGIF1ELS            Branch if Key 1 not less
+0015E0                                    (1/627)627 *
+0015E0                                    (1/628)628 *  [4]       Copy TABLE1 entry to TABLE3
+0015E0                                    (1/629)629 *
+0015E0 D22B90005000                       (1/630)630          MVC   0(44,9),0(5)        Copy entry
+0015E6                                    (1/631)631 *
+0015E6                                    (1/632)632 *  [5]       Increment TABLE1 pointer
+0015E6                                    (1/633)633 *
+0015E6 4150502C                           (1/634)634          LA    5,44(,5)            Increment address
+0015EA                                    (1/635)635 *
+0015EA                                    (1/636)636 *  [6]    Else
+0015EA                                    (1/637)637 *
+0015EA 47F0C614                001614     (1/638)638          B     MGIF1END            Continue
+0015EE                                    (1/639)639 *
+0015EE                                    (1/640)640 MGIF1ELS DS    0H
+0015EE                                    (1/641)641 *
+0015EE                                    (1/642)642 *  [7]       If (TABLE1 KEY > TABLE2 KEY)
+0015EE                                    (1/643)643 *
+0015EE D51D50047004                       (1/644)644          CLC   4(30,5),4(7)        Compare keys
+0015F4 47D0C606                001606     (1/645)645          BNH   MGIF2ELS            Branch if Key 2 not less
+0015F8                                    (1/646)646 *
+0015F8                                    (1/647)647 *  [8]          Copy TABLE2 entry to TABLE3
+0015F8                                    (1/648)648 *
+0015F8 D22B90007000                       (1/649)649          MVC   0(44,9),0(7)        Copy entry
+0015FE                                    (1/650)650 *
+0015FE                                    (1/651)651 *  [9]          Increment TABLE2 pointer
+0015FE                                    (1/652)652 *
+0015FE 4170702C                           (1/653)653          LA    7,44(,7)            Increment address
+001602                                    (1/654)654 *
+001602                                    (1/655)655 * [10]       Else
+001602                                    (1/656)656 *
+001602 47F0C614                001614     (1/657)657          B     MGIF2END            Continue
+001606                                    (1/658)658 *
+001606                                    (1/659)659 MGIF2ELS DS    0H
+001606                                    (1/660)660 *
+001606                                    (1/661)661 * [11]          Copy TABLE1 (or TABLE2) entry to TABLE3
+001606                                    (1/662)662 *
+001606 D22B90005000                       (1/663)663          MVC   0(44,9),0(5)        Copy entry
+00160C                                    (1/664)664 *
+00160C                                    (1/665)665 * [12]          Increment TABLE1 pointer
+00160C                                    (1/666)666 *
+00160C 4150502C                           (1/667)667          LA    5,44(,5)            Increment address
+001610                                    (1/668)668 *
+001610                                    (1/669)669 * [13]          Increment TABLE2 pointer
+001610                                    (1/670)670 *
+001610 4170702C                           (1/671)671          LA    7,44(,7)            Increment address
+001614                                    (1/672)672 *
+001614                                    (1/673)673 * [14]       End If
+001614                                    (1/674)674 *
+001614                                    (1/675)675 MGIF2END DS    0H
+001614                                    (1/676)676 *
+001614                                    (1/677)677 * [15]    End If
+001614                                    (1/678)678 *
+001614                                    (1/679)679 MGIF1END DS    0H
+001614                                    (1/680)680 *
+001614                                    (1/681)681 * [16]    Increment TABLE3 pointer
+001614                                    (1/682)682 *
+001614 4190902C                           (1/683)683          LA    9,44(,9)            Increment address
+001618                                    (1/684)684 *
+001618                                    (1/685)685 * [17] End Do
+001618                                    (1/686)686 *
+001618 47F0C5C6                0015C6     (1/687)687          B     MGDO1               Continue
+00161C                                    (1/688)688 *
+00161C                                    (1/689)689 MGDO1END DS    0H
+00161C                                    (1/690)690 *
+00161C                                    (1/691)691 * [18] Do While (NOT End-of-TABLE1)
+00161C                                    (1/692)692 *
+00161C 59506000                           (1/693)693 MGDO2    C     5,0(,6)             Check for end of TABLE1
+001620 47B0C636                001636     (1/694)694          BNL   MGDO2END            Yes, end of phase 2
+001624                                    (1/695)695 *
+001624                                    (1/696)696 * [19]    Copy TABLE1 entry to TABLE3
+001624                                    (1/697)697 *
+001624 D22B90005000                       (1/698)698          MVC   0(44,9),0(5)        Copy entry
+00162A                                    (1/699)699 *
+00162A                                    (1/700)700 * [20]    Increment TABLE1 pointer
+00162A                                    (1/701)701 *
+00162A 4150502C                           (1/702)702          LA    5,44(,5)            Increment address
+00162E                                    (1/703)703 *
+00162E                                    (1/704)704 * [21]    Increment TABLE3 pointer
+00162E                                    (1/705)705 *
+00162E 4190902C                           (1/706)706          LA    9,44(,9)           Increment address
+001632                                    (1/707)707 *
+001632                                    (1/708)708 * [22] End Do
+001632                                    (1/709)709 *
+001632 47F0C61C                00161C     (1/710)710          B     MGDO2               Continue
+001636                                    (1/711)711 *
+001636                                    (1/712)712 MGDO2END DS    0H
+001636                                    (1/713)713 *
+001636                                    (1/714)714 * [23] Do While (NOT End-of-TABLE2)
+001636                                    (1/715)715 *
+001636 59708000                           (1/716)716 MGDO3    C     7,0(,8)             Check for end of TABLE2
+00163A 47B0C650                001650     (1/717)717          BNL   MGDO3END            Yes, end of phase 3
+00163E                                    (1/718)718 *
+00163E                                    (1/719)719 * [24]    Copy TABLE2 entry to TABLE3
+00163E                                    (1/720)720 *
+00163E D22B90007000                       (1/721)721          MVC   0(44,9),0(7)       Copy entry
+001644                                    (1/722)722 *
+001644                                    (1/723)723 * [25]    Increment TABLE2 pointer
+001644                                    (1/724)724 *
+001644 4170702C                           (1/725)725          LA    7,44(,7)            Increment address
+001648                                    (1/726)726 *
+001648                                    (1/727)727 * [26]    Increment TABLE3 pointer
+001648                                    (1/728)728 *
+001648 4190902C                           (1/729)729          LA    9,44(,9)            Increment address
+00164C                                    (1/730)730 *
+00164C                                    (1/731)731 * [27] End Do
+00164C                                    (1/732)732 *
+00164C 47F0C636                001636     (1/733)733          B     MGDO3               Continue
+001650                                    (1/734)734 *
+001650                                    (1/735)735 MGDO3END DS    0H
+001650                                    (1/736)736 *
+001650                                    (1/737)737 * [28] Return address of next entry in TABLE3 as NAV3
+001650                                    (1/738)738 *
+001650 5090A000                           (1/739)739          ST    9,0(,10)            Return address of next entry
+001654                                    (1/740)740 *
+001654                                    (1/741)741 * [29] Perform exit processing
+001654                                    (1/742)742 *
+001654 980FC65C                00165C     (1/743)743          LM    0,15,MERGSAVE       Restore all registers
+001658 07FE                               (1/744)744          BR    14                  Return to caller
+00165A                                    (1/745)745 *
+00165A                                    (1/746)746 *********0*****6*******************6**********************************1
+00165A                                    (1/747)747 *
+00165C                                    (1/748)748 MERGSAVE DS    16F                 Save area
+00169C                                    (1/749)749 *
+00169C                                    (1/750)750          LTORG
+0016A0                                    (1/752)752 *
+0016A0                                    (1/753)753 *********0*****6*******************6**********************************1
+0016A0                                    (1/754)754 *
+0016A0                                    (1/755)755 * Name:        UPDATE
+0016A0                                    (1/756)756 *
+0016A0                                    (1/757)757 * Function:    Applies updates to the table of publishers via
+0016A0                                    (1/758)758 *              transactions read from the input file
+0016A0                                    (1/759)759 *
+0016A0                                    (1/760)760 * Entry Cond:  0(R1) - Address of the table
+0016A0                                    (1/761)761 *              4(R1) - Address of next available entry address
+0016A0                                    (1/762)762 *              8(R1) - Address of the input buffer
+0016A0                                    (1/763)763 *
+0016A0                                    (1/764)764 * Input record format:
+0016A0                                    (1/765)765 *              Character - Publisher Name
+0016A0                                    (1/766)766 *              Numeric -   Change to count of Titles Published
+0016A0                                    (1/767)767 *              Numeric -   Change to count of Titles in Preparation
+0016A0                                    (1/768)768 *
+0016A0                                    (1/769)769 * Register Usage:
+0016A0                                    (1/770)770 *      0 - Temp
+0016A0                                    (1/771)771 *      1 - Input parameters
+0016A0                                    (1/772)772 *      5 - Current table entry during search
+0016A0                                    (1/773)773 *      6 - Count of Titles Published from input record
+0016A0                                    (1/774)774 *      7 - Count of Titles in Preparation from input record
+0016A0                                    (1/775)775 *      8 - Input - Address of table
+0016A0                                    (1/776)776 *      9 - Input - Address of ptr to next available entry in table
+0016A0                                    (1/777)777 *     10 - Input - Address of buffer for reading records
+0016A0                                    (1/778)778 *     11 - Program base
+0016A0                                    (1/779)779 *     12 - Program base
+0016A0                                    (1/780)780 *
+0016A0                                    (1/781)781 * Logic:
+0016A0                                    (1/782)782 *     [1] Initialization
+0016A0                                    (1/783)783 *     [2] Read the first transaction into the passed buffer
+0016A0                                    (1/784)784 *     [3] Do While ( NOT End-of-file )
+0016A0                                    (1/785)785 *     [4]    Extract Published and In Process count changes
+0016A0                                    (1/786)786 *     [5]    Do While ( NOT Publisher Name found AND NOT end-of-table )
+0016A0                                    (1/787)787 *     [6]       Increment table pointer
+0016A0                                    (1/788)788 *     [7]    EndDo
+0016A0                                    (1/789)789 *     [8]    If Publisher Name found
+0016A0                                    (1/790)790 *     [9]       Add change to 'Published' count and total
+0016A0                                    (1/791)791 *    [10]       Add change to 'In Process' count and total
+0016A0                                    (1/792)792 *    [11]       Format and print transaction message
+0016A0                                    (1/793)793 *    [12]    Else
+0016A0                                    (1/794)794 *    [13]       Print 'Not Found' error message
+0016A0                                    (1/795)795 *    [14]    EndIf
+0016A0                                    (1/796)796 *    [15]    Read the next transaction into the passed buffer
+0016A0                                    (1/797)797 *    [16] EndDo
+0016A0                                    (1/798)798 *    [17] Print totals detail lines
+0016A0                                    (1/799)799 *    [18] Return to caller
+0016A0                                    (1/800)800 *
+0016A0                                    (1/801)801 *********0*****6*******************6**********************************1
+0016A0                                    (1/802)802 *
+0016A0                                    (1/803)803 *     [1] Initialization
+0016A0                                    (1/804)804 *
+0016A0 900FC75C                00175C     (1/805)805 UPDATE   STM   0,15,UPDTSAVE       Save all registers
+0016A4 988A1000                           (1/806)806          LM    8,10,0(1)           Table, next-available, buffer
+0016A8                                    (1/807)807 *
+0016A8                                    (1/808)808 *     [2] Read the first transaction into the passed buffer
+0016A8                                    (1/809)809 *
+0016A8 E000A0000050                       (1/810)810          XREAD 0(,10),80           Read into passed buffer
+0016AE                                    (1/811)811 *
+0016AE                                    (1/812)812 *     [3] Do While ( NOT End-of-file )
+0016AE                                    (1/813)813 *
+0016AE 4740C73A                00173A     (1/814)814 UDO3     BC    B'0100',ENDUDO3  BM Check for end of file
+0016B2                                    (1/815)815 *
+0016B2                                    (1/816)816 *     [4]    Extract Published and In Process count changes
+0016B2                                    (1/817)817 *
+0016B2 5360A020                           (1/818)818          XDECI 6,32(,10)           Get 'Published' change (+ or -)
+0016B6 53701000                           (1/819)819          XDECI 7,0(,1)             Get 'In Process' change (+ or -)
+0016BA                                    (1/820)820 *
+0016BA                                    (1/821)821 *     [5]    Do While ( NOT Publisher Name found AND NOT end-of-table )
+0016BA                                    (1/822)822 *
+0016BA 1858                               (1/823)823          LR    5,8                 Start of table
+0016BC 1B00                               (1/824)824          SR    0,0                 'Publisher Name not found'
+0016BE                                    (1/825)825 *
+0016BE 59509000                           (1/826)826 UDO5     C     5,0(,9)             If we are past the last entry
+0016C2 47B0C6DE                0016DE     (1/827)827          BC    B'1011',ENDUDO5 BNL  then quit search
+0016C6                                    (1/828)828 *
+0016C6 4100A000                           (1/829)829          LA    0,0(,10)            If found, remember this
+0016CA D51D5004A000                       (1/830)830          CLC   4(30,5),0(10)       Is this the publisher we want?
+0016D0 4780C6DE                0016DE     (1/831)831          BC    B'1000',ENDUDO5 BE  Quit search if it is
+0016D4                                    (1/832)832 *
+0016D4                                    (1/833)833 *     [6]       Increment table pointer
+0016D4                                    (1/834)834 *
+0016D4 4150502C                           (1/835)835          LA    5,44(,5)            Move along to next table entry
+0016D8 1B00                               (1/836)836          SR    0,0                 'Publisher Name not found'
+0016DA                                    (1/837)837 *
+0016DA                                    (1/838)838 *     [7]    EndDo
+0016DA                                    (1/839)839 *
+0016DA 47F0C6BE                0016BE     (1/840)840          BC    B'1111',UDO5  B     Continue search
+0016DE                                    (1/841)841 *
+0016DE                                    (1/842)842 ENDUDO5  DS    0H
+0016DE                                    (1/843)843 *
+0016DE                                    (1/844)844 *     [8]    If Publisher Name found
+0016DE                                    (1/845)845 *
+0016DE 1200                               (1/846)846 UIF8     LTR   0,0                 Was the publisher found?
+0016E0 4780C724                001724     (1/847)847          BC    B'1000',ELSUIF8 BZ  No, wasn't found in table
+0016E4                                    (1/848)848 *
+0016E4                                    (1/849)849 *     [9]       Add change to 'Published' count and total
+0016E4                                    (1/850)850 *
+0016E4 58005024                           (1/851)851          L     0,36(,5)            Get current 'Published' value
+0016E8 1A06                               (1/852)852          AR    0,6                 Add change
+0016EA 50005024                           (1/853)853          ST    0,36(,5)             and resave
+0016EE                                    (1/854)854 *
+0016EE 5800C79C                00179C     (1/855)855          L     0,UPDPUBLT          Get total Published changes so far
+0016F2 1A06                               (1/856)856          AR    0,6                 Add this change
+0016F4 5000C79C                00179C     (1/857)857          ST    0,UPDPUBLT           and resave
+0016F8                                    (1/858)858 *
+0016F8                                    (1/859)859 *    [10]       Add change to 'In Process' count and total
+0016F8                                    (1/860)860 *
+0016F8 58005028                           (1/861)861          L     0,40(,5)            Get current 'In Process' value
+0016FC 1A07                               (1/862)862          AR    0,7                 Add change
+0016FE 50005028                           (1/863)863          ST    0,40(,5)             and resave
+001702                                    (1/864)864 *
+001702 5800C7A0                0017A0     (1/865)865          L     0,UPDPREPT          Get total In Prep changes so far
+001706 1A07                               (1/866)866          AR    0,7                 Add this change
+001708 5000C7A0                0017A0     (1/867)867          ST    0,UPDPREPT           and resave
+00170C                                    (1/868)868 *
+00170C                                    (1/869)869 *    [11]       Format and print transaction message
+00170C                                    (1/870)870 *
+00170C D21DC7AE5004     0017AE            (1/871)871          MVC   UPDPUBN,4(5)        Get Publisher Name
+001712 5260C7E2                0017E2     (1/872)872          XDECO 6,UPDPUBL           Get Published Titles
+001716 5270C80A                00180A     (1/873)873          XDECO 7,UPDPREP           Get In Preparation
+00171A                                    (1/874)874 *
+00171A E020C7A40085            0017A4     (1/875)875          XPRNT UPDDET1,133         Print transaction information
+001720                                    (1/876)876 *
+001720                                    (1/877)877 *    [18]    Else
+001720                                    (1/878)878 *
+001720 47F0C730                001730     (1/879)879          BC    B'1111',ENDUIF8  B  All done, continue
+001724                                    (1/880)880 ELSUIF8  DS    0H
+001724                                    (1/881)881 *
+001724                                    (1/882)882 *    [19]       Print 'Not Found' error message
+001724                                    (1/883)883 *
+001724 D21DC833A000     001833            (1/884)884          MVC   UPD2NAME,0(10)      Set sought brand in output buffer
+00172A E020C8290085            001829     (1/885)885          XPRNT UPDDET2,133         Print error message
+001730                                    (1/886)886 *
+001730                                    (1/887)887 *    [20]    EndIf
+001730                                    (1/888)888 *
+001730                                    (1/889)889 ENDUIF8  DS    0H
+001730                                    (1/890)890 *
+001730                                    (1/891)891 *    [21]    Read the next transaction into the passed buffer
+001730                                    (1/892)892 *
+001730 E000A0000050                       (1/893)893          XREAD 0(,10),80           Get next record
+001736                                    (1/894)894 *
+001736                                    (1/895)895 *    [22] EndDo
+001736                                    (1/896)896 *
+001736 47F0C6AE                0016AE     (1/897)897          BC    B'1111',UDO3   B    Continue
+00173A                                    (1/898)898 *
+00173A                                    (1/899)899 ENDUDO3  DS    0H
+00173A                                    (1/900)900 *
+00173A                                    (1/901)901 *    [23] Print Total changes detail lines
+00173A                                    (1/902)902 *
+00173A 5800C79C                00179C     (1/903)903          L     0,UPDPUBLT          Get total changes to Published
+00173E 5200C8E8                0018E8     (1/904)904          XDECO 0,UPDSUMS           Place in report line
+001742 E020C8AA004A            0018AA     (1/905)905          XPRNT UPDSUM1,UPDSUM1L    Print report
+001748                                    (1/906)906 *
+001748 5800C7A0                0017A0     (1/907)907          L     0,UPDPREPT          Get total received
+00174C 5200C95A                00195A     (1/908)908          XDECO 0,UPDSUMR           Place in report line
+001750 E020C8F40072            0018F4     (1/909)909          XPRNT UPDSUM2,UPDSUM2L    Print report
+001756                                    (1/910)910 *
+001756                                    (1/911)911 *    [24] Return to caller
+001756                                    (1/912)912 *
+001756 980FC75C                00175C     (1/913)913          LM    0,15,UPDTSAVE       Reload the initial registers
+00175A 07FE                               (1/914)914          BR    14                  Return to calling routine
+00175C                                    (1/915)915 *
+00175C                                    (1/916)916 *********0*****6*******************6**********************************1
+00175C                                    (1/917)917 *
+00175C                                    (1/918)918 *  Storage areas for UPDATE
+00175C                                    (1/919)919 *
+00175C                                    (1/920)920 UPDTSAVE DS    16F                 Save all registers
+00179C                                    (1/921)921 *
+00179C 00000000                           (1/922)922 UPDPUBLT DC    F'0'                Total changes to Published
+0017A0 00000000                           (1/923)923 UPDPREPT DC    F'0'                Total changes to In Preparation
+0017A4                                    (1/924)924 *
+0017A4 40                                 (1/925)925 UPDDET1  DC    C' '                Transaction detail line
+0017A5 4040404040404040                   (1/926)926          DC    9C' '
+0017AE                                    (1/927)927 UPDPUBN  DS    CL30                Publisher Name
+0017CC 4040404040404040                   (1/928)928          DC    22C' '
+0017E2                                    (1/929)929 UPDPUBL  DS    CL12                Change to Published Titles
+0017EE 4040404040404040                   (1/930)930          DC    28C' '
+00180A                                    (1/931)931 UPDPREP  DS    CL12                Change to In Preparation
+001816 4040404040404040                   (1/932)932          DC    19C' '
+001829                                    (1/933)933 *
+001829 40                                 (1/934)934 UPDDET2  DC    C' '                Record not found detail line
+00182A 4040404040404040                   (1/935)935          DC    CL9' '
+001833                                    (1/936)936 UPD2NAME DS    CL30                Publisher name
+001851 404040404040                       (1/937)937          DC    CL6' '
+001857 5C5C5C40C5999996                   (1/938)938          DC    CL38'*** Error *** Publisher Name Not Found'
+00187D 4040404040404040                   (1/939)939          DC    CL45' '
+0018AA                                    (1/940)940 *
+0018AA 60                                 (1/941)941 UPDSUM1  DC    C'-'               Update summary line 1
+0018AB 4040404040404040                   (1/942)942          DC    CL24' '
+0018C3 E396A38193408388                   (1/943)943          DC    CL34'Total changes to Titles Published:'
+0018E5 404040                             (1/944)944          DC    CL3' '
+0018E8                                    (1/945)945 UPDSUMS  DS    CL12               Published titles
+0018F4                  00004A            (1/946)946 UPDSUM1L EQU   *-UPDSUM1          Length of detail line
+0018F4                                    (1/947)947 *
+0018F4 F0                                 (1/948)948 UPDSUM2  DC    C'0'               Update summary line 2
+0018F5 4040404040404040                   (1/949)949          DC    CL24' '
+00190D E396A38193408388                   (1/950)950          DC    CL39'Total changes to Titles in Preparation:'
+001934 4040404040404040                   (1/951)951          DC    CL38' '
+00195A                                    (1/952)952 UPDSUMR  DS    CL12
+001966                  000072            (1/953)953 UPDSUM2L EQU   *-UPDSUM2          Length of detail line
+001966                                    (1/954)954 *
+001966                                    (1/955)955          LTORG
+001968                                    (1/956)956 *
+001968                                    (1/957)957 *    596    12345        0   O'Reilly
+001968                                    (1/958)958 *    201    23456      111   Addison-Wesley
+001968                                    (1/959)959 *    321    34567    65433   Addison-Wesley
+001968                                    (1/960)960 *     13      123        0   Prentice-Hall
+001968                                    (1/961)961 *     12   234567        0   Academic Press
+001968                                    (1/962)962 *    387     9999        1   Springer-Verlag
+001968                                    (1/963)963 *   8359     9999        1   Reston
+001968                                    (1/964)964 *   7356     9876       99   Microsoft Press
+001968                                    (1/965)965 *   7897     6543        0   Que
+001968                                    (1/966)966 *    672    45678    11111   Sams
+001968                                    (1/967)967 *     19   345678        1   Oxford
+001968                                    (1/968)968 *    393    56789        0   Norton
+001968                                    (1/969)969 *    521    98765      999   Cambridge
+001968                                    (1/970)970 *    670    76543        0   Viking
+001968                                    (1/971)971 *  87580      123       99   NIU Press
+001968                                    (1/972)972 *   7167     5555     5555   Freeman
+001968                                    (1/973)973 *    394        1        1   Knopf
+001968                                    (1/974)974 *0000000
+001968                                    (1/975)975 *   8021     5555     5555   Atlantic Monthly Press
+001968                                    (1/976)976 *9666490        2        9   London Town Press
+001968                                    (1/977)977 *   8126     6543        0   Cricket Books
+001968                                    (1/978)978 *    684    12345        0   Scribner's
+001968                                    (1/979)979 *    679    76543        0   Random House
+001968                                    (1/980)980 *    399    56789        0   Putnam
+001968                                    (1/981)981 * 935218       99        0   Insight Press
+001968                                    (1/982)982 *   7924     9999        1   Thunder Bay Press
+001968                                    (1/983)983 *9761989        9        0   Cosmo Dogood's Urban Almanac
+001968                                    (1/984)984 *    385    34567    65433   Doubleday
+001968                                    (1/985)985 * 913966       88        9   Liberty Press
+001968                                    (1/986)986 *    440    45678    11111   Warner Books
+001968                                    (1/987)987 *   8050     9876       99   Henry Holt
+001968                                    (1/988)988 *  87000      123       99   Arlington House
+001968                                    (1/989)989 *    374    98765      999   Farrar, Strauss and Giroux
+001968                                    (1/990)990 *   7432     6543      123   Simon & Schuster
+001968                                    (1/991)991 *    691      123        0   Princeton University Press
+001968                                    (1/992)992 *    465   234567        0   Basic Books
+001968                                    (1/993)993 *    684    12345       99   Simon & Schuster
+001968                                    (1/994)994 *   8027     6543      999   Walker & Company
+001968                                    (1/995)995 *0000000
+001968                                    (1/996)996 *Thunder Bay Press               0000  0000
+001968                                    (1/997)997 *NIU Press                         +2    -2
+001968                                    (1/998)998 *Princeton University Press        25     0
+001968                                    (1/999)999 *London Town Press                  9    -9
+001968                                  (1/1000)1000 *Liberty PRess                     11     3
+001968                                  (1/1001)1001 *Springer-Verlag                  -99   +19
+001968                                  (1/1002)1002 *Putman                             0     1
+001968                                  (1/1003)1003 *Academic Press                 -1234 +2345
+001968                                  (1/1004)1004          END   MAIN
+Relocation Definitions
+ ESD=0001 LOC=000000F8 LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=000000FC LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=00000100 LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=00000104 LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=00000108 LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=0000010C LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=00000110 LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=00000114 LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=00000118 LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=0000011C LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=00000120 LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=00000124 LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=00000128 LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=00000560 LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=00000564 LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=00000568 LEN=4 SIGN=+ XESD=0001
+
+Symbol Table Listing
+
+ SYM=BLDEOF   LOC=00001396 LEN=00000002 ESD=0001 TYPE=REL  XREF=331 304 308 
+ SYM=BLDLOOP  LOC=0000135E LEN=00000004 ESD=0001 TYPE=REL  XREF=304 329 
+ SYM=BLDSAVE  LOC=000013A0 LEN=00000004 ESD=0001 TYPE=REL  XREF=339 295 336 
+ SYM=BUILD    LOC=0000134C LEN=00000002 ESD=0001 TYPE=REL  XREF=294 68 91 
+ SYM=ELSUIF8  LOC=00001724 LEN=00000002 ESD=0001 TYPE=REL  XREF=880 847 
+ SYM=ENDUDO3  LOC=0000173A LEN=00000002 ESD=0001 TYPE=REL  XREF=899 814 
+ SYM=ENDUDO5  LOC=000016DE LEN=00000002 ESD=0001 TYPE=REL  XREF=842 827 831 
+ SYM=ENDUIF8  LOC=00001730 LEN=00000002 ESD=0001 TYPE=REL  XREF=889 879 
+ SYM=HDR1     LOC=0000012C LEN=00000001 ESD=0001 TYPE=REL  XREF=182 78 101 119 131 
+  144 
+ SYM=HDR2     LOC=000001B1 LEN=00000001 ESD=0001 TYPE=REL  XREF=187 79 102 120 145 
+ SYM=HDR2STAT LOC=000001E2 LEN=00000007 ESD=0001 TYPE=REL  XREF=189 77 100 118 143 
+ SYM=HDR3     LOC=00000237 LEN=00000001 ESD=0001 TYPE=REL  XREF=193 80 103 121 146 
+ SYM=HDR4     LOC=000002BC LEN=00000001 ESD=0001 TYPE=REL  XREF=204 81 104 122 147 
+ SYM=HDR5     LOC=00000341 LEN=00000001 ESD=0001 TYPE=REL  XREF=215 132 
+ SYM=HDR6     LOC=000003C6 LEN=00000001 ESD=0001 TYPE=REL  XREF=220 133 
+ SYM=HDR7     LOC=0000044B LEN=00000001 ESD=0001 TYPE=REL  XREF=229 134 
+ SYM=INPUT    LOC=000004D0 LEN=00000050 ESD=0001 TYPE=REL  XREF=248 166 170 178 
+ SYM=INSFOR   LOC=000013F6 LEN=00000004 ESD=0001 TYPE=REL  XREF=389 430 
+ SYM=INSFORND LOC=00001436 LEN=00000002 ESD=0001 TYPE=REL  XREF=432 391 
+ SYM=INSWHEND LOC=0000142C LEN=00000002 ESD=0001 TYPE=REL  XREF=422 406 408 
+ SYM=INSWHILE LOC=0000140E LEN=00000006 ESD=0001 TYPE=REL  XREF=405 420 
+ SYM=KEY      LOC=00001484 LEN=0000001E ESD=0001 TYPE=REL  XREF=446 405 
+ SYM=MAIN     LOC=00000000 LEN=00001968 ESD=0001 TYPE=CST  XREF=56 57 62 
+ SYM=MAINSAVE LOC=00000520 LEN=00000004 ESD=0001 TYPE=REL  XREF=249 58 156 
+ SYM=MERGE    LOC=000015BE LEN=00000002 ESD=0001 TYPE=REL  XREF=609 114 
+ SYM=MERGSAVE LOC=0000165C LEN=00000004 ESD=0001 TYPE=REL  XREF=748 610 743 
+ SYM=MGDO1    LOC=000015C6 LEN=00000004 ESD=0001 TYPE=REL  XREF=618 687 
+ SYM=MGDO1END LOC=0000161C LEN=00000002 ESD=0001 TYPE=REL  XREF=689 619 621 
+ SYM=MGDO2    LOC=0000161C LEN=00000004 ESD=0001 TYPE=REL  XREF=693 710 
+ SYM=MGDO2END LOC=00001636 LEN=00000002 ESD=0001 TYPE=REL  XREF=712 694 
+ SYM=MGDO3    LOC=00001636 LEN=00000004 ESD=0001 TYPE=REL  XREF=716 733 
+ SYM=MGDO3END LOC=00001650 LEN=00000002 ESD=0001 TYPE=REL  XREF=735 717 
+ SYM=MGIF1ELS LOC=000015EE LEN=00000002 ESD=0001 TYPE=REL  XREF=640 626 
+ SYM=MGIF1END LOC=00001614 LEN=00000002 ESD=0001 TYPE=REL  XREF=679 638 
+ SYM=MGIF2ELS LOC=00001606 LEN=00000002 ESD=0001 TYPE=REL  XREF=659 645 
+ SYM=MGIF2END LOC=00001614 LEN=00000002 ESD=0001 TYPE=REL  XREF=675 657 
+ SYM=N        LOC=0000147C LEN=00000004 ESD=0001 TYPE=REL  XREF=442 383 390 
+ SYM=NAV1     LOC=00000560 LEN=00000004 ESD=0001 TYPE=REL  XREF=251 165 173 
+ SYM=NAV2     LOC=00000564 LEN=00000004 ESD=0001 TYPE=REL  XREF=252 169 175 
+ SYM=NAV3     LOC=00000568 LEN=00000004 ESD=0001 TYPE=REL  XREF=253 177 
+ SYM=PLST1    LOC=000000F8 LEN=00000004 ESD=0001 TYPE=REL  XREF=164 72 85 
+ SYM=PLST1A   LOC=000000FC LEN=00000004 ESD=0001 TYPE=REL  XREF=165 67 
+ SYM=PLST2    LOC=00000104 LEN=00000004 ESD=0001 TYPE=REL  XREF=168 95 108 
+ SYM=PLST2A   LOC=00000108 LEN=00000004 ESD=0001 TYPE=REL  XREF=169 90 
+ SYM=PLST3    LOC=00000110 LEN=00000004 ESD=0001 TYPE=REL  XREF=172 113 
+ SYM=PLST3A   LOC=00000120 LEN=00000004 ESD=0001 TYPE=REL  XREF=176 126 138 151 
+ SYM=PRINT    LOC=000014B4 LEN=00000002 ESD=0001 TYPE=REL  XREF=485 86 109 127 152 
+ SYM=PRTEND   LOC=000014F0 LEN=00000002 ESD=0001 TYPE=REL  XREF=526 493 
+ SYM=PRTINPRT LOC=00001587 LEN=0000000C ESD=0001 TYPE=REL  XREF=542 507 
+ SYM=PRTLINE  LOC=00001538 LEN=00000001 ESD=0001 TYPE=REL  XREF=536 516 
+ SYM=PRTLOOP  LOC=000014BC LEN=00000004 ESD=0001 TYPE=REL  XREF=492 524 
+ SYM=PRTNAME  LOC=00001542 LEN=0000001E ESD=0001 TYPE=REL  XREF=538 497 
+ SYM=PRTPREF  LOC=0000156E LEN=0000000C ESD=0001 TYPE=REL  XREF=540 502 
+ SYM=PRTPREP  LOC=000015A6 LEN=0000000C ESD=0001 TYPE=REL  XREF=544 512 
+ SYM=PRTSAVE  LOC=000014F8 LEN=00000004 ESD=0001 TYPE=REL  XREF=533 486 530 
+ SYM=REC      LOC=00001480 LEN=0000002C ESD=0001 TYPE=REL  XREF=444 401 426 445 
+ SYM=SORT     LOC=000013E4 LEN=00000002 ESD=0001 TYPE=REL  XREF=378 73 96 
+ SYM=SORTSAVE LOC=0000143C LEN=00000004 ESD=0001 TYPE=REL  XREF=441 379 436 
+ SYM=TABLE1   LOC=0000056C LEN=00000004 ESD=0001 TYPE=REL  XREF=254 164 172 251 
+ SYM=TABLE2   LOC=000008DC LEN=00000004 ESD=0001 TYPE=REL  XREF=255 168 174 252 
+ SYM=TABLE3   LOC=00000C4C LEN=00000004 ESD=0001 TYPE=REL  XREF=256 176 253 
+ SYM=UDO3     LOC=000016AE LEN=00000004 ESD=0001 TYPE=REL  XREF=814 897 
+ SYM=UDO5     LOC=000016BE LEN=00000004 ESD=0001 TYPE=REL  XREF=826 840 
+ SYM=UIF8     LOC=000016DE LEN=00000002 ESD=0001 TYPE=REL  XREF=846 
+ SYM=UPD2NAME LOC=00001833 LEN=0000001E ESD=0001 TYPE=REL  XREF=936 884 
+ SYM=UPDATE   LOC=000016A0 LEN=00000004 ESD=0001 TYPE=REL  XREF=805 139 
+ SYM=UPDDET1  LOC=000017A4 LEN=00000001 ESD=0001 TYPE=REL  XREF=925 875 
+ SYM=UPDDET2  LOC=00001829 LEN=00000001 ESD=0001 TYPE=REL  XREF=934 885 
+ SYM=UPDPREP  LOC=0000180A LEN=0000000C ESD=0001 TYPE=REL  XREF=931 873 
+ SYM=UPDPREPT LOC=000017A0 LEN=00000004 ESD=0001 TYPE=REL  XREF=923 865 867 907 
+ SYM=UPDPUBL  LOC=000017E2 LEN=0000000C ESD=0001 TYPE=REL  XREF=929 872 
+ SYM=UPDPUBLT LOC=0000179C LEN=00000004 ESD=0001 TYPE=REL  XREF=922 855 857 903 
+ SYM=UPDPUBN  LOC=000017AE LEN=0000001E ESD=0001 TYPE=REL  XREF=927 871 
+ SYM=UPDSUM1  LOC=000018AA LEN=00000001 ESD=0001 TYPE=REL  XREF=941 905 946 
+ SYM=UPDSUM1L LOC=0000004A LEN=00000001 ESD=0000 TYPE=ABS  XREF=946 905 
+ SYM=UPDSUM2  LOC=000018F4 LEN=00000001 ESD=0001 TYPE=REL  XREF=948 909 953 
+ SYM=UPDSUM2L LOC=00000072 LEN=00000001 ESD=0000 TYPE=ABS  XREF=953 909 
+ SYM=UPDSUMR  LOC=0000195A LEN=0000000C ESD=0001 TYPE=REL  XREF=952 908 
+ SYM=UPDSUMS  LOC=000018E8 LEN=0000000C ESD=0001 TYPE=REL  XREF=945 904 
+ SYM=UPDTSAVE LOC=0000175C LEN=00000004 ESD=0001 TYPE=REL  XREF=920 805 913 
+
+Literal Table Listing
+
+ LIT=C'  First' LOC=00001330 LEN=00000007 ESD=0001 POOL=0001 XREF=77 
+ LIT=C' Merged' LOC=0000133E LEN=00000007 ESD=0001 POOL=0001 XREF=118 
+ LIT=C' Second' LOC=00001337 LEN=00000007 ESD=0001 POOL=0001 XREF=100 
+ LIT=C'Updated' LOC=00001345 LEN=00000007 ESD=0001 POOL=0001 XREF=143 
+ LIT=F'0'     LOC=000013E0 LEN=00000004 ESD=0001 POOL=0002 XREF=307 
+ LIT=F'44'    LOC=000014B0 LEN=00000004 ESD=0001 POOL=0003 XREF=396 416 
+ 
+AZ390I total mnote warnings = 0
+AZ390I total mnote errors   = 0
+AZ390I max   mnote level    = 0
+AZ390I total mz390 errors   = 0
+AZ390I total az390 errors   = 0
+solp06    MZ390 ENDED   RC= 0 MEM(MB)= 40 IO=2360

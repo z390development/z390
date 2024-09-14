@@ -1,0 +1,14 @@
+P11FIND2  EZ390 STARTED USING z390 V1.3.09 ON J2SE 1.6.0_03
+EZ390I Copyright 2006 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = mfacc\P11FIND2.390
+EZ390I options = @rt\rt1=(bal notiming stats) systerm(rtmfacc) 
+  SYSCPY(mfacc+mac)
+ZMFACC Solution for problem P11FIND2 by DON HIGGINS using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+SNAP DUMP ID=2 TEXT=Output Area
+ 000BF50C *D7F1F1C6 C9D5C440 C4C9E5C9 E2D6D940* *P11FIND DIVISOR *
+ 000BF51C *7E000000 00000000 00000D91 40404040* *=..........j    *
+ 000BF52C *F3F4F7F3                           * *3473            *
+EZ390I total errors         = 0
+P11FIND2  EZ390 ENDED   RC= 0 MEM(MB)= 13 IO=53 INS=9918006

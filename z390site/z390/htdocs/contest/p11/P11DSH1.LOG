@@ -1,0 +1,11 @@
+P11DSH1   EZ390 STARTED USING z390 V1.3.09 ON J2SE 1.6.0_03
+EZ390I Copyright 2006 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = mfacc\P11DSH1.390
+EZ390I options = @rt\rt1=(bal notiming stats) systerm(rtmfacc) 
+  SYSCPY(mfacc+mac)
+ZMFACC Solution for problem P11DSH1 by DON HIGGINS using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+SNAP DUMP ID=2 TEXT=Output Area
+EZ390I total errors         = 0
+P11DSH1   EZ390 ENDED   RC= 0 MEM(MB)= 13 IO=48 INS=1041979

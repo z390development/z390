@@ -1,0 +1,305 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Standard Timestamp Support for Assembler, C, COBOL, Java, SQL, XML </title>
+</head>
+
+<body>
+
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="center" width="161" height="90">
+              <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></td>
+              <td align="center" width="460" height="90">
+              <p align="center"><b><font size="5">Standard  </font>
+              <font face="Times New Roman" size="5"><a href="http://en.wikipedia.org/wiki/Timestamp">
+              Timestamp</a></font><font size="5"> Support for<br>
+              Assembler, C, COBOL, Java, SQL, XML</font></b></td>
+              <td width="133" height="90" align="center">
+              <b>
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="anim370.gif" alt="Automated Software Tools Corporation" width="100" height="59"></a></b></td>
+            </tr>
+            </table>
+         
+        
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="left" valign="top">
+              <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%" height="190">
+                <tr>
+                  <td width="50%" height="190" align="left" valign="top">
+                  <ul>
+                    <li><b><a href="#Overview_ot_Timestamps">Overview of 
+                    Timestamps</a></b></li>
+                    <li><b>Standards for Timestamps</b><ul>
+                    <li><b><a href="http://tools.ietf.org/html/rfc3339">IETF RFC 
+                    3339 - Date and Time on Internet</a></b></li>
+                    <li><b><a href="http://en.wikipedia.org/wiki/ISO_8601">ISO 8601 
+                    - Display standard date and time</a></b></li>
+                  </ul>
+                    </li>
+                    <li><b>Operating System Timestamps</b><ul>
+                      <li><b>
+                      <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/IEA2A970/75.2.8?SHELF=&DT=20060619230153&CASE=">z/OS 
+                      - TIME macro svc 11 services</a></b></li>
+                      <li><b>
+                      <a href="http://msdn.microsoft.com/en-us/library/ms725473(VS.85).aspx">Windows 
+                      Time functions</a></b></li>
+                      <li><b><a href="http://www.linux-mag.com/id/847">Linux - 
+                      Time functions</a></b></li>
+                    </ul>
+                    </li>
+                    <li><b>Language Timestamp Functions</b><ul>
+                      <li><b><a href="#C_Timestamp_Support">C</a></b></li>
+                      <li><b><a href="#COBOL_Timestamp_Support">COBOL</a></b></li>
+                      <li><b>
+                      <a href="http://java.sun.com/j2se/1.4.2/docs/api/java/sql/Timestamp.html">Java 
+                      - TimeStamp class methods</a></b></li>
+                      <li><b><a href="#Assembler_Timestamp_Support">Mainframe Assembler</a></b></li>
+                      <li><b>
+                      <a href="http://troels.arvin.dk/db/rdbms/#data_types-date_and_time-timestamp">
+                      SQL - Comparison of timestamps by vendor</a></b></li>
+                      <li><b><a href="http://www.w3.org/TR/xmlschema-2/#dateTime">XML - 
+                      Date and time types</a></b></li>
+                    </ul>
+                    </li>
+                  </ul>
+                  </td>
+                  <td width="50%" height="190" align="left" valign="top">
+                  <ul>
+                    <li><b>Additional <a href="http://en.wikipedia.org/wiki/Timestamp">
+                    Tmestamp</a> References</b><ul>
+                    <li><b>
+                    <a href="http://en.wikipedia.org/wiki/Greenwich_Mean_Time">
+                    GMT (also UTC or UT1)</a></b></li>
+                    <li><b><a href="http://tf.nist.gov/general/glossary.htm">NIST 
+                      Time and frequency glossary</a></b></li>
+                    <li><b><a href="http://www.ntp.org/">Network Time Protocol</a></b></li>
+                    <li><b>
+                    <a href="http://www.tdan.com/view-articles/4923/">SQL no longer a standard</a></b></li>
+                    <li><b>
+                    <a href="http://www-didc.lbl.gov/GGF-PERF/GMA-WG/papers/GWD-GP-10-1.pdf">
+                    Standard Timestamp for Grid Proposal</a></b></li>
+                    <li><b><a href="http://www.time.gov/">The Official US Time</a></b></li>
+                    <li><b>
+                    <a href="http://en.wikipedia.org/wiki/Year_2038_problem">The 
+                    next Y2K type challenge in 2038</a></b></li>
+                    <li><b>
+                    <a href="http://en.wikipedia.org/wiki/Universal_Time">
+                    Universal Time</a></b></li>
+                    <li><b>
+                    <a href="http://www.peterrussell.com/Odds/WorldClock.php">
+                    World Clock with interesting event counters</a></b></li>
+                        </ul>
+                        </li>
+                        </ul>
+                        </td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" colspan="2">
+                  <p align="center"><b><a name="Overview_ot_Timestamps">Overview 
+                  ot Timestamps</a></b></p>
+                  <p><b><a href="http://en.wikipedia.org/wiki/Timestamp">
+                  Timestamps</a> are used in most computer systems to define the 
+                  date and or time associated with an event or transaction.&nbsp; 
+                  There are several standards for defining date and time but 
+                  they are not consistently followed so every computer platform, 
+                  operating system, and language has different formats and 
+                  methods for processing date and time information.&nbsp; 
+                  Perhaps the closest thing to a consistent standard is the
+                  <a href="http://en.wikipedia.org/wiki/ISO_8601#History">ISO 
+                  8601 standard</a> for external date amd time which simply says 
+                  the sequence should be 4 digit year, month, day, hour, minute, 
+                  and second so the timestamps can be compared and sorted 
+                  easily.&nbsp; The year, month, and day typically refer to the
+                  <a href="http://en.wikipedia.org/wiki/Gregorian_calendar">
+                  Gregorian Calender</a> which is the most widely used and is 
+                  the defacto standard.&nbsp; To simplify date calculations and 
+                  time interval measurement, timestamps are often stored as a 
+                  single numeric number with 0 representing some
+                  <a href="http://www.timeanddate.com/worldclock/">local time 
+                  zone</a> arbitrary starting time called an
+                  <a href="http://en.wikipedia.org/wiki/Epoch_(reference_date)#Computing">
+                  epoch</a>.&nbsp; There are many different date and time
+                  <a href="http://en.wikipedia.org/wiki/Epoch_(reference_date)#Computing">
+                  epochs</a> in use today including:</b></p>
+                  <ul>
+                    <li><b>
+                    <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/IEA2A970/75.2.8?SHELF=&DT=20060619230153&CASE=">
+                    IBM z/OS mainframes </a>and the
+                    <a href="http://www.ntp.org/">Network Time Protocol</a> 
+                    Epoch uses January 1, 1900</b></li>
+                    <li><b>
+                    <a href="http://msdn.microsoft.com/en-us/library/ms725473(VS.85).aspx">
+                    Microsoft Windows Epoch</a> uses January 1, 1601</b></li>
+                    <li><b>
+                    <a href="http://java.sun.com/j2se/1.4.2/docs/api/java/sql/Timestamp.html">
+                    Sun Microsystems Portable Java Runtime Epoch</a> uses 
+                    January 1, 1970</b></li>
+                    <li><b>
+                    <a href="http://en.wikipedia.org/wiki/Unix_time#International_Atomic_Time-based_variant">
+                    International Atomic Time Epoch</a> uses January 1970 and 
+                    does not skip leap years</b></li>
+                  </ul>
+                  <p><b>For 32 bit computer systems that count seconds from the 
+                  epoch January 1, 1970 such as some Unix and Linux systems, the 
+                  counter will overflow in the year 2038 potentially causing 
+                  another Y2K type event unless these systems are converted to 
+                  use 64 bit counters or the epoch is moved forward to delay the 
+                  inevitable.&nbsp; For those interested in a standard
+                  <a href="http://en.wikipedia.org/wiki/Universal_Time">Univeral 
+                  Time</a> for planet earth, there is
+                  <a href="http://en.wikipedia.org/wiki/Greenwich_Mean_Time">GMT</a> 
+                  (also called UTC or UT1).&nbsp; For geologists there is
+                  <a href="http://en.wikipedia.org/wiki/Geologic_timescale">
+                  geological time</a> starting about 5 billion years ago.&nbsp; 
+                  Then for those interested in a truly
+                  <a href="http://csep10.phys.utk.edu/astr161/lect/sense/sense.html">
+                  universal time scale</a>, consider joining
+                  <a href="http://setiathome.berkeley.edu/">SETI</a> (one of the 
+                  worlds largest distributed processing grid projects to detect 
+                  extra terrestrials intelligence) and get ready to redefine 
+                  &quot;Universal Time&quot; when we discover a plant that has its own 
+                  universal time starting perhaps 10 billion years ago.&nbsp; 
+                  Calling earth time as &quot;Universal&quot; is like declaring the earth 
+                  as the center of the universe.</b></p>
+                  <p><b>Moving from the galactic scale down to the sub second 
+                  scale, timestamps are also often used to to uniquely identify 
+                  events within a computer system.&nbsp; And as the speed of 
+                  computer chips continue to increase with cycle times exceeding 
+                  GHZ, there is a need for more precise timestamps measuring 
+                  microseconds and nanoseconds.&nbsp; The
+                  <a href="http://www.z390.org">z390</a> version of the IBM 
+                  mainframe compatible TIME macro has added a new time NS which 
+                  returns a 64 bit value representing the nanoseconds since the 
+                  J2SE Java runtime startup.&nbsp; This function uses
+                  <a href="http://java.sun.com/j2se/1.4.2/docs/api/java/sql/Timestamp.html">
+                  System.nanotime()</a> class method which in turn for Windows 
+                  host operating systems uses the
+                  <a href="http://msdn.microsoft.com/en-us/library/ms644905(VS.85).aspx">
+                  QueryPerformanceFrequency</a> and
+                  <a href="http://msdn.microsoft.com/en-us/library/ms644904(VS.85).aspx">
+                  QueryPerformanceCounter</a> functions for measuring short 
+                  intervals.&nbsp; A similar approach has been used recently to 
+                  add a Micro Focus Mainframe Express COBOL callable routine 
+                  named GETTIME that returns the current date and time in 
+                  microseconds using the Windows January 1, 1601 epoch and the 
+                  additional function
+                  <a href="http://msdn.microsoft.com/en-us/library/ms724397(VS.85).aspx">
+                  GetSystemTimeAsFileTime</a>.&nbsp; This COBOL function&nbsp; 
+                  is available from Micro Focus for customer use.&nbsp; There 
+                  are similar functions in C, Java, SQL, XML and other languages 
+                  but they are all different enough that a change in platform, 
+                  operating system, or language vendor will probably require 
+                  conversion.&nbsp; Have you noticed that almost every computer 
+                  installation has its own set of callable date and time 
+                  routines that have evolved for the years and are ofter written 
+                  in assembler?</b></td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" colspan="2">
+                  <p align="center">&nbsp;</p>
+                  <p align="center"><b><a name="Assembler_Timestamp_Support">
+                  Mainframe Assembler Timestamp Support</a></b></p>
+                  <p><b>Both IBM
+                  <a href="http://www-03.ibm.com/systems/z/os/zos/index.html">
+                  z/OS</a> and <a href="http://www.z390.org">z390</a> Mainframe 
+                  Assembler languages support the
+                  <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/IEA2A970/75.2.8?SHELF=&DT=20060619230153&CASE=">
+                  TIME</a> macro to retrieve date and time in verious formats.&nbsp;&nbsp; 
+                  z390 has added the following extensions to its TIME macro:<br>
+&nbsp; 1.&nbsp; TIME TS,ADDR=timestamp returns 29 character EBCDIC timestamp in 
+                  the following format:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; YYYY-MM-DD HH:MM:SS.NNNNNNNNN WHERE 
+                  NNNNNNNNN is in nanoseconds.&nbsp; This is the same<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; format as
+                  <a href="http://java.sun.com/j2se/1.3/docs/api/java/sql/Timestamp.html">
+                  JDBC SQL timestamp</a>.<br>
+&nbsp;2.&nbsp; TIME NS returns nanosecond counter for use in interval 
+                  measurements in 64 bit GPR 0.<br>
+&nbsp;3.&nbsp; CLOCK=JAVA returns time since J2SE epoch Jan. 1, 1970 versus 
+                  default IBM epoch Jan. 1, 1900.&nbsp; (Note Windows system 
+                  uses epoch Jan 1, 1601 and Linux system uses the same epoch as 
+                  J2SE Jan. 1, 1970.)</b></p>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" colspan="2">
+                  <p align="center">&nbsp;</p>
+                  <p align="center"><b><a name="C_Timestamp_Support">C Timestamp 
+                  Support</a></b></p>
+                  <p><b><a href="http://www.linux.org/">Linux</a> supports 
+                  several date and time functions including
+                  <a href="http://www.linux-mag.com/id/847">ftime(time)</a> 
+                  returning 2 64 bit fields containing seconds since<br>
+                  the epoch Jan. 1, 1970 and microsecond fraction of a second.</b></p>
+                  <p><b>
+                  <a href="http://msdn.microsoft.com/en-us/library/aa383749(VS.85).aspx">
+                  Windows WIN32API</a> includes the following calls:<br>
+&nbsp; 1.&nbsp; <a href="http://msdn.microsoft.com/en-us/library/ms724397(VS.85).aspx">
+                  GetSystemTimeAsFileTime()</a> - returns 64 bit time in 100 
+                  nanoseconds since epoch Jan 1, 1601.&nbsp; This is the format<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; to timestamp files in Windows.<br>
+&nbsp; 2.&nbsp; <a href="http://msdn.microsoft.com/en-us/library/ms644905(VS.85).aspx">
+                  QueryPerformanceFrequency()</a> - returns 64 bit frequency of 
+                  updates for QueryPerformanceCounter.<br>
+&nbsp; 3.&nbsp; <a href="http://msdn.microsoft.com/en-us/library/ms644904(VS.85).aspx">
+                  QueryPerformanceCounter()</a> - returns 64 bit counter 
+                  incremented QueryPerformanceFrequ</b></td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" colspan="2">
+                  <p align="center">&nbsp;</p>
+                  <p align="center"><b><a name="COBOL_Timestamp_Support">COBOL 
+                  Timestamp Support</a></b></p>
+                  <p><b>The COBOL standards support obtaining date and time in 
+                  numerous formats using intrinsic functions and ACCEPT options.&nbsp; 
+                  For comprehensive lists see:&nbsp;
+                  <a href="http://www.cobolstandard.info/j4/files/05-0094.doc">
+                  http://www.cobolstandard.info/j4/files/05-0094.doc</a>.&nbsp;
+                  </b></p>
+                  <p><b>Unfortunately&nbsp; there does not appear to be a 
+                  consistent standard COBOL method to obtain time of day in microseconds or 
+                  nanoseconds for more precise interval timing.&nbsp; As a 
+                  result calls to functions written in C or assembler are often 
+                  used to obtain such time formats.</b></p>
+                  <p><b>For Micro Focus Mainframe Express COBOL running on 
+                  Windows, there is now a subroutine written in COBOL which uses 
+                  the WIN32API interface to the Windows time functions to obtain 
+                  the time of day in microseconds.&nbsp; This routine is 
+                  available to Micro Focus customers. </b>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" colspan="2">
+                  &nbsp;</td>
+                </tr>
+              </table>
+                      </td>
+            </tr>
+            </table>
+         
+        
+<p align="center"><b>IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS<br>
+&nbsp;are registered trademarks
+&nbsp;of International Business Machines Corporation</b></p>
+
+        
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Sunday September 07, 2008<!--webbot bot="Timestamp" i-checksum="59270" endspan -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a>&nbsp; <br>
+Copyright 2008 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </b> </p>
+
+</body>
+
+</html>

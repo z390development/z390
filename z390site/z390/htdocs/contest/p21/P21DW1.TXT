@@ -1,0 +1,122 @@
+*=====================================================================*
+*
+*        PROBLEM #21 - BINARY SEARCH OF 20 ELEMENT INTEGER ARRAY,
+*                      SEARCHING IN TURN, FOR ALL THE ELEMENTS IN THE
+*                      THE ARRAY, PLUS 3 ADDITIONAL VALUES NOT IN THE 
+*                      ARRAY - USING A TOTAL OF 1649 INSTRUCTIONS.
+*
+*        DATE    - 13TH AUGUST 2008
+*        AUTHOR  - DAVID WILKINSON
+*
+*=====================================================================*
+P21DW1   ZMFACC CODE,START,ZRUNSYS=Z390,NAME='DAVID WILKINSON'
+*
+A1000    EQU   *        
+         MVC   LEFT,=F'1'              LEFT INDEX
+         MVC   RIGHT,=F'20'            RIGHT INDEX
+         L     R2,=A(KEYS)             LOAD ADDR OF SEARCH TABLE
+         LHI   R4,23                   LOAD SEARCH KEY COUNT
+*
+A1020    EQU   *
+         MVC   KEY,0(R2)               SET SEARCH KEY
+         L     R1,KEY                  LOAD ADDR OF KEY
+         CVD   R1,WORKD                CONVERT TO PACKED
+         UNPK  WORKD(3),WORKD+6(2)     UNPACK KEY
+         OI    WORKD+2,C'0'            MAKE SIGN READABLE
+*
+         L     R15,=A(KBSEC)           LOAD ADDR OF ROUTINE
+         BALR  R14,R15                 CALL BINARY SEARCH
+         CLC   RC,=F'0'                KEY FOUND ?
+         BE    A1040                   NO..
+*
+         MVC   A1030+12(3),WORKD       MOVE KEY TO WTO
+A1030    WTO   'KEY XXX FOUND.'
+         B     A1060                   CONTINUE..  
+*
+A1040    EQU   *
+         MVC   A1050+12(3),WORKD       MOVE KEY TO WTO
+A1050    WTO   'KEY XXX NOT FOUND.'
+*
+A1060    EQU   *
+         LA    R2,4(,R2)               POINT TO NEXT ENTRY
+         BCT   R4,A1020                BRANCH UNTIL R4 IS ZERO..
+         B     A1999                   RETURN
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+KBSEC    DS    0H                      BINARY SEARCH
+         STM   R1,R15,KBSAVE           SAVE REGISTERS
+*---------------------------------------------------------------------*
+*
+*        BINARY SEARCH - COURTESY OF KNUTH (SORTING AND SEARCHING)
+*
+*        R1  = L = LOWER INDEX
+*        R2  = U = UPPER INDEX
+*        R3  = I = MID POINT
+*        R4  = WORK REGISTER
+*        R5  = WORK REGISTER
+*        R6  = TEMP
+*        R7  = -1
+*        R8  = KEY LENGTH -1
+*        R9  = START OF ARRAY
+*        R10 = WORK
+*
+*---------------------------------------------------------------------*
+KB000    EQU   *                       
+         L     R1,LEFT                 LOAD INITIAL L
+         L     R2,RIGHT                LOAD INITIAL U
+         LHI   R7,-1                   LOAD R7 WITH -1    
+         LHI   R8,3                    LOAD KEY LENGTH -1
+         L     R9,=A(ARRAY)            LOAD START OF ARRAY ADDR
+         XC    RC,RC                   SET NOT FOUND RC
+         B     KB040                   CONTINUE...
+*
+KB020    EQU   *                       
+         LA    R1,1(,R3)               L = I + 1
+*
+KB040    EQU   *                       
+         LA    R10,0(R1,R2)            L = L + U 
+         SRL   R10,1                   L = (L + U)/2 
+         LR    R6,R10                  STORE RESULT IN TEMP
+*
+         CRB   R1,R6,B'0010',KB060     EXIT IF L > U 
+         LR    R3,R6                   I = MID POINT
+         LA    R5,0(R3,R7)             LOAD R4 WITH I - 1
+         MHI   R5,4                    MULTIPLY R4 BY ENTRY LENGTH 
+         AR    R5,R9                   POINT TO X(I) KEY
+*
+         CLC   KEY,0(R5)               COMPARE KEY : K(I)  
+         BH    KB020                   KEY > K(I) 
+         BL    KB080                   KEY < K(I)
+*                                      SUCCESS: KEY FOUND 
+         ST    R3,RC                   STORE I IN RC  
+*
+KB060    EQU   *
+         LM    R1,R15,KBSAVE           RESTORE REGISTERS
+         BR    R14                     RETURN
+*   
+KB080    EQU   *               
+         LA    R2,0(R3,R7)             U = I - 1
+         B     KB040                   CONTINUE...
+*
+KBSAVE   DC    18F'0'                  REGISTER SAVE AREA
+*---------------------------------------------------------------------*
+WORKD    DS    D                       WORK AREA
+KEY      DS    F                       SEARCH KEY
+LEFT     DS    F                       LEFT INDEX
+RIGHT    DS    F                       RIGHT INDEX
+RC       DS    F                       RETURN CODE
+*---------------------------------------------------------------------*
+*
+A1999    DS    0H                      RETURN
+*=====================================================================*
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         ZMFACC OUTPUT,START
+KEYS     DC    F'00,28,99'
+*
+ARRAY    DC    F'01,03,07,09,13,18,19,20,25,27'
+         DC    F'30,31,32,40,41,45,47,50,65,80' 
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,END
+         END

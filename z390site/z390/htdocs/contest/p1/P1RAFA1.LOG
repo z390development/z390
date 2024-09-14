@@ -1,0 +1,23 @@
+EZ390I V1.3.09 Current Date 12/15/07 Time 20:52:51
+EZ390I Copyright 2006 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = P1RAFA1
+EZ390I options = 
+ZMFACC SOLUTION FOR PROBLEM P1MVC2 BY RAFA
+SNAP DUMP ID=1 TEXT=INPUT AREA
+ 000FFF38 *C6C9C5D3 C440C240 40404040 40404040* *FIELD B         *
+ 000FFF48 *40404040 C6C9C5D3 C440C140 40404040* *    FIELD A     *
+ 000FFF58 *40404040 40404040                  * *                *
+SNAP DUMP ID=2 TEXT=OUTPUT AREA
+ 000FFF38 *C6C9C5D3 C440C240 40404040 40404040* *FIELD B         *
+ 000FFF48 *40404040 C6C9C5D3 C440C140 40404040* *    FIELD A     *
+ 000FFF58 *40404040 40404040                  * *                *
+EZ390I Stats total instructions    = 27
+EZ390I stats TCPIO operations      = 0
+EZ390I stats DCB operations        = 0
+EZ390I stats VSAM operations       = 0
+EZ390I Stats current date 12/15/07 time 20:52:51
+EZ390I Stats total seconds         = 0
+EZ390I Stats instructions/sec      = 2454
+EZ390I total errors         = 0
+EZ390I return code(P1RAFA1 )= 0

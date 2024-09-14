@@ -1,0 +1,119 @@
+         TITLE 'P18DSH1.MLC - Calc % gain replacing LTR,BNE with CIBNE'
+*********************************************************************
+* Program ID.  P16DSH1.MLC
+* Author.      Don Higgins.
+* Date.        03/07/08.
+*********************************************************************
+P18DSH1  ZMFACC CODE,START,NAME='DON HIGGINS'
+* TIME THE BCTR,LTR,BNE LOOP 1
+         WTO    'MEASURE MIPS FOR 1000000 BCTR,LTR,JNZ'
+         CALL   DAT
+         L      R1,=A(1000000)
+LOOP1    DS     0H
+         BCTR   R1,0
+         LTR    R1,R1
+         JNZ    LOOP1
+         CALL   DAT
+         L      R2,=A(PWORK)
+         SGR    R4,R4            CLEAR HIGH 32 FOR DSG LATER
+         CVB    R4,0(R2)         R4 = MIPS LOOP1 
+         L      R1,=A(NSDIFF)
+         LG     R6,0(R1)         R6 = NANO-SEC LOOP1
+* TIME THE BCTR, CIBNE LOOP 2
+         WTO    'MEASURE MIPS FOR 1000000 BCTR,CIJNE'
+         TIME   BIN
+         L      R1,=A(1000000)
+LOOP2    DS     0H
+         BCTR   R1,0
+         CIJNE  R1,0,LOOP2
+         CALL   DAT
+         L      R1,=A(NSDIFF)
+         LG     R7,0(R1)         R7 = NANO-SEC LOOP1
+* CALC MIP REDUCTION IN SPEED
+         L      R2,=A(PWORK)
+         CVB    R5,0(R2)        R5 = MIPS LOOP2
+         LGR    R1,R4
+         SR     R1,R5
+         MH     R1,=H'100'   R1 = PCT REDUCTION IN MIP RATE
+         DSGR   R0,R4
+         CVD    R1,0(R2)
+         MVC    DPCTMIPS,=X'40202120'
+         ED     DPCTMIPS,6(R2)
+* CALC NANO-SECOND REDUCTION IN ELAPSED TIME
+         LGR    R1,R6
+         SGR    R1,R7
+         MH     R1,=H'100'   R1 = PCT REDUCTION IN ELAPSED NANO-SEC 
+         DSGR   R0,R6
+         CVD    R1,0(R2)
+         MVC    DPCTNS,=X'40202120'
+         ED     DPCTNS,6(R2)
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         DC    C'MIPS DOWN='
+DPCTMIPS DC    C' ZZZ0',C'%'
+         DC   ,C'NSEC DOWN='
+DPCTNS   DC    C' ZZZ0',C'%'
+         ZMFACC OUTPUT,END
+         LTORG
+         TITLE 'DAT - DATE AND TIME SUBROUTINE'
+**********************************************************************
+*  AUTHOR.    DON HIGGINS.
+*  DATE.      04/01/85.
+**********************************************************************
+* 03/21/08 DSH1 UPGRADE FROM PC/370 TO Z390 AFTER 23 YEARS
+*  1.  DISPLAY DATE, TIME OF DAY, INSTRUCTION COUNTER, AND MIPS
+*  2.  DISPLAY JDBC TIME-STAMP WITH NANO-SECOND EXTENSION USING TIME TS
+*  3.  DISPLAY TOTAL Z390 INSTRUCTIONS EXECUTED USING TIME INS
+*  4.  FOR REPEATED CALLS, CALCULATE AND DISPLAY MIP RATE FOR INTERVAL
+**********************************************************************
+DAT      SUBENTRY         
+         TIME  TS,JDBCTS         GET JDBC TIME STAMP WITH NANO-SEC EXT.
+         LG    R3,NSPREV         R3 = PREV NS TIME   
+         TIME  NS,NSTIME         GET TOD IN NANO-SECONDS
+         MVC   NSPREV,NSTIME     SAVE CURR NS TIME    
+         LG    R4,LASTINS        R4 = PREV INSTR COUNT
+         TIME  INS               R1 = CURR INSTR COUNT
+         STG   R1,LASTINS        SAVE CURR INSTR COUNT
+         CVDG  R1,PWORK          CVT 64 BIT COUNT
+         MVC   DINS,MASKINS
+         ED    DINS,PWORK+10     DISPLAY LOW 11 DIGITS OF COUNT
+         LTGR  R3,R3             IS PREV NSTIME ZERO
+         BZ    NOMIPS            YES, SKIP MIP CALC
+         LG    R0,NSTIME
+         SGR   R0,R3
+         BZ    NOMIPS            SKIP MIP CALC IF NANO-SEC INT = 0 
+         STG   R0,NSDIFF         SAVE ELAPSED TIME IN NANO-SECONDS
+         LG    R1,LASTINS
+         SGR   R1,R4            R1 = INSTR INTERVAL COUNT
+         MSG   R1,=FL8'100000'  R1 = INSTR * 100,000         
+         DSG   R0,NSDIFF        R1 = MIPS * 100
+	CVD   R1,PWORK
+         MVC   DMIPS,MASKMIPS
+         ED    DMIPS,PWORK+5
+         B     DISPLAY
+NOMIPS   DS    0H
+         MVI   DMIPS,C' '
+         MVC   DMIPS(L'DMIPS-1),DMIPS
+DISPLAY  DS    0H
+         WTO   MF=(E,DATMSG)     DISPLAY TS, TOTAL INSTRUCTIONS, MIPS 
+         SUBEXIT 
+DATMSG   DC    AL2(MSGEND-*,0)  
+JDBCTS   DC    CL29' ',C' INS='
+DINS     DC    C' ZZ,ZZZ,ZZZ,ZZZ',C' MIPS='    
+DMIPS    DC    C'   0.00'    
+MSGEND   EQU   *
+PWORK    DC    PL16'0'
+LASTINS  DC    FL8'0'
+MASKINS  DC    C' ',X'2020',3AL1(C',',X'20',X'20',X'20')
+MASKMIPS DC    C' ',X'202120',C'.',X'2020'
+NSPREV   DC    FL8'0'  PREV NS
+NSTIME   DC    FL8'0'  CURR NS
+NSDIFF   DC    FL8'0'  NS IN INTERVAL
+         LTORG
+         END
+
+                       
+
+

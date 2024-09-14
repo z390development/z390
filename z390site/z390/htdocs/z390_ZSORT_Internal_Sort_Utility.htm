@@ -1,0 +1,271 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 12.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>z390 ZSORT Internal and FIle Sort Utility</title>
+</head>
+
+<body>
+
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" id="AutoNumber1">
+            <tr>
+              <td align="center" width="205" height="90">
+              <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></td>
+              <td align="center" width="402" height="90">
+              <p align="center"><b><font size="5">z390 </font></b>
+              <font size="5"><b>ZSORT Sort Utility<br>
+              &nbsp;</b></font></td>
+              <td width="151" height="90" align="center">
+              <b>
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="anim370.gif" alt="Automated Software Tools Corporation" width="100" height="59"></a></b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3">
+              <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%">
+                <tr>
+                  <td width="25%" align="left" valign="top"><b>ZSORT</b><ul>
+                    <li><b><a href="#Overview">Overview</a></b></li>
+                    <li><b><a href="#Macro_Interface">MACRO interface</a></b></li>
+                    <li><b><a href="#SORT_Utility">SORT utility</a></b></li>
+                    <li><b>REPRO utility</b></li>
+                    <li><b>zcobol SORT verb</b></li>
+                  </ul>
+                  </td>
+                  <td width="25%" align="left" valign="top"><b>Examples</b><ul>
+                    <li><b><a href="#REPRO_Build_Alternate_Index">Build alternate index</a></b></li>
+                    <li><b><a href="#FIle_Sort_Example">Sort file</a></b></li>
+                    <li><b><a href="#Internal_Sort_Example">z390 Internal sort</a></b></li>
+                    <li><b><a href="#zcobol_Internal_Sort">zcobol internal sort</a></b></li>
+                  </ul>
+                  </td>
+                  <td width="25%" align="left" valign="top"><b>SORT References</b><ul>
+                    <li>
+                    <b>
+                    <a href="http://www.kcats.org/share/sort/slides/SortAst.pdf">
+                    SHARE session on sorting by Michael Stack</a></b></li>
+                    <li>
+                    <b>
+                    <a href="http://en.wikipedia.org/wiki/Merge_sort#Optimizing_merge_sort">
+                    Merge Sort</a></b></li>
+                    <li>
+                    <b>
+                    <a href="http://www.cs.princeton.edu/~rs/talks/Montreal.pdf">
+                    Sorting Theory by R. Sedgewick and J. Hartley</a></b></li>
+                    <li>
+                    <b>
+                    <a href="http://www.softpanorama.org/Algorithms/sorting.shtml">
+                    Skeptical View of sorting algorithms</a></b></li>
+                  </ul>
+                  </td>
+                  <td width="25%" align="left" valign="top"><b>SORT Product 
+                  Links</b><ul>
+                    <li><b>
+                    <a href="http://www-01.ibm.com/support/docview.wss?rs=0&uid=isg3T7000077">
+                    DFSORT</a></b><ul>
+                      <li><b>
+                      <a href="http://www.mainframegurukul.com/srcsinc/drona/programming/languages/jcl/jcl.sort.html">
+                      Example</a></b></li>
+                      </ul>
+                    </li>
+                    <li><b><a href="http://www.syncsort.com/">SYNCSORT</a></b></li>
+                    <li><b>
+                    <a href="https://www.ca.com/us/products/product.aspx?id=1507">
+                    CASORT</a></b></li>
+                    </ul>
+                    </td>
+                </tr>
+              </table>
+              </td>
+            </tr>
+                <tr>
+              <td align="left" valign="top" colspan="3">
+              <p align="center"><b><a name="Overview">ZSORT Overview</a></b><p><b>The z390 
+              ZSORT internal sort facility is an open source J2SE java component of z390 
+              which supports sorting of any number of fixed or variable length records of 
+              any size up to the limits of memory and 64 bit file system.&nbsp; </b><p>
+              <b>ZSORT is implemented via SVC x'A1' which has 3 function calls: 
+              one to initialize internal sort request, one to submit unsorted 
+              record, and one to retrieve sorted records.&nbsp; Unsorted records 
+              are loaded into dynamically allocated table in memory and sorted.&nbsp; 
+              If the unsorted records exceed size of table, then multiple blocks 
+              of sorted records are written to a work file and then merged.&nbsp; 
+              If all the records fit in table, then they are sorted and returned 
+              without requiring use of sort work files.&nbsp; When required, the 
+              merging is performed using two dynamically allocated sort work files 
+              with DDNAME's SORTWK01 and SORTWK02.&nbsp; The sorted strings 
+              are merged from one work file to another doubling the size of the 
+              sorted strings on each pass until all the records are sorted on 
+              last merge pass.&nbsp; All file I/O is blocked to minimize disk 
+              seeking on single disk systems.&nbsp; User can define location of 
+              SORTWK01 and SORTWK02 if multiple physical disk drives are 
+              desired.</b><p>
+              <b>A set of regression tests are executed via rt\RTSORT.BAT 
+              including test of all 7 sort key types.&nbsp; The utilities 
+              sort\TESTSRT3.MLC and TESTSRT4.MLC can be used to generate, sort, 
+              and verify any number of records.&nbsp; A million records can be 
+              sorted in 28 seconds.&nbsp; Statistics on each sort execution are 
+              recorded on the statistics file if option STATS is specified.</b><p><b>The initial sort method used to sort table is a shell sort.&nbsp; 
+              All comments, suggestions, and contributions for improving this 
+              open source J2SE java sort utility are welcome.&nbsp; You can join 
+              the discussion on <a href="mailto:z390@yahoogroups.com">
+              z390@yahoogroups.com</a> or send private email to
+              <a href="mailto:don@higgins.net">don@higgins.net</a>. </b>
+              <p>&nbsp;</td>
+                </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" width="758">
+              <p align="center"><b><a name="Macro_Interface">ZSORT Macro Interface</a></b><p><b>
+              The ZSORT utility function can be called from z390 assembler using 
+              standard call interface with full work parameters in list 
+              pointed to by register 1.&nbsp; The first positional macro 
+              parameter contains the operation code and options:&nbsp; The 
+              operations include:</b><ul>
+                <li><b>ISORT - initialize for internal sort using PUT to insert 
+                unsorted records and GET to retrieve sorted records</b></li>
+                <li><b>PUT - insert unsorted record following ISORT</b></li>
+                <li><b>GET - return sorted record following last PUT, returns 
+                RC=4 at end of sorted records</b></li>
+                </ul>
+              <p><b>The following key work macro parameters are required for ISORT 
+              operations are:</b><ul>
+                  <li><b><a name="SORT_FIELDS">FIELDS=</a> - any number of key 
+                  fields defined as (offset,length,type,A/D,,,,)</b><ul>
+                  <li><b>Offset to start of key starts at 1 and cannot be greater 
+                  than LRECL.&nbsp; For variable length records the offset does 
+                  not include the 4 byte prefix.</b></li>
+                  <li><b>Length of key plus offset must not exceed LRECL</b></li>
+                  <li><b>Type of sort key field:</b><ul>
+                  <li><b>AC - ASCII characters (same as CH)</b></li>
+                  <li><b>BI&nbsp; - unsigned binary (same as CH)</b></li>
+                  <li><b>CH - EBCDIC characters (same as CH)</b></li>
+                  <li><b>FI&nbsp;&nbsp; - signed binary such as half word, full 
+                  word, or quad word integers</b></li>
+                  <li><b>FL&nbsp; - floating point HFP, BFP, or DFP short, long, or 
+                  extended</b></li>
+                  <li><b>PD - packed decimal</b></li>
+                  <li><b>ZD - zoned decimal</b></li>
+                  </ul>
+                  </li>
+                  <li><b>A/D - ascending or descending key sequence</b></li>
+                  </ul>
+                  </li>
+                  <li><b>LRECL= - length of record (may be maximum length of 
+                  variable length records)</b></li>
+                  <li><b>MEMORY= - amount of memory available for sort table (If 
+                  not specified, the maximum available contiguous memory block 
+                  within the memory allocated to step by MEM option will be 
+                  used.)</b></li>
+                  <li><b>Alternatively the execute form MF=(E,addr) can be used.&nbsp; 
+                  See linklib\SORT.MLC for example.</b></li>
+                  </ul>
+              <p><b>The PUT and GET operations only require the 
+              keyword REC= defining address of record area.</b><p><b>
+              <a name="Internal_Sort_Example">Here is an example of internal 
+              sort interface</a>:</b><p><b>&nbsp;&nbsp;&nbsp;&nbsp; ZSORT 
+              ISORT,LRECL=80.MEMORY=10000000,FIELDS=(1,80,CH,A)<br>
+&nbsp;&nbsp;&nbsp;&nbsp; .......<br>
+&nbsp;&nbsp;&nbsp;&nbsp; ZSORT PUT,REC=(R2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp; .......<br>
+&nbsp;ZSORT GET,REC=(R2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp; CHI&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; R15,4<br>
+&nbsp;&nbsp;&nbsp;&nbsp; BE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              END_OF_FILE<br>
+&nbsp;&nbsp;&nbsp;&nbsp; .......</b><p>&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" width="758">
+              <b>
+              <a name="REPRO_Build_Alternate_Index">Here is example of REPRO 
+              utility used to create alternate index</a>&nbsp; (Still in 
+              development as of v1.5.01c)</b><p><b>Run REPRO with INFILE 
+              set to VSAM cluster data file and OUTFILE set to name of alternate 
+              index in catalog:</b></p>
+              <p><b>SET INFILE=TESTCAT.MYFILE<br>
+              SET OUTFILE=TESTCAT.MYFILEX1<br>
+              EXEC REPRO</b></p>
+              <p>&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" width="758">
+              <b>
+              <a name="zcobol_Internal_Sort">Here is example of zcobol internal 
+              file sort</a></b><p><b>See zcobol\demo\DEMOSRT1.CBL for COBOL file sort.</b></p>
+              <p><b>See zcobol\demo\DEMOSRT2.CBL for COBOL internal sort using 
+              input/output procedure paragraphs.</b></p>
+              <p>&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" width="758">
+              <p align="center"><b><a name="SORT_Utility">ZSORT SORT Utility</a> 
+              (Available in v1.5.01c)</b></p>
+              <p><b>The open source z390 SORT utility program in linklib\SORT.MLC 
+              is designed to be compatible with DFSORT and SYNCSORT.&nbsp; SORT 
+              currently supports fixed and variable length files with ascending 
+              or descending single binary keys.&nbsp; The input and output files 
+              are defined via SORTIN and SORTOUT DDNAME's.&nbsp; Work files if 
+              required may be defined using SORTWK01 and SORTWK02 DDNAME's.&nbsp; 
+              The input control record is defined using SYSIN DDNAME.&nbsp; For 
+              example:</b></p>
+              <p><b>SET SORTIN=TESTFILE.IN[RECFM=F,BLKSIZE=80]<br>
+              SET SORTOUT=TESTFILE.OUT<br>
+              SET SYSIN=TESTFILE.INI<br>
+              EXEC SORT</b></p>
+              <p><b>The SYSIN file must be ASCII line sequential file format 
+              containing SORT command defining any number of sort key fields as 
+              follows:</b></p>
+              <p><b>&nbsp;&nbsp; SORT FIELDS=(offset,length,type,A/D,,,,)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              <a href="#SORT_FIELDS">See SORT FIELD= definition above for 
+              options.</a></b></p>
+              <p><b>Use the STATS option to output statistics on sort 
+              performance on the STA statistics file.&nbsp; For example, here is 
+              output from one of the regression tests in rt\RTSORT.BAT:</b></p>
+              <p><b>10:20:53 SORT EZ390 ZSORT ID=1 started=10:20:50 
+              ended=10:20:53 <br>
+              10:20:53 SORT EZ390 ZSORT ID=1 lrecl=4 keys=1<br>
+              10:20:53 SORT EZ390 ZSORT ID=1 records=100000 memory= 4000<br>
+              10:20:53 SORT EZ390 ZSORT ID=1 record compares=1487600 
+              moves=2223800<br>
+              10:20:53 SORT EZ390 ZSORT ID=1 sorted blocks=100 merge passes=7<br>
+              10:20:53 SORT EZ390 ZSORT ID=1 block writes=2503 reads2401</b></p>
+              <p><b>Note in the above example, the optional parm PARM(1000) was 
+              passed to the SORT utility to force the maximum memory table size 
+              to 1000 records which in turn forced the sort to perform 7 merge 
+              passes to complete the sort of 100,000 reecords in 3 seconds.</b></p>
+              <p><b>Additional functionality will be added to this z390 SORT 
+              utility program and to the ZSORT function based on future user 
+              requests.</b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" width="758">
+              &nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" width="758">
+              &nbsp;</td>
+            </tr>
+            </table>
+         
+        
+        </table>
+<p align="center"><b>IBM, CICS, HLASM, MVS, OS/390, VSAM, 
+z9, z10, and z/OS are registered trademarks<br>
+&nbsp;of International Business Machines Corporation</b></p>
+
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Wednesday May 23, 2012<!--webbot bot="Timestamp" endspan i-checksum="42714" -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a>&nbsp;
+<a href="pop-up/sitemap.html">Sitemap</a><br>
+Copyright 2011 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </b> </p>
+
+</body>
+
+</html>

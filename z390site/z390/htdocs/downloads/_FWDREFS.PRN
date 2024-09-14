@@ -1,0 +1,99 @@
+15:06:55 FWDREFS   MZ390 START USING z390 V1.5.06 ON J2SE 1.8.0_11 08/04/14
+AZ390I Copyright 2011 Automated Software Tools Corporation
+AZ390I z390 is licensed under GNU General Public License
+AZ390I program = C:\z390\FWDREFS
+AZ390I options = sysmac(C:\z390\mac+.) syscpy(C:\z390\mac+.)
+External Symbol Definitions
+ ESD=0001 LOC=00000000 LEN=000000C8 TYPE=CST NAME=FWDREFS
+Assembler Listing
+000000                                        (1/1)1 FWDREFS SUBENTRY 
+000000                                       (2/78)2+FWDREFS  CSECT 
+000000 90ECD00C                             (2/168)3+         STM   14,12,12(13)
+000004 45FF0068                             (2/169)4+         BAL   15,104(15)
+000008 0000000000000000                     (2/170)5+         DC    18F'0'
+000050 C6E6C4D9C5C6E240                     (2/171)6+         DC    CL8'FWDREFS'
+000058 F0F861F0F461F1F4                     (2/172)7+         DC    CL8'08/04/14'
+000060 F1F54BF0F6404040                     (2/173)8+         DC    CL8'15.06'
+000068 50FD0008                             (2/174)9+         ST    15,8(13)
+00006C 50DF0004                            (2/175)10+         ST    13,4(15)
+000070 18DF                                (2/176)11+         LR    13,15
+000072                                     (2/189)12+         USING FWDREFS+8,13
+LISTUSE FWDREFS  ESD=0001 LOC=00000008 LEN=01000 REG=D OFF=00000 LAB=
+000072                                       (1/2)14         IF     (CLC,A123(3),EQ,X123)
+000072 D502D0B9D0B6     0000C1 0000BE       (3/47)39+         CLC   A123(3),X123
+000078 4770D08C                000094       (3/49)40+         BC    15-EQ,#@IF_1_2
+00007C                                       (1/3)42                WTO '1, 2, 3 OK'
+00007C A7150009                00008E       (6/49)43+         BRAS  1,*+(WTO#0004_EOT-*+1)/2*2
+000080 000E0000F16B40F2                     (6/50)44+         DC    AL2(WTO#0004_EOT-*,0),C'1, 2, 3 OK'
+00008E                  0000008E            (6/51)45+WTO#0004_EOT     EQU *
+00008E 0A23                                 (6/52)46+         SVC   35
+000090                                       (1/4)48         ELSE 
+000090 47F0D0A4                0000AC       (7/40)51+        B      #@IF_1_E
+000094                                      (7/41)52+#@IF_1_2                                                 DS 0H
+000094                                       (1/5)54                WTO '1, 2, 3 ERROR'
+000094 A715000B                0000AA       (6/49)55+         BRAS  1,*+(WTO#0007_EOT-*+1)/2*2
+000098 00110000F16B40F2                     (6/50)56+         DC    AL2(WTO#0007_EOT-*,0),C'1, 2, 3 ERROR'
+0000A9                  000000A9            (6/51)57+WTO#0007_EOT     EQU *
+0000AA 0A23                                 (6/52)58+         SVC   35
+0000AC                                       (1/6)60         ENDIF 
+0000AC                                      (8/23)63+#@IF_1_E                         DS 0H
+0000AC                                       (1/7)65         SUBEXIT 
+0000AC 41F00000                             (9/33)66+         LA    15,0
+0000B0 58D0D004                             (9/50)67+         L     13,4(,13)
+0000B4 58E0D00C                             (9/51)68+         L     14,12(,13)
+0000B8 982CD01C                             (9/52)69+         LM    2,12,28(13)
+0000BC 07FE                                 (9/53)70+         BR    14
+0000BE                  00000003             (1/8)72 THREE   EQU    TWO+1   resolved on third pass
+0000BE                  00000002             (1/9)73 TWO     EQU    ONE+1   resolved on second pass
+0000BE                  00000001            (1/10)74 ONE     EQU    1       resolved on first pass
+0000BE 010203                               (1/11)75 X123    DC     XL1'1,2,3'
+0000C1 010203                               (1/12)76 A123    DC     AL1(ONE,TWO,THREE)
+0000C4                                      (1/13)77 *
+0000C4                                      (1/14)78 * 2014-08-04 Don Higgins add 1 loctr to force 1 extra pass
+0000C4                                      (1/15)79 *                        to resolve nested forward reference
+0000C4                                      (1/16)80 *
+0000C4                                      (1/17)81 L1      LOCTR 
+0000C4                                      (1/18)82         END 
+
+Symbol Table Listing
+
+ SYM=#@IF_1_2 LOC=00000094 LEN=00000002 ESD=0001 TYPE=REL  XREF=52 40 
+ SYM=#@IF_1_E LOC=000000AC LEN=00000002 ESD=0001 TYPE=REL  XREF=63 51 
+ SYM=A123     LOC=000000C1 LEN=00000001 ESD=0001 TYPE=REL  XREF=76 39 
+ SYM=E        LOC=00000008 LEN=00000001 ESD=0000 TYPE=ABS  XREF=20 
+ SYM=EQ       LOC=00000008 LEN=00000001 ESD=0000 TYPE=ABS  XREF=32 40 
+ SYM=FWDREFS  LOC=00000000 LEN=000000C8 ESD=0001 TYPE=CST  XREF=2 12 
+ SYM=GE       LOC=0000000B LEN=00000001 ESD=0000 TYPE=ABS  XREF=35 
+ SYM=GT       LOC=00000002 LEN=00000001 ESD=0000 TYPE=ABS  XREF=33 
+ SYM=H        LOC=00000002 LEN=00000001 ESD=0000 TYPE=ABS  XREF=18 
+ SYM=L        LOC=00000004 LEN=00000001 ESD=0000 TYPE=ABS  XREF=19 
+ SYM=L1       LOC=000000C4 LEN=00000000 ESD=0001 TYPE=CST  XREF=81 
+ SYM=LE       LOC=0000000D LEN=00000001 ESD=0000 TYPE=ABS  XREF=36 
+ SYM=LT       LOC=00000004 LEN=00000001 ESD=0000 TYPE=ABS  XREF=34 
+ SYM=M        LOC=00000004 LEN=00000001 ESD=0000 TYPE=ABS  XREF=26 
+ SYM=NE       LOC=00000007 LEN=00000001 ESD=0000 TYPE=ABS  XREF=23 
+ SYM=NH       LOC=0000000D LEN=00000001 ESD=0000 TYPE=ABS  XREF=21 
+ SYM=NL       LOC=0000000B LEN=00000001 ESD=0000 TYPE=ABS  XREF=22 
+ SYM=NM       LOC=0000000B LEN=00000001 ESD=0000 TYPE=ABS  XREF=29 
+ SYM=NO       LOC=0000000E LEN=00000001 ESD=0000 TYPE=ABS  XREF=31 
+ SYM=NP       LOC=0000000D LEN=00000001 ESD=0000 TYPE=ABS  XREF=28 
+ SYM=NZ       LOC=00000007 LEN=00000001 ESD=0000 TYPE=ABS  XREF=30 
+ SYM=O        LOC=00000001 LEN=00000001 ESD=0000 TYPE=ABS  XREF=24 
+ SYM=ONE      LOC=00000001 LEN=00000001 ESD=0000 TYPE=ABS  XREF=74 73 76 
+ SYM=P        LOC=00000002 LEN=00000001 ESD=0000 TYPE=ABS  XREF=25 
+ SYM=THREE    LOC=00000003 LEN=00000001 ESD=0000 TYPE=ABS  XREF=72 76 
+ SYM=TWO      LOC=00000002 LEN=00000001 ESD=0000 TYPE=ABS  XREF=73 72 76 
+ SYM=WTO#0004_EOT LOC=0000008E LEN=00000001 ESD=0001 TYPE=REL  XREF=45 43 44 
+ SYM=WTO#0007_EOT LOC=000000A9 LEN=00000001 ESD=0001 TYPE=REL  XREF=57 55 56 
+ SYM=X123     LOC=000000BE LEN=00000001 ESD=0001 TYPE=REL  XREF=75 39 
+ SYM=Z        LOC=00000008 LEN=00000001 ESD=0000 TYPE=ABS  XREF=27 
+
+Literal Table Listing
+
+ 
+AZ390I total mnote warnings = 0
+AZ390I total mnote errors   = 0
+AZ390I max   mnote level    = 0
+AZ390I total mz390 errors   = 0
+AZ390I total az390 errors   = 0
+15:06:55 FWDREFS   MZ390 ENDED   RC= 0 SEC= 0 MEM(MB)= 40 IO=813

@@ -1,0 +1,423 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>z390 Project Frequently Asked Questions</title>
+</head>
+
+<body>
+
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="center" width="202" height="90">
+              <font face="Times New Roman">
+              <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></font></td>
+              <td align="center" width="405" height="90">
+              <p align="center"><font face="Times New Roman" size="5"><b>z390 Frequently Asked Questions</b></font></td>
+              <td width="147" height="90" align="center">
+              <b>
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="anim370.gif" alt="Automated Software Tools Corporation" width="100" height="59"></a></b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3">
+              <font face="Times New Roman">
+              <b>This page is a growing collection of frequently asked questions 
+              about the z390 project.&nbsp; You can join the z390 open discussion 
+              forum for the z390 project by sending email to
+              <a href="mailto:z390-subscribe@yahoogroups.com">
+              z390-subscribe@yahoogroups.com</a>.&nbsp; You can use this group 
+              to post questions and participate in discussion of hot topics.&nbsp; 
+              Questions and answers will be added to this page:</b></font><ul>
+                <li><b>How do I quickly identify the macros and copybooks 
+                required to assemble a mainframe assembler source program with 
+                z390?</b><ul>
+                <li><b>When you attempt to assembly any program with the command 
+                ASM, ASML, or ASMLG and there are missing macro or copybook 
+                references, the assembler will automatically turn on the ERRSUM 
+                option (z390 v1.3.07d or later).&nbsp; This option lists the 
+                missing macro and copybook names.&nbsp; Once all the missing 
+                files have been found by adding the necessary directory lists to 
+                SYSMAC(...) and SYSCPY(..) parms, then the option ERRSUM can be 
+                used again to list any remaining undefined symbol references 
+                which often indicate a missing macro or copybook reference or a 
+                macro library release level problem.</b></li>
+              </ul>
+                </li>
+                <li><b>How do I search for the errors in a PRN assembly listing 
+                file?</b><ul>
+                <li><b>Search for the character sequence &quot;390E&quot; which is in both 
+                &quot;MZ390E&quot; and &quot;AZ390E&quot; error messages.</b></li>
+              </ul>
+                </li>
+                <li><font face="Times New Roman"><b>What are the primary uses of the z390
+                portable mainframe macro assembler and emulator?</b></font><ul>
+                <li><b><font face="Times New Roman">Enable developers to 
+                assemble, link, and execute mainframe assembler programs on any 
+                J2SE platform including PC laptops and home computers.</font></b></li>
+                <li><b><font face="Times New Roman">Simplify the migration of 
+                applications which include mainframe assembler. </font></b></li>
+                <li><b><font face="Times New Roman">Provide a useful learning 
+                tool for students learning mainframe assembler or Java.</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">Why is z390 open source?</font></b><ul>
+                <li><b><font face="Times New Roman">z390 is an open source 
+                project with free downloads including both the Java source code 
+                and the&nbsp; executable z390.jar file.&nbsp; Downloads are 
+                available in InstallShield format for Windows XP and Vista and in 
+                file zip format for <a href="http://www.ubuntu.com/">Ubuntu</a> 
+                and other Linux distributions.&nbsp; Open source provides access 
+                at no cost and promotes a continuing cooperative effort to 
+                enhance the tool and correct any bugs found.&nbsp; Open source 
+                also ensures users that they can support the tool and customize 
+                the tool to their own needs as required.&nbsp;
+                <a href="z390_Statemnet_of_Direction.htm">See the Automated 
+                Software Tools statement of direction for z390.</a></font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">How is the Java source code 
+                maintained?</font></b><ul>
+                <li><b><font face="Times New Roman">The
+                <a href="http://www.eclipse.org">Eclipse open source Integrated 
+                Development Environment (IDE)</a> tool is used to edit and unit 
+                test the Java source code in z390.&nbsp; Eclipse includes an 
+                excellent source level debugger.</font></b></li>
+                <li><b><font face="Times New Roman">Once changes to individual 
+                Java source programs have been unit tested,
+                <a href="z390_Regression_Tests.htm">z390 regression tests</a> 
+                are run to verify that nothing has been broken.&nbsp; The 
+                regression tests are continually updated to add new tests.</font></b></li>
+              </ul>
+                </li>
+                <li><font face="Times New Roman"><b>What is required to run the z390 portable mainframe macro 
+                assembler and emulator?</b></font><ul>
+                  <li><font face="Times New Roman"><b>Windows XP, Windows Vista, 
+                  and <a href="Linux/z390_Linux_Support.htm">Linux</a> are now 
+                  supported:</b></font><ul>
+                    <li><b><font face="Times New Roman">Windows XP requires at 
+                    least SP2 update.</font></b></li>
+                    <li><font face="Times New Roman"><b>Recommend at least 1.0 GHZ processor and 3.0 GHZ 
+                    processor is better&nbsp; for performance.&nbsp; See
+                    <a href="http://www.automatedsoftwaretools.com/z390/z390_Benchmark_Instruction_Timing.htm">
+                    benchmark statistics</a> here.</b></font></li>
+                    <li><font face="Times New Roman"><b>Recommend at least 512 MB memory.&nbsp; 
+                    mz390 macro assembler defaults to 100 MB, and z390 defaults 
+                    to 1 MB of z390 main memory with options to increase memory 
+                    to physical limit using 24 or 32 bit addressing mode.&nbsp; AMODE 64 will be a 
+                    future enhancement for 64 bit platforms.</b></font></li>
+                  </ul>
+                  </li>
+                  <li><font face="Times New Roman"><b><a href="http://java.sun.com/j2se/1.5.0/download.jsp">
+                  Sun Microsystems Java 2 Runtime version J2RE 1.5.0+</a>.&nbsp; 
+                  Note only the runtime is required.&nbsp; The JDK and J2EE include the J2RE runtime.&nbsp; If you install z390 and receive the 
+                  java runtime error message saying major/minor conflict 49.0 it 
+                  usually indicates there is an earlier version of J2RE installed 
+                  on your PC that may be conflicting with J2SE 1.5 runtime.&nbsp; 
+                  Remove the older versions such as 1.4.2 and try it again.</b></font></li>
+                  <li><font face="Times New Roman"><b>You can submit
+                  <a href="http://www.automatedsoftwaretools.com/z390/z390_Support_Request_Form.htm">
+                  RPI Request Program Information</a> for both problems and 
+                  enhancements which will be added to pending
+                  <a href="http://www.automatedsoftwaretools.com/z390/z390_Support_Request_Log.htm">
+                  RPI Request Log</a> and will be planned for future maintenance 
+                  and enhancement releases base on project priorities and 
+                  resources available.&nbsp; See
+                  <a href="http://www.automatedsoftwaretools.com/z390/z390_Download_Archive.htm">
+                  Download Archive</a> for RPI's included in previous releases.</b></font></li>
+                  <li><font face="Times New Roman"><b>There is a
+                  <a href="http://www.automatedsoftwaretools.com/z390/z390_Regression_Tests.htm">
+                  Regression Test Directory</a> with constantly growing number 
+                  of regression tests included in the z390 install.&nbsp; Issue 
+                  command RT to run all the regression tests..&nbsp; These 
+                  programs also serve as useful demo programs for what functions 
+                  and features are supported by z390.&nbsp; For example there 
+                  are source programs to test sequential and random file access, 
+                  tests for all the instructions, and tests for new support for 
+                  multiple Windows command tasks under assembler program 
+                  control.</b></font></li>
+                </ul>
+                </li>
+                <li><b><font face="Times New Roman">What are the limitations of 
+                z390?</font></b><ul>
+                <li><b><font face="Times New Roman">z390 uses the J2RE
+                <a href="http://java.sun.com/docs/books/vmspec/2nd-edition/html/VMSpecTOC.doc.html">
+                Java Virtual Machine</a> emulator to interpret mainframe 
+                instructions.&nbsp; As a result z390 will never execute 
+                instructions as fast as a real mainframe.&nbsp; However, on a 3 
+                GHZ Intel Dual Core chip, z390 can execute several million 
+                mainframe instructions per second which is sufficient for most 
+                development and production applications which are typically I/O 
+                bound versus CPU bound.</font></b></li>
+                <li><b><font face="Times New Roman">Specific limitations of the 
+                z390 components are listed <a href="z390_Statistics.htm">here</a>.</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">Who is using z390?</font></b><ul>
+                <li><b><font face="Times New Roman">The
+                <a href="http://tech.groups.yahoo.com/group/z390/">z390 user 
+                group</a> now has about 300 members and many have contributed to 
+                the project by submitting
+                <a href="http://www.automatedsoftwaretools.com/z390/z390_Support_Request_Form.htm">
+                enhancement and bug fix requests</a>.&nbsp; Several major 
+                contributors include Melvyn Maltz who has contributed a
+                <a href="http://www.automatedsoftwaretools.com/z390/z390_Benchmark_Instruction_Timing.htm">
+                z390 benchmark instruction timing</a> tool plus additional 
+                documentation. and Martin Ward has contributed
+                <a href="http://www.automatedsoftwaretools.com/z390/Linux/z390_Linux_Support.htm">
+                z390 Linux mods</a> to enable running both the z390 GUI and 
+                command line interface on Linux/</font></b></li>
+              </ul>
+                </li>
+                <li><font face="Times New Roman"><b>What is the target level of z390 support and how can I 
+                learn more about z390 assembler and the mainframe</b></font><ul>
+                  <li><font face="Times New Roman"><b>z390 is targeted to be compatible with
+                  <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/ASMR1010/CCONTENTS?DT=20040728153937">
+                  IBM High Level Assembler </a>&nbsp;Note some of the less 
+                  frequently used features may not yet supported yet and
+                  <a href="z390_Support_Request_Form.htm">RPI</a>'s for 
+                  any required additions are welcome.</b></font></li>
+                  <li><font face="Times New Roman"><b>z390 is targeted to support problem 
+                  state instructions 
+                  as defined in
+                  <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DZ9ZR003/CCONTENTS">
+                  IBM z/Architecture Principles Of Operations Manual</a></b></font></li>
+                  <li><font face="Times New Roman"><b>z390 is targeted to support IBM MVS, OS/390, and z/OS 
+                  common system macros at the macro interface level.&nbsp;&nbsp; 
+                  A subset of the most commonly used macros are included and 
+                  support assembly, link, and execution of mainframe assembler 
+                  application programs.&nbsp;
+                  <a href="http://www.automatedsoftwaretools.com/z390/z390_Support_Request_Form.htm">RPI's</a> 
+                  for required additions are welcome.&nbsp; In addition the 
+                  public domain MVS 3.8J system macros are included in a 
+                  separate library for use in assembling MVS compatible programs 
+                  to be executed using the
+                  <a href="http://cbttape.org/~jmorrison/mvs38j/">Hercules MVS 
+                  3.8J emulator</a>.&nbsp; </b></font>
+                  </li>
+                </ul>
+                </li>
+                <li><font face="Times New Roman"><b>Where are additional references for learning about 
+                mainframe assembler and z390?</b></font><ul>
+                <li><b><font face="Times New Roman">
+                <a href="index.html#Reference Links">See z390 Reference Links
+                </a></font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">My program has aborted, how 
+                do I start to debug the problem?</font></b><ul>
+                <li><b><font face="Times New Roman">The simplest 
+                approach is to rerun the program with option TRACE and then view 
+                the trace output file type &quot;.TRE&quot; which shows every instruction 
+                executed up to the point of failure along with register and 
+                storage operand field values.</font></b></li>
+                <li><b><font face="Times New Roman">If additional 
+                information is required at the point of failure, rerun the 
+                program with option TEST to invoke the interactive debug 
+                facility and use the command T or G with opcode name, address, 
+                or count to run up to the point of failure.&nbsp; Then use L 
+                command to display additional registers and memory areas.&nbsp;</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">What are some of the most 
+                common Java coding errors to check for when modifying z390 
+                source code?</font></b><ul>
+                <li><b><font face="Times New Roman">Remember to put break after 
+                each case in a switch otherwise it drops through which can cause 
+                very strange results.</font></b></li>
+                <li><b><font face="Times New Roman">Remember Java subscripts 
+                start at 0 and end at length of array -1 versus macro assembler 
+                arrays that start at 1 and end at length of array.</font></b></li>
+              </ul>
+                <li><b><font face="Times New Roman">How can I allocate more than 
+                the default 1 MB memory for use by assembler program?</font></b><ul>
+                <li><b><font face="Times New Roman">The MEM(mb) option can be 
+                specified on ez390 command to allocate more memory.&nbsp; For 
+                example, MEM(32) will allocate 16 MB below the line and 16 MB 
+                above the line.&nbsp; The lz390 linker supports both AMODE and 
+                RMODE options to create 390 load module that loads above or 
+                below the line and runs in either 24 bit or 31 bit mode.&nbsp; 
+                See regression test TESTOBJ2.MLC run with options AMODE31 
+                RMODE31 MEM(49) to link 32 MB single CSECT program which loads 
+                and runs above the line.&nbsp; The default is AMODE31 RMODE24 
+                MEM(1).</font></b></li>
+                <li><b><font face="Times New Roman">The maximum memory that can 
+                be allocated is limited by physical memory and the memory 
+                required by other Windows applications and other J2RE 
+                applications.&nbsp; If you want to allocate more that the 
+                default maximum allowed by J2SE (about 50 MB on 1 GB system), 
+                you can add the J2RE option -Xmx option.&nbsp; For example, 
+                -Xmx500000000 will allow up to 500 MB to be allocated to J2RE.&nbsp; 
+                Be careful to leave enough memory for both Windows and other 
+                J2RE applications.&nbsp; Note the mz390.bat command processor 
+                allocates 100 MB for large assembly programs.&nbsp; The largest 
+                seen up to v1.2 has 450 macros with 45,000 macro calls.&nbsp; 
+                This assembly used 88 MB and ran 24 seconds.</font></b></li>
+                <li><b><font face="Times New Roman">See useful <a href="http://h21007.www2.hp.com/dspp/tech/tech_TechDocumentDetailPage_IDX/1,1701,1604,00.html#Heap%20Size">
+                HP reference</a> for more 
+                information on memory management. </font> </b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">How can I get more 
+                information on where my macro assembler code went wrong?</font></b><ul>
+                <li><b><font face="Times New Roman">Use the TRACEP option to 
+                generate a macro pseudo code trace on file TRM.&nbsp; This trice 
+                will show the value of every macro variable in every AIF, SETA, 
+                SETB, and SETC statement as well the source lines for both 
+                conditional macro code and generated BAL lines.&nbsp; Note this 
+                trace file can be very large so it is recommended to create a 
+                cut down test version of failing code when possible.</font></b></li>
+                <li><b><font face="Times New Roman">Use the TRACEM option to 
+                generated TRM trace file with just the conditional macro code 
+                lines and generated BAL lines processing during execution of 
+                macro assembler.</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">What are the 
+                differences between Hercules and z390?</font></b><ul>
+                <li><b><font face="Times New Roman">Hercules is a 
+                software implementation of the System/370, ESA/390 and 
+                z/Architecture mainframe architectures. Hercules runs under 
+                Windows and Linux.&nbsp; Hercules requires an operating system 
+                to emulate in order to assemble and execute assembler programs.&nbsp; 
+                The only public domain OS type operating system available is MVS 
+                3.8.&nbsp; When emulating MVS 3,8, Hercules emulates physical 
+                I/O supervisor instructions such as Start I/O (SIO) to execute 
+                channel programs which access files in virtual volumes.&nbsp; 
+                z390 emulates problem state instructions and maps Supervisor 
+                Calls (SVC) into calls to Java routines which perform I/O and 
+                other supervisor functions using the J2RE runtime to access any 
+                files on the host system.</font></b></li>
+                <li><b><font face="Times New Roman">Hercules MVS 
+                3.8 emulation has 24 bit limit of 16 MB for each program address 
+                space.&nbsp; z390 supports AMODE 24 and 31 bits with memory 
+                spaces up to the physical limit of the J2RE host processor.</font></b></li>
+                <li><b><font face="Times New Roman">Hercules MVS 
+                3.8 emulation includes mainframe assembler running in emulation 
+                with EBCDIC source files.&nbsp; z390 includes a macro assembler 
+                which is compatible with the current HLASM V5 and reads ASCII 
+                source files.</font></b></li>
+                <li><b><font face="Times New Roman">z390 recently added support 
+                for the assembly and execution of Decimal Floating Point plus 
+                226 new instructions added for the z10 processor.&nbsp; The z390 
+                floating point support includes:<br>
+&nbsp;</font></b><table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%">
+                  <tr>
+                    <td width="25%">Decimal digit Precision</td>
+                    <td width="25%">Short</td>
+                    <td width="25%">Long</td>
+                    <td width="25%">Extended</td>
+                  </tr>
+                  <tr>
+                    <td width="25%">BFP</td>
+                    <td width="25%">7</td>
+                    <td width="25%">15</td>
+                    <td width="25%">34</td>
+                  </tr>
+                  <tr>
+                    <td width="25%">DFP</td>
+                    <td width="25%">7</td>
+                    <td width="25%">16</td>
+                    <td width="25%">34</td>
+                  </tr>
+                  <tr>
+                    <td width="25%">HFP</td>
+                    <td width="25%">7</td>
+                    <td width="25%">15</td>
+                    <td width="25%">30</td>
+                  </tr>
+                </table>
+                </li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">What is the purpose of the -Xrs 
+                java runtime option?</font></b><ul>
+                <li><b><font face="Times New Roman">This option turns off J2SE 
+                runtime internal error signal handling for CTRL-BRK allowing 
+                user to successfully stop a z390 program that is running in a 
+                loop or taking too long.&nbsp; Without the option J2SE runtime 
+                attempts to handle CTRL-BRK and does not stop the process 
+                requiring user to abort the command line or GUI dialog to 
+                restart.&nbsp; For more information on
+                <a href="http://www.ibm.com/developerworks/ibm/library/i-signalhandling/">
+                -Xrs for multiple OS's see this</a>.</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">How do I debug a memory leak 
+                in J2SE?</font></b><ul>
+                <li><b><font face="Times New Roman">In order to debug a reported 
+                memory leak in long running z390 CICS server program I added the 
+                J2SE option -verbose:gc to the exec.bat java invocation command.&nbsp; 
+                This option generates trace on console showing the results of 
+                periodic garbage collection done by J2SE runtime.&nbsp; 
+                Initially this trace showed memory usage growing by 18k every 
+                few seconds.&nbsp; After tracing through server code using 
+                Eclipse, I found and fixed recursive TN3270 screen update loop. 
+                After correcting the problem, the trace showed constant memory 
+                usage.</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">How do I prevent Windows 
+                from poping up &quot;File&quot; menu when the PF10 key is pressed (For 
+                example start IE7 and press PF10 to see the &quot;File&quot; menu show up 
+                highlighted)?</font></b><ul>
+                <li><b><font face="Times New Roman">In the z390.java or 
+                gz390.java open source code the following code has been added to 
+                the KeyPressed event handler:<br>
+&nbsp;&nbsp;&nbsp;&nbsp; </font></b><font COLOR="#7f0055"><b>if</b></font><b><font COLOR="#400040">
+                </font>(keyCode<font COLOR="#400040"> </font>==<font COLOR="#400040">
+                </font>KeyEvent.<font COLOR="#0000c0"><i>VK_F10</i></font>){<br>
+                <font color="#400040">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </font>e.<a href="http://java.sun.com/j2se/1.5.0/docs/api/java/awt/event/InputEvent.html#consume()">consume</a>();<br>
+&nbsp;&nbsp;&nbsp; }<br>
+                This code consumes the Key pressed event for PF10 preventing 
+                Windows default action.</b></li>
+              </ul>
+                </li>
+                <li><b>How do I prevent large macro assembly process from 
+                stalling where CPU usage goes to 100% and the process slows down 
+                to a crawl due to excessive garbage collection being repeated by 
+                J2SE runtime?</b><ul>
+                <li><b>Increase the maximum memory allocated by J2SE using 
+                optional parameter which can be added to the z390\MZ390.BAT 
+                command.&nbsp; Add -Xmx100000k parameter after the -Xrs paramter.&nbsp; 
+                This increases the J2SE heap space from the system default to 
+                100 MB which worked for the largest macro process I've seen so 
+                far.&nbsp; The system default is the preferred setting in order 
+                to prevent overcommitting the system and possibly stalling other 
+                tasks if too many are running at once.</b></li>
+              </ul>
+                </li>
+                <li><b>If I must keep both J2SE 1.5 and J2SE 1.6 runtimes on my 
+                system, how do I get z390 to use a specific runtime?</b><ul>
+                <li><b>Add the explicit path to the java.exe in the GUI icon 
+                start up and in all the batch commands such as z390.bat, 
+                asmlg.bat, exe.bat, etc.&nbsp; For example, the path to java.exe 
+                on my Vista system is &quot;c:\program files\java\jre6\bin\java.exe&quot;.</b></li>
+              </ul>
+                </li>
+              </ul>
+                </li>
+              </td>
+            </tr>
+          </table>
+         
+        
+        </table>
+<p align="center"><font face="Times New Roman"><b>.This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Saturday December 12, 2009<!--webbot bot="Timestamp" i-checksum="537" endspan -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a>&nbsp;
+<a href="pop-up/sitemap.html">Sitemap</a><br>
+Copyright 2008 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </b> </font> </p>
+
+</body>
+
+</html>

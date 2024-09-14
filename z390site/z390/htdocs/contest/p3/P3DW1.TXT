@@ -1,0 +1,27 @@
+*=====================================================================*
+*
+*        PROBLEM - CONVERT 4 BYTES TO DISPLAY FORMAT
+*        DATE    - 3RD AUGUST 2008
+*        AUTHOR  - DAVID WILKINSON
+*
+*=====================================================================*
+P3DW1    ZMFACC CODE,START,ZRUNSYS=Z390,NAME='David Wilkinson'
+         LA    R1,TABLE                LOAD ADDR OF TRANSLATE TABLE
+         AHI   R1,-240                 POINT BACK 240 BYTES
+         UNPK  WORKA(9),IPARM(5)       UNPACK INPUT AREA
+         MVC   OPARM(8),WORKA          MOVE TO OUTPUT AREA
+         TR    OPARM(8),0(R1)          TRANSLATE TO DISPLAY 
+         B     HX999                   EXIT..
+*
+TABLE    DC    C'0123456789ABCDEF'     TRANSLATE TABLE
+WORKA    DS    CL9                     WORK AREA
+*
+HX999    DS    0H
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+IPARM    DC    X'ACDCBABE'             INPUT AREA
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+OPARM    DS    CL8                     OUTPUT AREA
+         ZMFACC OUTPUT,END
+         END

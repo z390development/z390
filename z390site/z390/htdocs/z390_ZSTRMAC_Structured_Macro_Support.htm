@@ -1,0 +1,293 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 12.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>z390 ZSTRMAC Structured Macro Assembler Language Extensions</title>
+</head>
+
+<body>
+
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" id="AutoNumber1">
+            <tr>
+              <td align="center" width="205" height="90">
+              <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></td>
+              <td align="center" width="402" height="90">
+              <p align="center"><b><font size="5">z390 </font></b>
+              <font size="5"><b>ZSTRMAC Structured <br>
+              Macro Assembler Support</b></font></td>
+              <td width="151" height="90" align="center">
+              <b>
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="anim370.gif" alt="Automated Software Tools Corporation" width="100" height="59"></a></b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3">
+              <p><b>The z390 Portable Mainframe Macro Assembler and Emulator 
+              includes the following ZSTRMAC structured programming support 
+              tools:</b><ul>
+                <li><b><a href="#SPE">Structured Programming Extensions (SPE's) 
+                for use in coding structured conditional macro code</a></b><ul>
+                  <li><b>
+                  <a href="http://www.share.org/Events/CurrentConference/tabid/349/Default.aspx">
+                  First SHARE presentation on this support scheduled for Tuesday 
+                  March 3, 2009 in Austin</a></b></li>
+                  </ul>
+                </li>
+                <li><b><a href="#SPM">Structured Programming Macros (SPM's) for 
+                use in coding assembler compatible with HLASM</a></b><ul>
+                  <li><b>
+                  <a href="http://www-01.ibm.com/software/awdtools/hlasm/">IBM 
+                  supplies set of SPM macros as part of HLASM Toolkit</a></b></li>
+                  <li><b>
+                  <a href="ftp://phoenixsoftware.com/pub/demo/Structured_Assembler.pdf">The latest SHARE presentation on the 
+                  HLASM SPM macros 
+  by Ed Jaffe</a></b></li>
+                  <li><b>
+                  <a href="http://www.z390.org/z390_Structured_Programming_Macro_Guide.pdf">
+                  z390 currently has subset of compatible macros IF, ELSE, 
+                  ELSEIF, ENDIF, DO, ENDDO </a></b></li>
+                  <li><b><a href="http://www.cbttape.org/covdowns.htm">z390 
+                  macros are updated from original 1978 public domain SPM's in 
+                  SHARE CBT tape #177</a></b></li>
+                  <li><b><a href="index.html#Download_Links">z390 v1.4.03b</a> has 
+                  the latest structured SPM's in the z390\mac directory.&nbsp; 
+                  Also included are translated versions of all the structured 
+                  SPM's in the mac\spm directory.&nbsp; The translated version 
+                  are for use on systems with HLASM or other mainframe 
+                  assemblers which do not yet support the SPE's.&nbsp; Using the 
+                  SPM's and SPE's you never have to code another unconditional 
+                  branch in macro code or assembler!</b></li>
+                  </ul>
+                  </li>
+                  </ul>
+              <p align="center"><b><font size="5"><a name="SPE">Structured 
+              Programming Extensions (SPE's)</a><br>
+              <a name="SPE">&nbsp;for use in coding structured conditional macro 
+              code</a></font></b><p><b>z390 Macro support has been extended to allow coding 
+              mainframe conditional macro code using the following structured 
+              programming extensions to the standard HLASM conditional macro 
+              language:</b><ul>
+                <li><b>Alternate selection of code blocks</b><ul>
+                  <li><b>AIF&nbsp; (expression) 
+                  - execute the following block of code if expression is true</b></li>
+                  <li><b>AELSEIF (expression) - end prior block and execute 
+                  following block if expression is true</b></li>
+                  <li><b>AELSE 
+                  - end prior block and execute following block 
+                  if prior AIF and AELSEIF false</b></li>
+                  <li><b>AEND 
+                  - end last block for AIF at current level of nesting</b></li>
+                  </ul>
+                  </li>
+                  <li><b>Repeat execution of code block</b><ul>
+                    <li><b>AWHILE (expression) - repeat following code block 
+                    while expression is true (test at beginning)</b></li>
+                    <li><b>AEXIT AWHILE - exit to end of inner most AWHILE 
+                    (for exceptions within nested AIF)</b></li>
+                    <li><b>AEND - end block of code for AWHILE at current level 
+                    of nesting</b></li>
+                    <li><b>AUNTIL (expression) - repeat following code block 
+                    until expression is true (test at end)</b></li>
+                    <li><b>AEXIT AUNTIL - exit to end of inner most AUNTIL 
+                    (for exceptions within nested AIF)</b></li>
+                    <li><b>AEND - end block of code for AUNTIL at current level 
+                    of nesting</b></li>
+                    </ul>
+                    </li>
+                    <li><b>Perform code block</b><ul>
+                      <li><b>ACALL name&nbsp;- call the named code block and return to next 
+                      instruction</b></li>
+                      <li><b>AENTRY name&nbsp;- define start of performed block of code (skip 
+                      over if 
+                      entered sequentially)</b></li>
+                      <li><b>AEXIT AENTRY - exit from AENTRY block of code (for 
+                      exceptions within nested AIF)</b></li>
+                      <li><b>AEND 
+                      - end the current performed code block and exit to next 
+                      statement after APM</b></li>
+                      </ul>
+                      </li>
+                      <li><b>Perform selection of code blocks based on index 
+                      from 0 to 255</b><ul>
+                        <li><b>ACASE (expression) - execute selected block 
+                        based on value of index expression</b></li>
+                        <li><b>AWHEN values 
+                        - define end of previous block and start of code block 
+                        for index values</b><ul>
+                        <li><b>values can be decimal (0-255), character C'?', or 
+                        hex X'??'</b></li>
+                        <li><b>one or more values may be specified separated 
+                        by commas</b></li>
+                        <li><b>a range of values may be specified as (value1,value2)</b></li>
+                        <li><b>for example AWHEN (C'0',C'9') defines EBCDIC 
+                        digits 240-249</b></li>
+                        </ul>
+                        </li>
+                        <li><b>AEXIT ACASE - exit to end of current ACASE 
+                        (for exceptions within nested AIF)</b></li>
+                        <li><b>AELSE - define optional code block if no AWHEN 
+                        block defined for current index</b></li>
+                        <li><b>AEND&nbsp;- end code block for ACASE</b></li>
+                        </ul>
+                        </li>
+                        <li><b>Additional extension to indent label field by 
+                        preceding with colon (:)</b></li>
+                <li><b>Release Log:</b><ul>
+                <li><b>v1.4.02e - a translator has been added (linklib\zstrmac.mlc) which will read structured 
+              macro assembler source code from SYSUT1 and write standard HLASM 
+              macro assembler source code 
+              on SYSUT2</b></li>
+                <li><b>v1.4.03 the support is included in the z390 macro processor so no separate translation 
+              will be required to use the extensions to write structured macro 
+              code.&nbsp; The mz390 macro processor will perform the translation 
+              automatically during source input if option ZSTRMAC is on</b></li>
+                <li><b>v1.4.03a - ASELECT changed to ACASE and APM changed to 
+                ACALL, and lower case support</b></li>
+                <li><b>v1.4.03b - SPM's upgraded to structured form using SPE's 
+                and SELECT and CASENTRY added</b></li>
+                        </ul>
+                </li>
+                        </ul>
+                <p>
+              <b>The following source programs are included for general use:</b><ol>
+                <li><b><a href="z390_ZSTRMAC_ZSM_Structured_Source.pdf">linklib\ZSTRMAC.ZSM</a> - structured translator 
+                which can be translated to standard HLASM compatible code using 
+                itself on z390 v1.4.03+ or using the bootstrap version which is 
+                HLASM compatible <a href="z390_ZSTRMAC1_MLC_Bootstrap_Source.pdf">
+                rt\test\STRMAC1.MLC</a>.&nbsp; Using either method, the 
+                generated HLASM compatible translator is here
+                <a href="z390_ZSTRMAC_TXT_Generated_Source.pdf">linklib\ZSTRMAC.TXT</a>.</b></li>
+                <li><b>
+                <a href="z390_ZSTRMAC_BAT_Translate_Structured_Source.pdf">ZSTRMAC.BAT</a> - command using %1 to set SYSUT1 input and %2 to 
+                set SYSUT2 output and translate structured macro assembler to 
+                standard HLASM macro assembler. </b> </li>
+                <li><b>ZSTRSPM.BAT - command to translate all the SPM's in z390\mac 
+                directory to HLASM compatible code versions in z390\mac\spm directory 
+                using calls to the ZSTRMAC.BAT translator command.</b></li>
+                </ol>
+                <p><b>The following regression test programs are included:</b><ol>
+                  <li><b><a href="z390_ZSTRMAC1_MLC_Bootstrap_Source.pdf">rt\test\ZSTRMAC1.MLC</a> - bootstrap version of translator 
+                  written in standard HLASM.</b></li>
+                  <li><b><a href="z390_ZSTRMAC_ZSM_Structured_Source.pdf">rt\test\ZSTRMAC2.ZSM</a> - structured version of the 
+                  translator which uses all the structures.</b></li>
+                  <li><b><a href="z390_ZSTRMAC_TESTSPE1.ZSM.pdf">rt\test\TESTSPE1.ZSM</a> - test program for ZSTRMAC1 with 
+                  all the basic structures.</b></li>
+                  <li><b><a href="z390_ZSTRMAC_TESTSPE2.ZSM.pdf">rt\test\TESTSPE2.ZSM</a> 
+                  - test program for ZSTRMAC2 with all the basic structures in 
+                  lower case</b></li>
+                  <li><b><a href="z390_ZSTRMAC_TESTSPE3.ZSM.pdf">rt\test\TESTSPE3.ZSM</a> - test of all 256 ACASE values 
+                  using all forms of AWHEN operands</b></li>
+                  <li><b><a href="z390_ZSTRMAC_TESTSPE4.ZSM.pdf">rt\test\TESTSPE4.ZSM</a> - test error messages</b></li>
+                  </ol>
+                  <p><b>The following demo programs using SPE's are include:</b></p>
+              <ol>
+                <li><b>demo\DEMOM8Q1.ZSM - solve 8 queens chess problem suing 
+                recursive structured macro</b></li>
+              </ol>
+              <p><b>The following z390 utility programs using SPE's are 
+              included:</b></p>
+              <ol>
+                <li><b>linklib\RTGENDIR.MLC - read Windows directory listing and 
+                create list of file names</b></li>
+                <li><b>linklib\RTGENCMP.MLC - read merged list of files from 2 
+                directories and generate compare commands</b></li>
+                <li><b>linklib\RTGENDIF.MLC - read difference files and generate 
+                erase commands for identical files</b></li>
+              </ol>
+              <p><b>The following z390 system macros have been structured using 
+              the SPE's:</b></p>
+              <ol>
+                <li><b>EQUREGS - generate EQU symbols if not already generated 
+                for GPR and FPR registers</b></li>
+                <li><b>ZCLOSE - close files (called from CLOSE and other user 
+                macros in concatenated directories)</b></li>
+                <li><b>ZOPEN - open files (called from OPEN and other user 
+                macros in concatenated directories)</b></li>
+                <li><b>(See all the structured SPM macros below)</b></li>
+              </ol>
+                  <p align="center"><b><a name="SPM"><font size="5">Structured 
+                  Programming Macros (SPM's)</font></a><font size="5"><br>
+                  </font><a name="SPM"><font size="5">for use in coding 
+                  structured assembler compatible with HLASM</font></a></b></p>
+                  <p><b>z390 startmg with <a href="index.html#Download_Links">
+                  PTF v1403b</a> includes the following set of Structured Programming Macros 
+                  (SPM's) in the z390\mac directory:</b></p>
+                  <ul>
+                    <li><b>IF, ELSEIF, ELSE, ENDIF - alternate selection</b></li>
+                    <li><b>DO, ENDDO - iteration</b></li>
+                    <li><b>SELECT, WHEN, OTHRWISE, ENDSEL - selection by value 
+                    using compares (v1403b first release)</b></li>
+                    <li><b>CASENTRY, CASE, ENDCASE - selection by value using 
+                    branch table (v1403b first release)</b></li>
+                    <li><b>PM, PENTRY, PEXIT - perform block of code and return 
+                    to next instruction</b></li>
+                    <li><b>ASMMSP.CPY&nbsp; - copybook for compatibility with 
+                    HLASM programs that require this copybook</b></li>
+                    <li><b>ZSTRGBL.CPY - copybook included in each SPM with 
+                    shared global variables</b></li>
+                    <li><b>ZSTREQU - macro called from ZSTRGBL to define shared 
+                    EQU's for condition code operands</b></li>
+              </ul>
+                  <p><b>These macros have been updated from the original public domain 
+                  macros in the <a href="http://www.cbttape.org/covdowns.htm">
+                  SHARE CBT tape #177</a> dated 1978.&nbsp; All these macros 
+                  have been updated to use SPE structured programming macro 
+                  extensions to eliminate all macro labels and use of AGO's.&nbsp; 
+                  Also included are translated versions of all the structured 
+                  SPM's in the z390\mac\spm directory.&nbsp; The translated 
+                  version are for use on systems with HLASM or other mainframe 
+                  assemblers which do not yet support the SPE's.</b></p>
+                  <p><b>The following regression test programs are included:</b></p>
+                  <ol>
+                    <li><b>rt\test\TESTSPM1.MLC - test IF, DO, SELECT, and 
+                    CASENTRY structures (v1403b first release)</b></li>
+              </ol>
+                  <p><b>The following z390 utilities are written in structured 
+                  form using these SPM's:</b></p>
+                  <ol>
+                    <li><b>linklib\REPRO.MLC - VSAM load and unload utility</b></li>
+                    <li><b>linklib\SUPERZAP.MLC - dump and path file utility</b></li>
+                    <li><b>linklib\FPCONMFC.MLC - interface between z390 
+                    BFP/DFP/HFP regression tests and the mainframe compatible 
+                    external format conversion routine linklib\FPCONVRT.MAC 
+                    contributed by David Bond.</b></li>
+              </ol>
+                  <p><b>The <a href="z390_ZSTRMAC1_MLC_Bootstrap_Source.pdf">ZSTRMAC1.MLC</a> 
+                  bootstrap conditional macro code program is the last unstructured macro code program I 
+                  ever intend to write with 169 explicit macro labels.&nbsp; The 
+                  structured version has no labels, and I would submit that it is 
+                  significantly easier to read and maintain using ACALL to reduce the logic down into small logical blocks.&nbsp; 
+                  Any and all feedback is welcome.&nbsp; 
+                  Send comments and suggestions to
+                  <a href="mailto:don@higgins.net?subject=STRMAC Structured Macro Assembler Translator">
+                  Don Higgins</a>.</b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" width="758">
+              &nbsp;</td>
+            </tr>
+            </table>
+         
+        
+        </table>
+<p align="center"><b>IBM, CICS, HLASM, MVS, OS/390, VSAM, 
+z9, z10, and z/OS are registered trademarks<br>
+&nbsp;of International Business Machines Corporation</b></p>
+
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Wednesday May 23, 2012<!--webbot bot="Timestamp" endspan i-checksum="42714" -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a>&nbsp;
+<a href="pop-up/sitemap.html">Sitemap</a><br>
+Copyright 2011 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </b> </p>
+
+</body>
+
+</html>

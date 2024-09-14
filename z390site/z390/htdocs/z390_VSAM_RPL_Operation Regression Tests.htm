@@ -1,0 +1,329 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- saved from url=(0085)http://www.automatedsoftwaretools.com/z390/z390_VSAM_Compatible_Assembler_Support.htm -->
+<HTML><HEAD><TITLE>z390 VSAM RPL Operation Tests</TITLE>
+<META http-equiv=Content-Language content=en-us>
+<META content="Microsoft FrontPage 5.0" name=GENERATOR>
+<META content=FrontPage.Editor.Document name=ProgId>
+<META http-equiv=Content-Type content="text/html; charset=windows-1252"></HEAD>
+<BODY><!-- Begin of Pop Up Code --><!-- Pop-Up DHTML menu is © by Anoxy Software --><!-- |4.7.1|H|AV|NHD|NL|ANM|NFX|ND&D|NSND|FL|NASW|NASZ|NSRL| -->
+<SCRIPT language=JavaScript 
+src="z390_VSAM_Compatible_Assembler_Support_files/popblank.js" 
+type=text/javascript></SCRIPT>
+
+<SCRIPT language=JavaScript type=text/javascript>
+<!--
+popbasedir = "http://www.automatedsoftwaretools.com/z390//pop-up/";
+poX = 174;
+poY = 111;
+peXt = (navigator.userAgent.indexOf("Opera")!=-1 && document.getElementById) ? ((document.body.insertAdjacentHTML) ? "mo" : "op") : (navigator.userAgent.indexOf("Konqueror")!=-1 && document.getElementById) ? "ko" : (document.all) ? "ie" : (document.layers) ? "nn" : (!document.all && document.getElementById) ? "mo" : "";
+if (peXt!="")
+document.write('<scr'+'ipt language="JavaScript" src="'+popbasedir+'popup'+peXt+'.js"></scr'+'ipt>');
+
+window.onload = onloevha;
+popXURLV = "";
+
+function onloevha(){
+if (peXt=="nn")
+popmcreate();
+}
+////-->
+</SCRIPT>
+<LAYER style="POSITION: absolute" Name="DboX"></LAYER><!-- End of Pop Up Code -->
+<TABLE id=AutoNumber1 style="BORDER-COLLAPSE: collapse" borderColor=#111111 
+height=1 cellSpacing=0 cellPadding=0 width=758 border=0>
+  <TBODY>
+  <TR>
+    <TD align=middle width=202 height=90><B><A 
+      href="http://www.z390.org/"><IMG height=60 
+      alt="z390 Portable Mainframe Assembler and Emulator" 
+      src="z390_VSAM_Compatible_Assembler_Support_files/z390.jpg" width=100 
+      border=0></A></B></TD>
+    <TD align=middle width=405 height=90>
+      <P align=center><B><FONT size=5>z390 VSAM RPL Operation<br>
+      Regression Tests as of v1.3.08</FONT></B></P></TD>
+    <TD align=middle width=147 height=90><B><A 
+      href="http://www.automatedsoftwaretools.com/">
+    <IMG 
+      alt="Automated Software Tools Corporation" 
+      src="z390_VSAM_Compatible_Assembler_Support_files/laptop.gif" 
+      border=0 width="97" height="71"></A></B></TD></TR>
+  <TR>
+    <TD vAlign=top align=left width=202 height=36>&nbsp;</TD>
+    <TD vAlign=top align=left width=405 height=36>&nbsp;</TD>
+    <TD vAlign=top align=left width=147 height=36>&nbsp;</TD></TR></TBODY></TABLE>
+<TABLE style="BORDER-COLLAPSE: collapse" borderColor=#111111 cellSpacing=0 
+cellPadding=0 width="100%" border=0>
+  <TBODY>
+  <TR>
+    <TD width="100%"><B>z390 Virtual Storage Access Method (VSAM) compatible 
+    assembler support includes the following regression tests in the z390\vsam\test 
+    directory.&nbsp; See naming convention notes at bottom:</B><div align="left">
+      <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="747">
+        <tr>
+          <td align="left" valign="top" width="139"><b>RPL OPTCD</b></td>
+          <td align="left" valign="top" width="77"><b>GET</b></td>
+          <td align="left" valign="top" width="77"><b>PUT</b></td>
+          <td align="left" valign="top" width="77"><b>POINT</b></td>
+          <td align="left" valign="top" width="75"><b>MODCB</b></td>
+          <td align="left" valign="top" width="75"><b>SHOWCB</b></td>
+          <td align="left" valign="top" width="75"><b>TESTCB</b></td>
+          <td align="left" valign="top" width="77"><b>GENCB</b></td>
+          <td align="left" valign="top" width="65"><b>ERASE</b></td>
+        </tr>
+        <tr>
+          <td align="left" valign="top" width="139"><b>SEQ or SEQ,FWD</b></td>
+          <td align="left" valign="top" width="77"><b>ESF1TEST<br>
+          ESF1SKP1<br>
+          ESV1TEST<br>
+          ESV1SKP1<br>
+          ESV2TEST</b></td>
+          <td align="left" valign="top" width="77"><b>ESF1TEST<br>
+          ESF1SKP1<br>
+          ESV1TEST<br>
+          ESV1SKP1<br>
+          ESV2TEST</b></td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="75"><b>ESF1TEST<br>
+          ESF1SKP1<br>
+          ESV1SKP1<br>
+          ESV2TEST</b></td>
+          <td align="left" valign="top" width="75"><b>ESF1TEST<br>
+          ESV1TEST<br>
+          ESV1SKP1<br>
+          ESV2TEST</b></td>
+          <td align="left" valign="top" width="75"><b>ESF1TEST<br>
+          ESV1TEST<br>
+          ESV1SKP1<br>
+          ESV2TEST</b></td>
+          <td align="left" valign="top" width="77"><b>ESF1SKP1<br>
+          ESV1SKP1</b></td>
+          <td align="left" valign="top" width="65">&nbsp;</td>
+        </tr>
+        <tr>
+          <td align="left" valign="top" width="139"><b>SEQ,BWD,LRD</b></td>
+          <td align="left" valign="top" width="77"><b>ESF3TEST<br>
+          ESF3SKP1<br>
+          ESV4TEST</b></td>
+          <td align="left" valign="top" width="77"><b>ESF3TEST<br>
+          ESF3SKP1<br>
+          ESV4TEST</b></td>
+          <td align="left" valign="top" width="77"><b>ESF3TEST<br>
+          ESF3SKP1<br>
+          ESV4TEST</b></td>
+          <td align="left" valign="top" width="75"><b>ESF3TEST<br>
+          ESF3SKP1<br>
+          ESV4TEST</b></td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="75"><b>ESF3TEST<br>
+          ESF3SKP1<br>
+          ESV4TEST</b></td>
+          <td align="left" valign="top" width="77"><b>ESF3SKP1</b></td>
+          <td align="left" valign="top" width="65">&nbsp;</td>
+        </tr>
+        <tr>
+          <td align="left" valign="top" width="139"><b>SEQ,UPD</b></td>
+          <td align="left" valign="top" width="77"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="77"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="75"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="75"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="75"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="65">&nbsp;</td>
+        </tr>
+        <tr>
+          <td align="left" valign="top" width="139"><b>SEQ,BWD,LRD,UPD</b></td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="65">&nbsp;</td>
+        </tr>
+        <tr>
+          <td align="left" valign="top" width="139"><b>ADR</b></td>
+          <td align="left" valign="top" width="77"><b>ESF1TEST<br>
+          ESF1SKP1<br>
+          ESV1TEST<br>
+          ESV1SKP1</b></td>
+          <td align="left" valign="top" width="77"><b>ESF1TEST<br>
+          ESF1SKP1<br>
+          ESV1TEST<br>
+          ESV1SKP1</b></td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="75"><b>ESF1AKP1<br>
+          ESV1TEST<br>
+          ESV1SKP1</b></td>
+          <td align="left" valign="top" width="75"><b>ESF1TEST<br>
+          ESF1SKP1<br>
+          ESV1TEST<br>
+          ESV1SKP1</b></td>
+          <td align="left" valign="top" width="75"><b>ESF1TEST<br>
+          ESF1SKP1<br>
+          ESV1TEST<br>
+          ESV1SKP1</b></td>
+          <td align="left" valign="top" width="77"><b>ESF1SKP1<br>
+          ESV1SKP1</b></td>
+          <td align="left" valign="top" width="65">&nbsp;</td>
+        </tr>
+        <tr>
+          <td align="left" valign="top" width="139"><b>ADR,UPD</b></td>
+          <td align="left" valign="top" width="77"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="77"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="75"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="75"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="75"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="65">&nbsp;</td>
+        </tr>
+        <tr>
+          <td align="left" valign="top" width="139"><b>ADR,XRBA</b></td>
+          <td align="left" valign="top" width="77"><b>ESF1TEST<br>
+          ESF1SKP1<br>
+          ESV1TEST<br>
+          ESV1SKP1</b></td>
+          <td align="left" valign="top" width="77"><b>ESF1TEST<br>
+          ESF1SKP1<br>
+          ESV1TEST<br>
+          ESV1SKP1</b></td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="75"><b>ESF1SKP1<br>
+          ESV1TEST<br>
+          ESV1SKP1</b></td>
+          <td align="left" valign="top" width="75"><b>ESF1TEST<br>
+          ESF1SKP1<br>
+          ESV1TEST<br>
+          ESV1SKP1</b></td>
+          <td align="left" valign="top" width="75"><b>ESF1TEST<br>
+          ESF1SKP1<br>
+          ESV1TEST<br>
+          ESV1SKP1</b></td>
+          <td align="left" valign="top" width="77"><b>ESF1SKP1<br>
+          ESV1SKP1</b></td>
+          <td align="left" valign="top" width="65">&nbsp;</td>
+        </tr>
+        <tr>
+          <td align="left" valign="top" width="139"><b>ADR,XRBA,UPD</b></td>
+          <td align="left" valign="top" width="77"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="77"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="75"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="75"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="75"><b>ESF2TEST<br>
+          ESV3TEST</b></td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="65">&nbsp;</td>
+        </tr>
+        <tr>
+          <td align="left" valign="top" width="139"><b>KEY</b></td>
+          <td align="left" valign="top" width="77"><b>RRF1TEST<br>
+          RRF1SKP1<br>
+          RRV1TEST<br>
+          RRV1SKP1</b></td>
+          <td align="left" valign="top" width="77"><b>RRF1TEST<br>
+          RRF1SKP1<br>
+          RRV1TEST<br>
+          RRV1SKP1</b></td>
+          <td align="left" valign="top" width="77"><b>RRF1SKP1<br>
+          RRV1SKP1</b></td>
+          <td align="left" valign="top" width="75"><b>RRF1SKP1<br>
+          RRV1TEST<br>
+          RRV1SKP1</b></td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="75"><b>RRV1TEST</b></td>
+          <td align="left" valign="top" width="77"><b>RRF1SKP1<br>
+          RRV1SKP1</b></td>
+          <td align="left" valign="top" width="65">&nbsp;</td>
+        </tr>
+        <tr>
+          <td align="left" valign="top" width="139">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="65">&nbsp;</td>
+        </tr>
+        <tr>
+          <td align="left" valign="top" width="139">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="65">&nbsp;</td>
+        </tr>
+        <tr>
+          <td align="left" valign="top" width="139">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="65">&nbsp;</td>
+        </tr>
+        <tr>
+          <td align="left" valign="top" width="139">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="75">&nbsp;</td>
+          <td align="left" valign="top" width="77">&nbsp;</td>
+          <td align="left" valign="top" width="65">&nbsp;</td>
+        </tr>
+      </table>
+    </div>
+    </TD></TR></TBODY></TABLE>
+<table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%">
+  <tr>
+    <td width="100%"><b>Notes:</b><ol>
+      <li><b>ESF tests are ESDS fixed length record file tests&nbsp; with no 
+      index</b></li>
+      <li><b>ESV tests are ESDS varuabke length record test with no index</b></li>
+      <li><b>RRF tests are RRDS fixed length record tests with no index</b></li>
+      <li><b>RRV tests are VRRDS variable length record test wtih index</b></li>
+      <li><b>KSF tests are KSDS fixed length record&nbsp; tests with index</b></li>
+      <li><b>KSV tests are KSDS variable length record tests&nbsp; with index</b></li>
+      <li><b>LDS tests are LDS linear tests reading CI blocks sequentially</b></li>
+      <li><b>There are also regression tests to load and unload each type of 
+      VSAM file from/to QSAM file using z390 REPRO utility.&nbsp; For example 
+      see ESF1REPO.BAT for regression test to load and unload fixed length ESDS.&nbsp; 
+      The REPRO.MLC program in z390\linklib uses all the RPL operations except 
+      ERASE.</b></li>
+    </ol>
+    </td>
+  </tr>
+</table>
+<P align=center><B>IBM and CICS are registered trademarks of International 
+Business Corporation.</B></P>
+<P align=center><B>This page last updated 
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Tuesday September 25, 2007<!--webbot bot="Timestamp" i-checksum="56183" endspan -->.&nbsp;&nbsp; <A 
+href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</A>&nbsp; 
+<A 
+href="http://www.automatedsoftwaretools.com/z390/pop-up/sitemap.html">Sitemap</A><BR>Copyright 
+2006 Automated Software Tools Corporation<BR><BR>&nbsp; </B></P></BODY></HTML>

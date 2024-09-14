@@ -1,0 +1,14 @@
+* TEST NEW Z15 MISC INSTR FACILITY 3 
+*   NCRK AND WITH COMPLEMENT REGISTER
+* POP REF: SA22-7832-12
+* 2019-09-30 DON HIGGINS DON@HIGGINS.NET
+TESTNCRK CSECT
+         USING *,15
+         LM    2,3,=F'3,2'
+         NCRK  1,2,3      R1=R2 AND (COMP R3) = 1
+         BZ    *+1        ABORT IF CC=0
+         CL    1,=F'1'
+         BNE   *+1        ABORT IF CC NOT 0
+         BR    14
+         LTORG
+         END

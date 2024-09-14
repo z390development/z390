@@ -1,0 +1,25 @@
+TCSECT1  SUBENTRY
+         PRINT NOGEN
+         OPEN  (SYSPRINT,OUTPUT)
+         MVI   XXX,C' '
+         MVC   XXX+1(120),XXX
+         PRINT GEN
+         STRING 'MONKEY','DOGS','SYMBOLS','PIGS','COWS',XXX
+         PRINT NOGEN
+         WTO   'HELLO WORLD'
+         B     SKIPHDR
+         DC    AL1(L'EYECATCH)
+EYECATCH DC    C'TDATA-RAHIM.AZIZARAB-&SYSDATE.-&SYSTIME.'
+SKIPHDR  DS    0H
+         PUT   SYSPRINT,XXX
+         SLR   R15,R15
+         CLOSE (SYSPRINT)
+         SUBEXIT
+*
+SYSPRINT DCB   DSORG=PS,DDNAME=SYSPRINT,MACRF=PM,RECFM=FT,LRECL=121
+XXX      DS    CL121
+*
+*
+         YREGS
+         LTORG
+         END 

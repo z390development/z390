@@ -1,0 +1,16 @@
+13:36:41 p19wr1    EZ390 STARTED USING z390 V1.4.01b ON J2SE 1.6.0_05
+EZ390I Copyright 2008 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = mfacc\p19wr1.390
+EZ390I options = 
+ZMFACC Solution for problem P19WR1 by WERNER RAMS using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 000FF10C *E3C5E2E3 40D3C9D5 C5404040 40404040* *TEST LINE       *
+ 000FF11C *40404040 40404040 40404040 40404040* *                *
+ ........
+ 000FF14C *40404040 40404040 40404040 40404040*
+SNAP DUMP ID=2 TEXT=Output Area
+ 000FF25C *000FF114                           * *..1.            *
+EZ390I instructions/sec     = 2800
+EZ390I total errors         = 0
+

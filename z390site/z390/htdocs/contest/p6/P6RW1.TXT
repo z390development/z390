@@ -1,0 +1,29 @@
+* PROBLEM 6 SOUTION SUBMITTED BY RAYMOND WONG
+* CONVERTED TO USE NEW ZMFACC MACRO FOR PORTABILITY BY DSH
+* AND ALSO TO CONVERT 2 BYTES INSTEAD OF 1 WITH SAME 5 INSTR.
+* WITH DIFFERENT LENGTH (TABLES SUPPORT UP TO 32 BYTES
+* TO ASSEMBLE,LINK, AND EXECUTE USE ASMLG #6RW3
+P6RW1    ZMFACC CODE,START,NAME='RAY WONG'
+         MVC   OUTBUF(L'INBUF*8),TABTR1T8
+         TR    OUTBUF(L'INBUF*8),INBUF
+         NC    OUTBUF(L'INBUF*8),TABNC1T8
+         TR    OUTBUF(L'INBUF*8),TABXTBIN
+         ZMFACC CODE,END
+***********************************************************************
+**       Tranlation tables;                                          **
+***********************************************************************
+TABTR1T8 DC    256AL1((*-TABTR1T8)/8)
+*
+TABNC1T8 DC    32X'8040201008040201'
+*
+TABXTBIN DC    C'0',255C'1'
+***********************************************************************
+**       Input output data areas                                     **
+***********************************************************************
+         ZMFACC INPUT,START
+INBUF    DC    C'AB'
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+OUTBUF   DS    CL16
+         ZMFACC OUTPUT,END
+         END   

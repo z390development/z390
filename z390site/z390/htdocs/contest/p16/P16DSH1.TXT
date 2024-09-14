@@ -1,0 +1,93 @@
+         TITLE 'P16DSH1.MLC - Calc primes using store/fetch bit array'
+*********************************************************************
+* Program ID.  P16DSH1.MLC
+* Author.      Don Higgins.
+* Date.        02/22/08.
+*********************************************************************
+         MACRO
+&N       SETBIT &BIT=,&ARRAY=,&BITMASK=            
+.*       
+.* SET BIT INDEXED BY BIT REGISTER (2-12) IN ARRAY REGISRER (2=12)
+.* BIT MASK REGISTER MUST POINT TO 8 BYTE ARRAY WITH X'80'-X'01'
+.*
+&N       LR     14,&BIT(1)           R14=BIT # STARTING WITH 0
+         LR     15,14                R15=BIT # STARTING WITH 0
+         NILL   14,X'FFF8'           TURN OFF LOW 3 BITS OF R14
+         SR     15,14                R15=RELATIVE BIT IN BYTE 0-7
+         IC     15,0(&BITMASK(1),15) R15=BIT MASK X'80'-X'01'
+         SRL    14,3                 R14=BYTE OFFSET IN ARRAY
+         LA     14,0(14,&ARRAY(1))   R14=ADDR OF BYTE IN ARRAY
+         EX     15,*+4+4             EX OI WITH BIT MASK
+         B      *+4+4                SKIP OI
+         OI     0(14),*-*
+         MEND
+         MACRO
+&N       TESTBIT &BIT=(2),&ARRAY=(3),&BITMASK=(4)            
+.*       
+.* TEST BIT INDEXED BY BIT REGISTER (2-12) IN ARRAY REGISRER (2=12)
+.* BIT MASK REGISTER MUST POINT TO 8 BYTE ARRAY WITH X'80'-X'01'
+.*
+&N       LR     14,&BIT(1)           R14=BIT # STARTING WITH 0
+         LR     15,14                R15=BIT # STARTING WITH 0
+         NILL   14,X'FFF8'           TURN OFF LOW 3 BITS OF R14
+         SR     15,14                R15=RELATIVE BIT IN BYTE 0-7
+         IC     15,0(&BITMASK(1),15) R15=BIT MASK X'80'-X'01'
+         SRL    14,3                 R14=BYTE OFFSET IN ARRAY
+         LA     14,0(14,&ARRAY(1))   R14=ADDR OF BYTE IN ARRAY
+         EX     15,*+4+4             EX TM WITH BIT MASK
+         B      *+4+4                SKIP TM
+         TM     0(14),*-*
+         MEND
+P16DSH1  ZMFACC CODE,START,NAME='DON HIGGINS'
+         COPY   ASMMSP
+         LA     R3,TABLE
+         LA     R4,=X'8040201008040201'
+         LA     R5,3                  R5=NEXT N TO TEST
+         DO     WHILE=(CHI,R5,LT,100) TEST ODD N FOR N=3 TO 99
+                MVI  PRIME,TRUE
+                LA   R2,3
+                LR   R1,R2
+                MR   R0,R2
+                DO   WHILE=(CR,R1,LE,R5) TEST ODD UP TO SQRT N
+                     SR   R0,R0
+                     LR   R1,R5
+                     DR   R0,R2
+                     IF   (CHI,R0,EQ,0)
+                          MVI  PRIME,FALSE
+                          LA   R1,1(R5)
+                     ELSE
+                          AHI  R2,2
+                          LR   R1,R2
+                          MR   R0,R2
+                     ENDIF
+                ENDDO
+                IF   (CLI,PRIME,EQ,TRUE)
+                     SETBIT BIT=(R5),ARRAY=(R3),BITMASK=(R4)
+                ENDIF
+                AHI  R5,2   R5 = NEXT TRIAL PRIME
+         ENDDO            
+         LA    R5,3
+         DO    WHILE=(CHI,R5,LT,100)
+               TESTBIT BIT=(R5),ARRAY=(R3),BITMASK=(R4)
+               IF  (LR,R0,NZ,R0) TEST CC NZ
+                   CVD R5,PWORK
+                   MVC DPRIME,=X'40202020'
+                   ED  DPRIME,PWORK+6
+                   WTO MF=(E,WTOMSG)
+               ENDIF
+               AHI R5,2
+         ENDDO
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         ZMFACC OUTPUT,END
+PRIME    DC    AL1(FALSE)
+FALSE    EQU   0
+TRUE     EQU   1
+TABLE    DC    XL(100/8+1)'00'
+PWORK    DC    PL16'0'
+WTOMSG   DC    AL2(WTOEND-WTOMSG,0),C'PRIME ='
+DPRIME   DC    C' ZZZ'
+WTOEND   EQU   *
+         END

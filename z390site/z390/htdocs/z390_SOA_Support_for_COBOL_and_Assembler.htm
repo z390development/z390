@@ -1,0 +1,400 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>z390 Service Oriented Architecture (SOA) Support for COBOL and Assembler</title>
+</head>
+
+<body>
+
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="center" width="202" height="90">
+              <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></td>
+              <td align="center" width="405" height="90">
+              <p align="center"><b><font size="5">z390 Service Oriented 
+              Architecture&nbsp; Support for COBOL and Assembler</font></b></td>
+              <td width="147" height="90" align="center">
+              <b>
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="anim370.gif" alt="Automated Software Tools Corporation" width="100" height="59"></a></b></td>
+            </tr>
+            </table>
+         
+        
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="left" valign="top">
+              <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%" height="190">
+                <tr>
+                  <td width="50%" height="190">&nbsp;<ul>
+                <li><b>
+                <a href="#EXEC SOA Overview">z390 SOA Overview</a></b></li>
+                <li><b>
+                <a href="z390_Service_Oriented_Architecture_User_Guide.pdf">z390 SOA User Guide</a></b></li>
+                <li><b><a href="#z390 Assembler SOA Client Server Demo">z390 SOA 
+                z390 assembler client/server demo</a></b></li>
+                <li><b>
+                <a href="#COBOL SOA Client and z390 Assembler Server Demo">z390 
+                SOA COBOL and z390 assembler demo</a></b></li>
+                <li><b>
+                <a href="z390_Service_Oriented_Architecture_Timing_Statistics.pdf">z390 SOA 
+                Timing Statistics</a></b></li>
+                <li><b><a href="#References">SOA Reference Links</a></b></li>
+              </ul>
+                  <p><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Screen capture of
+                  <a href="http://www.microfocus.com/products/mfeee/index.asp">
+                  MFE COBOL</a></b><br>
+                  <b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; calling <a href="http://www.z390.org">z390 assembler</a></b><br>
+                  <b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Click
+                  <a href="COBOL_Calling_z390_Assembler_via_EZASOKET.pdf">picture</a> for full screen PDF<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Click <a href="#See Description of COBOL/z390 Screen Capture">
+                  description</a> for explanation.</b></p>
+                  <p>&nbsp;</td>
+                  <td width="50%" height="190">
+                  <p align="center"><b>
+                  <a href="COBOL_Calling_z390_Assembler_via_EZASOKET.pdf">
+                  <img border="0" src="images/COBOL_Calling_z390_Assembler_via_EZASOKET.jpg" width="333" height="250"></a><br>
+&nbsp;&nbsp;&nbsp; MFE COBOL and z390 Assembler</b></td>
+                </tr>
+              </table>
+              <p>
+              <b><a name="EXEC SOA Overview">z390 SOA Overview</a></b></p>
+              <p>
+              <b>System Oriented Architecture (SOA) is a software design model 
+              to address the need to share and reuse application components 
+              across diverse applications and network users.&nbsp; 
+              z390 now includes tools to enable users to generate low level SOA 
+              type COBOL and z390 client server assembler applications.&nbsp; 
+              For COBOL clients, the
+              <a href="http://vse2pdf.com/coolstuff/EZA2004.pdf">EZASOKET</a> 
+              interface is called to send and receive SOA messages via TCP/IP.&nbsp; 
+              For z390 assembler clients and servers, the z390 TCPIO macro and 
+              svc are used to send and receive SOA messages via J2SE sockets 
+              support. No other 
+              SOA frameworks or languages such as CICS, XML or C are required.</b></p>
+              <p>
+              <b>For COBOL client applications on Windows which call mainframe 
+              assembler,
+              <a href="http://www.microfocus.com/products/mfeee/index.asp">Micro 
+              Focus Mainframe Express</a> now has EZASOKET support available 
+              which is supported by the z390 SOA COBOL client generator.&nbsp; 
+              See
+              <a href="#COBOL SOA Client and z390 Assembler Server Demo">COBOL 
+              SOA Demo</a> for more details. </b></p>
+              <p>
+              <b>The z390 
+              TCPIO macro supports client and server 
+              TCP/IP messaging using J2SE sockets via SVC X'7C'.&nbsp; z390 servers 
+              running on Windows or Linux can issue OPEN to listen for messages from clients on a specified 
+              port.&nbsp; z390 clients on Windows or Linux can issue OPEN for specific HOST port to 
+              connect and SEND and RECEIVE messages from the server.</b></p>
+              <p align="center">
+              <b><a name="z390 Assembler SOA Client Server Demo">z390 Assembler 
+              SOA Client Server Demo</a></b></p>
+              <p>
+              <b>A z390 demo application consisting of a main program 
+              <a href="soa/DEMOMAIN.MLC.pdf">DEMOMAIN.MLC </a>which calls 2 subroutines 
+              <a href="soa/DEMOSUB1.MLC.pdf">DEMOSUB1.MLC</a> and 
+              <a href="soa/DEMOSUB2.MLC.pdf">DEMOSUB2.MLC</a> are included in new SOA directory.&nbsp; As a base 
+              line, the demo can be assembled, statically linked, and executed 
+              locally using the command SOA\DEMO\DEMOSTD.BAT.&nbsp; Then the 
+              demo can be converted to an SOA client server application, 
+              assembled, linked, and executed using the command SOA\DEMO\DEMOSOA.BAT.&nbsp; 
+              The demo SOA application generation is driven by the user defined 
+              SOAGEN macro call:</b></p>
+              <p>
+              <b>&nbsp;&nbsp; SOAGEN CTYPE=MLC,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MAIN=DEMOMAIN, MAIN CLIENT APPLICATION PGM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              CLIENT=DEMOCMGR, SOA CLIENT MSG MGR NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              SERVER=DEMOSMGR, SOA SERVER MSG MGR NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              HOST=*, (192.168.1.3) HOST SERVER NAME (*=LOCAL)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              PORT=3900, HOST SERVER PORT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              SERVICES=((DEMOSUB1,-45,-45,45), SERVICES WITH PARM LEN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              (DEMOSUB2,-4,-4,4)), (NOTE -LENGTH FOR READ ONLY)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              MACDIR=D:\WORK\Z390\SOA\MACLIB, SOA GEN MACRO DIRECTORY X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              GENDIR=D:\WORK\Z390\SOA\DEMO, DIRECTORY FOR SOA APPL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              GENBLD=DEMOBLD, GENERATED BUILD BAT FILE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              GENRUN=DEMORUN GENERATED RUN BAT FILE <br>
+&nbsp;&nbsp; END</b></p>
+              <p>
+              <b>The z390 SOA application generation macros create the following 
+              source files from the above:</b></p>
+              <ol>
+                <li><b><a href="soa/DEMOCMGR.MLC.PRN.pdf">DEMOCMGR.MLC</a> - demo application client SOA message 
+                manager.</b></li>
+                <li><b><a href="soa/DEMOSMGR.MLC.PRN.pdf">DEMOSMGR.MLC</a> - demo application server SOA message 
+                manager</b></li>
+                <li><b>SOA_STUB_DEMOSUB1.MLC - demo application stub for service 
+                calls to DEMOSUB1</b></li>
+                <li><b>SOA_STUB_DEMOSUB2.MLC - demo application stub for service 
+                calls to DEMOSUB2</b></li>
+                <li><b>DEMOBLD.BAT - command to assemble and link the demo SOA 
+                application</b></li>
+                <li><b>DEMORUN.BAT - command to start server and then run the 
+                client application</b></li>
+              </ol>
+              <p>
+              <b>The z390 SOA generated command DEMOBLD.BAT builds the following 
+              executables:</b></p>
+              <ol>
+                <li><b>DEMOMAIN.390 - demo client main program statically linked 
+                with 2 SOA stubs for service calls.</b></li>
+                <li><b>DEMOCMGR.390 - demo SOA client message manager 
+                dynamically called from stubs</b></li>
+                <li><b>DEMOSMGR.390 - demo SOA server&nbsp; message manager 
+                processes messages from client</b></li>
+                <li><b>DEMOSUB1.390 - service loaded by DEMOSMGR on first 
+                service call</b></li>
+                <li><b>DEMOSUB2.390 - service loaded by DEMOSMGR on first 
+                service call</b></li>
+              </ol>
+              <p>
+              <b>The demo SOA client server application has been run on single 
+              CPU, local LAN connected client and server PCs, and again on 
+              wireless LAN connected client and server PC's to generate initial
+              <a href="z390_Service_Oriented_Architecture_Timing_Statistics.pdf">z390 SOA Demo Timing 
+              Statistics</a> showing that after initial transaction, the average 
+              overhead for the z390 SOA TCP/IP messaging is about 2-3 
+              milliseconds.&nbsp; For complex services performing I/O to 
+              databases, this overhead is relatively negligible compared to the 
+              major benefit of simplifying the sharing and maintenance of 
+              services across diverse applications and users.&nbsp; Future plans 
+              for z390 enhancements will include support for XML and registry 
+              type services to provide unit test environment for higher level 
+              SOA type application components. </b></p>
+              <p align="center">
+              <b><a name="COBOL SOA Client and z390 Assembler Server Demo">COBOL 
+              SOA Client and z390 Assembler Server Demo</a></b></p>
+              <p>
+              <b>An IBM Enterprise COBOL compatible version of the z390 
+              assembler SOA client demo has been created named 
+              <a href="soa/DEMOMAIN.CBL.pdf">soa\demo\DEMOMAIN.CBL</a>.&nbsp; 
+              The SOAGEN macro has been updated to support the name keyword 
+              CTYPE=CBL in addition to the default CTYPE=MLC.&nbsp; The new  
+              command soa\demo\DEMOSOAC.BAT will generate the COBOL stubs and 
+              COBOL client message manager required to run the COBOL demo program 
+              using the same z390 assembler server as the z390 assembler client 
+              demo.&nbsp; The generated COBOL client message manager issues calls 
+              to the <a href="http://vse2pdf.com/coolstuff/EZA2004.pdf">HLL standard EZASOKET</a> interface which is 
+              now available for running mainframe COBOL and z390 assembler 
+              applications on Windows via Micro 
+              Focus Mainframe Express 3.1.</b></p>
+              <p>
+              <b>The COBOL SOA application generation macros create the following 
+              source files from the above:</b></p>
+              <ol>
+                <li><b><a href="soa/DEMOCMGR.CBL.pdf">DEMOCMGR.CBL</a>&nbsp; - demo application client SOA message 
+                manager which calls EZASOKET.</b></li>
+                <li><b><a href="soa/DEMOSMGR.MLC.PRN.pdf">DEMOSMGR.MLC</a> - demo application server SOA message 
+                manager (no changes)</b></li>
+                <li><b><a href="soa/DEMOSUB1.CBL.pdf">DEMOSUB1.CBL</a>&nbsp;&nbsp;&nbsp; - demo application stub 
+                for service calls to DEMOSUB1</b></li>
+                <li><b><a href="soa/DEMOSUB2.CBL.pdf">DEMOSUB2.CBL</a>&nbsp;&nbsp;&nbsp; - demo application stub 
+                for service calls to DEMOSUB2</b></li>
+                <li><b>DEMOSOAC.BAT&nbsp;&nbsp; - command to generate the above 
+                COBOL and assemble SOA 
+                application</b></li>
+              </ol>
+              <p>
+              <b>To&nbsp; run the COBOL SOA demo using Micro Focus Mainframe 
+              Express on Windows perform the following steps:</b></p>
+              <ol>
+                <li><b>Install Micro Focus Mainframe Express 3.1 for Windows XP 
+                or Vista</b></li>
+                <li><b>Create a project named EZASOKET</b></li>
+                <li><b>Import latest version of field developed EZASOKET.CBL and 
+                EZAMFE.CBL available to MFI customers</b></li>
+                <li><b>Compile EZASOKET.CBL&nbsp; as &quot;Enterprise COBOL&quot; with 
+                option STICKY-LINKAGE&quot;1&quot;</b></li>
+                <li><b>Compile EZAMFE.CBL as &quot;non-mainframe&quot; (This interface 
+                issues Windows Winsock calls from COBOL)</b></li>
+                <li>Install J2SE 6.0+ runtime </li>
+                <li><b>Install z390 v1.4.01 and latest PTF v1.4.01e</b></li>
+                <li><b>Start z390 GUI interface by double-clicking on desktop 
+                icon.</b></li>
+                <li><b>Enter the command: start soa\demo\DEMORUNS notime tracet 
+                con<br>
+                This will start the SOA server for DEMOMAIN application, display 
+                the name of the host, and wait for next service request.&nbsp; 
+                The notime option prevents timeout after 15 seconds.&nbsp; The 
+                tracet option displays hex dump of each TCPIO send and receive 
+                message and each operation performed.&nbsp; The con option turns 
+                console output back on as any trace option turns it off.&nbsp; 
+                All output will be on the DEMSMGR.LOG file.</b></li>
+                <li><b>Run soa\demo\DEMOSOAC.BAT to generated the COBOL stubs 
+                and client message manager</b></li>
+                <li><b>Add the following COBOL programs to the MFE project from 
+                soa\demo directory:</b><ol>
+                  <li><b><a href="soa/DEMOMAIN.CBL.pdf">DEMOMAIN.CBL</a> - COBOL version of the original 
+                  <a href="soa/DEMOMAIN.MLC.pdf">DEMOMAIN.MLC</a></b></li>
+                  <li><b><a href="soa/DEMOSUB1.CBL.pdf">DEMOSUB1.CBL</a> - generated stub for DEMOSUB1 calls</b></li>
+                  <li><b><a href="soa/DEMOSUB2.CBL.pdf">DEMOSUB2.CBL</a> - generated stub for DEMOSUB2 calls</b></li>
+                  <li><b><a href="soa/DEMOCMGR.CBL.pdf">DEMOCMGR.CBL</a> - generated client message manager which 
+                  issues EZASOKET calls&nbsp; </b></li>
+                </ol>
+                </li>
+                <li><b>Edit the <a href="soa/DEMOCMGR.CBL.pdf">DEMOCMGR.CBL</a> program to change host name from 
+                DSH3 to the name of your PC displayed in prior step at server 
+                startup.</b></li>
+                <li><b>Compile the demo COBOL programs as &quot;Enterprise COBOL&quot;</b></li>
+                <li><b>Start the MFE TSO command interface</b></li>
+                <li><b>Enter CALL DEMOMAIN to start animation the SOA demo COBOL client 
+                application</b></li>
+                <li><b>After each send and receive via EZASOCKET call, you can 
+                view the records in the server trace.</b></li>
+                <li><b><a name="See Description of COBOL/z390 Screen Capture">See</a> 
+                this <a href="COBOL_Calling_z390_Assembler_via_EZASOKET.pdf">
+                screen capture</a> for quick overview of how it all looks:</b><ol>
+                <li><b>MFE Animation of the <a href="soa/DEMOMAIN.CBL.pdf">DEMOMAIN.CBL</a> program source is in 
+                the background</b></li>
+                <li><b>MFE Application output is at the bottom left of screen 
+                showing displays left in each program for demo.</b></li>
+                <li><b>In the center of the screen is pop-up showing the value 
+                of field DFP3 after returning from call to DEMOSUB1.390 which 
+                was loaded and executed by the SOA server message manager 
+                DEMOSMGR.390 to calculate the sum of 1.1 + 2.2 using IBM Decimal 
+                Floating Point (DFP).</b></li>
+                <li><b>In the upper right is the z390 GUI screen used to issue 
+                the start command shown to launch the SOA server DEMOSMGR.390 
+                with the options NOTIME to prevent timeout, TRACET to trace all 
+                TCPIO operations and dump each message received and sent. </b>
+                </li>
+                <li><b>In the lower right is the started z390 server task 
+                showing the trace dump of last messages received and sent with 
+                the results of service call to DEMOSUB1.390.&nbsp; The first 
+                service request message shows the input fields with 1.1 and 2.2.&nbsp; 
+                The service response messages shows the 3.3 result.</b></li>
+              </ol>
+                </li>
+              </ol>
+              <p><b>Ok, so the demo works, now how do I get my mainframe COBOL 
+              and assembler application to work using this new option so I can 
+              do development and testing on my Windows PC?&nbsp; First I'd 
+              recommend talking to both
+              <a href="mailto:Malcolm.Marias@MicroFocus.com?subject=Planning for MFE COBOL and z390 Assembler">
+              Micro Focus</a> and
+              <a href="mailto:don@AutomatedSoftwareTools.com?subject=Planning for COBOL and z390 Assembler">
+              Automated Software Tools</a> to determine if the Micro Focus and 
+              z390 tools will support the application requirements.&nbsp; Then 
+              if the requirements are met, the tools can be installed and the 
+              process to generate one or more SOA z390 servers can be started 
+              along with setting up the COBOL client application in Mainframe 
+              Express or Server Express. </b></p>
+              <p>
+              <b><a name="References">References</a>:</b></p>
+              <ul>
+                <li><b>SOA</b><ul>
+                <li><b>
+                <a href="http://www-128.ibm.com/developerworks/webservices/library/ws-migratesoa/">
+                IBM - Migrating to SOA</a></b></li>
+                <li><b>
+                <a href="http://www.javaworld.com/javaworld/jw-06-2005/jw-0613-soa.html">
+                JavaWorld definition of XML based SOA architecture</a></b></li>
+                <li><b><a href="http://www.microfocus.com/products/SOAExpress/">
+                Micro Focus SOA Express</a></b></li>
+                <li><b>
+                <a href="http://msdn2.microsoft.com/en-us/architecture/aa948857.aspx">
+                Microsoft SOA</a></b></li>
+                <li><b>
+                <a href="http://www.developer.com/design/article.php/1010451">
+                Software Developers Introduction to SOA</a></b></li>
+                <li><b>
+                <a href="http://java.sun.com/developer/technicalArticles/WebServices/soa/">
+                Sun SOA and Web Services</a></b></li>
+              </ul>
+                </li>
+                <li><b>EZASOKET High Level Language Interface to TCP/IP Sockets</b><ul>
+                <li><b><a href="http://vse2pdf.com/coolstuff/EZA2004.pdf">Why 
+                use HLL EZASOKET for portability</a></b></li>
+                <li><b>
+                <a href="http://publibz.boulder.ibm.com/epubs/pdf/f1a1g140.pdf">
+                IBM z/OS CICS Sockets Guide</a></b></li>
+                <li><b>
+                <a href="http://publib.boulder.ibm.com/infocenter/zos/v1r9/index.jsp?topic=/com.ibm.zos.r9.halc001/f1a1g140377.htm">
+                IBM CICS sockets Examples</a></b></li>
+                <li><b>
+                <a href="http://www-1.ibm.com/support/docview.wss?uid=swg27007910&aid=1">
+                IBM CICS EZASOKET Data Flow</a></b></li>
+                <li><b><a href="http://www.van-den-heuvel.com/hpw/I255604.html">
+                IBM EZASMI sockets assembler macro example</a></b></li>
+                <li><b>
+                <a href="http://supportline.microfocus.com/Documentation/books/es50sx/cbezas.htm">
+                Micro Focus Enterprise Server EZASOKET Support</a></b></li>
+                <li><b>
+                <a href="http://www.microfocus.com/000/MMv5-whatsnew-2_tcm21-12615.pdf">
+                Micro Focus Mainframe Migration EZASOKET Support</a></b></li>
+              </ul>
+                <ul>
+                <li><b> 
+                <a href="http://www.faqs.org/rfcs/rfc793.html">TCP/IP 
+                Transmission Control Protocol RFP</a></b></li>
+                <li><b>
+                <a href="http://www.cs.rpi.edu/courses/sysprog/sockets/sock.html">
+                Sockets Tutorial</a></b></li>
+                <li><b>
+                <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/net/ServerSocket.html">
+                J2SE ServerSocket Class</a></b></li>
+                <li><b>
+                <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/net/Socket.html">
+                J2SE Socket Class</a></b></li>
+              </ul>
+                </li>
+                <li><b>Host IP Addressing</b><ul>
+                <li><b>
+                <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/net/InetAddress.html">
+                J2SE InetAddress Class</a></b></li>
+                <li><b><a href="http://www.ietf.org/rfc/rfc2373.txt">IP 
+                Addressing RFC</a></b></li>
+              </ul>
+                </li>
+                <li><b>Socket Ports</b><ul>
+                <li><b>
+                <a href="http://www.mathworks.com/access/helpdesk/help/toolbox/modelsim/index.html?/access/helpdesk/help/toolbox/modelsim/a1057689278b4.html&http://www.google.com/search?sourceid=navclient&ie=UTF-8&rls=GGLD,GGLD:2003-43,GGLD:en&q=socket+ports">
+                Choosing a Socket Port</a></b></li>
+                <li><b><a href="http://www.iana.org/assignments/port-numbers">
+                Registered Ports </a></b></li>
+                <li><b><a href="http://www.iana.org/cgi-bin/usr-port-number.pl">
+                Register a Port</a></b></li>
+              </ul>
+                </li>
+              </ul>
+              <p align="center">
+              &nbsp;</td>
+            </tr>
+            </table>
+         
+        
+<p align="center"><b>IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS<br>
+&nbsp;are registered trademarks
+&nbsp;of International Business Machines Corporation</b></p>
+
+        
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Sunday September 07, 2008<!--webbot bot="Timestamp" i-checksum="59270" endspan -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a>&nbsp;
+<a href="pop-up/sitemap.html">Sitemap</a><br>
+Copyright 2008 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </b> </p>
+
+</body>
+
+</html>

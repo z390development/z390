@@ -1,0 +1,165 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 12.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>z390 Portable Mainframe Assembler and Emulator Getting Started Help</title>
+</head>
+
+<body>
+
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="center" width="202" height="90">
+              <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></td>
+              <td align="center" width="405" height="90">
+              <p align="center"><b><font size="5">z390 </font></b>
+              <font size="5"><b>Getting Started</b></font></td>
+              <td width="147" height="90" align="center">
+              <b>
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="anim370.gif" alt="Automated Software Tools Corporation" width="100" height="59"></a></b></td>
+            </tr>
+            </table>
+         
+        
+        </table>
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%" id="AutoNumber2">
+  <tr>
+    <td width="100%"><b>This page is designed to help those installing and 
+    learning how to use z390 for the first time.&nbsp; Please send any 
+    additional suggestions to
+    <a href="mailto:don@higgins.net?subject=z390 Getting Started">Don Higgins</a>.</b><ul>
+      <li><b>What is required to use z390 to assemble, link, and execute 
+      programs on Windows or Linux?</b><ul>
+        <li><b><a href="index.html#Download Links">Download and install latest 
+        version of z390 using InstallShield or Linux file image zip </a></b></li>
+        <li><b><a href="index.html#Download Links">Download and install latest 
+        version of Sun Microsystems J2RE 1.6+</a></b></li>
+        <li><b><a href="java/index.html">Verify that you have J2RE 1.6+ 
+        installed</a></b></li>
+        <li><b>Also remove prior J2RE versions which may conflich such as 1.4 
+        and 1.5</b></li>
+      </ul>
+      </li>
+      <li><b>How do I verify that the latest z390 release is installed?</b><ul>
+        <li><b>Double click on the z390 desktop icon to start the GUI interface</b></li>
+        <li>Enter the command &quot;IVP&quot; to run z390 installation verification 
+        program which should display version and indicate if optional MVS 3.8 
+        macro library or z390 regression tests are installed.&nbsp; If return 
+        code is greater than 4 or the z390 release is older than the latest 
+        release listed on <a href="http://www.z390.org">www.z390.org</a>, 
+        uninstall old versions and then install latest z390 release<b>.</b></li>
+      </ul>
+      </li>
+      <li><b>How do I run the Hello World demo and view results?</b><ul>
+        <li><b>Double click the z390 desktop icon to start z390 GUI interface</b></li>
+        <li><b>Enter the command &quot;ASMLG demo\DEMO&quot; to assemble, link, and 
+        execute the demo program demo\DEMO.MLC using batch command ASMLG.BAT</b></li>
+        <li><b>The execution step should display the &quot;HELLO WORLD&quot; on the 
+        console</b></li>
+        <li><b>To view the console log file, enter command &quot;edit demo\DEMO.LOG&quot;, 
+        close editor</b></li>
+        <li><b>To view the assembler listing enter command &quot;edit demo\DEMO.PRN&quot;, 
+        close editor</b></li>
+        <li><b>To view the linker listing enter command &quot;edit demo\DEMO.LST&quot;, 
+        close editor</b></li>
+      </ul>
+      </li>
+      <li><b>How do I rerun the demo with instruction execution trace?</b><ul>
+        <li><b>Enter the command &quot;EXEC demo\DEMO trace con</b></li>
+        <li><b>The instruction execution trace should appear on console and TRE 
+        trace file</b></li>
+        <li><b>To view the trace file enter command &quot;edit demo\DEMO.TRE&quot;, close 
+        editor</b></li>
+      </ul>
+      </li>
+      <li><b>What are the best references for more information on z390 and 
+      mainframe assembler</b><ul>
+        <li><b><a href="z390_User_Guide.pdf">z390 User Guide (See appendix for 
+        listings of demo &quot;Hello World&quot; source files)</a></b></li>
+        <li><b><a href="index.html#z390 Documentation">z390 Additional 
+        documentation links</a></b></li>
+        <li><b><a href="index.html#IBM Reference Links">IBM z/Architecture and 
+        z/OS reference links</a></b></li>
+      </ul>
+      </li>
+      <li><b>Where can I find more examples?</b><ul>
+      <li><b>The z390\demo directory contains several example programs</b></li>
+      <li><b>Run the command RTDEMO to assemble, link, and execute them all</b></li>
+      <li><b>Edit the file RTDEMO.BAT and the files it calls to see how batch 
+      command work</b></li>
+      <li><b>For a lot more examples, <a href="index.html#Download Links">download</a> and install the RT.zip file into 
+      z390 directory.&nbsp; Then view all the programs in z390\RT\TEST and run 
+      the command RT.BAT to assemble, link, and execute them all.</b></li>
+    </ul>
+      </li>
+      <li><b>What macros are supported?</b><ul>
+      <li><b>The install directory z390\mac contains all the currently supported 
+      MVS compatible macros which generate svc calls supported by the z390 
+      runtime emulator.&nbsp; See the <a href="index.html#z390 Documentation">
+      z390 documentation links</a> above for additional documentation on these 
+      macros.&nbsp; Requests for additional macro support are welcome.</b></li>
+      <li><b>There is an optional download file named MVS.zip which contains the 
+      public domain MVS 3.8 macro library in ASCII text format.&nbsp; These 
+      macros can be used with z390 to assemble mainframe programs targeted for 
+      execution on MVS or z/OS mainframe systems.&nbsp; You could even upload 
+      the binary OBJ files generated for linking and executing them on a 
+      mainframe system.&nbsp; These macros also provide useful examples of macro 
+      assembler code.&nbsp; However these macros do not generated svc code 
+      compatible with the current z390 runtime.&nbsp; For those interested in 
+      actually running MVS 3.8 code on Windows, I recommend the
+      <a href="http://www.conmicro.com/hercules/">Hercules emulator</a>.&nbsp; 
+      The Hercules emulator will also run the mainframe assembler that comes 
+      with MVS 3.8, but that assembler is quite dated and does not support new z 
+      series opcodes for such features as DFP.&nbsp; Hercules is also limited to 
+      16MB regions.</b></li>
+      <li><b>Note IBM z/OS and other current operating system product macros are 
+      only available from IBM under license.&nbsp; z390 is targeted to be HLASM 
+      compatible and any bugs found by users assembling these macros should be
+      <a href="z390_Support_Request_Form.htm">submitted for RPI correction</a>.
+      </b></li>
+    </ul>
+      </li>
+      <li><b>How do I run the regression tests?</b><ul>
+      <li><b>You can enter command rt\RTDEMO to run all the demos in z390\demo 
+      directory.&nbsp; The output of the regression test is in z390\demo\dif 
+      consisting of text files showing the differences between the generated 
+      demo files and the saved files from last verified regression test.&nbsp; 
+      The files are listed in descending order by size to quickly any spot files 
+      with differences which can be due to different software versions, 
+      different options, bugs, etc.</b></li>
+      <li><b>You can also run rt\RTCICS for regression tests of CICS.</b></li>
+      <li><b>You can download and unzip the optional MVS.zip macros into z390 
+      directory and then run rt\RTMVS regression tests using the MVS macros.</b></li>
+      <li><b>You can download and unzip the optional rt\RT.zip tests into z390 
+      directory and then run the RTTEST regression test which takes 5 minutes or 
+      more to assembler and run over a 100 different test programs for the macro 
+      processor, assembler, linker, and emulator.&nbsp; You can also run RT.BAT 
+      which runs all of the above regression tests.</b></li>
+    </ul>
+      </li>
+    </ul>
+    </td>
+  </tr>
+</table>
+<p align="center"><b>IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS<br>
+&nbsp;are registered trademarks
+&nbsp;of International Business Machines Corporation</b></p>
+
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Wednesday May 23, 2012<!--webbot bot="Timestamp" endspan i-checksum="42714" -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a>&nbsp;
+<a href="pop-up/sitemap.html">Sitemap</a><br>
+Copyright 2011 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </b> </p>
+
+</body>
+
+</html>

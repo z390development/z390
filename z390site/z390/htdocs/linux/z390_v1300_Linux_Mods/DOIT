@@ -1,0 +1,6 @@
+#!/bin/sh
+echo compile and build z390.jar
+cd src
+javac *.java
+jar cmf mainClass.txt ../z390.jar *.class
+cd ..

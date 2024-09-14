@@ -1,0 +1,13 @@
+17:33:29 p7eh1     EZ390 STARTED USING z390 V1.4.01f ON J2SE 1.6.0_06
+EZ390I Copyright 2008 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = mfacc\p7eh1.390
+EZ390I options = 
+ZMFACC Solution for problem P7EH1 by John Erhman using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 000FFF48 *00000000 00000000 00000000         * *............    *
+SNAP DUMP ID=2 TEXT=Output Area
+ 000FFF48 *4E4BF3F1 F4F1F4F1 C54EF0F1         * *+.314141E+01    *
+EZ390I instructions/sec     = 4888
+EZ390I total errors         = 0
+17:33:29 p7eh1     EZ390 ENDED   RC= 0 SEC= 0 MEM(MB)= 16 IO=33 INS=44

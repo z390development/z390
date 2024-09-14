@@ -1,0 +1,18 @@
+* Problem - Swap two 20 byte fields optimized for speed
+* Date - 12/15/07
+* Author - Rafa Pereira
+* Ref. - z390 Mainframe Assembler Coding Contest on www.z390.org
+*
+* Using just two MVC instructions. A,B and TEMP must be consecutive.
+P1MVC2   ZMFACC CODE,START,NAME='RAFA'
+         MVC TEMP,A
+         MVC A(L'A+L'B),B
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         ZMFACC OUTPUT,START
+A        DC     CL20'FIELD A'
+B        DC     CL20'FIELD B'
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,END
+TEMP     DS     CL20
+         END

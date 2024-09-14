@@ -1,0 +1,420 @@
+ASMPRIM  TITLE 'Sieve of Eratosthenes: Find Prime Numbers'              00010000
+ASMPRIM  AMODE 31                                                       00013002
+ASMPRIM  RMODE 24                                                       00016002
+*********************************************************************** 00020000
+***                                                                 *** 00030000
+*** Program:  ASMPRIM                                               *** 00040000
+***                                                                 *** 00050000
+*** Purpose:  Find all prime numbers up to a given limit            *** 00060000
+***           using Eratosthenes' sieve algorithm.                  *** 00070002
+***                                                                 *** 00080000
+*** Usage:    The following JCL is required to run ASMPRIM:         *** 00090000
+***                                                                 *** 00100000
+***           //ASMPRIM EXEC PGM=ASMPRIM,PARM=<limit>               *** 00110003
+***           //STEPLIB  DD  DSN=<loadlib>,DISP=SHR                 *** 00120000
+***           //SYSPRINT DD  SYSOUT=*                               *** 00130000
+***                                                                 *** 00140000
+***           The parameters are defined as follows:                *** 00150000
+***                                                                 *** 00160000
+***           <limit>   the largest number to sieve. All primes     *** 00170000
+***                     up to this number will be found. A maximum  *** 00180003
+***                     limit of 4,294,967,295 is supported. If     *** 00200003
+***                     a higher limit is requested it will be      *** 00220003
+***                     reduced to the supported maximum silently.  *** 00240003
+***                                                                 *** 00320000
+***           <loadlib> the load library containing the ASMPRIM     *** 00330000
+***                     program.                                    *** 00340000
+***                                                                 *** 00350000
+***           The job must be able to allocate 256 MB of virtual    *** 00360003
+***           storage above 16 MB. Otherwise it will abend with an  *** 00362003
+***           S878-10 completion code.                              *** 00364003
+***                                                                 *** 00366003
+*** Function: 1. Allocate 256 MB of virtual storage above 16 MB and *** 00368003
+***              adjust sieve limit if necessary. This storage is   *** 00370003
+***              used as flags, where each bit indicates whether    *** 00380000
+***              the odd number corresponding to the bit's position *** 00390001
+***              is prime or not. Odd numbers are assigned to these *** 00394001
+***              bits in sequence, i.e. numbers 1,3,5,7,9,11,13,15  *** 00398001
+***              correspond to bits 0,1,2,3,4,5,6,7 and so forth.   *** 00402001
+***                                                                 *** 00410000
+***           2. Set all prime flags to one, except the first.      *** 00420001
+***              The first flag corresponds to the number one,      *** 00425001
+***              which isn't prime. Note that there don't exist     *** 00430001
+***              flags for even numbers, because even numbers       *** 00435001
+***              (except the two) are never prime.                  *** 00440001
+***                                                                 *** 00450000
+***           3. Run Eratothenes' sieve which will result in        *** 00460000
+***              clearing the prime flags of all none prime numbers *** 00470000
+***              up to the given limit.                             *** 00480000
+***                                                                 *** 00490000
+***           4. Print all numbers having their prime flag set to   *** 00500000
+***              SYSPRINT. The "irregular" two is printed manually  *** 00510001
+***              for the sake of completeness.                      *** 00513001
+***                                                                 *** 00520000
+***           5. Print a summary message indicating the number of   *** 00530000
+***              primes found up to the given limit to SYSPRINT and *** 00540000
+***              to the job log.                                    *** 00550000
+***                                                                 *** 00560000
+***           6. Release the allocated storage.                     *** 00570000
+***                                                                 *** 00580000
+***           7. Exit.                                              *** 00590000
+***                                                                 *** 00600000
+***  Note:    The logic used to implement the Sieve of Eratosthenes *** 00600202
+***           allows an upper limit of 16 times the maximum storage *** 00600402
+***           than can be addressed and allocated. For that reason, *** 00600602
+***           to represent the absolute value of a potential prime, *** 00600802
+***           there are needed 4 bits more than to represent the    *** 00601002
+***           highest possible storage address. The algorithm uses  *** 00601202
+***           32-bit general registers or full words to represent   *** 00601402
+***           the values of potential primes. Consequently          *** 00601602
+***                                                                 *** 00601802
+***           - in 24-bit addressing mode (S/370) there doesn't     *** 00602002
+***             exist any problem as a full word is 8 bits longer   *** 00602202
+***             than the longest address                            *** 00602402
+***           - in ESA/390 31-bit mode a full word has only one bit *** 00602602
+***             more than the longest address, which means that the *** 00602802
+***             algorithm needs to artificially get cut off at      *** 00603002
+***             double the highest address possible or otherwise    *** 00603202
+***             it would need to be redesigned to work using double *** 00603402
+***             words and register pairs                            *** 00603602
+***           - in z/Arch (ESAME) 31-bit addressing could fully be  *** 00603802
+***             exploited using 64-bit registers, double words and  *** 00604002
+***             the corresponding instructions operating on 64-bit  *** 00604202
+***             data, i.e. in this situation no significant changes *** 00604402
+***             would be needed. However, exploiting 64-bit         *** 00604602
+***             addresses, would then again lack 4 bits in data     *** 00604802
+***             length and require a redesign.                      *** 00605002
+***                                                                 *** 00605202
+***           To avoid having to cover all variants possible the    *** 00605402
+***           program has been designed for 31-bit addressing with  *** 00605602
+***           a 32-bit data value cut off throughout the algorithm. *** 00605802
+***           The lead-in (interpretion of the PARM value) and the  *** 00606002
+***           output field width, however, are already 35-bit save, *** 00606202
+***           allowing to request a 35-bit limit through PARM and   *** 00606402
+***           to format 35 bit results for printing.                *** 00606602
+***                                                                 *** 00606802
+***           All data cut offs are marked by a comment containing  *** 00607002
+***           the string "cut off" for easy identification. The     *** 00607202
+***           effect is, that in 31-bit addressing mode the maximum *** 00607402
+***           sieve limit is 4,294,967,295, requiring a REGION      *** 00607602
+***           of 256 MB. Any higher limit requested through PARM    *** 00607802
+***           will silently be reduced, any larger REGION provided  *** 00608002
+***           will remain unused. To exploit the theoretical        *** 00608202
+***           limit of 34,359,738,367 the cut off logic needs to    *** 00608402
+***           be removed and the corresponding code sections        *** 00608602
+***           need to be revised to be datawise 35-bit save.        *** 00608802
+***                                                                 *** 00609002
+*** Updates:  2014/07/18 original implementation.                   *** 00610001
+***           2014/07/21 eliminate even numbers from prime flags.   *** 00613001
+***           2014/07/30 enable AMODE 31 and allocate prime flag    *** 00614002
+***                      array above the line. See the above note   *** 00615002
+***                      for address exploitation limitations.      *** 00616002
+***           2014/07/31 unconditionally allocate 256 MB of storage *** 00616503
+***                      above the line instead of dynamically      *** 00617003
+***                      using the maximum allowable amount within  *** 00617503
+***                      the given REGION. This allows the program  *** 00618003
+***                      to run on systems not supporting VRU type  *** 00618503
+***                      GETMAIN requests.                          *** 00619003
+***                                                                 *** 00620000
+*** Author:   Juergen Winkelmann, ETH Zuerich.                      *** 00630001
+***                                                                 *** 00640000
+*********************************************************************** 00650000
+ASMPRIM  CSECT                                                          00660000
+         SAVE  (14,12),,*       save registers                          00670000
+         LR    R12,R15          establish module addressability         00680000
+         USING ASMPRIM,R12      tell assembler of base                  00690000
+         LA    R2,SAVEA         chain ..                                00700000
+         ST    R13,4(,R2)         .. the ..                             00710000
+         ST    R2,8(,R13)           .. save ..                          00720000
+         LR    R13,R2                 .. areas                          00730000
+*                                                                       00740000
+* Initialize sieve limit and virtual storage                            00750000
+*                                                                       00760000
+         L     R6,0(,R1)        parameter list address                  00770002
+         LH    R1,0(,R6)        length of PARM field                    00776002
+         LTR   R1,R1            PARM field specified?                   00790000
+         BZ    NOPARM           no, use default sieve limit             00800000
+         XR    R2,R2            clear R2 for parm arithmetics           00801002
+         L     R3,HIGHLIM       maximum PARM allowed                    00810000
+         LA    R4,12            maximum PARM length allowed             00820002
+         CR    R1,R4            maximum PARM length exceeded?           00830000
+         BH    HIGHPARM         yes -> use maximum as sieve limit       00840000
+         LA    R3,PARM+12       right justify ..                        00850002
+         SR    R3,R1              .. to 12 digits                       00856002
+         BCTR  R1,0             decrement for EXecute                   00870000
+         EX    R1,MOVEPARM      get PARM                                00880000
+         PACK  NUMDEC(8),PARM+6(6) pack low order PARM digits and ..    00890002
+         CVB   R5,NUMDEC            .. convert to binary                00892002
+         PACK  NUMDEC(8),PARM(6) pack high order PARM digits and ..     00894002
+         CVB   R3,NUMDEC            .. convert to binary                00900000
+         M     R2,D1000000      multiply high order digits and ..       00910002
+         ALR   R3,R5              .. and add low order digits           00911002
+         BC    12,HIGHPARM      no carry -> set sieve limit             00912002
+         LA    R2,1(,R2)        carry -> increment high order register  00913002
+HIGHPARM STM   R2,R3,LIMITDWD   set sieve limit                         00914002
+NOPARM   OPEN  (SYSPRINT,OUTPUT) open SYSPRINT                          00920000
+         L     R2,MAXMEM        amount of storage to request            00930003
+         GETMAIN RU,LV=(R2),LOC=31 get storage above the line           00931003
+         ST    R1,ISPRIME       address of gotten storage               00934002
+         XR    R6,R6            clear R6 for shift                      00936002
+         L     R7,MAXMEM        storage amount obtained times 16 ..     00940001
+         SLDL  R6,4               .. is maximum sieve limit possible    00946002
+         CL    R6,LIMITDWD      does requested limit fit into storage?  00949002
+         BL    *+16             no  -> use maximum possible             00952002
+         BH    *+16             yes, definitely -> use requested limit  00955002
+         CL    R7,LIMIT         yes, perhaps -> check low order word    00958002
+         BNL   *+8              yes -> use requested limit              00970000
+         STM   R6,R7,LIMITDWD   no  -> use maximum possible             00980002
+*                                                                       00980702
+* cut off logic for 32-bit arithmetics                                  00981402
+*                                                                       00982102
+         XR    R6,R6            currently sieve limits larger than ..   00982802
+         L     R7,HIGHLIM         .. X'FFFFFFFF' are not supported. ..  00983502
+         CL    R6,LIMITDWD        .. Is sieve limit too high?           00984202
+         BZ    *+8              no  -> continue                         00984902
+         STM   R6,R7,LIMITDWD   yes -> reduce to the supported maximum  00985602
+*                                                                       00986302
+* end of cut off logic                                                  00987002
+*                                                                       00987702
+         L     R6,ISPRIME       address of storage obtained             00990000
+         L     R8,LIMIT         sieve limit                             01000000
+         XR    R9,R9            clear R9 for modulo                     01010000
+         SRDL  R8,4             divide sieve limit by 16                01020001
+         LR    R7,R8            amount of storage to be initialized     01030000
+         LTR   R9,R9            sieve limit modulo 16 = 0?              01040001
+         BZ    *+8              yes -> use computed storage amount      01050000
+         LA    R7,1(,R7)        no  -> increment amount by one          01060000
+         LR    R8,R7            compute number of additional ..         01063002
+         SRL   R8,24              .. passes to adjust initial ..        01065002
+         AR    R7,R8              .. MVCL length                        01067002
+         XR    R8,R8            clear R8 for MVCL                       01070000
+         L     R9,FF            get initialization pattern for MVCL     01080001
+INITPRIM MVCL  R6,R8            initialize prime indication flags       01090002
+         LTR   R7,R7            initialization complete?                01091002
+         BZ    *+10             yes -> go ahead                         01092002
+         BCTR  R7,0             no  -> compute remaining amount and ..  01093002
+         B     INITPRIM                  .. continue initialization     01094002
+         L     R6,ISPRIME       start of prime indication flags         01100000
+         MVI   0(R6),X'7F'      make one not prime                      01110001
+*                                                                       01120000
+* Sieve of Eratosthenes                                                 01130000
+*                                                                       01140000
+         L     R0,LIMIT         sieve limit                             01141002
+         L     R1,ISPRIME       address of prime flag array             01150000
+         LA    R2,CROSSOUT      masks to cross out primes               01160000
+         XR    R3,R3            clear for prime test EXecuted later     01170000
+         LA    R4,PRIMFLGS      masks for prime test                    01180000
+         LA    R5,1             candidate bit offset \  sieve starts    01190001
+         LR    R6,R1            candidate address     >      at         01200000
+         LA    R7,3             candidate value      /     three        01210000
+         LA    R14,2            incrementor for large numbers           01220001
+SIEVE    LR    R9,R7            is square of ..                         01230000
+         MR    R8,R7              .. candidate value ..                 01240000
+         CLR   R9,R0                .. higher than sieve limit?         01250002
+         BH    PRNTPRIM         yes -> sieve complete, go print         01260000
+*                                                                       01261002
+* cut off logic for 32-bit arithmetics                                  01262002
+*                                                                       01263002
+         LTR   R8,R8            out of 32-bit range?                    01263102
+         BNZ   PRNTPRIM         yes -> sieve complete, go print         01263202
+*                                                                       01264002
+* end of cut off logic                                                  01265002
+*                                                                       01266002
+         IC    R3,0(R5,R4)      is prime flag for ..                    01270000
+         EX    R3,TESTPRIM        .. this candidate set?                01280000
+         BNO   SIEVENXT         no  -> check next candidate             01290000
+CLRMULT  SLL   R7,1             only odd multiples need to be cleared   01300001
+CLRMULTL LR    R10,R9           current prime multiple                  01303001
+         BCTR  R10,0            decrement for addressing                01310000
+         SRL   R10,1            divide by two (address compression)     01315001
+         SRDL  R10,3            divide by eight                         01320000
+         AR    R10,R1           address of prime multiple               01330000
+         SRL   R11,29           bit offset of prime multiple            01340000
+         IC    R3,0(R11,R2)     get cross out mask                      01350000
+         EX    R3,CLRPRIM       cross out prime multiple                01360000
+         ALR   R9,R7            is next odd prime multiple ..           01370002
+*                                                                       01372002
+* cut off logic for 32-bit arithmetics                                  01374002
+*                                                                       01376002
+         BC    3,*+10           carry? -> we're done with this prime    01378002
+*                                                                       01380002
+* end of cut off logic                                                  01382002
+*                                                                       01384002
+         CLR   R9,R0              .. not higher than sieve limit?       01386002
+         BNH   CLRMULTL         yes -> go cross it out                  01390001
+         SRL   R7,1             restore candidate value                 01393001
+SIEVENXT AR    R7,R14           next please, skip even numbers          01400000
+         LA    R5,1(,R5)        next bit position                       01410001
+         CH    R5,EIGHT         end of byte reached                     01420000
+         BL    SIEVE            no  -> check candidate                  01430000
+         LA    R5,0             yes -> reset candidate bit offset ..    01440001
+         LA    R6,1(,R6)                 .. and increment to next byte  01450001
+         B     SIEVE            go check it                             01470000
+*                                                                       01480000
+* Print primes                                                          01490000
+*                                                                       01500000
+PRNTPRIM LA    R5,1             candidate bit offset \  print starts    01510001
+         LR    R6,R1            candidate address     >      at         01520000
+         LA    R7,3             candidate value      /     three        01530000
+         LA    R2,2             incrementor for large limits            01540000
+         LA    R8,1             number of primes found, the two is ..   01550000
+         LA    R10,1              .. pre set and ..                     01560000
+         LA    R9,PRNTLINE+17     .. pre printed                        01570002
+         XR    R11,R11          no lines printed on this page yet       01580000
+         B     *+16             skip page initialization on first page  01590000
+NEWLINE  MVC   CC(166),NL       new line                                01600000
+         LA    R9,PRNTLINE+4    current print position                  01610002
+         XR    R10,R10          no numbers printed on this line yet     01620000
+         CH    R11,LPP          page full?                              01630000
+         BNE   CHKPRIME         no -> check next number                 01640000
+         XR    R11,R11          no lines printed on this page yet       01650000
+         MVI   CC,C'1'          next line starts a new page             01660000
+CHKPRIME CL    R7,LIMIT         sieve limit reached?                    01670002
+         BH    LASTLINE         yes -> print last line                  01680000
+         IC    R3,0(R5,R4)      is prime flag for ..                    01690000
+         EX    R3,TESTPRIM        .. this candidate set?                01700000
+         BNO   CHKNEXT          no  -> check next candidate             01710000
+         LA    R8,1(,R8)        yes -> increment number of primes found 01720000
+         MVC   0(13,R9),EDIT    get print format into print position    01720102
+         LTR   R7,R7            is signed prime negative?               01721002
+         BM    SPLTPRIM         yes -> go split it for conversion       01722002
+         CVD   R7,NUMDEC        convert prime to decimal                01730000
+         ED    1(13,R9),NUMDEC+2 format prime                           01740002
+         B     PRIMOK           no splitting required                   01742002
+SPLTPRIM LR    R0,R6            remember R6                             01744002
+         LR    R15,R7           remember R7                             01746002
+         XR    R6,R6            clear for divide                        01748002
+         DL    R6,D1000000      cut off low order decimal digits        01750002
+         CVD   R7,NUMDEC        convert high order digits and ..        01752002
+         ED    1(7,R9),NUMDEC+5   .. format them                        01754002
+         CVD   R6,NUMDEC        convert low order digits to decimal     01756002
+         L     R6,NUMDEC+4      get ..                                  01758002
+         SLL   R6,4                   .. rid of ..                      01760002
+         ST    R6,NUMDEC                          .. sign               01762002
+         UNPK  PARM(7),NUMDEC(4) format low order digits and            01764002
+         MVC   7(6,R9),PARM       .. move them into position            01766002
+         LR    R6,R0            restore R6                              01768002
+         LR    R7,R15           restore R7                              01770002
+PRIMOK   LA    R10,1(,R10)      increment number of primes and ..       01772002
+         LA    R9,13(,R9)         .. print position                     01774002
+         CH    R10,NPL          is current line filled up?              01780000
+         BNE   CHKNEXT          no  -> check next candidate             01790000
+         PUT   SYSPRINT,CC      yes -> print line                       01800000
+         LA    R11,1(,R11)      increment number of lines on this page  01810000
+         LA    R15,NEWLINE      next loop initializes a new line        01820000
+         B     *+8              skip adding to current line             01830000
+CHKNEXT  LA    R15,CHKPRIME     next loop adds to current line          01840000
+         ALR   R7,R2            next please, skip even numbers          01850002
+*                                                                       01851002
+* cut off logic for 32-bit arithmetics                                  01852002
+*                                                                       01853002
+         BC    3,LASTLINE       carry? -> print last line               01854002
+*                                                                       01855002
+* end of cut off logic                                                  01856002
+*                                                                       01857002
+         LA    R5,1(,R5)        next bit position                       01860001
+         CH    R5,EIGHT         end of byte reached                     01870000
+         BLR   R15              no  -> check candidate                  01880000
+         LA    R5,0             yes -> reset candidate bit offset ..    01890001
+         LA    R6,1(,R6)                 .. and increment to next byte  01900001
+         BR    R15              go check it                             01920000
+LASTLINE LTR   R10,R10          not yet printed primes in this line?    01930000
+         BZ    SUMMARY          no  -> print summary                    01940000
+         PUT   SYSPRINT,CC      yes -> print last primes                01950000
+         MVC   CC(166),NL       new line                                01960000
+         LA    R11,1(,R11)      increment number of lines on this page  01970000
+SUMMARY  CLI   CC,C'1'          new page already started?               01980000
+         BE    PRINTSUM         yes -> print summary line               01990000
+         LA    R11,1(,R11)      no  -> increment number of lines        02000000
+         CH    R11,LPP          page almost full?                       02010000
+         BNL   *+12             yes -> start new page                   02020000
+         MVI   CC,C'0'          no  -> skip one line                    02030000
+         B     *+8              print summary                           02040000
+         MVI   CC,C'1'          start new page                          02050000
+PRINTSUM CVD   R8,NUMDEC        convert number of primes to decimal     02060000
+         MVC   PRNTLINE(LSUMMARY),EDIT get summary line and formats     02070000
+         ED    PRNTLINE+1(13),NUMDEC+2 format number of lines           02080002
+         L     R9,LIMIT         get sieve limit                         02082002
+         LTR   R9,R9            negative?                               02084002
+         BM    SPLIT            yes -> go split it for conversion       02086002
+         CVD   R9,NUMDEC        no  -> just convert to decimal and ..   02088002
+         ED    PRNTLINE+LIMITEBC+1(13),NUMDEC+2 .. format sieve limit   02090002
+         B     NOSPLIT          no splitting required                   02092002
+SPLIT    XR    R8,R8            clear for divide                        02094002
+         DL    R8,D1000000      cut off low order decimal digits        02096002
+         CVD   R9,NUMDEC        convert high order digits and ..        02098002
+         ED    PRNTLINE+LIMITEBC+1(7),NUMDEC+5 .. format them           02100002
+         CVD   R8,NUMDEC        convert low order digits to decimal     02102002
+         L     R8,NUMDEC+4      get ..                                  02104002
+         SLL   R8,4                   .. rid of ..                      02106002
+         ST    R8,NUMDEC                          .. sign               02108002
+         UNPK  PARM(7),NUMDEC(4) format low order digits and            02110002
+         MVC   PRNTLINE+LIMITEBC+7(6),PARM .. move them into position   02112002
+NOSPLIT  PUT   SYSPRINT,CC      print number of primes and sieve limit  02114002
+         MVC   TELLUSER(4),SUMWTOP get WTO prefix and suffix ..         02130000
+         MVC   PRNTLINE+LSUMMARY(4),SUMWTOS .. around summary line      02140000
+         WTO   MF=(E,TELLUSER)  print summary line in job log           02150000
+*                                                                       02160000
+* Cleanup and return                                                    02170000
+*                                                                       02180000
+         L     R2,MAXMEM        amount of storage allocated             02190002
+         L     R1,ISPRIME       address of gotten storage               02192002
+         FREEMAIN RU,A=(R1),LV=(R2) release storage                     02194002
+         CLOSE SYSPRINT         close printer                           02200000
+         L     R13,4(,R13)      caller's save area pointer              02210000
+         RETURN (14,12),RC=0    restore registers and return            02220000
+*                                                                       02230000
+* Data area                                                             02240000
+*                                                                       02250000
+SAVEA    DS    18F              save area                               02260000
+MOVEPARM MVC   0(1,R3),2(R6)    EXecuted to retrieve PARM field         02270002
+TESTPRIM TM    0(R6),0          EXecuted to test for being prime        02280000
+CLRPRIM  NI    0(R10),0         EXecuted to cross out a prime multiple  02290000
+NUMDEC   DS    D                target for decimal conversion           02300000
+LIMITDWD DC    F'0'             left justify LIMIT to double word       02310002
+LIMIT    DC    F'2000'          default sieve limit                     02320000
+D1000000 DC    F'1000000'       multiplier/divisor to shift decimals    02323002
+HIGHLIM  DC    X'FFFFFFFF'      highest possible fullword value         02326002
+FF       DC    X'FF000000'      prime flags initialization pattern      02330001
+LPP      DC    H'64'            lines to print per page                 02340000
+NPL      DC    H'12'            prime numbers to print per line         02350002
+EIGHT    DC    H'8'             used for loops and comparisons          02360000
+PARM     DC    12C'0'           PARM field goes here                    02370002
+PRIMFLGS DC    B'10000000'      .. the set      ..                      02380000
+         DC    B'01000000'        .. bit's        ..                    02390000
+         DC    B'00100000'          .. position     ..                  02400000
+         DC    B'00010000'            .. represents   ..                02410000
+         DC    B'00001000'              .. a            ..              02420000
+         DC    B'00000100'                .. potential    ..            02430000
+         DC    B'00000010'                  .. prime        ..          02440000
+         DC    B'00000001'                    .. number       ..        02450000
+CROSSOUT DC    B'01111111'      .. masks        ..                      02460000
+         DC    B'10111111'        .. used         ..                    02470000
+         DC    B'11011111'          .. to           ..                  02480000
+         DC    B'11101111'            .. cross        ..                02490000
+         DC    B'11110111'              .. out          ..              02500000
+         DC    B'11111011'                .. none         ..            02510000
+         DC    B'11111101'                  .. prime        ..          02520000
+         DC    B'11111110'                    .. numbers      ..        02530000
+         DS    0F                                                       02540000
+TELLUSER DS    H                WTO plist for summary message goes here 02550000
+NL       DC    C' '             newline carriage control                02560000
+CC       DC    C'1'             formfeed on first output line           02570000
+PRNTLINE DC    16C' '           line to be printed ..                   02580002
+         DC    C'2'               .. the prime two is ..                02590000
+         DC    148C' '            .. pre printed on initial line        02600002
+         DC    C' '             filler to receive EDit garbage          02610000
+SUMWTOP  DC    X'00318000'      prefix for summary message WTO          02620002
+SUMWTOS  DC    X'02000020'      suffix for summery message WTO          02630000
+EDIT     DC    2C' ',11X'20'    EDit pattern to format 11 digits        02640002
+         DC    C' primes up to' .. skeleton ..                          02650000
+LIMITEBC EQU   *-EDIT             .. for      ..                        02660000
+         DC    2C' ',11X'20'        .. summary  ..                      02670002
+         DC    C' found'              .. line     ..                    02680000
+LSUMMARY EQU   *-EDIT           summary line length                     02690001
+SYSPRINT DCB   DSORG=PS,MACRF=PM,DDNAME=SYSPRINT,                      X02700000
+               RECFM=FT,LRECL=166 DCB for SYSPRINT                      02710000
+ISPRIME  DS    F                address of allocated storage            02740000
+MAXMEM   DC    F'268435456'     maximum prime flag array length         02750003
+         YREGS ,                register equates                        02760000
+         END   ASMPRIM          end of ASMPRIM                          02770000

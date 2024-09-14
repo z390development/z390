@@ -1,0 +1,358 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- saved from url=(0085)http://www.automatedsoftwaretools.com/z390/z390_VSAM_Compatible_Assembler_Support.htm -->
+<HTML><HEAD><TITLE>z390 VSAM Compatible Assembler Support</TITLE>
+<META http-equiv=Content-Language content=en-us>
+<META content="Microsoft FrontPage 5.0" name=GENERATOR>
+<META content=FrontPage.Editor.Document name=ProgId>
+<META http-equiv=Content-Type content="text/html; charset=windows-1252"></HEAD>
+<BODY>
+<TABLE id=AutoNumber1 style="BORDER-COLLAPSE: collapse" borderColor=#111111 
+height=1 cellSpacing=0 cellPadding=0 width=758 border=0>
+  <TBODY>
+  <TR>
+    <TD align=middle width=202 height=90>
+              <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></TD>
+    <TD align=middle width=405 height=90>
+      <P align=center><B><FONT size=5>z390 VSAM Compatible<br>
+&nbsp;Assembler Support</FONT></B></P></TD>
+    <TD align=middle width=147 height=90>
+              <b>
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="anim370.gif" alt="Automated Software Tools Corporation" width="100" height="59"></a></b></TD></TR>
+  </TBODY></TABLE>
+<TABLE style="BORDER-COLLAPSE: collapse" borderColor=#111111 cellSpacing=0 
+cellPadding=0 width="100%" border=0>
+  <TBODY>
+  <TR>
+    <TD width="100%"><B>z390 Virtual Storage Access Method (VSAM) compatible 
+    assembler support includes capability to create and access Entry Sequence 
+    (ESDS), Relative Record (RRDS), and Key Sequence (KSDS) data set files.&nbsp; 
+    Record lengths can be fixed or variable up to 2 GB.&nbsp; RRDS access 
+    supports RBA (4 byte) or XRBA (8 byte) for 2**63 size files.&nbsp; KSDS 
+    access supports any number of alternate keys with lengths up to 2 GB.&nbsp; 
+    A REPRO utility supports loading and unloading ESDS VSAM file from/to QSAM 
+    files.&nbsp; </B><p><B>As of z390 release v1.4.01, VSAM ESDS, RRDS, and KSDS 
+    sequential and random access are supported.&nbsp; ESDS, RRDS, and KSDS&nbsp; 
+    sequential and random updates with insert are supported.&nbsp; All VSAM file types can be defined 
+    in VCDT VSAM catalog definition tables.&nbsp; The VCDT catalogs can contain 
+    any number of base cluster, alternate index, and path definitions with 
+    default local path or explicit overrides defining user specified path and 
+    name for data and index files.&nbsp; The DDNAME on ACB at open must point to 
+    the VCDT loadable catalog table file containing the desired base cluster or 
+    path to be opened.&nbsp; The DDNAME file specification can contain optional 
+    dot suffix with the name of the base cluster or path to&nbsp; be opened.&nbsp; 
+    If an explicit entry is not specified, the name of the ACB will be used to 
+    find entry in the specified catalog.&nbsp; The current plan 
+    for additional VSAM support is as follows:</B></p>
+    <ol>
+      <li>
+      <p class="MsoListParagraph" style="text-indent: -.25in; margin-left: 21.0pt">
+      <span style="font-weight: 700">KSDS alternate index read only plus 
+      BUILDINDEX utility </span></li>
+      <li>
+      <p class="MsoListParagraph" style="text-indent: -.25in; margin-left: 21.0pt">
+      <span style="font-weight: 700">ENQ/DEQ record locking for VSAM (currently 
+      there is no locking)</span></li>
+      <li>
+      <p class="MsoListParagraph" style="text-indent: -.25in; margin-left: 21.0pt">
+      <span style="font-weight: 700">KSDS  ENDREQ and ERASE macro 
+      support</span></li>
+      <li>
+      <p class="MsoListParagraph" style="text-indent: -.25in; margin-left: 21.0pt">
+      <span style="font-weight: 700">LDS linear support with user specified 
+      CONTROLINTERVALSIZE on DEFINE CLUSTER macro.&nbsp; (Note the current default 
+      support for ESDS, RRDS/VRRDS, and KSDS does not use CI/CA structures and 
+      all inserts are added at the end of base cluster VES data file.&nbsp; The 
+      planned initial LDS support will insert dead space in CI’s as required to 
+      insure no records are split across CI’s.</span></li>
+    </ol>
+    <p><b>See the following VSAM User Guide for more information 
+    on the current support:&nbsp; </b></p>
+    <ol>
+        <LI><B><a href="z390_VSAM_User_Guide.pdf">z390 
+        VSAM User Guide (PDF)</a> </B> 
+        </ol>
+      <P><B>z390 VSAM support consists of the following components:</B></P>
+      <UL>
+        <LI><b>VCDT - VSAM Catalog Definition Table is assembled from multiple DEFINE macros 
+        used to define VSAM base clusters, alternate index, and paths.&nbsp; 
+        The VCDT is assembled and linked into loadable 
+        table which is referened by ACB DDNAME at open time.&nbsp; The following 
+        DCB physical files are dynamically allocated at ACB open time: </b>
+        <UL>
+          <LI><B>VES DCB base data file with fixed or variable length 
+          records.&nbsp; Variable records are prefixed with 4 byte length which 
+          is not included in logical record length.&nbsp; For ESDS the 
+          keyword INDEX=NONINDEXED is required on the DEFINE CLUSTER macro.&nbsp; 
+          For RRDS the keyword INDEX=NUMBERED is required on DEFINE CLUSTER 
+          macro. The default is KSDS which also requires keyword KEYS=(length, 
+          offset) defining primary unique key field. </B> 
+          <LI><B>VX0 DCB primary VRRDS or KSDS index file 
+          containing 8 byte XRBA's to each record in VES DCB.&nbsp; For KSDS the 
+          VX0 file include XRBA and primary key field in key sequence.</B><LI><B>VXN DCB alternate index file 
+          for KSDS optional alternate index files 
+          containing 8 byte RBA plus alternate key field alternate key 
+          sequence.&nbsp; The VXN XRBA points to record entry in the VX0 index 
+          file.&nbsp; The keyword RELATE= specifies name of base cluster, and 
+          the keyword UPGRADE=NOGRADE can be specified to turn off updating of 
+          alternate index.</B></LI> 
+          <LI><b>The DEFINE macro parameters for creating VCDT catalog are as 
+          follows:</b><UL>
+          <li><b>CATALOG</b><UL>
+          <li><b>,NAME=&nbsp; define catalog name which appears in dump</b></li>
+          </UL>
+          </li>
+          <li><b>CLUSTER,</b><UL>
+          <li><b>NAME=, base cluster name (default file names will be NAME.VES 
+          and NAME.VX0)</b></li>
+          <li><b>RECORDSIZE=,&nbsp; required fixed length or average and 
+          maximum variable record length up to 2 GB.</b></li>
+          <li><b>INDEX=INDEXED, optional cluster type INDEXED (KSDS default), 
+          NUMBERED (RRDS), NONINDEXED (ESDS), or LINEAR (LDS) type VSAM cluster.</b></li>
+          <li><b>KEYS=(64,0), KSDS primary unique key field (length,offset)</b></li>
+          <li><b>REUSE=REUSE, optional parameter to request empty file at each 
+          open</b></li>
+          <li><b>VESDSN, optional user specified path and file name for base 
+          cluster data</b></li>
+          <li><b>VX0DSN, optional user specified override path and name for base 
+          cluster index</b></li>
+          </UL>
+          </li>
+          <li><b>ALTERNATEINDEX,</b><UL>
+          <li><b>NAME=,&nbsp; alternate index name (default file name will be 
+          NAME.VXN)</b></li>
+          <li><b>KEYS=(64,0), alternate key length and offset in base cluster 
+          records</b></li>
+          <li><b>RELATE=, name of base cluster</b></li>
+          <li><b>UPGRADE=NOUPGRADE, request no updating of alternate index</b></li>
+          <li><b>REUSE=REUSE, optional paramter to request empty file at each 
+          open</b></li>
+          </UL>
+          </li>
+          <li><b>PATH,</b><UL>
+          <li><b>NAME=, name of path to alternate index or alias base cluster</b></li>
+          <li><b>ENTRY=, name of alternate index or base cluster</b></li>
+          <li><b>UPDATE=NOUPDATE request no updating of any alternate indexes</b></li>
+          </UL>
+          </li>
+          </UL>
+          </LI></UL>
+        <LI><B>ACB, ACBD, CLOSE, ENDREQ, ERASE, GENCB, GET, OPEN, MODCB, POINT, PUT, RPL, RPLD, SHOWCB, TESTCB, 
+        and VCDTD - VSAM application macros for VSAM 
+        access/ </B> 
+        <LI><B>REPRO - utility to load or unload fixed or variable length VSAM 
+        file from/to QSAM file.&nbsp; For VSAM files with variable length 
+        records over 32760, an application program must be used to load, unload 
+        or copy to another VSAM file. </B> 
+        <LI><B>Demo programs in vsam\demo: </B>
+        <UL>
+          <LI><b>DEMOS.BAT - assemble, link, and execute all VSAM demo programs</b><LI><b>ESF1DEMO.BAT - assemble, link, 
+          and execute ESF1SP.MLC to copy fixed length QSAM file to VSAM ESDS 
+          file and then run ESF1SG.MLC to copy ESDS file back to fixed length 
+          QSAM file and verify QSAM files match. </b>
+          <LI><B>ESV1DEMO.BAT - assemble, link, and execute ESV1SP.MLC to copy 
+          variable length QSAM file to ESDS and execute ESV1SG.MLC to copy ESDS 
+          file back to variable length QSAM file 
+          and verify QSAM files match.</B></LI> 
+          <LI><b>KSF1RPO1.BAT - load and unload KSDS fixed length file from/to text 
+          file with 6 test names and addresses.</b></LI> 
+          <LI><b>KSF1DEMO.BAT - randomly read the 6 records randomly by name key 
+          and display records.</b></LI> 
+          <LI><b>KSF1SKP1.BAT - point to first record with name &gt;= &quot;MQ&quot; and read 
+          and display sequentially. </b> </LI> 
+          <LI><b>RRF1DEMO.BAT - create RRDS file with 3 fixed length records and 
+          read records back by relative record number to verify content.</b></LI> 
+          <LI><b>RRV1DEMO.BAT - create RRDS file with 3 variable length records 
+          and read records back by relative record number to verify length and 
+          content. </b>
+          </LI> 
+        </UL></LI>
+        <li><b>Regression test programs and files (vsam\test):</b><UL>
+        <li><b>ESF1TEST.BAT - test fixed length ESDS sequential, RBA, and XRBA 
+        access</b></li>
+        <li><b>ESF1SKP1.BAT - test fixed length ESDS skip sequential 
+        forward/backward from XRBA start</b></li>
+        <li><b>ESF2TEST.BAT - test fixed length ESDS sequential and random 
+        update in place</b></li>
+        <li><b>ESF3TEST.BAT - test fixed length ESDS read backwards</b></li>
+        <li><b>ESF3GEN1.BAT - test fixed length ESDS read backwards using GENCB 
+        for ACB and RPL</b></li>
+        <li><b>ESV1TEST.BAT - test variable length ESDS sequential, RBA, and 
+        XRBA random access</b></li>
+        <li><b>ESV1SKP1.BAT - test variable length ESDS skip sequential 
+        forward/backward from XRBA start</b></li>
+        <li><b>ESV2TEST.BAT - test variable length ESDS with records up to 
+        100,000 bytes</b></li>
+        <li><b>ESV3TEST.BAT - test variable length ESDS sequential and random 
+        update in place</b></li>
+        <li><b>ESV4TEST.BAT - test variable length ESDS read backwards</b></li>
+        <li><b>RRF1TEST.BAT - test fixed length RRDS random read and write</b></li>
+        <li><b>RRV1TEST.BAT - test variable length VRRDS random read and write 
+        and update different length</b></li>
+        <li><b>KSF1TEST.BAT - test KSDS fixed length record query by key and 
+        sequentail forward/backword</b></li>
+        <li><b>KSF2TST1.BAT - test KSDS insert of 1 record and retrieval by key</b></li>
+        <li><b>KSF2TST2.BAT - test KSDS insert of 3 records and retrieval by key</b></li>
+        <li><b>KSF2TST3.BAT - test KSDS retrieval of existing and inserted 
+        records by key and seq. fwd/bwd</b></li>
+        <li><b>KSF2TST4.BAT - test KSDS
+        <a href="http://sky.fit.qut.edu.au/~maire/avl/System/AVLTree.html">AVL 
+        balanced tree</a> insert support by inserting 1000 records in pseudo 
+        random sequence and then retrieving them sequentially by key.&nbsp; See 
+        AVL statistics on the STATS optional STA statistics file showing max 
+        tree depth of 10 for 1000 records (2**10=1024).</b></li>
+        </UL></li>
+        <li><b>REPRO load and unload tests</b><UL>
+        <li><b>ESF1RPO1.BAT - test load and unload of fixed length ESDS from/to 
+        QSAM EF format</b></li>
+        <li><b>ESF4RPO1.BAT - load and unload ESDS fixed file from/to QSAM EF 
+        format</b></li>
+        <li><b>ESV1RPO1.BAT - load and unload of variable length ESDS from/to 
+        QSAM EV format</b></li>
+        <li><b>ESV5RPO1.BAT - load and unload ESDS variable file from/to QSAM EV format</b></li>
+        <li><b>RRF1RPO1.BAT - load and unload RRDS fixed file from/to QSAM RF 
+        format</b></li>
+        <li><b>RRF2RPO1.BAT - load and unload RRDS fixed file from/to QSAM RF 
+        format</b></li>
+        <li><b>RRV1RPO1.BAT - load and unload RRDS variable file from/to QSAM RV 
+        format</b></li>
+        <li><b>ESF1RPQ1.BAT - test load and unload of fixed length ESDS from/to 
+        QSAM E format</b></li>
+        <li><b>ESF4RPQ1.BAT - load and unload ESDS fixed file from/to QSAM FT 
+        format</b></li>
+        <li><b>ESV1RPQ1.BAT - load and unload of variable length ESDS from/to 
+        QSAM V format</b></li>
+        <li><b>ESV5RPQ1.BAT - load and unload ESDS variable file from/to QSAM VT format</b></li>
+        <li><b>RRF2RPQ1.BAT - load and unload RRDS fixed file from/to QSAM F 
+        format</b></li>
+        <li><b>RRV1RPQ1.BAT - load and unload RRDS variable file from/to QSAM V 
+        format</b></li>
+    </UL>
+        </li>
+        <li><b><a href="z390_VSAM_RPL_Operation_Regression_Tests.htm">See online 
+        document with VSAM regression tests by RPL option and macro type</a></b></li>
+    </UL>
+    <p><b>IBM VSAM Related References:</b></p>
+    <ol>
+      <li><B><A 
+          href="http://www.redbooks.ibm.com/redbooks/SG246105/wwhelp/wwhimpl/java/html/wwhelp.htm">VSAM 
+          Demystified (Redbook)</A> </B> 
+          </li>
+      <li><B><A 
+          href="http://www.research.ibm.com/journal/sj/133/ibmsj1303B.pdf">VSAM 
+          Data Set Overview and Design Parameters</A> </B> 
+          </li>
+      <li><B><A 
+          href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2I250/CCONTENTS?DT=20060630014839">z/OS 
+          DFSMS AMS for Catalogs</A></B><OL>
+            <LI><B><A 
+            href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2I250/14.0?DT=20060630014839">DEFINE 
+            CLUSTER to define base cluster</A> </B> </LI>
+            <LI><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2I250/13.0?DT=20060630014839">
+            DEFINE ALTERNATEINDEX to define an alternate index</a></b></LI>
+            <LI><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2I250/18.0?DT=20060630014839">
+            DEFINE PATH to define path for accessing base via an alternate index</a></b></LI></OL>
+          </li>
+      <li><B><A 
+          href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/CCONTENTS?DT=20060628224020">z/OS 
+          DFSMS Macro Instructions for Data Sets</A></B><OL>
+            <LI><B><A 
+            href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.4?DT=20060628224020">ACB 
+            macro to access VSAM cluster</A> </B> 
+            <OL>
+            <li><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.3.1?DT=20060628224020">
+            OPEN - open one or more ACB's</a></b></li>
+            <li><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.3.2?DT=20060628224020">
+            CLOSE - close one or more ACB's</a></b></li>
+          </OL>
+            <LI><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.12?DT=20060628224020">
+            GENCB - dynamically generate ACB</a></b><LI><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.13?DT=20060628224020">
+            GENCB - dynamically generate exit list</a></b><LI><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.14?DT=20060628224020">
+            GENCB - dynamically generated RPL</a></b><LI><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.17?DT=20060628224020">
+            MODCB - modify ACB</a></b><LI><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.18?DT=20060628224020">
+            MODCB - modify exit list</a></b><LI><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.19?DT=20060628224020">
+            MODCB - modify RPL</a></b><LI><B><A 
+            href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.24?DT=20060628224020">RPL 
+            macro to request specific VSAM record access</A> </B>
+            <OL>
+              <LI>
+              <b>
+              <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.9?DT=20060628224020">
+              ENDREQ - end request to release update locking</a></b><LI>
+              <b>
+              <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.10?DT=20060628224020">
+              ERASE - delete record previously retrieved via GET</a></b><LI><B><A 
+              href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.15?DT=20060628224020">GET 
+              macro to read record</A> </B> 
+              <LI><b>
+              <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.22?DT=20060628224020">
+              POINT - set current position to specified key, record, or RBA 
+              address</a></b><LI><B><A 
+              href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.23?DT=20060628224020">PUT 
+              macro to write record</A> </B> </LI></OL></LI>
+            <li><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.27?DT=20060628224020">
+            SHOWCB - show contents of ACB</a></b></li>
+            <li><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.28?DT=20060628224020">
+            SHOWCB - show contents of exit list</a></b></li>
+            <li><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.29?DT=20060628224020">
+            SHOWCB - show contents of RPL</a></b></li>
+            <li><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.30?DT=20060628224020">
+            TESTCB - test content of ACB field</a></b></li>
+            <li><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.31?DT=20060628224020">
+            TESTCB - test content of exit list field</a></b></li>
+            <li><b>
+            <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D530/1.2.32?DT=20060628224020">
+            TESTCB - test content of RPL field</a></b></li>
+            <li><b>
+            <a href="http://publib.boulder.ibm.com/cgi-bin/bookmgr/BOOKS/DGT2D511/1.3">
+            VSAM macro return and reason codes</a></b></li>
+          </OL>
+          </li>
+      <li><B><A 
+          href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/DGT2D450/CCONTENTS?DT=20060524093000">z/OS 
+          DFSMS Using Data Sets</A></B><ol>
+      <li><b>
+      <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/dgt2d450/2.2.4?ACTION=MATCHES&REQUEST=REPRO+load&TYPE=FUZZY&SHELF=&DT=20060524093000&CASE=&searchTopic=TOPIC&searchText=TEXT&searchIndex=INDEX&rank=RANK&ScrollTOP=FIRSTHIT#FIRSTHIT">
+      Loading a VSAM Data Set</a></b></li>
+      <li><b>
+      <a href="http://publibz.boulder.ibm.com/cgi-bin/bookmgr_OS390/BOOKS/dgt2d450/2.6.2.2?ACTION=MATCHES&REQUEST=RDF&TYPE=FUZZY&SHELF=&DT=20060524093000&CASE=&searchTopic=TOPIC&searchText=TEXT&searchIndex=INDEX&rank=RANK&ScrollTOP=FIRSTHIT#FIRSTHIT">
+      RDF record definition fields at end of control interval (not used)</a></b></li>
+    </ol>
+      </li>
+    </ol>
+    <p><b>Other Useful VSAM References:</b></p>
+    <ul>
+      <li><b><a href="http://sky.fit.qut.edu.au/~maire/avl/System/AVLTree.html">AVL 
+      Balanced Tree Algorithm</a></b></li>
+      <li><b> <a href="http://mkt.neonsys.com/neon/sampdata/vsam.htm">Neon 
+    VSAM Function description</a></b></li>
+      <li><b><a href="http://support.sas.com/publishing/pubcat/chaps/56097.pdf">SAS 
+      VSAM</a></b></li>
+      <li><b><a href="http://www.research.ibm.com/journal/sj/362/strickland.html">
+      VSAM Record Level Sharing</a></b></li>
+    </ul>
+    </TD></TR></TBODY></TABLE>
+<P align=center><b>IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS<br>
+&nbsp;are registered trademarks
+&nbsp;of International Business Machines Corporation</b></P>
+<P align=center><B>This page last updated 
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Sunday September 07, 2008<!--webbot bot="Timestamp" i-checksum="59270" endspan -->.&nbsp;&nbsp; <A 
+href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</A>&nbsp; <BR><font face="Times New Roman">Copyright 
+2008 <a href="http://www.automatedsoftwaretools.com/">Automated Software Tools Corporation</a></font><BR><BR>&nbsp; </B></P></BODY></HTML>

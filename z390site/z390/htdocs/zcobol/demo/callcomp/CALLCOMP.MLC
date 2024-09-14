@@ -1,0 +1,34 @@
+         TITLE 'CALLCOMP - CALL ZCOBOL COMPUTE TO ADD 15 FIELDS'
+* AUTHOR. DON HIGGINS.
+* DATE.   05/12/12.
+* REMARKS. CALL ZCOBOL COMPSUM.CBL TO ADD 15 DIFFERENT FIELD TYPES.
+CALLCOMP SUBENTRY
+         CALL COMPSUM,(ZDATA)
+         ED   DSUM,PSUM
+         WTO  MF=(E,MSG)
+         SUBEXIT
+         PRINT DATA
+         LTORG    
+MSG      DC   AL2(MSGEND-*,0)
+         DC   C'COMPUTE TOTAL='
+DSUM     DS   0CL(MSGEND-*)
+         DC   C' ',X'20202021',C'.',X'20'  ZZZ9.9
+MSGEND   EQU  *
+ZDATA    DS   0D  
+EH1      DC   EHL4'1.5'
+DH1      DC   DHL8'1.5'
+LH1      DC   LHL16'1.5'
+EB1      DC   EBL4'1.5'
+DB1      DC   DBL8'1.5'
+LB1      DC   LBL16'1.5'
+ED1      DC   EDL4'1.5'
+DD1      DC   DDL8'1.5'
+LD1      DC   LDL16'1.5'
+H1       DC   HL2'15'           3V1
+F1       DC   FL4'150'          7V2
+G1       DC   FL8'1500'      15V3
+Q1       DC   FL16'15000'    25V4
+P1       DC   PL16'150000'   26V5
+Z1       DC   ZL31'1500000'  25V6
+PSUM     DC   P'00000'       4V1
+         END

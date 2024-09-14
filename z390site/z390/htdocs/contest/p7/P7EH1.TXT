@@ -1,0 +1,51 @@
+*********************************************************************
+* MAINFRAME ASSEMBLER PROBLEM 7 - CALC AND DISPLAY 311/99 
+* USING SINGLE PRECISION FLOATING POINT WITHOUT USING CTD OR
+* OTHER LIBRARY SERVICES.
+*********************************************************************
+* 12/20/07 EH1  SOLUTION SUBMITTED BY JOHN ERHMAN USING AW INSTR.
+* 12/21/07 DSH1 ADDED Z390 DISPLAY OF EH AND DH INTERMEDIATE RESULTS
+*               USING CTD AND WTO FOR VERIFICATION
+* 12/21/07 DSH2 ADDED Z390 ALTERNATE CODE PATH FOR AW SINCE
+*               Z390 MAINTANINS ALL FP VALUES IN CACHE FOR PERFORMANCE
+*               USING NORMALIZED SINGLE, DOUBLE, OR BIGDECIMAL JAVA
+*               FORMAT WHICH PREVENTS AW UNNORMALIZED INSTR. FROM
+*               WORKING AS INTENDED. SEE NEW Z390 PTF 767 TO DISABLE
+*               ALL THE UNNORMALIZED FP INSTRUCTIONS RATHER THAN 
+*               RETURNING NORMALIZED RESULT WHICH MAY NOT BE DESIRED. 
+* 05/29/08 DSH3 RPI 767 REMOVE WORK-AROUND AND TEST NEW AW SUPPORT
+*********************************************************************
+P7EH1    ZMFACC CODE,START,NAME='John Erhman'
+         LE    F0,=E'311'
+         DE    F0,=E'99'
+         MVI   ESign,C'+'
+         MVI   EDecimal,C'.'
+         MD    F0,=D'.1'
+         MD    F0,=D'1.E6'
+         AD    F0,=D'.5'
+         AW    F0,UnNormer                                 
+         STD   F0,DWord
+         L     R0,DWord+4
+         CVD   R0,DWord
+         OI    DWord+7,X'0F'
+         UNPK  EDigits,DWord
+         MVI   ExoneE,C'E'
+         MVI   ExpSign,C'+'
+         LHI   R1,1
+         CVD   R1,DWord
+         OI    DWord+7,X'0F'
+         UNPK  Exponent,DWord
+         ZMFACC CODE,END
+DWord    DC    D'0'
+UnNormer DC    X'4E00000000000000'
+         ZMFACC INPUT,START
+         ZMFACC OUTPUT,START
+ESign    DS    C
+EDecimal DS    C
+EDigits  DS    CL6
+ExoneE   DS    C
+ExpSign  DS    C
+Exponent DS    CL2
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,END
+         END

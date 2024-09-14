@@ -1,0 +1,38 @@
+DEMOAST1  EZ390 STARTED USING z390 V1.4.01x2 ON J2SE 1.6.0_04
+EZ390I Copyright 2008 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = assist\DEMOAST1.390
+EZ390I options = assist notiming stats
+           1
+           2
+           3
+           5
+           7
+          11
+          13
+          17
+          19
+          23
+          25
+          29
+          31
+          37
+          41
+          43
+          47
+          53
+          55
+          59
+          61
+          65
+          67
+          71
+          73
+          79
+          83
+          85
+          89
+          95
+          97
+EZ390I total errors         = 0
+

@@ -1,0 +1,232 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>z390 zCOBOL Command Line Options and File Types</title>
+</head>
+
+<body>
+
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="center" width="141" height="69" valign="top">
+              <b><font face="Times New Roman">
+              <a href="http://www.zcobol.org">
+              <img border="0" src="zcobol.jpg" width="100" height="75" alt="z390 Portable Mainframe COBOL Compiler"></a></font></b></td>
+              <td align="center" width="445" height="69">
+              <p align="center"><b><font size="4" face="Times New Roman">zCOBOL 
+              Portable Mainframe COBOL Options and File Types</font></b></td>
+              <td width="152" height="69" align="center">
+              <b>
+              <a href="http://www.z390.org">
+              <img border="0" src="z390.jpg" width="124" height="75" alt="z390 Portable Mainframe Assembler and Emulator"></a><font face="Times New Roman"><br>
+&nbsp;</font></b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3">
+              <b>z390 and zcobol options include the following:</b><ul>
+                <li><b><a href="#zCOBOL_Options">Command line options for zCOBOL 
+                compiler</a></b></li>
+                <li><b><a href="#zCOBOL_File_Types">File Types associated with 
+                zCOBOL compiler</a></b></li>
+                <li><b><a href="http://www.z390.org/z390_Options.htm">z390 
+                Options</a></b></li>
+              </ul>
+              <p align="center"><b>
+              <a name="zCOBOL_Options">Command Line options for zCOBOL Compiler</a></b></p>
+              <p>
+              <b>To turn off an option that is on, prefix the option name with 
+              NO on command line or in OPT options file.</b></p>
+              <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%" id="AutoNumber2">
+                <tr>
+                  <td width="16%" align="left" valign="top"><b>Option</b></td>
+                  <td width="9%" align="left" valign="top"><b>Default</b></td>
+                  <td width="147%" align="left" valign="top"><b>Description</b></td>
+                </tr>
+                <tr>
+                  <td width="16%" align="left" valign="top"><b>@file</b></td>
+                  <td width="9%" align="left" valign="top"><b>NO</b></td>
+                  <td width="147%" align="left" valign="top"><b>Retrieve additional 
+                  options from free form text file with default suffix OPT.&nbsp; 
+                  Options can be specified delimited by spaces on as many lines 
+                  as requires.&nbsp; All characters on a line following * are 
+                  ignored as comments. The @file option can be nested.&nbsp; The 
+                  default path is the program path.</b></td>
+                </tr>
+                <tr>
+                  <td width="16%" align="left" valign="top"><b>CICS</b></td>
+                  <td width="9%" align="left" valign="top"><b>NO</b></td>
+                  <td width="147%" align="left" valign="top"><b>Parse COBOL EXEC 
+                  CICS commands into z390 EXEC CICS compatible macro calls and 
+                  also rename working storage to DFHEISTG. </b></td>
+                </tr>
+                <tr>
+                  <td width="16%" align="left" valign="top"><b>COMMENT</b></td>
+                  <td width="9%" align="left" valign="top"><b>YES</b></td>
+                  <td width="147%" align="left" valign="top"><b>Generate MLC 
+                  comments showing original COBOL statement preceding each macro 
+                  call statement.</b></td>
+                </tr>
+                <tr>
+                  <td width="16%" align="left" valign="top"><b>EXTEND</b></td>
+                  <td width="9%" align="left" valign="top"><b>YES</b></td>
+                  <td width="147%" align="left" valign="top"><b>Support up to 31 
+                  digits for DISPLAY (Z) and COMP-3 
+                  (P) type data items rather than limiting precision to ANSI 
+                  1985 standard of 18.</b></td>
+                </tr>
+                <tr>
+                  <td width="16%" align="left" valign="top"><b>FLOAT(DECIMAL)</b></td>
+                  <td width="9%" align="left" valign="top"><b>YES</b></td>
+                  <td width="147%" align="left" valign="top"><b>Set type of 
+                  floating point for usage FLOAT-SHORT, FLOAT-LONG, and 
+                  FLOAT-EXTENDED.&nbsp; The choices are FLOAT(HEX) for 
+                  Hexidecimal Floating Point (HFP) like COMP-1 and 
+                  COMP-2, FLOAT(BINARY) for Binary Floating Point (BFP), or the 
+                  default FLOAT(DECIMAL) for Decimal Floating Point (DFP).</b></td>
+                </tr>
+                <tr>
+                  <td width="16%" align="left" valign="top"><b>R64</b></td>
+                  <td width="9%" align="left" valign="top"><b>YES</b></td>
+                  <td width="147%" align="left" valign="top"><b>Generate 64 bit 
+                  instructions for the 16 GPR registers where appropriate.&nbsp; 
+                  NOR64 restricts code generation to only use lower 32 bits of 
+                  16 GPR registers as required by z/VSE and some other operating 
+                  environments.&nbsp; (Note option TRUNC and NOR64 results in 
+                  use of DXR instead of DGR which is more efficient.)</b></td>
+                </tr>
+                <tr>
+                  <td width="16%" align="left" valign="top"><b>TRACE</b></td>
+                  <td width="9%" align="left" valign="top"><b>NO</b></td>
+                  <td width="147%" align="left" valign="top"><b>Generate WTO 
+                  display of paragraph name at entry to each new paragraph in 
+                  procedure division.&nbsp; This provides high level trace as 
+                  opposed to using the z390 TRACE(E) option which generates 
+                  instruction level trace.</b></td>
+                </tr>
+                <tr>
+                  <td width="16%" align="left" valign="top"><b>TRUNC</b></td>
+                  <td width="9%" align="left" valign="top"><b>NO</b></td>
+                  <td width="147%" align="left" valign="top"><b>Truncate binary 
+                  data types F, G, and H to specified number of digits in 
+                  PICTURE.</b></td>
+                </tr>
+                <tr>
+                  <td width="16%" align="left" valign="top"><b>WARN</b></td>
+                  <td width="9%" align="left" valign="top"><b>YES</b></td>
+                  <td width="147%" align="left" valign="top"><b>Generate level 4 
+                  MNOTE warnings from zcobol macros </b></td>
+                </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3">
+              <ul>
+                <li>Options are passed to the zcobol macro stage via CBL macro 
+                call with the options defined as positional parameters</li>
+              </ul>
+              <p align="center"><b><a name="zCOBOL_File_Types">zCOBOL File Types</a></b></p>
+              <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%" height="66">
+                <tr>
+                  <td width="9%" align="left" valign="top" height="1"><b>TYPE</b></td>
+                  <td width="7%" align="left" valign="top" height="1"><b>Format</b></td>
+                  <td width="40%" align="left" valign="top" height="1"><b>File Description</b></td>
+                  <td width="40%" align="left" valign="top" height="1"><b>File 
+                  or Report Format Description</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="6"><b>CBL</b></td>
+                  <td width="7%" align="left" valign="top" height="6"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="6"><b>COBOL 
+                  source program</b></td>
+                  <td width="40%" align="left" valign="top" height="6"><b>1-6 
+                  sequence #, 7 Comment if not space, 8-11 area A, 12-72 area B</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="6"><b>MLC</b></td>
+                  <td width="7%" align="left" valign="top" height="6"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="6"><b>macro 
+                  assembler source program generated by phase 1 of the zcobol 
+                  compiler which uses zcobol.class regular expression based 
+                  parser in z390.jar to read CBL source file and create MLC 
+                  source file in one pass.&nbsp; </b></td>
+                  <td width="40%" align="left" valign="top" height="6"><b>macro 
+                  call. for each COBOL statement starting in area A and for each 
+                  COBOL verb found in area B.&nbsp; Working storage data items 
+                  are mapped to WS macro call with level as first parameter.&nbsp; 
+                  Each macro call name is followed by positional&nbsp; 
+                  parameters found following verb up to next verb or period.&nbsp;&nbsp; 
+                  Periods are mapped to PERIOD macro call.&nbsp; Parameters of 
+                  the form keyword(..) are passed as single parameter.&nbsp; 
+                  Other ( and ) are passed as separate parameter in quotes. </b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="6"><b>BAL</b></td>
+                  <td width="7%" align="left" valign="top" height="6"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="6"><b>HLASM 
+                  compatible source code generated by phase 2 of the zCOBOL 
+                  compiler when using ZC390C or ZC390CLG commands.</b></td>
+                  <td width="40%" align="left" valign="top" height="6"><b>HLASM 
+                  compatible source statements generated by the 
+                  zcobol+zcobol\z390 macros during expansion of the generated 
+                  MLC file.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="6"><b>JAVA</b></td>
+                  <td width="7%" align="left" valign="top" height="6"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="6"><b>J2SE 
+                  Java compatible source program file generated by phase 2 of 
+                  the zCOBOL compiler when using ZCJAVC or ZCJAVCLG commands.</b></td>
+                  <td width="40%" align="left" valign="top" height="6"><b>Java 
+                  source statements generated by the zcobol+zcobol\java macros 
+                  during expansion of the generated MLC file.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="6"><b>CPP</b></td>
+                  <td width="7%" align="left" valign="top" height="6"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="6"><b>MS 
+                  Visual Express C compatible source program file generated by 
+                  phase 2 of the zCOBOL compiler when using ZCVCEC or ZCVCECLG 
+                  commands.</b></td>
+                  <td width="40%" align="left" valign="top" height="6"><b>MS 
+                  Visual Express C compatible source statements generated by the 
+                  zcobol+zcobol\vce macros during expansion of the generated MLC 
+                  file.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="6"><b>HLA</b></td>
+                  <td width="7%" align="left" valign="top" height="6"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="6"><b>
+                  HLA/MASM compatible source program file generated by phase 2 
+                  of the zCOBOL compiler when using ZC586C or ZC586CLG commands.</b></td>
+                  <td width="40%" align="left" valign="top" height="6"><b>
+                  HLA/MASM compatible source statements generated by the 
+                  zcobol+zcobol\i586 macros during expansion of the generated 
+                  MLC file.</b></td>
+                </tr>
+              </table>
+              </td>
+            </tr>
+          </table>
+         
+        
+        </table>
+<p align="center"><b>IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS<br>
+&nbsp;are registered trademarks
+&nbsp;of International Business Machines Corporation</b></p>
+
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Wednesday April 15, 2009<!--webbot bot="Timestamp" i-checksum="56505" endspan -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a><br>
+Copyright 2009 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </b> </p>
+
+</body>
+
+</html>

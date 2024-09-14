@@ -1,0 +1,13 @@
+09:44:19 P3DW1     EZ390 STARTED USING z390 V1.4.02dx2 ON J2SE 1.6.0_07
+EZ390I Copyright 2008 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = mfacc\P3DW1.390
+EZ390I options = 
+ZMFACC Solution for problem P3DW1 by David Wilkinson using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 000FFF68 *ACDCBABE                           * *..[.            *
+SNAP DUMP ID=2 TEXT=Output Area
+ 000FFF6C *C1C3C4C3 C2C1C2C5                  * *ACDCBABE        *
+EZ390I instructions/sec     = 3875
+EZ390I total errors         = 0
+09:44:19 P3DW1     EZ390 ENDED   RC= 0 SEC= 0 MEM(MB)= 16 IO=33 INS=31

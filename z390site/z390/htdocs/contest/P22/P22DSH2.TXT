@@ -1,0 +1,84 @@
+         TITLE 'P22DSH2.MLC - Calc total bits in string using POPCNT'
+*********************************************************************
+* Program ID.  P22DSH1.MLC
+* Author.      Don Higgins.
+* Date.        08/06/10.
+*********************************************************************
+P22DSH2  ZMFACC CODE,START,NAME='DON HIGGINS'
+         WTO    'COUNT TOTAL BITS IN STRING USING NEW POPCNT Z196 INS'
+         CALL   BITCOUNT,(INPUT,LINPUT,COUNT)
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         DC     C'STRING='
+INPUT    DS    0X
+         DC    C'Code fastest instruction sequence to count bits '
+         DC    C'in an arbitrary string of bytes using currently '
+         DC    C'available z/Architecture instructions prior to '
+         DC    C'new instruction coming with z196 which is '
+         DC    C'estimated to be 5 times faster.'
+INPLEN   EQU   *-INPUT
+LINPUT   DC     A(INPLEN)
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         DC    C'TOTAL BIT COUNT ='
+COUNT    DC    F'0'
+         ZMFACC OUTPUT,END
+         LTORG
+         TITLE 'BITCOUNT - COUNT BITS IN STRING'
+BITCOUNT CSECT
+         USING *,R15
+         LM    R3,R5,0(R1)  R3=A(STRING) R4=A(LSTRING) R5=A(COUNT)
+         L     R4,0(R4)     R4=LENGTH OF STRING
+         LA    R6,8         INCR FOR BXLE
+         SR    R8,R8        R8=TOTAL BIT COUNTER
+         LG    R9,=X'0101010101010101' CONSTANT FOR MSGR AFTER POPCNT
+* PROCESS ANY ODD PREFIX BYTES AND ADJUST ADDR AND LENGTH
+         LR    R1,R3
+         IF    (N,R1,NZ,=X'00000007')
+               LA    R10,7
+               SR    R10,R1
+               XC    WORK,WORK      CLEAR WORK AREA
+               EX    R10,MVCPFX      MOVE PFX ODD BYTES TO WORK
+               LG    R0,WORK        LOAD 8 BYTES TO COUNT
+               BAS   R12,ADDCOUNT   ADD  PFX BITS TO COUNT
+               LA    R3,1(R10,R3)   SKIP PFX
+               SR    R4,R10         REDUCE LENGTH
+               BCTR  R4,0           R3 = REMAINING LENGTH
+         ENDIF
+         LA    R7,0(R4,R3)  R7=A(STRING+LENGTH)
+* PROCESS ANY ODD SUFFIX BYTES AND ADJUST LENGTH
+         LR    R1,R7                      
+         IF    (N,R1,NZ,=X'00000007')
+               SR    R7,R1          REDUCE ENDING ADDR FOR BXLE
+               BCTR  R1,0
+               XC    WORK,WORK      CLEAR WORK AREA
+               EX    R1,MVCSFX      MOVE SFX ODD BYTES TO WORK
+               LG    R0,WORK
+               BAS   R12,ADDCOUNT   ADD  SFX BITS TO COUNT
+         ENDIF
+         IF    (CR,R3,LT,R7)      CHECK IF ANY DOUBLE WORDS LEFT
+               BCTR  R7,0         R7=A(LAST BYTE IN STRING) FOR BXLE)
+LOOP           EQU   *
+                 LG    R0,0(R3)      LOAD DOUBLE WORD
+                 BAS   R12,ADDCOUNT  ADD BITS IN DOUBLE WORD
+               BXLE  R3,R6,LOOP  
+         ENDIF
+         ST    R8,0(R5)  STORE FINAL BIT COUNT
+         BR    R14       RETURN
+*
+* USE POPCNT TO ADD BITS IN ALL 8 BYTES OF R0 TO R8
+*
+ADDCOUNT EQU   *
+         POPCNT R0,R0   CONVERT BYTE VALUES TO BIT COUNTS
+         MSGR   R0,R9   PUT TOTAL COUNT IN HIGH BYTE
+         SRLG   R0,R0,56   MOVE TO LOW BYTE
+         AR     R8,R0      ADD TOTAL TO GRAND TOTAL
+         BR     R12
+WORK     DC    XL8'00'            
+MVCPFX   MVC   WORK(0),0(R3)      MOVE ODD PREFIX BYTES TO WORK
+MVCSFX   MVC   WORK(0),0(R7)      MOVE ODD SUFFIX BYTES TO WORK
+         END
+
+                       
+
+

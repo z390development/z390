@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE docmanager [
+<!ELEMENT docmanager (docgroup+)>
+<!ELEMENT docgroup (doc_group_id,groupname,documents)>
+<!ELEMENT doc_group_id (#PCDATA)>
+<!ELEMENT groupname (#PCDATA)>
+<!ELEMENT documents (document*)>
+<!ELEMENT document (url,docid,title,data,state,updatedate,createdate,description,language,creator)>
+<!ELEMENT url (#PCDATA)>
+<!ELEMENT docid (#PCDATA)>
+<!ELEMENT title (#PCDATA)>
+<!ELEMENT data (#PCDATA)>
+<!ELEMENT state (#PCDATA)>
+<!ELEMENT updatedate (#PCDATA)>
+<!ELEMENT createdate (#PCDATA)>
+<!ELEMENT description (#PCDATA)>
+<!ELEMENT language (#PCDATA)>
+<!ELEMENT creator (#PCDATA)>
+]>
+<docmanager>
+<docgroup>
+<doc_group_id>166867</doc_group_id>
+<groupname>Uncategorized Submissions</groupname>
+<documents>
+<document>
+<url>https://sourceforge.net/docman/display_doc.php?docid=72808&amp;#x26;group_id=207170</url>
+<docid>72808</docid>
+<title>Links to z390 project online documentation</title>
+<data>This web page has links to all the z390 portable mainframe assembler and emulator online documentation:
+
+http://z390.sourceforge.net/z390_documentation.htm
+
+Don Higgins
+Project Administrator
+don@higgins.net</data>
+<state>pending</state>
+<updatedate>1193570099</updatedate>
+<createdate>1193570099</createdate>
+<description>This web page has links to all the z390 online documentation</description>
+<language>en</language>
+<creator>don_higgins</creator>
+</document>
+</documents>
+</docgroup>
+</docmanager>

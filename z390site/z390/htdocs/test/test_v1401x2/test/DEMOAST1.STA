@@ -1,0 +1,143 @@
+DEMOAST1  MZ390 STARTED USING z390 V1.4.01x2 ON J2SE 1.6.0_04
+DEMOAST1  MZ390 Copyright 2008 Automated Software Tools Corporation
+DEMOAST1  MZ390 z390 is licensed under GNU General Public License
+DEMOAST1  MZ390 program = assist\DEMOAST1.MLC
+DEMOAST1  MZ390 options = sysmac(w:\work\z390\mac+.) 
+  syscpy(w:\work\z390\mac+.) assist notiming stats
+DEMOAST1  MZ390 final options=NOAMODE24 AMODE31 NOASCII ASM ASSIST NOBAL 
+  NOBS2000 NOCICS CON NODUMP EPILOG NOERRSUM NOGUAM LIST LISTCALL LISTUSE 
+  NOMCALL OBJ NOOBJHEX PC PCOPT PROLOG PROTECT NOREFORMAT NOREGS RMODE24 
+  NORMODE31 STATS NOTEST NOTIME NOTIMING NOTRACE NOTRACEA NOTRACEALL NOTRACEG 
+  NOTRACEL NOTRACEM NOTRACEP NOTRACEQ NOTRACET NOTRACEV TRAP NOTS VCB XREF 
+  CHKMAC=0 CHKSRC=1 ERR=100 MAXCALL=50 MAXESD=1000 MAXFILE=1000 MAXGBL=100000 
+  MAXHEIGHT=600 MAXLCL=100000 MAXLEN=80 MAXLINE=200000 MAXLOG=1000000 
+  MAXPARM=10000 MAXPC=50000 MAXQUE=1000 MAXRLD=10000 MAXSIZE=52428800 
+  MAXSYM=50000 MAXWARN=4 MAXWIDTH=800 MEM=1 MINHEIGHT=150 MINWIDTH=150 PARM= 
+  PROFILE= STATS=assist\DEMOAST1.STA SYSPARM= SYSTERM=assist\DEMOAST1.ERR 
+  TESTDD= TIME=15 TRACE= Z390ACROBAT=cmd.exe /c Start 
+  Z390BROWSER=cmd.exe /c Start Z390COMMAND=cmd.exe Z390EDITOR=notepad.exe 
+  INSTALL= IPL= LOG= SYS390=assist\+linklib SYSBAL=assist\ 
+  SYSCPY=w:\work\z390\mac+. SYSDAT=assist\ SYSERR=assist\ SYSLOG=assist\ 
+  SYSLST=assist\ SYSMAC=w:\work\z390\mac+. SYSMLC=assist\ SYSPCH=assist\ 
+  SYSPRN=assist\ SYSOBJ=assist\ SYSOPT=assist\ SYSTRC=assist\ 
+DEMOAST1  MZ390 total MLC/MAC loaded  = 54
+DEMOAST1  MZ390 total BAL output lines= 53
+DEMOAST1  MZ390 total BAL instructions= 23
+DEMOAST1  MZ390 total macros          = 1
+DEMOAST1  MZ390 total macro loads     = 1
+DEMOAST1  MZ390 total macro calls     = 0
+DEMOAST1  MZ390 total global set names= 41
+DEMOAST1  MZ390 tot global seta cells = 3
+DEMOAST1  MZ390 tot global setb cells = 3
+DEMOAST1  MZ390 tot global setc cells = 35
+DEMOAST1  MZ390 max local pos parms   = 0
+DEMOAST1  MZ390 max local key parms   = 0
+DEMOAST1  MZ390 max local set names   = 5
+DEMOAST1  MZ390 max local seta cells  = 1
+DEMOAST1  MZ390 max local setb cells  = 0
+DEMOAST1  MZ390 max local setc cells  = 4
+DEMOAST1  MZ390 total array expansions= 0
+DEMOAST1  MZ390 total Keys            = 1009
+DEMOAST1  MZ390 Key searches          = 1230
+DEMOAST1  MZ390 Key avg comps         = 0
+DEMOAST1  MZ390 Key max comps         = 3
+DEMOAST1  MZ390 total macro line exec = 54
+DEMOAST1  MZ390 total pcode line exec = 0
+DEMOAST1  MZ390 total pcode line gen. = 0
+DEMOAST1  MZ390 total pcode line reuse= 0
+DEMOAST1  MZ390 total pcode op   gen. = 0
+DEMOAST1  MZ390 total pcode op   exec = 0
+DEMOAST1  MZ390 total pcode gen  opt  = 0
+DEMOAST1  MZ390 total pcode exec opt  = 0
+DEMOAST1  MZ390 FID=  1 ERR= 0 w:\work\z390\assist\DEMOAST1.MLC
+DEMOAST1  MZ390 total mnote warnings  = 0
+DEMOAST1  MZ390 total mnote errors    = 0
+DEMOAST1  MZ390 max   mnote level     = 0
+DEMOAST1  MZ390 total errors          = 0
+DEMOAST1  AZ390 BAL lines             = 54
+DEMOAST1  AZ390 symbols               = 15
+DEMOAST1  AZ390 Literals              = 3
+DEMOAST1  AZ390 alloc passes          = 2
+DEMOAST1  AZ390 Keys                  = 957
+DEMOAST1  AZ390 Key searches          = 1348
+DEMOAST1  AZ390 Key avg comps         = 0
+DEMOAST1  AZ390 Key max comps         = 2
+DEMOAST1  AZ390 ESD symbols           = 1
+DEMOAST1  AZ390 object bytes          = 174
+DEMOAST1  AZ390 object rlds           = 0
+DEMOAST1  AZ390 total mnote warnings  = 0
+DEMOAST1  AZ390 total mnote errors    = 0
+DEMOAST1  AZ390 max   mnote level     = 0
+DEMOAST1  AZ390 total mz390 errors    = 0
+DEMOAST1  AZ390 total az390 errors    = 0
+DEMOAST1  MZ390 ENDED   RC= 0 MEM(MB)= 38 IO=221
+DEMOAST1  LZ390 STARTED USING z390 V1.4.01x2 ON J2SE 1.6.0_04
+DEMOAST1  LZ390 Copyright 2008 Automated Software Tools Corporation
+DEMOAST1  LZ390 z390 is licensed under GNU General Public License
+DEMOAST1  LZ390 program = assist\DEMOAST1.OBJ
+DEMOAST1  LZ390 options = assist notiming stats
+DEMOAST1  LZ390 final options=NOAMODE24 AMODE31 NOASCII ASM ASSIST NOBAL 
+  NOBS2000 NOCICS CON NODUMP EPILOG NOERRSUM NOGUAM LIST LISTCALL LISTUSE 
+  NOMCALL OBJ NOOBJHEX PC PCOPT PROLOG PROTECT NOREFORMAT NOREGS RMODE24 
+  NORMODE31 STATS NOTEST NOTIME NOTIMING NOTRACE NOTRACEA NOTRACEALL NOTRACEG 
+  NOTRACEL NOTRACEM NOTRACEP NOTRACEQ NOTRACET NOTRACEV TRAP NOTS VCB XREF 
+  CHKMAC=0 CHKSRC=1 ERR=100 MAXCALL=50 MAXESD=1000 MAXFILE=1000 MAXGBL=100000 
+  MAXHEIGHT=600 MAXLCL=100000 MAXLEN=80 MAXLINE=200000 MAXLOG=1000000 
+  MAXPARM=10000 MAXPC=50000 MAXQUE=1000 MAXRLD=10000 MAXSIZE=52428800 
+  MAXSYM=50000 MAXWARN=4 MAXWIDTH=800 MEM=1 MINHEIGHT=150 MINWIDTH=150 PARM= 
+  PROFILE= STATS=assist\DEMOAST1.STA SYSPARM= SYSTERM=assist\DEMOAST1.ERR 
+  TESTDD= TIME=15 TRACE= Z390ACROBAT=cmd.exe /c Start 
+  Z390BROWSER=cmd.exe /c Start Z390COMMAND=cmd.exe Z390EDITOR=notepad.exe 
+  INSTALL= IPL= LOG= SYS390=assist\+linklib SYSBAL=assist\ SYSCPY=assist\ 
+  SYSDAT=assist\ SYSERR=assist\ SYSLOG=assist\ SYSLST=assist\ SYSMAC=assist\ 
+  SYSMLC=assist\ SYSPCH=assist\ SYSPRN=assist\ SYSOBJ=assist\ SYSOPT=assist\ 
+  SYSTRC=assist\ 
+DEMOAST1  LZ390 Stats total obj files = 1
+DEMOAST1  LZ390 Stats total esds      = 1
+DEMOAST1  LZ390 Stats total csects    = 1
+DEMOAST1  LZ390 Stats total entries   = 0
+DEMOAST1  LZ390 Stats missing wxtrn's = 0
+DEMOAST1  LZ390 Stats Keys            = 1
+DEMOAST1  LZ390 Stats Key searches    = 2
+DEMOAST1  LZ390 Stats Key avg comps   = 0
+DEMOAST1  LZ390 Stats Key max comps   = 1
+DEMOAST1  LZ390 Stats total obj byte  = 174
+DEMOAST1  LZ390 Stats total obj rlds  = 0
+DEMOAST1  LZ390 total errors          = 0
+DEMOAST1  LZ390 ENDED   RC= 0 MEM(MB)= 14 IO=50
+DEMOAST1  EZ390 STARTED USING z390 V1.4.01x2 ON J2SE 1.6.0_04
+DEMOAST1  EZ390 Copyright 2008 Automated Software Tools Corporation
+DEMOAST1  EZ390 z390 is licensed under GNU General Public License
+DEMOAST1  EZ390 program = assist\DEMOAST1.390
+DEMOAST1  EZ390 options = assist notiming stats
+DEMOAST1  EZ390 final options=NOAMODE24 AMODE31 NOASCII ASM ASSIST NOBAL 
+  NOBS2000 NOCICS CON NODUMP EPILOG NOERRSUM NOGUAM LIST LISTCALL LISTUSE 
+  NOMCALL OBJ NOOBJHEX PC PCOPT PROLOG PROTECT NOREFORMAT NOREGS RMODE24 
+  NORMODE31 STATS NOTEST NOTIME NOTIMING NOTRACE NOTRACEA NOTRACEALL NOTRACEG 
+  NOTRACEL NOTRACEM NOTRACEP NOTRACEQ NOTRACET NOTRACEV TRAP NOTS VCB XREF 
+  CHKMAC=0 CHKSRC=1 ERR=100 MAXCALL=50 MAXESD=1000 MAXFILE=1000 MAXGBL=100000 
+  MAXHEIGHT=600 MAXLCL=100000 MAXLEN=80 MAXLINE=200000 MAXLOG=1000000 
+  MAXPARM=10000 MAXPC=50000 MAXQUE=1000 MAXRLD=10000 MAXSIZE=52428800 
+  MAXSYM=50000 MAXWARN=4 MAXWIDTH=800 MEM=1 MINHEIGHT=150 MINWIDTH=150 PARM= 
+  PROFILE= STATS=assist\DEMOAST1.STA SYSPARM= SYSTERM=assist\DEMOAST1.ERR 
+  TESTDD= TIME=15 TRACE= Z390ACROBAT=cmd.exe /c Start 
+  Z390BROWSER=cmd.exe /c Start Z390COMMAND=cmd.exe Z390EDITOR=notepad.exe 
+  INSTALL= IPL= LOG=assist\DEMOAST1.LOG SYS390=assist\+linklib SYSBAL=assist\ 
+  SYSCPY=assist\ SYSDAT=assist\ SYSERR=assist\ SYSLOG=assist\ SYSLST=assist\ 
+  SYSMAC=assist\ SYSMLC=assist\ SYSPCH=assist\ SYSPRN=assist\ SYSOBJ=assist\ 
+  SYSOPT=assist\ SYSTRC=assist\ 
+DEMOAST1  EZ390 TCPIO operations      = 0
+DEMOAST1  EZ390 DCB operations        = 1
+DEMOAST1  EZ390 DCB open              = 1
+DEMOAST1  EZ390 DCB close             = 0
+DEMOAST1  EZ390 DCB get               = 0
+DEMOAST1  EZ390 DCB put               = 0
+DEMOAST1  EZ390 DCB read              = 0
+DEMOAST1  EZ390 stats DCB write             = 0
+DEMOAST1  EZ390 VSAM operations       = 0
+DEMOAST1  EZ390 Keys                  = 1737
+DEMOAST1  EZ390 Key searches          = 2
+DEMOAST1  EZ390 Key avg comps         = 0
+DEMOAST1  EZ390 Key max comps         = 0
+DEMOAST1  EZ390 total errors          = 0
+DEMOAST1  EZ390 ENDED   RC= 0 MEM(MB)= 16 IO=71 INS=1034

@@ -1,0 +1,17 @@
+P10MB1    EZ390 STARTED USING z390 V1.3.08h ON J2SE 1.6.0_03
+EZ390I Copyright 2006 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = w:\work\z390\mfacc\P10MB1.390
+EZ390I options = @w:\work\z390\rt1=(bal notiming stats) 
+  systerm(rtmfacc)
+ZMFACC Solution for problem P10MB1 by MATS BROBERG AT SEB SWEDEN using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 000FFE94 *00000000 BBBBBBBB BBBBBBBB BBBBBBBB* *....]]]]]]]]]]]]*
+ 000FFEA4 *BBBBBBBB                           * *]]]]            *
+SNAP DUMP ID=2 TEXT=Output Area
+ 000FFEA8 *40F2F4F9 40F5F4F0 40F4F0F2 40F4F0F8* * 249 540 402 408*
+ 000FFEB8 *40F6F8F8 40F2F0F6 40F5F3F9 40F8F0F8* * 688 206 539 808*
+ 000FFEC8 *40F0F4F5 40F4F4F9 40F9F6F3 40F3F5F5* * 045 449 963 355*
+ 000FFED8 *40F0F6F7                           * * 067            *
+EZ390I total errors         = 0
+P10MB1    EZ390 ENDED   RC= 0 MEM(MB)= 10 IO=50 INS=48

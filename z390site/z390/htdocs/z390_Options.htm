@@ -1,0 +1,1490 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 12.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>z390 Portable Mainframe Assembler and Emulator Options</title>
+</head>
+
+<body>
+
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="center" width="202" height="90">
+              <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></td>
+              <td align="center" width="405" height="90">
+              <p align="center"><b><font size="5">z390 Options and File Types</font></b></td>
+              <td width="147" height="90" align="center">
+              <b>
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="anim370.gif" alt="Automated Software Tools Corporation" width="100" height="59"></a></b></td>
+            </tr>
+          </table>
+         
+
+
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="left" valign="top">
+              <b>z390 Options include the following:</b><ul>
+                <li><b><a href="#z390 Command Line options for macro assembler">
+                z390&nbsp;Options for macro assembler, linker, and emulator</a></b></li>
+                <li><b><a href="http://www.zcobol.org/zcobol_options.htm">z390 
+                Options for zcobol</a></b></li>
+                <li><b><a href="#z390_Default_File_Types">
+                z390_File_Types and Report Formats</a></b></li>
+                <li><b><a href="#z390 GUI startup options">z390&nbsp; GUI 
+                Startup Command Options</a></b></li>
+                <li><b><a href="#z390 GUI Environment Variable Options">z390&nbsp; 
+                GUI Environment Variable Options</a></b></li>
+				  <li><b><a href="z390_Options.htm#J2SE_Startup_Options">J2SE Startup 
+				  Options</a></b></li>
+              </ul>
+              <p align="center"><b>
+              <a name="z390 Command Line options for macro assembler">z390 
+              Command Line options for macro assembler</a></b></p>
+              <p>
+              <b>The following table shows all the z390 options available and 
+              which programs they apply to:</b></p>
+              <ul>
+                  <li><b>M - mz390 macro processor which reads ASCII assembler 
+                  source and generates expanded BAL</b></li>
+                  <li><b>A - az390 assembler which reads BAL and generated OBJ 
+                  relocatible object code</b></li>
+                  <li><b>L - lz390 linker which reads OBJ relocatible object 
+                  files and generates 390 load module</b></li>
+                  <li><b>E - ez390 emulator runtime which loads and executes 390 
+                  load module</b></li>
+                </ul>
+              <p>
+              <b>To turn off an option that is on, prefix the option name with 
+              NO on command line or in OPT options file.</b></p>
+              <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%" id="AutoNumber2">
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>Option</b></td>
+                  <td width="7%" align="left" valign="top"><b>Scope</b></td>
+                  <td width="8%" align="left" valign="top"><b>Default</b></td>
+                  <td width="153%" align="left" valign="top"><b>Description</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>@filename</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>Options in 
+				  Z390.OPT file if found.</b></td>
+                  <td width="153%" align="left" valign="top"><b>Retrieve 
+                  additional options from free form text file with default 
+                  suffix OPT.&nbsp; Options can be specified delimited by spaces 
+                  on as many lines as requires.&nbsp; All characters on a line 
+                  following * are ignored as comments. The @file option can be 
+                  nested.&nbsp; The default path is the program path.&nbsp; If a 
+				  file named Z390.OPT exists in the z390 install directory, 
+				  these options will be applied first as default options.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>ALIGN</b></td>
+                  <td width="7%" align="left" valign="top"><b>A</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Align DS/DC data 
+                  fields based on type unless explicit length is specified.&nbsp; 
+                  If duplication factor is 0, then NOALIGN is ignored.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>ALLOW</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Allow extensions 
+                  to HLASM syntax including:<br>1) No quotes required for SETC 
+				  variables.<br>2) Duplication 
+		  factor does not require (..).<br>
+		  		3) Array declarations with 
+		  variables in expression accepted<br>4) Substring starting beyond end 
+		  		returns null string<br>5) Quoted strings allowed in SETA 
+		  		and SETB expressions<br>6) Allow &amp;var as null string if not found 
+		  during substitution<br>7) Allow duplicate local and global variable 
+				  declarations<br>8) Allow AREAD 
+                  and PUNCH file records greater than 80 characters.&nbsp; <br>The 
+                  default of NOALLOW insures HLASM compatibility.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>AMODE24</b></td>
+                  <td width="7%" align="left" valign="top"><b>LE</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Set 390 load 
+                  module options to start in 24 bit address mode</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>AMODE31</b></td>
+                  <td width="7%" align="left" valign="top"><b>LE</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Set 390 load 
+                  module options to start in 31 bit address mode</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>ASCII</b></td>
+                  <td width="7%" align="left" valign="top"><b>AE</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate ASCII 
+                  versus EBCDIC DC character constants, compare character 
+                  strings in ASCII versus EBCDIC in macro processor, generate 
+                  ASCII versus EBCDIC output for UNPK, ED, and EDMK.&nbsp;&nbsp;&nbsp; 
+                  Note ASCII mode is not mainframe compatible and requires 
+                  careful review of program to insure no EBCDIC immediate 
+                  compare constants such as X'40', 64, X'F0', 240 etc. are used 
+                  and that there are no assumptions about EBCDIC versus ASCII 
+                  collating sequences which have numbers and letters reversed, 
+                  and EBCDIC letters are non-contiguous.&nbsp; Typically HLASM 
+                  compatible programs are run in default EBCDIC mode and DCB 
+                  RECFM=FT?VT or some other translation option is used to 
+                  convert between EBCDIC and ASCII where necessary.&nbsp; Note 
+                  there are a few instructions affected by ASCII mode:<br>
+                  1)&nbsp; ED/EDMK generate ASCII versus EBCDIC but the mask 
+                  must always be in EBCDIC (masks are usually coded in X'...' 
+                  format)<br>
+                  2)&nbsp; UNPK generates X'3' versus X'F' in zone field (high 
+                  order nibble)</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>ASM</b></td>
+                  <td width="7%" align="left" valign="top"><b>MA</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Run az390 
+                  assembler as subtask of mz390 passing BAL.&nbsp; Note NOASM is 
+                  for use in pure text processing programs which only use 
+                  conditional macro code and AREAD/PUNCH with extensions to 
+                  process ascii text files.&nbsp; NOASM does not support 
+                  ordinary symbol attribute tests, OPSYN, or lookahead mode, and 
+                  requires CHKMAC(0) and CHKSRC(0-2).</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>ASSIST</b></td>
+                  <td width="7%" align="left" valign="top"><b>MAE</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Enable assembly 
+                  and execution of 11 new ASSIST extended instructions to 
+                  simplify I/O for student use.&nbsp; This option also sets 
+                  NOLOADHIGH.&nbsp; See
+                  <a href="z390_ASSIST_Support.htm">ASSIST Support</a>.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>AUTOLINK</b></td>
+                  <td width="7%" align="left" valign="top"><b>L</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Search for 
+                  unresolved external references in SYSOBJ directory list which 
+                  defaults to linklib.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>BAL</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate BAL 
+                  expanded assembler source file</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>BS2000</b></td>
+                  <td width="7%" align="left" valign="top"><b>MA</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Support Siemens 
+                  BS2000 assembler global variables</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>CHKMAC(0-2)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>0</b></td>
+                  <td width="153%" align="left" valign="top"><b>Check macros 
+                  during loading as follows:<br>
+                  0 - no checking<br>
+                  1- check for missing AGO and AIF labels and issue warning<br>
+                  2 - also check missing labels and also check for non comment 
+                  text after MEND</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>CHKSRC(0-3)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MA</b></td>
+                  <td width="8%" align="left" valign="top"><b>1</b></td>
+                  <td width="153%" align="left" valign="top"><b>Check input 
+                  source files as follows:<br>
+                  0 - no checking<br>
+                  1 - check MLC or BAL input source files for any&nbsp; 
+                  non-ASCII characters and issue error<br>
+                  2 - check MLC, MAC, CPY, and BAL input source files for any 
+                  non-ASCII characters and issue error.<br>
+                  3 - also check for out of sequence characters in 73-80 or any 
+                  non-blank characters beyond 80 and issue error. <br>
+                  Note this should detect any EBCDIC literal character strings 
+                  containing non-ASCII characters such as binary 0 byte which 
+                  must be changed to hex X'00' type strings for portability. </b> </td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>CICS</b></td>
+                  <td width="7%" align="left" valign="top"><b>MA</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Support EXEC 
+                  CICS pre-processor expansion and constants.&nbsp; If this 
+                  option is not on during macro expansion, PROLOG and EPILOG 
+                  option settings will be ignored.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>
+                  CODEPAGE(ascii+ebcdic+LIST)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>The default is 
+                  CODEPAGE(ISO-8859-1+IBM1047).&nbsp; If +LIST is added the 
+                  mapping of the 2 codepages along with printable character and 
+                  Unicode values are displayed on ERR file.&nbsp; A hex dump of 
+                  the tables and a list of the valid ASCII and EBCDIC Unicode 
+                  Charset codepages are listed.&nbsp; There are 162 Charset 
+                  codepages available on J2SE 1.6.0_16 including 64 valid ASCII 
+                  and 15 valid EBCDIC codepages.&nbsp; If the EBCDIC codepage 
+                  you need is not on the host system, you can replace the EBCDIC 
+                  codepage name with a file specification such as IBM1047.HCP 
+                  (example included) which is in hex dump format.&nbsp; The 
+                  above defaults match z/OS nnd has been successfully tested on 
+                  Windows Vista and XP.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>CON</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Console output 
+                  for all start/stop, error, trace, MNOTE's with level &gt; 4, and 
+                  WTO messages.&nbsp; When the&nbsp; TRACE??? option is 
+                  specified, the CON option is turned off so only start/stop and 
+                  abort error messages appear on console log.&nbsp; You can 
+                  specify CON after last TRACE option to turn it back on if you 
+                  want all display, trace, and error messages displayed on 
+                  console log.&nbsp; All the trace messages appear on 
+                  corresponding TR? file for each z390 program executed.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>DUMP</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate full 
+                  memory dump on LOG or TRE if abort</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>EDF</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>CICS Execution 
+                  Diagnostic Facility</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>EPILOG</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate epilog 
+                  macro call DFHEIEND for CICS program at END statement if CICS 
+                  option and EPILOG option are on.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>ERR(100)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>100</b></td>
+                  <td width="153%" align="left" valign="top"><b>Terminate 
+                  process if total errors for program exceeds limit. Use ERR(0) 
+                  to eliminate any error limit and always generate PRN file.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>ERRSUM</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate 
+                  critical error summary on console and ERR file listing missing 
+                  macros and copybooks. This option requires ASM option and is 
+                  turned on automatically if missing macros or copybooks are 
+                  found in the executed macro code path.&nbsp; When ERRSUM is 
+                  on, ERR(0) is set to prevent abort prior to finding all macro 
+                  and copybook references.&nbsp; All errors are listed on ERR 
+                  file along with summary report.&nbsp; Note several iterations 
+                  may be required to identify and resolve all missing macros and 
+                  copybooks.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>GUAM</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Support one or 
+                  more GUI Graphical User Access Method dialogs for MCS, TN3270, 
+                  or graphics user interface. </b> </td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>INIT</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Initialize all 
+                  registers to hex x'F4', all memory to hex x'F5', and all 
+                  uninitialized load module areas to x'F6' for easier 
+                  identification of access to uninitialized registers, memory. 
+                  or program fields.&nbsp; This default option was adopted when 
+                  ASSIST option was added after fixing a number of regression 
+                  test initialization bugs.&nbsp; Use NOINIT to revert to all 
+                  zeros as work-around for bugs.&nbsp; The x'F6' init was added 
+                  in v1403d PTF.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>INSTALL(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define alternate 
+                  z390 install directory to run batch command.&nbsp; The default 
+                  is set from J2SE Property &quot;user.dir&quot;.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>IPL(pgm)</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>none</b></td>
+                  <td width="153%" align="left" valign="top"><b>Execute 390 
+                  program at startup.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>LIST</b></td>
+                  <td width="7%" align="left" valign="top"><b>ALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate PRN, 
+                  LST, and LOG files for assembler, linker, and execution 
+                  respectively.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>LISTCALL</b></td>
+                  <td width="7%" align="left" valign="top"><b>MA</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate level 
+                  macro call and exit comments in BAL file which are used by 
+                  assembler to format first level macro calls preceding 
+                  assembler lines with &quot;+&quot; for macro generated source.&nbsp;
+                  </b> </td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>LISTUSE</b></td>
+                  <td width="7%" align="left" valign="top"><b>A</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>List active 
+                  USING definitions each time USING or DROP changes status in 
+                  the PRN assembly listing file.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>LOADHIGH</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Load programs 
+                  and allocate memory for GETMAIN/STORAGE from high end of first 
+                  FQE large enough to satisfy request.&nbsp; The ASSIST option 
+                  changes this option to NOLOADHIGH causing initial program to 
+                  load starting at X'10000' which simplifies relative address 
+                  calculations.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>LOG(file)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE </b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm</b></td>
+                  <td width="153%" align="left" valign="top"><b>Set file name 
+                  for ERR, TR?, and LOG files.&nbsp; The default is the program 
+                  name.&nbsp; This option is required when running multiple 
+                  copies of the same program via CMD startup in order to create 
+                  separate unique&nbsp; ERR, TR?, and LOG files.&nbsp; Otherwise 
+                  duplicate programs running in parallel will mod the same ERR, 
+                  TR?, and LOG file.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXCALL(50)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>50</b></td>
+                  <td width="153%" align="left" valign="top"><b>Set limit for 
+                  nested macro calls.</b></td>
+                </tr>
+                  <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXDISPLAY(80)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>80</b></td>
+                  <td width="153%" align="left" valign="top"><b>Use to increase 
+                  zcobol DISPLAY line size up to 256 characters.</b></td>
+                  </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXESD(1000)</b></td>
+                  <td width="7%" align="left" valign="top"><b>AL</b></td>
+                  <td width="8%" align="left" valign="top"><b>1000</b></td>
+                  <td width="153%" align="left" valign="top"><b>Set limit for 
+                  ESD sections or entries in one program.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXFILE(1000)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>1000</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum macro 
+                  and copybook files</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXGBL(1000000)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>100000</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum global 
+                  macro variables</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXHEIGHT(600)</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>600</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum pixel 
+                  height for GUI dialog windows</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXLCL(100000)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>100000</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum local 
+                  macro variables</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXLINE(200000)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MA</b></td>
+                  <td width="8%" align="left" valign="top"><b>200000</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum MLC, 
+                  MAC, CPY, and BAL source lines that can be loaded into memory 
+                  during an assembly.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXLOG(1000000)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>1000000</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum GUI log 
+                  file output before truncation begins by removing 50% to limit 
+                  memory consumption.&nbsp; The only limit on size of log file 
+                  is MAXSIZE.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXPARM(100000)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>10000</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum length 
+                  of any string during macro processing.&nbsp; This is an 
+                  extension as
+                  <a href="http://publib.boulder.ibm.com/infocenter/ratdevz/v7r1m1/index.jsp?topic=/com.ibm.ent.asm.zos.doc/topics/fn1lrmst327.htm">
+                  HLASM limit is currently 1024</a>.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXPASS(2)</b></td>
+                  <td width="7%" align="left" valign="top"><b>A</b></td>
+                  <td width="8%" align="left" valign="top"><b>2</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum passes 
+                  of the BAL source by assembler to resolve forward nested 
+                  symbol references prior to final pass to generate object code.&nbsp; 
+                  The number of LOCTR statements is added to this limit in order 
+                  to resolve the final address of each LOCTR section.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXPC(50000)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>50000</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum pseudo 
+                  code instructions held in cache before LRU replacement begins.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXQUE(1000)</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>1000</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum output 
+                  queue length from any CMD started task before queue messages 
+                  are automatically copied to GUI output log to conserve memory 
+                  and prevent stall.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXRLD(10000)</b></td>
+                  <td width="7%" align="left" valign="top"><b>L</b></td>
+                  <td width="8%" align="left" valign="top"><b>10000</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum RLD 
+                  relocation records allowed in a program.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXSIZE(50)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>50</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum size of 
+                  any output file in MB</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXSYM(50000)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MA</b></td>
+                  <td width="8%" align="left" valign="top"><b>50000</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum symbols 
+                  in one macro assembly</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXWARN(4)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MA</b></td>
+                  <td width="8%" align="left" valign="top"><b>4</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum MNOTE 
+                  warning level without generating error.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MAXWIDTH(800)</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>800</b></td>
+                  <td width="153%" align="left" valign="top"><b>Maximum pixel 
+                  width for GUI dialog windows</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MCALL</b></td>
+                  <td width="7%" align="left" valign="top"><b>A</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>List each macro 
+                  call and exit on the PRN assembly listing in addition to first 
+                  level calls if LISTCALL option is also on.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MEM(1)</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>1</b></td>
+                  <td width="153%" align="left" valign="top"><b>Memory allocated 
+                  for 390 program execution in MB.&nbsp; Note for RMODE31 loads 
+                  and GETMAIN's memory above the 16 MB line must be allocated.&nbsp; 
+                  For example MEM(32) would provide 16 MB below the line and 16 
+                  MB above.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MINHEIGHT(150)</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>150</b></td>
+                  <td width="153%" align="left" valign="top"><b>Minimum pixel 
+                  height for GUI dialog windows</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MINWIDTH(150)</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>150</b></td>
+                  <td width="153%" align="left" valign="top"><b>Minimum pixel 
+                  width for GUI dialog windows</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MNOTE(0)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MA</b></td>
+                  <td width="8%" align="left" valign="top"><b>0</b></td>
+                  <td width="153%" align="left" valign="top"><b>Control MNOTE 
+				  error/warning messages during macro expansion and assembly:<br>
+		  &nbsp;0 - default generates MNOTE error/warning during mz390 and az390<br>&nbsp;1 
+				  - suppress mz390 error/warning and only pass MNOTE to az390<br>&nbsp;2 
+				  - 
+		  generates MNOTE error/warning during mz390 and suppresses passing them 
+		  on to az390</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>MOD</b></td>
+                  <td width="7%" align="left" valign="top"><b>L</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate raw 
+                  code file from lz390 with .MOD suffix and no header or trailer 
+                  and no RLD's.&nbsp; </b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>OBJ</b></td>
+                  <td width="7%" align="left" valign="top"><b>A</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate 
+                  relocatible object code file</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>OBJHEX</b></td>
+                  <td width="7%" align="left" valign="top"><b>A</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate ASCII 
+                  readable form of OBJ file with support for 31 bit long 
+                  sections.&nbsp; The default is to generate binary OBJ file 
+                  which is compatible with mainframe linkers but is limited to 
+                  24 bit long sections.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>PARM('text')</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>none</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define character 
+                  string parm to passed to executable program via address in R1 
+                  at startup pointing to half word length followed by EBCDIC 
+                  characters. Default length is 0.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>PC</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate macro 
+                  pseudo code in cache memory for speeding up macro code that is 
+                  executed more than once during macro expansion.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>PCOPT</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Optimize macro 
+                  pseudo code by looking for push, add/sub, store sequences and 
+                  replacing them with inc/dec pseudo code opcodes.&nbsp; These 
+                  pseudo codes are maintained in a cache in memory during macro 
+                  execution only and have no affect on generated object code.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>PRINTALL</b></td>
+                  <td width="7%" align="left" valign="top"><b>A</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Suppress PRINT 
+                  OFF and PRINT NOGEN commands to force all source lines on PRN 
+                  listing.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>PDSMEM8</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>If PDSMEM8 option 
+				  is specified, error messages will be issued for any macro or 
+				  copybook file names with length greater than 8.&nbsp; This 
+				  options is available to provide compatibility with mainframe 
+				  PDS libraries that are limited to 8 character names. Note 
+				  zCOBOL and zCICS use names longer than 8 characters such as 
+				  zcobol\IDENTIFICATION.MAC and cics\CICS_INQUIRE.MAC.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>PROFILE(file)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Insert COPY file 
+                  in front of MLC source file</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>PROLOG</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate CICS 
+                  prolog macro calls DFHEIGBL, DFHEISTG, and&nbsp; DFHEIENT if 
+                  CICS option and PROLOG options are on.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>PROTECT</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Prevent 
+                  modification of PSA in low memory 8k block</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>REFORMAT</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Reformat 
+                  expanded BAL code to align all opcodes at column 10 and 
+                  operands at column 16 if possible.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>REGS</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate GPR 
+                  register trace before and after each instruction if TRACE 
+                  option on.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>RMODE24</b></td>
+                  <td width="7%" align="left" valign="top"><b>LE</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Set 390 load 
+                  module options to load module below the 24 bit address line.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>RMODE31</b></td>
+                  <td width="7%" align="left" valign="top"><b>LE</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Set 390 load 
+                  module options to load module above the 31 bit address line.&nbsp; 
+                  Note this options requires option MEM be set to include enough 
+                  memory above the 31 bit address line.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>STATS or 
+                  STATS(file)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate 
+                  statistics file STA with final options listing, macro and 
+                  copybook file listing, plus all program statistics.&nbsp; If 
+                  file is omitted the program path and file name are used with 
+                  STA suffix.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYS390(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>LE</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define directory 
+                  for storing and retrieving 390 load modules </b> </td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSBAL(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MA</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define directory 
+                  for storing and retrieving generated BAL files.&nbsp; This 
+                  option may also override file name and/or suffix (*.sfx 
+                  overrides just the suffix in the pgm directory). </b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSCPY(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MA</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define one or 
+                  more directories for retrieving CPY source input files.&nbsp; 
+                  If the option starts with + the directories listed will be 
+                  concatenated with current list.&nbsp; Multiple directories are 
+                  always separated by +.&nbsp; This option may also override 
+                  suffix by adding *.sfx.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSDAT(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define directory 
+                  for retrieving DAT source input files for AREAD.&nbsp; Set to 
+                  SYSDAT(.) for current directory when no path is specified on 
+                  DSNAME parm for AREAD.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSERR(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define directory 
+                  for output ERR files. This option may also override file name 
+                  and/or suffix (*.sfx overrides just the suffix in the pgm 
+                  directory). </b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSLKD(file)</b></td>
+                  <td width="7%" align="left" valign="top"><b>L</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define input 
+                  source file for linker commands such as INCLUDE, ALIAS, ENTRY, 
+                  and NAME.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSLOG(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define directory 
+                  for output LOG file. This option may also override file name 
+                  and/or suffix (*.sfx overrides just the suffix in the pgm 
+                  directory). </b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSLST(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>AL</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define directory 
+                  for output LST files.&nbsp; This option may also override file 
+                  name and/or suffix (*.sfx overrides just the suffix in the pgm 
+                  directory). </b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSMAC(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>mac dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define one or 
+                  more directories for source MAC files.&nbsp; If the option 
+                  starts with + the directories listed will be concatenated with 
+                  current list.&nbsp; Multiple directories are always separated 
+                  by +.&nbsp; This option may also override suffix by adding *.sfx.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSMLC(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MA</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define directory 
+                  for source input MLC files.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSOBJ(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>AL</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define directory 
+                  for OBJ relocatible object files</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSOPT(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define directory 
+                  for @file option files.&nbsp; This option may override suffix 
+                  using *.sfx.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSPARM('text')</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>none</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define text 
+                  string which can be accessed by mz390 global macro variable &amp;SYSPARM.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSPCH(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define directory 
+                  for PCH output files from PUNCH.&nbsp; This option may also 
+                  override file name and/or suffix (*.sfx overrides just the 
+                  suffix in the pgm directory).&nbsp; Note PUNCH output is in 
+                  ASCII source format and is not directed to the OBJ file.&nbsp; 
+                  These files may be used as linker input commands via 
+                  SYSLKD(file) option.&nbsp; Set to SYSPCH(.) for current 
+                  directory when no path is specified on DSNAME parm for PUNCH.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSPRN(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>A</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define directory 
+                  for assembler listing PRN output files.&nbsp; This option may 
+                  also override file name and suffix.&nbsp; This option may also 
+                  override file name and/or suffix (*.sfx overrides just the 
+                  suffix in the pgm directory). </b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSTERM(file)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm.ERR</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define alternate 
+                  file for all start/end messages plus any error messages, plus 
+                  related source file statistics for each file containing 
+                  errors.&nbsp; The default is the program name with ERR suffix.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>SYSTRC(dir)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>pgm dir</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define directory 
+                  for output TRACE TR? files</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TEST</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Start execution 
+                  with interactive TEST mode active which prompts for commands 
+                  such as T opcode or G opcode to trace or execution to the next 
+                  occurrence of opcode name.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TESTDD(file)</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Define input 
+                  command file to run TEST commands.&nbsp; See regression test 
+                  rt\test\TESTTST1.MLC for example.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>THREAD</b></td>
+                  <td width="7%" align="left" valign="top"><b>A</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Assign 
+				  continuing CSECT addresses for multiple CSECT's assembled in 
+				  the same module to help identify location of instruction and 
+				  data labels.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TIME or 
+                  TIME(seconds)</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Limit execution 
+                  time of each program to the number of seconds specified.&nbsp; 
+                  The default is 15 seconds. This option is turned off if 
+                  NOTIMING specified.&nbsp; Use NOTIME to allow tasks such as 
+                  SOA servers like z390CICS to run continuously while still 
+                  supporting application use of timing functions.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TIMING</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Calculate 
+                  elapsed time and instructions per second statistics for 
+                  display on START/END messages and STA statistics. tTIMING also 
+                  displays current z390 and J2SE version on start message and 
+                  memory usage on ended message.&nbsp; Note NOTIMING is used in 
+                  regression tests to force generated files to be identical by 
+                  using fixed data/time stamp using 
+                  GregorianCalendar(2005,0,2,22,33,44).&nbsp; NOTIMING 
+                  suppresses versions on start message and memory usage on ended 
+                  message.&nbsp; NOTIMING also sets NOTIME which prevents 
+                  application from using time functions..</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TRACE or 
+                  TRACE(AEGILMPQTV)</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>TRACE or TRACE(E) 
+                  will turn on ez390 execution trace generation on TRE file and 
+                  turn off CON.&nbsp;&nbsp; TRACE will display every instruction 
+                  executed along with address and value of each operand.&nbsp; 
+                  Any combination of the following trace options can be set 
+                  using the TRACE(...) option.&nbsp; TRACE(*) will also set 
+                  TRACEALL.&nbsp; Note the &amp;SYSTRACE global SETC variable can be 
+                  used to turn any trace options on or off during execution.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TRACEA or TRACE(A)</b></td>
+                  <td width="7%" align="left" valign="top"><b>A</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>TRACEA or 
+                  TRACE(A) will turn on az390 assembly trace generation on TRA 
+                  file and turn off CON.&nbsp; TRACEA will display each BAL 
+                  statement during each pass of the assembler.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TRACEALL</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Turn on all 
+                  trace options generating TRM, TRA, TRL, and TRE files and turn 
+                  off CON.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TRACEC or TRACE(C)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Trace copy file 
+                  code for TRACEM and TRACEP.&nbsp; The default is NOTRACEC to 
+                  eliminated redundant code that usually just contains global 
+                  variable declarations.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TRACEG or TRACE(G)</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Turn on ez390 
+                  emulator trace generation on TRE file with trace of GETMAIN/FREEMAIN 
+                  FQE memory management control block changes and turn off CON.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TRACEI or TRACE(I)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>TRACEI will trace 
+				  each AINSERT showing source on the TRM trace file.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TRACEL or TRACE(L)</b></td>
+                  <td width="7%" align="left" valign="top"><b>L</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>TRACEL or 
+                  TRACE(L) will turn on lz390 linker trace generation on TRL 
+                  file and turn off CON.&nbsp; TRACEL shows each CSECT, ENTRY, 
+                  EXTRN and OBJ file being loaded.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TRACEM or TRACE(M)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>TRACEM or 
+                  TRACE(M) will turn on mz390 macro processor trace generation 
+                  on TRM file and turn off CON.&nbsp; TRACEM displays each 
+                  conditional macro statement executed plus stored values and 
+                  AIF compare values.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TRACEP or TRACE(P)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>TRACEP or 
+                  TRACE(P) will turn on mz390 macro processor pseudo code 
+                  generation and execution trace on TRM file and turn off CON.&nbsp; 
+                  TRACEP shows each conditional macro pseudo operation performed 
+                  for each conditional macro statement and the values of all 
+                  variables.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TRACEQ or TRACE(Q)</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>TRACEQ or 
+                  TRACE(Q) will turn on ez390 emulator QSAM/BSAM DCB I/O trace 
+                  generation on TRE file and turn off CON.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TRACES or TRACE(S)</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Displace MLC 
+                  source lines on console regardless of CON setting to help 
+                  locate any loops, waits, or hangs in large macro process.&nbsp; 
+                  If MCALL is also on, then *MCALL and *MEXIT comments will also 
+                  be displayed to show location with nested macros.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TRACET or TRACE(T)</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>TRACET or 
+                  TRACE(T) will turn on ez390 emulator TGET/TPUT and TCP/IO 
+                  trace generation on TRE file and turn off CON.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TRACEV or TRACE(V)</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>TRACEV or 
+                  TRACE(V) will turn on ez390 emulator VSAM ACB/RPL I/O trace 
+                  generation on TRE file and turn off CON.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TRAP</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Trap any 
+                  unexpected J2SE program exceptions and generate emulator 0C5 
+                  exception which can be handled by SPIE/STAE exits if defined.&nbsp; 
+                  NOTRAP can be used with Eclipse source debugger to stop at 
+                  J2SE statement causing exception.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>TS</b></td>
+                  <td width="7%" align="left" valign="top"><b>MALE</b></td>
+                  <td width="8%" align="left" valign="top"><b>NO</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate JDBC 
+                  compatible time-stamp on all TRACE and ERR file records for 
+                  use in debugging time dependent issue.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>VCB</b></td>
+                  <td width="7%" align="left" valign="top"><b>E</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Generate VSAM 
+                  cache buffer for improving VSAM performance by storing most 
+                  recently accessed records and indexes.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>XREF</b></td>
+                  <td width="7%" align="left" valign="top"><b>A</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Cross reference 
+                  symbols to source lines in PRN assembly listing.</b></td>
+                </tr>
+                <tr>
+                  <td width="11%" align="left" valign="top"><b>ZSTRMAC</b></td>
+                  <td width="7%" align="left" valign="top"><b>M</b></td>
+                  <td width="8%" align="left" valign="top"><b>YES</b></td>
+                  <td width="153%" align="left" valign="top"><b>Support 
+                  expansion of ZSTRMAC structured conditional macro code 
+                  instructions during loading of MLC, MAC, and CPY files.&nbsp;&nbsp; 
+                  Note z390 macros in z390\mac directory now are using zstrmac 
+                  for structured coding.&nbsp; NOZSTRMAC can only be used with 
+                  MVS, VSE, or other non-structured macro libraries.</b></td>
+                </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="left" valign="top">
+              <table>              
+<td align="left" valign="top">
+              <p align="center"><b><a name="z390 GUI startup options">z390 GUI 
+              startup options</a></b></p>
+              <p><b>The following options can be added to the Z390.BAT startup 
+              command file in the install directory which is executed when you 
+              double click on the z390 desktop icon:</b></p>
+              <ul>
+                <li><font FACE="Times New Roman"><b>/SC maximize.ini -&nbsp; the 
+                /sc option executes the z390 startup commands in the named file.&nbsp; 
+                See the z390 User Guide for list of commands including changing 
+                the location and size of the z390 GUI dialog.</li>
+                <li>
+                <p ALIGN="LEFT">/NP – suppress all permissions to test web 
+                version</li>
+                <li>
+                <p ALIGN="LEFT">/NT – suppress the unique time stamp included in 
+                the default log file name (By default the unique time stamp 
+                insures a log of all z390 commands executed are retained for 
+                each instance of z390 GUI window, command line, and batch file 
+                executions. The log files can be deleted periodically.)</li>
+              </ul>
+              </b></font>
+              <p align="center"><b>
+              <a name="z390 GUI Environment Variable Options">z390 GUI 
+              Environment Variable Options</a></b></p>
+              <p><b>Environment variables are supported on both Windows and 
+              Linux for setting the following z390 GUI options.&nbsp; 
+              Environment variables are also used to define the file 
+              specifications for DDNAME's used in z390 macro assembler program 
+              extended AREAD and PUNCH statements and in DCB's and ACB's for 
+              file access.&nbsp; The environment variables for batch execution 
+              must be set in z390 BAT command or in individual batch commands 
+              prior to executing program since each batch command runs in its 
+              own environment space.</b></p>
+              <ul>
+                <li><b>Z390ACROBAT=cmd.exe 
+                  /c Start - default started task for processing Acrobat PDF 
+                commands</b></li>
+                <li><b>Z390BROWSER=cmd.exe 
+                  /c Start - default started task for web browser started by 
+                z390 to access <a href="http://www.z390.org">www.z390.org</a> 
+                online documentation.&nbsp; For Windows Start invokes IE.&nbsp; 
+                For Linux the default is firefox.</b></li>
+                <li><b>Z390COMMAND=cmd.exe - default batch command processor 
+                used by z390 GUI for unknown commands.&nbsp; On Windows this is 
+                the standard Windows BAT file command processor.&nbsp; For Linux 
+                this is a Perl script named cmd.pl which processes Windows 
+                compatible BAT command files and performs the same functions.</b></li>
+                <li><b>Z390EDITOR=notepad.exe - default GUI editor started by 
+                z390 GUI using the EDIT command.&nbsp; For Linux the default is 
+                gedit.</b></li>
+                <li><b>INSTALL=&quot;<a href="file:///c:/Program%20Files/Automated%20Software%20Tools/z390">c:\Program 
+                Files\Automated Software Tools\z390</a>&quot; - default z390 install 
+                location</b></li>
+              </ul>
+              <p><b>
+			  <a href="#J2SE_Startiup_Options" name="J2SE_Startup_Options">The following J2SE runtime startup options may be added to 
+              any of the following z390 commands:</a></b></p>
+              <ul>
+                <li><b>z390.bat - start the z390 GUI which in turn runs z390 
+                batch commands in the background </b> </li>
+                <li><b>mz390.bat - run the z390 macro assembler (called from 
+                ASMLG, ASML, and ASM commands) </b> </li>
+                <li><b>lz390.bat - run the z390 linker (called from ASMLG, ASML, 
+                and LINK commands) </b> </li>
+                <li><b>ez390.bat - run the z390 emulator (called from ASMLG and 
+                EXEC commands) </b> </li>
+              </ul>
+              <p><b>Any of the following J2SE options can be added to the above 
+              command files by setting J2SEOPTIONS environment variable:</b></p>
+              <ul>
+                <li><b>-classpath path to jar file (the z390.jar containing all 
+                z390 classes is in the install directory) </b> </li>
+                <li><b>-verbose:gc trace garbage collection to detect memory 
+                leaks (useful for debugging memory leaks) </b> </li>
+                <li><b>-XmsnK set initial memory allocation to nK (useful to 
+                force larger J2SE alloc memory, but can stall OS) </b> </li>
+                <li><b>-XmxnK set max memory allocation to nK (useful to reduce 
+                default J2SE alloc memory if needed) </b> </li>
+                <li><b>-Xrs allow control break interruption of java tasks 
+                (allows user CTRL-BRK interruptions) </b> </li>
+              </ul>
+              <p><b></b></p>
+              <p align="center"><b><a name="z390_Default_File_Types">z390 
+              Default File Types</a></b></p>
+              <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%" height="1313">
+                <tr>
+                  <td width="9%" align="left" valign="top" height="19"><b>TYPE</b></td>
+                  <td width="4%" align="left" valign="top" height="19"><b>Scope</b></td>
+                  <td width="7%" align="left" valign="top" height="19"><b>Format</b></td>
+                  <td width="40%" align="left" valign="top" height="19"><b>File 
+                  Description</b></td>
+                  <td width="40%" align="left" valign="top" height="19"><b>File 
+                  or Report Format Description</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="209"><b>BAL</b></td>
+                  <td width="4%" align="left" valign="top" height="209"><b>MA</b></td>
+                  <td width="7%" align="left" valign="top" height="209"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="209"><b>
+                  Basic Assembly Language generated ASCII source file generated 
+                  by mz390 when option BAL is specified.&nbsp; When option ASM 
+                  is on (the default), mz390 starts az390 as a separate process 
+                  running in parallel and passes generated BAL statements 
+                  directly to it.&nbsp; This allows the first pass of assembler 
+                  processing to be overlapped with macro expansion and 
+                  eliminates need to write this file to external disk.</b></td>
+                  <td width="40%" align="left" valign="top" height="209"><b>
+                  Basic Assembler format is free form within first 71 characters 
+                  with optional label starting in position 1 followed by opcode 
+                  followed by operands if any.&nbsp; If continuation is required 
+                  a non-space character appears in position 72.&nbsp; Positions 
+                  73-80 may be used for sequence numbering.&nbsp; The ICTL&nbsp; 
+                  instruction may be used to change these default setting but it 
+                  is not recommended as the macro and copybook files are all in 
+                  the default format.&nbsp; Embedded AREAD records longer than 
+                  71 characters must be in standard continuation format for 
+                  preloading of MLC and MAC files (a z390 restriction).&nbsp; 
+                  Note the default NOALLOW limits AREAD and PUNCH records to 
+                  maximum of 80.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="41"><b>CPY</b></td>
+                  <td width="4%" align="left" valign="top" height="41"><b>MA</b></td>
+                  <td width="7%" align="left" valign="top" height="41"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="41"><b>
+                  Copybook source included in source programs, macros, or other 
+                  copybooks</b></td>
+                  <td width="40%" align="left" valign="top" height="41"><b>Same 
+                  format as BAL</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="114"><b>DAT</b></td>
+                  <td width="4%" align="left" valign="top" height="114"><b>M</b></td>
+                  <td width="7%" align="left" valign="top" height="114"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="114"><b>Text 
+                  data input files read via AREAD statements in macro processor 
+                  specifying ID=, DDNAME= or DSNAME= extended parameters.&nbsp; 
+                  AREAD with no extended parameters reads the next statement in 
+                  the input stream.</b></td>
+                  <td width="40%" align="left" valign="top" height="114"><b>Same 
+                  format as BAL except text records can be any length with no 
+                  continuation format required using ALLOW</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="57"><b>ERR</b></td>
+                  <td width="4%" align="left" valign="top" height="57"><b>MALE</b></td>
+                  <td width="7%" align="left" valign="top" height="57"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="57"><b>
+                  Output log of all START and ENDED messages plus any errors 
+                  plus any error file references.</b></td>
+                  <td width="40%" align="left" valign="top" height="57"><b>Text 
+                  file with messages showing start and stop statistics for each 
+                  step and any error messages issued by those steps.&nbsp; A 
+                  cross reference of all macro and copybook files with errors is 
+                  included at the end.&nbsp; For full cross reference of all 
+                  macros and copybooks used see STA file.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="38"><b>LOG</b></td>
+                  <td width="4%" align="left" valign="top" height="38"><b>E</b></td>
+                  <td width="7%" align="left" valign="top" height="38"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>
+                  Output log of for GUI or batch command execution controlled by 
+                  CON option</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>Test 
+                  file with messages issued udring program execution including 
+                  start and stop statistics plus any errors and any WTO write to 
+                  operator messages.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="38"><b>LKD</b></td>
+                  <td width="4%" align="left" valign="top" height="38"><b>L</b></td>
+                  <td width="7%" align="left" valign="top" height="38"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>
+                  Optional input command for linker (INCLUDE, ENTRY, ALIAS, 
+                  NAME)</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>Same 
+                  format as BAL.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="19"><b>MAC</b></td>
+                  <td width="4%" align="left" valign="top" height="19"><b>M</b></td>
+                  <td width="7%" align="left" valign="top" height="19"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="19"><b>macro 
+                  source files</b></td>
+                  <td width="40%" align="left" valign="top" height="19"><b>Same 
+                  format as BAL.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="38"><b>MLC</b></td>
+                  <td width="4%" align="left" valign="top" height="38"><b>M</b></td>
+                  <td width="7%" align="left" valign="top" height="38"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>macro 
+                  assembler source programs read by mz390</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>Same 
+                  format as BAL.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="152"><b>MOD</b></td>
+                  <td width="4%" align="left" valign="top" height="152"><b>LE</b></td>
+                  <td width="7%" align="left" valign="top" height="152"><b>
+                  binary</b></td>
+                  <td width="40%" align="left" valign="top" height="152"><b>
+                  Binary code output from linker with no header and no RLD 
+                  records.&nbsp; This type file can be created using option MOD 
+                  and can be loaded as a data table by Micro Focus CICS, </b></td>
+                  <td width="40%" align="left" valign="top" height="152"><b>
+                  Binary file with all CSECT binary data.&nbsp; For example DC 
+                  C'ABC' using option MOD will result in 3 byte MOD file 
+                  containing x'C1C2C3'.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="152"><b>OBJ</b></td>
+                  <td width="4%" align="left" valign="top" height="152"><b>AL</b></td>
+                  <td width="7%" align="left" valign="top" height="152"><b>
+                  EBCDIC<br>
+                  ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="152"><b>Output 
+                  relocatible object code file for macro assembler with two 
+                  format options.&nbsp; </b> </td>
+                  <td width="40%" align="left" valign="top" height="152"><b>The 
+                  default is mainframe linker compatible relocatible object code 
+                  80 records (ESD, TXT, RLD, and END).&nbsp; When OBJHEX option 
+                  is specified for assembler, ASCII readable text extended 
+                  format supporting 31 bit long sections is generated.&nbsp; The 
+                  z390 linker can read either format by examining file.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="57"><b>OPT</b></td>
+                  <td width="4%" align="left" valign="top" height="57"><b>MALE</b></td>
+                  <td width="7%" align="left" valign="top" height="57"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="57"><b>
+                  Optional options files referenced via @file option from 
+                  command line or other option files</b></td>
+                  <td width="40%" align="left" valign="top" height="57"><b>Text 
+                  file with z390 options entered in free format delimited by 
+                  spaces.&nbsp; An * will terminate options on a line and start 
+                  comments on that line.&nbsp; </b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="95"><b>PCH</b></td>
+                  <td width="4%" align="left" valign="top" height="95"><b>M</b></td>
+                  <td width="7%" align="left" valign="top" height="95"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="95"><b>
+                  Output text files written via PUNCH statements in macro 
+                  processor using optional ID=, DDNAME=, or DSNAME= extended 
+                  parameters.&nbsp; The default is pgm.PCH.</b></td>
+                  <td width="40%" align="left" valign="top" height="95"><b>Text 
+                  file output which is not limited to 80 byte BAL format using 
+                  ALLOW.&nbsp; Any macro program generating BAL output must 
+                  format continuations.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="38"><b>PRN</b></td>
+                  <td width="4%" align="left" valign="top" height="38"><b>A</b></td>
+                  <td width="7%" align="left" valign="top" height="38"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>
+                  Output assembly language listing from az390</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>Text 
+                  file with the following listing fields:<br>
+                  1) hex relative offset to instruction<br>
+                  2) hex bytes in instruction or data with up ot 8 bytes per 
+                  line.&nbsp; Direction PRINT DATA will force listing all data 8 
+                  bytes per line.<br>
+                  3) (file#/file-line#)generated-line# identified the file # and 
+                  the relative file line #for the MLC, MAC, or CPY file that the 
+                  generated line came from followed by the sequential generated 
+                  line #.<br>
+                  4) Flag field has + for macro generated lines, and = for line 
+                  from copybook.<br>
+                  5)BAL line with label, opcode, and operands.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="38"><b>STA</b></td>
+                  <td width="4%" align="left" valign="top" height="38"><b>MALE</b></td>
+                  <td width="7%" align="left" valign="top" height="38"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>
+                  Output statistics file listing options set, program 
+                  statistics, and file references</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>Text 
+                  file with detail statistics on each step including all option 
+                  settings, complete macro and copybook cross reference for 
+                  mz390, and execution statistics.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="38"><b>TRA</b></td>
+                  <td width="4%" align="left" valign="top" height="38"><b>A</b></td>
+                  <td width="7%" align="left" valign="top" height="38"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>Trace 
+                  output file for assembler (lists each line being assembled 
+                  during each pass)</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>Text 
+                  file with ma390 assembler trace output including source file 
+                  name, relative line, generated line, relative hex offset, and 
+                  source statement for each assembler pass which may be 2 or 
+                  more depending on usage of LOCTR.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="38"><b>TRE</b></td>
+                  <td width="4%" align="left" valign="top" height="38"><b>E</b></td>
+                  <td width="7%" align="left" valign="top" height="38"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>Trace 
+                  output file for emulator (lists each instruction, address, and 
+                  operand values)</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>Text 
+                  file with ez390 emulator execution trace output showing, hex 
+                  psw address, condition code, hex instruction, mnemonic, 
+                  operand register and storage values at the start of each 
+                  instruction.&nbsp; Blank line inserted for each branch to non 
+                  sequential address.&nbsp; The high bit of PSW hex address 
+                  indicates 24 or 31 bit address mode.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="38"><b>TRL</b></td>
+                  <td width="4%" align="left" valign="top" height="38"><b>L</b></td>
+                  <td width="7%" align="left" valign="top" height="38"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>Trace 
+                  output file for linker (lists each OBJ record processed)</b></td>
+                  <td width="40%" align="left" valign="top" height="38"><b>Text 
+                  file with lz390 linker trace output including ESD external 
+                  symbol hex addresses and lengths, TXT text records with 
+                  relative offset within ESD and hex data.&nbsp; RLD relocation 
+                  records showing hex offset, field length, and ESD symbol.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="114"><b>TRM</b></td>
+                  <td width="4%" align="left" valign="top" height="114"><b>M</b></td>
+                  <td width="7%" align="left" valign="top" height="114"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="114"><b>
+                  Trace output file for macro process (TRACEM lists each macro 
+                  line executed, TRACEP lists every macro pseudo code 
+                  instruction executed showing the current value of local and 
+                  global variables used in SET statements and AIF statements 
+                  etc.)</b></td>
+                  <td width="40%" align="left" valign="top" height="114"><b>Text 
+                  file with mz390 macro processor trace output file which is 
+                  typically generated in parallel with the generation of the 
+                  first pass information in the TRA file since mz390 and az390 
+                  run as concurrent tasks.&nbsp; This file includes source file 
+                  name, relative line number, and source macro statement.&nbsp; 
+                  For generated BAL output lines the source file# and relative 
+                  line# cross reference is also include.&nbsp; If the TRACEP 
+                  option is specified, this file also includes listing of the 
+                  generation and execution of
+                  <a href="z390_Macro_Pseudo_Code.pdf">macro pseudo code 
+                  instructions</a>. </b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="114"><b>ZSM</b></td>
+                  <td width="4%" align="left" valign="top" height="114"><b>M</b></td>
+                  <td width="7%" align="left" valign="top" height="114"><b>ASCII</b></td>
+                  <td width="40%" align="left" valign="top" height="114"><b>
+                  <a href="z390_ZSTRMAC_Structured_Macro_Support.htm">ZSTRMAC 
+                  Structured Conditional Macro </a>source programs.</b></td>
+                  <td width="40%" align="left" valign="top" height="114"><b>Use 
+                  ZSTRMAC.BAT file1 file2 to translate ZSM type file to standard 
+                  HLASM compatible MLC type source file.</b></td>
+                </tr>
+                <tr>
+                  <td width="9%" align="left" valign="top" height="114"><b>390</b></td>
+                  <td width="4%" align="left" valign="top" height="114"><b>LE</b></td>
+                  <td width="7%" align="left" valign="top" height="114"><b>
+                  binary</b></td>
+                  <td width="40%" align="left" valign="top" height="114"><b>
+                  Executable z390 load modules created by linker from OBJ files 
+                  and loaded by emulator.&nbsp; </b></td>
+                  <td width="40%" align="left" valign="top" height="114"><b>The 
+                  390 load modules contain 20 byte header with the following:<br>
+                  1)&nbsp; 4 byte ASCII character version '1002'<br>
+                  2)&nbsp; 1 byte flag AMODE31 'T' or 'F'<br>
+                  3)&nbsp; 1 byte flag RMODE31 'T' or 'F'<br>
+                  4)&nbsp; 2 bytes reserved '??'<br>
+                  5)&nbsp; 4 byte length of code<br>
+                  6)&nbsp; 4&nbsp; byte offset to entry<br>
+                  7)&nbsp; 4 byte count of RLD's following code<br>
+                  The code for all CSECTS follows the header.&nbsp; The RLD 
+                  table follows the code if any.&nbsp; Each RLD field in load 
+                  module is relocated by the load address determined at load 
+                  time. The 5 byte RLD records are as follows:<br>
+                  1)&nbsp; 4 byte offset to RLD field in code<br>
+                  2)&nbsp; 1 byte field length<br>
+                  See option MOD and file type MOD to create code without header 
+                  or any RLD's.</b></td>
+                </tr>
+              </table></td>
+            </tr>
+          </table>
+         
+
+</body>
+
+</html>
+<p align="center"><b>IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS<br>
+&nbsp;are registered trademarks
+&nbsp;of International Business Machines Corporation</b></p>
+
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Saturday February 18, 2012<!--webbot bot="Timestamp" endspan i-checksum="2639" -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a>&nbsp;
+<a href="pop-up/sitemap.html">Sitemap</a><br>
+Copyright 2011 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </b> </p>

@@ -1,0 +1,16 @@
+EZ390I Copyright 2006 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = P3LKM1
+EZ390I options = 
+EZ390I V1.3.09 started date 12/30/07 time 07:23:58
+ZMFACC Solution for problem P3LKM1 by Lindy Mayfield using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 000FFF64 *BABE1976                           * *[...            *
+SNAP DUMP ID=2 TEXT=Output Area
+ 000FFF68 *C2C1C2C5 F1F9F7F6                  * *BABE1976        *
+EZ390I V1.3.09 ended   date 12/30/07 time 07:23:58
+EZ390I total instructions   = 88
+EZ390I total seconds        = 0
+EZ390I instructions/sec     = 8800
+EZ390I total errors         = 0
+EZ390I return code(P3LKM1  )= 0

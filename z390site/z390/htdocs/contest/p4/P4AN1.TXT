@@ -1,0 +1,103 @@
+P4AN1    ZMFACC CODE,START,NAME='Alfred Nykolyn'
+         CALL   SHELSORT,(TABLE,NTABLE)
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+TABLEI   DC    20A(TABLE_END-*)
+TABLEI_END EQU  *
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+TABLE    DC    20A(TABLE_END-*)
+TABLE_END EQU  *
+         ZMFACC OUTPUT,END
+NTABLE   DC     A((TABLE_END-TABLE)/4)
+SHELSORT CSECT
+         SAVE (14,12)
+         BALR R12,0
+         USING *,R12       
+         LM    R1,R2,0(R1)   R1,R2 = A(TABLE,NTABLE)
+         L     R0,0(R2)      R0= NTABLE
+         title 'Shellsort from Sedgwick'
+*
+*  shellsort(itemType a[], int N)
+*  {
+*       int i, j, k, h; itemType v;
+*       int incs[16] = { 1391376, 463792, 198768, 86961, 33936,
+*                        13776, 4592, 1968, 861, 336,
+*                        112, 48, 21, 7, 3, 1 };
+*       for ( k = 0; k < 16; k++) {
+*           for (h = incs[k], i = l+h; i <= N; i++) {
+*               v = a[i]; j = i;
+*               while (j > h && a[j-h] > v) {
+*                   a[j] = a[j-h]; j -= h;
+*               }
+*               a[j] = v;
+*           }
+*       }
+*  }
+*
+* See http://www.cs.princeton.edu/~rs/shell/paperF.pdf for details
+*
+*-------------------------------------------------
+*
+*   Input:
+*     r1 = array address a[]
+*     r0 = N array length
+*
+*   Output:
+*     a[] sorted ascending
+*
+*-------------------------------------------------
+*
+         la    r14,1
+         la    r11,incs           * r11 -> increment
+         la    r10,16             * r10 =  pass count
+         sr    r0,r14             * elements are a[0], a[1], ... a[N-1]
+
+nextINC  equ   *
+         l     r9,0(,r11)         * r9  =  h current increment
+         lr    r8,r9              * r8  =  i
+
+         cr    r8,r0              * larger than N?
+         bh    bumpinc
+
+nextI    equ   *
+         lr    r15,r8
+         sll   r15,2
+         alr   r15,r1             * r15 -> a[i]
+         l     r14,0(,r15)        * r14 =  a[i] = v
+         lr    r7,r8              * r7  =  j
+         cr    r7,r9              * j > h ?
+         bl    bumpI
+
+nextJ    equ   *
+         lr    r2,r7              * r2  = j
+         sr    r2,r9              * r2  = j - h
+         sll   r2,2
+         alr   r2,r1              * r2 -> a[j-h]
+         l     r3,0(,r2)          * r3 =  a[j-h]
+         cr    r3,r14             * a[j-h] > v ?
+         bnh   bumpI
+
+         lr    r4,r7              * r4  = j
+         sll   r4,2
+         alr   r4,r1              * r4 -> a[j]
+         st    r3,0(,r4)          * a[j]   = a[j-h]
+         st    r14,0(,r2)         * a[j-h] = v
+
+bumpJ    equ   *
+         sr    r7,r9              * j = j-h
+         cr    r7,r9              * j > h ?
+         bnl   nextJ
+
+bumpI    equ   *
+         la    r8,1(,r8)          * next i
+         cr    r8,r0              * larger than N?
+         bnh   nextI
+
+bumpinc  equ   *
+         la    r11,4(,r11)        * r11 -> next increment
+         bct   r10,nextINC
+         RETURN (14,12),RC=0
+incs     dc    al4(1391376,463792,198768,86961,33936,13776,4592,1968)
+         dc    al4(861,336,112,48,21,7,3,1)
+         end

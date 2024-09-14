@@ -1,0 +1,117 @@
+08:31:26 CALLCOMP  MZ390 START USING z390 V1.5.06 ON J2SE 1.6.0_31 05/22/12
+AZ390I Copyright 2011 Automated Software Tools Corporation
+AZ390I z390 is licensed under GNU General Public License
+AZ390I program = zcobol\demo\callcomp\CALLCOMP
+AZ390I options = sysmac(C:\PROGRA~2\AUTOMA~1\z390\mac+.) 
+  syscpy(C:\PROGRA~2\AUTOMA~1\z390\mac+.)
+External Symbol Definitions
+ ESD=0001 LOC=00000000 LEN=00000170 TYPE=CST NAME=CALLCOMP
+ ESD=0002 LOC=00000000 LEN=00000000 TYPE=EXT NAME=COMPSUM
+Assembler Listing
+000000                                        (1/1)1          TITLE 'CALLCOMP - CALL ZCOBOL COMPUTE TO ADD 15 FIELDS'
+000000                                        (1/2)2 * AUTHOR. DON HIGGINS.
+000000                                        (1/3)3 * DATE.   05/12/12.
+000000                                        (1/4)4 * REMARKS. CALL ZCOBOL COMPSUM.CBL TO ADD 15 DIFFERENT FIELD TYPES.
+000000                                        (1/5)5 CALLCOMP SUBENTRY 
+000000                                       (2/78)6+CALLCOMP CSECT 
+000000 90ECD00C                             (2/168)7+         STM   14,12,12(13)
+000004 45FF0068                             (2/169)8+         BAL   15,104(15)
+000008 0000000000000000                     (2/170)9+         DC    18F'0'
+000050 C3C1D3D3C3D6D4D7                    (2/171)10+         DC    CL8'CALLCOMP'
+000058 F0F561F2F261F1F2                    (2/172)11+         DC    CL8'05/22/12'
+000060 F0F84BF3F1404040                    (2/173)12+         DC    CL8'08.31'
+000068 50FD0008                            (2/174)13+         ST    15,8(13)
+00006C 50DF0004                            (2/175)14+         ST    13,4(15)
+000070 18DF                                (2/176)15+         LR    13,15
+000072                                     (2/189)16+         USING CALLCOMP+8,13
+LISTUSE CALLCOMP ESD=0001 LOC=00000008 LEN=01000 REG=D OFF=00000 LAB=
+000072                                       (1/6)18          CALL COMPSUM,(ZDATA)
+000072 0700                                 (4/29)21+         CNOP  0,4
+000074 A7150004                00007C       (4/57)22+         BRAS   1,*+4+1*4
+000078 000000C8                             (4/58)23+         DC     A(ZDATA)
+00007C C4FD00000016            0000A8       (4/79)24+         LRL    15,=V(COMPSUM)
+000082 05EF                                 (4/84)25+         BALR      14,15
+000084 DE06D0B6D161     0000BE 000169        (1/7)28          ED   DSUM,PSUM
+00008A                                       (1/8)29          WTO  MF=(E,MSG)
+00008A 4110D0A4                0000AC       (5/61)30+         LA    1,MSG
+00008E 0A23                                 (5/66)31+         SVC   35
+000090                                       (1/9)33          SUBEXIT 
+000090 41F00000                             (6/33)34+         LA    15,0
+000094 58D0D004                             (6/50)35+         L     13,4(,13)
+000098 58E0D00C                             (6/51)36+         L     14,12(,13)
+00009C 982CD01C                             (6/52)37+         LM    2,12,28(13)
+0000A0 07FE                                 (6/53)38+         BR    14
+0000A2                                      (1/10)40          PRINT DATA
+0000A2                                      (1/11)41          LTORG 
+0000A8 00000000         =V(COMPSUM)
+0000AC 00190000                             (1/12)42 MSG      DC   AL2(MSGEND-*,0)
+0000B0 C3D6D4D7E4E3C540                     (1/13)43          DC   C'COMPUTE TOTAL='
+0000B8 E3D6E3C1D37E
+0000BE                                      (1/14)44 DSUM     DS   0CL(MSGEND-*)
+0000BE 40202020214B20                       (1/15)45          DC   C' ',X'20202021',C'.',X'20'  ZZZ9.9
+0000C5                  000000C5            (1/16)46 MSGEND   EQU  *
+0000C8                                      (1/17)47 ZDATA    DS   0D
+0000C8 41180000                             (1/18)48 EH1      DC   EHL4'1.5'
+0000CC 4118000000000000                     (1/19)49 DH1      DC   DHL8'1.5'
+0000D4 4118000000000000                     (1/20)50 LH1      DC   LHL16'1.5'
+0000DC 3300000000000000
+0000E4 3FC00000                             (1/21)51 EB1      DC   EBL4'1.5'
+0000E8 3FF8000000000000                     (1/22)52 DB1      DC   DBL8'1.5'
+0000F0 3FFF800000000000                     (1/23)53 LB1      DC   LBL16'1.5'
+0000F8 0000000000000000
+000100 22400015                             (1/24)54 ED1      DC   EDL4'1.5'
+000104 2234000000000015                     (1/25)55 DD1      DC   DDL8'1.5'
+00010C 2207C00000000000                     (1/26)56 LD1      DC   LDL16'1.5'
+000114 0000000000000015
+00011C 000F                                 (1/27)57 H1       DC   HL2'15'           3V1
+00011E 00000096                             (1/28)58 F1       DC   FL4'150'          7V2
+000122 00000000000005DC                     (1/29)59 G1       DC   FL8'1500'      15V3
+00012A 0000000000000000                     (1/30)60 Q1       DC   FL16'15000'    25V4
+000132 0000000000003A98
+00013A 0000000000000000                     (1/31)61 P1       DC   PL16'150000'   26V5
+000142 000000000150000C
+00014A F0F0F0F0F0F0F0F0                     (1/32)62 Z1       DC   ZL31'1500000'  25V6
+000152 F0F0F0F0F0F0F0F0
+00015A F0F0F0F0F0F0F0F0
+000162 F1F5F0F0F0F0C0
+000169 00000C                               (1/33)63 PSUM     DC   P'00000'       4V1
+00016C                                      (1/34)64          END 
+Relocation Definitions
+ ESD=0001 LOC=00000078 LEN=4 SIGN=+ XESD=0001
+ ESD=0001 LOC=000000A8 LEN=4 SIGN=+ XESD=0002
+
+Symbol Table Listing
+
+ SYM=CALLCOMP LOC=00000000 LEN=00000170 ESD=0001 TYPE=CST  XREF=6 16 
+ SYM=COMPSUM  LOC=00000000 LEN=00000000 ESD=0002 TYPE=EXT  XREF=24 41 
+ SYM=DB1      LOC=000000E8 LEN=00000008 ESD=0001 TYPE=REL  XREF=52 
+ SYM=DD1      LOC=00000104 LEN=00000008 ESD=0001 TYPE=REL  XREF=55 
+ SYM=DH1      LOC=000000CC LEN=00000008 ESD=0001 TYPE=REL  XREF=49 
+ SYM=DSUM     LOC=000000BE LEN=00000007 ESD=0001 TYPE=REL  XREF=44 28 
+ SYM=EB1      LOC=000000E4 LEN=00000004 ESD=0001 TYPE=REL  XREF=51 
+ SYM=ED1      LOC=00000100 LEN=00000004 ESD=0001 TYPE=REL  XREF=54 
+ SYM=EH1      LOC=000000C8 LEN=00000004 ESD=0001 TYPE=REL  XREF=48 
+ SYM=F1       LOC=0000011E LEN=00000004 ESD=0001 TYPE=REL  XREF=58 
+ SYM=G1       LOC=00000122 LEN=00000008 ESD=0001 TYPE=REL  XREF=59 
+ SYM=H1       LOC=0000011C LEN=00000002 ESD=0001 TYPE=REL  XREF=57 
+ SYM=LB1      LOC=000000F0 LEN=00000010 ESD=0001 TYPE=REL  XREF=53 
+ SYM=LD1      LOC=0000010C LEN=00000010 ESD=0001 TYPE=REL  XREF=56 
+ SYM=LH1      LOC=000000D4 LEN=00000010 ESD=0001 TYPE=REL  XREF=50 
+ SYM=MSG      LOC=000000AC LEN=00000002 ESD=0001 TYPE=REL  XREF=42 30 
+ SYM=MSGEND   LOC=000000C5 LEN=00000001 ESD=0001 TYPE=REL  XREF=46 42 44 
+ SYM=P1       LOC=0000013A LEN=00000010 ESD=0001 TYPE=REL  XREF=61 
+ SYM=PSUM     LOC=00000169 LEN=00000003 ESD=0001 TYPE=REL  XREF=63 28 
+ SYM=Q1       LOC=0000012A LEN=00000010 ESD=0001 TYPE=REL  XREF=60 
+ SYM=Z1       LOC=0000014A LEN=0000001F ESD=0001 TYPE=REL  XREF=62 
+ SYM=ZDATA    LOC=000000C8 LEN=00000008 ESD=0001 TYPE=REL  XREF=47 23 
+
+Literal Table Listing
+
+ LIT=V(COMPSUM) LOC=000000A8 LEN=00000004 ESD=0001 POOL=0001 XREF=24 
+ 
+AZ390I total mnote warnings = 0
+AZ390I total mnote errors   = 0
+AZ390I max   mnote level    = 0
+AZ390I total mz390 errors   = 0
+AZ390I total az390 errors   = 0
+08:31:26 CALLCOMP  MZ390 ENDED   RC= 0 SEC= 0 MEM(MB)= 37 IO=673

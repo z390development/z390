@@ -1,0 +1,18 @@
+FWDREFS SUBENTRY
+        IF     (CLC,A123(3),EQ,X123)
+               WTO '1, 2, 3 OK'
+        ELSE
+               WTO '1, 2, 3 ERROR'
+        ENDIF
+        SUBEXIT 
+THREE   EQU    TWO+1   resolved on third pass
+TWO     EQU    ONE+1   resolved on second pass
+ONE     EQU    1       resolved on first pass
+X123    DC     XL1'1,2,3'
+A123    DC     AL1(ONE,TWO,THREE)
+*
+* 2014-08-04 Don Higgins add 1 loctr to force 1 extra pass 
+*                        to resolve nested forward reference
+*
+L1      LOCTR
+        END

@@ -1,0 +1,37 @@
+17:21:33 P16WR1    EZ390 STARTED USING z390 V1.4.00f ON J2SE 1.6.0_04
+EZ390I Copyright 2008 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = mfacc\P16WR1.390
+EZ390I options = 
+ZMFACC Solution for problem P16WR1 by WERNER RAMS using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+PRIME =   2
+PRIME =   3
+PRIME =   5
+PRIME =   7
+PRIME =  11
+PRIME =  13
+PRIME =  17
+PRIME =  19
+PRIME =  23
+PRIME =  29
+PRIME =  31
+PRIME =  37
+PRIME =  41
+PRIME =  43
+PRIME =  47
+PRIME =  53
+PRIME =  59
+PRIME =  61
+PRIME =  67
+PRIME =  71
+PRIME =  73
+PRIME =  79
+PRIME =  83
+PRIME =  89
+PRIME =  97
+SNAP DUMP ID=2 TEXT=Output Area
+ 000FFF40 *0AEBAEFA FBAEFBEB EEBEEFBF B0      * *............^   *
+EZ390I instructions/sec     = 120523
+EZ390I total errors         = 0
+17:21:33 P16WR1    EZ390 ENDED   RC= 0 SEC= 0 MEM(MB)= 16 IO=58 INS=2531

@@ -1,0 +1,63 @@
+P9       ZMFACC CODE,START,NAME='MELVYN MALTZ' 
+* 
+* IMPROVED VERSION FROM SUGGESTION BY BINYAMIN DISSEN 
+* 
+         LA    R1,OUT1+5          PRESET CURRENCY SYMBOL IF ZERO 
+         MVC   OUT1,MASK          SET EDIT MASK 
+         EDMK  OUT1,TEST1         EDIT 
+         BCTR  R1,0               BACK OFF 1 FOR CURRENCY SYMBOL 
+         MVI   0(R1),C'$'         SET CURRENCY SYMBOL 
+         BNM   NEXT1              EXIT IF NOT NEGATIVE 
+         BCTR  R1,0               BACK OFF FROM CURRENCY SYMBOL 
+         MVI   0(R1),C'('         SET BEG PAREN 
+* 
+NEXT1    DS    0H 
+         LA    R1,OUT2+5          PRESET CURRENCY SYMBOL IF ZERO 
+         MVC   OUT2,MASK          SET EDIT MASK 
+         EDMK  OUT2,TEST2         EDIT 
+         BCTR  R1,0               BACK OFF 1 FOR CURRENCY SYMBOL 
+         MVI   0(R1),C'$'         SET CURRENCY SYMBOL 
+         BNM   NEXT2              EXIT IF NOT NEGATIVE 
+         BCTR  R1,0               BACK OFF FROM CURRENCY SYMBOL 
+         MVI   0(R1),C'('         SET BEG PAREN 
+* 
+NEXT2    DS    0H 
+         LA    R1,OUT3+5          PRESET CURRENCY SYMBOL IF ZERO 
+         MVC   OUT3,MASK          SET EDIT MASK 
+         EDMK  OUT3,TEST3         EDIT 
+         BCTR  R1,0               BACK OFF 1 FOR CURRENCY SYMBOL 
+         MVI   0(R1),C'$'         SET CURRENCY SYMBOL 
+         BNM   NEXT3              EXIT IF NOT NEGATIVE 
+         BCTR  R1,0               BACK OFF FROM CURRENCY SYMBOL 
+         MVI   0(R1),C'('         SET BEG PAREN 
+* 
+NEXT3    DS    0H 
+         LA    R1,OUT4+5          PRESET CURRENCY SYMBOL IF ZERO 
+         MVC   OUT4,MASK          SET EDIT MASK 
+         EDMK  OUT4,TEST4         EDIT 
+         BCTR  R1,0               BACK OFF 1 FOR CURRENCY SYMBOL 
+         MVI   0(R1),C'$'         SET CURRENCY SYMBOL 
+         BNM   SNAPIT             EXIT IF NOT NEGATIVE 
+         BCTR  R1,0               BACK OFF FROM CURRENCY SYMBOL 
+         MVI   0(R1),C'('         SET BEG PAREN 
+* 
+SNAPIT   DS    0H 
+         ZMFACC CODE,END 
+* 
+         ZMFACC INPUT,START 
+         DS    0D 
+TEST1    DC    PL4'89378' 
+TEST2    DC    PL4'-9142536' 
+TEST3    DC    PL4'0' 
+TEST4    DC    PL4'-1' 
+         ZMFACC INPUT,END 
+* 
+MASK     DC    X'4020206B2021204B20205D' 
+         DS    0D 
+         ZMFACC OUTPUT,START 
+OUT1     DC    CL11' ' 
+OUT2     DC    CL11' ' 
+OUT3     DC    CL11' ' 
+OUT4     DC    CL11' ' 
+         ZMFACC OUTPUT,END 
+         END

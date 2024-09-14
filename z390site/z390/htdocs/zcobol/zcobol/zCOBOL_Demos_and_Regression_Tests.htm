@@ -1,0 +1,334 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 12.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>zCOBOL Portable COBOL Demo and Regression Test Programs</title>
+<META NAME="DESCRIPTION" CONTENT="z390 Protable Mainframe Assembler, Linker, Emulator Open Source J2SE">
+<META name="KEYWORDS" content="Mainframe Assembler Tools z390 SuperZap Open Source J2SE Java">
+
+<style>
+<!--
+ li.MsoNormal
+	{mso-style-parent:"";
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	margin-left:0in; margin-right:0in; margin-top:0in}
+-->
+</style>
+
+</head>
+
+<body>
+<table border="0" cellpadding="0" cellspacing="3" style="border-collapse: collapse" bordercolor="#111111" id="AutoNumber1" width="750" height="1">
+            <tr>
+              <td align="center" width="141" height="69" valign="top">
+              <b><font face="Times New Roman">
+              <a href="http://www.z390.org/zcobol">
+              <img border="0" src="zcobol.jpg" width="100" height="75" alt="z390 Portable Mainframe COBOL Compiler"></a></font></b></td>
+              <td align="center" width="445" height="69">
+              <p align="center"><b><font size="4" face="Times New Roman">zCOBOL 
+              Portable Mainframe COBOL<br>
+              Demo, Regression Test, and EXEC CICS COBOL Programs</font></b></td>
+              <td width="152" height="69" align="center">
+              <b>
+              <a href="http://www.z390.org">
+              <img border="0" src="z390.jpg" width="124" height="75" alt="z390 Portable Mainframe Assembler and Emulator"></a><font face="Times New Roman"><br>
+&nbsp;</font></b></td>
+            </tr>
+            <tr>
+              <td align="center" width="246" height="35" valign="top">
+              <b><a href="#zcobo_Demo_Programs">Demo Programs</a></b></td>
+              <td align="center" width="246" height="35" valign="top">
+              <b><a href="#zcobo_Regression_Tests">Regression Test Programs</a></b></td>
+              <td align="center" width="246" height="35" valign="top">
+              <b>
+              <a href="http://www.z390.org/z390_EXEC_CICS_Compatible_Assembler_Support.htm">
+              EXEC CICS Programs</a></b></td>
+            </tr>
+            <tr>
+              <td align="center" width="738" height="69" valign="top" colspan="3">
+              <b>
+              <br>
+              <a name="zcobo_Demo_Programs">zcobol Demo Programs in 
+              zcobol\demo</a><br>
+&nbsp;</b><table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%">
+                <tr>
+                  <td width="14%"><b>HELLO</b></td>
+                  <td width="86%"><b>Display &quot;Hello World&quot; and STOP RUN</b></td>
+                </tr>
+                <tr>
+                  <td width="14%"><b>DATETIME</b></td>
+                  <td width="86%"><b>ACCEPT current date and time and display 
+                  month, day of week, and year</b></td>
+                </tr>
+                <tr>
+                  <td width="14%"><b>CALLCOMP</b></td>
+                  <td width="86%"><b>z390 assembler program which calls 
+				  COMPSUM.CBL to COMPUTE expression&nbsp;</b></td>
+                </tr>
+                <tr>
+                  <td width="14%"><b>COMPSUM</b></td>
+                  <td width="86%"><b>zcobol subroutine to calculate sum of 15 
+				  different field types and return packed decimal sum</b></td>
+                </tr>
+                <tr>
+                  <td width="14%"><b>COPYFILE</b></td>
+                  <td width="86%"><b>Read line sequential ASCII file and copy it to 
+                  an output line sequential file</b></td>
+                </tr>
+                <tr>
+                  <td width="14%"><b>POWERS</b></td>
+                  <td width="86%"><b>Calculate and display powers of 2 up to 2**31</b></td>
+                </tr>
+              </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" width="738" height="69" valign="top" colspan="3">
+              <b>
+              <br>
+              <a name="zcobo_Regression_Tests">zcobol Regression Tests in 
+              zcobol\test</a><br>
+&nbsp;</b><table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%">
+                <tr>
+                  <td width="15%"><b>TESTADD1</b></td>
+                  <td width="85%"><b>Test 225 combinations of ADD</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTADD2</b></td>
+                  <td width="85%"><b>Test 225 combinations of ADD with different 
+				  implied decimals</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTASM4.MLC</b></td>
+                  <td width="85%"><b>Assembler module statically linked with 
+                  TESTCAL3.CBL</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTBFP1</b></td>
+                  <td width="85%"><b>Test Binary Floating Point support</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTCAL1</b></td>
+                  <td width="85%"><b>CALL TESTCAL2 statically linked</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTCAL2</b></td>
+                  <td width="85%"><b>CALL TESTCAL3 dynamically</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTCAL3</b></td>
+                  <td width="85%"><b>Dynamically loaded zcobol module which calls 
+                  statically linked TESTASM4 assembler routine</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTCMP1</b></td>
+                  <td width="85%"><b>ADD, SUBTRACT, MULTIPLY, and DIVIDE all 
+                  formats</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTCMP2</b></td>
+                  <td width="85%"><b>Test ADD, SUBTRACT, MULTIPLY, and DIVIDE</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTCMP3</b></td>
+                  <td width="85%"><b>Test COMPUTE with implied decimal points 
+				  for data type F, G, H, P, Q, and Z.</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTCMP4</b></td>
+                  <td width="85%"><b>Test COMPUTE with literals and different 
+				  numberic values and implied decimals.</b></td>
+                </tr>
+                  <tr>
+                  <td width="15%"><b>TESTCMP5</b></td>
+                  <td width="85%"><b>Test 225 combinations of COMPUTE</b></td>
+                  </tr>
+				  <tr>
+                  <td width="15%"><b>TESTCMP6</b></td>
+                  <td width="85%"><b>Test 225 combinations of COMPUTE with 
+				  different implied decimals</b></td>
+                  </tr>
+                <tr>
+                  <td width="15%"><b>TESTCPY1</b></td>
+                  <td width="85%"><b>COPY</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTCPY2</b></td>
+                  <td width="85%"><b>nested COPY</b></td>
+                </tr>
+                  <tr>
+                  <td width="15%">TESTDFP1</td>
+                  <td width="85%">Test Decimal Floating Point )DFP) support</td>
+                  </tr>
+				  <tr>
+                  <td width="15%"><b>TESTDIV1</b></td>
+                  <td width="85%"><b>Test 225 combinations of DIVIDE</b></td>
+                  </tr>
+				  <tr>
+                  <td width="15%"><b>TESTDIV2</b></td>
+                  <td width="85%"><b>Test 225 combinations of DIVIDE with 
+				  different implied decimals</b></td>
+                  </tr>
+                <tr>
+                  <td width="15%"><b>TESTDSP1</b></td>
+                  <td width="85%"><b>DISPLAY all formats</b></td>
+                </tr>
+                  <tr>
+                  <td width="15%">TESTFIL1</td>
+                  <td width="85%">Test file access</td>
+                  </tr>
+				  <tr>
+                  <td width="15%">TESTFIL2</td>
+                  <td width="85%">Test file access</td>
+                  </tr>
+                <tr>
+                  <td width="15%"><b>TESTFUN1</b></td>
+                  <td width="85%"><b>ACCEPT, TRANSFORM, NUMERIC, etc.</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTGO1</b></td>
+                  <td width="85%"><b>GO TO DEPENDING ON</b></td>
+                </tr>
+                <tr>
+                  <td width="15%">TESTHFP1</td>
+                  <td width="85%">Test Hexidecimal Floating Point (HFP) support</td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTIF1</b></td>
+                  <td width="85%"><b>Compound IF requiring use of intermediate T/F 
+                  flags</b></td>
+                </tr>
+                <tr>
+                  <td width="15%">TESTIF2</td>
+                  <td width="85%">Test IF with omitted operands such as IF A = B 
+				  OR C</td>
+                </tr>
+                <tr>
+                  <td width="15%">TESTIF3</td>
+                  <td width="85%">Test IF with parenthesis</td>
+                </tr>
+                <tr>
+                  <td width="15%">TESTINT1</td>
+                  <td width="85%">Test integer data types H, F, G, Q, P, and Z</td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTISP1</b></td>
+                  <td width="85%"><b>INSPECT TALLYING, REPLACING, TRANSFORMING</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTMOV1</b></td>
+                  <td width="85%"><b>MOVE all formats</b></td>
+                </tr>
+                  <tr>
+                  <td width="15%">TESTMOV2</td>
+                  <td width="85%">Test alignment for non-floating point moves</td>
+                  </tr>
+				  <tr>
+                  <td width="15%">TESTMOV3</td>
+                  <td width="85%">Test scaling for implied decimal for 
+				  non-floating point moves</td>
+                  </tr>
+				  <tr>
+                  <td width="15%"><b>TESTMPY1</b></td>
+                  <td width="85%"><b>Test 225 combinations of MULTIPLY</b></td>
+                  </tr>
+				  <tr>
+                  <td width="15%"><b>TESTMPY2</b></td>
+                  <td width="85%"><b>Test 225 combinations of MULTIPLY with 
+				  different implied decimals</b></td>
+                  </tr>
+                <tr>
+                  <td width="15%"><b>TESTPM1</b></td>
+                  <td width="85%"><b>PERFORM VARYING and PERFORM TIMES</b></td>
+                </tr>
+                <tr>
+                  <td width="15%">TESTPM2</td>
+                  <td width="85%">Test PERFORM with duplicate paragraph names in 
+				  different sections</td>
+                </tr>
+                <tr>
+                  <td width="15%">TESTPM3</td>
+                  <td width="85%">Test reading file using nested PERFORM VARYING</td>
+                </tr>
+                <tr>
+                  <td width="15%">TESTRMD1</td>
+                  <td width="85%">Test move reference modification of the form 
+				  MOVE F1(var1+lit1:len1) TO F2(var2+lit2:len2)</td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTSIX1</b></td>
+                  <td width="85%"><b>Test multiple subscripts</b></td>
+                </tr>
+                  <tr>
+                  <td width="15%">TESTSIX2</td>
+                  <td width="85%">Test SET and INDEXED form of subscripting</td>
+                  </tr>
+				  <tr>
+                  <td width="15%"><b>TESTSUB1</b></td>
+                  <td width="85%"><b>Test 225 combinations of SUBTRACT</b></td>
+                  </tr>
+				  <tr>
+                  <td width="15%"><b>TESTSUB2</b></td>
+                  <td width="85%"><b>Test 225 combinations of SUBTRACT with 
+				  different implied decimals</b></td>
+                  </tr>
+                <tr>
+                  <td width="15%"><b>TESTTRC1</b></td>
+                  <td width="85%"><b>TRUNC</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTTRC2</b></td>
+                  <td width="85%"><b>NOTRUNC with ONSIZE</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTTRC3</b></td>
+                  <td width="85%"><b>TRUNC and NOR64 to test use of DXR versus DSG</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTWS1</b></td>
+                  <td width="85%"><b>Working storage REDEFINE and OCCURS with 
+                  padding</b></td>
+                </tr>
+                </table>
+              </td>
+            </tr>
+            </table>
+         
+        
+        </table>
+<p align="center"><b><font face="Times New Roman">IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS<br>
+&nbsp;are registered trademarks
+&nbsp;of International Business Machines Corporation</font></b></p>
+
+<p align="center"><b><font face="Times New Roman">This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Tuesday May 22, 2012<!--webbot bot="Timestamp" endspan i-checksum="29251" -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools z390 Portable Mainframe Assembler and Emulator">Webmaster</a><br>
+Copyright 2009 <a href="http://www.AutomatedSoftwareTools.com">Automated Software Tools Corporation</a></font></b></p>
+
+<p align="center">
+<b><font face="Times New Roman">
+<br>
+<script language=javascript type="text/javascript" src="http://ss.webring.com/navbar?f=j;y=dsh33782;u=10138599"> </script><noscript>
+<center> <table bgcolor=gray cellspacing=0 border=2><tr> <td><table cellpadding=2 cellspacing=0 border=0><tr><td align=center> <font face=arial size=-1>This site is a member of WebRing. <br>To browse visit <a href="http://ss.webring.com/navbar?f=l;y=dsh33782;u=10138599"> Here</a>.</font></td></tr></table></td></tr></table> </center></noscript> 
+<!-- START OF ACTIVEMETER CODE -->
+<script type="text/javascript" language="javascript">
+var __pid=36843;
+var __am_invisible=0;
+</script>
+<script type="text/javascript" language="javascript" src="http://www.activemeter.com/counter.js"></script>
+<noscript>
+   <a href="http://www.activemeter.com/" target="_blank">
+      <img  src="http://am1.activemeter.com/webtracker/track.html?method=track&pid=36843&java=0" alt="Free Web Counter" border="0">
+   </a></noscript>
+<!-- END OF ACTIVEMETER CODE -->
+</font></b>
+</p>
+
+</body>
+
+</html>

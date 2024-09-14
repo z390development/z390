@@ -1,0 +1,111 @@
+*********************************************************************
+* Z390 MAINFRAME ASSEMBLER CODING CONTEST PROBLEM #11.
+* CODE TWO ROUTINES TO ADD AND FIND OPCODE TABLE ENTRIES.
+* THE TABLE CONTAINS 856 ENTRIES WITH 8 BYTE MNEMONIC NAMES AND 2 BYTE 
+* OPCODES.  THE TABLE IS INCLUDED IN PROGRAM VIA COPY FROM OPCODES.CPY
+* TO COMPARE THE PERFORMANCE OF SOLUTIONS, USE THIS MODEL PROGRAM 
+* WHICH LOADS TABLE AND THEN FINDS ALL ENTRIES 100 TIMES VERIFYING
+* THAT MATCHING OPCODE TABLE ENTRY IS RETURNED.  THE ROUTINE MUST BE
+* CODED TO HANDLE RANDOM ACCESS EVEN THOUGH THIS TEST USES SEQUENTIAL
+* ACCESS.
+********************************************************************* 
+*********************************************************************
+P11WR1   ZMFACC CODE,START,NAME='WERNER RAMS',RUNSYS=390
+         LA     R3,TABLE
+LOOP1    DS     0H            LOAD HASH TABLE
+         BAL    R10,ADDOP        ADD TABLE ENTRIES TO MY HASH TABLE
+         AHI    R3,10
+         CL     R3,=A(TABLEEND)
+         BL     LOOP1
+         LA     R4,100
+LOOP2    DS     0H            REPEAT FIND LOOP 100 TIMES
+         LA     R3,TABLE
+LOOP3    DS     0H            FIND EACH ENTRY IN TABLE
+         BAL    R10,FINDOP       FIND TABLE ENTRY FOR NAME AT (R3)
+         CLR    R1,R3            VERIFY MATCHING ENTRY
+         BNE    1                ABORT IF ERROR
+         AHI    R3,LENTRY
+         CL     R3,=A(TABLEEND)
+         BL     LOOP3
+         BCT    R4,LOOP2
+         ZMFACC CODE,END 
+         ZMFACC INPUT,START 
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         ZMFACC OUTPUT,END
+*
+* ADD HASH TABLE ENTRY WITH NAME AT (R3) AND OPCODE AT 8(R3)
+* AND RETURN VIA R10
+*
+ADDOP    DS    0H
+*                     YOUR ADD ROUTINE CODE HERE
+         L     R6,=A(HASHADR)
+         USING HASHADR,R6
+         L     R5,0(R6)   1. FREE ADDRESS
+         SR    R14,R14
+         ICM   R15,7,4(R3)      make ...
+         SLDL  R14,17           Hashvalue
+         O     R15,0(R3) 
+         D     R14,=A(HASHANZ)   R14 = HASHENTRY
+         SLL   R14,2             * 4
+         LA    R15,HASHANF(R14)
+ADD005   EQU   *
+         LR    R12,R15
+         ICM   R15,15,0(R15)        END OF THIS ENTRY FOUND ?
+         BNZ   ADD005               NO
+ADD010   EQU   *
+         ST    R5,0(R12)            BEGIN NEXT ENTRY
+         ST    R15,0(R5)            NEW END OF CHAIN 
+         ST    R3,4(R5)             TABLEENTRY
+         LA    R5,8(R5)
+         ST    R5,0(R6)                                
+         BR    R10
+*
+* FIND HASH TABLE ENTRY WITH NAME AT (R3) AND RETURN ADDRESS OF
+* ENTRY IN R1
+* AND RETURN VIA R10
+*
+FINDOP   DS    0H
+         L     R6,=A(HASHADR)
+         SR    R14,R14
+         ICM   R15,7,4(R3)
+         SLDL  R14,17
+         O     R15,0(R3) 
+         D     R14,=A(HASHANZ)   R14 = HASHENTRY
+         SLL   R14,2             * 4
+         LA    R15,HASHANF(R14)
+FIND005  EQU   *
+         ICM   R15,15,0(R15)    
+         BZ    1                ENTRY NOT FOUND, ERROR 
+         C     R3,4(R15)        ENTRY FOUND ?
+         BNE   FIND005          NO, TRY NEXT ENTRY IN CHAIN
+         L     R1,4(R15)        ENTRY FOUND         
+         BR    R10
+         LTORG
+         PRINT DATA
+*
+* TABLE OF OPCODE MNEMONICS AND HEX OPCODES
+*
+TABLE    DS     0D
+         MACRO
+         ZOSOP &HEXOP,&DESC,&OPCODE,&TYPE,&NOP=
+&TDESC   SETC  '&DESC'(2,K'&DESC-2)
+&THEXOP  SETC  '&HEXOP'(2,K'&HEXOP-2)
+&THEXOP  SETC  '&THEXOP.00'(1,4)
+ DC CL8&OPCODE,XL2'&THEXOP' &TDESC
+         MEND
+LENTRY   EQU    8+2
+         COPY   OPCODES
+TABLEEND EQU    *
+*
+* HASH TABLE
+*   
+         DC    C'YOUR HASH TABLE DATA AREAS HERE'
+HASHANZ  EQU   977     SHOULD BE A PRIME NUMBER, 
+*                      LITTLE HIGHER THAN COUNT OF ENTRIES
+HASHADR  DC    A(HASHBER)
+HASHANF  DS    0F
+         DC    (HASHANZ)F'0'          
+HASHBER  DS    CL((TABLEEND-TABLE)/LENTRY*8+8)
+HASHBERE EQU   *
+         END

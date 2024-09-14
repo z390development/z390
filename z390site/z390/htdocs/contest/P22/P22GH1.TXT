@@ -1,0 +1,61 @@
+P22GH1   ZMFACC CODE,START,NAME='Glen Herrmannsfeldt'
+         WTO    'COUNT TOTAL BITS IN STRING AND DISPLAY RESULT'
+* INITIALIZE 64 BIT REGSITER CONSTANTS         
+         LG    R8,=X'5555555555555555'
+         LG    R9,=X'3333333333333333'
+         LG    R10,=X'0f0f0f0f0f0f0f0f'
+         LG    R11,=FL8'255'
+* LOOP TO LOAD DOUBLE WORDS FROM STRING IN R5 AND PROCESS
+         LA    R1,INPUT              R1 = A(STRING) ON DWORD, PADDED
+         LA    R2,8                  R2 = INCR FOR BXLE
+         L     R3,=A(INPUT+INPLEN-1) R3 = A(LAST BYTE OF STRING)
+         SGR   R7,R7                 R7 = TOTAL BITS
+LOOP  LG    R5,0(R1)         
+         SRLG R6,R5,1
+         NGR  R5,R8
+         NGR  R6,R8
+         AGR  R5,R6
+*******
+         SRLG R6,R5,2
+         NGR  R5,R9
+         NGR  R6,R9
+         AGR  R5,R6
+*******
+         SRLG R6,R5,4
+         NGR  R5,R10
+         NGR  R6,R10
+         AGR  R5,R6
+*******
+         SRLG R6,R5,8
+         AGR  R5,R6
+*******
+         SRLG R6,R5,16
+         AGR  R5,R6
+*******
+         SRLG R6,R5,32
+         AGR  R5,R6
+*******
+         NGR  R5,R11
+         AGR  R7,R5
+      BXLE  R1,R2,LOOP
+* STORE RESULT
+         ST    R7,COUNT
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         DC     C'STRING='
+INPUT    DS    0D
+         DC    C'Code fastest instruction sequence to count bits '
+         DC    C'in an arbitrary string of bytes using currently '
+         DC    C'available z/Architecture instructions prior to '
+         DC    C'new instruction coming with z196 which is '
+         DC    C'estimated to be 5 times faster.'
+INPLEN   EQU   *-INPUT
+         DC     XL8'00'   PAD WITH ZEROS TO NEXT DOUBLE WORLD
+LINPUT   DC     A(INPLEN)
+          
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         DC    C'TOTAL BIT COUNT ='
+COUNT    DC    F'0'
+         ZMFACC OUTPUT,END
+         END

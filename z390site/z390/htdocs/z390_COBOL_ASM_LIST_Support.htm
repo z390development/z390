@@ -1,0 +1,260 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>z390 COBOL Assembler List Conversion Support</title>
+</head>
+
+<body>
+
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="center" width="202" height="90">
+              <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></td>
+              <td align="center" width="405" height="90">
+              <p align="center"><b><font size="5">z390 COBOL Assembler List 
+              Conversion
+              Support as of v1.4.01b</font></b></td>
+              <td width="147" height="90" align="center">
+              <b>
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="laptop.gif" alt="Automated Software Tools Corporation" width="97" height="71"></a></b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3">
+              <b>z390 COBOL Portable Assembler Support provides open source 
+              utilities and support modules required to generate z390 assembler 
+              source programs from mainframe COBOL compiler assembler list 
+              output option.&nbsp; The generated z390 assembler source programs 
+              can then be assembled, linked, and executed along with other 
+              mainframe assembler programs on any z390 supported 
+              platform including Windows and Linux.&nbsp; This capability can be 
+              used as an educational aide for those interested in learning how 
+              the assembler code generated from COBOL code works, plus it can be 
+              used for unit testing and benchmarking alternative coding methods.&nbsp; There is 
+              an option to select a range of COBOL lines to be executed.&nbsp; 
+              See specific COBOL version support below for details:</b><table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%">
+                <tr>
+                  <td width="25%" align="left" valign="top"><b>z390 COBOL 
+                  Portable Assembler Support by type:</b><ul>
+                    <li><b>
+                    <a href="#z390 Enterprise COBOL Portable Assembler Support">
+                    Enterprise COBOL Assembler Support</a> </b></li>
+                    <li><b>
+                    <a href="#z390 COBOL for OS/390 and VM Portable Assembler Support">
+                    COBOL for OS/390 Assembler Support</a> </b></li>
+                    <li><b>Future Support (Send Requests and Examples)</b><ul>
+                    <li><b>COBOL for MVS Assembler Support</b></li>
+                    <li><b>COBOL/370 Assembler Support</b></li>
+                    <li><b>VS COBOL II Assembler Support<br>
+&nbsp;</b></li>
+                  </ul>
+                    </li>
+                  </ul>
+                  </td>
+                  <td width="25%" align="left" valign="top"><b>COBOL References:</b><ul>
+                    <li><b>
+                    <a href="http://www-306.ibm.com/software/awdtools/cobol/zos/">
+                    IBM Enterprise COBOL</a></b><ul>
+                    <li><b>
+                    <a href="http://publib.boulder.ibm.com/infocenter/pdthelp/v1r1/index.jsp?topic=/com.ibm.entcobol4.doc/rpbug02.htm">
+                    LIST Option</a></b></li>
+                    <li><b>
+                    <a href="http://publib.boulder.ibm.com/infocenter/pdthelp/v1r1/index.jsp?topic=/com.ibm.entcobol4.doc/rpbug02.htm">
+                    Reading LIST </a></b></li>
+                  </ul>
+                    </li>
+                    <li><b>
+                    <a href="http://www-306.ibm.com/software/awdtools/cobol/">
+                    IBM COBOL Family</a></b></li>
+                    <li><b><a href="http://www.z390.org">z390 Portable Assembler</a></b></li>
+                  </ul>
+                  </td>
+                </tr>
+              </table>
+              <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%">
+                <tr>
+                  <td width="100%">
+                  <p align="center"><b>
+                  <a name="z390 Enterprise COBOL Portable Assembler Support">
+                  z390 Enterprise COBOL Portable Assembler Support</a></b></p>
+                  <p align="left"><b>The z390 Enterprise COBOL portable 
+                  assembler support consists for the following components:</b></p>
+                  <ol>
+                    <li>
+                  <p align="left"><b>cobol\PAECGEN.MLC - z390 utility to read 
+                  COBOL generated assembler list txt file via DDNAME=SYSUT1 and&nbsp; 
+                  produced z390 assembler source program MLC file via 
+                  DDNAME=SYSUT2.</b></p>
+                    </li>
+                    <li>
+                  <p align="left"><b>cobol\PAECGEN.BAT - command to generate, 
+                  assemble, link, and execute portable assembler program with 
+                  optional SYSPARM(nn:mm) to specify starting COBOL line number 
+                  nn and ending line number mm.</b></p>
+                    </li>
+                    <li>
+                  <p align="left"><b>cobol\PAECINT.MLC/OBJ - statically linked 
+                  interface module included with each generated program.</b></p>
+                    </li>
+                    <li>
+                  <p align="left"><b>cobol\PAECLINT.CPY - copybook with shared 
+                  DSECT's</b></p>
+                    </li>
+                    <li>
+                  <p align="left"><b>cobol\PAECLIB.MLC/390 - dynamically loaded 
+                  support module used by all generated programs.&nbsp; Currently 
+                  the following COBOL verb generated library call functions are 
+                  supported::</b></p>
+                    <ol>
+                      <li>
+                  <p align="left"><b>DISPLAY</b></p>
+                      </li>
+                      <li>
+                  <p align="left"><b>STOP RUN</b></p>
+                      </li>
+                      <li>
+                  <p align="left"><b>(Sample programs with requests for 
+                  additional support welcome)</b></p>
+                      </li>
+                    </ol>
+                    </li>
+                    <li>
+                  <p align="left"><b>cobol\paec - subdirectory with sample 
+                  program and command files</b></p>
+                    <ol>
+                      <li>
+                  <p align="left"><b>ECDEMO1.TXT - sample hello world program 
+                  txt file (waiting for permission from user to include)</b></p>
+                      </li>
+                      <li>
+                  <p align="left"><b>ECDEMO1.BAT - command with SYSPARM(51:52) 
+                  to execute just the DISPLAY and STOP RUN lines.</b></p>
+                      </li>
+                      <li>
+                  <p align="left"><b>ECDEMO1.LOG - sample output from generated 
+                  &quot;Hello World&quot; demo program.</b></p>
+                      </li>
+                    </ol>
+                    </li>
+                  </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="100%">
+                  <p align="center"><b>
+                  <a name="z390 COBOL for OS/390 and VM Portable Assembler Support">
+                  z390 COBOL for OS/390 and VM Portable Assembler Support</a></b></p>
+                  <p align="left"><b>The z390 COBOL for OS/390 and VM portable 
+                  assembler support consists for the following components:</b></p>
+                  <ol>
+                    <li>
+                  <p align="left"><b>cobol\PAOSGEN.MLC - z390 utility to read 
+                  COBOL generated assembler list txt file via DDNAME=SYSUT1 and&nbsp; 
+                  produced z390 assembler source program MLC file via 
+                  DDNAME=SYSUT2.</b></p>
+                    </li>
+                    <li>
+                  <p align="left"><b>cobol\PAOSGEN.BAT - command to generate, 
+                  assemble, link, and execute portable assembler program with 
+                  optional SYSPARM(nn:mm) to specify starting COBOL line number 
+                  nn and ending line number mm.</b></p>
+                    </li>
+                    <li>
+                  <p align="left"><b>cobol\PAOSINT.MLC/OBJ - statically linked 
+                  interface module included with each generated program.</b></p>
+                    </li>
+                    <li>
+                  <p align="left"><b>cobol\PAOSLINT.CPY - copybook with shared 
+                  DSECT's</b></p>
+                    </li>
+                    <li>
+                  <p align="left"><b>cobol\PAOSLIB.MLC/390 - dynamically loaded 
+                  support module used by all generated programs.&nbsp; Currently 
+                  the following COBOL verb generated library call functions are 
+                  supported in addition to inline code::</b></p>
+                    <ol>
+                      <li>
+                  <p align="left"><b>DISPLAY</b></p>
+                      </li>
+                      <li>
+                  <p align="left"><b>STOP RUN</b></p>
+                      </li>
+                      <li>
+                  <p align="left"><b>(Sample programs with requests for 
+                  additional library function support welcome)</b></p>
+                      </li>
+                    </ol>
+                    </li>
+                    <li>
+                  <p align="left"><b>cobol\paos - subdirectory with sample 
+                  program and command files</b></p>
+                    <ol>
+                      <li>
+                  <p align="left"><b>OSDEMO1.TXT - sample program found on the 
+                  Internet</b></p>
+                      </li>
+                      <li>
+                  <p align="left"><b>OSDEMO1.BAT - command with SYSPARM(510:515) 
+                  to execute just the DISPLAY &quot;What to do now&quot; and STOP RUN 
+                  lines.</b></p>
+                      </li>
+                    </ol>
+                    </li>
+                  </ol>
+                  <p align="left"><b>The command cobol\paos\OSDEMO1 will read 
+                  cobol\paos\OSDEMO1.TXT file 
+                  and generate the following output files:</b></p>
+                  <ol>
+                    <li>
+                    <p align="left"><b>cobol\paos\OSDEMO1.MLC - generated assembler 
+                    source program</b></li>
+                    <li>
+                    <p align="left"><b>cobol\paos\OSDEMO1.PRN - assembler 
+                    listing with any translation errors</b></li>
+                    <li>
+                    <p align="left"><b>cobol\paos\OSDEMO1.OBJ - mainframe 
+                    compatible assembler object module</b></li>
+                    <li>
+                    <p align="left"><b>cobol\paos\OSDEMO1.LST - linker listing 
+                    with any unresolved reference errors</b></li>
+                    <li>
+                    <p align="left"><b>cobol\paos\OSDEMO1.390 - z390 executable 
+                    load module (only if no errors above)</b></li>
+                    <li>
+                    <p align="left"><b>cobol\paos\OSDEMO1.LOG - z390 execution 
+                    log with any execution errors</b></li>
+                    <li>
+                    <p align="left"><b>cobol\paos\OSDEMO1.TRE - optional detail 
+                    instruction trace if you add option TRACE to command</b></li>
+                  </ol>
+                  <p align="left">&nbsp;</td>
+                </tr>
+              </table>
+              </td>
+            </tr>
+            </table>
+         
+        
+        </table>
+<p align="center"><b>IBM, CICS, ESA, MQ Series, MQM, MVS, OS/390, VSAM, 
+z9, z10, and z/OS are registered trademarks<br>
+&nbsp;of International Business Machines Corporation</b></p>
+
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Tuesday May 27, 2008<!--webbot bot="Timestamp" i-checksum="29455" endspan -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a>&nbsp;
+<a href="pop-up/sitemap.html">Sitemap</a><br>
+Copyright 2005 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </b> </p>
+
+</body>
+
+</html>

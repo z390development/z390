@@ -1,0 +1,16 @@
+* Problem - pgm to swap two 20 byte fields which executes the fastest?
+* Date    - 12/10/07
+* Author  - Don Higgins - University of South Florida
+* Ref.    - z390 Mainframe Assembler Coding Contest on www.z390.org
+P1       ZMFACC  CODE,START,NAME='Don Higgins'
+         LM      4,8,A
+         MVC     A,B
+         STM     4,8,B
+         ZMFACC  CODE,END
+         ZMFACC  INPUT,START
+         ZMFACC  OUTPUT,START
+A        DC      CL20'FIELD A'
+B        DC      CL20'FIELD B'
+         ZMFACC  INPUT,END
+         ZMFACC  OUTPUT,END
+         END

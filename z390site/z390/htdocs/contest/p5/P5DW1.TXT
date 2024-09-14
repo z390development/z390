@@ -1,0 +1,150 @@
+*=====================================================================*
+*
+*        PROBLEM #5 -  CODE TO TRANSLATE 256 BYTES OF TRUE HEX, TO 
+*                      PRINTABLE HEX AND BACK TO TRUE HEX, USING TROT 
+*                      AND TRTO - USING A TOTAL OF 37 INSTRUCTIONS.
+*
+*        DATE    - 27TH AUGUST 2008
+*        AUTHOR  - DAVID WILKINSON
+*
+*=====================================================================*
+P5DW1    ZMFACC CODE,START,NAME='DAVID WILKINSON'
+*
+*        CONVERT BIN TO HEX CHAR
+*
+         L     R1,=A(TT1TO2)           LOAD ADDR OF TRANSLATE TABLE
+         LA    R6,DSPHEX               LOAD ADDR OF DESTINATION 
+         LA    R7,256                  LOAD SOURCE LENGTH
+         LA    R8,INHEX                LOAD ADDR OF SOURCE 
+*
+A1000    EQU   *
+         TROT  R6,R8,1                 TRANSLATE TO PRINTABLE HEX
+         BC    1,A1000                 CONTINUE TROT IF CC=3
+*
+*        CONVERT HEX CHAR TO BIN
+*
+         L     R1,=A(TT2TO1-49600)     LOAD ADDR OF TRANSLATE TABLE
+         LA    R6,OUTHEX               LOAD ADDR OF DESTINATION
+         LA    R7,512                  LOAD SOURCE LENGTH
+         LA    R8,DSPHEX               LOAD ADDR OF SOURCE
+*
+         TRTO  R6,R8,1                 TRANSLATE TO TRUE HEX
+         BC    1,*-4                   CONTINUE TRTO IF CC=3
+*---------------------------------------------------------------------*
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+INHEX    DS    0C
+*
+         DC    X'000102030405060708090A0B0C0D0E0F'  00-0F 
+         DC    X'101112131415161718191A1B1C1D1E1F'  10-1F
+         DC    X'202122232425262728292A2B2C2D2E2F'  20-2F
+         DC    X'303132333435363738393A3B3C3D3E3F'  30-3F
+         DC    X'404142434445464748494A4B4C4D4E4F'  40-4F
+         DC    X'505152535455565758595A5B5C5D5E5F'  50-5F
+         DC    X'606162636465666768696A6B6C6D6E6F'  60-6F
+         DC    X'707172737475767778797A7B7C7D7E7F'  70-7F
+         DC    X'808182838485868788898A8B8C8D8E8F'  80-8F
+         DC    X'909192939495969798999A9B9C9D9E9F'  90-9F
+         DC    X'A0A1A2A3A4A5A6A7A8A9AAABACADAEAF'  A0-AF
+         DC    X'B0B1B2B3B4B5B6B7B8B9BABBBCBDBEBF'  B0-BF
+         DC    X'C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF'  C0-CF
+         DC    X'D0D1D2D3D4D5D6D7D8D9DADBDCDDDEDF'  D0-DF
+         DC    X'E0E1E2E3E4E5E6E7E8E9EAEBECEDEEEF'  E0-EF
+         DC    X'F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF'  F0-FF
+*
+         ZMFACC INPUT,END
+DSPHEX   DS    CL512                   REAL HEX
+         ZMFACC OUTPUT,START
+OUTHEX   DS    CL256                   DISPLAY HEX 
+         ZMFACC OUTPUT,END
+         LTORG ,
+*---------------------------------------------------------------------*
+TT1TO2   DC    0D                      1 TO 2 BYTE - HEX TO DISPLAY HEX
+*
+         DC    C'000102030405060708090A0B0C0D0E0F'  00-0F 
+         DC    C'101112131415161718191A1B1C1D1E1F'  10-1F
+         DC    C'202122232425262728292A2B2C2D2E2F'  20-2F
+         DC    C'303132333435363738393A3B3C3D3E3F'  30-3F
+         DC    C'404142434445464748494A4B4C4D4E4F'  40-4F
+         DC    C'505152535455565758595A5B5C5D5E5F'  50-5F
+         DC    C'606162636465666768696A6B6C6D6E6F'  60-6F
+         DC    C'707172737475767778797A7B7C7D7E7F'  70-7F
+         DC    C'808182838485868788898A8B8C8D8E8F'  80-8F
+         DC    C'909192939495969798999A9B9C9D9E9F'  90-9F
+         DC    C'A0A1A2A3A4A5A6A7A8A9AAABACADAEAF'  A0-AF
+         DC    C'B0B1B2B3B4B5B6B7B8B9BABBBCBDBEBF'  B0-BF
+         DC    C'C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF'  C0-CF
+         DC    C'D0D1D2D3D4D5D6D7D8D9DADBDCDDDEDF'  D0-DF
+         DC    C'E0E1E2E3E4E5E6E7E8E9EAEBECEDEEEF'  E0-EF
+         DC    C'F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF'  F0-FF
+*                                      END OF TABLE
+*---------------------------------------------------------------------*
+TT2TO1   DC    0D                      2 TO 1 BYTE - DISPLAY HEX TO HEX
+*
+         DC    X'FF'
+         DC    X'AAABACADAEAF'
+         DC    41X'FF'
+         DC    X'A0A1A2A3A4A5A6A7A8A9'
+         DC    199X'FF'
+         DC    X'BABBBCBDBEBF' 
+         DC    41X'FF'
+         DC    X'B0B1B2B3B4B5B6B7B8B9'
+         DC    199X'FF'
+         DC    X'CACBCCCDCECF'
+         DC    41X'FF'
+         DC    X'C0C1C2C3C4C5C6C7C8C9'
+         DC    199X'FF'
+         DC    X'DADBDCDDDEDF'  
+         DC    41X'FF'
+         DC    X'D0D1D2D3D4D5D6D7D8D9'
+         DC    199X'FF'
+         DC    X'EAEBECEDEEEF' 
+         DC    41X'FF'
+         DC    X'E0E1E2E3E4E5E6E7E8E9'
+         DC    199X'FF'
+         DC    X'FAFBFCFDFEFF'  
+         DC    41X'FF'
+         DC    X'F0F1F2F3F4F5F6F7F8F9'
+         DC    10695X'FF'
+         DC    X'0A0B0C0D0E0F'
+         DC    41X'FF'
+         DC    X'00010203040506070809'
+         DC    199X'FF'
+         DC    X'1A1B1C1D1E1F'
+         DC    41X'FF'
+         DC    X'10111213141516171819'
+         DC    199X'FF'
+         DC    X'2A2B2C2D2E2F' 
+         DC    41X'FF'
+         DC    X'20212223242526272829'
+         DC    199X'FF'
+         DC    X'3A3B3C3D3E3F'  
+         DC    41X'FF'
+         DC    X'30313233343536373839'
+         DC    199X'FF'
+         DC    X'4A4B4C4D4E4F'  
+         DC    41X'FF'
+         DC    X'40414243444546474849'
+         DC    199X'FF'
+         DC    X'5A5B5C5D5E5F' 
+         DC    41X'FF'
+         DC    X'50515253545556575859'
+         DC    199X'FF'
+         DC    X'6A6B6C6D6E6F' 
+         DC    41X'FF'
+         DC    X'60616263646566676869'
+         DC    199X'FF'
+         DC    X'7A7B7C7D7E7F'  
+         DC    41X'FF'
+         DC    X'70717273747576777879'
+         DC    199X'FF'
+         DC    X'8A8B8C8D8E8F' 
+         DC    41X'FF'
+         DC    X'80818283848586878889'
+         DC    199X'FF'
+         DC    X'9A9B9C9D9E9F'  
+         DC    41X'FF'
+         DC    X'90919293949596979899'
+*                                      END OF TABLE
+*---------------------------------------------------------------------*
+         END

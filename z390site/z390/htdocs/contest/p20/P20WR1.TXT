@@ -1,0 +1,51 @@
+*********************************************************************
+* Z390 MAINFRAME ASSEMBLER CODING CONTEST PROBLEM #20.
+********************************************************************* 
+*********************************************************************
+P20WR1   ZMFACC CODE,START,NAME='WERNER RAMS',RUNSYS=390
+*
+*  THE IDEA IS NOT FROM MYSELF, BUT IS PUBLISHED IN
+*  THE INTERNET FOR THE RANDOM-FUNCTION OF HIGHER PROGRAMMING LANG.
+*  THE FORMULA IS X1 = (397204094*X0) MOD (2 ^ 31 -1)
+*  THE FIRST X0 IS THE VALUE OF SEED
+*  THE FORMULA THEN GENERATES 2 ^ 31 -1 DIFFERENT PSEUDO RANDOM NUMBERS 
+*
+*  ON MY PC THE PROGRAM RUNS ABOUT 1 1/2 HOURS (BY 5 MIPS)
+*
+         MVC    LFDZAHL,SEED 
+         SR     R4,R4
+         L      R2,=X'7FFFFFFF'
+ANF010   EQU   *
+         L      R15,LFDZAHL
+         M      R14,KONST
+         D      R14,=X'7FFFFFFF'
+         ST     R14,LFDZAHL 
+         C      R14,SEED
+         BE     END000  
+         AHI    R4,1
+         BCT    R2,ANF010 
+END000   EQU    * 
+         CVD    R14,DW
+         MVC    ZUFALL,SCHAB
+         ED     ZUFALL,DW+2
+         WTO    MF=(E,WTOMSG)
+         CVD    R4,DW
+         MVC    ZUFALL,SCHAB
+         ED     ZUFALL,DW+2
+         WTO    MF=(E,WTOMSG)
+         ZMFACC CODE,END 
+         ZMFACC INPUT,START 
+SEED     DC     F'101'     CAN BE ANY NUMBER, BUT NOT ZERO      
+KONST    DC     F'397204094' THIS IS FROM THE INTERNET
+         ZMFACC INPUT,END
+LFDZAHL  DS     F         
+BITTAB   DC     X'8040201008040201' 
+         ZMFACC OUTPUT,START
+         ZMFACC OUTPUT,END
+DW       DS     D 
+SCHAB    DC     X'4020204B2020204B2020204B202020'
+WTOMSG   DC     AL2(WTOEND-WTOMSG,0),C'ZUFALL ='
+ZUFALL   DS     CL15
+WTOEND   EQU    * 
+         LTORG
+         END

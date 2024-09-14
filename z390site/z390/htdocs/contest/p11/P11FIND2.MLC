@@ -1,0 +1,110 @@
+         TITLE 'P11FIND2 - FIND HASH TABLE WITH LIMITED DUP KEYS' 
+P11FIND2 ZMFACC CODE,START,NAME='DON HIGGINS'
+*
+*  LOOP UNTIL TABLE WITH TOT DUP KEYS < MAXD AND SEARCHES < MAXS
+*
+FINDLOOP DS     0H
+         LM     R6,R9,=A(HASHTAB,MAX*4,0,0)
+         MVCL   R6,R8         ZERO HASH TABLE 
+         L      R3,=A(TABLE)
+         ZAP    TDUP,=P'0'
+*
+* ADD KEYS TO HASH TABLE UNTIL DUP KEY FOUND OR ALL KEYS ADDED
+*
+LOOP1    DS     0H            LOAD HASH TABLE
+         ZAP    TSEARCH,=P'0'
+         BAL    R10,ADDOP        ADD TABLE ENTRIES TO MY HASH TABLE
+         CP     TSEARCH,MAXS
+         BH     NEXTFIND
+         AP     TDUP,TSEARCH
+         CP     TDUP,MAXD
+         BH     NEXTFIND
+         AHI    R3,10
+         CL     R3,=A(TABLEEND)
+         BL     LOOP1
+         B      DONE
+NEXTFIND DS     0H
+         L      R0,DIVISOR+4
+         AHI    R0,2
+         ST     R0,DIVISOR+4
+         CL     R0,=A(MAX)
+         BL     FINDLOOP
+         WTO    'P11FIND FAILED TO FIND SOLUTION WITHIN MAX'
+         DC     X'0000'  ABORT
+*
+* HASH TABLE FOUND WITH NO DUP KEYS - DISPLAY DIVISOR AND EXIT
+*
+DONE     DS     0H
+         LG     R0,DIVISOR
+         CVDG   R0,PWORK
+         ED     DEC,PWORK+12
+         ZMFACC CODE,END 
+         ZMFACC INPUT,START 
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         DC    C'P11FIND DIVISOR ='
+DIVISOR  DC    0D,A(0,MIN)
+DEC      DC    0CL8,C' ',7X'20'
+         ZMFACC OUTPUT,END
+PWORK    DC    PL16'0'
+TDUP     DC    PL4'0'
+MAXD     DC    PL4'160' TOTAL MAX DUP KEYS REQUIRING SEARCH
+TSEARCH  DC    PL4'0'
+MAXS     DC    PL4'2'  MAX SEARCHES FOR A GIVIEN KEY      
+*
+* ADD HASH TABLE ENTRY WITH NAME AT (R3) AND OPCODE AT 8(R3)
+* AND RETURN VIA R10
+*
+ADDOP    DS    0H
+         LR    R11,R10            SAVE RETURN
+         BAL   R10,FINDOP         GET HASH TABLE ENTRY IN R1
+         LTR   R1,R1              IF NOT ZERO
+         BNZ   SEARCH
+STORE    DS    0H
+         ST    R3,HASHTAB(R2)     ELSE STORE NEW ENTRY
+         BR    R11                EXIT 
+SEARCH   DS    0H
+         AP    TSEARCH,=P'1'
+         AHI   R2,4
+         L     R1,HASHTAB(R2)
+         LTR   R1,R1
+         BZ    STORE
+         CP    TSEARCH,MAXS
+         BNH   SEARCH
+         BR    R11   
+*
+* FIND HASH TABLE ENTRY WITH NAME AT (R3) AND RETURN ADDRESS OF
+* ENTRY IN R1
+* AND RETURN VIA R10
+*
+FINDOP   DS    0H
+         LG    R1,0(R3)     G1 = 8 BYTE NAME
+         DSG   R0,DIVISOR
+         LPGR  R2,R0        G1 = POSITIVE REMAINDER
+         SLL   R2,2
+         L     R1,HASHTAB(R2)
+         BR    R10
+         LTORG
+         PRINT DATA
+*
+* HASH TABLE
+*   
+         DC    C'YOUR HASH TABLE DATA AREAS HERE'
+MIN      EQU   (TABLEEND-TABLE)/LENTRY/2*2+1 FIRST ODD > TOT
+MAX      EQU   64000
+HASHTAB  DS    (MAX+10)F'0'   TABLE SIZE = DISIOR + MAX DUP SEARCH
+*
+* TABLE OF OPCODE MNEMONICS AND HEX OPCODES
+*
+TABLE    DS     0D
+         MACRO
+         ZOSOP &HEXOP,&DESC,&OPCODE,&TYPE,&NOP=
+&TDESC   SETC  '&DESC'(2,K'&DESC-2)
+&THEXOP  SETC  '&HEXOP'(2,K'&HEXOP-2)
+&THEXOP  SETC  '&THEXOP.00'(1,4)
+ DC CL8&OPCODE,XL2'&THEXOP' &TDESC
+         MEND
+LENTRY   EQU    8+2
+         COPY   OPCODES
+TABLEEND EQU    *
+         END

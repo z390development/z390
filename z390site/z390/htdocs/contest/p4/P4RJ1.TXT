@@ -1,0 +1,120 @@
+* PROBLEM - SORT ARRAY OF FULL WORD INTEGERS USING FASTEST EXEC METHOD
+* DATE    - 12/27/07
+* AUTHOR  - MATS BROBERG AND ROLAND JOHANSSON, SEB SWEDEN
+*
+* IT IS AN IMPLEMENTATION OF THE QUICKERSORT ALGORITHM.
+
+P4RJ1  ZMFACC   CODE,START,NAME='MATS B/ROLAND J SEB'
+*                                   START QUICKER SORT
+         MVC   AREAOUT,AREAIN
+         USING DUMMY0010,WORKAR                                         
+         STMY  14,12,S0010          SAVE REGISTERS                      
+         STY   13,R130010           R13 IN OWN AREA                     
+         LAY   0,AREAOUT                                                
+         STY   0,UT0010                                                 
+         LHI   0,20                                                     
+         STY   0,LT0010                                                 
+         LAY   15,DUMMY0010         ADDRESS WORKING AREA                
+         PUSH  USING
+         DROP  R13
+         USING DUMMY0010,R15
+         LHI   10,4                 RECORD LENGTH                       
+         LHI   8,-4                  - RECORD LENGTH                    
+         LY    13,LT0010             NO OF RECORDS                      
+         MHI   13,4                  TOTAL LENGTH                       
+         LY    12,UT0010             I: START OF AREA                   
+         AR    13,12                      FIRST BYTE AFTER AREA         
+         AHI   13,-4                   J: LAST RECORD                   
+         LHI   5,0                     M: EMPTY STACK                   
+         LAY   2,TMP0010               T: WORK AREA
+N0010    EQU   *                                                        
+         LR    7,13                                                     
+         SR    7,12           (J-I)*L                                   
+         AHI   7,-4           (J-I-1)*L                                 
+         BRNP  L3E0010        BRANCH IF 1 OR 2 RECORDS                  
+         AHI   7,4            (J-I)*L      P:=I+(J-I)/2;                
+         LHI   6,0                                                      
+         LHI   1,2*4           2*L                                      
+         DR    6,1             ((J-I))/2 I R7                           
+         MHI   7,4             *L  IS L*((J-I)/2)                       
+         AR    7,12            +I*L IS L*(I+(J-I)/2)                    
+         MVC   0(4,2),0(7)             T := A(P)                        
+         MVC   0(4,7),0(12)            A(P) := A(I);                    
+         LR    11,13                   Q = J                            
+         LA    9,4(12)                 K = I+1                          
+LP10010  EQU   *                                                        
+         CLC   0(4,2),0(9)                                              
+         BRNL  ND10010         K PLACED CORRECT. TAKE NEXT K            
+LP20010  EQU   *                                                        
+         CLC   0(4,2),0(11)                                             
+         BRNH  ND20010         Q PLACED CORRECT. NEXT Q                 
+         XC    0(4,11),0(9)              SWITCH K ...                   
+         XC    0(4,9),0(11)                    AND ...                  
+         XC    0(4,11),0(9)                    Q                        
+         AHI   11,-4                                                    
+         BRU   ND10010                                                  
+ND20010  EQU   *                                                        
+        BRXH   11,8,LP20010      LOOP CNTRL FOR Q                       
+         LR    11,9                                                     
+         AHI   11,-4                I+1 -> Q PCACED CORRECT             
+         BRU   M0010                      GO TO M;                      
+ND10010  EQU   *                                                        
+         BRXLE  9,10,LP10010      LOOP CNTRL FOR K                      
+M0010    EQU   *                                                        
+         MVC   0(4,12),0(11)          M: A(I) := A(Q);                  
+         MVC   0(4,11),TMP0010                  A(Q) := T;              
+         LR    6,11                 Q                                   
+         AHI   11,-4                Q-1                                 
+         SLA   6,1                  2*Q                                 
+         SR    6,12                 2*Q-I                               
+         SR    6,13                 2*Q-I-J                             
+         BRNP  LWR0010                                                  
+         STY   12,LT0010(5)      LOWER LIMIT I                          
+         STY   11,UT0010(5)      UPPER LIMIT Q-1                        
+         AHI   11,2*4                                                   
+         LR    12,11                Q+1                                 
+         BRU   UM0010                                                   
+LWR0010  EQU   *                                                        
+         STY   13,UT0010(5)      UPPER LIMIT J                          
+         LR    13,11                Q-1                                 
+         AHI   11,2*4               Q+1                                 
+         STY   11,LT0010(5)      LOWER LIMIT Q+1                        
+UM0010   EQU   *                                                        
+         AHI   5,4                  MARK ONE MORE IN STACK              
+         BRU   N0010                MAIN LOOP                           
+L3E0010  EQU   *                                                        
+         CR    12,13                                                    
+         BRNL  P0010                                                    
+         CLC   0(4,12),0(13)                                            
+         BRNH  P0010         PLACED CORRECT                             
+         XC    0(4,12),0(13)                                            
+         XC    0(4,13),0(12)                                            
+         XC    0(4,12),0(13)                                            
+P0010    EQU   *                                                        
+         AHI   5,-4                                                     
+         BRM   QT0010                     END OF INTERVAL               
+         LY    12,LT0010(5)               I := LT(M);                   
+         LY    13,UT0010(5)               J := UT(M);                   
+         BRU   N0010                      MAIN LOOP                     
+QT0010   EQU   *                                                        
+         LY    13,R130010               END QUICKERSORT                 
+         POP   USING
+         LMY   14,12,S0010                                              
+      ZMFACC   CODE,END                                                 
+
+      ZMFACC   INPUT,START                                              
+AREAIN   DC    20A(AREAEND-*)                                           
+AREAEND  EQU *                                                          
+      ZMFACC   INPUT,END                                                
+
+      ZMFACC   OUTPUT,START                                             
+AREAOUT  DS    XL80                                                     
+      ZMFACC   OUTPUT,END                                               
+WORKAR   DS    XL512                                                    
+DUMMY0010 DSECT                                                         
+S0010    DS    15F                                                      
+UT0010   DS    20F                AUXILLARY STORAGE FOR UT ARRAY        
+LT0010   DS    20F                AUXILLARY STORAGE FOR LT ARRAY        
+R130010  DS    F                       SAVE AREA FOR REGISTER 13        
+TMP0010  DS    CL4                            TEMP STORAGE FOR COMPARE  
+      END                                                               

@@ -1,0 +1,125 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>z390 Java Compiing and Debugging Guide</title>
+</head>
+
+<body>
+
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="center" width="202" height="90">
+              <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></td>
+              <td align="center" width="405" height="90">
+              <p align="center"><b><font size="5">z390 </font></b>
+              <font size="5"><b>Java Compiling<br>
+              and Debugging Guide</b></font></td>
+              <td width="147" height="90" align="center">
+              <b>
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="anim370.gif" alt="Automated Software Tools Corporation" width="100" height="59"></a></b></td>
+            </tr>
+            </table>
+         
+        
+        </table>
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%">
+  <tr>
+    <td width="100%">The z390 open source Java code can be compiled and executed 
+    just using the <a href="http://java.sun.com/javase/downloads/index.jsp">J2SE 
+    runtime</a>.&nbsp; To debug the java source code, the open source
+    <a href="http://www.eclipse.org/downloads/">Eclipse IDE</a> is recommended.&nbsp; 
+    To build the z390.jar containing all the compiled java class executable 
+    code, requires using the jar.exe utility which is in the
+    <a href="http://java.sun.com/javase/downloads/index.jsp">J2SE JDK</a>:<ul>
+      <li>BLDJAR6.BAT - command file included started with v.1.3.09 to compile 
+      all the z390 source code and build z390.jar for distribution using the 
+      J2SE JDK 1.6.0_03.&nbsp; All the J2SE java sources are in z390\src 
+      directory along with z390.man maifect file required by the jar.exe 
+      utility.&nbsp; Note this command assumes latest z390 java sources are in 
+      the eclipse project source directory described below.</li>
+      <li>Optional z390 java source level debugging using open source Eclipse 
+      IDE:<ul>
+        <li>Installation of <a href="http://www.eclipse.org/downloads/">Eclipse 
+        IDE</a><ul>
+          <li>Download zipped file with latest version of Eclipse (Currently 
+          using 3.2.2)</li>
+          <li>Unzip to target install directory (currently using 
+          w:\work\eclipse)</li>
+          <li>Copy eclipse shortcut and icon to desktop for startup and update 
+          path</li>
+        </ul>
+        </li>
+        <li>Setup on first use<ul>
+          <li>Startup Eclipse using desktop icon.</li>
+          <li>Create named workspace (currently using w:\work\eclipse\workspace</li>
+          <li>Open project named z390 with standard src source and lib library 
+          sub-directories</li>
+          <li>Import all the z390 java sources to the z390 project from z390\src 
+          install directory</li>
+        </ul>
+        </li>
+        <li>Debug the z390 demo\DEMO.MLC user program using Eclipse<ul>
+          <li>Startup Eclipse using the desktop icon</li>
+          <li>Select &quot;run&quot; and then &quot;debug&quot; menu items<ul>
+            <li>Enter project name z390</li>
+            <li>Enter main class:<ul>
+              <li>mz390 to debug macro assembler</li>
+              <li>lz390 to debug linker</li>
+              <li>ez390 to debug emulator</li>
+            </ul>
+            </li>
+            <li>Check stop in main</li>
+            <li>Select &quot;arguments&quot; tab and enter program parms with path:<br>
+            <a href="file:///w:/work/z390/demo/DEMO.MLC">
+            w:\work\z390\demo\DEMO.MLC</a> trace notrap sysmac(w:\work\z390\mac)</li>
+            <li>Click on &quot;Debug&quot; button at bottom of page to start debugging</li>
+            <li>(debugger should stop at first java statement in the program 
+            selected</li>
+            <li>Click on any of the follows to proceed with debugging:<ul>
+              <li>Green triangle &quot;proceed&quot; will execute to next break, 
+              exception, or end of program</li>
+              <li>Red box &quot;terminate&quot; will end current debugging session</li>
+              <li>Use yellow &quot;step into&quot; to enter function on current source 
+              line</li>
+              <li>Use yellow &quot;step over&quot; to execute function and advance to next 
+              statement</li>
+              <li>Highlight any variable in program and right click &quot;Display&quot; to 
+              display current value</li>
+              <li>Put cursor on any source line in any program and then select 
+              &quot;run&quot;, &quot;Toggle Break&quot; to set or reset break-point on that line.&nbsp; 
+              Then use &quot;proceed&quot; to advande to next break-point</li>
+            </ul>
+            </li>
+          </ul>
+          </li>
+        </ul>
+        </li>
+      </ul>
+      </li>
+    </ul>
+    </td>
+  </tr>
+</table>
+<p align="center"><b>IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS<br>
+&nbsp;are registered trademarks
+&nbsp;of International Business Machines Corporation</b></p>
+
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Sunday September 07, 2008<!--webbot bot="Timestamp" i-checksum="59270" endspan -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a>&nbsp;
+<a href="pop-up/sitemap.html">Sitemap</a><br>
+Copyright 2008 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </b> </p>
+
+</body>
+
+</html>

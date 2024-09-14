@@ -1,0 +1,334 @@
+* Problem - Sort array of full word integers using fastest exec method
+* Date    - 12/16/07
+* Author  - Rafa Pereira
+* Ref.    - z390 Mainframe Assembler Coding Contest on www.z390.org
+*
+* It is an implementation of the QuickSort Algorithm.
+* This particular implementation is based on the code available at:
+* http://www.mycsresource.net/articles/programming/sorting_algos/
+* quicksort/
+* An interesting and clear explanation of the algorithm is also
+* available at the same URL.
+*
+* I have transformed it into an iterative implementation following the
+* guidance at
+* http://www.geocities.com/siliconvalley/garage/3323/aat/a_recu.html
+*
+* So, the code used as the starting point is:
+*
+* public void quickSortIterative(int start, int end)
+* {
+*   int i;
+*   int k;
+*   push (start, end);
+*
+*   while (pop(s,e) OK)  //i.e. while stack is not empty
+*   {
+*     if (e - s >= 1)
+*     {
+*       int pivot = array[s];
+*       -> I will change this to pivot=array[(s+e)/2]
+*
+*       i = s;
+*       k = e;
+*
+*       while (k > i)
+*       {
+*         while (array[i] <= pivot && i <= e && k > i) i++;
+*         while (array[k] > pivot && k >= s && k >= i) k--;
+*         if (k > i) swap(i, k);
+*       }
+*
+*       swap(s, k);
+*       push(s, k - 1);
+*       push(k + 1, e);
+*     }
+*   }
+*   return;
+* }
+*
+**********************************************************************
+* REGISTERS
+* ---------
+*
+*    R0
+*    R1   WORK
+*    R2   WORK
+*    R3   LEFT  INDEX WITHIN ARRAY TO SORT
+*    R4   RIGTH INDEX WITHIN ARRAY TO SORT
+*    R5
+*    R6   LINK TO ROUTINES
+*    R7
+*    R8   BASE ADDRESS OF ARRAY TO SORT
+*    R9   STACK POINTER
+*    R10  STACK BASE ADDRESS
+*    R11
+*    R12
+*    R13  BASE ADDRESSING REGISTER
+*    R14
+*    R15  RC ON RETURN FROM ROUTINES
+*
+**********************************************************************
+*
+P4RAFA1  ZMFACC  CODE,START,NAME='RAFA'
+*
+         BAL     R6,INIT
+         BAL     R6,QSORT
+         ZMFACC  CODE,END
+*
+**********************************************************************
+* INIT ROUTINE - ROUTINE FOR INITIALIZATIONS
+*
+* ON ENTRY:
+* R6: RETURN ADDRESS
+*
+* ON RETURN:
+* R3: ZERO
+* R4: 19x4 (OFFSET OF LAST ELEMENT IN THE ARRAY TO SORT)
+* R8: BASE ADDRESS OF THE ARRAY TO SORT
+* R9: ZERO
+* R10: BASE ADDRESS OF THE STACK
+**********************************************************************
+INIT     SR      R3,R3            R3 := 0
+         LA      R4,76            R4 := 76 (19x4)
+         LA      R8,TABLE         R8 -> ARRAY TO SORT
+         SR      R9,R9            R9 := 0
+         LA      R10,STACK        R10 -> STACK
+         BR      R6               RETURN
+*
+**********************************************************************
+* PUSH ROUTINE - PUSHES VALUE OF REGISTERS R3 AND R4 INTO THE STACK
+*
+* NOTE: STACK-FULL CONDITION IS NOT CHECKED. STACK MUST BE PROPERLY
+*       DIMENSIONED.
+*
+* ON ENTRY:
+* R3: FIRST  VALUE TO PUSH INTO THE STACK
+* R4: SECOND VALUE TO PUSH INTO THE STACK
+* R6: RETURN ADDRESS
+* R9: INDEX WITHIN STACK OF FIRST FREE CELL
+* R10: POINTS TO THE BASE OF THE STACK
+*
+* ON RETURN:
+* R9: UPDATED
+**********************************************************************
+PUSH     ST      R3,0(R9,R10)     PUSH R3 INTO STACK
+         ST      R4,4(R9,R10)     PUSH R4 INTO STACK
+         LA      R9,8(R9)         UDATE STACK POINTER
+         BR      R6               RETURN
+*
+**********************************************************************
+* POP ROUTINE - POP'ES TWO VALUES FROM THE STACK INTO REGS R3 AND R4
+*
+* ON ENTRY:
+* R6: RETURN ADDRESS
+* R9: INDEX WITHIN STACK OF FIRST FREE CELL
+* R10: POINTS TO THE BASE OF THE STACK
+*
+* ON RETURN:
+* R3: SECOND VALUE POPED FROM THE STACK
+* R4: FIRST  VALUE POPED FROM THE STACK
+* R9: UPDATED
+* R15: RETURN-CODE = 0 OK
+*                  = 1 STACK EMPTY ON ENTRY
+**********************************************************************
+POP      LTR     R9,R9            STACK IS ALREADY EMPTY?
+         BZ      POPEMPTY           YES: END WITH ERROR
+*
+         S       R9,F8            UPDATE R9 (STACK POINTER)
+         L       R3,0(R9,R10)     POP R3 FROM STACK
+         L       R4,4(R9,R10)     POP R4 FROM STACK
+         SR      R15,R15          R15 := 0
+         BR      R6               RETURN
+*
+POPEMPTY LA      R15,1            R15 := 1
+         BR      R6               RETURN
+*
+**********************************************************************
+* QUICK-SORT ROUTINE - ITERATIVE.
+*                      SELECTS A PIVOT ELEMENT.
+*                      PARTITIONS THE INPUT ARRAY INTO TWO ARRAYS,
+*                      ONE WITH ELEMENTS LESS-THAN-OR-EQUAL-TO THE
+*                      PIVOT AND ONE WITH ELEMENTS GREATER-THAN THE
+*                      PIVOT.
+*                      PROCESSES EACH OF THE TWO SUBARRAYS.
+*                      THE PARTITIONING IS DONE IN-PLACE.
+*
+* ON ENTRY:
+* R3: INDEX IN THE DATA ARRAY OF THE LEFTMOST ELEMENT
+* R4: INDEX IN THE DATA ARRAY OF THE RIGHTMOST ELEMENT
+* R6: RETURN ADDRESS
+* R8: BASE ADDRESS OF THE ARRAY TO SORT
+*
+* ON RETURN:
+* R3: MODIFIED
+* R4: MODIFIED
+*
+* public void quickSortIterative(int start, int end)
+* {
+*   int i;
+*   int k;
+*   push (start, end);
+*
+*   while (pop(s,e) OK)  //i.e. while stack is not empty
+*   {
+*     if (e - s >= 1)
+*     {
+*       int pivot = array[s];
+*       -> I will change this to pivot=array[(s+e)/2]:
+*
+*             swap(s, (s+e)/2);
+*             pivot = array[s];
+*
+*       i = s;
+*       k = e;
+*
+*       while (k > i)
+*       {
+*         while (array[i] <= pivot && i <= e && k > i) i++;
+*         while (array[k] > pivot && k >= s && k >= i) k--;
+*         if (k > i) swap(i, k);
+*       }
+*
+*       swap(s, k);
+*       push(s, k - 1);
+*       push(k + 1, e);
+*     }
+*   }
+*   return;
+* }
+**********************************************************************
+* LOCAL USE OF REGISTERS
+* ----------------------
+*
+*    R0   work
+*    R1   i, work
+*    R2   k
+*    R3   s, start
+*    R4   e, end
+*    R5   work
+*    R6   LINK TO ROUTINES
+*    R7   pivot
+*    R8   BASE ADDRESS OF ARRAY TO SORT
+*    R9   STACK POINTER
+*    R10  STACK BASE ADDRESS
+*    R11
+*    R12
+*    R13  BASE ADDRESSING REGISTER
+*    R14
+*    R15  RC ON RETURN FROM ROUTINES
+*
+**********************************************************************
+QSORT    STM     R0,R2,QSORTR0    SAVE R0,R1,R2
+         STM     R5,R7,QSORTR5    SAVE R5,R6,R7
+         BAL     R6,PUSH          PUSH (START, END)
+*
+* BEGINNING OF WHILE (POP(S,E) OK) LOOP
+*
+QSORTWHL BAL     R6,POP           POP (S,E)
+         LTR     R15,R15          OK?
+         BNZ     QSORTZ             NO: GO TO END
+*
+* BEGINNING OF IF (E - S >= 1) FRAGMENT
+*
+         LR      R5,R4            R5 := E
+         SR      R5,R3            R5 := E - S
+         C       R5,F4            R5 < 4? (4 BECAUSE FULLWORD SIZE)
+         BL      QSORTWHL           YES: BACK TO WHILE LOOP
+*
+         SRA     R5,1             R5 := (E-S)/2
+         AR      R5,R3            R5 := (E-S)/2 + S = (E+S)/2
+         N       R5,FFFFFFFC      ROUNT TO MULTIPLE OF 4
+         L       R7,0(R5,R8)      PIVOT (R7) := ARRAY[(S+E)/2]
+*
+         L       R1,0(R3,R8)      SWAP ...
+         ST      R1,0(R5,R8)      ... (E+S)/2 ...
+         ST      R7,0(R3,R8)      ... AND S
+*
+         LR      R1,R3            I := S
+         LR      R2,R4            K := E
+*
+* BEGINNING OF WHILE (K > I) LOOP
+*
+QSORTWH2 CR      R1,R2            I < K?
+         BNL     QSORT01            NO: END OF WHILE (K>I)
+*
+* BEGINNING OF WHILE (ARRAY[I] ...) LOOP
+*
+QSORTWH3 C       R7,0(R1,R8)      PIVOT < ARRAY[I]?
+         BL      QSORTWH4           YES: END OF WHILE (ARRAY[I]..)
+         CR      R1,R2            I < K?
+         BNL     QSORTWH4           NO:  END OF WHILE (ARRAY[I]..)
+         CR      R4,R1            E < I?
+         BL      QSORTWH4           YES: END OF WHILE (ARRAY[I]..)
+         LA      R1,4(R1)         I++  (4 BECAUSE FULLWORD SIZE)
+         B       QSORTWH3         BACK TO WHILE (ARRAY[I]..) LOOP
+*
+* BEGINNING OF WHILE (ARRAY[K] ...) LOOP
+*
+QSORTWH4 C       R7,0(R2,R8)      PIVOT < ARRAY[K]?
+         BNL     QSORT02            NO:  END OF WHILE (ARRAY[K]..)
+         CR      R2,R1            K < I?
+         BL      QSORT02            YES: END OF WHILE (ARRAY[K]..)
+         CR      R2,R3            K < S?
+         BL      QSORT02            YES: END OF WHILE (ARRAY[K]..)
+         S       R2,F4            K--  (4 BECAUSE FULLWORD SIZE)
+         B       QSORTWH4         BACK TO WHILE (ARRAY[K]..) LOOP
+*
+* END       OF WHILE (ARRAY[K] ...) LOOP
+*
+QSORT02  CR      R1,R2            I < K?
+         BNL     QSORT01            NO:  END OF WHILE (K>I) LOOP
+*
+         L       R0,0(R1,R8)      SWAP    ...
+         L       R5,0(R2,R8)      ...  I  ...
+         ST      R0,0(R2,R8)      ... AND ...
+         ST      R5,0(R1,R8)      ...  K
+*
+         B       QSORTWH2         BACK TO WHILE (K>I) LOOP
+*
+* END       OF WHILE (K > I) LOOP
+*
+QSORT01  L       R0,0(R3,R8)      SWAP    ...
+         L       R5,0(R2,R8)      ...  S  ...
+         ST      R0,0(R2,R8)      ... AND ...
+         ST      R5,0(R3,R8)      ...  K
+*
+         LR      R5,R4            SAVE E IN R5
+*
+         LR      R4,R2            R4 :=
+         S       R4,F4              K - 1 (4 BECAUSE FULLWORD SIZE)
+         BAL     R6,PUSH          PUSH(S,K-1)
+*
+         LA      R3,4(R2)         R3 := K + 1 (4 BECAUSE FWORD SIZE)
+         LR      R4,R5            RESTORE E FROM R5
+         BAL     R6,PUSH          PUSH(K+1,E)
+*
+         B       QSORTWHL         BACK TO WHILE (POP(S,E) OK) LOOP
+*
+QSORTZ   LM      R0,R2,QSORTR0    RESTORE R0,R1,R2
+         LM      R5,R7,QSORTR5    RESTORE R5,R6,R7
+         BR      R6               RETURN
+*
+**********************************************************************
+* DATA
+**********************************************************************
+         ZMFACC  INPUT,START
+         ZMFACC  OUTPUT,START
+TABLE    DC    20A(TABLEEND-*)
+TABLEEND EQU *
+         ZMFACC  INPUT,END
+         ZMFACC  OUTPUT,END
+QSORTR0  DS      F       SAVEAREA FOR R0  IN ROUTINE QSORT
+QSORTR1  DS      F       SAVEAREA FOR R1  IN ROUTINE QSORT
+QSORTR2  DS      F       SAVEAREA FOR R2  IN ROUTINE QSORT
+QSORTR5  DS      F       SAVEAREA FOR R5  IN ROUTINE QSORT
+QSORTR6  DS      F       SAVEAREA FOR R6  IN ROUTINE QSORT
+QSORTR7  DS      F       SAVEAREA FOR R7  IN ROUTINE QSORT
+F4       DC      F'4'    CONSTANT 4
+F8       DC      F'8'    CONSTANT 8
+FFFFFFFC DC      X'FFFFFFFC'  TWO LOW ORDER BITS = 00
+STACK    DS      50A     STACK
+*
+         END
+

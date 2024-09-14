@@ -1,0 +1,47 @@
+    596    12345        0   O'Reilly
+    201    23456      111   Addison-Wesley
+    321    34567    65433   Addison-Wesley
+     13      123        0   Prentice-Hall
+     12   234567        0   Academic Press
+    387     9999        1   Springer-Verlag
+   8359     9999        1   Reston
+   7356     9876       99   Microsoft Press
+   7897     6543        0   Que
+    672    45678    11111   Sams
+     19   345678        1   Oxford
+    393    56789        0   Norton
+    521    98765      999   Cambridge
+    670    76543        0   Viking
+  87580      123       99   NIU Press
+   7167     5555     5555   Freeman
+    394        1        1   Knopf
+0000000
+   8021     5555     5555   Atlantic Monthly Press
+9666490        2        9   London Town Press
+   8126     6543        0   Cricket Books
+    684    12345        0   Scribner's
+    679    76543        0   Random House
+    399    56789        0   Putnam
+ 935218       99        0   Insight Press
+   7924     9999        1   Thunder Bay Press
+9761989        9        0   Cosmo Dogood's Urban Almanac
+    385    34567    65433   Doubleday
+ 913966       88        9   Liberty Press
+    440    45678    11111   Warner Books
+   8050     9876       99   Henry Holt
+  87000      123       99   Arlington House
+    374    98765      999   Farrar, Strauss and Giroux
+   7432     6543      123   Simon & Schuster
+    691      123        0   Princeton University Press
+    465   234567        0   Basic Books
+    684    12345       99   Simon & Schuster
+   8027     6543      999   Walker & Company
+0000000
+Thunder Bay Press               0000  0000
+NIU Press                         +2    -2
+Princeton University Press        25     0
+London Town Press                  9    -9
+Liberty PRess                     11     3
+Springer-Verlag                  -99   +19
+Putman                             0     1
+Academic Press                 -1234 +2345    

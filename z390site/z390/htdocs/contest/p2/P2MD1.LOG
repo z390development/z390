@@ -1,0 +1,19 @@
+EZ390I V1.3.09 Current Date 12/14/07 Time 07:58:40
+EZ390I Copyright 2006 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = P2MD1
+EZ390I options = 
+ZMFACC SOLUTION FOR PROBLEM P2MD1 BY Mark Dixon
+SNAP DUMP ID=1 TEXT=INPUT AREA
+ 000FFF68 *00000000 00000001                  * *........        *
+SNAP DUMP ID=2 TEXT=OUTPUT AREA
+ 000FFF70 *00000001 00000000                  * *........        *
+EZ390I Stats total instructions    = 30
+EZ390I stats TCPIO operations      = 0
+EZ390I stats DCB operations        = 0
+EZ390I stats VSAM operations       = 0
+EZ390I Stats current date 12/14/07 time 07:58:40
+EZ390I Stats total seconds         = 0
+EZ390I Stats instructions/sec      = 2500
+EZ390I total errors         = 0
+EZ390I return code(P2MD1   )= 0

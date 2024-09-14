@@ -1,0 +1,342 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 12.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>ZPAR z390 and zcobol ZPARTRS Source Code Execution Trace Utility</title>
+<META NAME="DESCRIPTION" CONTENT="z390 Protable Mainframe Assembler, Linker, Emulator Open Source J2SE">
+<META name="KEYWORDS" content="Mainframe Assembler Tools z390 SuperZap Open Source J2SE Java">
+
+<style>
+<!--
+ li.MsoNormal
+	{mso-style-parent:"";
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	margin-left:0in; margin-right:0in; margin-top:0in}
+-->
+</style>
+
+</head>
+
+<body>
+<table border="0" cellpadding="0" cellspacing="3" style="border-collapse: collapse" bordercolor="#111111" id="AutoNumber1" height="558">
+            <tr>
+              <td align="center" width="141" height="94" valign="top">
+              <font face="Times New Roman">
+              <span style="background-color: #FFFFFF; font-weight:700"><strong>
+			  <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="../images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></strong></span></font></td>
+              <td align="center" width="392" height="94">
+              <p align="center"><b>ZPAR - z390 and zcobol<br>
+              Program Analysis Reports<br>
+              ZPARTRS Source Execution Trace Utility</b></td>
+              <td width="136" height="94" align="center">
+              <b>
+              <strong>
+              <a href="http://www.z390.org/zcobol/">
+              <img border="0" src="../zcobol.jpg" width="100" height="75" alt="zcobol Portable Mainframe COBOL Compiler"></a></strong><br>
+&nbsp;</b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="675" height="206" colspan="3">
+              <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="369%" id="AutoNumber2" height="94">
+                <tr>
+                  <td align="left" valign="top">
+                  <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" id="AutoNumber3" width="753">
+                    <tr>
+                      <td width="154" align="left" valign="top" height="169">
+                      <ul>
+                        <li><b><a href="#OVerview">Overview</a></b></li>
+                        <li><b><a href="#Examples">Examples</a></b></li>
+                        <li><b><a href="#User_Guide">User Guide</a></b></li>
+                        <li><b><a href="#Debugging">Debugging</a></b></li>
+                      </ul>
+                      </td>
+                      <td align="left" valign="top" height="169" style="width: 22px">
+                      &nbsp;</td>
+                      <td width="164" align="left" valign="top" height="169">
+                      <ul>
+                        <li>
+                        <b>
+                        <a href="http://www.z390.org">z390 Assembler</a></b></li>
+                        <li>
+                        <b>
+                        <a href="http://www.zcobol.org">zcobol COBOL</a></b></li>
+                        <li>
+                        <b>
+                        <a href="http://tech.groups.yahoo.com/group/z390/">z390 
+                        Email</a></b></li>
+                        <li>
+                        <b><a href="http://tech.groups.yahoo.com/group/zcobol/">
+                        zcobol Email</a></b></li>
+                        <li><b><a href="http://www.automatedsoftwaretools.com/">
+                        AST Services</a></b></li>
+                        <li>
+                        <b>
+                        <a href="http://www.automatedsoftwaretools.com/About.htm">About</a></b></li>
+                      </ul>
+                      </td>
+                    </tr>
+                    </table>
+                  </td>
+                  <td width="28%" height="94" align="left" valign="top">&nbsp;</td>
+                </tr>
+              </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" height="1">
+</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="675" colspan="3" height="19">
+              <p align="center"><b><a name="Overview">ZPARTRS</a> - Trace Source 
+              COBOL, Assembler, and EXEC CICS Execution Report</b></p>
+              <p><b>ZPARTRS can be used to generate a z390 COBOL, Assembler, and 
+              EXEC CICS source code 
+              execution trace&nbsp; report from an existing z390 instruction execution TRE trace 
+              file and the associated program LST and PRN files.&nbsp; The 
+              source code for the 3 files requires to run ZPARTRS are here:</b></p>
+              <ul>
+                <li><b> <a href="ZPARTRS_MLC.pdf">ZPARTRS.MLC</a> - structured 
+                conditional macro assembler source program</b></li>
+                <li><b><a href="ZPARTRS_BAT.pdf">ZPARTRS.BAT</a> = batch command 
+                with up to 9 user parameters</b></li>
+                <li><b><a href="ZPARTRS_OPT.pdf">ZPARTRS.OPT</a> - default 
+                options for execution of ZPARTRS referenced by BAT file</b></li>
+                <li><b>zpar\ZPARTRS dir\pgm options - trace command for zcobol and 
+                z390 assembler</b><ul>
+                <li><b>dir\pgm&nbsp;&nbsp; -&nbsp; the name and optional directory 
+                path of the TRE execution trace file must be the first user 
+                parameter passed to ZPARTRS.BAT.&nbsp; The output trace 
+                file will be dir\pgm.TRS with trace and any error messages.</b></li>
+                <li><b>Options - up to 8 additional options separated by spaces can 
+                  follow the dir\pgm parameter:</b><ul>
+                  <li><b>ASM/NOASM - trace assembler program source statements (default is 
+                  ASM).&nbsp; (Note this ZPARTRS option to turn ASM source 
+                  tracing on or off is different from the z390 NOASM option 
+                  specified in the ZPARTRS.OPT file to suppress assembly and 
+                  only execute the conditional macro code in ZPARTRS.MLC.)</b></li>
+                  <li><b>CBL/NOCBL - trace zcobol source program statements (default is 
+                  CBL)</b></li>
+                  <li><b>DETAIL/NODETAIL - include both the TRE instruction trace with 
+                  operand values and the corresponding source assembler program 
+                  instruction line with operand names and comments (the default 
+                  is NODETAIL to only include the assembler source line with PSW and CC)</b></li>
+                  <li><b>EXCLUDE(pgm1+pgm2+pgmn) - list of program modules to 
+                  exclude from trace (examples include EXCLUDE(DISPLAY) to 
+                  suppress tracing of the COBOL DISPLAY support module.&nbsp; 
+                  Only the code to generate parameter list and call will be 
+                  generated.)</b></li>
+                  <li><b>INCLUDE(pgm1+pgm2+pgmn) - list of program modules to 
+                  include in source trace (the default is to only include the 
+                  first program loaded in the TRE trace if no INCLUDE parameter 
+                  is included).</b></li>
+                  <li>LOADLIB(path) - define optional path for all LST and PRN 
+                  files.&nbsp; The default is to use the path in the TRE trace 
+                  loads for LST files and use the LST include paths for PRN 
+                  files.&nbsp; This is useful if you want to save a trace and 
+                  associated source files seprate from normal execution 
+                  environment.</li>
+                  <li><b>NOMSG - exclude all messages such as WTO, TRACE and 
+                  error messages (default is to include all messages from 
+                  included source modules.&nbsp; The trace also shows single line 
+                  .... with count of skipped instructions and messages).</b></li>
+                  <li><b>NOTIME - exclude any time-stamps found in TRE file 
+                  (default is to include them)<br>
+&nbsp;</b></li>
+                </ul>
+                  </li>
+              </ul>
+                </li>
+              </ul>
+              <p>&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="675" colspan="3" height="19">
+              <p align="center"><b><a name="Examples">ZPARTRS Examples</a> </b>
+              </p>
+              <ul>
+                <li><b>Example EXEC CICS, COBOL, and Assembler source traces for the following:</b><ul>
+                  <li><b><a href="DEMO_MLC.pdf">DEMO.MLC</a> - Assembler WTO &quot;Hello World&quot; demo program.&nbsp; 
+                  Command ASMLG demo\DEMO TRACE generates demo\DEMO.TRE 
+                  trace file for assembler demo program with WTO 'Hello World')</b><ul>
+                    <li><b><a href="ZPARTRA_DEMO_ASM.pdf">zpar\ZPARTRS demo\DEMO 
+                    NOTIME</a> - generate assembler source trace in demo\DEMO.TRS.</b></li>
+                    <li><b><a href="ZPARTRA_DEMO_ASM_DETAIL.pdf">zpar\ZPARTRS 
+                    demo\DEMO DETAIL NOTIME</a> - generate detail assembler trace 
+                    including both the TRE instruction operand values and the 
+                    assembler source lines in demo\DEMO.TRS.</b></li>
+                  </ul>
+                  </li>
+                  <li><b><a href="HELLO_CBL.pdf">HELLO.CBL</a> - COBOL program with DISPLAY &quot;Hello World&quot;.&nbsp; 
+                  Command ZC390CLG zcobol\demo\HELLO TRACE(E) generates 
+                  zcobol\demo\HELLO.TRE trace file.</b><ul>
+                  <li><b><a href="ZPARTRC_HELLO_CBL_ASM.pdf">zpar\ZPARTRS 
+                  zcobol\demo\HELLO NOTIME NOASM</a> - generate COBOL only source trace in zcobol\demo\HELLO.TRS.</b></li>
+                  <li><b><a href="ZPARTRC_HELLO_CBL.pdf">zpar\ZPARTRS 
+                  zcobol\demo\HELLO NOTIME</a> - generate COBOL and assembler source trace in 
+                  zcobol\demo\HELLO.TRS</b></li>
+                  <li><b><a href="ZPARTRC_HELLO_CBL_DETAIL.pdf">zpar\ZPARTRC 
+                  zcobol\demo\HELLO NOTIME DETAIL</a> - generate COBOL and 
+                  detail assembler trace with both TRE and assembler source in 
+                  zcobol\demo\HELLO.TRS.</b></li>
+                </ul>
+                  </li>
+                  <li><b><a href="TESTGUI6_MLC.pdf">TESTGUI6.MLC</a> - Assembler EXEC CICS transaction program 
+                  with form to enter name, address, and zip.&nbsp; Command cics\Z390CICG 
+                  starts zCICS session using local terminal with client side 
+                  trace turned on in cics\Z390CICS.INI file.&nbsp; The commands 
+                  entered for the TESTGUI6 trace were&nbsp; 
+                  CLEAR,GUI6,don,tab,9057 Waterash,&nbsp; tab, 33782, enter, F3, 
+                  clear, CEMT P SHUT.&nbsp; The resulting TN3270 screen capture 
+                  is <a href="ZPARTRS_CICS_TESTGUI6_SCREEN.pdf">here</a>.)</b><ul>
+                    <li><b><a href="ZPARTRS_CICS_TESTGUI6_ASM.pdf">ZPAR\ZPARTRS 
+                    cics\DON0 INCLUDE(TESTGUI6) NOMSG NOTIME</a> 
+                    (command for trace of assembler EXEC CICS TESTGUI6.MLC 
+                    assembler transaction source program lines executed during 
+                    session.&nbsp; The assembler EXEC CICS source statements 
+                    appear as ECA= type messages with line breaks.)</b></li>
+                    <li><b><a href="ZPARTRS_CICS_TESTGUI6_ASM_DETAIL.pdf">ZPAR\ZPARTRS 
+                    cics\DON0 INCLUDE(TESTGUI6) DETAIL NOMSG NOTIME</a> 
+                    (command for detail trace of assembler EXEC CICS TESTGUI6.MLC 
+                    assembler transaction source program lines executed during 
+                    session.&nbsp; The original TRE lines with operand hex 
+                    values are followed by assembler source lines with labels 
+                    and comments.&nbsp; The assembler EXEC CICS source 
+                    statements appear as ECA= type messages with line breaks.)</b></li>
+                    <li><b><a href="ZPARTRS_CICS_TESTGUI6_ECA.pdf">ZPAR\ZPARTRS 
+                    cics\DON0 INCLUDE(TESTGUI6) NOASM NOMSG NOTIME</a> 
+                    (command for trace of just the assembler EXEC CICS 
+                    statements in TESTGUI6.MLC assembler transaction source 
+                    program lines executed during session.&nbsp; Note the use of 
+                    NOASM suppresses ASM instructions and only the EXEC CICS 
+                    assembler statements are 
+                    traced.&nbsp; The assembler EXEC CICS source statements 
+                    appear as ECA= type messages with line breaks.)</b></li>
+                  </ul>
+                  </li>
+                  <li><b><a href="TESTBEC1_CBL.pdf">TESTBEC1.CBL</a> - EXEC CICS COBOL program to display lines 
+                  of text at prompt.&nbsp; The screen capture following 
+                  execution of BEC1 transaction is
+                  <a href="ZPARTRS_CICS_TESTBEC1_SCREEN.pdf">here</a>.</b><ul>
+                    <li><b><a href="ZPARTRS_CICS_TESTBEC1_CBL.pdf">ZPAR\ZPARTRS 
+                    cics\DON0 INCLUDE(TESTBEC1) NOASM NOMSG NOTIME</a> - 
+                    generate trace of COBOL source program lines executed during 
+                    session.</b></li>
+                    <li><b><a href="ZPARTRS_CICS_TESTBEC1_CBL_ASM.pdf">ZPAR\ZPARTRS 
+                    cics\DON0 INCLUDE(TESTBEC1) NOMSG NOTIME</a> 
+                    - generate trace of COBOL and assembler source program lines 
+                    executed during session.</b></li>
+                </ul>
+                  </li>
+                </ul>
+                </li>
+              </ul>
+              <p>&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="675" colspan="3" height="19">
+              <p align="center"><b><a name="User_Guide">ZPARTRS User Guide</a></b><p><b>The program <a href="ZPARTRS_MLC.pdf">zpar\ZPARTRS.MLC</a> reads the linker listing LST 
+              file for every z390 load module executed in the trace via LINK, 
+              LOAD, or XCTL in order to find the PRN file 
+              for every included module in each load module.&nbsp;&nbsp; If 
+              LOADLIB(path) is specified, all the LST and PRN files will be 
+              loaded from that directory otherwise the LST files will be loaded 
+              from path specified in the TRE trace for each LOAD svc, and the 
+              PRN files will be loaded from the path specified on the INCLUDE 
+              statements in each LST file.&nbsp; If no 
+              INCLUDE option is specified, the first loaded program is the only 
+              program source traced.&nbsp; The 
+              source code for each statically linked PRN is loaded into memory and cross referenced to the PSW-ADDR corresponding to current 
+              load address using HLASM created macro variables which store 
+              source code by PSW address name.&nbsp; Note the same source 
+              program may be loaded multiple times at different addresses during 
+              execution.&nbsp; The output source trace file is created with same  
+              path and name as TRE file but with suffix TRS.&nbsp; The source assembler lines 
+              include:</b></p>
+              <ul>
+                <li><b>Source assembler lines&nbsp;&nbsp;&nbsp;  </b>
+                <ul>
+                  <li><b>PSW-ADDR - instruction PSW trace 
+              address with high bit indicating 31 or 24 bit AMODE<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; from TRE file</b></li>
+                  <li><b>PSW-CC&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              - condition code at start of instruction from TRE file</b></li>
+                  <li><b>MODULE-NAME - source module name 
+              included in 390 load module (case sensitive)</b></li>
+                  <li><b>MOD-ADDR - relative module 
+              address from PRN listing</b></li>
+                  <li><b>LINE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              - source assembler line with comments</b></li>
+                </ul>
+                </li>
+                <li><b>Source COBOL lines</b><ul>
+                  <li><b>LINE #&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                  - line number of source statement</b></li>
+                  <li><b>MOD_NAME - source module name included in 390 load 
+                  module (case sensitive)</b></li>
+                  <li><b>LINE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                  - COBOL or EXEC CICS source line with comments (note assembler 
+                  EXEC CICS lines show up as ECA= instead of CBL=)</b></li>
+                </ul>
+                </li>
+              </ul>
+              <p><b>If no corresponding PRN source line is found when generating 
+              all assembler, the original TRE instruction trace line with opcode and operands is generated 
+              instead as message.&nbsp; This can occur due to missing LST or PRN files or 
+              due to generation of instructions using DC hex values for multiple 
+              instructions, use of ORG to overlay instructions, etc.&nbsp;&nbsp;
+              </b>
+              <p>&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="675" colspan="3" height="19">
+              <p align="center"><b><a name="Debugging">ZPARTRS Debugging</a></b></p>
+              <p><b>Tips on debugging problems with ZPARTRS:</b></p>
+              <ul>
+                <li><b>The generated TRS file contains all the generated error 
+                messages starting with ERR=.&nbsp; These messages also appear on 
+                the zpar\zpartrs.err log as mnotes with 4, 8, or 16 error level.&nbsp; 
+                The total error count and max level is displayed at end of 
+                report.&nbsp; The zpartrs return code is set to highest MNOTE 
+                error level.</b></li>
+                <li><b>The file zpar\ZPARTRS.OPT contains default options.&nbsp; 
+                You can turn on TRACEM to generate 
+                apar\ZPARTRS.TRM trace file to help debug any conditional macro 
+                errors occurring.&nbsp; 
+                Note this really slows down the execution so cut down test TRE 
+                files are best..</b></li>
+                <li><b>INCLUDE and EXCLUDE are mutually exclusive so only 
+                specify one or the other.</b></li>
+                <li><b>If no source code is found in an included PRN file, an 
+                error is generated.&nbsp; This can occur if the PRN listing has 
+                PRINT NOGEN or PRINT OFF.&nbsp; ZPARTRS is dependent on PRN file 
+                containing source code listing with zcobol statement comments (*ZC) 
+                and/or assembler instruction listing.</b></li>
+              </ul>
+              </td>
+            </tr>
+          </table>
+         
+        
+        </table>
+<p align="center"><b>IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS<br>
+&nbsp;are registered trademarks
+&nbsp;of International Business Machines Corporation</b></p>
+
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Wednesday May 23, 2012<!--webbot bot="Timestamp" endspan i-checksum="42714" -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools z390 Portable Mainframe Assembler and Emulator">Webmaster</a><br>
+Copyright 2011 <a href="http://www.AutomatedSoftwareTools.com">Automated Software Tools Corporation</a></b></p>
+
+
+
+</body>
+
+</html>

@@ -1,0 +1,287 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 12.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>ZPAR z390 and zcobol Program Analysis Reports</title>
+<META NAME="DESCRIPTION" CONTENT="z390 Protable Mainframe Assembler, Linker, Emulator Open Source J2SE">
+<META name="KEYWORDS" content="Mainframe Assembler Tools z390 SuperZap Open Source J2SE Java">
+
+<style>
+<!--
+ li.MsoNormal
+	{mso-style-parent:"";
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	margin-left:0in; margin-right:0in; margin-top:0in}
+-->
+</style>
+
+</head>
+
+<body>
+<table border="0" cellpadding="0" cellspacing="3" style="border-collapse: collapse" bordercolor="#111111" id="AutoNumber1" height="558">
+            <tr>
+              <td align="center" width="141" height="94" valign="top">
+              <font face="Times New Roman">
+              <span style="background-color: #FFFFFF; font-weight:700"><strong>
+			  <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="../images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></strong></span></font></td>
+              <td align="center" width="392" height="94">
+              <p align="center"><b>ZPAR - z390 and zcobol<br>
+              Program Analysis Reports</b></td>
+              <td width="136" height="94" align="center">
+              <b>
+              <strong>
+              <a href="http://www.z390.org/zcobol/">
+              <img border="0" src="../zcobol.jpg" width="100" height="75" alt="zcobol Portable Mainframe COBOL Compiler"></a></strong><br>
+&nbsp;</b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="675" height="206" colspan="3">
+              <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="369%" id="AutoNumber2" height="94">
+                <tr>
+                  <td align="left" valign="top">
+                  <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" id="AutoNumber3" width="753">
+                    <tr>
+                      <td align="left" valign="top" height="169" style="width: 166px">
+                      <ul>
+                        <li><b><a href="#OVerview">Overview</a></b></li>
+                        <li><b>Utilities</b><ul>
+                        <li><b><a href="#FIXCRLF">FIXCRLF</a></b></li>
+                        <li><b><a href="#ZPARGEN">ZPARGEN</a></b></li>
+                      </ul>
+                        </li>
+                      </ul>
+                      </td>
+                      <td align="left" valign="top" height="169" style="width: 83px">
+                      <ul>
+						  <li><b>Reports</b><ul>
+                        <li><b><a href="#ZPARERR">ERR</a></b></li>
+                        <li><b><a href="#ZPARMLC">MLC</a></b></li>
+                        <li><b><a href="#ZPARSUM1">SUM1</a></b></li>
+                        <li><b><a href="#ZPARSUM2">SUM2</a></b></li>
+                        <li><b>
+                        <a href="ZPARTRS_Source_Execution_Trace_Utility.htm">TRS</a></b></li>
+                      </ul>
+                          </li>
+					  </ul>
+                      </td>
+                      <td width="164" align="left" valign="top" height="169">
+                      <ul>
+                        <li>
+                        <b>
+                        <a href="http://www.z390.org">z390 Assembler</a></b></li>
+                        <li>
+                        <b>
+                        <a href="http://www.zcobol.org">zcobol COBOL</a></b></li>
+                        <li>
+                        <b>
+                        <a href="http://tech.groups.yahoo.com/group/z390/">z390 
+                        Email</a></b></li>
+                        <li>
+                        <b><a href="http://tech.groups.yahoo.com/group/zcobol/">
+                        zcobol Email</a></b></li>
+                        <li><b><a href="http://www.automatedsoftwaretools.com/">
+                        AST Services</a></b></li>
+                        <li>
+                        <b>
+                        <a href="http://www.automatedsoftwaretools.com/About.htm">About</a></b></li>
+                      </ul>
+                      </td>
+                    </tr>
+                    </table>
+                  </td>
+                  <td width="28%" height="94" align="left" valign="top">&nbsp;</td>
+                </tr>
+              </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3">
+</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" height="224">
+              <b><a name="Overview">Welcome</a> 
+              to z390 and zcobol Program Analysis Reports documentation website.&nbsp; 
+              The ZPAR utilities and reports documented here are all written in 
+              structured macro assembler and are included with the installation 
+              of <a href="http://www.z390.org">z390</a> portable mainframe 
+              assembler starting with PTF v1.5.00e.&nbsp; The utility 
+              <a href="#ZPARGEN">ZPARGEN</a> 
+              supports batch assembly or compile of all the source programs in a 
+              directory with a single command.&nbsp; For example, all the z390 
+              demo programs in the demo directory can be assembled with the 
+              single command:&nbsp; </b>
+              <p><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; zpar\ZPARGEN&nbsp;&nbsp;&nbsp; ASM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; demo\*.MLC </b></p>
+              <p><b>All the zcobol demo programs in the demo directory 
+              zcobol\demo can be compiled with the single command:</b></p>
+              <p><b>&nbsp;&nbsp;&nbsp;&nbsp; zpar\ZPARGEN&nbsp;&nbsp;&nbsp;&nbsp; ZC390C&nbsp;&nbsp; zcobol\demo\*.CBL</b></p>
+              <p><b>The report generator <a href="#ZPARERR">ZPARERR</a> can be used to summarize all 
+              the ERR files generated by the z390 assembler</b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="675" colspan="3" height="19">
+              <b>in a directory showing the total number of occurrences of any 
+              error messages and the total number of ERR files found.&nbsp; For 
+              example following the above batch assembly of demo programs, the 
+              following command will generate report summarizing any errors 
+              found:</b><p><b>&nbsp;&nbsp;&nbsp;&nbsp; zpar\ZPARERR&nbsp;&nbsp;&nbsp;&nbsp; demo\*.ERR</b></p>
+              <p><b>The report generator
+              <a href="ZPARTRS_Source_Execution_Trace_Utility.htm">ZPARTRS</a> (TRace Source) can be used to 
+              obtain an execution trace showing the assembler source statement 
+              for each instruction executed along with the PSW address, 
+              condition code, module name, and relative offset within the module 
+              of the source line.&nbsp; For example the following command will 
+              generate execution source trace report for the demo program demo\DEMO.MLC:</b></p>
+              <p><b>asmlg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              demo\DEMO trace&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              (assemble, link, and execute with trace)&nbsp;&nbsp; <br>
+              zpar\ZPARTRS&nbsp;&nbsp;&nbsp;&nbsp; demo\DEMO&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              (read trace TRE, LST, and PRN files for source trace)</b></p>
+              <p><b><a href="#ZPARTRS">See examples of COBOL, Assembler, and 
+              EXEC CICS source execution traces</a></b></p>
+              <p><b>The 
+              utility <a href="#FIXCRLF">FIXCRLF</a> simple copies all the specified 
+              ASCII source files 
+              adding ASCII CR/LF at the end of each line.&nbsp; This has been 
+              used with files created with just LF at the end of each line as 
+              some editors and programs require both CR and LF.&nbsp; </b><p><b>Any and all comments, suggestions, requests, and volunteer 
+              contributors are welcome.&nbsp; Join the
+              <a href="http://tech.groups.yahoo.com/group/z390/">z390 email 
+              group</a> and post to the group or email me directly.</b><p>
+              <b>
+              <a href="mailto:don@higgins.net?subject=ZPAR z390 and zcobol Program Analysis Reports">
+              Don Higgins</a><br>
+              <a href="http://www.AutomatedSoftwareTools.com">President, 
+              Automated Software Tools Corporation</a></b><p>&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="675" colspan="3" height="19">
+              <p align="center"><b><a name="ZPARGEN">ZPARGEN</a></b></p>
+              <p><b>ZPARGEN can be used to assemble or compile all the programs 
+              in a directory.&nbsp; It can also be used to execute any specified 
+              batch command for selected files in a directory.&nbsp; The command 
+              syntax is as follows:</b></p>
+              <p><b>&nbsp;&nbsp; zpar\ZPARGEN&nbsp; command dir\file.type</b></p>
+              <p><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              command - is any batch command such as ASM or ZC390C</b></p>
+              <p><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              dir\file.type - is a directory and file selection specification 
+              such as demo\*.mlc or <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; zcobol\demo\*.CBL</b></p>
+              <p><b>A temporary file named zpar\TEMPGEN.DIR is generated 
+              containing directory records for selected files.&nbsp; A temporary 
+              file named zpar\TEMPGEN.BAT is generated containing calls to the 
+              specified command for each selected file.&nbsp; Then TEMPGEN.BAT 
+              is called to execute the commands.</b></p>
+              <p>&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="675" colspan="3" height="19">
+              <p align="center"><b><a name="ZPARERR">ZPARERR</a> - Error Summary 
+              Report</b></p>
+              <p><b>ZPARERR can be used to summarize all the errors generated in 
+              z390 ERR files in a directory.&nbsp; The command syntax is as 
+              follows:</b></p>
+              <p><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; zpar\ZPARERR 
+              dir\file</b></p>
+              <p><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; dir\file - is a 
+              directory and file selection specification such as demo\* or 
+              zcobol\demo\*</b></p>
+              <p><b>A temporary file zpar\ZPARERR.DAT is generated with all the 
+              selected ERR file records.&nbsp; A temporary report file 
+              zpar\ZPARERR.RPT is generated with the following summary of the 
+              ERR records:</b></p>
+              <p><b>1.&nbsp; Current date and time of report and file selection 
+              specified<br>
+              2.&nbsp; Date and time stamps from beginning and end of selected 
+              ERR records<br>
+              3.&nbsp; Total ERR records read and total summary keys stored<br>
+              4.&nbsp; Group 1 - total step START and END records found with 
+              count of each different return code<br>
+              5.&nbsp; Group 2 - total occurrences for each missing macro or 
+              copybook<br>
+              6.&nbsp; Group 3 - total errors for each file with 1 or more 
+              errors<br>
+              7.&nbsp; Group 4 - total occurrences for each error message type<br>
+              8.&nbsp; Group 5 - total occurrences for each MNOTE message<br>
+              9.&nbsp; Group 6 - total occurrences of any other ERR file 
+              messages including blank lines</b><p>&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="675" colspan="3" height="19">
+              <p align="center"><b><a name="ZPARMLC">ZPARMLC - Frequency 
+              Distribution of MLC Operation Codes</a></b></p>
+              <p><b>This command reads one or more MLC or BAL type source files 
+              and generates report with frequency distribution of the operation 
+              codes found.&nbsp; First the counts and opcodes are listed in 
+              descending order by frequency and then alphabetically by operation 
+              code.&nbsp; See
+              <a href="http://www.zcobol.org/zcobol_NIST_COBOL_1985_Test_Results.htm">
+              zcobol NIST test program generated opcodes</a> for examples.</b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="675" colspan="3" height="19">
+              <p align="center"><b><a name="ZPARSUM1">ZPARSUM1 - Error Summary 
+              Report with START/STOP by 2 char program prefix</a></b></p>
+              <p><b>Same summary of ERR file statistics as <a href="#ZPARERR">
+              ZPARERR</a> with addition of breaking down program START and STOP 
+              statistics by 2 character program name prefix.&nbsp; The command 
+              syntax is as follows:</b></p>
+              <p><b>zpar\ZPARSUM1 dir\file</b></p>
+              <p>&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="675" colspan="3" height="19">
+              <p align="center"><b><a name="ZPARSUM2">ZPARSUM2 - Summary report 
+              of program translation, assembly, and execution by 2 character 
+              prefix</a></b></p>
+              <p><b>This command executes ZPARSUM1 and then ZPARSUM2 to produce 
+              summary report by 2 character prefix showing the number of 
+              programs translated, assembled, and executed with return code 0 or 
+              &gt;0.&nbsp; For example see the
+              <a href="http://02b2696.netsolhost.com/zcobol/index.html#zcobol_NIST_Test_Results">
+              NIST COBOL 1985 test results</a>.&nbsp; The command syntax for 
+              this command is as follows:</b></p>
+              <p><b>zpar\ZPARSUM2 dir\file</b></p>
+              <p align="center">&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="675" colspan="3" height="19">
+              <p align="center"><b><a name="FIXCRLF">FIXCRLF</a> - Fix carriage 
+              return and line feed</b></p>
+              <p><b>FIXCRLF can be used to insert carriage return character 
+              (X'0D' at end of each ASCII line preceding line feed character 
+              (X'0A').&nbsp; This is required by some older ASCII editors and 
+              other text processing programs.&nbsp; The command syntax is as 
+              follows:</b></p>
+              <p><b>&nbsp;&nbsp; zpar\FIXCRLF dir\file.type newtype</b></p>
+              <p><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; dir\file.type - is a 
+              directory and file selection specification such as mydir\*.*</b></p>
+              <p><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; newtype - new file type to be 
+              assigned to each new output file mydir\*.newtype</b></p>
+              <p>&nbsp;</td>
+            </tr>
+          </table>
+         
+        
+        </table>
+<p align="center"><b>IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS<br>
+&nbsp;are registered trademarks
+&nbsp;of International Business Machines Corporation</b></p>
+
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Wednesday May 23, 2012<!--webbot bot="Timestamp" endspan i-checksum="42714" -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools z390 Portable Mainframe Assembler and Emulator">Webmaster</a><br>
+Copyright 2011 <a href="http://www.AutomatedSoftwareTools.com">Automated Software Tools Corporation</a></b></p>
+
+
+</body>
+
+</html>

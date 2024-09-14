@@ -1,0 +1,204 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>z390 ASSIST Support</title>
+</head>
+
+<body>
+
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="center" width="202" height="90">
+              <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></td>
+              <td align="center" width="405" height="90">
+              <p align="center"><b><font size="5">z390 ASSIST Support v1.4.01</font></b></td>
+              <td width="147" height="90" align="center">
+              <b>
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="laptop.gif" alt="Automated Software Tools Corporation" width="97" height="71"></a></b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3">
+              <b>z390 
+              <a href="http://www.seasite.niu.edu/cs360/asusergd.htm">ASSIST</a> 
+              support has been added in v1.4.01 at the request of
+              <a href="http://www.niu.edu/index.shtml">Northern Illinois 
+              University</a> for use in computer science classes.&nbsp; The 
+              ASSIST support is enabled using the new option ASSIST which allows 
+              assembly and execution of all the z/Architecture problem state 
+              instructions including the new z10 instructions plus the following ASSIST instructions:</b><ul>
+                <li><b>z390 ASSIST instructions</b><ul>
+                  <li><b>XDECI&nbsp;&nbsp; RX X'53rxbddd' r1.s2 convert decimal to 
+                  binary</b><ul>
+                  <li><b>Start scan for next decimal number at s2 skipping 
+                  leading blanks</b></li>
+                  <li><b>Convert decimal number to binary in r1 until non 
+                  decimal character found</b></li>
+                  <li>Set register 1 to address of the last non decimal 
+                  character found</li>
+                  <li><b>Set condition code 0 if number converted successfully 
+                  else set condition code 3</b></li>
+                </ul>
+                  </li>
+                  <li><b>XDECO RX X'52rxbddd' r1,s2 convert binary to decimal</b><ul>
+                  <li><b>Convert binary 32 bit r1 value to right justified 12 
+                  character decimal field at s2</b></li>
+                </ul>
+                  </li>
+                  <li><b>XDUMP RXSS X'E06xbdddbddd' s1(x1),s2 - dump registers 
+                  and/or storage</b><ul>
+                  <li><b>If no operands are specified, dump registers and the 
+                  default storage area</b><ul>
+                  <li><b>If no XLIMD instruction has reset default storage dump 
+                  area, dump all storage</b></li>
+                </ul>
+                  </li>
+                  <li><b>if s1(x1) address of storage area and s2 length of area 
+                  are specified just dump that area</b></li>
+                </ul>
+                  </li>
+                  <li><b>XGET&nbsp;&nbsp;&nbsp;&nbsp; RXSS X'E0Axbdddbddd' s1(x1),s2 read 
+                  record from ASCII file DDNAME=XGET into area s1(x1) with length 
+                  of s2</b></li>
+                  <li><b>XHEXI&nbsp;&nbsp; RX X'61' r1,s2 convert hex to binary 
+                  (cc3 if no hex, update field addr)</b></li>
+                  <li><b>XHEXO RX X'62' r1,s2 convert binary to hex (12 bytes, 
+                  update field addr)</b></li>
+                  <li><b>XLIMD RXSS X'E08xrbdddbddd' s1(x1),s2 set default XDUMP 
+                  storage area address and length</b></li>
+                  <li><b>XPNCH RXSS X'E04xbdddbddd' s1(x1),s2 write to DDNAME=XPNCH with 
+                  length s2</b></li>
+                  <li><b>XPRNT RXSS X'E02xbdddbddd' s1(x1),s2 write to DDNAME=XPRNT with 
+                  length s2 </b></li>
+                  <li><b>XPUT&nbsp;&nbsp;&nbsp; RXSS&nbsp; X'E0Cxbdddbddd' s1(x1),s2 write to DDNAME=XPUT 
+                  for length s2</b></li>
+                  <li><b>XREAD RXSS X'E00xbdddbddd' s1(x1),s2 read record from DDNAME=XREAD 
+                  for length s2</b></li>
+                </ul>
+                </li>
+                <li><b>z390 ASSIST command can be used to assemble, link, and execute 
+                assist programs</b><ul>
+                <li><b>Use the command ASSIST filename where filename is the 
+                base name of any mainframe assembler source program with file 
+                type MLC to assemble, link, and execute the program on Windows 
+                XP/Vista or Linux system using z390 GUI or command line 
+                interface.&nbsp; This command sets the ASSIST option on and 
+                defines the following environment variables for input and output 
+                ASCII text files:</b><ul>
+                <li><b>XREAD=filename.XRD</b></li>
+                <li><b>XPRNT=filename.XPR</b></li>
+                <li><b>XPNCH=filename.XPH</b></li>
+                <li><b>XGET=filename.XGT</b></li>
+                <li><b>XPUT=filename.XPT</b></li>
+              </ul>
+                </li>
+                <li><b>All of the above files are optional and will be opened on 
+                first access and closed at end of execution or end of file.&nbsp; 
+                All files are ASCII with automatic conversion from or to EBCDIC.&nbsp; 
+                ASCII file records have trailing spaces removed and end with 
+                carriage return x'0d' and line feed x'0a'.&nbsp; On input fields 
+                are padded with EBCDIC spaces x'40'.&nbsp; Non ASCII output 
+                bytes are converted to periods.</b><ul>
+                <li><b>If a file operation is successful the condition code is 
+                set to 0 for XREAD, XGET, and XPUT.&nbsp; </b></li>
+                <li><b>XPRNT and XPNCH do not set condition code.</b></li>
+                <li><b>At end of file for XREAD or XGET, the condition code 1 is 
+                set.</b></li>
+                <li><b>If a file error occurs on XREAD, XPRNT, XPNCH, the 
+                program aborts with abend code S013.</b></li>
+                <li><b>If a file open error occurs, program terminates with S013 
+                abend with error message showing the file specification which 
+                failed.</b></li>
+                <li><b>If any other error occurs on XGET or XPUT such as missing 
+                length, condition code 2 is set.</b></li>
+              </ul>
+                </li>
+                <li><b>Example commands:</b><ul>
+                <li>ASSIST assist\DEMOAST1 - assemble, link, and execute new 
+                ASSIST demo program which uses the ASSIST XDECO and XPRNT 
+                instructions to print prime numbers to 100.&nbsp; See the 
+                follwoing files:<ul>
+                <li>assist\DEMOAST1.MLC - source program</li>
+                <li>assist\DEMOAST1.PRN - generated assembly listing</li>
+                <li>assist\DEMOAST1.LOG - generated output log including all 
+                XPRNT output</li>
+                <li>assist\DEMOAST1.XPR - generated output file with all XPRNT 
+                lines.</li>
+              </ul>
+                </li>
+                <li><b>ASSIST assist\TESTAST1 - assemble, link, and execute new 
+                ASSIST regression test named TESTAST1.MLC in the assist 
+                sub-directory.&nbsp; 
+                After the command completes, the following files are available 
+                for viewing:</b><ul>
+                <li>assist\TESTAST1.MLC - source assembler program with ASSIST 
+                instructions</li>
+                <li>assist\TESTAST1.ERR - error log with start/stop messages 
+                plus any error messages</li>
+                <li><b>assist\TESTAST1.PRN - assembly listing</b></li>
+                <li><b>assist\TESTAST1.LST - linker listing</b></li>
+                <li><b>assist\TESTAST1.LOG - execution log with XPRNT and XDUMP 
+                output</b></li>
+                <li>assist\TESTAST1.XRD - XREAD test input file</li>
+                <li>assist\TESTAST1.XPR - XPRNT output file</li>
+                <li><b>assist\TESTAST1.XPH - XPNCH output file</b></li>
+                <li><b>assist\TESTAST1.XGT - XGET test input file</b></li>
+                <li><b>assist\TEST\AST1.XPT - XPUT output file</b></li>
+              </ul>
+                </li>
+                <li><b>ASSIST assist\TESTAST1 TRACE - add the TRACE option to 
+                generate TESTAST1.TRE output file with XPRNT, XDUMP, plus 
+                instruction trace for use in debugging.</b></li>
+                <li><b>ASSIST assist\TESTAST1 TEST - add the TEST option to 
+                start interactive test execution of the program with prompts for 
+                test commands which support tracing one or more instructions, 
+                dumping and/or changing registers and memory, etc.&nbsp; Type H 
+                for help list of test commands.</b></li>
+              </ul>
+                </li>
+                <li><b>Installation of z390 with ASSIST:</b><ul>
+                <li><b>Uninstall any versions of z390 prior to v1.4.01 and 
+                delete the install directory z390.</b></li>
+                <li><b>Uninstall any versions of J2SE prior to 1.6.0</b></li>
+                <li><b>Download and install latest update for J2SE 1.6</b></li>
+                <li><b>Download and install z390 v1.4.01 for Windows or Linux</b></li>
+                <li><b>Download and install z390 cumulative PTF fixes v1.4.01</b></li>
+                <li><b>Double click z390 desktop icon to start GUI interface</b></li>
+                <li><b>Enter command ASSIST assist\TESTAST1 to run the ASSIST 
+                regression test</b></li>
+                <li><b>Enter edit assist\TESTAST1.LOG to view output log.</b></li>
+                <li><b>Enter command ASSIST assist\DEMOAST1 to run the ASSIST 
+                demo to print primes to 100.</b></li>
+              </ul>
+                <p>&nbsp;</li>
+              </ul>
+                </li>
+              </ul>
+              <p>&nbsp;</td>
+            </tr>
+            </table>
+         
+        
+        </table>
+<p align="center"><b>IBM, CICS, ESA, MQ Series, MQM, MVS, OS/390, VSAM, 
+z10, and z/OS are registered trademarks<br>
+&nbsp;of International Business Machines Corporation</b></p>
+
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Sunday March 02, 2008<!--webbot bot="Timestamp" i-checksum="32922" endspan -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a>&nbsp;
+<a href="pop-up/sitemap.html">Sitemap</a><br>
+Copyright 2005 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </b> </p>
+
+</body>
+
+</html>

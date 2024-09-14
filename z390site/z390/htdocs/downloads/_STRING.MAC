@@ -1,0 +1,35 @@
+.*                                                                     
+.*        THIS IS THE MACRO DEFINITION                                 
+.*        Written by Rahim Azizarab rahimazizarab and released 
+.*        to Public Domain on September 30,2014                                                             
+         MACRO                                                        
+         STRING                                          
+         LCLC  &TYPE &TO &L &NP                                        
+         AIF   (N'&SYSLIST LT 2).ERROR1
+&OPS     SETC  ''
+.*  Use &SYSLIST instead of a positional parameter inside a macro;      
+&NP      SETA  N'&SYSLIST
+.*  For each macro invocation, a new value of &SYSNDX is assigned.
+&L       SETC  '&SYSNDX'   
+&I       SETA  0
+&J       SETA  0
+.LOOP1   ANOP
+&J       SETA  &J+1
+&K       SETA  &J-1
+         AIF   (&K EQ 0).LOOP1
+&F1LEN   SETA  K'&SYSLIST(&K)-2
+         MVC   (&SYSLIST(&NP)+&I)(&F1LEN),=C&SYSLIST(&K)
+         AIF   (&J EQ &NP).EXIT
+&I       SETA  &I+&F1LEN
+.*S&J      DC    C&SYSLIST(&J)
+         AGO   .LOOP1
+.*                                                                    
+.EXIT    ANOP                                                           
+         MEXIT                                                          
+.*                                                                      
+.*       ERROR MESSAGES FOR INVALID STRING MACRO INSTRUCTIONS             
+.*                                                                      
+.ERROR1  MNOTE 1,'IMPROPER NUMBER OF OPERANDS, NO STATEMENTS GENERATED' 
+         MEXIT                                                          
+         MEND                                                           
+

@@ -1,0 +1,443 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>zCOBOL Portable Mainframe COBOL Compiler</title>
+<META NAME="DESCRIPTION" CONTENT="z390 Protable Mainframe Assembler, Linker, Emulator Open Source J2SE">
+<META name="KEYWORDS" content="Mainframe Assembler Tools z390 SuperZap Open Source J2SE Java">
+
+<style>
+<!--
+ li.MsoNormal
+	{mso-style-parent:"";
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	margin-left:0in; margin-right:0in; margin-top:0in}
+-->
+</style>
+
+</head>
+
+<body>
+<table border="0" cellpadding="0" cellspacing="3" style="border-collapse: collapse" bordercolor="#111111" id="AutoNumber1" width="750" height="1">
+            <tr>
+              <td align="center" width="141" height="69" valign="top">
+              <b><font face="Times New Roman">
+              <a href="http://www.zcobol.org">
+              <img border="0" src="zcobol.jpg" width="100" height="75" alt="z390 Portable Mainframe COBOL Compiler"></a></font></b></td>
+              <td align="center" width="445" height="69">
+              <p align="center"><b><font size="4" face="Times New Roman">zCOBOL 
+              Portable Mainframe COBOL Compiler<br>
+              <a href="News.htm">What's New</a></font></b></td>
+              <td width="152" height="69" align="center">
+              <b>
+              <a href="http://www.z390.org">
+              <img border="0" src="z390.jpg" width="124" height="75" alt="z390 Portable Mainframe Assembler and Emulator"></a><font face="Times New Roman"><br>
+&nbsp;</font></b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="744" height="170" colspan="3">
+              <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" id="AutoNumber2" width="744">
+                <tr>
+                  <td align="left" valign="top" width="204">
+                  <p align="center"><b>zCOBOL Docs</b></td>
+                  <td align="left" valign="top" width="179">
+                  <p align="center"><b>zCOBOL Docs</b></td>
+                  <td align="left" valign="top" width="191">
+                  <p align="center"><b>COBOL Links</b></td>
+                  <td align="left" valign="top" width="170">
+                  <p align="center"><b>COBOL Links</b></td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" width="204">
+                  <ul>
+                    <li><b><a href="#Announcement_at_SHARE">SHARE Announcement</a></b></li>
+                    <li><b><a href="http://:/www.z390.org/SHARE/">SHARE 
+                    Presentation</a></b></li>
+                    <li><b><a href="#zCOBOL_Overview">Overview</a></b></li>
+                    <li><b><a href="#zcobol_Compiler_Commands">Compiler Commands</a></b></li>
+                    <li><b><a href="zcobol_options.htm">Compiler Options</a></b></li>
+                    <li><b>
+                    <a href="http://www.z390.org/z390_EXEC_CICS_Compatible_Assembler_Support.htm">
+                    EXEC CICS Support</a></b></li>
+                    <li><b><a href="zCOBOL_User_Guide.htm">User Guide</a></b></li>
+                  </ul>
+                  </td>
+                  <td align="left" valign="top" width="179">
+                  <ul>
+                    <li><b><a href="http://tech.groups.yahoo.com/group/zcobol/">
+                    User Group</a></b></li>
+                    <li><b><a href="#zcobol_Project">zcobol project </a></b></li>
+                    <li>
+                    <b>
+                    <a href="zCOBOL_Demos_and_Regression_Tests.htm#zcobo_Demo_Programs">
+                    Demo Programs</a></b></li>
+                    <li><b>
+                    <a href="zCOBOL_Demos_and_Regression_Tests.htm#zcobo_Regression_Tests">
+                    Regression Tests</a></b></li>
+                    <li><b><a href="zCOBOL_System_Programmer_Guide.htm">System 
+                    Pgmr Guide</a></b></li>
+                    <li><b><a href="http://www.z390.org">z390 website</a></b></li>
+                    <li><b>
+                    <a href="http://www.z390.org/z390_Support_Request_Log.htm">
+                    RPI Request log</a></b></li>
+                  </ul>
+                  </td>
+                  <td align="left" valign="top" width="191">
+                  <ul>
+                    <li><b>
+                    <a href="http://www.itl.nist.gov/div897/ctg/cobol_form.htm">
+                    NIST COBOL Tests</a></b></li>
+                    <li><b><a href="#zcobol_NIST_Test_Results">NIST zcobol 
+                    statistics</a></b></li>
+                    <li><b>
+                    <a href="http://www-01.ibm.com/software/awdtools/cobol/">IBM 
+                    COBOL</a></b></li>
+                    <li><b><a href="http://www.microfocus.com/">Micro Focus 
+                    COBOL</a></b></li>
+                    <li><b><a href="http://www.opencobol.org/">Open COBOL</a></b></li>
+                    <li><b><a href="http://www.veryant.com/">Veryant isCOBOL</a></b></li>
+                  </ul>
+                  </td>
+                  <td align="left" valign="top" width="170">
+                  <ul>
+                    <li><b> <a href="http://www.share.org">SHARE (03/03/09)</a></b></li>
+                    <li><b><a href="http://wavv.org/">WAVV&nbsp; (05/18/09)</a></b></li>
+                    <li><b>
+                    <a href="http://www.webring.com/hub?ring=cobol&list&page=1">
+                    All Things COBOL</a></b></li>
+                    <li><b>
+                    <a href="http://www.cobug.com/cobug/docs/forums0008.html">
+                    COBOL Forums</a></b></li>
+                  </ul>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" width="744" colspan="4">
+                  <p align="center"><b><a name="zCOBOL_Overview">zCOBOL Overview</a></b></p>
+                  <p><b>zCOBOL is an open source portable mainframe COBOL compiler 
+                  available as part of the z390 open source portable mainframe 
+                  assembler for Windows or Linux starting with z390 v1.5.00.&nbsp; 
+                  You can download z390 and zcobol in InstallShield format for 
+                  Windows for file image format for Linux from 
+                  <a href="http://www.z390.org">www.z390.org</a>.&nbsp; 
+                  You will also need the J2SE Java runtime which you can 
+                  download from
+                  <a href="http://java.sun.com/javase/downloads/index.jsp">Sun 
+                  Developer Network</a>.&nbsp; The first release of zcobol has been 
+                  regression tested with J2SE 6 update 12.&nbsp; Be sure to 
+                  remove any old obsolete&nbsp; versions of J2SE such as 1.4 or 
+                  1.5 which may conflict with current version.</b></p>
+                  <p><b>The zcobol compiler translates COBOL source language 
+                  programs into executable code using the following 3 major 
+                  components:</b></p>
+                  <ul>
+                    <li><b>The java program zc390.class in z390.jar reads COBOL 
+                    language source program with file extension CBL and 
+                    generates a z390 HLASM compatible mainframe assembler source 
+                    program with MLC extension.&nbsp; Each COBOL verb becomes a 
+                    macro call opcode and all the words following up to the next 
+                    verb or period become positional parameters for the macro 
+                    call.&nbsp; Periods generate a PERIOD macro call to 
+                    terminate all structures which may be missing the optional END-IF type words.&nbsp; 
+                    All dashes in words are converted to underscores unless in 
+                    quotes.&nbsp; the level numbers in data division statements are mapped 
+                    to WS macro call with level as first positional operand.</b></li>
+                    <li><b>The macros in COBOL verb macro library z390\zcobol\*.mac parse the 
+                    parameters for each verb, access global macro symbol table, 
+                    and call code generation macros to generated executable 
+                    code.&nbsp; For example the IF macro issues calls to GEN_COMP macro to generate executable source code to compare 
+                    two fields, and issues call to GEN_BC to generate executable 
+                    source code to branch on condition.</b></li>
+                    <li><b>There are currently 4 optional zcobol executable code 
+                    generation macro libraries:</b><ul>
+                      <li><b>z390\zcobol\z390 - zcobol code generation macros for 
+                      HLASM native z9/10 code</b></li>
+                      <li><b>z390\zcobol\java - zcobol code generation macros for 
+                      J2SE Java</b></li>
+                      <li><b>z390\zcobol\vce - zcobol code generation macros for MS 
+                      Visual Express C++</b></li>
+                      <li><b>z390\zcobol\i586 - zcobol code generation macros for 
+                      HLA and MASM native Intel code</b></li>
+                    </ul>
+                    <p><b>The z390\zcobol\z390 HLASM code generation library is the primary 
+                    focus currently.&nbsp; However there is a 
+                    COBOL demo program z390\zcobol\demo\HELLO.CBL which can be 
+                    compiled and executed in all 4 different target language 
+                    environments using the initial zcobol release.&nbsp; 
+                    Once the z390 HLASM code generation macros are complete and 
+                    all the NIST COBOL 1985 standards tests have been completed 
+                    successfully as a first milestone,&nbsp; 
+                    then these macros can be copied to the other libraries and modified 
+                    to replace HLASM source code model statements with the other 
+                    target language statements.</b></li>
+                  </ul>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" width="744" colspan="4">
+                  <p align="center"><b><a name="zcobol_Compiler_Commands">zcobol 
+                  Compiler Commands</a></b></p>
+                  <ul>
+                    <li><b>ZC390 - translate COBOL CBL source file to macro 
+                    assembler MLC source file</b></li>
+                    <li><b>ZC390C - compile CBL to HLASM BAL and assemble to 
+                    relocatible object code</b></li>
+                    <li><b>ZC390CL - compile CBL to HLASM BAL, assemble, and link to 
+                    z390 load module</b></li>
+                    <li><b>ZC390CLG - compile CBL to HLASM BAL, assemble, link, and 
+                    execute z390 load module</b></li>
+                    <li><b>ZCJAVCLG - compile CBL to J2SE java and execute class</b></li>
+                    <li><b>ZCVCECLG - compile CBL to MS Visual C++, link, and execute 
+                    exe</b></li>
+                    <li><b>ZC586CLG - compile CBL to HLA/ASM, link, and execute exe</b></li>
+                    <li><b>ZCRT390.BAT - run
+                    <a href="zCOBOL_Demos_and_Regression_Tests.htm#zcobo_Demo_Programs">
+                    zcobol to HLASM demos</a></b></li>
+                    <li><b>ZCRTJAV.BAT - run zcobol to Java demo</b></li>
+                    <li><b>ZCRTVCE.BAT - run zcobol to C++ demo (requires
+                    <a href="http://www.microsoft.com/Express/">MS Visual 
+                    Express 2008</a> install)</b></li>
+                    <li><b>ZCRT586.BAT - run zcobol to HLA/masm demo (requires
+                    <a href="http://webster.cs.ucr.edu/">HLA</a> and
+                    <a href="http://www.microsoft.com/downloads/details.aspx?familyid=7A1C9DA0-0510-44A2-B042-7EF370530C64&displaylang=en">
+                    MASM</a> installs)</b></li>
+                    <li><b>ZCRTTEST.BAT - run
+                    <a href="zCOBOL_Demos_and_Regression_Tests.htm#zcobo_Regression_Tests">
+                    zcobol to HLASM regression tests</a></b></li>
+                    <li><b>ZCRTSAVE.BAT - save regression test generated files 
+                    after any changes have been verified</b></li>
+                  </ul>
+                  <p><b>All zcobol commands start with ZC and are located in the 
+                  zcobol\bat directory and the z390 root directory for ease of use. All commands 
+                  require <a href="http://www.z390.org">z390 v1.5.00+</a> and
+                  <a href="http://java.sun.com/javase/downloads/index.jsp">J2SE 
+                  6.0+</a>.</b></td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" colspan="4" width="744">
+                  <p align="center"><b><br>
+                  <a name="Announcement_at_SHARE">
+                  Announcement at SHARE Session 8194</a></b></p>
+                  <ul>
+                    <li><b>WHAT - zCOBOL portable mainframe COBOL compiler</b></li>
+                    <li><b>WHEN - March 3, 2009 8:00 AM</b></li>
+                    <li><b>WHERE - <a href="http://www.share.org">SHARE</a> in Austin Texas</b></li>
+                    <li><b>WHY - This announcement focuses on the what, when, 
+                    where, and why</b></li>
+                    <li><b>HOW - Come to the SHARE session 8194 and join
+                    <a href="http://tech.groups.yahoo.com/group/zcobol/">zcobol@yahoogroups.com</a> for more </b></li>
+                  </ul>
+                  <p><b>The zCOBOL Portable Mainframe COBOL Compiler tool will 
+                  be presented at <a href="http://www.z390.org/SHARE">SHARE session 8194</a> 
+                  on Tuesday, March 3, 2009 
+                  starting at 8 AM.&nbsp; Sign up now and come learn how it 
+                  works, see live demos, and meet developers Don Higgins and 
+                  Melvyn Maltz.&nbsp; The session titled z390 Portable Mainframe 
+                  Assembler will include overview of z390 and will focus on the 
+                  new zCOBOL tool addition which is written in structured 
+                  conditional macro assembler and runs on any J2SE platform 
+                  including Windows and Linux.&nbsp; The tool can also be ported 
+                  to HLASM for those interested in running it on IBM z9/z10 
+                  mainframes.</b></p>
+                  <p><b>zCOBOL includes a framework which enables compiling 
+                  COBOL programs of multiple dialects into multiple target language 
+                  environment executable programs.&nbsp; The initial release of 
+                  zCOBOL includes support for many of the unique features and 
+                  extensions found in IBM Enterprise COBOL, Micro Focus COBOL, 
+                  and other older dialects of COBOL including verbs such as 
+                  ALTER and TRANSFORM.&nbsp; The user selectable target language 
+                  environments supported include IBM HLASM assembler for z9/z10 
+                  processors, Java for any J2SE platform, C++ for Microsoft 
+                  platforms, and HLA/MASM assembler for Intel platforms.&nbsp; 
+                  One of the zCOBOL demos includes a &quot;Hello World&quot; COBOL source 
+                  program which can be compiled and executed in any of the 4 
+                  current target language environments simply by using a 
+                  different zCOBOL compile and link command.</b></p>
+                  <p><b>In the initial release of zCOBOL, the primary 
+                  development focus has been on support of the IBM HLASM 
+                  mainframe assembler target language environment generating 
+                  HLASM compatible source programs which can be compiled and 
+                  executed using z390 on any J2SE platform or ported to IBM 
+                  z9/z10 mainframe processors for native code execution.&nbsp; 
+                  Mainframe data types supported include zoned 
+                  decimal up to S9(31), packed decimal up to S9(31), short 
+                  floating point COMP-1, long floating point COMP-2, binary half 
+                  word S9(4), full work S9(9), and double word S9(18).&nbsp; There are multiple 
+                  demos and regression tests for all the supported commonly used 
+                  COBOL verbs such as ADD, SUBTRACT, MULTIPLY, DIVIDE, MOVE, 
+                  CALL, DISPLAY, IF, ELSE, EVALUATE, WHEN, etc.&nbsp; The 
+                  initial release includes support for EXEC CICS COBOL and SOA 
+                  SEND and RECEIVE message extensions with demos that can be 
+                  compiled and executed on Windows or Linux.</b></p>
+                  <p><b>The zCOBOL support for the HLASM target language 
+                  environment includes generation of HLASM compatible source 
+                  language assembler for each COBOL program with data 
+                  names and procedure paragraph names retained for readability 
+                  when required during debugging.&nbsp; Debugging support 
+                  includes optional paragraph name tracing as well as macro assembler 
+                  and execution instruction tracing when required.&nbsp; Although 
+                  it is desirable, it is not a requirement that COBOL 
+                  programmers learn assembler.&nbsp; Users can simply compile, 
+                  link, and execute COBOL programs and just look at the compile 
+                  error or execution error messages to correct any problems.&nbsp; 
+                  The zcobol compiler includes a dynamically loaded runtime for 
+                  complex COBOL functions and all the source code for the zcobol 
+                  compiler and the runtime is installed along with z390 using 
+                  InstallShield for Windows and file image option for Linux 
+                  systems. </b></p>
+                  <p><b>zCOBOL generated programs can be statically and/or 
+                  dynamically linked with other zCOBOL or HLASM compatible 
+                  assembler programs.&nbsp; There is a regression test which 
+                  includes a test of both static and dynamic linking with both BY 
+                  VALUE and BY REFERENCE parameter passing.&nbsp; Currently an 
+                  effort is underway to run the
+                  <a href="http://www.itl.nist.gov/div897/ctg/cobol_form.htm">
+                  NIST ANSI COBOL 85</a> standard tests and provide results at SHARE.</b></p>
+                  <p><b>The zCOBOL compiler has been developed as a new flexible 
+                  tool for testing and modernizing COBOL applications without 
+                  requiring rewriting existing programs.&nbsp;&nbsp; With the 
+                  recent addition of
+                  <a href="http://www.z390.org/z390_ZSTRMAC_Structured_Macro_Support.htm">
+                  z390 structured conditional macro assembler extensions</a>, 
+                  the development of zCOBOL became feasible and has evolved 
+                  rapidly.&nbsp; As the recent article in the
+                  <a href="http://www.zjournal.com/index.cfm?section=article&aid=1079">
+                  z/System Journal titled, &quot;Easy COBOL Modernization for SOA&quot; 
+                  by L. H. Couch and Charles F. Townsend, November 2008</a> 
+                  indicates there is a growing demand for tools such as zCOBOL 
+                  to help seamlessly bridge legacy and modern IT solutions.</b></p>
+                  <p><b>Come to SHARE in Austin and learn about zCOBOL and many 
+                  other SOA tools.&nbsp; When you return from SHARE, you 
+                  will be able to download the latest version of z390 with 
+                  zCOBOL and try it out yourself on your own Windows or Linux 
+                  laptop.&nbsp; To participate in a 
+                  discussion group just for zcobol users join
+                  <a href="http://tech.groups.yahoo.com/group/zcobol/">zcobol@yahoogroups.com</a>.&nbsp; 
+                  And if you are an assembler or COBOL developer who would like 
+                  to contribute to the zcobol open source project, join the 
+                  zcobol group and indicate your specific interests.&nbsp; All 
+                  users are welcome and are encouraged to submit bug reports and 
+                  requests for priority on future open source zcobol and z390 development.&nbsp;&nbsp; </b></p>
+                  <p><b>
+                  <a href="mailto:don@higgins.net?subject=zcobol portable mainframe COBOL compiler - www.zcobol.org">Don Higgins</a></b></p>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" colspan="4" width="744">
+                  <p align="center"><b><br>
+                  <a name="zcobol_Project">zcobol Project</a></b></p>
+                  <p><b>Have you been bored lately?&nbsp; If you know COBOL and 
+                  assembler or Java, or C there is a job on the zcobol project 
+                  waiting for you.&nbsp; The pay is poor ($0) but the self 
+                  actualization rewards can be very satisfying.&nbsp; And there 
+                  is always the possibility of future paying jobs helping 
+                  companies use zcobol.&nbsp; Current jobs available include 
+                  writing COBOL verb macros for currently unsupported verbs 
+                  including SORT, MERGE.&nbsp; Optimizing the code generation 
+                  macros to produce more efficient code and optional code based 
+                  on <a href="zcobol_options.htm">zcobol options</a> such as 
+                  TRUNC, R64, etc.&nbsp; In addition major effort is still 
+                  required to covert the HLASM code generation macros to 
+                  generated java, C, or MASM.&nbsp; For COBOL programmers there 
+                  is the constant need to extend the
+                  <a href="zCOBOL_Demos_and_Regression_Tests.htm#zcobo_Regression_Tests">
+                  zcobol regression tests</a> written in zcobol which verify 
+                  that zcobol statements produce the expected results.&nbsp; And 
+                  finally there is a need to develop documentation on the zcobol 
+                  project as it evolves.</b></td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" colspan="4" width="744">
+                  <p align="center"><b><br>
+                  <a name="zcobol_NIST_Test_Results">zcobol NIST ANSI 85 Test 
+                  Suite Results</a><br>
+&nbsp;</b></p>
+                  <p><b>The following results were obtained using zcobol 
+                  v1.5.00.&nbsp; Once some of the more critical missing support 
+                  verbs such as SET and COMPUTE are completed, these numbers 
+                  should improve dramatically.&nbsp; The plan is to achieve 100% 
+                  within the next few releases of zcobol and then provide 
+                  optional regression test download for the NIST test suite for 
+                  zcobol.&nbsp; These statistics were extracted from </b></p>
+                  <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%">
+                    <tr>
+                      <td width="33%"><b>NIST Programs Compiled</b></td>
+                      <td width="11%"><b>319</b></td>
+                      <td width="56%"><b>26 minutes on Dell 3 GHZ Vista System</b></td>
+                    </tr>
+                    <tr>
+                      <td width="33%"><b>RC=0 No errors</b></td>
+                      <td width="11%"><b>11</b></td>
+                      <td width="56%">&nbsp;</td>
+                    </tr>
+                    <tr>
+                      <td width="33%"><b>RC=8 MNOTE support warning</b></td>
+                      <td width="11%"><b>19</b></td>
+                      <td width="56%"><b>Warning for unsupported verbs pending 
+                      implementation</b></td>
+                    </tr>
+                    <tr>
+                      <td width="33%"><b>RC=16 At lease 1 error message</b></td>
+                      <td width="11%"><b>249</b></td>
+                      <td width="56%"><b>Error messages from mz390 or az390 
+                      macro assembler</b></td>
+                    </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              </td>
+            </tr>
+
+            </table>
+         
+        
+        </table>
+<p align="center"><b><font face="Times New Roman">IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS<br>
+&nbsp;are registered trademarks
+&nbsp;of International Business Machines Corporation</font></b></p>
+
+<p align="center"><b><font face="Times New Roman">This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Saturday February 21, 2009<!--webbot bot="Timestamp" i-checksum="2600" endspan -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools z390 Portable Mainframe Assembler and Emulator">Webmaster</a><br>
+Copyright 2009 <a href="http://www.AutomatedSoftwareTools.com">Automated Software Tools Corporation</a></font></b></p>
+
+<b><font face="Times New Roman">
+
+<!--optional-->
+<noscript>
+<center><table bgcolor=gray cellspacing=0 border=2><tr>
+<td><table cellpadding=2 cellspacing=0 border=0><tr><td align=center>
+<font face=arial size=-1>This site is a member of WebRing. 
+<br>To browse visit <a href="http://ss.webring.com/navbar?f=l;y=dsh337821;u=defurl">
+Here</a>.</font></td></tr></table></td></tr></table>
+</center></noscript>
+</font></b></p>
+
+<p align="center">
+<b><font face="Times New Roman">
+<br>
+<script language=javascript type="text/javascript" src="http://ss.webring.com/navbar?f=j;y=dsh33782;u=10138599"> </script><noscript>
+<center> <table bgcolor=gray cellspacing=0 border=2><tr> <td><table cellpadding=2 cellspacing=0 border=0><tr><td align=center> <font face=arial size=-1>This site is a member of WebRing. <br>To browse visit <a href="http://ss.webring.com/navbar?f=l;y=dsh33782;u=10138599"> Here</a>.</font></td></tr></table></td></tr></table> </center></noscript> 
+<!-- START OF ACTIVEMETER CODE -->
+<script type="text/javascript" language="javascript">
+var __pid=36843;
+var __am_invisible=0;
+</script>
+<script type="text/javascript" language="javascript" src="http://www.activemeter.com/counter.js"></script>
+<noscript>
+   <a href="http://www.activemeter.com/" target="_blank">
+      <img  src="http://am1.activemeter.com/webtracker/track.html?method=track&pid=36843&java=0" alt="Free Web Counter" border="0">
+   </a></noscript>
+<!-- END OF ACTIVEMETER CODE -->
+</font></b>
+</p>
+
+</body>
+
+</html>

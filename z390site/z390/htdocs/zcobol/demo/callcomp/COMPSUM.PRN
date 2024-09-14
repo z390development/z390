@@ -1,0 +1,877 @@
+08:31:23 COMPSUM   MZ390 START USING z390 V1.5.06 ON J2SE 1.6.0_31 05/22/12
+AZ390I Copyright 2011 Automated Software Tools Corporation
+AZ390I z390 is licensed under GNU General Public License
+AZ390I program = zcobol\demo\callcomp\COMPSUM
+AZ390I options = @zcobol\z390\ZC390CLG=(
+  sysmac(+zcobol+zcobol\z390+mac+cics) syscpy(+zcobol+zcobol\z390+mac+cics) 
+  BAL NOLISTCALL MAXGBL(1500000))
+External Symbol Definitions
+ ESD=0001 LOC=00000000 LEN=00000508 TYPE=CST NAME=COMPSUM
+Assembler Listing
+000000                                       (6/15)1+*    ZCOBOL PGM='zcobol\demo\callcomp\COMPSUM' VER=V1.5.06 05/22/12 08:31:23 
+000000                                       (6/15)3+*    ZCOBOL OPTIONS=() 
+000000                                        (1/4)4          COPY  COMPSUM_ZC_LABELS.CPY
+000000                                        (1/5)5 *        IDENTIFICATION DIVISION.
+000000                                        (1/7)6 *        PROGRAM-ID.    COMPSUM
+000000                                       (9/34)7+         PRINT NOLIST,NOGEN,NOLISTUSE    SET LIST OPTION FOR INTERNAL CODE
+000000                                       (9/59)9+COMPSUM  CSECT ,                CSECT WITH PROCEDURE CODE AND WS
+000000                                      (9/60)10+         USING *,ZC_R15
+LISTUSE COMPSUM  ESD=0001 LOC=00000000 LEN=01000 REG=F OFF=00000 LAB=
+000000 90ECD00C                            (14/51)11+         STM   14,12,12+4*(14-14)(13)
+000004                                      (9/93)12+         CNOP  4,8             FORCE ZC390PVT TO DOUBLEWORD BOUNDARY
+000004 A785001A                000038       (9/94)13+         BRAS  ZC_R8,ZC_LOAD
+000008                                      (9/95)14+         USING *,ZC_R8            BASE FOR LOAD AND CICS V5 USE
+LISTUSE COMPSUM  ESD=0001 LOC=00000000 LEN=01000 REG=F OFF=00000 LAB=
+LISTUSE COMPSUM  ESD=0001 LOC=00000008 LEN=01000 REG=8 OFF=00000 LAB=
+000008                                      (9/96)15+*
+000008                                      (9/97)16+*  THESE FIELDS MUST BE KEPT IN SYNC WITH zcobol\ZC390PVT.CPY
+000008                                      (9/98)17+*
+000008 C3D6D4D7E2E4D440                     (9/99)18+         DC    CL8'COMPSUM'    PVTPGM   ZCOBOL PGM NAME
+000010 F0F561F2F261F1F2                    (9/100)19+         DC    CL8'05/22/12'   PVTDATE  ZCOBOL COMPILE DATE
+000018 F0F84BF3F1404040                    (9/101)20+         DC    CL8'08.31'   PVTTIME  ZCOBOL COMPILE TIME
+000020 E5F14BF54BF0F640                    (9/102)21+         DC    CL8'V1.5.06'    PVTVER   ZCOBOL COMPILER VERSION
+000028 F0                                  (9/103)22+         DC    C'0'     PVTCICS  ZCOBOL EXEC CICS PGM
+000029 F1                                  (9/104)23+         DC    C'1'   PVTEXTND ZCOBOL EXTENDED PRECISION
+00002A F0                                  (9/105)24+         DC    C'0'    PVTTRUNC ZCOBOL TRUNCATE TO PICTURE
+00002B F1                                  (9/106)25+         DC    C'1'      PVTR64   ZCOBOL USE 64 BIT REGISTERS
+00002C 0050                                (9/107)26+         DC    H'80' MAX DISPLAY LINE LEN  RPI 1118
+00002E                                     (9/108)27+         DS    XL10            RESERVED
+000038                                     (9/109)28+ZC_LOAD  DS    0H
+000038 410080B0                0000B8      (15/74)29+         LA    0,=CL8'ZC390LIB'
+00003C 1BFF                                (15/95)30+         SR    15,15 USE DEFAULT SYS390 SEARCH
+00003E 0A08                               (15/125)31+         SVC   8 LOAD R0=A(NAME) R15=DDNAME/DSNAME ADDR OR 0
+000040 12FF                                (9/111)32+         LTR   ZC_R15,ZC_R15
+000042 A7840013                000068      (9/112)33+         JZ    ZC_LOAD_OK
+000046 A715000D                000060      (16/49)34+         BRAS  1,*+(WTO#0009_EOT-*+1)/2*2
+00004A 00160000E9C3F3F9                    (16/50)35+         DC    AL2(WTO#0009_EOT-*,0),C'ZC390LIB NOT FOUND'
+000060                  00000060           (16/51)36+WTO#0009_EOT     EQU *
+000060 0A23                                (16/52)37+         SVC   35
+000062 41F00010                            (9/114)38+         LA  ZC_R15,16
+000066 0A03                                (9/115)39+         SVC 3      EXIT TO CALLER WITH RC=16
+000068                                     (9/116)40+ZC_LOAD_OK DS  0H
+000068 1890                                (9/117)41+         LR    ZC_R9,ZC_R0
+00006A                                     (9/118)42+         USING ZC390CVT,ZC_R9    R9=CVT
+LISTUSE COMPSUM  ESD=0001 LOC=00000000 LEN=01000 REG=F OFF=00000 LAB=
+LISTUSE COMPSUM  ESD=0001 LOC=00000008 LEN=01000 REG=8 OFF=00000 LAB=
+LISTUSE ZC390CVT ESD=0003 LOC=00000000 LEN=01000 REG=9 OFF=00000 LAB=
+00006A D503900080B8     000000 0000C0      (9/119)43+         CLC   ZCVT_ID,=C'ZCVT'              CHECK ZCVT ID AND LENGTH
+000070 A774000C                000088      (9/120)44+         JNE   ZC_VER_ERR                    IN ZC390LIB.390 MATCH
+000074 D503900480BC     000004 0000C4      (9/121)45+         CLC   ZCVT_LEN,=A(ZCVT_END-ZCVT_ID) ZCOBOL PGM COMPILED ID/LEN
+00007A 47708080                000088      (9/122)46+         BNE   ZC_VER_ERR
+00007E 58F09010                000010      (9/123)47+         L     ZC_R15,ZCVT_ZC390NUC
+000082 0DEF                                (9/124)48+         BASR  ZC_R14,ZC_R15 CALL ZC390NUC TO VERIFY VER, OPTIONS
+000084 A7F40022                0000C8      (9/125)49+         J     ZC_VER_OK
+000088                                     (9/126)50+ZC_VER_ERR DS 0H
+000088 A7150011                0000AA      (16/49)51+         BRAS  1,*+(WTO#0010_EOT-*+1)/2*2
+00008C 001E0000E9C3F3F9                    (16/50)52+         DC    AL2(WTO#0010_EOT-*,0),C'ZC390LIB ZCVT VERIFY ERROR'
+0000AA                  000000AA           (16/51)53+WTO#0010_EOT     EQU *
+0000AA 0A23                                (16/52)54+         SVC   35
+0000AC 41F00010                            (9/128)55+         LA  ZC_R15,16
+0000B0 0A03                                (9/129)56+         SVC 3      EXIT TO CALLER WITH RC=16
+0000B2                                     (9/130)57+         LTORG 
+0000B8 E9C3F3F9F0D3C9C2 =CL8'ZC390LIB'
+0000C0 E9C3E5E3         =C'ZCVT'
+0000C4 000001F8         =A(ZCVT_END-ZCVT_ID)
+0000C8                  00000080          (13/10)112=PFPO_TEST    EQU  X'80' PFPO TEST IF VALID OPCODE (NOT SUPPORTED YET)
+0000C8                  00000001          (13/11)113=PFPO_RADIX   EQU  1 PFPO OPCODE - CONVERT FROM ONE RADIX TO ANOTHER
+0000C8                  00000000          (13/12)114=PFPO_RND     EQU  0 PFOP ROUNDING OPTION (ONLY DEFAULT ALLOWED)
+0000C8                  00000000          (13/13)115=PFPO_TYPE_EH EQU  0 EH HFP SHORT     32 BITS 7  DIGITS
+0000C8                  00000001          (13/14)116=PFPO_TYPE_DH EQU  1 ED HFP LONG      64 BITS 15 DIGITS
+0000C8                  00000002          (13/15)117=PFPO_TYPE_LH EQU  2 EL HFP EXTENDED 128 BITS 30 DIGITS
+0000C8                  00000005          (13/16)118=PFPO_TYPE_EB EQU  5 EB BFP SHORT     32 BITS 7  DIGITS
+0000C8                  00000006          (13/17)119=PFPO_TYPE_DB EQU  6 DB BFP LONG      64 BITS 16 DIGITS
+0000C8                  00000007          (13/18)120=PFPO_TYPE_LB EQU  7 LB BFP EXTENDED 128 BITS 34 DIGITS
+0000C8                  00000008          (13/19)121=PFPO_TYPE_ED EQU  8 ED DFP SHORT     32 BITS 7  DIGITS
+0000C8                  00000009          (13/20)122=PFPO_TYPE_DD EQU  9 DD DFP LONG      64 BITS 16 DIGITS
+0000C8                  0000000A          (13/21)123=PFPO_TYPE_LD EQU 10 LD DFP EXTENDED 128 BITS 34 DIGITS
+0000C8                                    (9/133)124+ZC_VER_OK DS   0H
+0000C8 582D0018                            (9/63)125+         L     ZC_R2,24(ZC_R13) SET ZC_R2=PARMLIST ADDRESS AFTER LOAD
+0000CC C010000001BA            000440      (9/64)126+         LARL  ZC_R1,ZC_WS     ZC_R2=A(WORKING STORAGE WITH SAVEAREA)
+0000D2 501D0008                            (9/65)127+         ST    ZC_R1,8(ZC_R13) FORWARD  SAVE CHAIN
+0000D6 50D10004                            (9/66)128+         ST    ZC_R13,4(ZC_R1) BACKWARD SAVE CHAIN
+0000DA 18D1                                (9/67)129+         LR    ZC_R13,ZC_R1    LINK SAVE AREA IN ZC390CVT
+0000DC                                     (9/68)130+         USING ZC_WS,ZC_R13    BASE FOR ZCOBOL WS (SEE GEN_SYM_RX.MAC)
+LISTUSE COMPSUM  ESD=0001 LOC=00000000 LEN=01000 REG=F OFF=00000 LAB=
+LISTUSE COMPSUM  ESD=0001 LOC=00000008 LEN=01000 REG=8 OFF=00000 LAB=
+LISTUSE ZC390CVT ESD=0003 LOC=00000000 LEN=01000 REG=9 OFF=00000 LAB=
+LISTUSE COMPSUM  ESD=0001 LOC=00000440 LEN=01000 REG=D OFF=00000 LAB=
+0000DC 50D0D050                000490      (9/69)131+         ST    ZC_R13,ZC_WS_START  SAVE ADDR WS IN WS PREFIX
+0000E0 C00000000214            000508      (9/70)132+         LARL  ZC_R0,ZC_WS_END
+0000E6 1B0D                                (9/71)133+         SR    ZC_R0,ZC_R13
+0000E8 5000D054                000494      (9/72)134+         ST    ZC_R0,ZC_WS_LEN     SAVE LENGTH OF WS IN WS PREFIX
+0000EC                                     (9/73)135+         DROP  ZC_R15              RPI 1042
+LISTUSE COMPSUM  ESD=0001 LOC=00000440 LEN=01000 REG=D OFF=00000 LAB=
+LISTUSE COMPSUM  ESD=0001 LOC=00000008 LEN=01000 REG=8 OFF=00000 LAB=
+LISTUSE ZC390CVT ESD=0003 LOC=00000000 LEN=01000 REG=9 OFF=00000 LAB=
+00043C                                     (9/74)136+ZC_WSLOC LOCTR 
+000440                                     (9/75)137+ZC_WS    DS    0D           START WORKING STORAGE
+000000                                     (9/81)138+ZC390CVT DSECT 
+000000                                    (10/31)139=ZCVT_ID            DC    C'ZCVT'             ZCVT ID  VERIFIED BY ZCOB
+000004                                    (10/32)140=ZCVT_LEN           DC    A(ZCVT_END-ZCVT_ID) ZCVT LEN VERIFIED BY ZCOB
+000008                                    (10/33)141=ZCVT_VER           DC    CL8'V1.5.06'    ZCVT VER VERIFIED BY ZC390NUC
+000010                                    (10/34)142=ZCVT_ZC390NUC  DC V(ZC390NUC)      MODULE  SYSTEM ROUTINE MODULE INIT
+000014                                    (10/35)143=ZCVT_CALL           DC V(CALL)       ENTRY R0=A(PGM),R1=A(PARMLIST)
+000018                                    (10/36)144=ZCVT_CMP64R32       DC V(CMP64R32)   ENTRY COMPARE R0-1=FLD1 R2-3=FLD2
+00001C                                    (10/37)145=ZCVT_CVTLBTQ        DC V(CVTLBTQ)    ENTRY CVT LB IN F4-6 TO Q IN R0-1
+000020                                    (10/38)146=ZCVT_CVTLDTP        DC V(CVTLDTP)    ENTRY CVT LD IN F0-2 TO PL31 R0-1
+000024                                    (10/39)147=ZCVT_CVTQTLB        DC V(CVTQTLB)    ENTRY CVT Q IN R0-1 TO LB IN F4-6
+000028                                    (10/40)148=ZCVT_DIV64R32       DC V(DIV64R32)   ENTRY DIVIDE R0-1=N64, R2-3=MAX64
+00002C                                    (10/41)149=ZCVT_DIVQ128        DC V(DIVQ128)    ENTRY DIVIDE Q128 R0-R1 BY R2-R3
+000030                                    (10/42)150=ZCVT_GOBACK         DC V(GOBACK)     ENTRY R1=RC
+000034                                    (10/43)151=ZCVT_MPYQ128        DC V(MPYQ128)    ENTRY MULTIPLY Q128 R0-R1 BY R2-R3
+000038                                    (10/44)152=ZCVT_OSE64R32       DC V(OSE64R32)   ENTRY ON SIZE ERR R0-1=N, R2-3=MAX
+00003C                                    (10/45)153=ZCVT_PERFORM        DC V(PERFORM)    ENTRY R14=PGTAR,R0=PGEXT,R1=PMRET
+000040                                    (10/46)154=ZCVT_PMCHECK        DC V(PMCHECK)    ENTRY R14=RETURN TO NEXT INSTR.
+000044                                    (10/47)155=ZCVT_ROUNDF         DC V(ROUNDF)     ENTRY R0=REM,R1=QUO,R2=DIVISOR
+000048                                    (10/48)156=ZCVT_STACKORG       DC V(STACKORG)   ENTRY PERFORM STACK ORIGIN
+00004C                                    (10/49)157=ZCVT_STACKPTR       DC V(STACKPTR)   ENTRY CUR ENTRY A(PG_END+4,RET)
+000050                                    (10/50)158=ZCVT_STACKEND       DC V(STACKEND)   ENTRY PERFORM STACK END
+000054                                    (10/51)159=ZCVT_STOPRUN        DC V(STOPRUN)    ENTRY R1=RC
+000058                                    (10/52)160=ZCVT_TALPHAX        DC V(TALPHAX)    ENTRY TEST ALPHABETIC X
+00005C                                    (10/53)161=ZCVT_TNUMP          DC V(TNUMP)      ENTRY TEST NUMERIC P
+000060                                    (10/54)162=ZCVT_TNUMX          DC V(TNUMX)      ENTRY TEST NUMERIC X
+000064                                    (10/55)163=ZCVT_TNUMZ          DC V(TNUMZ)      ENTRY TEST NUMERIC Z
+000068                                    (10/56)164=*
+000068                                    (10/57)165=* ADDITIONAL SEPARATE MODULES LINKED WITH Z390NUC IN ZC390LIB.390
+000068                                    (10/58)166=*
+000068                                    (10/59)167=ZCVT_ABORT     DC V(ABORT)         MODULE  R1=ABORT ERROR MSG #
+00006C                  00000001          (10/60)168=ZCVT_ABORT_ALTER   EQU    1 ABORT ALTER DUE TO BRC NOT FOUND AT TARGET
+00006C                  00000002          (10/61)169=ZCVT_ABORT_CALL    EQU    2 ABORT DYNAMIC CALL - PGM NOT FOUND
+00006C                  00000003          (10/62)170=ZCVT_ABORT_DISPLAY EQU    3 ABORT DISPLAY DUE TO BUFFER EXCEEDED
+00006C                  00000004          (10/63)171=ZCVT_ABORT_OPEN    EQU    4 ABORT OPEN  INVALID DCB
+00006C                  00000006          (10/64)172=ZCVT_ABORT_STACK   EQU    6 ABORT PEROFRM STACK OVERFLOW
+00006C                  00000007          (10/65)173=ZCVT_ABORT_VERSION EQU    7 ABORT ZC390NUC INIT ZCOBOL VERSION ERROR
+00006C                  00000008          (10/66)174=ZCVT_ABORT_INT128  EQU    8 ABORT INTEGER 128 CONVERSION OVERFLO
+00006C                  00000009          (10/67)175=ZCVT_ABORT_DIVQ    EQU    9 ABORT DIVIDE Q IF DIVISOR 0 OR > 2**63
+00006C                  0000000A          (10/68)176=ZCVT_ABORT_CICS    EQU   10 ABORT THIS PGM REQUIRES EXEC CICS TRANS MGR
+00006C                  0000000B          (10/69)177=ZCVT_ABORT_ACCEPT  EQU   11 ABORT ACCEPT EOF
+00006C                  0000000B          (10/70)178=ZCVT_ABORT_MAXERR  EQU   11 ABORT MAX ERROR CODE
+00006C                                    (10/71)179=ZCVT_ACCEPT    DC V(ACCEPT)        MODULE  R1=A(TYPE,FLD_ADD,FLD_LEN)
+000070                  00000001          (10/72)180=ZCVT_ACCEPT_DEFAULT EQU   1 INPUT DEFAULT DDNAME=SYSIN
+000070                  00000002          (10/73)181=ZCVT_ACCEPT_CONSOLE EQU   2 INPUT VIA WTOR FROM CONSOLE
+000070                  00000003          (10/74)182=ZCVT_ACCEPT_DDNAME  EQU   3 INPUT FROM DDNAME WITH DDNAME ADDR IN R3
+000070                  00000004          (10/75)183=ZCVT_ACCEPT_DATE    EQU   4 RETURN DAY OF WEEK PIC 9(8) MMDDYYYY
+000070                  00000005          (10/76)184=ZCVT_ACCEPT_TIME    EQU   5 RETURN DAY OF WEEK PIC 9(8) HHMMSSTH
+000070                  00000006          (10/77)185=ZCVT_ACCEPT_DOW     EQU   6 RETURN DAY OF WEEK PIC 9 1-7
+000070                                    (10/78)186=ZCVT_DISPLAY   DC V(DISPLAY)       MODULE  R1=A(ADDR,LEN,TYPE)
+000074                                    (10/79)187=ZCVT_INSPECT   DC V(INSPECT)       MODULE  R0=TYPE,R1=PARMLIST
+000078                  00000000          (10/80)188=ZCVT_TALLYING      EQU   0 INSPECT TALLYING
+000078                  00000004          (10/81)189=ZCVT_REPLACING     EQU   4 INSPECT REPLACING
+000078                  00000008          (10/82)190=ZCVT_CONVERTING    EQU   8 INSPECT CONVERTING
+000078                                    (10/83)191=*
+000078                                    (10/84)192=* SHARED DATA AREAS
+000078                                    (10/85)193=*
+000078                                    (10/86)194=ZCVT_PVTMAXDL  DS H          MAXIMUM DISPLAY LINE LENGTH  RPI 1118
+000080                                    (10/87)195=               DS 0D
+000080                                    (10/88)196=ZCVT_ZERO      DC XL16'00'   BINARY ZEROS
+000090                                    (10/89)197=ZCVT_HIGH_VALUES DC 0XL16,16X'FF' BINARY FF'S     RPI 1181
+0000A0                                    (10/90)198=ZCVT_PWORK     DS PL8        CVD/CVB WORK
+0000A8                                    (10/91)199=ZCVT_PWORK1    DS PL16       DIV DIVIDEND, CVDG/CVBG WORK
+0000B8                                    (10/92)200=ZCVT_PWORK2    DS PL16       DIV DIVISOR
+0000C8                                    (10/93)201=ZCVT_PWORK3    DS PL16       DIV QUOTIENT
+0000D8                                    (10/94)202=ZCVT_PWORK4    DS PL16       DIV REMAINDER
+0000E8                                    (10/95)203=ZCVT_NDDX      DS XL16       DIV DIVIDEND HOLD AREA
+0000F8                                    (10/96)204=ZCVT_WORKAREA  DS XL256      GEN_INSPECT PARMS, GEN_EDIT WORK, ETC.
+0001F8                                    (10/97)205=*
+0001F8                                    (10/98)206=* END OF ZC390CVT
+0001F8                                    (10/99)207=*
+0001F8                  000001F8         (10/100)208=ZCVT_END   EQU   *
+000000                                     (9/83)209+ZC390PVT DSECT 
+000000                                    (11/11)210=PVTPGM   DS    CL8  ZCOBOL PGM NAME
+000008                                    (11/12)211=PVTDATE  DS    CL8  ZCOBOL COMPILE DATE
+000010                                    (11/13)212=PVTTIME  DS    CL8  ZCOBOL COMPILE TIME
+000018                                    (11/14)213=PVTVER   DS    CL8  ZCOBOL COMPILER VERSION
+000020                                    (11/15)214=PVTCICS  DS    C    ZCOBOL EXEC CICS PGM
+000021                                    (11/16)215=PVTEXTND DS    C    ZCOBOL EXTENDED PRECISION
+000022                                    (11/17)216=PVTTRUNC DS    C    ZCOBOL TRUNCATE TO PICTURE
+000023                                    (11/18)217=PVTR64   DS    C    ZCOBOL USE 64 BIT REGISTERS
+000024                                    (11/19)218=PVTMAXDL DS    H    ZCOBOL MAX DISPLAY LINE LENGTH
+000026                                    (11/20)219=         DS    XL10 RESERVED
+000440                                     (9/85)220+ZC_WSLOC LOCTR              CONTINUE WS FOR FD AND DATA
+000440                                      (1/9)221 *        AUTHOR.        DON HIGGINS.
+000440                                     (1/11)222 *        DATE-WRITTEN.  05/12/12.
+000440                                     (1/13)223 *      * SUBROUTINE CALLED TO ADD 15 DATA FIELDS AND RETURN SUM.       
+000440                                     (1/15)224 *        ENVIRONMENT DIVISION.
+000440                                     (1/17)225 *        DATA DIVISION.
+000440                                    (26/23)226+         PRINT DATA
+000440                                     (1/19)227 *        LINKAGE SECTION.
+000440                                     (1/21)228 *        01 ZDATA.
+000440                                     (1/23)229 *           05 EH1 FLOAT-HEX-7.
+000440                                     (1/25)230 *           05 DH1 FLOAT-HEX-15.
+000440                                     (1/27)231 *           05 LH1 FLOAT-HEX-30.
+000440                                     (1/29)232 *           05 EB1 FLOAT-BINARY-7.
+000440                                     (1/31)233 *           05 DB1 FLOAT-BINARY-16.
+000440                                     (1/33)234 *           05 LB1 FLOAT-BINARY-34.
+000440                                     (1/35)235 *           05 ED1 FLOAT-DECIMAL-7.
+000440                                     (1/37)236 *           05 DD1 FLOAT-DECIMAL-16.
+000440                                     (1/39)237 *           05 LD1 FLOAT-DECIMAL-34.
+000440                                     (1/41)238 *           05 H1      COMP PIC S9(3)V9.
+000440                                     (1/43)239 *           05 F1      COMP PIC S9(7)V99.
+000440                                     (1/45)240 *           05 G1      COMP PIC S9(15)V999.
+000440                                     (1/47)241 *           05 Q1      COMP PIC S9(35)V9999.
+000440                                     (1/49)242 *           05 P1      COMP-3 PIC S9(26)V9(5).
+000440                                     (1/51)243 *           05 Z1             PIC S9(25)V9(6).
+000440                                     (1/53)244 *           05 PSUM    COMP-3 PIC S9(4)V9.
+000440                                     (1/56)245 *        PROCEDURE DIVISION USING ZDATA.
+000440                                     (1/57)246 *ZC   PROCEDURE DIVISION,USING,ZDATA
+000440                                    (29/18)247+         PRINT LIST,GEN,LISTUSE TURN PRINT LISTING ON FOR USER CODE GEN
+0000EC                                    (29/19)248+COMPSUM  CSECT                SWITCH TO PROCEDURE CODE AHEAD OF WS
+0000EC 58020000                           (29/70)249+         L     ZC_R0,0(ZC_R2)          LOAD PARM ADDR FROM PARMLIST
+0000F0 5000D0BB                0004FB     (29/72)250+         ST    ZC_R0,ZC_ZDATA_PTR STORE PARM POINTER
+0000F4                                     (1/59)251 *            COMPUTE PSUM = EH1+DH1+LH1
+0000F4                                     (1/60)252 *                          +EB1+DB1+LB1
+0000F4                                     (1/61)253 *                          +ED1+DD1+LD1
+0000F4                                     (1/62)254 *                          +H1+F1+G1
+0000F4                                     (1/63)255 *                          +Q1+P1+Z1           .
+0000F4                                     (1/65)256 *ZC     27         COMPUTE PSUM,=,EH1,+,DH1,+,LH1,+,EB1,+,DB1,+,LB1,+,ED1,+,DD1,+,LD1,+,H1,+,F1,+,G1,+,Q1,+,P1,+,Z1
+0000F4 5840D0BB                0004FB    (32/128)258+         L     ZC_R4,ZC_ZDATA_PTR
+0000F8                                   (32/136)259+         USING ZDATA_DSECT,ZC_R4
+LISTUSE COMPSUM  ESD=0001 LOC=00000440 LEN=01000 REG=D OFF=00000 LAB=
+LISTUSE COMPSUM  ESD=0001 LOC=00000008 LEN=01000 REG=8 OFF=00000 LAB=
+LISTUSE ZC390CVT ESD=0003 LOC=00000000 LEN=01000 REG=9 OFF=00000 LAB=
+LISTUSE ZDATA_DSECT ESD=0005 LOC=00000000 LEN=01000 REG=4 OFF=00000 LAB=
+0000F8                                    (34/34)260+         MNOTE 'ZC_CALC PARMS=PSUM,=,EH1,+,DH1,+,LH1,+,EB1,+,DB1,+,LB1,+,ED1,+,DD1,+,LD1,+,H1,+,F1,+,G1,+,Q1,+,P1,+,Z1'
+0000F8                                   (34/737)262+         MNOTE 'ZC_CALC   MOVE TMP-1,9,16,0 EH1,1,4,0'
+0000F8 78404000                000000     (37/67)263+         LE    ZC_F4,EH1
+0000FC C40D0000018E            000418     (37/93)264+         LRL   ZC_R0,=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_EH,PFPO_RND)
+000102 010A                               (37/94)266+         PFPO 
+000104 600090F8                0000F8   (36/1001)267+         STD   0,ZCVT_WORKAREA+0
+000108 60209100                000100   (36/1002)268+         STD   2,8+ZCVT_WORKAREA+0
+00010C                                   (34/737)269+         MNOTE 'ZC_CALC   ADD TMP-1,9,16,0 DH1,2,8,0'
+00010C 68404004                000004     (37/69)270+         LD    ZC_F4,DH1
+000110 C40D00000186            00041C     (37/93)271+         LRL   ZC_R0,=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_DH,PFPO_RND)
+000116 010A                               (37/94)273+         PFPO 
+000118 681090F8                0000F8    (38/803)274+         LD    ZC_F1,ZCVT_WORKAREA+0
+00011C 68309100                000100    (38/804)275+         LD    ZC_F3,8+ZCVT_WORKAREA+0
+000120 B3DA1000                          (38/805)276+         AXTR  ZC_F0,ZC_F0,ZC_F1
+000124 600090F8                0000F8    (38/806)277+         STD   ZC_F0,ZCVT_WORKAREA+0
+000128 60209100                000100    (38/807)278+         STD   ZC_F2,8+ZCVT_WORKAREA+0
+00012C                                   (34/737)279+         MNOTE 'ZC_CALC   MOVE TMP-2,9,16,0 TMP-1,9,16,0'
+00012C D20F910890F8     000108 0000F8    (36/105)280+         MVC   ZCVT_WORKAREA+16(16),16-16+ZCVT_WORKAREA+0 ALN RIGHT 9ZP
+000132                                   (34/737)281+         MNOTE 'ZC_CALC   ADD TMP-2,9,16,0 LH1,3,16,0'
+000132 6840400C                00000C     (37/71)282+         LD    ZC_F4,LH1
+000136 68604014                000014     (37/72)283+         LD    ZC_F6,8+LH1
+00013A C40D00000173            000420     (37/93)284+         LRL   ZC_R0,=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_LH,PFPO_RND)
+000140 010A                               (37/94)286+         PFPO 
+000142 68109108                000108    (38/803)287+         LD    ZC_F1,ZCVT_WORKAREA+16
+000146 68309110                000110    (38/804)288+         LD    ZC_F3,8+ZCVT_WORKAREA+16
+00014A B3DA1000                          (38/805)289+         AXTR  ZC_F0,ZC_F0,ZC_F1
+00014E 60009108                000108    (38/806)290+         STD   ZC_F0,ZCVT_WORKAREA+16
+000152 60209110                000110    (38/807)291+         STD   ZC_F2,8+ZCVT_WORKAREA+16
+000156                                   (34/737)292+         MNOTE 'ZC_CALC   MOVE TMP-1,9,16,0 TMP-2,9,16,0'
+000156 D20F90F89108     0000F8 000108    (36/105)293+         MVC   ZCVT_WORKAREA+0(16),16-16+ZCVT_WORKAREA+16 ALN RIGHT 9ZP
+00015C                                   (34/737)294+         MNOTE 'ZC_CALC   ADD TMP-1,9,16,0 EB1,4,4,0'
+00015C 7840401C                00001C     (37/67)295+         LE    ZC_F4,EB1
+000160 C40D00000162            000424     (37/93)296+         LRL   ZC_R0,=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_EB,PFPO_RND)
+000166 010A                               (37/94)298+         PFPO 
+000168 681090F8                0000F8    (38/803)299+         LD    ZC_F1,ZCVT_WORKAREA+0
+00016C 68309100                000100    (38/804)300+         LD    ZC_F3,8+ZCVT_WORKAREA+0
+000170 B3DA1000                          (38/805)301+         AXTR  ZC_F0,ZC_F0,ZC_F1
+000174 600090F8                0000F8    (38/806)302+         STD   ZC_F0,ZCVT_WORKAREA+0
+000178 60209100                000100    (38/807)303+         STD   ZC_F2,8+ZCVT_WORKAREA+0
+00017C                                   (34/737)304+         MNOTE 'ZC_CALC   MOVE TMP-2,9,16,0 TMP-1,9,16,0'
+00017C D20F910890F8     000108 0000F8    (36/105)305+         MVC   ZCVT_WORKAREA+16(16),16-16+ZCVT_WORKAREA+0 ALN RIGHT 9ZP
+000182                                   (34/737)306+         MNOTE 'ZC_CALC   ADD TMP-2,9,16,0 DB1,5,8,0'
+000182 68404020                000020     (37/69)307+         LD    ZC_F4,DB1
+000186 C40D00000151            000428     (37/93)308+         LRL   ZC_R0,=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_DB,PFPO_RND)
+00018C 010A                               (37/94)310+         PFPO 
+00018E 68109108                000108    (38/803)311+         LD    ZC_F1,ZCVT_WORKAREA+16
+000192 68309110                000110    (38/804)312+         LD    ZC_F3,8+ZCVT_WORKAREA+16
+000196 B3DA1000                          (38/805)313+         AXTR  ZC_F0,ZC_F0,ZC_F1
+00019A 60009108                000108    (38/806)314+         STD   ZC_F0,ZCVT_WORKAREA+16
+00019E 60209110                000110    (38/807)315+         STD   ZC_F2,8+ZCVT_WORKAREA+16
+0001A2                                   (34/737)316+         MNOTE 'ZC_CALC   MOVE TMP-1,9,16,0 TMP-2,9,16,0'
+0001A2 D20F90F89108     0000F8 000108    (36/105)317+         MVC   ZCVT_WORKAREA+0(16),16-16+ZCVT_WORKAREA+16 ALN RIGHT 9ZP
+0001A8                                   (34/737)318+         MNOTE 'ZC_CALC   ADD TMP-1,9,16,0 LB1,6,16,0'
+0001A8 68404028                000028     (37/71)319+         LD    ZC_F4,LB1
+0001AC 68604030                000030     (37/72)320+         LD    ZC_F6,8+LB1
+0001B0 C40D0000013E            00042C     (37/93)321+         LRL   ZC_R0,=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_LB,PFPO_RND)
+0001B6 010A                               (37/94)323+         PFPO 
+0001B8 681090F8                0000F8    (38/803)324+         LD    ZC_F1,ZCVT_WORKAREA+0
+0001BC 68309100                000100    (38/804)325+         LD    ZC_F3,8+ZCVT_WORKAREA+0
+0001C0 B3DA1000                          (38/805)326+         AXTR  ZC_F0,ZC_F0,ZC_F1
+0001C4 600090F8                0000F8    (38/806)327+         STD   ZC_F0,ZCVT_WORKAREA+0
+0001C8 60209100                000100    (38/807)328+         STD   ZC_F2,8+ZCVT_WORKAREA+0
+0001CC                                   (34/737)329+         MNOTE 'ZC_CALC   MOVE TMP-2,9,16,0 TMP-1,9,16,0'
+0001CC D20F910890F8     000108 0000F8    (36/105)330+         MVC   ZCVT_WORKAREA+16(16),16-16+ZCVT_WORKAREA+0 ALN RIGHT 9ZP
+0001D2                                   (34/737)331+         MNOTE 'ZC_CALC   ADD TMP-2,9,16,0 ED1,7,4,0'
+0001D2 78404038                000038     (37/67)332+         LE    ZC_F4,ED1
+0001D6 C40D0000012D            000430     (37/93)333+         LRL   ZC_R0,=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_ED,PFPO_RND)
+0001DC 010A                               (37/94)335+         PFPO 
+0001DE 68109108                000108    (38/803)336+         LD    ZC_F1,ZCVT_WORKAREA+16
+0001E2 68309110                000110    (38/804)337+         LD    ZC_F3,8+ZCVT_WORKAREA+16
+0001E6 B3DA1000                          (38/805)338+         AXTR  ZC_F0,ZC_F0,ZC_F1
+0001EA 60009108                000108    (38/806)339+         STD   ZC_F0,ZCVT_WORKAREA+16
+0001EE 60209110                000110    (38/807)340+         STD   ZC_F2,8+ZCVT_WORKAREA+16
+0001F2                                   (34/737)341+         MNOTE 'ZC_CALC   MOVE TMP-1,9,16,0 TMP-2,9,16,0'
+0001F2 D20F90F89108     0000F8 000108    (36/105)342+         MVC   ZCVT_WORKAREA+0(16),16-16+ZCVT_WORKAREA+16 ALN RIGHT 9ZP
+0001F8                                   (34/737)343+         MNOTE 'ZC_CALC   ADD TMP-1,9,16,0 DD1,8,8,0'
+0001F8 6840403C                00003C     (37/69)344+         LD    ZC_F4,DD1
+0001FC C40D0000011C            000434     (37/93)345+         LRL   ZC_R0,=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_DD,PFPO_RND)
+000202 010A                               (37/94)347+         PFPO 
+000204 681090F8                0000F8    (38/803)348+         LD    ZC_F1,ZCVT_WORKAREA+0
+000208 68309100                000100    (38/804)349+         LD    ZC_F3,8+ZCVT_WORKAREA+0
+00020C B3DA1000                          (38/805)350+         AXTR  ZC_F0,ZC_F0,ZC_F1
+000210 600090F8                0000F8    (38/806)351+         STD   ZC_F0,ZCVT_WORKAREA+0
+000214 60209100                000100    (38/807)352+         STD   ZC_F2,8+ZCVT_WORKAREA+0
+000218                                   (34/737)353+         MNOTE 'ZC_CALC   MOVE TMP-2,9,16,0 TMP-1,9,16,0'
+000218 D20F910890F8     000108 0000F8    (36/105)354+         MVC   ZCVT_WORKAREA+16(16),16-16+ZCVT_WORKAREA+0 ALN RIGHT 9ZP
+00021E                                   (34/737)355+         MNOTE 'ZC_CALC   ADD TMP-2,9,16,0 LD1,9,16,0'
+00021E 68004044                000044     (37/40)356+         LD    ZC_F0,LD1
+000222 6820404C                00004C     (37/41)357+         LD    ZC_F2,8+LD1
+000226 68109108                000108    (38/803)358+         LD    ZC_F1,ZCVT_WORKAREA+16
+00022A 68309110                000110    (38/804)359+         LD    ZC_F3,8+ZCVT_WORKAREA+16
+00022E B3DA1000                          (38/805)360+         AXTR  ZC_F0,ZC_F0,ZC_F1
+000232 60009108                000108    (38/806)361+         STD   ZC_F0,ZCVT_WORKAREA+16
+000236 60209110                000110    (38/807)362+         STD   ZC_F2,8+ZCVT_WORKAREA+16
+00023A                                   (34/737)363+         MNOTE 'ZC_CALC   MOVE TMP-1,9,16,0 TMP-2,9,16,0'
+00023A D20F90F89108     0000F8 000108    (36/105)364+         MVC   ZCVT_WORKAREA+0(16),16-16+ZCVT_WORKAREA+16 ALN RIGHT 9ZP
+000240                                   (34/737)365+         MNOTE 'ZC_CALC   ADD TMP-1,9,16,0 H1,H,2,1'
+000240 E30040540015            000054    (38/785)366+         LGH   ZC_R0,H1
+000246 B3F90000                          (38/786)367+         CXGTR ZC_F0,ZC_R0
+00024A C010000000BF            0003C8   (38/1562)368+         LARL  ZC_R1,=LD'1E1'
+000250 68110000                         (38/1563)369+         LD    ZC_F1,0(ZC_R1)
+000254 68310008                         (38/1564)370+         LD    ZC_F3,8(ZC_R1)
+000258 B3D91000                         (38/1565)371+         DXTR  ZC_F0,ZC_F0,ZC_F1
+00025C 681090F8                0000F8    (38/803)372+         LD    ZC_F1,ZCVT_WORKAREA+0
+000260 68309100                000100    (38/804)373+         LD    ZC_F3,8+ZCVT_WORKAREA+0
+000264 B3DA1000                          (38/805)374+         AXTR  ZC_F0,ZC_F0,ZC_F1
+000268 600090F8                0000F8    (38/806)375+         STD   ZC_F0,ZCVT_WORKAREA+0
+00026C 60209100                000100    (38/807)376+         STD   ZC_F2,8+ZCVT_WORKAREA+0
+000270                                   (34/737)377+         MNOTE 'ZC_CALC   MOVE TMP-2,9,16,0 TMP-1,9,16,0'
+000270 D20F910890F8     000108 0000F8    (36/105)378+         MVC   ZCVT_WORKAREA+16(16),16-16+ZCVT_WORKAREA+0 ALN RIGHT 9ZP
+000276                                   (34/737)379+         MNOTE 'ZC_CALC   ADD TMP-2,9,16,0 F1,F,4,2'
+000276 E30040560014            000056    (38/779)380+         LGF   ZC_R0,F1
+00027C B3F90000                          (38/780)381+         CXGTR ZC_F0,ZC_R0
+000280 C010000000AC            0003D8   (38/1562)382+         LARL  ZC_R1,=LD'1E2'
+000286 68110000                         (38/1563)383+         LD    ZC_F1,0(ZC_R1)
+00028A 68310008                         (38/1564)384+         LD    ZC_F3,8(ZC_R1)
+00028E B3D91000                         (38/1565)385+         DXTR  ZC_F0,ZC_F0,ZC_F1
+000292 68109108                000108    (38/803)386+         LD    ZC_F1,ZCVT_WORKAREA+16
+000296 68309110                000110    (38/804)387+         LD    ZC_F3,8+ZCVT_WORKAREA+16
+00029A B3DA1000                          (38/805)388+         AXTR  ZC_F0,ZC_F0,ZC_F1
+00029E 60009108                000108    (38/806)389+         STD   ZC_F0,ZCVT_WORKAREA+16
+0002A2 60209110                000110    (38/807)390+         STD   ZC_F2,8+ZCVT_WORKAREA+16
+0002A6                                   (34/737)391+         MNOTE 'ZC_CALC   MOVE TMP-1,9,16,0 TMP-2,9,16,0'
+0002A6 D20F90F89108     0000F8 000108    (36/105)392+         MVC   ZCVT_WORKAREA+0(16),16-16+ZCVT_WORKAREA+16 ALN RIGHT 9ZP
+0002AC                                   (34/737)393+         MNOTE 'ZC_CALC   ADD TMP-1,9,16,0 G1,G,8,3'
+0002AC E300405A0004            00005A    (38/782)394+         LG    ZC_R0,G1
+0002B2 B3F90000                          (38/783)395+         CXGTR ZC_F0,ZC_R0
+0002B6 C01000000099            0003E8   (38/1562)396+         LARL  ZC_R1,=LD'1E3'
+0002BC 68110000                         (38/1563)397+         LD    ZC_F1,0(ZC_R1)
+0002C0 68310008                         (38/1564)398+         LD    ZC_F3,8(ZC_R1)
+0002C4 B3D91000                         (38/1565)399+         DXTR  ZC_F0,ZC_F0,ZC_F1
+0002C8 681090F8                0000F8    (38/803)400+         LD    ZC_F1,ZCVT_WORKAREA+0
+0002CC 68309100                000100    (38/804)401+         LD    ZC_F3,8+ZCVT_WORKAREA+0
+0002D0 B3DA1000                          (38/805)402+         AXTR  ZC_F0,ZC_F0,ZC_F1
+0002D4 600090F8                0000F8    (38/806)403+         STD   ZC_F0,ZCVT_WORKAREA+0
+0002D8 60209100                000100    (38/807)404+         STD   ZC_F2,8+ZCVT_WORKAREA+0
+0002DC                                   (34/737)405+         MNOTE 'ZC_CALC   MOVE TMP-2,9,16,0 TMP-1,9,16,0'
+0002DC D20F910890F8     000108 0000F8    (36/105)406+         MVC   ZCVT_WORKAREA+16(16),16-16+ZCVT_WORKAREA+0 ALN RIGHT 9ZP
+0002E2                                   (34/737)407+         MNOTE 'ZC_CALC   ADD TMP-2,9,16,0 Q1,Q,16,4'
+0002E2 E30040620004            000062     (37/52)408+         LG    ZC_R0,Q1
+0002E8 E310406A0004            00006A     (37/53)409+         LG    ZC_R1,8+Q1
+0002EE 58F09024                000024     (37/56)410+         L     ZC_R15,ZCVT_CVTQTLB   CVT Q IN ZC_R0-ZC_R1                                    TO LB IN ZC_F4-ZC_F6
+0002F2 0DEF                               (37/57)412+         BASR  ZC_R14,ZC_R15
+0002F4 C40D0000009C            00042C     (37/93)413+         LRL   ZC_R0,=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_LB,PFPO_RND)
+0002FA 010A                               (37/94)415+         PFPO 
+0002FC C0100000007E            0003F8   (38/1562)416+         LARL  ZC_R1,=LD'1E4'
+000302 68110000                         (38/1563)417+         LD    ZC_F1,0(ZC_R1)
+000306 68310008                         (38/1564)418+         LD    ZC_F3,8(ZC_R1)
+00030A B3D91000                         (38/1565)419+         DXTR  ZC_F0,ZC_F0,ZC_F1
+00030E 68109108                000108    (38/803)420+         LD    ZC_F1,ZCVT_WORKAREA+16
+000312 68309110                000110    (38/804)421+         LD    ZC_F3,8+ZCVT_WORKAREA+16
+000316 B3DA1000                          (38/805)422+         AXTR  ZC_F0,ZC_F0,ZC_F1
+00031A 60009108                000108    (38/806)423+         STD   ZC_F0,ZCVT_WORKAREA+16
+00031E 60209110                000110    (38/807)424+         STD   ZC_F2,8+ZCVT_WORKAREA+16
+000322                                   (34/737)425+         MNOTE 'ZC_CALC   MOVE TMP-1,9,16,0 TMP-2,9,16,0'
+000322 D20F90F89108     0000F8 000108    (36/105)426+         MVC   ZCVT_WORKAREA+0(16),16-16+ZCVT_WORKAREA+16 ALN RIGHT 9ZP
+000328                                   (34/737)427+         MNOTE 'ZC_CALC   ADD TMP-1,9,16,0 P1,P,16,5'
+000328 F8FF90A84072     0000A8 000072    (38/788)428+         ZAP   ZCVT_PWORK1,P1
+00032E EB0190A80004            0000A8    (38/789)429+         LMG   ZC_R0,ZC_R1,ZCVT_PWORK1
+000334 B3FB0000                          (38/790)430+         CXSTR ZC_F0,ZC_R0
+000338 C01000000068            000408   (38/1562)431+         LARL  ZC_R1,=LD'1E5'
+00033E 68110000                         (38/1563)432+         LD    ZC_F1,0(ZC_R1)
+000342 68310008                         (38/1564)433+         LD    ZC_F3,8(ZC_R1)
+000346 B3D91000                         (38/1565)434+         DXTR  ZC_F0,ZC_F0,ZC_F1
+00034A 681090F8                0000F8    (38/803)435+         LD    ZC_F1,ZCVT_WORKAREA+0
+00034E 68309100                000100    (38/804)436+         LD    ZC_F3,8+ZCVT_WORKAREA+0
+000352 B3DA1000                          (38/805)437+         AXTR  ZC_F0,ZC_F0,ZC_F1
+000356 600090F8                0000F8    (38/806)438+         STD   ZC_F0,ZCVT_WORKAREA+0
+00035A 60209100                000100    (38/807)439+         STD   ZC_F2,8+ZCVT_WORKAREA+0
+00035E                                   (34/737)440+         MNOTE 'ZC_CALC   MOVE PSUM,P,3,1 TMP-1,9,16,0'
+00035E 684090F8                0000F8   (36/1437)441+         LD    ZC_F4,ZCVT_WORKAREA+0
+000362 68609100                000100   (36/1438)442+         LD    ZC_F6,8+ZCVT_WORKAREA+0
+000366 C01000000031            0003C8   (36/1440)443+         LARL  ZC_R1,=LD'1E1'
+00036C 68310008                         (36/1441)444+         LD    ZC_F3,8(ZC_R1)
+000370 68110000                         (36/1442)445+         LD    ZC_F1,0(ZC_R1)
+000374 B3D81044                         (36/1443)446+         MXTR  ZC_F4,ZC_F4,ZC_F1
+000378 C40D00000060            000438     (37/88)447+         LRL   ZC_R0,=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_LD,PFPO_RND)
+00037E 010A                               (37/89)449+         PFPO 
+000380 58F09020                000020     (37/90)450+         L     ZC_R15,ZCVT_CVTLDTP IN F0-F2 TO PL31 IN ZC_R0-ZC_R1
+000384 0DEF                               (37/91)451+         BASR  ZC_R14,ZC_R15
+000386 EB0190B80024            0000B8   (36/1446)452+         STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
+00038C F82F40A190B8     0000A1 0000B8   (36/1447)453+         ZAP   PSUM,ZCVT_PWORK2
+000392                                   (34/737)454+         MNOTE 'ZC_CALC   ADD PSUM,P,3,1 Z1,Z,31,6'
+000392 F27E90B84082     0000B8 000082     (39/45)455+         PACK  ZCVT_PWORK2(8),0+Z1(15) PACK #1 FULL
+000398 F27E90BF4090     0000BF 000090     (39/53)456+         PACK  7+ZCVT_PWORK2(8),14+Z1(15) PACK #2 FULL
+00039E F21290C6409E     0000C6 00009E     (39/67)457+         PACK  14+ZCVT_PWORK2(2),28+Z1(3)  PACK #3 FINAL
+0003A4 F0F090B8003B     0000B8          (38/1245)458+        SRP ZCVT_PWORK2,64-5,0
+0003AA FA2F40A190B8     0000A1 0000B8   (38/1247)459+        AP    PSUM,ZCVT_PWORK2
+0003B0                                     (1/69)460 *            GOBACK.
+0003B0                                     (1/70)461 *ZC     32         GOBACK
+0003B0 4810D0B9                0004F9     (42/18)462+         LH    ZC_R1,RETURN_CODE      PASS RETURN CODE IN R1
+0003B4 58F09030                000030     (42/23)463+         L     ZC_R15,ZCVT_GOBACK
+0003B8 07FF                               (42/24)464+         BR    ZC_R15
+0003BA                                   (44/108)465+SN_END_PROCEDURE DS 0H SECTION
+0003BA                                    (46/12)466+         DROP     ZC_R4
+LISTUSE COMPSUM  ESD=0001 LOC=00000440 LEN=01000 REG=D OFF=00000 LAB=
+LISTUSE COMPSUM  ESD=0001 LOC=00000008 LEN=01000 REG=8 OFF=00000 LAB=
+LISTUSE ZC390CVT ESD=0003 LOC=00000000 LEN=01000 REG=9 OFF=00000 LAB=
+0003BA                                    (43/18)467+*        PROCEDURE END
+0003BA 4810D0B9                0004F9     (43/24)468+         LH    ZC_R1,RETURN_CODE
+0003BE 58F09030                000030     (43/25)469+         L     ZC_R15,ZCVT_GOBACK
+0003C2 0DEF                               (43/26)470+         BASR  ZC_R14,ZC_R15
+0003C4                                    (43/32)471+         LTORG 
+0003C8 2208400000000000 =LD'1E1'
+0003D0 0000000000000001
+0003D8 2208800000000000 =LD'1E2'
+0003E0 0000000000000001
+0003E8 2208C00000000000 =LD'1E3'
+0003F0 0000000000000001
+0003F8 2209000000000000 =LD'1E4'
+000400 0000000000000001
+000408 2209400000000000 =LD'1E5'
+000410 0000000000000001
+000418 010A0000         =AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_EH,PFPO_RND)
+00041C 010A0100         =AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_DH,PFPO_RND)
+000420 010A0200         =AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_LH,PFPO_RND)
+000424 010A0500         =AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_EB,PFPO_RND)
+000428 010A0600         =AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_DB,PFPO_RND)
+00042C 010A0700         =AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_LB,PFPO_RND)
+000430 010A0800         =AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_ED,PFPO_RND)
+000434 010A0900         =AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_DD,PFPO_RND)
+000438 010A0A00         =AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_LD,PFPO_RND)
+00043C                                     (6/15)472+*    ZCOBOL WORKING STORAGE SECTION DATA ITEMS 
+00043C                                     (6/15)473+*    LVL DATA NAME                      ADDR     LEN      DUP TYP PIC        VALUE 
+00043C                                     (6/15)475+*    01  ZC_SAVEAREA                    00000000 00000048 1   X   X(72)       
+00043C                                     (6/15)477+*    01  ZC_WS_ID                       00000048 00000008 1   X   X(8)       ''WS*WS*WS'' 
+00043C                                     (6/15)479+*    01  ZC_WS_START                    00000050 00000004 1   A               
+00043C                                     (6/15)481+*    01  ZC_WS_LEN                      00000054 00000004 1   F   9(9)        
+00043C                                     (6/15)483+*    01  FILLER                         00000058 00000000 1   X               
+00043C                                     (6/15)485+*    01  ZC_WS_ID1                      00000058 00000007 1   X   X(7)       ''ZCWSID1'' 
+00043C                                     (6/15)487+*    01  DEBUG_ITEM                     0000005F 00000058 1   X               
+00043C                                     (6/15)489+*    02  DEBUG_LINE                     0000005F 00000006 1   X   X(6)        
+00043C                                     (6/15)491+*    02  FILLER                         00000065 00000001 1   X   X          SPACE 
+00043C                                     (6/15)493+*    02  DEBUG_NAME                     00000066 0000001E 1   X   X(30)       
+00043C                                     (6/15)495+*    02  FILLER                         00000084 00000001 1   X   X          SPACE 
+00043C                                     (6/15)497+*    02  DEBUG_SUB_1                    00000085 00000004 1   Z   9999        
+00043C                                     (6/15)499+*    02  FILLER                         00000089 00000001 1   X   X          SPACE 
+00043C                                     (6/15)501+*    02  DEBUG_SUB_2                    0000008A 00000004 1   Z   9999        
+00043C                                     (6/15)503+*    02  FILLER                         0000008E 00000001 1   X   X          SPACE 
+00043C                                     (6/15)505+*    02  DEBUG_SUB_3                    0000008F 00000004 1   Z   9999        
+00043C                                     (6/15)507+*    02  FILLER                         00000093 00000001 1   X   X          SPACE 
+00043C                                     (6/15)509+*    02  DEBUG_CONTENTS                 00000094 00000023 1   X   X(35)       
+00043C                                     (6/15)511+*    01  TRUE                           000000B7 00000001 1   Z   9          1 
+00043C                                     (6/15)513+*    01  FALSE                          000000B8 00000001 1   Z   9          0 
+00043C                                     (6/15)515+*    01  RETURN_CODE                    000000B9 00000002 1   H   9(4)       0 
+00043C                                     (6/15)517+*    01  ZC_ZDATA_PTR                   000000BB 00000004 1   A               
+00043C                                     (6/15)519+*    01  ZC_ZC_LK_END_PTR               000000BF 00000004 1   A               
+000440                                    (48/39)521+ZC_WSLOC LOCTR 
+000440                  00000000         (48/131)522+ZC_WS_LOC_1  EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+000440                                   (48/336)523+ZC_SAVEAREA DS CL72
+000488                  00000048         (48/131)524+ZC_WS_LOC_2  EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+000488 E6E25CE6E25CE6E2                  (48/220)525+ZC_WS_ID DC CL8'WS*WS*WS'
+000490                  00000050         (48/131)526+ZC_WS_LOC_3  EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+000490                                   (48/322)527+ZC_WS_START DS AL4
+000494                  00000054         (48/131)528+ZC_WS_LOC_4  EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+000494                                   (48/324)529+ZC_WS_LEN DS FL4
+000498                  00000058         (48/131)530+ZC_WS_LOC_5  EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+000498                                   (48/336)531+         DS  0CL0
+000498                  00000058         (48/131)532+ZC_WS_LOC_6  EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+000498 E9C3E6E2C9C4F1                    (48/220)533+ZC_WS_ID1 DC CL7'ZCWSID1'
+00049F                  0000005F         (48/131)534+ZC_WS_LOC_25 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+00049F                                   (48/336)535+DEBUG_ITEM DS 0CL88
+00049F                  0000005F         (48/131)536+ZC_WS_LOC_26 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+00049F                                   (48/336)537+DEBUG_LINE DS CL6
+0004A5                  00000065         (48/131)538+ZC_WS_LOC_27 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004A5 40                                (48/227)539+         DC CL1' '
+0004A6                  00000066         (48/131)540+ZC_WS_LOC_28 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004A6                                   (48/336)541+DEBUG_NAME DS CL30
+0004C4                  00000084         (48/131)542+ZC_WS_LOC_29 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004C4 40                                (48/227)543+         DC CL1' '
+0004C5                  00000085         (48/131)544+ZC_WS_LOC_30 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004C5                                   (48/338)545+DEBUG_SUB_1 DS ZL4
+0004C9                  00000089         (48/131)546+ZC_WS_LOC_31 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004C9 40                                (48/227)547+         DC CL1' '
+0004CA                  0000008A         (48/131)548+ZC_WS_LOC_32 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004CA                                   (48/338)549+DEBUG_SUB_2 DS ZL4
+0004CE                  0000008E         (48/131)550+ZC_WS_LOC_33 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004CE 40                                (48/227)551+         DC CL1' '
+0004CF                  0000008F         (48/131)552+ZC_WS_LOC_34 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004CF                                   (48/338)553+DEBUG_SUB_3 DS ZL4
+0004D3                  00000093         (48/131)554+ZC_WS_LOC_35 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004D3 40                                (48/227)555+         DC CL1' '
+0004D4                  00000094         (48/131)556+ZC_WS_LOC_36 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004D4                                   (48/336)557+DEBUG_CONTENTS DS CL35
+0004F7                  000000B7         (48/131)558+ZC_WS_LOC_37 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004F7 F1                                (48/251)559+TRUE     DC CL1'1'
+0004F8                  000000B8         (48/131)560+ZC_WS_LOC_38 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004F8 F0                                (48/251)561+FALSE    DC CL1'0'
+0004F9                  000000B9         (48/131)562+ZC_WS_LOC_39 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004F9 0000                              (48/199)563+RETURN_CODE DC AL2(0)                  RPI 1065
+0004FB                  000000BB         (48/131)564+ZC_WS_LOC_40 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004FB                                   (48/322)565+ZC_ZDATA_PTR DS AL4
+0004FF                  000000BF         (48/131)566+ZC_WS_LOC_41 EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
+0004FF                                   (48/322)567+ZC_ZC_LK_END_PTR DS AL4
+000503                                     (6/15)568+*    ZCOBOL LINKAGE SECTION DATA ITEMS 
+000503                                     (6/15)569+*    LVL DATA NAME                      ADDR     LEN      DUP TYP PIC        VALUE 
+000503                                     (6/15)571+*    01  ZDATA                          00000000 000000A4 1   X               
+000503                                     (6/15)573+*    05  EH1                            00000000 00000004 1   1               
+000503                                     (6/15)575+*    05  DH1                            00000004 00000008 1   2               
+000503                                     (6/15)577+*    05  LH1                            0000000C 00000010 1   3               
+000503                                     (6/15)579+*    05  EB1                            0000001C 00000004 1   4               
+000503                                     (6/15)581+*    05  DB1                            00000020 00000008 1   5               
+000503                                     (6/15)583+*    05  LB1                            00000028 00000010 1   6               
+000503                                     (6/15)585+*    05  ED1                            00000038 00000004 1   7               
+000503                                     (6/15)587+*    05  DD1                            0000003C 00000008 1   8               
+000503                                     (6/15)589+*    05  LD1                            00000044 00000010 1   9               
+000503                                     (6/15)591+*    05  H1                             00000054 00000002 1   H   9(3)V9     0 
+000503                                     (6/15)593+*    05  F1                             00000056 00000004 1   F   9(7)V99    00 
+000503                                     (6/15)595+*    05  G1                             0000005A 00000008 1   G   9(15)V999  000 
+000503                                     (6/15)597+*    05  Q1                             00000062 00000010 1   Q   9(35)V9999 0000 
+000503                                     (6/15)599+*    05  P1                             00000072 00000010 1   P   9(26)V9(5) 00000 
+000503                                     (6/15)601+*    05  Z1                             00000082 0000001F 1   Z   9(25)V9(6) 000000 
+000503                                     (6/15)603+*    05  PSUM                           000000A1 00000003 1   P   9(4)V9     0 
+000503                                     (6/15)605+*    01  ZC_LK_END                      00000000 00000001 1   X   X           
+000503                                    (48/39)607+ZC_WSLOC LOCTR 
+000000                                    (48/80)608+ZDATA_DSECT DSECT 
+000000                  00000000         (48/128)609+ZC_LK_LOC_7  EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+000000                                   (48/336)610+ZDATA    DS  0CL164
+000000                  00000000         (48/128)611+ZC_LK_LOC_8  EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+000000                                   (48/304)612+EH1      DS EHL4
+000004                  00000004         (48/128)613+ZC_LK_LOC_9  EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+000004                                   (48/306)614+DH1      DS DHL8
+00000C                  0000000C         (48/128)615+ZC_LK_LOC_10 EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+00000C                                   (48/308)616+LH1      DS LHL16
+00001C                  0000001C         (48/128)617+ZC_LK_LOC_11 EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+00001C                                   (48/310)618+EB1      DS EBL4
+000020                  00000020         (48/128)619+ZC_LK_LOC_12 EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+000020                                   (48/312)620+DB1      DS DBL8
+000028                  00000028         (48/128)621+ZC_LK_LOC_13 EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+000028                                   (48/314)622+LB1      DS LBL16
+000038                  00000038         (48/128)623+ZC_LK_LOC_14 EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+000038                                   (48/316)624+ED1      DS EDL4
+00003C                  0000003C         (48/128)625+ZC_LK_LOC_15 EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+00003C                                   (48/318)626+DD1      DS DDL8
+000044                  00000044         (48/128)627+ZC_LK_LOC_16 EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+000044                                   (48/320)628+LD1      DS LDL16
+000054                  00000054         (48/128)629+ZC_LK_LOC_17 EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+000054                                   (48/328)630+H1       DS  HL2
+000056                  00000056         (48/128)631+ZC_LK_LOC_18 EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+000056                                   (48/324)632+F1       DS  FL4
+00005A                  0000005A         (48/128)633+ZC_LK_LOC_19 EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+00005A                                   (48/326)634+G1       DS  FL8
+000062                  00000062         (48/128)635+ZC_LK_LOC_20 EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+000062                                   (48/334)636+Q1       DS FL16
+000072                  00000072         (48/128)637+ZC_LK_LOC_21 EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+000072                                   (48/332)638+P1       DS  PL16
+000082                  00000082         (48/128)639+ZC_LK_LOC_22 EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+000082                                   (48/338)640+Z1       DS  ZL31
+0000A1                  000000A1         (48/128)641+ZC_LK_LOC_23 EQU *-ZDATA CHECK &SYM_NAME(&I) LK LOC
+0000A1                                   (48/332)642+PSUM     DS  PL3
+000000                                    (48/80)643+ZC_LK_END_DSECT DSECT 
+000000                  00000000         (48/128)644+ZC_LK_LOC_24 EQU *-ZC_LK_END CHECK &SYM_NAME(&I) LK LOC
+000000                                   (48/336)645+ZC_LK_END DS CL1
+000503                                    (43/58)646+ZC_WSLOC LOCTR 
+000503                  00000000          (43/60)647+ZC_WS_DIFF EQU  *-ZC_WS-195  DIFF BETWEEN ALLOC AND CALC WS
+000508                                    (43/65)648+ZC_WS_END DS   0D
+000508                                    (49/14)649+         MNOTE *,'ZCOBOL TOTAL SYMBOLS                 = 41'
+000508                                    (49/15)650+         MNOTE *,'ZCOBOL TOTAL SYMBOL DUPLICATES       = 0'
+000508                                    (49/16)651+         MNOTE *,'ZCOBOL TOTAL SYMBOL MAX DUP CHAIN    = 0'
+000508                                    (49/17)652+         MNOTE *,'ZCOBOL TOTAL SYMBOL LEVEL 88         = 0'
+000508                                    (49/18)653+         MNOTE *,'ZCOBOL TOTAL SYMBOL SET INDEXES      = 0'
+000508                                    (49/19)654+         MNOTE *,'ZCOBOL TOTAL SYMBOL LINKAGE SECTIONS = 2'
+000508                                    (49/20)655+         MNOTE *,'ZCOBOL TOTAL PROCEDURE SECTIONS      = 0'
+000508                                    (49/21)656+         MNOTE *,'ZCOBOL TOTAL PROCEDURE PARAGRAPHS    = 0'
+000508                                    (49/22)657+         MNOTE *,'ZCOBOL TOTAL PROCEDURE PARAGRAPH DUP = 0'
+000508                                     (1/74)658          END 
+
+Symbol Table Listing
+
+ SYM=COMPSUM  LOC=00000000 LEN=00000508 ESD=0001 TYPE=CST  XREF=9 248 
+ SYM=DB1      LOC=00000020 LEN=00000008 ESD=0005 TYPE=REL  XREF=620 307 
+ SYM=DD1      LOC=0000003C LEN=00000008 ESD=0005 TYPE=REL  XREF=626 344 
+ SYM=DEBUG_CONTENTS LOC=000004D4 LEN=00000023 ESD=0001 TYPE=REL  XREF=557 
+ SYM=DEBUG_ITEM LOC=0000049F LEN=00000058 ESD=0001 TYPE=REL  XREF=535 
+ SYM=DEBUG_LINE LOC=0000049F LEN=00000006 ESD=0001 TYPE=REL  XREF=537 
+ SYM=DEBUG_NAME LOC=000004A6 LEN=0000001E ESD=0001 TYPE=REL  XREF=541 
+ SYM=DEBUG_SUB_1 LOC=000004C5 LEN=00000004 ESD=0001 TYPE=REL  XREF=545 
+ SYM=DEBUG_SUB_2 LOC=000004CA LEN=00000004 ESD=0001 TYPE=REL  XREF=549 
+ SYM=DEBUG_SUB_3 LOC=000004CF LEN=00000004 ESD=0001 TYPE=REL  XREF=553 
+ SYM=DH1      LOC=00000004 LEN=00000008 ESD=0005 TYPE=REL  XREF=614 270 
+ SYM=EB1      LOC=0000001C LEN=00000004 ESD=0005 TYPE=REL  XREF=618 295 
+ SYM=ED1      LOC=00000038 LEN=00000004 ESD=0005 TYPE=REL  XREF=624 332 
+ SYM=EH1      LOC=00000000 LEN=00000004 ESD=0005 TYPE=REL  XREF=612 263 
+ SYM=F1       LOC=00000056 LEN=00000004 ESD=0005 TYPE=REL  XREF=632 380 
+ SYM=FALSE    LOC=000004F8 LEN=00000001 ESD=0001 TYPE=REL  XREF=561 
+ SYM=G1       LOC=0000005A LEN=00000008 ESD=0005 TYPE=REL  XREF=634 394 
+ SYM=H1       LOC=00000054 LEN=00000002 ESD=0005 TYPE=REL  XREF=630 366 
+ SYM=LB1      LOC=00000028 LEN=00000010 ESD=0005 TYPE=REL  XREF=622 319 320 
+ SYM=LD1      LOC=00000044 LEN=00000010 ESD=0005 TYPE=REL  XREF=628 356 357 
+ SYM=LH1      LOC=0000000C LEN=00000010 ESD=0005 TYPE=REL  XREF=616 282 283 
+ SYM=P1       LOC=00000072 LEN=00000010 ESD=0005 TYPE=REL  XREF=638 428 
+ SYM=PFPO_RADIX LOC=00000001 LEN=00000001 ESD=0000 TYPE=ABS  XREF=113 264 271 284 
+  296 308 321 333 345 413 447 471 
+ SYM=PFPO_RND LOC=00000000 LEN=00000001 ESD=0000 TYPE=ABS  XREF=114 264 271 284 296 
+  308 321 333 345 413 447 471 
+ SYM=PFPO_TEST LOC=00000080 LEN=00000001 ESD=0000 TYPE=ABS  XREF=112 
+ SYM=PFPO_TYPE_DB LOC=00000006 LEN=00000001 ESD=0000 TYPE=ABS  XREF=119 308 471 
+ SYM=PFPO_TYPE_DD LOC=00000009 LEN=00000001 ESD=0000 TYPE=ABS  XREF=122 345 471 
+ SYM=PFPO_TYPE_DH LOC=00000001 LEN=00000001 ESD=0000 TYPE=ABS  XREF=116 271 471 
+ SYM=PFPO_TYPE_EB LOC=00000005 LEN=00000001 ESD=0000 TYPE=ABS  XREF=118 296 471 
+ SYM=PFPO_TYPE_ED LOC=00000008 LEN=00000001 ESD=0000 TYPE=ABS  XREF=121 333 471 
+ SYM=PFPO_TYPE_EH LOC=00000000 LEN=00000001 ESD=0000 TYPE=ABS  XREF=115 264 471 
+ SYM=PFPO_TYPE_LB LOC=00000007 LEN=00000001 ESD=0000 TYPE=ABS  XREF=120 321 413 471 
+ SYM=PFPO_TYPE_LD LOC=0000000A LEN=00000001 ESD=0000 TYPE=ABS  XREF=123 264 271 284 
+  296 308 321 333 345 413 447 471 
+ SYM=PFPO_TYPE_LH LOC=00000002 LEN=00000001 ESD=0000 TYPE=ABS  XREF=117 284 471 
+ SYM=PSUM     LOC=000000A1 LEN=00000003 ESD=0005 TYPE=REL  XREF=642 453 459 
+ SYM=PVTCICS  LOC=00000020 LEN=00000001 ESD=0004 TYPE=REL  XREF=214 
+ SYM=PVTDATE  LOC=00000008 LEN=00000008 ESD=0004 TYPE=REL  XREF=211 
+ SYM=PVTEXTND LOC=00000021 LEN=00000001 ESD=0004 TYPE=REL  XREF=215 
+ SYM=PVTMAXDL LOC=00000024 LEN=00000002 ESD=0004 TYPE=REL  XREF=218 
+ SYM=PVTPGM   LOC=00000000 LEN=00000008 ESD=0004 TYPE=REL  XREF=210 
+ SYM=PVTR64   LOC=00000023 LEN=00000001 ESD=0004 TYPE=REL  XREF=217 
+ SYM=PVTTIME  LOC=00000010 LEN=00000008 ESD=0004 TYPE=REL  XREF=212 
+ SYM=PVTTRUNC LOC=00000022 LEN=00000001 ESD=0004 TYPE=REL  XREF=216 
+ SYM=PVTVER   LOC=00000018 LEN=00000008 ESD=0004 TYPE=REL  XREF=213 
+ SYM=Q1       LOC=00000062 LEN=00000010 ESD=0005 TYPE=REL  XREF=636 408 409 
+ SYM=RETURN_CODE LOC=000004F9 LEN=00000002 ESD=0001 TYPE=REL  XREF=563 462 468 
+ SYM=SN_END_PROCEDURE LOC=000003BA LEN=00000002 ESD=0001 TYPE=REL  XREF=465 
+ SYM=TRUE     LOC=000004F7 LEN=00000001 ESD=0001 TYPE=REL  XREF=559 
+ SYM=WTO#0009_EOT LOC=00000060 LEN=00000001 ESD=0001 TYPE=REL  XREF=36 34 35 
+ SYM=WTO#0010_EOT LOC=000000AA LEN=00000001 ESD=0001 TYPE=REL  XREF=53 51 52 
+ SYM=Z1       LOC=00000082 LEN=0000001F ESD=0005 TYPE=REL  XREF=640 455 456 457 
+ SYM=ZC390CVT LOC=00000000 LEN=000001F8 ESD=0003 TYPE=DST  XREF=138 42 
+ SYM=ZC390PVT LOC=00000000 LEN=00000030 ESD=0004 TYPE=DST  XREF=209 
+ SYM=ZCVT_ABORT LOC=00000068 LEN=00000004 ESD=0003 TYPE=REL  XREF=167 
+ SYM=ZCVT_ABORT_ACCEPT LOC=0000000B LEN=00000001 ESD=0000 TYPE=ABS  XREF=177 
+ SYM=ZCVT_ABORT_ALTER LOC=00000001 LEN=00000001 ESD=0000 TYPE=ABS  XREF=168 
+ SYM=ZCVT_ABORT_CALL LOC=00000002 LEN=00000001 ESD=0000 TYPE=ABS  XREF=169 
+ SYM=ZCVT_ABORT_CICS LOC=0000000A LEN=00000001 ESD=0000 TYPE=ABS  XREF=176 
+ SYM=ZCVT_ABORT_DISPLAY LOC=00000003 LEN=00000001 ESD=0000 TYPE=ABS  XREF=170 
+ SYM=ZCVT_ABORT_DIVQ LOC=00000009 LEN=00000001 ESD=0000 TYPE=ABS  XREF=175 
+ SYM=ZCVT_ABORT_INT128 LOC=00000008 LEN=00000001 ESD=0000 TYPE=ABS  XREF=174 
+ SYM=ZCVT_ABORT_MAXERR LOC=0000000B LEN=00000001 ESD=0000 TYPE=ABS  XREF=178 
+ SYM=ZCVT_ABORT_OPEN LOC=00000004 LEN=00000001 ESD=0000 TYPE=ABS  XREF=171 
+ SYM=ZCVT_ABORT_STACK LOC=00000006 LEN=00000001 ESD=0000 TYPE=ABS  XREF=172 
+ SYM=ZCVT_ABORT_VERSION LOC=00000007 LEN=00000001 ESD=0000 TYPE=ABS  XREF=173 
+ SYM=ZCVT_ACCEPT LOC=0000006C LEN=00000004 ESD=0003 TYPE=REL  XREF=179 
+ SYM=ZCVT_ACCEPT_CONSOLE LOC=00000002 LEN=00000001 ESD=0000 TYPE=ABS  XREF=181 
+ SYM=ZCVT_ACCEPT_DATE LOC=00000004 LEN=00000001 ESD=0000 TYPE=ABS  XREF=183 
+ SYM=ZCVT_ACCEPT_DDNAME LOC=00000003 LEN=00000001 ESD=0000 TYPE=ABS  XREF=182 
+ SYM=ZCVT_ACCEPT_DEFAULT LOC=00000001 LEN=00000001 ESD=0000 TYPE=ABS  XREF=180 
+ SYM=ZCVT_ACCEPT_DOW LOC=00000006 LEN=00000001 ESD=0000 TYPE=ABS  XREF=185 
+ SYM=ZCVT_ACCEPT_TIME LOC=00000005 LEN=00000001 ESD=0000 TYPE=ABS  XREF=184 
+ SYM=ZCVT_CALL LOC=00000014 LEN=00000004 ESD=0003 TYPE=REL  XREF=143 
+ SYM=ZCVT_CMP64R32 LOC=00000018 LEN=00000004 ESD=0003 TYPE=REL  XREF=144 
+ SYM=ZCVT_CONVERTING LOC=00000008 LEN=00000001 ESD=0000 TYPE=ABS  XREF=190 
+ SYM=ZCVT_CVTLBTQ LOC=0000001C LEN=00000004 ESD=0003 TYPE=REL  XREF=145 
+ SYM=ZCVT_CVTLDTP LOC=00000020 LEN=00000004 ESD=0003 TYPE=REL  XREF=146 450 
+ SYM=ZCVT_CVTQTLB LOC=00000024 LEN=00000004 ESD=0003 TYPE=REL  XREF=147 410 
+ SYM=ZCVT_DISPLAY LOC=00000070 LEN=00000004 ESD=0003 TYPE=REL  XREF=186 
+ SYM=ZCVT_DIV64R32 LOC=00000028 LEN=00000004 ESD=0003 TYPE=REL  XREF=148 
+ SYM=ZCVT_DIVQ128 LOC=0000002C LEN=00000004 ESD=0003 TYPE=REL  XREF=149 
+ SYM=ZCVT_END LOC=000001F8 LEN=00000001 ESD=0003 TYPE=REL  XREF=208 45 57 140 
+ SYM=ZCVT_GOBACK LOC=00000030 LEN=00000004 ESD=0003 TYPE=REL  XREF=150 463 469 
+ SYM=ZCVT_HIGH_VALUES LOC=00000090 LEN=00000010 ESD=0003 TYPE=REL  XREF=197 
+ SYM=ZCVT_ID  LOC=00000000 LEN=00000004 ESD=0003 TYPE=REL  XREF=139 43 45 57 140 
+ SYM=ZCVT_INSPECT LOC=00000074 LEN=00000004 ESD=0003 TYPE=REL  XREF=187 
+ SYM=ZCVT_LEN LOC=00000004 LEN=00000004 ESD=0003 TYPE=REL  XREF=140 45 
+ SYM=ZCVT_MPYQ128 LOC=00000034 LEN=00000004 ESD=0003 TYPE=REL  XREF=151 
+ SYM=ZCVT_NDDX LOC=000000E8 LEN=00000010 ESD=0003 TYPE=REL  XREF=203 
+ SYM=ZCVT_OSE64R32 LOC=00000038 LEN=00000004 ESD=0003 TYPE=REL  XREF=152 
+ SYM=ZCVT_PERFORM LOC=0000003C LEN=00000004 ESD=0003 TYPE=REL  XREF=153 
+ SYM=ZCVT_PMCHECK LOC=00000040 LEN=00000004 ESD=0003 TYPE=REL  XREF=154 
+ SYM=ZCVT_PVTMAXDL LOC=00000078 LEN=00000002 ESD=0003 TYPE=REL  XREF=194 
+ SYM=ZCVT_PWORK LOC=000000A0 LEN=00000008 ESD=0003 TYPE=REL  XREF=198 
+ SYM=ZCVT_PWORK1 LOC=000000A8 LEN=00000010 ESD=0003 TYPE=REL  XREF=199 428 429 
+ SYM=ZCVT_PWORK2 LOC=000000B8 LEN=00000010 ESD=0003 TYPE=REL  XREF=200 452 453 455 
+  456 457 458 459 
+ SYM=ZCVT_PWORK3 LOC=000000C8 LEN=00000010 ESD=0003 TYPE=REL  XREF=201 
+ SYM=ZCVT_PWORK4 LOC=000000D8 LEN=00000010 ESD=0003 TYPE=REL  XREF=202 
+ SYM=ZCVT_REPLACING LOC=00000004 LEN=00000001 ESD=0000 TYPE=ABS  XREF=189 
+ SYM=ZCVT_ROUNDF LOC=00000044 LEN=00000004 ESD=0003 TYPE=REL  XREF=155 
+ SYM=ZCVT_STACKEND LOC=00000050 LEN=00000004 ESD=0003 TYPE=REL  XREF=158 
+ SYM=ZCVT_STACKORG LOC=00000048 LEN=00000004 ESD=0003 TYPE=REL  XREF=156 
+ SYM=ZCVT_STACKPTR LOC=0000004C LEN=00000004 ESD=0003 TYPE=REL  XREF=157 
+ SYM=ZCVT_STOPRUN LOC=00000054 LEN=00000004 ESD=0003 TYPE=REL  XREF=159 
+ SYM=ZCVT_TALLYING LOC=00000000 LEN=00000001 ESD=0000 TYPE=ABS  XREF=188 
+ SYM=ZCVT_TALPHAX LOC=00000058 LEN=00000004 ESD=0003 TYPE=REL  XREF=160 
+ SYM=ZCVT_TNUMP LOC=0000005C LEN=00000004 ESD=0003 TYPE=REL  XREF=161 
+ SYM=ZCVT_TNUMX LOC=00000060 LEN=00000004 ESD=0003 TYPE=REL  XREF=162 
+ SYM=ZCVT_TNUMZ LOC=00000064 LEN=00000004 ESD=0003 TYPE=REL  XREF=163 
+ SYM=ZCVT_VER LOC=00000008 LEN=00000008 ESD=0003 TYPE=REL  XREF=141 
+ SYM=ZCVT_WORKAREA LOC=000000F8 LEN=00000100 ESD=0003 TYPE=REL  XREF=204 267 268 
+  274 275 277 278 280 287 288 290 291 293 299 300 302 303 305 311 312 314 315 317 
+  324 325 327 328 330 336 337 339 340 342 348 349 351 352 354 358 359 361 362 364 
+  372 373 375 376 378 386 387 389 390 392 400 401 403 404 406 420 421 423 424 426 
+  435 436 438 439 441 442 
+ SYM=ZCVT_ZC390NUC LOC=00000010 LEN=00000004 ESD=0003 TYPE=REL  XREF=142 47 
+ SYM=ZCVT_ZERO LOC=00000080 LEN=00000010 ESD=0003 TYPE=REL  XREF=196 
+ SYM=ZC_E     LOC=00000008 LEN=00000001 ESD=0000 TYPE=ABS  XREF=94 
+ SYM=ZC_EQ    LOC=00000008 LEN=00000001 ESD=0000 TYPE=ABS  XREF=106 
+ SYM=ZC_F0    LOC=00000000 LEN=00000001 ESD=0000 TYPE=ABS  XREF=76 276 277 289 290 
+  301 302 313 314 326 327 338 339 350 351 356 360 361 367 371 374 375 381 385 388 
+  389 395 399 402 403 419 422 423 430 434 437 438 
+ SYM=ZC_F10   LOC=0000000A LEN=00000001 ESD=0000 TYPE=ABS  XREF=86 
+ SYM=ZC_F1    LOC=00000001 LEN=00000001 ESD=0000 TYPE=ABS  XREF=77 274 276 287 289 
+  299 301 311 313 324 326 336 338 348 350 358 360 369 371 372 374 383 385 386 388 
+  397 399 400 402 417 419 420 422 432 434 435 437 445 446 
+ SYM=ZC_F11   LOC=0000000B LEN=00000001 ESD=0000 TYPE=ABS  XREF=87 
+ SYM=ZC_F12   LOC=0000000C LEN=00000001 ESD=0000 TYPE=ABS  XREF=88 
+ SYM=ZC_F13   LOC=0000000D LEN=00000001 ESD=0000 TYPE=ABS  XREF=89 
+ SYM=ZC_F14   LOC=0000000E LEN=00000001 ESD=0000 TYPE=ABS  XREF=90 
+ SYM=ZC_F15   LOC=0000000F LEN=00000001 ESD=0000 TYPE=ABS  XREF=91 
+ SYM=ZC_F2    LOC=00000002 LEN=00000001 ESD=0000 TYPE=ABS  XREF=78 278 291 303 315 
+  328 340 352 357 362 376 390 404 424 439 
+ SYM=ZC_F3    LOC=00000003 LEN=00000001 ESD=0000 TYPE=ABS  XREF=79 275 288 300 312 
+  325 337 349 359 370 373 384 387 398 401 418 421 433 436 444 
+ SYM=ZC_F4    LOC=00000004 LEN=00000001 ESD=0000 TYPE=ABS  XREF=80 263 270 282 295 
+  307 319 332 344 441 446 
+ SYM=ZC_F5    LOC=00000005 LEN=00000001 ESD=0000 TYPE=ABS  XREF=81 
+ SYM=ZC_F6    LOC=00000006 LEN=00000001 ESD=0000 TYPE=ABS  XREF=82 283 320 442 
+ SYM=ZC_F7    LOC=00000007 LEN=00000001 ESD=0000 TYPE=ABS  XREF=83 
+ SYM=ZC_F8    LOC=00000008 LEN=00000001 ESD=0000 TYPE=ABS  XREF=84 
+ SYM=ZC_F9    LOC=00000009 LEN=00000001 ESD=0000 TYPE=ABS  XREF=85 
+ SYM=ZC_GE    LOC=0000000B LEN=00000001 ESD=0000 TYPE=ABS  XREF=109 
+ SYM=ZC_GT    LOC=00000002 LEN=00000001 ESD=0000 TYPE=ABS  XREF=107 
+ SYM=ZC_H     LOC=00000002 LEN=00000001 ESD=0000 TYPE=ABS  XREF=92 
+ SYM=ZC_L     LOC=00000004 LEN=00000001 ESD=0000 TYPE=ABS  XREF=93 
+ SYM=ZC_LE    LOC=0000000D LEN=00000001 ESD=0000 TYPE=ABS  XREF=110 
+ SYM=ZC_LK_END LOC=00000000 LEN=00000001 ESD=0006 TYPE=REL  XREF=645 644 
+ SYM=ZC_LK_END_DSECT LOC=00000000 LEN=00000008 ESD=0006 TYPE=DST  XREF=643 
+ SYM=ZC_LK_LOC_10 LOC=0000000C LEN=00000001 ESD=0000 TYPE=ABS  XREF=615 
+ SYM=ZC_LK_LOC_11 LOC=0000001C LEN=00000001 ESD=0000 TYPE=ABS  XREF=617 
+ SYM=ZC_LK_LOC_12 LOC=00000020 LEN=00000001 ESD=0000 TYPE=ABS  XREF=619 
+ SYM=ZC_LK_LOC_13 LOC=00000028 LEN=00000001 ESD=0000 TYPE=ABS  XREF=621 
+ SYM=ZC_LK_LOC_14 LOC=00000038 LEN=00000001 ESD=0000 TYPE=ABS  XREF=623 
+ SYM=ZC_LK_LOC_15 LOC=0000003C LEN=00000001 ESD=0000 TYPE=ABS  XREF=625 
+ SYM=ZC_LK_LOC_16 LOC=00000044 LEN=00000001 ESD=0000 TYPE=ABS  XREF=627 
+ SYM=ZC_LK_LOC_17 LOC=00000054 LEN=00000001 ESD=0000 TYPE=ABS  XREF=629 
+ SYM=ZC_LK_LOC_18 LOC=00000056 LEN=00000001 ESD=0000 TYPE=ABS  XREF=631 
+ SYM=ZC_LK_LOC_19 LOC=0000005A LEN=00000001 ESD=0000 TYPE=ABS  XREF=633 
+ SYM=ZC_LK_LOC_20 LOC=00000062 LEN=00000001 ESD=0000 TYPE=ABS  XREF=635 
+ SYM=ZC_LK_LOC_21 LOC=00000072 LEN=00000001 ESD=0000 TYPE=ABS  XREF=637 
+ SYM=ZC_LK_LOC_22 LOC=00000082 LEN=00000001 ESD=0000 TYPE=ABS  XREF=639 
+ SYM=ZC_LK_LOC_23 LOC=000000A1 LEN=00000001 ESD=0000 TYPE=ABS  XREF=641 
+ SYM=ZC_LK_LOC_24 LOC=00000000 LEN=00000001 ESD=0000 TYPE=ABS  XREF=644 
+ SYM=ZC_LK_LOC_7 LOC=00000000 LEN=00000001 ESD=0000 TYPE=ABS  XREF=609 
+ SYM=ZC_LK_LOC_8 LOC=00000000 LEN=00000001 ESD=0000 TYPE=ABS  XREF=611 
+ SYM=ZC_LK_LOC_9 LOC=00000004 LEN=00000001 ESD=0000 TYPE=ABS  XREF=613 
+ SYM=ZC_LOAD  LOC=00000038 LEN=00000002 ESD=0001 TYPE=REL  XREF=28 13 
+ SYM=ZC_LOAD_OK LOC=00000068 LEN=00000002 ESD=0001 TYPE=REL  XREF=40 33 
+ SYM=ZC_LT    LOC=00000004 LEN=00000001 ESD=0000 TYPE=ABS  XREF=108 
+ SYM=ZC_M     LOC=00000004 LEN=00000001 ESD=0000 TYPE=ABS  XREF=100 
+ SYM=ZC_NE    LOC=00000007 LEN=00000001 ESD=0000 TYPE=ABS  XREF=97 
+ SYM=ZC_NH    LOC=0000000D LEN=00000001 ESD=0000 TYPE=ABS  XREF=95 
+ SYM=ZC_NL    LOC=0000000B LEN=00000001 ESD=0000 TYPE=ABS  XREF=96 
+ SYM=ZC_NM    LOC=0000000B LEN=00000001 ESD=0000 TYPE=ABS  XREF=103 
+ SYM=ZC_NO    LOC=0000000E LEN=00000001 ESD=0000 TYPE=ABS  XREF=105 
+ SYM=ZC_NP    LOC=0000000D LEN=00000001 ESD=0000 TYPE=ABS  XREF=102 
+ SYM=ZC_NZ    LOC=00000007 LEN=00000001 ESD=0000 TYPE=ABS  XREF=104 
+ SYM=ZC_O     LOC=00000001 LEN=00000001 ESD=0000 TYPE=ABS  XREF=98 
+ SYM=ZC_P     LOC=00000002 LEN=00000001 ESD=0000 TYPE=ABS  XREF=99 
+ SYM=ZC_R0    LOC=00000000 LEN=00000001 ESD=0000 TYPE=ABS  XREF=60 41 132 133 134 
+  249 250 264 271 284 296 308 321 333 345 366 367 380 381 394 395 408 413 429 430 
+  447 452 
+ SYM=ZC_R10   LOC=0000000A LEN=00000001 ESD=0000 TYPE=ABS  XREF=70 
+ SYM=ZC_R1    LOC=00000001 LEN=00000001 ESD=0000 TYPE=ABS  XREF=61 126 127 128 129 
+  368 369 370 382 383 384 396 397 398 409 416 417 418 429 431 432 433 443 444 445 
+  452 462 468 
+ SYM=ZC_R11   LOC=0000000B LEN=00000001 ESD=0000 TYPE=ABS  XREF=71 
+ SYM=ZC_R12   LOC=0000000C LEN=00000001 ESD=0000 TYPE=ABS  XREF=72 
+ SYM=ZC_R13   LOC=0000000D LEN=00000001 ESD=0000 TYPE=ABS  XREF=73 125 127 128 129 
+  130 131 133 
+ SYM=ZC_R14   LOC=0000000E LEN=00000001 ESD=0000 TYPE=ABS  XREF=74 48 412 451 470 
+ SYM=ZC_R15   LOC=0000000F LEN=00000001 ESD=0000 TYPE=ABS  XREF=75 10 32 38 47 48 
+  55 135 410 412 450 451 463 464 469 470 
+ SYM=ZC_R2    LOC=00000002 LEN=00000001 ESD=0000 TYPE=ABS  XREF=62 125 249 
+ SYM=ZC_R3    LOC=00000003 LEN=00000001 ESD=0000 TYPE=ABS  XREF=63 
+ SYM=ZC_R4    LOC=00000004 LEN=00000001 ESD=0000 TYPE=ABS  XREF=64 258 259 466 
+ SYM=ZC_R5    LOC=00000005 LEN=00000001 ESD=0000 TYPE=ABS  XREF=65 
+ SYM=ZC_R6    LOC=00000006 LEN=00000001 ESD=0000 TYPE=ABS  XREF=66 
+ SYM=ZC_R7    LOC=00000007 LEN=00000001 ESD=0000 TYPE=ABS  XREF=67 
+ SYM=ZC_R8    LOC=00000008 LEN=00000001 ESD=0000 TYPE=ABS  XREF=68 13 14 
+ SYM=ZC_R9    LOC=00000009 LEN=00000001 ESD=0000 TYPE=ABS  XREF=69 41 42 
+ SYM=ZC_SAVEAREA LOC=00000440 LEN=00000048 ESD=0001 TYPE=REL  XREF=523 
+ SYM=ZC_VER_ERR LOC=00000088 LEN=00000002 ESD=0001 TYPE=REL  XREF=50 44 46 
+ SYM=ZC_VER_OK LOC=000000C8 LEN=00000002 ESD=0001 TYPE=REL  XREF=124 49 
+ SYM=ZC_WS    LOC=00000440 LEN=00000008 ESD=0001 TYPE=REL  XREF=137 126 130 522 524 
+  526 528 530 532 534 536 538 540 542 544 546 548 550 552 554 556 558 560 562 564 
+  566 647 
+ SYM=ZC_WSLOC LOC=0000043C LEN=000000CC ESD=0001 TYPE=CST  XREF=136 220 521 607 646 
+ SYM=ZC_WS_DIFF LOC=00000000 LEN=00000001 ESD=0000 TYPE=ABS  XREF=647 
+ SYM=ZC_WS_END LOC=00000508 LEN=00000008 ESD=0001 TYPE=REL  XREF=648 132 
+ SYM=ZC_WS_ID LOC=00000488 LEN=00000008 ESD=0001 TYPE=REL  XREF=525 
+ SYM=ZC_WS_ID1 LOC=00000498 LEN=00000007 ESD=0001 TYPE=REL  XREF=533 
+ SYM=ZC_WS_LEN LOC=00000494 LEN=00000004 ESD=0001 TYPE=REL  XREF=529 134 
+ SYM=ZC_WS_LOC_1 LOC=00000000 LEN=00000001 ESD=0000 TYPE=ABS  XREF=522 
+ SYM=ZC_WS_LOC_2 LOC=00000048 LEN=00000001 ESD=0000 TYPE=ABS  XREF=524 
+ SYM=ZC_WS_LOC_25 LOC=0000005F LEN=00000001 ESD=0000 TYPE=ABS  XREF=534 
+ SYM=ZC_WS_LOC_26 LOC=0000005F LEN=00000001 ESD=0000 TYPE=ABS  XREF=536 
+ SYM=ZC_WS_LOC_27 LOC=00000065 LEN=00000001 ESD=0000 TYPE=ABS  XREF=538 
+ SYM=ZC_WS_LOC_28 LOC=00000066 LEN=00000001 ESD=0000 TYPE=ABS  XREF=540 
+ SYM=ZC_WS_LOC_29 LOC=00000084 LEN=00000001 ESD=0000 TYPE=ABS  XREF=542 
+ SYM=ZC_WS_LOC_30 LOC=00000085 LEN=00000001 ESD=0000 TYPE=ABS  XREF=544 
+ SYM=ZC_WS_LOC_3 LOC=00000050 LEN=00000001 ESD=0000 TYPE=ABS  XREF=526 
+ SYM=ZC_WS_LOC_31 LOC=00000089 LEN=00000001 ESD=0000 TYPE=ABS  XREF=546 
+ SYM=ZC_WS_LOC_32 LOC=0000008A LEN=00000001 ESD=0000 TYPE=ABS  XREF=548 
+ SYM=ZC_WS_LOC_33 LOC=0000008E LEN=00000001 ESD=0000 TYPE=ABS  XREF=550 
+ SYM=ZC_WS_LOC_34 LOC=0000008F LEN=00000001 ESD=0000 TYPE=ABS  XREF=552 
+ SYM=ZC_WS_LOC_35 LOC=00000093 LEN=00000001 ESD=0000 TYPE=ABS  XREF=554 
+ SYM=ZC_WS_LOC_36 LOC=00000094 LEN=00000001 ESD=0000 TYPE=ABS  XREF=556 
+ SYM=ZC_WS_LOC_37 LOC=000000B7 LEN=00000001 ESD=0000 TYPE=ABS  XREF=558 
+ SYM=ZC_WS_LOC_38 LOC=000000B8 LEN=00000001 ESD=0000 TYPE=ABS  XREF=560 
+ SYM=ZC_WS_LOC_39 LOC=000000B9 LEN=00000001 ESD=0000 TYPE=ABS  XREF=562 
+ SYM=ZC_WS_LOC_40 LOC=000000BB LEN=00000001 ESD=0000 TYPE=ABS  XREF=564 
+ SYM=ZC_WS_LOC_4 LOC=00000054 LEN=00000001 ESD=0000 TYPE=ABS  XREF=528 
+ SYM=ZC_WS_LOC_41 LOC=000000BF LEN=00000001 ESD=0000 TYPE=ABS  XREF=566 
+ SYM=ZC_WS_LOC_5 LOC=00000058 LEN=00000001 ESD=0000 TYPE=ABS  XREF=530 
+ SYM=ZC_WS_LOC_6 LOC=00000058 LEN=00000001 ESD=0000 TYPE=ABS  XREF=532 
+ SYM=ZC_WS_START LOC=00000490 LEN=00000004 ESD=0001 TYPE=REL  XREF=527 131 
+ SYM=ZC_Z     LOC=00000008 LEN=00000001 ESD=0000 TYPE=ABS  XREF=101 
+ SYM=ZC_ZC_LK_END_PTR LOC=000004FF LEN=00000004 ESD=0001 TYPE=REL  XREF=567 
+ SYM=ZC_ZDATA_PTR LOC=000004FB LEN=00000004 ESD=0001 TYPE=REL  XREF=565 250 258 
+ SYM=ZDATA    LOC=00000000 LEN=000000A4 ESD=0005 TYPE=REL  XREF=610 609 611 613 615 
+  617 619 621 623 625 627 629 631 633 635 637 639 641 
+ SYM=ZDATA_DSECT LOC=00000000 LEN=000000A8 ESD=0005 TYPE=DST  XREF=608 259 
+
+Literal Table Listing
+
+ LIT=A(ZCVT_END-ZCVT_ID) LOC=000000C4 LEN=00000004 ESD=0001 POOL=0001 XREF=45 
+ LIT=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_DB,PFPO_RND) LOC=00000428 LEN=00000001 ESD=0001 POOL=0002 XREF=308 
+ LIT=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_DD,PFPO_RND) LOC=00000434 LEN=00000001 ESD=0001 POOL=0002 XREF=345 
+ LIT=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_DH,PFPO_RND) LOC=0000041C LEN=00000001 ESD=0001 POOL=0002 XREF=271 
+ LIT=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_EB,PFPO_RND) LOC=00000424 LEN=00000001 ESD=0001 POOL=0002 XREF=296 
+ LIT=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_ED,PFPO_RND) LOC=00000430 LEN=00000001 ESD=0001 POOL=0002 XREF=333 
+ LIT=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_EH,PFPO_RND) LOC=00000418 LEN=00000001 ESD=0001 POOL=0002 XREF=264 
+ LIT=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_LB,PFPO_RND) LOC=0000042C LEN=00000001 ESD=0001 POOL=0002 XREF=321 
+  413 
+ LIT=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_LD,PFPO_RND) LOC=00000438 LEN=00000001 ESD=0001 POOL=0002 XREF=447 
+ LIT=AL1(PFPO_RADIX,PFPO_TYPE_LD,PFPO_TYPE_LH,PFPO_RND) LOC=00000420 LEN=00000001 ESD=0001 POOL=0002 XREF=284 
+ LIT=C'ZCVT'  LOC=000000C0 LEN=00000004 ESD=0001 POOL=0001 XREF=43 
+ LIT=CL8'ZC390LIB' LOC=000000B8 LEN=00000008 ESD=0001 POOL=0001 XREF=29 
+ LIT=LD'1E1'  LOC=000003C8 LEN=00000010 ESD=0001 POOL=0002 XREF=368 443 
+ LIT=LD'1E2'  LOC=000003D8 LEN=00000010 ESD=0001 POOL=0002 XREF=382 
+ LIT=LD'1E3'  LOC=000003E8 LEN=00000010 ESD=0001 POOL=0002 XREF=396 
+ LIT=LD'1E4'  LOC=000003F8 LEN=00000010 ESD=0001 POOL=0002 XREF=416 
+ LIT=LD'1E5'  LOC=00000408 LEN=00000010 ESD=0001 POOL=0002 XREF=431 
+ 
+AZ390I total mnote warnings = 0
+AZ390I total mnote errors   = 0
+AZ390I max   mnote level    = 0
+AZ390I total mz390 errors   = 0
+AZ390I total az390 errors   = 0
+08:31:26 COMPSUM   MZ390 ENDED   RC= 0 SEC= 1 MEM(MB)=107 IO=18447

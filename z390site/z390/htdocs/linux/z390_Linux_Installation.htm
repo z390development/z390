@@ -1,0 +1,610 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>z390 Portable Mainframe Assembler and Emulator Linux Installation</title>
+</head>
+
+<body>
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="center" width="202" height="90">
+              <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="../images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></td>
+              <td align="center" width="405" height="90">
+              <p align="center"><b>z390 Portable Mainframe 
+              Assembler and Emulator<br>
+&nbsp;Linux Installation</b></td>
+              <td width="147" height="90" align="center">
+              <b>
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="../anim370.gif" alt="Automated Software Tools Corporation" width="100" height="59"></a></b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3">
+              <ul>
+                <li><b><a href="#Installing Linux">Installing Linux</a></b></li>
+                <li><b><a href="#Upgrading_Ubuntu_Linux_LTS">Upgrading Ubuntu Lininx 6.06 LTS to 8.04 LTS</a></b></li>
+                <li><b><a href="#Install J2RE Java Runtime on Lnux">Installing 
+                J2RE Java Runtime on Linux</a></b></li>
+                <li><b><a href="#Installing z390 on Linux">Installing z390 new 
+                release on Linux</a></b></li>
+                <li><b><a href="#Installing z390 cumulative PTF on Linux">
+                Installing z390 cumulative PTF on Linux</a></b></li>
+                <li><b>
+                <a href="#Running z390 Graphical User Interface on Linux">
+                Running z390 Graphical User Interface on Linux</a></b></li>
+                <li><b><a href="#Running z390 Command Line Interface on Linux">
+                Running z390 Command line Interface on Linux</a></b></li>
+                <li><b>Optional Installs</b><ul>
+                <li><b><a href="#Installing Eclipse on Linus">Installing Eclipse 
+                on Linux for debugging z390 source code</a></b></li>
+                <li><b>
+                <a href="#Install Adobe Acrobat to view PDF files on Linux">
+                Install Adobe Acrobat on Linux for viewing PDF files</a></b></li>
+              </ul>
+                </li>
+              </ul>
+              </td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3">
+              <p align="center"><b><a name="Installing Linux">Installing Linux</a></b></p>
+              <p><b>This is a journal of my personal experience installing and 
+              using Linux to regression test z390.&nbsp; This was my first 
+              experience using Linux after being a long time Windows user.</b></p>
+              </td>
+            </tr>
+          </table>
+         
+        
+        </table>
+<ul>
+  <li>
+<p align="left"><b>Purchased new Dell Inspiration laptop with 160 GB HD, 2 GB 
+memory, Windows XP (it was 
+time for an upgrade)</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>Used Partition Magic 8.0 for Windows to split HD into 4 - 40 
+GB partitions for XP, LX, data, backup</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>XP remained NTFS format, the other 3 partitions are VFAT 
+(FAT32) for XP/LX sharing</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>Selected <a href="http://www.ubuntu.com/">Ubuntu Linux</a> as it is the most 
+widely used per this <a href="http://distrowatch.com/dwres.php?resource=major">
+Linux distribution analysis</a></b></p>
+
+  </li>
+  <li>
+<p align="left"><b>
+<a href="http://www.ubuntu.com/products/GetUbuntu/download#lts">Download Unbuntu</a> 6.06 LTS CD ISO image from Ubuntu website</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>Burned ISO image to CD by double clicking on ISO file and using Windows 
+wizard</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>Rebooted laptop and used F2 to change boot sequence to 
+include CD</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>Booted the Ubuntu 6.06 LTS boot CD</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>Selected X Windows safe mode install (the default failed to 
+install X Windows on laptop)</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>Ignore failure to moust FAT16 Dell support partition and 
+press continue</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>Double click on &quot;Install icon&quot; on desktop and answer a few 
+questions about defaults</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>Select free space on hard drive for creation of primary and 
+swap Ubuntu Linux partitions</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>Reboot and select Ubuntu 6.06 LTS instead of Windows XP from new dual 
+boot loader</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>Ubuntu 6.06 comes up in GUI mode with wireless mouse 
+support and Internet access already configured using Firefox web browser</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>Click on &quot;Updates&quot; to download latest Ubuntu updates</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>For Linux new comers, the book &quot;<a href="http://www.amazon.com/Beginning-Ubuntu-Linux-Novice-Professional/dp/1590596277">Beginning 
+Ubuntu Linux From Novice to Professiona</a>&quot; by Keir Thomas may be useful 
+reference while learning commands.</b></p>
+
+  </li>
+  <li>
+<p align="left"><b>Ubuntu Linux 6.06 LTS is now ready to use along side Windows 
+XP</b></p>
+
+  <div align="left">
+
+  <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%" id="AutoNumber2" height="3666" align="left">
+    <tr>
+      <td width="50%" align="left" valign="top">
+      <p align="center"><b><a name="Upgrading_Ubuntu_Linux_LTS">Upgrading Ubuntu 
+      Linux from 6.06 LTS to 8.04 LTS</a></b></p>
+      <ol>
+        <li><b>Boot Ubuntu 6.06 LTS</b></li>
+        <li><b>Use system menu to go to system maintenance and select &quot;Upgrade 
+        to 8.04 LTS&quot;</b><ol>
+          <li><b>Install is automatic and takes under an hour on broadband 
+          connection.</b></li>
+          <li><b>Eclipse 3.2 previously installed would not load correcly</b></li>
+          <li><b>Downloaded Eclipse 3.5 from <a href="http://www.eclipse.org">
+          www.eclipse.org</a> for Linus</b></li>
+        </ol>
+        </li>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+      <td width="50%" height="912" valign="top">
+      <p align="center"><b><a name="Install J2RE Java Runtime on Lnux">Install 
+      J2RE Java Runtime on Ubuntu Linux</a></b></p>
+      <ul>
+        <li>
+        <p align="left"><b>Download and install Linux version of Sun 
+        Microsystems Java</b><ul>
+        <li>
+        <p align="left"><b>
+        <a href="https://jdk-distros.dev.java.net/ubuntu.html">Install the 
+        package version of Sun J2RE 1.5.0_13 available in predefined repository</a><br>
+        (This JRE can be used to run z390 v1.3.09b) </b><ul>
+        <li>
+        <p align="left"><b>Boot Ubuntu 6.06 LTS</b></li>
+        <li>
+        <p align="left"><b>Select &quot;Applications&quot;, &quot;Add/Remove&quot; menu item</b></li>
+        <li>
+        <p align="left"><b>Click show unsupported applications (lower right of 
+        add/remove dialog)</b></li>
+        <li>
+        <p align="left"><b>Enter search &quot;Sun Java&quot; and press enter</b></li>
+        <li>
+        <p align="left"><b>Click on Sun Java 5/0 Runtime</b></li>
+        <li>
+        <p align="left"><b>Click ok to install</b></li>
+        <li>
+        <p align="left"><b>Click enable for &quot;Multiverse channel&quot; when prompted</b></li>
+        <li>
+        <p align="left"><b>Read Sun J2RE license, check if ok and press forward</b></li>
+        <li>
+        <p align="left"><b>Enable J2RE as Firefox browser plugin for applets:</b><ul>
+        <li>
+        <p align="left"><b>Start terminal from &quot;Application&quot;, &quot;Accessories&quot;, 
+        &quot;Terminal&quot; menu</b></li>
+        <li>
+        <p align="left"><b>Enter command: <br>
+        sudo apt-get install sun-java5-plugin</b></li>
+        <li>
+        <p align="left"><b>Enter password when prompted</b></li>
+      </ul>
+        </li>
+        <li>
+        <p align="left"><b>Make JRE 1.5.0_13 the default for command line by 
+        running command:<br>
+        sudo update-alternatives --config java</b><ul>
+        <li>
+        <p align="left"><b>Enter the desired java version selection number and 
+        press enter</b></li>
+      </ul>
+        </li>
+      </ul>
+        </li>
+        <li>
+        <p align="left"><b><a name="Install latest update of Sun JDK 1.5.0_10">Install latest update of Sun JDK 
+        1.6.0u16</a> for use 
+        with Eclipse which includes JRE<br>
+        (This JDK can be used with Eclipse 3.5 to debug z390 v1.5.01+ java source 
+        and rebuild the z390.jar)</b><ul>
+        <li>
+        <p align="left"><b>
+        <a href="http://java.sun.com/javase/downloads/index_jdk5.jsp">Download 
+        JDK Linux self extracting binary to desktop</a></b></li>
+        <li>
+        <p align="left"><b>Start terminal and enter following commands to 
+        extract files:<br>
+        cd Desktop<br>
+        chmod u+x jdk-6u4-linux-i586.bin<br>
+        ./jdk-6u4-linux-i586.bin</b></li>
+        <li>
+        <p align="left"><b>Delete existing local java directory if it already 
+        exists:<br>
+        sudo rm -r /usr/local/java</b></li>
+        <li>
+        <p align="left"><b>Move extracted directory from desktop to new local 
+        user application java directory:<br>
+        sudo mkdir /usr/local/java<br>
+        sudo mv jdk1.6.0_16 /usr/local/java/jdk1.6.0_16</b></li>
+        <li>
+        <p align="left"><b>Remove symbolic links if they already exist</b><ul>
+        <li>
+        <p align="left"><b>sudo rm -r&nbsp; /usr/local/bin/java</b></li>
+        <li>
+        <p align="left"><b>sudo rm -r /usr/local/bin/javac</b></li>
+        <li>
+        <p align="left"><b>sudo rm -r&nbsp;&nbsp;&nbsp;&nbsp; /usr/local/bin/jar</b></li>
+      </ul>
+        </li>
+        <li>
+        <p align="left"><b>Create symbolic links for command line references </b><ul>
+        <li>
+        <p align="left"><b>sudo
+        ln -s /usr/local/java/jdk1.6.0_16/bin/java&nbsp; /usr/local/bin/java</b></li>
+        <li>
+        <p align="left"><b>sudo
+        ln -s /usr/local/java/jdk1.6.0_16/bin/javac /usr/local/bin/javac</b></li>
+        <li>
+        <p align="left"><b>sudo
+        ln -s /usr/local/java/jdk1.6.0_16/bin/jar&nbsp;&nbsp;&nbsp;&nbsp; /usr/local/bin/jar</b></li>
+      </ul>
+        </li>
+        <li>
+        <p align="left"><b>Create symbolic link for Firefox web brower java 
+        support</b><ul>
+        <li>
+        <p align="left"><b>sudo ln -s /usr/local/java/jdk1.6.0_16/jre/plugin/i386/ns7/libjavaplugin_oji.so<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        /usr/lib/firefox-3.0.14/plugins/libjavaplugin_oji.so </b></li>
+      </ul>
+        </li>
+      </ul>
+        </li>
+        <li>
+        <p align="left"><b>Verify J2RE installed plugin for FireFox web browser</b><ul>
+        <li>
+        <p align="left"><b>Stop and restart Firefox web browser (Blue Circle on 
+        menu bar)</b></li>
+        <li>
+        <p align="left"><b>
+          Run Sun J2RE 
+          verification Applet&nbsp; at this URL<br>
+        <a href="http://www.java.com/en/download/installed.jsp">
+        http://www.java.com/en/download/installed.jsp</a> - the applet runs for 
+        a few seconds and then should display current J2RE version such as jre 
+        1.6.0_16</b></li>
+      </ul>
+        </li>
+      </ul>
+          <p align="left"><b>Thanks to Martin Ward for providing assistance on 
+          first Ubuntu application install.</b></li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td width="50%" height="19">
+      &nbsp;</td>
+    </tr>
+    <tr>
+      <td width="50%" height="684">
+      <p align="center"><b><a name="Installing z390 on Linux">Installing z390 
+      full release on 
+      Linux</a></b></p>
+      <ul>
+        <li>
+        <p align="left"><b>Download z390 file image zip and install on Linux</b><ul>
+          <li>
+          <p align="left"><b>Boot Ubuntu 8.04 LTS Linux</b></li>
+          <li>
+          <p align="left"><b>Start Firefox web browser</b></li>
+          <li>
+          <p align="left"><b>Open web page &quot;<a href="http://www.z390.org">www.z390.org</a>&quot;</b></li>
+          <li>
+          <p align="left"><b>Click on &quot;Downloads&quot;</b></li>
+          <li>
+          <p align="left"><b>Click on &quot;<a href="../z390_Download_Archive.htm">z390_v1309_files.zip</a>&quot; to download to 
+          desktop</b></li>
+          <li>
+          <p align="left"><b>Right click on &quot;z390_v1309_files.zip&quot; and select 
+          &quot;Extract here&quot;</b></li>
+          <li>
+          <p align="left"><b>Right click on &quot;z390_v1309_files.zip&quot; and select 
+          &quot;Move to trash&quot;4</b></li>
+          <li>
+          <p align="left"><b>Move z390 extracted directory from desktop to /usr/local/lib/z390:</b><ul>
+            <li>
+            <p align="left"><b>Start terminal from &quot;System&quot;, &quot;Accessories&quot;, 
+            &quot;Terminal&quot;</b></li>
+            <li>
+            <p align="left"><b>If z390 has been installed previously, remove the 
+            prior version:<br>
+            sudo rm -r /usr/local/lib/z390</b></li>
+            <li>
+            <p align="left"><b>Enter move command to move z390 directories and 
+            files:<br>
+            sudo mv ~/Desktop/z390 /usr/local/lib</b></li>
+            <li>
+            <p align="left"><b>Ensure access rights for all z390 directories and 
+            programs:<br>
+            sudo chmod -R a+rwx /usr/local/lib/z390</b></li>
+            <li>
+            <p align="left"><b>Define link to the z390.pl GUI startup perl script 
+            in z390 install directory:<br>
+            sudo ln -s /usr/local/lib/z390/z390.pl&nbsp;&nbsp; /usr/local/bin/z390</b></li>
+            <li>
+            <p align="left"><b>Define link to the dos.pl dos command processor 
+            perl script in z390 directory:<br>
+            (use Linux terminal command &quot;dos&quot; to start z390 dos command 
+            processor - <a href="#Running z390 Command Line Interface on Linux">
+            see below</a>) <br>
+            sudo ln -s /usr/local/lib/z390/dos.pl&nbsp;&nbsp; /usr/local/bin/dos</b></li>
+            <li>
+            <p align="left"><b>Define link to the cmd.pl dos bat file command 
+            processor perl script in z390 directory:<br>
+            (cmd.pl is executed instead of cmd.exe when z390 is running under 
+            Linux)<br>
+            sudo ln -s /usr/local/lib/z390/cmd.pl&nbsp;&nbsp; /usr/local/bin/cmd.pl</b></li>
+          </ul>
+          </li>
+          <li>
+            <p align="left"><b>Verify z390 installation by running IVP 
+            (Installation Verification Program):</b><ul>
+          <li>
+            <p align="left"><b>Start dos command processor by entering command:<br>
+            dos</b></li>
+          <li>
+            <p align="left"><b>Start the IVP dos command IVP.BAT by entering:<br>
+            IVP</b></li>
+          <li>
+            <p align="left"><b>The above command will 
+            display the operating system, J2SE, and z390 versions, any install 
+            errors, and a return code.&nbsp; If the return code is greater than 
+            4, action must be taken to correct J2SE or z390 install to correct 
+            version.&nbsp; The optional RT and MVS zip files must be correctly 
+            installed in z390 directory to eliminate all warnings and set return 
+            code 0.</b></li>
+        </ul>
+          </li>
+        </ul>
+        </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td width="50%" height="25">
+      <p align="center"><b><a name="Installing z390 cumulative PTF on Linux">
+      Installing z390 cumulative PTF on Linux</a></b></td>
+    </tr>
+    <tr>
+      <td width="50%" height="152">
+      <ul>
+        <li><b>Download z390 cumulative PTF file image and install (z390 file 
+        image overlay is in same zip along with Windows InstallShield 
+        executable):</b><ul>
+          <li><b>Find PTF to download on <a href="http://www.z390.org">
+          www.z390.org</a></b></li>
+          <li><b>Click on link and select &quot;save to Desktop&quot;</b></li>
+          <li><b>Right click PTF zip file on Desktop and select &quot;Extract here&quot;</b></li>
+          <li><b>Copy and paste z390 file image overlap onto existing z390 
+          installed directory</b></li>
+          <li><b>Use chmod to reset z390 privaledges to rwx for all z390 files.</b></li>
+        </ul>
+        </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td width="50%" height="285">
+      <p align="center"><b>
+      <a name="Running z390 Graphical User Interface on Linux">Running z390 
+      Graphical User Interface on Linux</a></b></p>
+      <ul>
+        <li>
+        <p align="left"><b>Create desktop icon to start z390 GUI Interface</b><ul>
+          <li>
+          <p align="left"><b>Right click on desktop and click on &quot;Launcher&quot;</b></li>
+          <li>
+          <p align="left"><b>Enter name &quot;z390 GUI Interface&quot;</b></li>
+          <li>
+          <p align="left"><b>Enter command &quot;perl /usr/local/lib/z390/z390.pl&quot;</b></li>
+          <li>
+          <p align="left"><b>press ok </b></li>
+          <li>
+          <p align="left"><b>Double click &quot;z390 GUI Interface icon on desktop to 
+          start it</b></li>
+          <li>
+          <p align="left"><b>Click on &quot;Help&quot;, &quot;Releases&quot; to see which version of 
+          Linux, z390, and J2RE is running</b></li>
+          <li>
+          <p align="left"><b>Enter following commands to assemble, link, 
+          and execute demo:<br>
+          cd demo<br>
+          asmlg DEMO</b></li>
+          <li>
+          <p align="left"><b>Enter the following command to view demo execution 
+          log file using gedit GUI editor:<br>
+          gedit DEMO.LOG</b></li>
+        </ul>
+        </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td width="50%" height="190">
+      <p align="center"><b>
+      <a name="Running z390 Command Line Interface on Linux">Running z390 
+      Command Line Interface on Linux</a></b></p>
+      <ul>
+        <li>
+        <p align="left"><b>Start terminal from menu &quot;System&quot;, &quot;Accessories&quot; to 
+        start command line interface</b></li>
+        <li>
+        <p align="left"><b>Enter the command &quot;dos&quot; to start the z390 dos bat 
+        file command processor</b><ul>
+        <li>
+        <p align="left"><b>demo&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        (run the DEMO.BAT demo)</b></li>
+        <li>
+        <p align="left"><b>asmlg demo/DEMO&nbsp;&nbsp;&nbsp; (Assemble, link, 
+        and execute hello world demo)</b></li>
+        <li>
+        <p align="left"><b>exec&nbsp;&nbsp; demo/DEMO trace con (Execute demo again with trace and output to console)</b></li>
+        <li>
+        <p align="left"><b>exit&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+        (end the dos bat file command shell)</b></li>
+      </ul>
+        </li>
+        <li>
+        <p align="left"><b>gedit demo/DEMO.TRE (view the demo execution trace 
+        using gexit GUI text editor)</b></li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td width="50%" height="551">
+      <p align="center"><b><a name="Installing Eclipse on Linus">Installing 
+      Eclipse on Linus</a></b></p>
+      <ul>
+        <li>
+        <p align="left"><b>
+        <a href="https://jdk-distros.dev.java.net/ubuntu.html">Install Eclipse 3.5</a>
+        (This requires <a href="#Install latest update of Sun JDK 1.5.0_10">JRE 
+        1.6.0_16</a> to avoid lost breakpoints in 13+14) </b><ul>
+        <li>
+        <p align="left"><b>Boot Ubuntu 8/04 LTS</b></li>
+        <li>
+        <p align="left"><b>Use Foxfire browser to download Eclipse 3.5 tar for 
+        Linux to desktop</b></li>
+        <li>
+        <p align="left"><b>Expand tar to file directory on desktop</b></li>
+            <li>
+            <p align="left"><b>If eclipse has been installed previously, remove the 
+            prior version:<br>
+            sudo rm -r /usr/lib/eclipse</b></li>
+            <li>
+            <p align="left"><b>Enter move command to move z390 directories and 
+            files:<br>
+            sudo mv ~/Desktop/z390 /usr/lib</b></li>
+            <li>
+            <p align="left"><b>Ensure access rights for all eclipse directories and 
+            programs:<br>
+            sudo chmod -R a+rwx /usr/lib/eclipse</b></li>
+      </ul>
+        </li>
+        <li>
+        <p align="left"><b>Create z390 source project directory in Eclipse 
+        workspace directory<br>
+        (I have created separate partition shared by Linux and Windows with z390 
+        sources)</b></li>
+        <li>
+        <p align="left"><b>Set and verify current J2RE used by Eclipse</b><ul>
+        <li>
+        <p align="left"><b>Double click desktop icon to start Eclipse</b></li>
+        <li>
+        <p align="left"><b>Select &quot;Run&quot;, &quot;Debug&quot;, &quot;JRE&quot; and browse to /usr/local/java/jre 
+        to select latest J2RE</b></li>
+        <li>
+        <p align="left"><b>Select &quot;Project&quot;, &quot;Clean&quot; to rebuild classes from 
+        source with selected J2RE</b></li>
+      </ul>
+        </li>
+        <li>
+        <p align="left"><b>Debug execution of existing regression test program 
+        z390/rt/test/testins2</b><ul>
+        <li>
+        <p align="left"><b>Select &quot;Run&quot;, &quot;Debug&quot;, check stop in main, and set 
+        project to z390 and class to ez390</b></li>
+        <li>
+        <p align="left"><b>Select &quot;arguments tab and enter path to z390/rt/test/testins2 
+        plus desired options<br>
+        /media/sda5/work/z390/rt/test/testins2 trace notrap notiming con<br>
+        (The above source testing path is on a shared volume separate from 
+        Ubuntu primary volume, and it is separate from the z390 download and 
+        install version located in /usr/local/lib/z390 on the Ubuntu primary 
+        volume.&nbsp; This allows independent testing of installs and source 
+        development.)</b></li>
+        <li>
+        <p align="left"><b>Click on &quot;Debug&quot; to start debugging with stop in main</b></li>
+        <li>
+        <p align="left"><b>Set any breakpoints on any z390 source code using 
+        &quot;Run&quot;, &quot;Toggle Breakpoint&quot;</b></li>
+        <li>
+        <p align="left"><b>Click on green arrow to run to next breakpoint or end 
+        of program</b></li>
+        <li>
+        <p align="left"><b>View any trace output on console tab</b></li>
+      </ul>
+        </li>
+      </ul>
+      <p>&nbsp;</td>
+    </tr>
+    <tr>
+      <td width="50%" height="209">
+      <p align="center"><b>
+      <a name="Install Adobe Acrobat to view PDF files on Linux">Install Adobe 
+      Acrobat to view PDF files on Linux</a></b></p>
+      <ul>
+        <li>
+        <p align="left"><b>
+        <a href="https://jdk-distros.dev.java.net/ubuntu.html">Install the 
+        package version of Adobe Acrobat for Linus defined in repository</a><br>
+        (This is required to view z390 documentation via &quot;Help&quot;, &quot;User Guide&quot; 
+        menu) </b><ul>
+        <li>
+        <p align="left"><b>Boot Ubuntu 6.06 LTS</b></li>
+        <li>
+        <p align="left"><b>Select &quot;Applications&quot;, &quot;Add/Remove&quot; menu item</b></li>
+        <li>
+        <p align="left"><b>Click show unsupported applications (lower right of 
+        add/remove dialog)</b></li>
+        <li>
+        <p align="left"><b>Enter search &quot;adobe&quot; and press enter</b></li>
+        <li>
+        <p align="left"><b>Click on &quot;Adobe Acrobat for reading PDF files&quot;</b></li>
+        <li>
+        <p align="left"><b>Click ok to install</b></li>
+      </ul>
+        </li>
+        </ul>
+      </td>
+    </tr>
+</table>
+
+  </div>
+
+  </li>
+</ul>
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Monday September 21, 2009<!--webbot bot="Timestamp" i-checksum="59233" endspan -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a>&nbsp;
+<a href="../pop-up/sitemap.html">Sitemap</a><br>
+Copyright 2005 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </b> </p>
+
+</body>
+
+</html>

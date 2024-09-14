@@ -1,0 +1,19 @@
+EZ390I V1.3.09 Current Date 12/14/07 Time 06:39:21
+EZ390I Copyright 2006 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = P6PL1
+EZ390I options = 
+ZMFACC SOLUTION FOR PROBLEM P6PL1 BY Philippe Leite
+SNAP DUMP ID=1 TEXT=INPUT AREA
+ 000FFF68 *0F                                 * *.               *
+SNAP DUMP ID=2 TEXT=OUTPUT AREA
+ 000FFF6C *F0F0F0F0 F1F1F1F1                  * *00001111        *
+EZ390I Stats total instructions    = 98
+EZ390I stats TCPIO operations      = 0
+EZ390I stats DCB operations        = 0
+EZ390I stats VSAM operations       = 0
+EZ390I Stats current date 12/14/07 time 06:39:21
+EZ390I Stats total seconds         = 0
+EZ390I Stats instructions/sec      = 8909
+EZ390I total errors         = 0
+EZ390I return code(P6PL1   )= 0

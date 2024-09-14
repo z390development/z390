@@ -1,0 +1,880 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>zCOBOL NIST COBOL 1985 Test Suite Results</title>
+<META NAME="DESCRIPTION" CONTENT="z390 Protable Mainframe Assembler, Linker, Emulator Open Source J2SE">
+<META name="KEYWORDS" content="Mainframe Assembler Tools z390 SuperZap Open Source J2SE Java">
+
+<style>
+<!--
+ li.MsoNormal
+	{mso-style-parent:"";
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	margin-left:0in; margin-right:0in; margin-top:0in}
+-->
+</style>
+
+</head>
+
+<body>
+<table border="0" cellpadding="0" cellspacing="3" style="border-collapse: collapse" bordercolor="#111111" id="AutoNumber1" width="750" height="1">
+            <tr>
+              <td align="center" width="141" height="69" valign="top">
+              <b><font face="Times New Roman">
+              <a href="http://www.zcobol.org">
+              <img border="0" src="zcobol.jpg" width="100" height="75" alt="z390 Portable Mainframe COBOL Compiler"></a></font></b></td>
+              <td align="center" width="445" height="69">
+              <p align="center"><b><font size="4" face="Times New Roman">zCOBOL 
+              NIST COBOL 1985 Test Results</font></b></td>
+              <td width="152" height="69" align="center">
+              <b>
+              <a href="http://www.z390.org">
+              <img border="0" src="z390.jpg" width="124" height="75" alt="z390 Portable Mainframe Assembler and Emulator"></a><font face="Times New Roman"><br>
+&nbsp;</font></b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="744" height="170" colspan="3">
+              <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" id="AutoNumber2" width="744">
+                <tr>
+                  <td align="left" valign="top" width="204">
+                  <p align="center"><b>zCOBOL Docs</b></td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top">
+                  <ul>
+                    <li><b><a href="#Overview">Overview</a></b></li>
+                    <li><b><a href="#Summary_Statistics">Summary Statistics</a></b></li>
+                    <li><b><a href="#Translation_to_zcobol_Macro_Calls">
+                    Translation to zcobol macro calls</a></b></li>
+                    <li><b><a href="#Generated_HLASM_Assembler_Instructions">
+                    Generated HLASM Assembler Instructions</a></b></li>
+                    <li><b>
+                    <a href="#Pending_Priority_List_for_zcobol_Development">
+                    Pending Priority List to complete test suite for HLASM 
+                    target language</a></b></li>
+                  </ul>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" width="744">
+                  <p align="center"><b><a name="Overview">Overview</a></b></p>
+                  <p><b>The
+                    <a href="http://www.itl.nist.gov/div897/ctg/cobol_form.htm">
+                    NIST COBOL Tests</a> have been downloaded and are being used 
+                  as an initial test of zcobol compliance with the COBOL 1985 
+                  Standard.&nbsp; There are 459 COBOL test programs of which 409 
+                  are currently being tested with zcobol.&nbsp; See the
+                  <a href="#Summary_Statistics">summary statistics</a> showing 
+                  translation, assembly, and execution by 2 character program 
+                  name prefix.&nbsp; Currently they all translate without 
+                  errors.&nbsp; </b></p>
+                  <p><b>
+                    <font face="Times New Roman">See the <a href="#Translation_to_zcobol_Macro_Calls">
+                  translation statistics</a> showing the frequency of each 
+                  generated zcobol macro call listed in descending order by 
+                  frequency followed by alphabetical list.&nbsp; The zcobol 
+                  translator program zc390.java/class in z390.jar consists of 
+                  1625 lines of java code and uses regular expression parsing 
+                  support to translate COBOL programs into equivalent HLASM 
+                  compatible macro assembler calls.&nbsp; It's interesting to 
+                  note that out of about 440,000 lines of COBOL code, the 
+                  following make up over 80% of all verbs: PERIOD, MOVE, WS, PERFORM, LABEL, GO, 
+                  IF, ADD, ELSE, and EXIT.&nbsp; PERIOD is the name of the macro 
+                  generated to process end of sentence closing structures etc.&nbsp; 
+                  WS is the name of the generated macro to handle all data 
+                  definitions in working-storage and linkage section with unique 
+                  qualified names.&nbsp; LABEL is the generated macro to handle 
+                  creating unique qualified paragraph names.&nbsp; The 
+                  translator also maps dashes in names to underscores, double 
+                  quotes to single quotes, START to ZCSTART, and END 
+                  DECLARATIVES to END_DECLARATIVES to avoid assembler conflicts.</font></b></p>
+                  <p><b>
+                    See the <a href="#Generated_HLASM_Assembler_Instructions">
+                  Generated HLASM Assembler Instructions</a> showing the 
+                  frequency of each generated HLASM assembler instruction listed 
+                  in descending order by frequency followed by alphabetical 
+                  list.&nbsp; The zcobol directory currently contains 119 macros 
+                  corresponding to COBOL verbs and reserved section names plus 
+                  9copybooks totaling 7470 lines of conditional structured macro 
+                  code.&nbsp; The zcobol directory macros in turn call code 
+                  generation macros for the target language environment.&nbsp; 
+                  The zcobol\z390 directory contains 44 code generation macros 
+                  and 4 copybooks totaling 13,250 lines of conditional 
+                  structured macro code.&nbsp; Of the million plus lines of 
+                  generated HLASM assembler code generated, over 80% consist of 
+                  the following: DS, LARL, EQU, L, MVC, BASR, DC, MVI, LAY, 
+                  USING, ORG, DROP, and BRC.&nbsp; The LARL is used to address 
+                  single literal pool without requiring base register.</b></p>
+                  <p><b>Much work has been done and the zcobol compiler does 
+                  compile and execute programs including a number of EXEC CICS 
+                  COBOL programs and also a number of demo and zcobol regression 
+                  test COBOL programs.&nbsp; However, there is still much work 
+                  to do to complete the NIST COBOL 1985 test suite.&nbsp; See 
+                  the <a href="#Pending_Priority_List_for_zcobol_Development">
+                  pending priority list </a>here and join the zcobol user email 
+                  group to participate in future direction of zcobol and the setting 
+                  of priorities going forward.</b></p>
+                  <p><b>The HLASM generation macros could now be copied to other 
+                  target language directories for Java, C, and MASM and then 
+                  modified to generate the appropriate equivalent source code.&nbsp; 
+                  However, the current focus will remain on HLASM and since the 
+                  zcobol generic language macros which call the code generation 
+                  macros are still subject to change, delaying the start of 
+                  other target language macro libraries is recommended.&nbsp; 
+                  There are existing example generation macros already included 
+                  which support compiling the zcobol\demo\HELLO.CBL program into 
+                  executable J2SE Java, Microsoft Visual C, and Intel MASM 
+                  assembler.<br>
+&nbsp;</b></td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" width="744">
+                  <p align="center"><b><a name="Summary_Statistics">Summary 
+                  Statistics</a><br>
+                  <br>
+                  The following summary report shows the current progress 
+                  toward translating, assembling, and executing 409 NIST 
+                  test programs for COBOL 1985 using zcobol and z390 version 
+                  v1.5.01.&nbsp; This report was generated automatically using 
+                  the following set of <a href="http://www.zpar.org">ZPAR utility commands</a>:</b></p>
+                  <p><b>call zpar\ZPARGEN zpar\ZCCLG \work\nist\src\*.CBL<br>
+                  call zpar\ZPARSUM2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                  \work\nist\src\*.ERR</b></p>
+                  <p class="MsoNormal"><b>
+                  <span style="font-size: 12.0pt; font-family: Courier New">
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TRANSLATE&nbsp; ASSEMBLY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; EXECUTION<br>
+                  ID&nbsp; TOT&nbsp; RC=0 RC&gt;0&nbsp; RC&lt;=4 RC=8 RC&gt;8&nbsp; RC=0 RC&gt;0&nbsp;</span></b></p>
+                  <p class="MsoNormal"><b>
+                  <span style="font-size: 12.0pt; font-family: Courier New">
+                  CM&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 0<br>
+                  DB&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 0<br>
+                  EX&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 0<br>
+                  IC&nbsp;&nbsp; 35&nbsp;&nbsp;&nbsp; 35&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 26&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp; 7<br>
+                  IF&nbsp;&nbsp; 42&nbsp;&nbsp;&nbsp; 42&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp; 42&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 0<br>
+                  IX&nbsp;&nbsp; 38&nbsp;&nbsp;&nbsp; 38&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp; 38&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 0<br>
+                  NC&nbsp;&nbsp; 92&nbsp;&nbsp;&nbsp; 92&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 18&nbsp;&nbsp; 72&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp; 18<br>
+                  OB&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;3&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 2<br>
+                  RL&nbsp;&nbsp; 32&nbsp;&nbsp;&nbsp; 32&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp; 32&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 0<br>
+                  RW&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 0<br>
+                  SG&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp; 10&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 0<br>
+                  SM&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp;&nbsp; 7&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp; 6&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 1<br>
+                  SQ&nbsp;&nbsp; 82&nbsp;&nbsp;&nbsp; 82&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp; 82&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 0 &nbsp;&nbsp;&nbsp;0<br>
+                  ST&nbsp;&nbsp; 39&nbsp;&nbsp;&nbsp; 39&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp; 39&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; 0&nbsp;</span></b></p>
+                  <p class="MsoNormal"><b>
+                  <span style="font-size: 12.0pt; font-family: Courier New">**&nbsp; 
+                  408&nbsp;&nbsp; 408&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 48&nbsp; 358&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp;&nbsp; 9&nbsp;&nbsp; 28</span></b></p>
+                  <p class="MsoNormal"><b>
+                  <span style="font-family: Courier New">Notes:</span></b></p>
+                  <ol>
+                    <li>
+                    <p class="MsoNormal"><b>The total NIST COBOL 1985 test suite 
+                    includes 459 programs.</b></li>
+                    <li>
+                    <p class="MsoNormal"><b>
+                    <span style="font-family: Courier New">SM201A and SM206A 
+                    have been removed pending completion of RPI 1068 support for 
+                    split pseudo literal for COPY REPLACING.</span></b></li>
+                    <li>
+                    <p class="MsoNormal"><b>
+                    <span style="font-family: Courier New">IC223a thru IC237A 
+                    (11) have been removed pending RPI 1070 to add support for 
+                    batch compiles from single CBL source with END PROGRAM 
+                    statements.</span></b></li>
+                    <li>
+                    <p class="MsoNormal"><b>
+                    <span style="font-family: Courier New">Removed 31 programs 
+                    of the form IDNNNM which intentionally raise flags to test 
+                    for error checking.</span></b></li>
+                    <li>
+                    <p class="MsoNormal"><b>Remove SM201A through SM208A until RPI 
+                    1006 is implemented to support the REPLACE verb.</b></li>
+                    <li>
+                    <p class="MsoNormal"><b>All of the remaining 408 programs 
+                    translate and assemble without any abnormal terminations in 
+                    30 minutes which is an average of about 4 seconds per 
+                    program on Dell 3 GHZ duo core Windows Vista system..</b></li>
+                    <li>
+                    <p class="MsoNormal"><b>
+                    <span style="font-family: Courier New">The next step will 
+                    be to add missing functions identified by MNOTE's in order 
+                    to assemble and execute successfully.</span></b></li>
+                  </ol>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" width="744">
+                  <p align="center"><b><span style="font-family: Courier New">
+                  <a name="Translation_to_zcobol_Macro_Calls">Translation to 
+                  zcobol Macro Calls</a></span></b></p>
+                  <p><b><span style="font-family: Courier New">All of the 
+                  generated MLC files for the 409 NIST COBOL programs were read 
+                  to produce this report using the command:</span></b></p>
+                  <p><b><span style="font-family: Courier New">zpar\ZPARMLC 
+                  \work\NIST\SRC\*.MLC</span></b></p>
+                  <p><b><font face="Courier New">G3-ZPARMLC TOTAL OPCODES = 99<br>
+                  G3-ZPARMLC TOTAL LINES = 777169<br>
+                  G3-ZPARMLC CURRENT DATE=08/22/09 TIME=06.11<br>
+                  G3-FREQ--- OPCODE<br>
+                  G2 339044 @_COMMENT<br>
+                  G2 129509 PERIOD<br>
+                  G2 78200 MOVE<br>
+                  G2 70231 WS<br>
+                  G2 46035 PERFORM<br>
+                  G2 43839 LABEL<br>
+                  G2 20826 GO<br>
+                  G2 14095 IF<br>
+                  G2 7932 ADD<br>
+                  G2 5752 ELSE<br>
+                  G2 2053 EXIT<br>
+                  G2 1717 WRITE<br>
+                  G2 1198 CLOSE<br>
+                  G2 1196 OPEN<br>
+                  G2 997 READ<br>
+                  G2 932 SET<br>
+                  G2 932 DATA<br>
+                  G2 917 PROCEDURE<br>
+                  G2 883 SELECT<br>
+                  G2 842 FD<br>
+                  G2 661 COMPUTE<br>
+                  G2 487 STOP<br>
+                  G2 474 END<br>
+                  G2 466 IDENTIFICATION<br>
+                  G2 462 ENVIRONMENT<br>
+                  G2 451 ZCOBOL<br>
+                  G2 451 PROGRAM_ID<br>
+                  G2 451 CONFIGURATION<br>
+                  G2 427 FILE<br>
+                  G2 422 INPUT_OUTPUT<br>
+                  G2 422 FILE_CONTROL<br>
+                  G2 418 WORKING_STORAGE<br>
+                  G2 409 COPY<br>
+                  G2 342 SUBTRACT<br>
+                  G2 296 WHEN<br>
+                  G2 296 REWRITE<br>
+                  G2 269 ACCEPT<br>
+                  G2 219 DIVIDE<br>
+                  G2 218 NEXT<br>
+                  G2 186 ZCSTART<br>
+                  G2 154 NOT<br>
+                  G2 152 MULTIPLY<br>
+                  G2 150 RETURN<br>
+                  G2 147 SEARCH<br>
+                  G2 134 USE<br>
+                  G2 125 CALL<br>
+                  G2 111 INSPECT<br>
+                  G2 103 DISPLAY<br>
+                  G2 96 ALTER<br>
+                  G2 95 EVALUATE<br>
+                  G2 94 CONTINUE<br>
+                  G2 90 END_DECLARATIVES<br>
+                  G2 64 SEND<br>
+                  G2 47 END_IF<br>
+                  G2 42 SORT<br>
+                  G2 40 ZCSD<br>
+                  G2 37 RELEASE<br>
+                  G2 34 UNSTRING<br>
+                  G2 34 STRING<br>
+                  G2 31 DELETE<br>
+                  G2 30 I_O_CONTROL<br>
+                  G2 30 END_DIVIDE<br>
+                  G2 29 ENABLE<br>
+                  G2 28 SPECIAL_NAMES<br>
+                  G2 22 LINKAGE<br>
+                  G2 22 @ERROR@<br>
+                  G2 21 END_READ<br>
+                  G2 20 ALPHABET<br>
+                  G2 19 DISABLE<br>
+                  G2 19 CD<br>
+                  G2 18 END_SUBTRACT<br>
+                  G2 18 END_ADD<br>
+                  G2 14 GENERATE<br>
+                  G2 14 CLASS<br>
+                  G2 13 RECEIVE<br>
+                  G2 12 END_MULTIPLY<br>
+                  G2 11 INITIALIZE<br>
+                  G2 11 COMMUNICATION<br>
+                  G2 11 CANCEL<br>
+                  G2 9 END_EVALUATE<br>
+                  G2 7 END_PERFORM<br>
+                  G2 6 TERMINATE<br>
+                  G2 6 SYMBOLIC<br>
+                  G2 6 REPORT<br>
+                  G2 6 RD<br>
+                  G2 6 MERGE<br>
+                  G2 6 INITIATE<br>
+                  G2 3 DATE_COMPILED<br>
+                  G2 2 SOURCE_COMPUTER<br>
+                  G2 2 OBJECT_COMPUTER<br>
+                  G2 2 DECIMAL_POINT<br>
+                  G2 2 CURRENCY<br>
+                  G2 1 SECURITY<br>
+                  G2 1 SD<br>
+                  G2 1 ORDER<br>
+                  G2 1 INSTALLATION<br>
+                  G2 1 DATE_WRITTEN<br>
+                  G2 1 AUTHOR<br>
+                  G2 1 @_BLANK<br>
+                  G2-OPCODE------------------------- --FREQ<br>
+                  G1 @_BLANK 1<br>
+                  G1 @_COMMENT 339044<br>
+                  G1 @ERROR@ 22<br>
+                  G1 ACCEPT 269<br>
+                  G1 ADD 7932<br>
+                  G1 ALPHABET 20<br>
+                  G1 ALTER 96<br>
+                  G1 AUTHOR 1<br>
+                  G1 CALL 125<br>
+                  G1 CANCEL 11<br>
+                  G1 CD 19<br>
+                  G1 CLASS 14<br>
+                  G1 CLOSE 1198<br>
+                  G1 COMMUNICATION 11<br>
+                  G1 COMPUTE 661<br>
+                  G1 CONFIGURATION 451<br>
+                  G1 CONTINUE 94<br>
+                  G1 COPY 409<br>
+                  G1 CURRENCY 2<br>
+                  G1 DATA 932<br>
+                  G1 DATE_COMPILED 3<br>
+                  G1 DATE_WRITTEN 1<br>
+                  G1 DECIMAL_POINT 2<br>
+                  G1 DELETE 31<br>
+                  G1 DISABLE 19<br>
+                  G1 DISPLAY 103<br>
+                  G1 DIVIDE 219<br>
+                  G1 ELSE 5752<br>
+                  G1 ENABLE 29<br>
+                  G1 END 474<br>
+                  G1 END_ADD 18<br>
+                  G1 END_DECLARATIVES 90<br>
+                  G1 END_DIVIDE 30<br>
+                  G1 END_EVALUATE 9<br>
+                  G1 END_IF 47<br>
+                  G1 END_MULTIPLY 12<br>
+                  G1 END_PERFORM 7<br>
+                  G1 END_READ 21<br>
+                  G1 END_SUBTRACT 18<br>
+                  G1 ENVIRONMENT 462<br>
+                  G1 EVALUATE 95<br>
+                  G1 EXIT 2053<br>
+                  G1 FD 842<br>
+                  G1 FILE 427<br>
+                  G1 FILE_CONTROL 422<br>
+                  G1 GENERATE 14<br>
+                  G1 GO 20826<br>
+                  G1 I_O_CONTROL 30<br>
+                  G1 IDENTIFICATION 466<br>
+                  G1 IF 14095<br>
+                  G1 INITIALIZE 11<br>
+                  G1 INITIATE 6<br>
+                  G1 INPUT_OUTPUT 422<br>
+                  G1 INSPECT 111<br>
+                  G1 INSTALLATION 1<br>
+                  G1 LABEL 43839<br>
+                  G1 LINKAGE 22<br>
+                  G1 MERGE 6<br>
+                  G1 MOVE 78200<br>
+                  G1 MULTIPLY 152<br>
+                  G1 NEXT 218<br>
+                  G1 NOT 154<br>
+                  G1 OBJECT_COMPUTER 2<br>
+                  G1 OPEN 1196<br>
+                  G1 ORDER 1<br>
+                  G1 PERFORM 46035<br>
+                  G1 PERIOD 129509<br>
+                  G1 PROCEDURE 917<br>
+                  G1 PROGRAM_ID 451<br>
+                  G1 RD 6<br>
+                  G1 READ 997<br>
+                  G1 RECEIVE 13<br>
+                  G1 RELEASE 37<br>
+                  G1 REPORT 6<br>
+                  G1 RETURN 150<br>
+                  G1 REWRITE 296<br>
+                  G1 SD 1<br>
+                  G1 SEARCH 147<br>
+                  G1 SECURITY 1<br>
+                  G1 SELECT 883<br>
+                  G1 SEND 64<br>
+                  G1 SET 932<br>
+                  G1 SORT 42<br>
+                  G1 SOURCE_COMPUTER 2<br>
+                  G1 SPECIAL_NAMES 28<br>
+                  G1 STOP 487<br>
+                  G1 STRING 34<br>
+                  G1 SUBTRACT 342<br>
+                  G1 SYMBOLIC 6<br>
+                  G1 TERMINATE 6<br>
+                  G1 UNSTRING 34<br>
+                  G1 USE 134<br>
+                  G1 WHEN 296<br>
+                  G1 WORKING_STORAGE 418<br>
+                  G1 WRITE 1717<br>
+                  G1 WS 70231<br>
+                  G1 ZCOBOL 451<br>
+                  G1 ZCSD 40<br>
+                  G1 ZCSTART 186</font></b><p><b><font face="Courier New">Notes:</font></b><ol>
+                    <li><b><font face="Courier New">@COMMENT@ counts comment 
+                    lines.&nbsp; Note unless NOCOMMENT option is specified every 
+                    COBOL line is also included as assembler comment.</font></b></li>
+                    <li><b><font face="Courier New">@BLANK@ counts blank lines</font></b></li>
+                    <li><b><font face="Courier New">@ERROR@ counts any lines 
+                    without valid assembler opcode</font></b></li>
+                    <li><b><font face="Courier New">LABEL counts macro to 
+                    generate unique procedure labels.</font></b></li>
+                    <li><b><font face="Courier New">PERIOD counts macro to end 
+                    sentence.</font></b></li>
+                    <li><b><font face="Courier New">WS counts macro to define 
+                    working-storage and linkage section</font></b></li>
+                    <li><b><font face="Courier New">ZCSD counts SD sort 
+                    definition sections (SD is an assembler instuction)</font></b></li>
+                    <li><b><font face="Courier New">ZCSTART counts START macro 
+                    (START is an assembler control instruction)</font></b></li>
+                    </ol>
+                    </td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" width="744">
+                  <p align="center"><b><font face="Courier New">
+                  <a name="Generated_HLASM_Assembler_Instructions">Generated 
+                  HLASM Assembler Instructions</a></font></b></p>
+                  <p><b><font face="Courier New">The following report showing 
+                  all the generated HLASM opcodes for all 409 of the NIST COBOL 
+                  programs assembled using option BAL was generated using the 
+                  following command:</font></b></p>
+                  <p><b><font face="Courier New">zpar\ZPARMLC \work\NIST\src\*.BAL</font></b></p>
+                  <p><b><font face="Courier New">G3-ZPARMLC TOTAL OPCODES = 142<br>
+                  G3-ZPARMLC TOTAL LINES = 1588292<br>
+                  G3-ZPARMLC CURRENT DATE=08/22/09 TIME=06.16<br>
+                  G3-FREQ--- OPCODE<br>
+                  G2 433584 @_COMMENT<br>
+                  G2 199445 DS<br>
+                  G2 158158 LARL<br>
+                  G2 126601 EQU<br>
+                  G2 106991 L<br>
+                  G2 92823 MVC<br>
+                  G2 92819 BASR<br>
+                  G2 70291 DC<br>
+                  G2 24827 MVI<br>
+                  G2 24727 LAY<br>
+                  G2 22338 USING<br>
+                  G2 22170 ORG<br>
+                  G2 20563 DROP<br>
+                  G2 19095 BRC<br>
+                  G2 18763 PACK<br>
+                  G2 11704 MNOTE<br>
+                  G2 11028 CLC<br>
+                  G2 9423 LA<br>
+                  G2 9151 UNPK<br>
+                  G2 8656 ST<br>
+                  G2 8143 OI<br>
+                  G2 7681 AP<br>
+                  G2 7067 ZAP<br>
+                  G2 6951 ED<br>
+                  G2 6490 SVC<br>
+                  G2 6412 JNM<br>
+                  G2 6296 MVHI<br>
+                  G2 5911 AFI<br>
+                  G2 5809 CFI<br>
+                  G2 5290 LR<br>
+                  G2 2220 LOCTR<br>
+                  G2 2150 LH<br>
+                  G2 1583 IILF<br>
+                  G2 1558 CLI<br>
+                  G2 1387 DSECT<br>
+                  G2 1367 PRINT<br>
+                  G2 1353 BRAS<br>
+                  G2 1333 CSECT<br>
+                  G2 1322 LTR<br>
+                  G2 1241 SR<br>
+                  G2 1162 CP<br>
+                  G2 1120 STH<br>
+                  G2 1001 BR<br>
+                  G2 973 LHI<br>
+                  G2 934 MSFI<br>
+                  G2 900 LTORG<br>
+                  G2 884 LGFI<br>
+                  G2 871 BRZ<br>
+                  G2 841 CVB<br>
+                  G2 787 BCTR<br>
+                  G2 735 CVD<br>
+                  G2 701 STM<br>
+                  G2 687 LG<br>
+                  G2 603 STG<br>
+                  G2 565 JNE<br>
+                  G2 551 SP<br>
+                  G2 527 LRL<br>
+                  G2 525 ASI<br>
+                  G2 521 PFPO<br>
+                  G2 469 LMG<br>
+                  G2 459 END<br>
+                  G2 451 PUSH<br>
+                  G2 451 POP<br>
+                  G2 451 JZ<br>
+                  G2 451 CNOP<br>
+                  G2 451 BNE<br>
+                  G2 442 CXSTR<br>
+                  G2 409 COPY<br>
+                  G2 304 A<br>
+                  G2 291 AR<br>
+                  G2 274 SGR<br>
+                  G2 262 MVHHI<br>
+                  G2 259 AHI<br>
+                  G2 247 LGR<br>
+                  G2 236 CVBG<br>
+                  G2 195 EDMK<br>
+                  G2 182 STMG<br>
+                  G2 180 DP<br>
+                  G2 166 AG<br>
+                  G2 165 CHI<br>
+                  G2 149 CVDG<br>
+                  G2 141 MVGHI<br>
+                  G2 117 SGFR<br>
+                  G2 116 D<br>
+                  G2 114 SRP<br>
+                  G2 114 LT<br>
+                  G2 110 SRL<br>
+                  G2 95 CG<br>
+                  G2 75 AGF<br>
+                  G2 69 MVCL<br>
+                  G2 67 CGR<br>
+                  G2 61 LGF<br>
+                  G2 52 AGFR<br>
+                  G2 44 JM<br>
+                  G2 33 S<br>
+                  G2 27 MP<br>
+                  G2 26 IILL<br>
+                  G2 26 IILH<br>
+                  G2 25 SLL<br>
+                  G2 25 JL<br>
+                  G2 25 JH<br>
+                  G2 25 B<br>
+                  G2 24 CLCL<br>
+                  G2 23 LGH<br>
+                  G2 22 @ERROR@<br>
+                  G2 21 SRAG<br>
+                  G2 21 DXTR<br>
+                  G2 16 MVZ<br>
+                  G2 14 ALG<br>
+                  G2 14 ALCG<br>
+                  G2 13 LTG<br>
+                  G2 13 AH<br>
+                  G2 11 MEXIT<br>
+                  G2 11 MEND<br>
+                  G2 11 MACRO<br>
+                  G2 11 CD<br>
+                  G2 10 LPR<br>
+                  G2 10 LD<br>
+                  G2 10 JNO<br>
+                  G2 10 AGFI<br>
+                  G2 9 DR<br>
+                  G2 8 CH<br>
+                  G2 8 C<br>
+                  G2 7 SLGR<br>
+                  G2 7 SLBGR<br>
+                  G2 6 MSG<br>
+                  G2 5 DSGR<br>
+                  G2 4 TM<br>
+                  G2 4 STD<br>
+                  G2 4 SH<br>
+                  G2 4 SG<br>
+                  G2 4 MS<br>
+                  G2 4 LDR<br>
+                  G2 4 CLGR<br>
+                  G2 2 MSR<br>
+                  G2 1 SD<br>
+                  G2 1 MXTR<br>
+                  G2 1 LPGR<br>
+                  G2 1 JO<br>
+                  G2 1 JNL<br>
+                  G2 1 AGSI<br>
+                  G2 1 @_BLANK<br>
+                  G2-OPCODE------------------------- --FREQ<br>
+                  G1 @_BLANK 1<br>
+                  G1 @_COMMENT 433584<br>
+                  G1 @ERROR@ 22<br>
+                  G1 A 304<br>
+                  G1 AFI 5911<br>
+                  G1 AG 166<br>
+                  G1 AGF 75<br>
+                  G1 AGFI 10<br>
+                  G1 AGFR 52<br>
+                  G1 AGSI 1<br>
+                  G1 AH 13<br>
+                  G1 AHI 259<br>
+                  G1 ALCG 14<br>
+                  G1 ALG 14<br>
+                  G1 AP 7681<br>
+                  G1 AR 291<br>
+                  G1 ASI 525<br>
+                  G1 B 25<br>
+                  G1 BASR 92819<br>
+                  G1 BCTR 787<br>
+                  G1 BNE 451<br>
+                  G1 BR 1001<br>
+                  G1 BRAS 1353<br>
+                  G1 BRC 19095<br>
+                  G1 BRZ 871<br>
+                  G1 C 8<br>
+                  G1 CD 11<br>
+                  G1 CFI 5809<br>
+                  G1 CG 95<br>
+                  G1 CGR 67<br>
+                  G1 CH 8<br>
+                  G1 CHI 165<br>
+                  G1 CLC 11028<br>
+                  G1 CLCL 24<br>
+                  G1 CLGR 4<br>
+                  G1 CLI 1558<br>
+                  G1 CNOP 451<br>
+                  G1 COPY 409<br>
+                  G1 CP 1162<br>
+                  G1 CSECT 1333<br>
+                  G1 CVB 841<br>
+                  G1 CVBG 236<br>
+                  G1 CVD 735<br>
+                  G1 CVDG 149<br>
+                  G1 CXSTR 442<br>
+                  G1 D 116<br>
+                  G1 DC 70291<br>
+                  G1 DP 180<br>
+                  G1 DR 9<br>
+                  G1 DROP 20563<br>
+                  G1 DS 199445<br>
+                  G1 DSECT 1387<br>
+                  G1 DSGR 5<br>
+                  G1 DXTR 21<br>
+                  G1 ED 6951<br>
+                  G1 EDMK 195<br>
+                  G1 END 459<br>
+                  G1 EQU 126601<br>
+                  G1 IILF 1583<br>
+                  G1 IILH 26<br>
+                  G1 IILL 26<br>
+                  G1 JH 25<br>
+                  G1 JL 25<br>
+                  G1 JM 44<br>
+                  G1 JNE 565<br>
+                  G1 JNL 1<br>
+                  G1 JNM 6412<br>
+                  G1 JNO 10<br>
+                  G1 JO 1<br>
+                  G1 JZ 451<br>
+                  G1 L 106991<br>
+                  G1 LA 9423<br>
+                  G1 LARL 158158<br>
+                  G1 LAY 24727<br>
+                  G1 LD 10<br>
+                  G1 LDR 4<br>
+                  G1 LG 687<br>
+                  G1 LGF 61<br>
+                  G1 LGFI 884<br>
+                  G1 LGH 23<br>
+                  G1 LGR 247<br>
+                  G1 LH 2150<br>
+                  G1 LHI 973<br>
+                  G1 LMG 469<br>
+                  G1 LOCTR 2220<br>
+                  G1 LPGR 1<br>
+                  G1 LPR 10<br>
+                  G1 LR 5290<br>
+                  G1 LRL 527<br>
+                  G1 LT 114<br>
+                  G1 LTG 13<br>
+                  G1 LTORG 900<br>
+                  G1 LTR 1322<br>
+                  G1 MACRO 11<br>
+                  G1 MEND 11<br>
+                  G1 MEXIT 11<br>
+                  G1 MNOTE 11704<br>
+                  G1 MP 27<br>
+                  G1 MS 4<br>
+                  G1 MSFI 934<br>
+                  G1 MSG 6<br>
+                  G1 MSR 2<br>
+                  G1 MVC 92823<br>
+                  G1 MVCL 69<br>
+                  G1 MVGHI 141<br>
+                  G1 MVHHI 262<br>
+                  G1 MVHI 6296<br>
+                  G1 MVI 24827<br>
+                  G1 MVZ 16<br>
+                  G1 MXTR 1<br>
+                  G1 OI 8143<br>
+                  G1 ORG 22170<br>
+                  G1 PACK 18763<br>
+                  G1 PFPO 521<br>
+                  G1 POP 451<br>
+                  G1 PRINT 1367<br>
+                  G1 PUSH 451<br>
+                  G1 S 33<br>
+                  G1 SD 1<br>
+                  G1 SG 4<br>
+                  G1 SGFR 117<br>
+                  G1 SGR 274<br>
+                  G1 SH 4<br>
+                  G1 SLBGR 7<br>
+                  G1 SLGR 7<br>
+                  G1 SLL 25<br>
+                  G1 SP 551<br>
+                  G1 SR 1241<br>
+                  G1 SRAG 21<br>
+                  G1 SRL 110<br>
+                  G1 SRP 114<br>
+                  G1 ST 8656<br>
+                  G1 STD 4<br>
+                  G1 STG 603<br>
+                  G1 STH 1120<br>
+                  G1 STM 701<br>
+                  G1 STMG 182<br>
+                  G1 SVC 6490<br>
+                  G1 TM 4<br>
+                  G1 UNPK 9151<br>
+                  G1 USING 22338<br>
+                  G1 ZAP 7067</font></b><p><b><font face="Courier New">Notes:</font></b><ol>
+                    <li><b><font face="Courier New">@COMMENT@ count comments</font></b></li>
+                    <li><b><font face="Courier New">@MAC_COMMENT@&nbsp; count 
+                    macro comments</font></b></li>
+                    <li><b><font face="Courier New">@BLANK@ count blank lines</font></b></li>
+                    <li><b><font face="Courier New">@ERROR@ count any lines 
+                    without valid assembler opcode<br>
+&nbsp;</font></b></li>
+                    </ol>
+                    </td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" width="744">
+                  <p align="center"><b><font face="Courier New">
+                  <a name="Pending_Priority_List_for_zcobol_Development">Pending 
+                  Priority List for zcobol Development</a></font></b></p>
+                  <p><b><font face="Courier New">The following priorities for 
+                  the open source zcobol portable COBOL compiler are based on 
+                  user feedback.&nbsp; Special thanks to Bill Klein for starting 
+                  the process.&nbsp; To submit your priorities, join the
+                  <a href="http://tech.groups.yahoo.com/group/zcobol/">zcobol 
+                  user email group</a> and post your requests:</font></b></p>
+                  <ul>
+                    <li><b><font face="Courier New">Nucleus</font></b><ul>
+                      <li><b>Data Division (fix a few remaining unsupported clauses 
+                      such as JUSTIFIED RIGHT)</b></li>
+                      <li><b>IF (add support for expressions using ZC_CALC shared 
+                      with COMPUTE)</b></li>
+                      <li><b>MOVE CORRESPONDING</b></li>
+                      <li><b><font face="Courier New">Functions</font></b><ul>
+                        <li><font face="Courier New">
+                        <span style="font-weight: 700">D</span></font><span style="font-family: Arial,sans-serif; font-weight:700">ate 
+                        functions</span></li>
+                        <li>
+                        <span style="font-family: Arial,sans-serif; font-weight:700">Ordering&nbsp; 
+                        (MIN, MAX, ORD-MIN, and ORD-MAX)</span></li>
+                        <li>
+                        <span style="font-family: Arial,sans-serif; font-weight:700">MIsc ORD, 
+                        CHAR, UPPER-/LOWER-<wbr />CASE</span></li>
+                        <li>
+                        <span style="font-family: Arial,sans-serif; font-weight:700">Math 
+                        functions (SQRT, SIN, COS, etc.).</span></li>
+                      </ul>
+                      </li>
+                    </ul>
+                    </li>
+                    <li><b>Debugging</b><ul>
+                      <li><b>EXHIBIT (READY/RESET TRACE already done)</b></li>
+                    </ul>
+                    </li>
+                    <li>
+                    <span style="font-family: Arial,sans-serif; font-weight:700">File Access</span><ul>
+                      <li>
+                      <span style="font-family: Arial,sans-serif; font-weight:700">Sequential 
+                      (ESDS, QSAM,LINE SEQUENTIAL already done)</span></li>
+                      <li>
+                      <span style="font-family: Arial,sans-serif; font-weight:700">Random 
+                      (RRDS, BDAM)</span></li>
+                      <li>
+                      <span style="font-family: Arial,sans-serif; font-weight:700">Indexed 
+                      (KSDS)</span></li>
+                    </ul>
+                    </li>
+                    <li>
+                    <span style="font-family: Arial,sans-serif; font-weight:700">Source text 
+                    management</span><ul>
+                      <li>
+                      <span style="font-family: Arial,sans-serif; font-weight:700">REPLACE 
+                      (COPY REPLACING already supported)</span></li>
+                    </ul>
+                    </li>
+                    <li><b>SORT and MERGE</b></li>
+                    <li>
+                    <span style="font-family: Arial,sans-serif; font-weight:700">Last 
+                    priority after everything else is done</span><ul>
+                      <li>
+                      <span style="font-family: Arial,sans-serif; font-weight:700">
+                      Segmentation</span></li>
+                      <li>
+                      <span style="font-family: Arial,sans-serif; font-weight:700">
+                      Communications</span></li>
+                    </ul>
+                    </li>
+                  </ul>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="left" valign="top" width="744">
+                  &nbsp;</td>
+                </tr>
+              </table>
+              </td>
+            </tr>
+
+            </table>
+         
+        
+        </table>
+<p align="center"><b><font face="Times New Roman">IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS<br>
+&nbsp;are registered trademarks
+&nbsp;of International Business Machines Corporation</font></b></p>
+
+<p align="center"><b><font face="Times New Roman">This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Monday September 14, 2009<!--webbot bot="Timestamp" i-checksum="59243" endspan -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools z390 Portable Mainframe Assembler and Emulator">Webmaster</a><br>
+Copyright 2009 <a href="http://www.AutomatedSoftwareTools.com">Automated Software Tools Corporation</a></font></b></p>
+
+<b><font face="Times New Roman">
+
+<!--optional-->
+<noscript>
+                    <center><table bgcolor=gray cellspacing=0 border=2><tr>
+<td><table cellpadding=2 cellspacing=0 border=0><tr><td align=center>
+<font face=arial size=-1>This site is a member of WebRing. 
+<br>To browse visit <a href="http://ss.webring.com/navbar?f=l;y=dsh337821;u=defurl">
+Here</a>.</font></td></tr></table></td></tr></table>
+</center></noscript>
+</font></b></p>
+
+<p align="center">
+<b><font face="Times New Roman">
+<br>
+<script language=javascript type="text/javascript" src="http://ss.webring.com/navbar?f=j;y=dsh33782;u=10138599"> </script><noscript>
+<center> <table bgcolor=gray cellspacing=0 border=2><tr> <td><table cellpadding=2 cellspacing=0 border=0><tr><td align=center> <font face=arial size=-1>This site is a member of WebRing. <br>To browse visit <a href="http://ss.webring.com/navbar?f=l;y=dsh33782;u=10138599"> Here</a>.</font></td></tr></table></td></tr></table> </center></noscript> 
+<!-- START OF ACTIVEMETER CODE -->
+<script type="text/javascript" language="javascript">
+var __pid=36843;
+var __am_invisible=0;
+</script>
+<script type="text/javascript" language="javascript" src="http://www.activemeter.com/counter.js"></script>
+<noscript>
+   <a href="http://www.activemeter.com/" target="_blank">
+      <img  src="http://am1.activemeter.com/webtracker/track.html?method=track&pid=36843&java=0" alt="Free Web Counter" border="0">
+   </a></noscript>
+<!-- END OF ACTIVEMETER CODE -->
+</font></b>
+</p>
+
+</body>
+
+</html>

@@ -1,0 +1,349 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 12.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>z390 Project Support Request RPI Form</title>
+</head>
+
+<body>
+
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="776" id="AutoNumber1" height="1">
+            <tr>
+              <td align="center" width="223" height="90">
+              <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></td>
+              <td align="center" width="372" height="90">
+              <p align="center"><b><font size="5">z390 P</font></b><font size="5"><b>roject 
+              Support Request RPI</b></font></td>
+              <td width="148" height="90" align="center">
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="anim370.gif" alt="Automated Software Tools Corporation" width="100" height="59"></a></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" width="743">
+              <b>Support the z390 Project by submitting RPI problem and 
+              enhancement requests.&nbsp; Please use the RPI form below for each 
+              separate request.&nbsp; Each RPI will be added to RPI Log in order 
+              received.&nbsp; The RPI Fix Release Plan will be updated to show 
+              planned fix releases.&nbsp; </b>
+              <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%" id="AutoNumber2">
+                <tr>
+                  <td align="right" width="5%" height="53">
+    <div align="center">
+      <center>
+      <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="101%" id="AutoNumber1" height="296">
+        <tr>
+          <td width="100%" height="296">
+          <!--webbot BOT="GeneratedScript" PREVIEW=" " startspan --><script Language="JavaScript" Type="text/javascript"><!--
+function FrontPage_Form1_Validator(theForm)
+{
+
+  if (theForm.Requestor_Name.value == "")
+  {
+    alert("Please enter a value for the \"Requestor_Name\" field.");
+    theForm.Requestor_Name.focus();
+    return (false);
+  }
+
+  if (theForm.Requestor_Name.value.length < 5)
+  {
+    alert("Please enter at least 5 characters in the \"Requestor_Name\" field.");
+    theForm.Requestor_Name.focus();
+    return (false);
+  }
+
+  var checkOK = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzƒŠŒŽšœžŸÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ \t\r\n\f";
+  var checkStr = theForm.Requestor_Name.value;
+  var allValid = true;
+  var validGroups = true;
+  for (i = 0;  i < checkStr.length;  i++)
+  {
+    ch = checkStr.charAt(i);
+    for (j = 0;  j < checkOK.length;  j++)
+      if (ch == checkOK.charAt(j))
+        break;
+    if (j == checkOK.length)
+    {
+      allValid = false;
+      break;
+    }
+  }
+  if (!allValid)
+  {
+    alert("Please enter only letter and whitespace characters in the \"Requestor_Name\" field.");
+    theForm.Requestor_Name.focus();
+    return (false);
+  }
+
+  if (theForm.Requestor_OS_version.value == "")
+  {
+    alert("Please enter a value for the \"Requestor_OS_version\" field.");
+    theForm.Requestor_OS_version.focus();
+    return (false);
+  }
+
+  if (theForm.Requestor_OS_version.value.length < 2)
+  {
+    alert("Please enter at least 2 characters in the \"Requestor_OS_version\" field.");
+    theForm.Requestor_OS_version.focus();
+    return (false);
+  }
+
+  var checkOK = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzƒŠŒŽšœžŸÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ0123456789- \t\r\n\f";
+  var checkStr = theForm.Requestor_OS_version.value;
+  var allValid = true;
+  var validGroups = true;
+  for (i = 0;  i < checkStr.length;  i++)
+  {
+    ch = checkStr.charAt(i);
+    for (j = 0;  j < checkOK.length;  j++)
+      if (ch == checkOK.charAt(j))
+        break;
+    if (j == checkOK.length)
+    {
+      allValid = false;
+      break;
+    }
+  }
+  if (!allValid)
+  {
+    alert("Please enter only letter, digit and whitespace characters in the \"Requestor_OS_version\" field.");
+    theForm.Requestor_OS_version.focus();
+    return (false);
+  }
+
+  if (theForm.Requestor_J2RE_version.value == "")
+  {
+    alert("Please enter a value for the \"Requestor_J2RE_version\" field.");
+    theForm.Requestor_J2RE_version.focus();
+    return (false);
+  }
+
+  if (theForm.Requestor_J2RE_version.value.length < 2)
+  {
+    alert("Please enter at least 2 characters in the \"Requestor_J2RE_version\" field.");
+    theForm.Requestor_J2RE_version.focus();
+    return (false);
+  }
+
+  var checkOK = "0123456789-._";
+  var checkStr = theForm.Requestor_J2RE_version.value;
+  var allValid = true;
+  var validGroups = true;
+  for (i = 0;  i < checkStr.length;  i++)
+  {
+    ch = checkStr.charAt(i);
+    for (j = 0;  j < checkOK.length;  j++)
+      if (ch == checkOK.charAt(j))
+        break;
+    if (j == checkOK.length)
+    {
+      allValid = false;
+      break;
+    }
+  }
+  if (!allValid)
+  {
+    alert("Please enter only digit and \"._\" characters in the \"Requestor_J2RE_version\" field.");
+    theForm.Requestor_J2RE_version.focus();
+    return (false);
+  }
+
+  if (theForm.Requestor_z390_verson.value == "")
+  {
+    alert("Please enter a value for the \"Requestor_z390_verson\" field.");
+    theForm.Requestor_z390_verson.focus();
+    return (false);
+  }
+
+  if (theForm.Requestor_z390_verson.value.length < 4)
+  {
+    alert("Please enter at least 4 characters in the \"Requestor_z390_verson\" field.");
+    theForm.Requestor_z390_verson.focus();
+    return (false);
+  }
+
+  var checkOK = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzƒŠŒŽšœžŸÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ0123456789-.";
+  var checkStr = theForm.Requestor_z390_verson.value;
+  var allValid = true;
+  var validGroups = true;
+  for (i = 0;  i < checkStr.length;  i++)
+  {
+    ch = checkStr.charAt(i);
+    for (j = 0;  j < checkOK.length;  j++)
+      if (ch == checkOK.charAt(j))
+        break;
+    if (j == checkOK.length)
+    {
+      allValid = false;
+      break;
+    }
+  }
+  if (!allValid)
+  {
+    alert("Please enter only letter, digit and \".\" characters in the \"Requestor_z390_verson\" field.");
+    theForm.Requestor_z390_verson.focus();
+    return (false);
+  }
+
+  if (theForm.Requestor_Email_Address.value == "")
+  {
+    alert("Please enter a value for the \"Requestor_Email_Address\" field.");
+    theForm.Requestor_Email_Address.focus();
+    return (false);
+  }
+
+  if (theForm.Requestor_Email_Address.value.length < 5)
+  {
+    alert("Please enter at least 5 characters in the \"Requestor_Email_Address\" field.");
+    theForm.Requestor_Email_Address.focus();
+    return (false);
+  }
+
+  var checkOK = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzƒŠŒŽšœžŸÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ0123456789-@_.";
+  var checkStr = theForm.Requestor_Email_Address.value;
+  var allValid = true;
+  var validGroups = true;
+  for (i = 0;  i < checkStr.length;  i++)
+  {
+    ch = checkStr.charAt(i);
+    for (j = 0;  j < checkOK.length;  j++)
+      if (ch == checkOK.charAt(j))
+        break;
+    if (j == checkOK.length)
+    {
+      allValid = false;
+      break;
+    }
+  }
+  if (!allValid)
+  {
+    alert("Please enter only letter, digit and \"@_.\" characters in the \"Requestor_Email_Address\" field.");
+    theForm.Requestor_Email_Address.focus();
+    return (false);
+  }
+
+  if (theForm.RPI_Description.value == "")
+  {
+    alert("Please enter a value for the \"RPI_Description\" field.");
+    theForm.RPI_Description.focus();
+    return (false);
+  }
+
+  if (theForm.RPI_Description.value.length < 10)
+  {
+    alert("Please enter at least 10 characters in the \"RPI_Description\" field.");
+    theForm.RPI_Description.focus();
+    return (false);
+  }
+  return (true);
+}
+//--></script><!--webbot BOT="GeneratedScript" endspan --><form method="POST" name="FrontPage_Form1" action="_derived/nortbots.htm" onSubmit="location.href='_derived/nortbots.htm';return false;" webbot-onSubmit language="JavaScript" webbot-action="--WEBBOT-SELF--">
+            <!--webbot bot="SaveResults" s-email-format="TEXT/PRE" s-email-address="support@AutomatedSoftwareTools.com" b-email-label-fields="TRUE" b-email-subject-from-field="FALSE" s-email-subject="z390 Portable Assembler Support Request RPI Form" s-builtin-fields startspan --><input NAME="VTI-GROUP" TYPE="hidden" VALUE="0"><!--webbot bot="SaveResults" endspan i-checksum="37496" --><p>
+            <b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <input type="submit" value="Submit" name="Submit">&nbsp;&nbsp; 
+            z390 Portable Assembler Support Request RPI form:</b></p>
+            <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%" id="AutoNumber3">
+              <tr>
+                <td width="24%" align="left" valign="top">
+            <b>Requestor Name:</b></td>
+                <td width="76%">
+            <b>
+            	<!--webbot b-allow-letters="TRUE" b-allow-whitespace="TRUE" b-value-required="TRUE" bot="Validation" i-minimum-length="5" s-data-type="String" --><input type="text" name="Requestor_Name" size="82"> </b></td>
+              </tr>
+              <tr>
+                <td width="24%" align="left" valign="top"><b>Requestor OS 
+                version</b></td>
+                <td width="76%">
+            <b>
+            	<!--webbot b-allow-digits="TRUE" b-allow-letters="TRUE" b-allow-whitespace="TRUE" b-value-required="TRUE" bot="Validation" i-minimum-length="2" s-data-type="String" --><input type="text" name="Requestor_OS_version" size="82"></b></td>
+              </tr>
+              <tr>
+                <td width="24%" align="left" valign="top"><b>Requestor J2RE 
+                version</b></td>
+                <td width="76%">
+            <b>
+            	<!--webbot b-allow-digits="TRUE" b-value-required="TRUE" bot="Validation" i-minimum-length="2" s-allow-other-chars="._" s-data-type="String" --><input type="text" name="Requestor_J2RE_version" size="82"></b></td>
+              </tr>
+              <tr>
+                <td width="24%" align="left" valign="top"><b>Requestor z390 
+                version</b></td>
+                <td width="76%">
+            <b>
+            	<!--webbot b-allow-digits="TRUE" b-allow-letters="TRUE" b-value-required="TRUE" bot="Validation" i-minimum-length="4" s-allow-other-chars="." s-data-type="String" --><input type="text" name="Requestor_z390_verson" size="82"></b></td>
+              </tr>
+              <tr>
+                <td width="24%" align="left" valign="top">
+            <b>Email Address:</b></td>
+                <td width="76%">
+            <b>
+            	<!--webbot b-allow-digits="TRUE" b-allow-letters="TRUE" b-value-required="TRUE" bot="Validation" i-minimum-length="5" s-allow-other-chars="@_." s-data-type="String" --><input type="text" name="Requestor_Email_Address" size="82"></b></td>
+              </tr>
+              <tr>
+                <td width="24%" align="left" valign="top"><b>Problem Fix or 
+                Enhancement<br>
+                Request Description</b></td>
+                <td width="76%">
+            <b>
+            	<!--webbot b-value-required="TRUE" bot="Validation" i-minimum-length="10" --><textarea rows="15" name="RPI_Description" cols="82"></textarea></b></td>
+              </tr>
+              <tr>
+                <td width="24%" align="left" valign="top"><b>Sample code and/or 
+                comments </b></td>
+                <td width="76%">
+            <b><textarea rows="15" name="RPI_Sample_Code_Comments" cols="82"></textarea></b></td>
+              </tr>
+            </table>
+            <p><b>&nbsp; Please allow 24 hours for updates to be validated and 
+            added to
+            <a href="http://z390.sourceforge.net/z390_Support_Request_Log.htm">z390 Support RPI 
+            Log</a> with status information</b></p>
+            <ul>
+              <li><b>For quick response to RPI problem reports here are some 
+              tips:</b><ul>
+                <li><b>Only OS versions currently being tested are Windows 
+                7/XP/Vista, Ubuntu Linux, Apple OSX</b></li>
+                <li><b>Only <a href="http://java.sun.com/j2se/">J2RE</a> 
+                versions currently supported are&nbsp; 1.6+</b></li>
+                <li><b>Please test using latest version of
+                <a href="http://www.z390.org">z390</a> before submitting RPI</b></li>
+                <li><b>Sample failing code is most helpful in isolating problems</b></li>
+                <li><b>Sample code to be supported is most helpful for 
+                enhancements</b></li>
+              </ul>
+              </li>
+            </ul>
+          </form>
+          </td>
+        </tr>
+      </table>
+      </center>
+    </div>
+  </td>
+                </tr>
+                <tr>
+                  <td width="100%">&nbsp;</td>
+                </tr>
+              </table>
+              </td>
+            </tr>
+          </table>
+         
+        
+        </table>
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Wednesday May 23, 2012<!--webbot bot="Timestamp" endspan i-checksum="42714" -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a>&nbsp; <br>
+Copyright 2011 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </b> </p>
+
+</body>
+
+</html>

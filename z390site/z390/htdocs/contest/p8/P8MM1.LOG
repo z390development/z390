@@ -1,0 +1,24 @@
+EZ390I V1.3.08g Current Date 12/23/07 Time 06:43:22
+EZ390I Copyright 2006 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = P8MM1
+EZ390I options = 
+ZMFACC Solution for problem P8MM1 by MELVYN MALTZ using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+SNAP DUMP ID=3 TEXT=DIF
+ 000FFEC0 *F3C560F3 F3404040 40404040 40404040* *3E-33           *
+ 000FFED0 *40404040 40404040 40404040 40404040* *                *
+ 000FFEE0 *40404040 40404040 40404040 40      * *                *
+SNAP DUMP ID=2 TEXT=Output Area
+ 000FFE7C *F34BF1F4 F1F5F9F2 F6F5F3F5 F8F9F7F9* *3.14159265358979*
+ 000FFE8C *F3F2F3F8 F4F6F2F6 F4F3F3F8 F3F2F7F9* *3238462643383279*
+ 000FFE9C *F5404040 40404040 40404040 40      * *5               *
+EZ390I Stats total instructions    = 1640
+EZ390I stats TCPIO operations      = 0
+EZ390I stats DCB operations        = 0
+EZ390I stats VSAM operations       = 0
+EZ390I Stats current date 12/23/07 time 06:43:22
+EZ390I Stats total seconds         = 0
+EZ390I Stats instructions/sec      = 19069
+EZ390I total errors         = 0
+EZ390I return code(P8MM1   )= 0

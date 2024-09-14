@@ -1,0 +1,142 @@
+solp06    MZ390 STARTED USING z390 V1.4.01x2 ON J2SE 1.6.0_04
+solp06    MZ390 Copyright 2008 Automated Software Tools Corporation
+solp06    MZ390 z390 is licensed under GNU General Public License
+solp06    MZ390 program = assist\solp06.MLC
+solp06    MZ390 options = sysmac(w:\work\z390\mac+.) 
+  syscpy(w:\work\z390\mac+.) assist notiming stats
+solp06    MZ390 final options=NOAMODE24 AMODE31 NOASCII ASM ASSIST NOBAL 
+  NOBS2000 NOCICS CON NODUMP EPILOG NOERRSUM NOGUAM LIST LISTCALL LISTUSE 
+  NOMCALL OBJ NOOBJHEX PC PCOPT PROLOG PROTECT NOREFORMAT NOREGS RMODE24 
+  NORMODE31 STATS NOTEST NOTIME NOTIMING NOTRACE NOTRACEA NOTRACEALL NOTRACEG 
+  NOTRACEL NOTRACEM NOTRACEP NOTRACEQ NOTRACET NOTRACEV TRAP NOTS VCB XREF 
+  CHKMAC=0 CHKSRC=1 ERR=100 MAXCALL=50 MAXESD=1000 MAXFILE=1000 MAXGBL=100000 
+  MAXHEIGHT=600 MAXLCL=100000 MAXLEN=80 MAXLINE=200000 MAXLOG=1000000 
+  MAXPARM=10000 MAXPC=50000 MAXQUE=1000 MAXRLD=10000 MAXSIZE=52428800 
+  MAXSYM=50000 MAXWARN=4 MAXWIDTH=800 MEM=1 MINHEIGHT=150 MINWIDTH=150 PARM= 
+  PROFILE= STATS=assist\solp06.STA SYSPARM= SYSTERM=assist\solp06.ERR TESTDD= 
+  TIME=15 TRACE= Z390ACROBAT=cmd.exe /c Start Z390BROWSER=cmd.exe /c Start 
+  Z390COMMAND=cmd.exe Z390EDITOR=notepad.exe INSTALL= IPL= LOG= 
+  SYS390=assist\+linklib SYSBAL=assist\ SYSCPY=w:\work\z390\mac+. 
+  SYSDAT=assist\ SYSERR=assist\ SYSLOG=assist\ SYSLST=assist\ 
+  SYSMAC=w:\work\z390\mac+. SYSMLC=assist\ SYSPCH=assist\ SYSPRN=assist\ 
+  SYSOBJ=assist\ SYSOPT=assist\ SYSTRC=assist\ 
+solp06    MZ390 total MLC/MAC loaded  = 1004
+solp06    MZ390 total BAL output lines= 1003
+solp06    MZ390 total BAL instructions= 38
+solp06    MZ390 total macros          = 1
+solp06    MZ390 total macro loads     = 1
+solp06    MZ390 total macro calls     = 0
+solp06    MZ390 total global set names= 41
+solp06    MZ390 tot global seta cells = 3
+solp06    MZ390 tot global setb cells = 3
+solp06    MZ390 tot global setc cells = 35
+solp06    MZ390 max local pos parms   = 0
+solp06    MZ390 max local key parms   = 0
+solp06    MZ390 max local set names   = 5
+solp06    MZ390 max local seta cells  = 1
+solp06    MZ390 max local setb cells  = 0
+solp06    MZ390 max local setc cells  = 4
+solp06    MZ390 total array expansions= 0
+solp06    MZ390 total Keys            = 1024
+solp06    MZ390 Key searches          = 2606
+solp06    MZ390 Key avg comps         = 0
+solp06    MZ390 Key max comps         = 4
+solp06    MZ390 total macro line exec = 1004
+solp06    MZ390 total pcode line exec = 0
+solp06    MZ390 total pcode line gen. = 0
+solp06    MZ390 total pcode line reuse= 0
+solp06    MZ390 total pcode op   gen. = 0
+solp06    MZ390 total pcode op   exec = 0
+solp06    MZ390 total pcode gen  opt  = 0
+solp06    MZ390 total pcode exec opt  = 0
+solp06    MZ390 FID=  1 ERR= 0 w:\work\z390\assist\solp06.MLC
+solp06    MZ390 total mnote warnings  = 0
+solp06    MZ390 total mnote errors    = 0
+solp06    MZ390 max   mnote level     = 0
+solp06    MZ390 total errors          = 0
+solp06    AZ390 BAL lines             = 1004
+solp06    AZ390 symbols               = 80
+solp06    AZ390 Literals              = 6
+solp06    AZ390 alloc passes          = 2
+solp06    AZ390 Keys                  = 1025
+solp06    AZ390 Key searches          = 3764
+solp06    AZ390 Key avg comps         = 0
+solp06    AZ390 Key max comps         = 3
+solp06    AZ390 ESD symbols           = 1
+solp06    AZ390 object bytes          = 2270
+solp06    AZ390 object rlds           = 16
+solp06    AZ390 total mnote warnings  = 0
+solp06    AZ390 total mnote errors    = 0
+solp06    AZ390 max   mnote level     = 0
+solp06    AZ390 total mz390 errors    = 0
+solp06    AZ390 total az390 errors    = 0
+solp06    MZ390 ENDED   RC= 0 MEM(MB)= 40 IO=2362
+solp06    LZ390 STARTED USING z390 V1.4.01x2 ON J2SE 1.6.0_04
+solp06    LZ390 Copyright 2008 Automated Software Tools Corporation
+solp06    LZ390 z390 is licensed under GNU General Public License
+solp06    LZ390 program = assist\solp06.OBJ
+solp06    LZ390 options = assist notiming stats
+solp06    LZ390 final options=NOAMODE24 AMODE31 NOASCII ASM ASSIST NOBAL 
+  NOBS2000 NOCICS CON NODUMP EPILOG NOERRSUM NOGUAM LIST LISTCALL LISTUSE 
+  NOMCALL OBJ NOOBJHEX PC PCOPT PROLOG PROTECT NOREFORMAT NOREGS RMODE24 
+  NORMODE31 STATS NOTEST NOTIME NOTIMING NOTRACE NOTRACEA NOTRACEALL NOTRACEG 
+  NOTRACEL NOTRACEM NOTRACEP NOTRACEQ NOTRACET NOTRACEV TRAP NOTS VCB XREF 
+  CHKMAC=0 CHKSRC=1 ERR=100 MAXCALL=50 MAXESD=1000 MAXFILE=1000 MAXGBL=100000 
+  MAXHEIGHT=600 MAXLCL=100000 MAXLEN=80 MAXLINE=200000 MAXLOG=1000000 
+  MAXPARM=10000 MAXPC=50000 MAXQUE=1000 MAXRLD=10000 MAXSIZE=52428800 
+  MAXSYM=50000 MAXWARN=4 MAXWIDTH=800 MEM=1 MINHEIGHT=150 MINWIDTH=150 PARM= 
+  PROFILE= STATS=assist\solp06.STA SYSPARM= SYSTERM=assist\solp06.ERR TESTDD= 
+  TIME=15 TRACE= Z390ACROBAT=cmd.exe /c Start Z390BROWSER=cmd.exe /c Start 
+  Z390COMMAND=cmd.exe Z390EDITOR=notepad.exe INSTALL= IPL= LOG= 
+  SYS390=assist\+linklib SYSBAL=assist\ SYSCPY=assist\ SYSDAT=assist\ 
+  SYSERR=assist\ SYSLOG=assist\ SYSLST=assist\ SYSMAC=assist\ SYSMLC=assist\ 
+  SYSPCH=assist\ SYSPRN=assist\ SYSOBJ=assist\ SYSOPT=assist\ SYSTRC=assist\ 
+solp06    LZ390 Stats total obj files = 1
+solp06    LZ390 Stats total esds      = 1
+solp06    LZ390 Stats total csects    = 1
+solp06    LZ390 Stats total entries   = 0
+solp06    LZ390 Stats missing wxtrn's = 0
+solp06    LZ390 Stats Keys            = 1
+solp06    LZ390 Stats Key searches    = 2
+solp06    LZ390 Stats Key avg comps   = 0
+solp06    LZ390 Stats Key max comps   = 1
+solp06    LZ390 Stats total obj byte  = 2270
+solp06    LZ390 Stats total obj rlds  = 16
+solp06    LZ390 total errors          = 0
+solp06    LZ390 ENDED   RC= 0 MEM(MB)= 14 IO=252
+solp06    EZ390 STARTED USING z390 V1.4.01x2 ON J2SE 1.6.0_04
+solp06    EZ390 Copyright 2008 Automated Software Tools Corporation
+solp06    EZ390 z390 is licensed under GNU General Public License
+solp06    EZ390 program = assist\solp06.390
+solp06    EZ390 options = assist notiming stats
+solp06    EZ390 final options=NOAMODE24 AMODE31 NOASCII ASM ASSIST NOBAL 
+  NOBS2000 NOCICS CON NODUMP EPILOG NOERRSUM NOGUAM LIST LISTCALL LISTUSE 
+  NOMCALL OBJ NOOBJHEX PC PCOPT PROLOG PROTECT NOREFORMAT NOREGS RMODE24 
+  NORMODE31 STATS NOTEST NOTIME NOTIMING NOTRACE NOTRACEA NOTRACEALL NOTRACEG 
+  NOTRACEL NOTRACEM NOTRACEP NOTRACEQ NOTRACET NOTRACEV TRAP NOTS VCB XREF 
+  CHKMAC=0 CHKSRC=1 ERR=100 MAXCALL=50 MAXESD=1000 MAXFILE=1000 MAXGBL=100000 
+  MAXHEIGHT=600 MAXLCL=100000 MAXLEN=80 MAXLINE=200000 MAXLOG=1000000 
+  MAXPARM=10000 MAXPC=50000 MAXQUE=1000 MAXRLD=10000 MAXSIZE=52428800 
+  MAXSYM=50000 MAXWARN=4 MAXWIDTH=800 MEM=1 MINHEIGHT=150 MINWIDTH=150 PARM= 
+  PROFILE= STATS=assist\solp06.STA SYSPARM= SYSTERM=assist\solp06.ERR TESTDD= 
+  TIME=15 TRACE= Z390ACROBAT=cmd.exe /c Start Z390BROWSER=cmd.exe /c Start 
+  Z390COMMAND=cmd.exe Z390EDITOR=notepad.exe INSTALL= IPL= 
+  LOG=assist\solp06.LOG SYS390=assist\+linklib SYSBAL=assist\ SYSCPY=assist\ 
+  SYSDAT=assist\ SYSERR=assist\ SYSLOG=assist\ SYSLST=assist\ SYSMAC=assist\ 
+  SYSMLC=assist\ SYSPCH=assist\ SYSPRN=assist\ SYSOBJ=assist\ SYSOPT=assist\ 
+  SYSTRC=assist\ 
+solp06    EZ390 TCPIO operations      = 0
+solp06    EZ390 DCB operations        = 3
+solp06    EZ390 DCB open              = 2
+solp06    EZ390 DCB close             = 1
+solp06    EZ390 DCB get               = 0
+solp06    EZ390 DCB put               = 0
+solp06    EZ390 DCB read              = 0
+solp06    EZ390 stats DCB write             = 0
+solp06    EZ390 VSAM operations       = 0
+solp06    EZ390 Keys                  = 1737
+solp06    EZ390 Key searches          = 2
+solp06    EZ390 Key avg comps         = 0
+solp06    EZ390 Key max comps         = 0
+solp06    EZ390 total errors          = 0
+solp06    EZ390 ENDED   RC= 0 MEM(MB)= 17 IO=213 INS=5553

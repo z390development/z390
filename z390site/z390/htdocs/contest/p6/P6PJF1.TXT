@@ -1,0 +1,20 @@
+P6PJF1   ZMFACC CODE,START,NAME='Peter J Farley'
+         IC    1,BYTE             Get the byte to translate        
+         LA    2,OUTBIT           Output location                         
+         LA    3,8                Number of bits                   
+LOOP     SLA   1,1                Slide left 1 bit                 
+         STCM  1,2,0(2)           Save 3rd byte in reg             
+         NI    0(2),1             Turn off all but right bit       
+         LA    2,1(2)             Next out byte                    
+         BCT   3,LOOP             Loop 8 times                     
+         OC    OUTBIT,ZONES       Trans to readable                
+         ZMFACC CODE,END
+ZONES    DC    C'00000000'  
+         ZMFACC INPUT,START
+BYTE     DC    B'10100101'    
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START  
+OUTBIT   DC    CL8' '         
+         ZMFACC OUTPUT,END  
+         END 
+

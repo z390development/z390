@@ -1,0 +1,239 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>z390 Service Oriented Architecture (SOA) Application Generator Support</title>
+</head>
+
+<body>
+<!-- Begin of Pop Up Code -->
+<!-- Pop-Up DHTML menu is © by Anoxy Software -->
+<!-- |4.7.1|H|AV|NHD|NL|ANM|NFX|ND&D|NSND|FL|NASW|NASZ|NSRL| -->
+<script language="JavaScript" src="http://www.automatedsoftwaretools.com/z390//pop-up/popblank.js" type="text/javascript"></script>
+<script language="JavaScript" type="text/javascript">
+<!--
+popbasedir = "http://www.automatedsoftwaretools.com/z390//pop-up/";
+poX = 174;
+poY = 111;
+peXt = (navigator.userAgent.indexOf("Opera")!=-1 && document.getElementById) ? ((document.body.insertAdjacentHTML) ? "mo" : "op") : (navigator.userAgent.indexOf("Konqueror")!=-1 && document.getElementById) ? "ko" : (document.all) ? "ie" : (document.layers) ? "nn" : (!document.all && document.getElementById) ? "mo" : "";
+if (peXt!="")
+document.write('<scr'+'ipt language="JavaScript" src="'+popbasedir+'popup'+peXt+'.js"></scr'+'ipt>');
+
+window.onload = onloevha;
+popXURLV = "";
+
+function onloevha(){
+if (peXt=="nn")
+popmcreate();
+}
+////-->
+</script>
+<layer Name="DboX" style="position:absolute"></layer>
+<!-- End of Pop Up Code -->
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="center" width="202" height="90">
+              <b>
+              <a href="http://www.z390.org/">
+              <img border="0" src="images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></b></td>
+              <td align="center" width="405" height="90">
+              <p align="center"><b><font size="5">z390 Service Oriented 
+              Architecture Application Generator Support</font></b></td>
+              <td width="147" height="90" align="center">
+              <b>
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="../laptop.gif" alt="Automated Software Tools Corporation" width="97" height="71"></a></b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" width="202" height="36">
+              &nbsp;</td>
+              <td align="left" valign="top" width="405" height="36">&nbsp;</td>
+              <td width="147" height="36" align="left" valign="top">
+&nbsp;</td>
+            </tr>
+            </table>
+         
+        
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1">
+            <tr>
+              <td align="left" valign="top">
+              &nbsp;<ul>
+                <li><b><a href="#EXEC SOA Overview">z390 SOA Overview</a></b></li>
+                <li><b><a href="z390_SOA_Client_Server_Overview.pdf">z390 SOA 
+                Client Server Overview Slides</a></b></li>
+                <li><b>
+                <a href="z390_SOA_User_Guide.pdf">z390 SOA User Guide</a></b></li>
+              </ul>
+              <p>
+              <b><a name="EXEC SOA Overview">z390 EXEC SOA Overview</a></b></p>
+              <p>
+              <b>System Oriented Architecture (SOA) is a software design model 
+              to address the need to share and reuse application components 
+              across diverse applications and network users (see references).&nbsp; 
+              z390 now includes tools to enable users to generate low level SOA 
+              type z390 client server assembler applications which run on any 
+              platforms supporting J2SE and TCP/IP sockets.&nbsp; No other 
+              frameworks or languages such as XML or C are required.</b></p>
+              <p>
+              <b>z390 includes a TCPIO macro and svc x'7C' to support client and 
+              server TCP/IP messaging using sockets.&nbsp; z390 programs can 
+              open up to 10 server ports and 10 client ports.&nbsp; z390 
+              programs can support up to a total of 20 client connects to 
+              servers ports.</b></p>
+              <p>
+              <b>A z390 demo application consisting of a main program 
+              DEMOMAIN.MLC which calls 2 subroutines DEMOSUB1.MLC and 
+              DEMOSUB2.MLC are included in new SOA directory.&nbsp; As a base 
+              line, the demo can be assembled, statically linked, and executed 
+              locally using the command SOA\DEMO\DEMOSTD.BAT.&nbsp; Then the 
+              demo can be generated as an SOA client server application, 
+              assembled, linked, and executed using the command SOA\DEMO\DEMOSOA.BAT.&nbsp; 
+              The demo SOA application generation is driven by the user defined 
+              SOAGEN macro call:</b></p>
+              <p>
+              <b>&nbsp;&nbsp; SOAGEN MAIN=DEMOMAIN, MAIN CLIENT APPLICATION PGM 
+              X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              CLIENT=DEMOCMGR, SOA CLIENT MSG MGR NAME X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              SERVER=DEMOSMGR, SOA SERVER MSG MGR NAME X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              HOST=*, (192.168.1.3) HOST SERVER NAME (*=LOCAL) X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              PORT=3900, HOST SERVER PORT X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              SERVICES=((DEMOSUB1,-45,-45,45), SERVICES WITH PARM LEN X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              (DEMOSUB2,-4,-4,4)), (NOTE -LENGTH FOR READ ONLY) X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              MACDIR=D:\WORK\Z390\SOA\MACLIB, SOA GEN MACRO DIRECTORY X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              GENDIR=D:\WORK\Z390\SOA\DEMO, DIRECTORY FOR SOA APPL X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              GENBLD=DEMOBLD, GENERATED BUILD BAT FILE X<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+              GENRUN=DEMORUN GENERATED RUN BAT FILE <br>
+&nbsp;&nbsp; END</b></p>
+              <p>
+              <b>The z390 SOA application generation macros create the following 
+              source files from the above:</b></p>
+              <ol>
+                <li><b>DEMOCMGR.MLC - demo application client SOA message 
+                manager.</b></li>
+                <li><b>DEMOSMGR.MLC - demo application server SOA message 
+                manager</b></li>
+                <li><b>SOA_STUB_DEMOSUB1.MLC - demo application stub for service 
+                calls to DEMOSUB1</b></li>
+                <li><b>SOA_STUB_DEMOSUB2.MLC - demo application stub for service 
+                calls to DEMOSUB2</b></li>
+                <li><b>DEMOBLD.BAT - command to assemble and link the demo SOA 
+                application</b></li>
+                <li><b>DEMORUN.BAT - command to start server and then run the 
+                client application</b></li>
+              </ol>
+              <p>
+              <b>The z390 SOA generated command DEMOBLD.BAT builds the following 
+              executables:</b></p>
+              <ol>
+                <li><b>DEMOMAIN.390 - demo client main program statically linked 
+                with 2 SOA stubs for service calls.</b></li>
+                <li><b>DEMOCMGR.390 - demo SOA client message manager 
+                dynamically called from stubs</b></li>
+                <li><b>DEMOSMGR.390 - demo SOA server&nbsp; message manager 
+                processes messages from client</b></li>
+                <li><b>DEMOSUB1.390 - service loaded by DEMOSMGR on first 
+                service call</b></li>
+                <li><b>DEMOSUB2.390 - service loaded by DEMOSMGR on first 
+                service call</b></li>
+              </ol>
+              <p>
+              <b>The demo SOA client server application has been run on single 
+              CPU, local LAN connected client and server PCs, and again on 
+              wireless LAN connected client and server PC's.&nbsp;&nbsp; The 
+              demo application client has also been run in parallel with other 
+              copies of the client on different processors sharing the same demo 
+              server to demonstrate the multiple client connection support.&nbsp;&nbsp; 
+              The z390 SOA demo timing 
+              statistics shown in the <a href="z390_SOA_User_Guide.pdf">z390 SOA 
+              User Guide</a> show that after initial transaction, the average 
+              overhead for the z390 SOA TCP/IP messaging is about 2-3 
+              milliseconds.&nbsp; For complex services performing I/O to 
+              databases, this overhead is relatively negligible compared to the 
+              major benefit of simplifying the sharing and maintenance of 
+              services across diverse applications and users.&nbsp; </b></p>
+              <p>
+              <b>References:</b></p>
+              <ul>
+                <li><b>SOA</b><ul>
+                <li><b>
+                <a href="http://www-128.ibm.com/developerworks/webservices/library/ws-migratesoa/">
+                IBM - Migrating to SOA</a></b></li>
+                <li><b>
+                <a href="http://www.javaworld.com/javaworld/jw-06-2005/jw-0613-soa.html">
+                JavaWorld definition of XML based SOA architecture</a></b></li>
+                <li><b>
+                <a href="http://msdn2.microsoft.com/en-us/architecture/aa948857.aspx">
+                Microsoft SOA</a></b></li>
+                <li><b>
+                <a href="http://www.developer.com/design/article.php/1010451">
+                Software Developers Introduction to SOA</a></b></li>
+                <li><b>
+                <a href="http://java.sun.com/developer/technicalArticles/WebServices/soa/">
+                Sun SOA and Web Services</a></b></li>
+              </ul>
+                </li>
+                <li><b>TCP/IP</b><ul>
+                <li><b> 
+                <a href="http://www.faqs.org/rfcs/rfc793.html">TCP/IP 
+                Transmission Control Protocol RFP</a></b></li>
+                <li><b>
+                <a href="http://www.cs.rpi.edu/courses/sysprog/sockets/sock.html">
+                Sockets Tutorial</a></b></li>
+                <li><b>
+                <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/net/ServerSocket.html">
+                J2SE ServerSocket Class</a></b></li>
+                <li><b>
+                <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/net/Socket.html">
+                J2SE Socket Class</a></b></li>
+              </ul>
+                </li>
+                <li><b>Host IP Addressing</b><ul>
+                <li><b>
+                <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/net/InetAddress.html">
+                J2SE InetAddress Class</a></b></li>
+                <li><b><a href="http://www.ietf.org/rfc/rfc2373.txt">IP 
+                Addressing RFC</a></b></li>
+              </ul>
+                </li>
+                <li><b>Socket Ports</b><ul>
+                <li><b>
+                <a href="http://www.mathworks.com/access/helpdesk/help/toolbox/modelsim/index.html?/access/helpdesk/help/toolbox/modelsim/a1057689278b4.html&http://www.google.com/search?sourceid=navclient&ie=UTF-8&rls=GGLD,GGLD:2003-43,GGLD:en&q=socket+ports">
+                Choosing a Socket Port</a></b></li>
+                <li><b><a href="http://www.iana.org/assignments/port-numbers">
+                Registered Ports </a></b></li>
+                <li><b><a href="http://www.iana.org/cgi-bin/usr-port-number.pl">
+                Register a Port</a></b></li>
+              </ul>
+                </li>
+              </ul>
+              <p align="center">
+              &nbsp;</td>
+            </tr>
+            </table>
+         
+        
+<p align="center"><b>This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Monday March 05, 2007<!--webbot bot="Timestamp" i-checksum="33080" endspan -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a>&nbsp;
+<a href="pop-up/sitemap.html">Sitemap</a><br>
+Copyright 2006 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </b> </p>
+
+</body>
+
+</html>

@@ -1,0 +1,19 @@
+P6BR1     ZMFACC CODE,START,NAME='Bob Rutledge'
+          ic    3,byte
+          sll   3,24
+          lhi   4,8
+lp       sllg  5,5,8
+          slr   2,2
+          sldl  2,1
+          ahi   2,c'0'
+          or    5,2
+          jct   4,lp
+          stg   5,wherever
+          ZMFACC CODE,END
+          ZMFACC INPUT,START
+byte      dc    x'f6'
+          ZMFACC INPUT,END
+          ZMFACC OUTPUT,START
+wherever  ds   d
+          ZMFACC OUTPUT,END
+          END

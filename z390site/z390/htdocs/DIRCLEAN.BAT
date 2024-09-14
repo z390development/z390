@@ -1,0 +1,23 @@
+rem remove gnerated files from directories except cics, linklib
+call RTCLEAN1 bmk
+call RTCLEAN1 demo
+call RTCLEAN1 guam
+call RTCLEAN1 guam\demo
+call RTCLEAN1 guam\test
+call RTCLEAN1 mac
+call RTCLEAN1 mvs
+call RTCLEAN1 mvs\demo
+call RTCLEAN1 mvs\test
+call RTCLEAN1 pc
+call RTCLEAN1 rt
+call RTCLEAN1 rt\test
+call RTCLEAN1 soa
+call RTCLEAN1 soa\demo
+call RTCLEAN1 soa\maclib
+call RTCLEAN1 vsam
+call RTCLEAN1 vsam\demo
+call RTCLEAN1 vsam\test
+call RTCLEAN1 vse
+call RTCLEAN1 vse\mac
+call RTCLEAN1 vse\demo
+call RTCLEAN1 vse\test

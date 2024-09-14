@@ -1,0 +1,14 @@
+EZ390I Copyright 2006 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = P11MODEL
+EZ390I options = SYSCPY(CONTEST\P11)
+EZ390I V1.3.08h started date 01/01/08 time 08:24:10
+ZMFACC Solution for problem P11 by YOUR NAME using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+SNAP DUMP ID=2 TEXT=Output Area
+EZ390I V1.3.08h ended   date 01/01/08 time 08:24:10
+EZ390I total instructions   = 689307
+EZ390I total seconds        = 0
+EZ390I instructions/sec     = 5302361
+EZ390I total errors         = 0
+EZ390I return code(P11MODEL)= 0

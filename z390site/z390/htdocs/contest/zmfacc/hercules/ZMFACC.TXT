@@ -1,0 +1,102 @@
+        MACRO
+&PROBLEM ZMFACC &SECTION,&OP,&NAME=
+.*****************************************************************
+.* Z390 Mainframe Assembler Coding Contest
+.* macro to isolate problem solutions from 
+.* specific operating systems. This macro 
+.* may be customizied to work on users 
+.* specific operating system.  The functions
+.* it performs are as follows:
+.*  CODE,START,NAME='YOUR NAME'
+.*    1.  generate standard linkage
+.*        and define base register.
+.*    2.  Verify problem # and name are specified and display them.
+.*    2.  Use SNAP or similar OS macro function
+.*        to display the memory between INPUT_START and INPUT_END.
+.*  CODE,END 
+.*    1.  Use SNAP or similar OS macro function
+.*        to display the memory between OUTPUT_START and OUTPUT_END.
+.*    2.  Exit with return code 0.
+.*    3.  Generate equates for R0-R15
+.*  INPUT,START
+.*    1.  Define INPUT_START on double word boundary for start
+.*        of data input storage to be displayed at CODE,START time.
+.*  INPUT,END
+.*    1.  Define INPUT_END for end
+.*        of data input storage to be displayed at CODE,START time.
+.*  OUTPUT,START
+.*    1.  Define OUTPUT_START on double word boundary for start
+.*        of data output storage to be displayed at CODE,END time.
+.*  OUTPUT,END
+.*    1.  Define OUTPUT_END for end
+.*        of data output storage to be displayed at CODE,END time.
+.*
+.****************************************************************
+.* 12/13/07 Don Higgins initial version for z390 environment
+.****************************************************************
+         AIF   (&SECTION EQ 'CODE').CODE
+         AIF   (&SECTION EQ 'INPUT').INPUT
+         AIF   (&SECTION EQ 'OUTPUT').OUTPUT
+         MNOTE 12,'ZMFACC SECTION NOT CODE/INPUT/OUTPUT - &SECTION'
+         MEXIT
+.CODE    ANOP 
+         AIF   (&OP EQ 'START').CODE_START
+         AIF   (&OP EQ 'END').CODE_END
+         MNOTE 12,'ZMFACC OP MUST BE START OR END - &OP'
+         MEXIT
+.CODE_START ANOP
+         AIF   (K'&PROBLEM LT 2 OR '&PROBLEM'(1,1) NE '#').BADPGM
+         AIF   (K'&NAME LT 2).BADNAME
+&PROBLEM CSECT
+         STM   14,12,12(13)                                              
+         BAL   15,104(15)                                                
+         DC    18F'0'                                                    
+         DC    CL8'&PROBLEM'                                                
+         DC    CL8'&SYSDATE'                                             
+         DC    CL8'&SYSTIME'                                             
+         ST    15,8(13)                                                  
+         ST    13,4(15)                                                  
+         LR    13,15                                                     
+         USING &PROBLEM+8,13
+&TNAME   SETC  '&NAME'(2,K'&NAME-2)
+         WTO   'ZMFACC SOLUTION FOR PROBLEM &PROBLEM BY &TNAME'        
+         SNAP  ID=1,PDATA=,STORAGE=(INPUT_START,INPUT_END),            X
+               TEXT='INPUT AREA'
+         MEXIT
+.CODE_END ANOP
+         SNAP  ID=2,PDATA=,STORAGE=(OUTPUT_START,OUTPUT_END),          X
+               TEXT='OUTPUT AREA'
+         L     13,4(,13)                                                
+         L     14,12(,13)                                               
+         LM    2,12,28(13)                                              
+         SR    15,15
+         BR    14                                                       
+         YREGS
+         MEXIT
+.INPUT   ANOP 
+         AIF   (&OP EQ 'START').INPUT_START
+         AIF   (&OP EQ 'END').INPUT_END
+         MNOTE 12,'ZMFACC OP MUST BE START OR END - &OP'
+         MEXIT
+.INPUT_START ANOP
+INPUT_START DS 0F
+         MEXIT
+.INPUT_END ANOP
+INPUT_END EQU *
+         MEXIT
+.OUTPUT  ANOP 
+         AIF   (&OP EQ 'START').OUTPUT_START
+         AIF   (&OP EQ 'END').OUTPUT_END
+         MNOTE 12,'ZMFACC OP MUST BE START OR END - &OP'
+         MEXIT
+.OUTPUT_START ANOP
+OUTPUT_START DS 0F
+         MEXIT
+.OUTPUT_END ANOP
+OUTPUT_END EQU *
+         MEXIT
+.BADPGM  MNOTE 12,'ZMFACC PROGRAM NAME MUST BE #? - &PROGRAM'
+         MEXIT
+.BADNAME MNOTE 12,'ZMFACC PROGRAMMER NAME MUST BE DEFINED'
+         MEXIT
+         MEND

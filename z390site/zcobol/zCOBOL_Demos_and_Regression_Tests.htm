@@ -1,0 +1,205 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>zCOBOL Portable COBOL Demo and Regression Test Programs</title>
+<META NAME="DESCRIPTION" CONTENT="z390 Protable Mainframe Assembler, Linker, Emulator Open Source J2SE">
+<META name="KEYWORDS" content="Mainframe Assembler Tools z390 SuperZap Open Source J2SE Java">
+
+<style>
+<!--
+ li.MsoNormal
+	{mso-style-parent:"";
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	margin-left:0in; margin-right:0in; margin-top:0in}
+-->
+</style>
+
+</head>
+
+<body>
+<table border="0" cellpadding="0" cellspacing="3" style="border-collapse: collapse" bordercolor="#111111" id="AutoNumber1" width="750" height="1">
+            <tr>
+              <td align="center" width="141" height="69" valign="top">
+              <b><font face="Times New Roman">
+              <a href="http://www.zcobol.org">
+              <img border="0" src="zcobol.jpg" width="100" height="75" alt="z390 Portable Mainframe COBOL Compiler"></a></font></b></td>
+              <td align="center" width="445" height="69">
+              <p align="center"><b><font size="4" face="Times New Roman">zCOBOL 
+              Portable Mainframe COBOL<br>
+              Demo, Regression Test, and EXEC CICS COBOL Programs</font></b></td>
+              <td width="152" height="69" align="center">
+              <b>
+              <a href="http://www.z390.org">
+              <img border="0" src="z390.jpg" width="124" height="75" alt="z390 Portable Mainframe Assembler and Emulator"></a><font face="Times New Roman"><br>
+&nbsp;</font></b></td>
+            </tr>
+            <tr>
+              <td align="center" width="246" height="35" valign="top">
+              <b><a href="#zcobo_Demo_Programs">Demo Programs</a></b></td>
+              <td align="center" width="246" height="35" valign="top">
+              <b><a href="#zcobo_Regression_Tests">Regression Test Programs</a></b></td>
+              <td align="center" width="246" height="35" valign="top">
+              <b>
+              <a href="http://www.z390.org/z390_EXEC_CICS_Compatible_Assembler_Support.htm">
+              EXEC CICS Programs</a></b></td>
+            </tr>
+            <tr>
+              <td align="center" width="738" height="69" valign="top" colspan="3">
+              <b>
+              <br>
+              <a name="zcobo_Demo_Programs">zcobol Demo Programs in 
+              zcobol\demo</a><br>
+&nbsp;</b><table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%">
+                <tr>
+                  <td width="14%"><b>HELLO</b></td>
+                  <td width="86%"><b>Display &quot;Hello World&quot; and STOP RUN</b></td>
+                </tr>
+                <tr>
+                  <td width="14%"><b>DATETIME</b></td>
+                  <td width="86%"><b>ACCEPT current date and time and display 
+                  month, day of week, and year</b></td>
+                </tr>
+                <tr>
+                  <td width="14%"><b>COPYFILE</b></td>
+                  <td width="86%"><b>Read line sequential ASCII file and copy it to 
+                  an output line sequential file</b></td>
+                </tr>
+                <tr>
+                  <td width="14%"><b>POWERS</b></td>
+                  <td width="86%"><b>Calculate and display powers of 2 up to 2**31</b></td>
+                </tr>
+              </table>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" width="738" height="69" valign="top" colspan="3">
+              <b>
+              <br>
+              <a name="zcobo_Regression_Tests">zcobol Regression Tests in 
+              zcobol\test</a><br>
+&nbsp;</b><table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%">
+                <tr>
+                  <td width="15%"><b>TESTASM4.MLC</b></td>
+                  <td width="85%"><b>Assembler module statically linked with 
+                  TESTCAL3.CBL</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTCAL1</b></td>
+                  <td width="85%"><b>CALL TESTCAL2 statically linked</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTCAL2</b></td>
+                  <td width="85%"><b>CALL TESTCAL3 dynamically</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTCAL3</b></td>
+                  <td width="85%"><b>Dynamically loaded zcobol module which calls 
+                  statically linked TESTASM4 assembler routine</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTCMP1</b></td>
+                  <td width="85%"><b>ADD, SUBTRACT, MULTIPLY, and DIVIDE all 
+                  formats</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTCPY1</b></td>
+                  <td width="85%"><b>COPY</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTCPY2</b></td>
+                  <td width="85%"><b>nested COPY</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTDSP1</b></td>
+                  <td width="85%"><b>DISPLAY all formats</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTFUN1</b></td>
+                  <td width="85%"><b>ACCEPT, TRANSFORM, NUMERIC, etc.</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTGO1</b></td>
+                  <td width="85%"><b>GO TO DEPENDING ON</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTIF1</b></td>
+                  <td width="85%"><b>Compound IF requiring use of intermediate T/F 
+                  flags</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTISP1</b></td>
+                  <td width="85%"><b>INSPECT TALLYING, REPLACING, TRANSFORMING</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTMOV1</b></td>
+                  <td width="85%"><b>MOVE all formats</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTPM1</b></td>
+                  <td width="85%"><b>PERFORM VARYING and PERFORM TIMES</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTSIX1</b></td>
+                  <td width="85%"><b>Multiple subscripts</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTTRC1</b></td>
+                  <td width="85%"><b>TRUNC</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTTRC2</b></td>
+                  <td width="85%"><b>NOTRUNC with ONSIZE</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTTRC3</b></td>
+                  <td width="85%"><b>TRUNC and NOR64 to test use of DXR versus DSG</b></td>
+                </tr>
+                <tr>
+                  <td width="15%"><b>TESTWS1</b></td>
+                  <td width="85%"><b>Working storage REDEFINE and OCCURS with 
+                  padding</b></td>
+                </tr>
+                </table>
+              </td>
+            </tr>
+            </table>
+         
+        
+        </table>
+<p align="center"><b><font face="Times New Roman">IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS<br>
+&nbsp;are registered trademarks
+&nbsp;of International Business Machines Corporation</font></b></p>
+
+<p align="center"><b><font face="Times New Roman">This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Thursday February 19, 2009<!--webbot bot="Timestamp" i-checksum="2671" endspan -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools z390 Portable Mainframe Assembler and Emulator">Webmaster</a><br>
+Copyright 2009 <a href="http://www.AutomatedSoftwareTools.com">Automated Software Tools Corporation</a></font></b></p>
+
+<p align="center">
+<b><font face="Times New Roman">
+<br>
+<script language=javascript type="text/javascript" src="http://ss.webring.com/navbar?f=j;y=dsh33782;u=10138599"> </script><noscript>
+<center> <table bgcolor=gray cellspacing=0 border=2><tr> <td><table cellpadding=2 cellspacing=0 border=0><tr><td align=center> <font face=arial size=-1>This site is a member of WebRing. <br>To browse visit <a href="http://ss.webring.com/navbar?f=l;y=dsh33782;u=10138599"> Here</a>.</font></td></tr></table></td></tr></table> </center></noscript> 
+<!-- START OF ACTIVEMETER CODE -->
+<script type="text/javascript" language="javascript">
+var __pid=36843;
+var __am_invisible=0;
+</script>
+<script type="text/javascript" language="javascript" src="http://www.activemeter.com/counter.js"></script>
+<noscript>
+   <a href="http://www.activemeter.com/" target="_blank">
+      <img  src="http://am1.activemeter.com/webtracker/track.html?method=track&pid=36843&java=0" alt="Free Web Counter" border="0">
+   </a></noscript>
+<!-- END OF ACTIVEMETER CODE -->
+</font></b>
+</p>
+
+</body>
+
+</html>

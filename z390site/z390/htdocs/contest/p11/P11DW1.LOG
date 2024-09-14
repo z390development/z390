@@ -1,0 +1,11 @@
+12:53:18 P11DW1    EZ390 STARTED USING z390 V1.4.03a ON J2SE 1.6.0_07
+EZ390I Copyright 2008 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = mfacc\P11DW1.390
+EZ390I options = sysmac(mfacc+mac) syscpy(mfacc+mac)
+ZMFACC Solution for problem P11DW1 by DAVID WILKINSON using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+SNAP DUMP ID=2 TEXT=Output Area
+EZ390I instructions/sec     = 3272164
+EZ390I total errors         = 0
+12:53:19 P11DW1    EZ390 ENDED   RC= 0 SEC= 0 MEM(MB)= 17 IO=33 INS=952200

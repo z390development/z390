@@ -1,0 +1,14 @@
+12:19:58 P14MW1    EZ390 STARTED USING z390 V1.4.00a ON J2SE 1.6.0_04
+EZ390I Copyright 2008 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = mfacc\P14MW1.390
+EZ390I options = stats
+ZMFACC Solution for problem P14MW1 by Martin Ward using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 000FFF20 *00000000 00000000 00000000 0000004C* *...............<*
+ 000FFF30 *00000000 00000000 00000000 0000001C* *................*
+SNAP DUMP ID=2 TEXT=Output Area
+ 000FFF40 *00000000 00000000 00000000 0065533C* *................*
+EZ390I instructions/sec     = 3076
+EZ390I total errors         = 0
+12:19:58 P14MW1    EZ390 ENDED   RC= 0 SEC= 0 MEM(MB)= 19 IO=49 INS=40

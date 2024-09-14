@@ -1,0 +1,383 @@
+<html>
+<title>z390 and zcobol J2SE Java Version Display</title>
+
+<body>
+<table height="356" width="737">
+<tr>
+              <td align="center" width="208" height="82">
+              <font face="Times New Roman">
+              <a href="http://www.z390.org/">
+              <span style="background-color: #FFFFFF; font-weight:700"><font color="#000000">
+              <img border="0" src="../images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></font></span></a></font></td>
+              <td align="center" width="315" height="82">
+              <p align="center">
+              <span style="font-weight: 700; background-color: #FFFFFF">
+              <font face="Times New Roman" size="4">Display current Java Version</font></span></td>
+              <td width="200" height="82" align="center">
+                          <b>
+              <a href="http://www.zcobol.org">
+              <img border="0" src="../zcobol.jpg" width="100" height="75" alt="zcobol Portable Mainframe COBOL Compiler"></a></b></td>
+            </tr>
+<tr>
+<td align="left" valign="top" height="266" width="208"><b>
+<a href="http://www.z390.org">z390</a> and <a href="http://www.zcobol.org">zcobol</a> require 
+<a href="http://java.sun.com/javase/downloads/index.jsp">
+J2SE</a> 1.6+ runtime as the only pre-requisite.</b><p><b>The yellow box to the right should 
+display the current installed version of <a href="http://java.sun.com/javase/downloads/index.jsp">
+J2SE</a> java runtime.&nbsp; See <a href="#test_results">test results</a>.</b></p>
+<p><b>If you do not have <a href="http://java.sun.com/javase/downloads/index.jsp">
+J2SE</a> 1.6 or later, you can download and install it from <a href="http://java.sun.com/javase/downloads/index.jsp">
+J2SE</a>.&nbsp; Refresh this page to verify install.</b></td>
+<td align="left" valign="top" bordercolor="#000000" bgcolor="#FFFF00" height="266" width="315">
+<b>
+<script language="Javascript">
+    document.write(
+     '<hr>Using HTML V3 APPLET<br>',
+     '<applet code="javaver.class"',
+     ' width=300 height=100 hspace="30" vspace="30">',
+     ' <br>Browser does not support HTML V3 APPLET',
+     '</applet>'
+     );
+    document.write(
+       '<hr>Using HTML V4 OBJECT<br>',
+       '<OBJECT',
+       ' classid="clsid:8AD9C840-044E-11D1-B3E9-00805F499D93"',
+       ' width=300 height=100 hspace="30" vspace="30">',
+       '<PARAM name="code" value="javaver.class">',
+       ' <br>Browser does not support HTML V4 OBJECT',
+       '</OBJECT>'
+       );
+</script>
+</b>
+</td>
+<td align="left" valign="top" width="200" height="266">
+<ul>
+  <li><b><a href="#Overview">Overview</a></b></li>
+  <li><b><a href="http://www.w3.org/MarkUp/">HTML</a></b><ul>
+  <li><b><a href="http://www.w3.org/TR/REC-html32#applet">V3 APPLET</a></b></li>
+  <li><b><a href="http://www.w3.org/TR/REC-html40/struct/objects.html">V4 OBJECT</a></b></li>
+  <li><b><a href="#HTML_source">source code</a></b></li>
+</ul>
+  </li>
+  <li><b><a href="http://www.w3schools.com/JS/default.asp">JavaScript</a></b></li>
+  <li><b> <a href="http://java.sun.com/javase/downloads/index.jsp">
+  J2SE Downloads</a></b></li>
+  <li>
+  <b>
+  <a href="http://java.sun.com/javase/6/docs/technotes/tools/windows/javac.html#options">
+  J2SE Java </a></b><ul>
+  <li><b><a href="http://java.sun.com/javase/6/docs/index.html">Documentation</a></b></li>
+  <li><b><a href="http://java.sun.com/javase/6/docs/api/index.html">V6 Classes</a></b></li>
+  <li>
+  <b>
+  <a href="http://java.sun.com/javase/6/docs/technotes/tools/windows/javac.html#options">
+  V6 javac options</a></b></li>
+  <li><b><a href="http://java.sun.com/docs/books/tutorial/deployment/applet/">
+  Applets</a></b></li>
+  <li><b>
+  <a href="http://java.sun.com/j2se/1.4.2/docs/guide/plugin/developer_guide/using_tags.html">
+  Plug-in</a></b></li>
+  <li><b><a href="#Java_source">source code</a></b></li>
+</ul>
+  </li>
+  <li><b><a href="http://www.javatester.org/">Java Tester</a></b></li>
+</ul>
+</td>
+</tr>
+<tr>
+<td align="left" valign="top" height="81" width="723" colspan="3">
+<p align="center">&nbsp;</p>
+<p align="center"><b><a name="Overview">Overview of this Java Version Display web 
+page</a></b></p>
+<p><b>This webpage has been designed to try and run successfully on all platforms 
+with all browsers.&nbsp; If your browser reports an error on the
+<a href="../index.html">z390 java version display web page</a> or says neither 
+<a href="http://www.w3.org/TR/REC-html32#applet">HTML V3 APPLET</a> or 
+<a href="http://www.w3.org/TR/REC-html40/struct/objects.html">HTML V4 OBJECT</a> are supported, please check your browser preferences to make sure you 
+have execution of Java Applets enabled and that the
+<a href="http://java.sun.com/j2se/1.4.2/docs/guide/plugin/developer_guide/using_tags.html">
+J2SE java browser plugin</a> is enabled.&nbsp;&nbsp; If you have a browser that reports an 
+error or does not function as you think it should, please send screen capture of 
+the error and a list or your operating system, browser, and <a href="http://java.sun.com/javase/downloads/index.jsp">
+J2SE</a> versions.&nbsp; See <a href="#test_results">test results</a> below.&nbsp; 
+If you do not have a 
+<a href="http://java.sun.com/javase/downloads/index.jsp">
+J2SE</a> 1.6+ runtime installed, you can download and install the latest 
+<a href="http://java.sun.com/javase/downloads/index.jsp">
+J2SE</a> 1.6+ version.&nbsp; You can verify that the install was successful and 
+than the associated browser plugin is working using this
+<a href="http://www.java.com/en/download/dt_verify.jsp?plugin=true&latest=true&users_jre=1.6.0_16">
+J2SE verification website</a>.</b></p>
+<p><b>Thanks to Michael Horowitz author of <a href="http://www.javatester.org/">
+Java Tester</a> website which is where I started research on how to develop this 
+page.&nbsp; The initial version used JavaScript to test which browser 
+release was running, to decide whether an 
+<a href="http://www.w3.org/TR/REC-html32#applet">HTML V3 APPLET</a> or
+<a href="http://www.w3.org/TR/REC-html40/struct/objects.html">HTML V4 OBJECT</a> should be 
+used to launch the Java program to display the current J2SE Java version 
+installed.&nbsp; However, when I discovered that IE8 on XP uses  
+<a href="http://www.w3.org/TR/REC-html32#applet">HTML V3 APPLET</a> and IE8 
+on Vista uses 
+<a href="http://www.w3.org/TR/REC-html40/struct/objects.html">HTML V4 OBJECT</a>, I decided to abandon that approach in favor of trying both 
+and reporting if either failed to be recognized by browser.</b></p>
+<p><b>After installing old <a href="http://java.sun.com/javase/downloads/index.jsp">
+J2SE</a> 1.5.0_12 on my Windows XP system to compile the <a href="#Java_source">Java Applet 
+source code</a> so it would be compatible with 1.5 as well as 1.6, I discovered 
+that I can use the
+<a href="http://java.sun.com/javase/6/docs/technotes/tools/windows/javac.html#options">
+java javac options</a> -target and -source to compile the Java Applet on 1.6 and make it 
+compatible with 1.4+ so it should work on any system with <a href="http://java.sun.com/javase/downloads/index.jsp">
+J2SE</a> 1.4+ installed.&nbsp; Both the <a href="#Java_source">Java applet 
+source program javaver.java</a> and the compiled java jjavaver.class files are 
+in the <a href="http://www.z390.org/java">www.z390.org/java</a> directory.</b></p>
+<p><b>I have tested this website on 
+<a href="http://www.microsoft.com/windows/windows-xp/default.aspx">Windows XP</a> 
+and
+<a href="http://www.microsoft.com/windows/windows-vista/default.aspx">Windows 
+Vista</a> with IE7 and IE8 browsers.&nbsp; I have also tested <a href="http://www.ubuntu.com/news/ubuntu-8.04-lts-desktop">
+Ubuntu Linux 8.04 LTS</a> and Windows Vista using both
+<a href="http://www.mozilla.com/en-US/firefox/ie.html">Firefox</a> 3.0.14 and
+<a href="http://www.google.com/chrome/">Google Chrome</a> 3.0.195.21 browsers.&nbsp; 
+I would like to hear test results from users of different operating systems, browsers, and 
+<a href="http://java.sun.com/javase/downloads/index.jsp">
+J2SE</a> versions.&nbsp; Please send screen capture of your display along with which 
+versions you have to
+<a href="mailto:don@higgins.net?subject=www.z390.org/java display of current installed J2SE Java">
+Don Higgins</a>, and I'll add then to this list of <a href="#test_results">test 
+results</a>.</b></p>
+
+<p><b>If you want to see what version of J2SE is installed on your system 
+without using web browser, you can go to command prompt and enter the command:&nbsp; 
+java -version.</b></p>
+
+</td>
+</tr>
+<tr>
+<td align="left" valign="top" height="26" width="723" colspan="3">
+<p align="center">&nbsp;</p>
+<p align="center"><b><a name="test_results">Test results for different operating 
+systems, J2SE versions, and browsers</a></b></p>
+<table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%">
+  <tr>
+    <td width="23%"><b>Operating System</b></td>
+    <td width="15%"><b>Java Version</b></td>
+    <td width="20%"><b>Browser</b></td>
+    <td width="17%"><b>HTML 3 Applet</b></td>
+    <td width="18%"><b>HTML 4 Object</b></td>
+    <td width="7%"><b>User</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Linux Ubuntu 8.04 LTS</b></td>
+    <td width="15%"><b>J2SE 1.6.0_16</b></td>
+    <td width="20%"><b>Firefox 3.0.14</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>N</b></td>
+    <td width="7%"><b>DSH</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Linux Ubuntu 9.04 LTS</b></td>
+    <td width="15%"><b>J2SE 1.6.0_16</b></td>
+    <td width="20%"><b>Firefox 3.0.14</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>N</b></td>
+    <td width="7%"><b>PF</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Windows 2000</b></td>
+    <td width="15%"><b>J2SE 1.6.0_14</b></td>
+    <td width="20%"><b>Firefox 3.5.3</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>N</b></td>
+    <td width="7%"><b>WB</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Windows 2000</b></td>
+    <td width="15%"><b>J2SE 1.6.0_14</b></td>
+    <td width="20%"><b>Internet Explorer 6</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>N</b></td>
+    <td width="7%"><b>WB</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Windows Server 2008</b></td>
+    <td width="15%"><b>J2SE 1.6.0_15</b></td>
+    <td width="20%"><b>Firefox 3.5.3</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>N</b></td>
+    <td width="7%"><b>JCL</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Windows Vista</b></td>
+    <td width="15%"><b>J2SE 1.6.0_16</b></td>
+    <td width="20%"><b>Chrome 3.0.195.21</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>Java Loop</b></td>
+    <td width="7%"><b>DSH</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Windows Vista</b></td>
+    <td width="15%"><b>J2SE 1.6.0_16</b></td>
+    <td width="20%"><b>Firefox 3.0.14</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>N</b></td>
+    <td width="7%"><b>DSH</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Windows Vista</b></td>
+    <td width="15%"><b>J2SE 1.6.0_16</b></td>
+    <td width="20%"><b>Internet Explorer 8</b></td>
+    <td width="17%"><b>N</b></td>
+    <td width="18%"><b>Y</b></td>
+    <td width="7%"><b>DSH</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Windows XP Pro SP2</b></td>
+    <td width="15%"><b>J2SE 1.6.0_13</b></td>
+    <td width="20%"><b>Internet Explorer 7</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>Y</b></td>
+    <td width="7%"><b>PF</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Windows XP Pro SP2</b></td>
+    <td width="15%"><b>J2SE 1.6.0_16</b></td>
+    <td width="20%"><b>Internet Explorer 6</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>Y</b></td>
+    <td width="7%"><b>WB</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Windows XP Pro SP3</b></td>
+    <td width="15%"><b>J2SE 1.5.0_12</b></td>
+    <td width="20%"><b>Firefox 3.0.14</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>N</b></td>
+    <td width="7%"><b>DSH</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Windows XP Pro SP3</b></td>
+    <td width="15%"><b>J2SE 1.5.0_12</b></td>
+    <td width="20%"><b>Internet Explorer 8</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>N</b></td>
+    <td width="7%"><b>DSH</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Windows XP Pro SP3</b></td>
+    <td width="15%"><b>J2SE 1.6.0_15</b></td>
+    <td width="20%"><b>Internet Explorer 6</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>Y</b></td>
+    <td width="7%"><b>DP</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Windows XP Pro SP3</b></td>
+    <td width="15%"><b>J2SE 1.6.0_16</b></td>
+    <td width="20%"><b>Chrome 4.0.211.7</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>Java Loop</b></td>
+    <td width="7%"><b>DP</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Windows XP Pro SP3</b></td>
+    <td width="15%"><b>J2SE 1.6.0_16</b></td>
+    <td width="20%"><b>Internet Explorer 7</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>Y</b></td>
+    <td width="7%"><b>DSH</b></td>
+  </tr>
+  <tr>
+    <td width="23%"><b>Windows XP Pro SP3</b></td>
+    <td width="15%"><b>J2SE 1.6.0_16</b></td>
+    <td width="20%"><b>Internet Explorer 8</b></td>
+    <td width="17%"><b>Y</b></td>
+    <td width="18%"><b>Y</b></td>
+    <td width="7%"><b>DP</b></td>
+  </tr>
+  <tr>
+    <td width="23%">&nbsp;</td>
+    <td width="15%">&nbsp;</td>
+    <td width="20%">&nbsp;</td>
+    <td width="17%">&nbsp;</td>
+    <td width="18%">&nbsp;</td>
+    <td width="7%">&nbsp;</td>
+  </tr>
+</table>
+</td>
+</tr>
+<tr>
+<td align="left" valign="top" height="26" width="723" colspan="3">
+<p align="center">&nbsp;</p>
+<p align="center"><b><a name="HTML_source">HTML Source Code for Java Version 
+Display</a></b></p>
+<p><b>The following HTML source code for table cell can be used in any HTML table 
+to display the installed version of <a href="http://java.sun.com/javase/downloads/index.jsp">
+J2SE</a> Java Runtime using both
+<a href="http://www.w3.org/TR/REC-html32#applet">HTML V3 APPLET</a> and
+<a href="http://www.w3.org/TR/REC-html40/struct/objects.html">HTML V4 OBJECT</a> assuming one or the other will be supported by browser 
+(Note IE7 on XP supports both):</b></p>
+<form method="POST" action="../_derived/nortbots.htm" onSubmit="location.href='../_derived/nortbots.htm';return false;" webbot-onSubmit webbot-action="--WEBBOT-SELF--">
+  <!--webbot bot="SaveResults" u-file="../_private/form_results.csv" s-format="TEXT/CSV" s-label-fields="TRUE" startspan --><input TYPE="hidden" NAME="VTI-GROUP" VALUE="0"><!--webbot bot="SaveResults" endspan i-checksum="43374" --><p>
+  <b>&lt;td align=&quot;left&quot; valign=&quot;top&quot; bordercolor=&quot;#000000&quot; bgcolor=&quot;#FFFF00&quot; 
+  height=&quot;266&quot; width=&quot;315&quot;&gt;<br>
+  &lt;b&gt;<br>
+  &lt;script language=&quot;Javascript&quot;&gt;<br>
+  document.write(<br>
+  '&lt;hr&gt;Using HTML V3 APPLET&lt;br&gt;',<br>
+  '&lt;applet code=&quot;javaver.class&quot;',<br>
+  ' width=300 height=100 hspace=&quot;30&quot; vspace=&quot;30&quot;&gt;',<br>
+  ' &lt;br&gt;Browser does not support HTML V3 APPLET',<br>
+  '&lt;/applet&gt;'<br>
+  );<br>
+  document.write(<br>
+  '&lt;hr&gt;Using HTML V4 OBJECT&lt;br&gt;',<br>
+  '&lt;OBJECT',<br>
+  ' classid=&quot;clsid:8AD9C840-044E-11D1-B3E9-00805F499D93&quot;',<br>
+  ' width=300 height=100 hspace=&quot;30&quot; vspace=&quot;30&quot;&gt;',<br>
+  '&lt;PARAM name=&quot;code&quot; value=&quot;javaver.class&quot;&gt;',<br>
+  ' &lt;br&gt;Browser does not support HTML V4 OBJECT',<br>
+  '&lt;/OBJECT&gt;'<br>
+  );<br>
+  &lt;/script&gt;<br>
+  &lt;/b&gt;<br>
+  &lt;/td&gt;</b></p>
+</form>
+</td>
+</tr>
+<tr>
+<td align="left" valign="top" height="81" width="723" colspan="3">
+<p align="center">&nbsp;</p>
+<p align="center"><b><a name="Java_source">J2SE Java source code for Applet</a></b></p>
+<p><b>The following command using <a href="http://java.sun.com/javase/downloads/index.jsp">
+J2SE</a> 1.6.0_16 on Windows was used to compile the 
+following source javaver.java into java.class which is compatible with any <a href="http://java.sun.com/javase/downloads/index.jsp">
+J2SE</a> 
+1.4+ Java runtime:</b></p>
+<p><b>&quot;c:\program files\Java\jdk1.6.0_16\bin\javac.exe&quot; -g:none -target 1.4 -source 
+1.4 javaver.java</b></p>
+<p><b>The javaver.java source code for applet is:</b></p>
+<p><b>&nbsp;import java.applet.*;<br>
+import java.awt.*;<br>
+public class javaver extends Applet<br>
+&nbsp;&nbsp; { private Label VersionVendor; <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public javaver()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; { VersionVendor = new Label (&quot; Java Version: &quot; +<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+System.getProperty(&quot;java.version&quot;)+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot; from &quot;+System.getProperty(&quot;java.vendor&quot;));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; this.add(VersionVendor);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br>
+}</b></td>
+</tr>
+<tr>
+<td align="left" valign="top" height="51" width="723" colspan="3">
+<p align="center"><font face="Times New Roman">
+<span style="background-color: #FFFFFF; font-weight:700">This page last updated 
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Saturday October 17, 2009<!--webbot bot="Timestamp" i-checksum="2430" endspan -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">
+<font color="#000000">Webmaster</font></a>&nbsp; <BR>Copyright 
+2009 <a href="http://www.automatedsoftwaretools.com/"><font color="#000000">Automated Software Tools Corporation</font></a></span></font></td>
+</tr>
+</table>
+</body>
+</html>

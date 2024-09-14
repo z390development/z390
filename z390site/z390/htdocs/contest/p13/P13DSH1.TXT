@@ -1,0 +1,38 @@
+         TITLE 'P13DSH1.MLC - Calc unit price to 2 decimal places'
+*********************************************************************
+* Program ID.  P12DSH1.MLC
+* Author.      Don Higgins.
+* Date.        01/24/08.
+*********************************************************************
+P13DSH1  ZMFACC CODE,START,NAME='DON HIGGINS'
+         ZAP    WORK8,COST       work has 00 00 00 00 42 37 5c
+         LG     R0,WORK8         R0 = 8 BYTE SIGNED PACKED COST
+         CDSTR  F4,R0            F4 = DD'42375'
+         ZAP    WORK8,QTY        work has 00 00 00 00 00 03 7c
+         SRP    WORK8,2,0        mpy by 100 to align for 2 dec COST
+         LG     R0,WORK8         R0 = 8 BYTE SIGNED PACKED QTY 
+         CDSTR  F5,R0            F5 = DD'3700'
+         DDTR   F0,F4,F5         F0 = COST/QTY = DD'11.45270270270270'
+         ESDTR  R6,F0            R6 = TOTAL SIGNIFICANT DIGITS
+         EEDTR  R7,F0            R7 = BIASED EXPONENT  
+         AHI    R7,-398          R7 = NEG DECIMAL PLACES
+         AR     R6,R7            R0 = SIGNIFICANT WHOLE DIGITS           
+         AHI    R6,2             R0 = ADD TWO DECIMAL PLACES       
+         RRDTR  F0,F0,R6,0       F0 = UN_PR ROUNDED = DD'11.45'  
+         CSDTR  R0,F0,0          R0 = 8 BYTE PD USING X'C' SIGN UN-PR
+         STG    R0,WORK8         
+         ZAP    UN_PR,WORK8      UN_PR = 11.45
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         DC    C'TOTAL COST = '
+cost  dc  pl5'42375'    dd dd dd d.d ds
+         DC    C'QUANTITY = '
+qty   dc  pl3'37'       dd ds
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         DC     C'UNIT PRICE = '
+un_pr ds  pl5    dd dd dd d.d ds
+         DC     C'WORK AREA = '
+WORK8    DS     D                              
+         ZMFACC OUTPUT,END
+         END

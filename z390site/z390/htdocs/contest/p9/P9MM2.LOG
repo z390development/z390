@@ -1,0 +1,21 @@
+EZ390I V1.3.09 Current Date 12/16/07 Time 19:29:27
+EZ390I Copyright 2006 Automated Software Tools Corporation
+EZ390I z390 is licensed under GNU General Public License
+EZ390I program = P9MM2
+EZ390I options = 
+ZMFACC SOLUTION FOR PROBLEM P9 BY MELVYN MALTZ
+SNAP DUMP ID=1 TEXT=INPUT AREA
+ 000FFF28 *0089378C 9142536D 0000000C 0000001D* *.i..j.._........*
+SNAP DUMP ID=2 TEXT=OUTPUT AREA
+ 000FFF48 *4040405B F8F9F34B F7F84D5B F9F16BF4* *   $893.78($91,4*
+ 000FFF58 *F2F54BF3 F65D4040 4040405B F04BF0F0* *25.36)     $0.00*
+ 000FFF68 *40404040 404D5BF0 4BF0F15D         * *     ($0.01)    *
+EZ390I Stats total instructions    = 53
+EZ390I stats TCPIO operations      = 0
+EZ390I stats DCB operations        = 0
+EZ390I stats VSAM operations       = 0
+EZ390I Stats current date 12/16/07 time 19:29:27
+EZ390I Stats total seconds         = 0
+EZ390I Stats instructions/sec      = 963
+EZ390I total errors         = 0
+EZ390I return code(P9MM2   )= 0

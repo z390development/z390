@@ -1,0 +1,1430 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>z390 Mainframe Assembler Coding Contest for Computer Programmers</title>
+</head>
+
+<body>
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="758" id="AutoNumber1" height="1051">
+            <tr>
+              <td align="center" width="188" height="76">
+              <b><font face="Times New Roman">
+              <a href="http://www.z390.org/">
+              <img border="0" src="images/z390.jpg" width="100" height="60" alt="z390 Portable Mainframe Assembler and Emulator"></a></font></b></td>
+              <td align="center" width="420" height="76">
+              <p align="center"><b><font face="Times New Roman">z390 Mainframe Assembler<br>
+              Coding Contest for Programmers</font></b></td>
+              <td width="146" height="76" align="center">
+              <b>
+              <a href="http://www.AutomatedSoftwareTools.com">
+              <img border="0" src="anim370.gif" alt="Automated Software Tools Corporation" width="100" height="59"></a></b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" height="2002">
+              <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="101%" height="209">
+                <tr>
+                  <td width="50%" align="left" valign="top" colspan="2" height="120">
+                  <b>Welcome to the z390 Mainframe Assembler Coding Contest.&nbsp; 
+                  The primary objective of this contest is to have some fun and 
+                  learn more about mainframe assembler.&nbsp; This contest is open to anyone interested in learning about 
+                  mainframe assembler and/or sharing their knowledge about 
+                  mainframe assembler.&nbsp; You can submit new problems or 
+                  solutions to problems already posted that you think are better.&nbsp; 
+                  The top ranked solutions are posted on this site along with 
+                  the author's name.&nbsp; Below you will find links to all the 
+                  coding problems posted to date, plus the top ranked solutions 
+                  submitted with source code and generated output.&nbsp; 
+                  Solutions can be submitted using a shared macro ZMFACC which 
+                  is portable across z390, Hercules MVS 3.8, z/OS, z/VM CMS, and 
+                  VSE.&nbsp; <a href="#z390">More</a>.</b></td>
+                  <td width="25%" align="left" valign="top" height="120">
+                  &nbsp;</td>
+                  <td width="25%" align="left" valign="top" height="120">
+                  &nbsp;</td>
+                </tr>
+                <tr>
+                  <td width="50%" align="left" valign="top" height="89">
+                  <ul>
+                    <li><b><font face="Times New Roman">
+                    <a href="#What_is_New">What's New as of
+              <!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%Y-%m-%d %H:%M" startspan -->2010-08-07 06:50<!--webbot bot="Timestamp" i-checksum="25252" endspan --></a></font></b></li>
+                    <li><b><font face="Times New Roman">
+              <a href="#Current_Solutions">
+              View current Contest Problems and Solutions</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+                    <a href="#Current Problem Category Index">View current 
+                    Problem Category Index</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+              <a href="#How_to_submit_a_new_problem">How to submit a problem</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+              <a href="#How_to_submit_a_solution_to_a_problem">How to submit a 
+              solution</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+                    <a href="#Reference Links">Additional Reference Links</a></font></b></li>
+                  </ul>
+                  </td>
+                  <td width="50%" align="left" valign="top" height="89">
+                  <ul>
+                    <li><b><font face="Times New Roman">
+                    <a href="#Download_ZMFACC_macro">
+                    Download ZMFACC macro source for your OS</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+              <a href="#Join_contest_email_group">
+              How to join contest email discussion group</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+              <a href="#Volunteer_to_help_as_moderator_or_judge">
+              Volunteer to be a moderator or judge</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+                    <a href="http://www.automatedsoftwaretools.com/demos/index.html">
+                    Demos 
+                    in HLASM, HLA, C, COBOL, and Java</a></font></b></li>
+                  </ul>
+                  </td>
+                </tr>
+              </table>
+              <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="100%" height="190">
+                <tr>
+                  <td width="11%" align="left" valign="top" colspan="4" height="19">
+                  <p align="center"><b><font face="Times New Roman">
+                  <a name="Reference Links">Reference Links</a></font></b></td>
+                </tr>
+                <tr>
+                  <td width="23%" align="left" valign="top" height="209">
+                  <ul>
+                    <li><b><font face="Times New Roman">
+                    <a href="http://www-03.ibm.com/servers/eserver/zseries/zos/">
+                    z/OS</a></font></b></li>
+                    <li><b><font face="Times New Roman"><a href="http://www-03.ibm.com/systems/z/os/linux/">
+                    z/Linux</a></font></b></li>
+                    <li><b><font face="Times New Roman"><a href="http://www.vm.ibm.com/">zVM</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+                    <a href="http://www-03.ibm.com/servers/eserver/zseries/zvse/solutions/">
+                    z/VSE</a></font></b></li>
+                    <li><b><font face="Times New Roman"><a href="http://z390.sourceforge.net/">z390</a></font></b></li>
+                    <li><b><font face="Times New Roman"><a href="http://www.conmicro.cx/hercules/">Hercules 
+                    MVS 3.8</a></font></b></li>
+                  </ul>
+                  </td>
+                  <td width="27%" align="left" valign="top" height="209">
+                  <ul>
+                    <li><b><font face="Times New Roman"><a href="http://www-03.ibm.com/systems/z/">IBM System 
+                    z</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+                    <a href="http://publibz.boulder.ibm.com/epubs/pdf/a2278325.pdf">z/Architecture POP 
+                    V5</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+                    <a href="http://www-306.ibm.com/software/awdtools/hlasm/">
+                    IBM HLASM V5</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+                    <a href="http://publibz.boulder.ibm.com/epubs/pdf/asmr1010.pdf">HLASM 
+                    Ref. PDF</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+                    <a href="http://z390.sourceforge.net/z390_Documentation.htm">z390 Ref. Docs..</a></font></b></li>
+                  </ul>
+                  </td>
+                  <td width="23%" align="left" valign="top" height="209">
+                  <ul>
+                    <li><b><font face="Times New Roman">
+                    <a href="http://www.listserv.uga.edu/archives/asm370.html">Assembler list</a></font></b></li>
+                    <li><b><font face="Times New Roman"><a href="http://tech.groups.yahoo.com/group/z390/">z390 
+                    User List</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+                    <a href="http://tech.groups.yahoo.com/group/z390-assembler-contest/">z390 Contest List</a></font></b></li>
+                    <li><b><font face="Times New Roman"><a href="http://bama.ua.edu/cgi-bin/wa?A0=ibm-main">
+                    IBM-MAIN List</a></font></b></li>
+                  </ul>
+                  </td>
+                  <td width="25%" align="left" valign="top" height="209">
+                  <ul>
+                    <li><b><font face="Times New Roman">
+                    <a href="http://www.neonesoft.com/doc/pres/21stCentury.ppt">21st Century Assembler 
+                    by Kristine Harper</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+                    <a href="http://shareew.prod.web.sba.com/displaymod/SingleConf.cfm?conference_id=17">Assembler at SHARE February 2008 (22 assembler sessions)</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+                    <a href="http://researchweb.watson.ibm.com/journal/rd/483/heller.html">
+                    z Series Millicode</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+                    <a href="#Assembler Test LInks">Assembler Test Links</a></font></b></li>
+                    <li><b><font face="Times New Roman">
+                    <a href="http://shareew.prod.web.sba.com/client_files/callpapers/attach/SHARE_in_Baltimore/S8192DB073718.pdf">
+                    Coding Assembler for Performance by David Bond</a></font></b></li>
+                  </ul>
+                  </td>
+                </tr>
+              </table>
+              <p>
+              <b><font face="Times New Roman">The <a name="z390">z390</a> open source Portable Mainframe Assembler project 
+              encourages all developers working with IBM&nbsp; mainframe systems 
+              to learn High Level mainframe assembler (HLASM for short).&nbsp; 
+              To that end the z390 project is sponsoring the z390 Mainframe Assembler 
+              Coding Contest open to everyone.&nbsp; For a limited time 
+              volunteers are being solicited to serve as members of a 3 member 
+              judges panel to rank submitted solutions&nbsp; The top three 
+              ranked solutions for each posted problem will be listed here along 
+              with the name of the programmer and their institution of choice.&nbsp; 
+              Rankings will be based on the specific requirements such as speed, 
+              storage, or best practices.&nbsp; New problems and new rankings 
+              will be updated as soon as judges have reviewed current pending 
+              submittals.&nbsp; </font></b></p>
+              <p>
+              <b><font face="Times New Roman">Hope you enjoy the contest!&nbsp; All questions and suggestions 
+              welcome.</font></b></p>
+              <p>
+              <b><font face="Times New Roman">Don Higgins, President<br>
+              <a href="http://www.automatedsoftwaretools.com/">Automated 
+              Software Tools </a><br>
+              <a href="mailto:don@higgins.net?subject=ZMFACC Mainframe Assembler Coding Contest">
+              don@higgins.net</a><br>
+              <a href="http://don-higgins.net">don-higgins.net</a></font></b></p>
+              <p align="center"><b><font face="Times New Roman">
+              <a name="Current_Solutions">Current z390 Mainframe Assembler Coding Contest Problems and 
+              Solutions</a>:</font></b><ol>
+                <li><b><font face="Times New Roman">Swap two 20 byte fields optimized for speed.<br>
+                Submitted by <a href="http://z390.sourceforge.net/About.htm">Don Higgins</a>
+                <a href="http://www.usf.edu/index.asp">University of South 
+                Florida</a></font></b><ol>
+                  <li><b><font face="Times New Roman"><a href="contest/p1/P1RAFA1.TXT">P1RAFA1.MLC</a>/<a href="contest/p1/P1RAFA1.LOG">LOG</a> 
+                  by Rafa Pereira - swaps 2 fields with 2 MVC's </font></b></li>
+                  <li><b><font face="Times New Roman"><a href="contest/p1/P1C1.TXT">P1C1.MLC</a>/<a href="contest/p1/P1C1.LOG">LOG</a> by Chris 
+                  - 3 XC instructions</font></b></li>
+                  <li><b><font face="Times New Roman"><a href="contest/p1/P1DSH1.TXT">P1DSH1.MLC</a>/<a href="contest/p1/P1DSH1.LOG">LOG</a> by
+                  <a href="http://z390.sourceforge.net/About.htm">Don Higgins</a> <a href="http://www.usf.edu/index.asp">
+                  University of South Florida</a> - 3 MVC's</font></b></li>
+                  <li><b><font face="Times New Roman"><a href="contest/p1/P1DSH1A.TXT">P1DSH1A.MLC</a>/<a href="contest/p1/P1DSH1A.LOG">LOG</a> by
+                  <a href="http://z390.sourceforge.net/About.htm">Don Higgins</a> <a href="http://www.usf.edu/index.asp">
+                  University of South Florida</a> -  LM, STM</font></b></li>
+                  </ol>
+                  </li>
+                  <li><b><font face="Times New Roman">Swap general purpose register 0 and 1 
+                  without using any other register or storage areas.<br>
+                  Submitted by <a href="http://z390.sourceforge.net/About.htm">Don Higgins</a> for
+                  <a href="http://www.usf.edu/index.asp">University of South 
+                  Florida</a></font></b><ol>
+                    <li><b><font face="Times New Roman"><a href="contest/p2/P2MD1.TXT">P2MD1.MLC</a>/<a href="contest/p2/P2MD1.LOG">LOG</a> by <a href="http://mark-dixon.com/">Mark 
+                    Dixon</a> <a href="http://www.uwa.edu.au/">University of 
+                    Western Australia</a> - 3 XR'S (could also be XGR)</font></b></li>
+                    </ol>
+                    </li>
+                    <li><b><font face="Times New Roman">Convert memory bytes to hex display 
+                    bytes.<br>
+                    Submitted by Melvyn Maltz</font></b><ol>
+                <li><b><font face="Times New Roman"><a href="contest/p3/P3MM1.TXT">P3MM1.MLC</a>/<a href="contest/p3/P3MM1.LOG">LOG</a> 
+                by Melvyn Maltz 
+                - single TROT (CC3 retry added per Michael Poil)</font></b></li>
+                <li><b><font face="Times New Roman"><a href="contest/p3/P3LKM1.TXT">P3LKM1.MLC</a>/<a href="contest/p3/P3LKM1.LOG">LOG</a> 
+                by Lindy Mayfield - loop to convert byte at a time with no table</font></b></li>
+                <li><b><font face="Times New Roman">
+                <a href="contest/p3/P3DW1.TXT">P3DW1.MLC</a>/<a href="contest/p3/P3DW1.LOG">LOG</a> 
+                by David Wilkinson - unpack and TR using 16 byte table for 4 
+                byte parm </font></b></li>
+                    </ol>
+                  </li>
+                    <li><b><font face="Times New Roman">Sort array of full word integers 
+                    using fastest execution method.<br>
+                    Submitted by <a href="http://z390.sourceforge.net/About.htm">Don Higgins</a> <a href="http://www.usf.edu/index.asp">
+                  University of South Florida</a></font></b><ol>
+                <li><b><font face="Times New Roman"><a href="contest/p4/P4RJ1.TXT">P4RJ1.MLC</a>/<a href="contest/p4/P4RJ1.LOG">LOG</a> 
+                by Mats Broberg, Roland Johansson, and Seb Sweden - improved 
+                version of Quicksort using 685 instructions.</font></b></li>
+                <li><b><a href="contest/p4/P4APN2.TXT">P4APN2.MLC</a>/<a href="contest/p4/P4APN2.LOG">LOG</a> 
+                by Alfred Nykolya - counts sort using 854 instructions</b></li>
+                <li><b><a href="contest/p4/P4DW1.TXT">P4DW1.MLC</a>/<a href="contest/p4/P4DW1.LOG">LOG</a> 
+                by David Wilkinson - improved Quicksort using 1057 instructions</b></li>
+                <li><b><font face="Times New Roman"><a href="contest/p4/P4RAFA2.TXT">P4RAFA2.MLC</a>/<a href="contest/p4/P4RAFA2.LOG">LOG</a> 
+                by Rafa Pereira - improved Quicksort using 1380 instructions</font></b></li>
+                <li><b><font face="Times New Roman"><a href="contest/p4/P4AN1.TXT">P4AN1.MLC</a>/<a href="contest/p4/P4AN1.LOG">LOG</a> 
+                by Alfred Nykolyn -shell sort sorts 20 elements using 1532 instr.</font></b></li>
+                <li><b><font face="Times New Roman"><a href="contest/p4/P4DSH1.TXT">P4DSH1.MLC</a>/<a href="contest/p4/P4DSH1.LOG">LOG</a> by <a href="http://z390.sourceforge.net/About.htm">Don Higgins</a> <a href="http://www.usf.edu/index.asp">
+                  University of South Florida</a> - bubble sort using 2610 instr.</font></b></li>
+                    </ol>
+                  </li>
+                    <li><b><font face="Times New Roman">Convert display hex characters to 
+                    binary bytes.<br>
+                    Submitted
+                    by <a href="http://mark-dixon.com/">Mark 
+                    Dixon</a> <a href="http://www.uwa.edu.au/">University of 
+                    Western Australia</a></font></b><ol>
+                <li><b><a href="contest/p5/P5DW1.TXT">P5DW1.MLC</a>/<a href="contest/p5/p5dw1.LOG">LOG</a> 
+                by David Wilkinson - using single TROT with truncated table to 
+                save memory</b></li>
+                <li><b><font face="Times New Roman"><a href="contest/p5/P5MM1.TXT">P5MM1.MLC</a>/<a href="contest/p5/P5MM1.LOG">LOG</a> by Melvyn Maltz 
+                -  using TR and PACK</font></b></li>
+                    </ol>
+                  </li>
+                    <li><b><font face="Times New Roman">Given a byte, create 8 EBCDIC zero and one characters 
+                    displaying the individual bits in the byte.<br>
+                    Submitted by
+                    <a href="http://www.naspa.com/files/CDKIT/CD01/2006/1206/T0612011.pdf">
+                    John R. Erhman</a> <a href="http://www.uillinois.edu/">
+                    University of Illinois</a></font></b><ol>
+                <li><b><font face="Times New Roman"><a href="contest/p6/P6RW1.TXT">P6RW1.MLC</a>/<a href="contest/p6/P6RW1.LOG">LOG</a> 
+                by Ray Wong - exactly&nbsp; 5 instructions to convert up to 32 
+                bytes</font></b></li>
+                <li><b><font face="Times New Roman"><a href="contest/p6/P6BR1.TXT">P6BR1.MLC</a>/<a href="contest/p6/P6BR1.LOG">LOG</a> by Bob 
+                Rutledge - 6 register instruction loop and single store</font></b></li>
+                <li><b><font face="Times New Roman"><a href="contest/p6/P6PJF1.TXT">P6PJF1.MLC</a>/<a href="contest/p6/P6PJF1.LOG">LOG</a> by
+                <a href="http://profiles.yahoo.com/pjfarley3">Peter J. Farley</a> 
+                - 5 instruction loop</font></b></li>
+                <li><b><font face="Times New Roman"><a href="contest/p6/P6PL1.TXT">P6PL1.MLC</a>/<a href="contest/p6/P6PL1.LOG">LOG</a> by
+                <a href="http://profiles.yahoo.com/philippe_leite">Philippe 
+                Leite</a> - first solution with 9 instruction loop </font></b></li>
+                    </ol>
+                  </li>
+                    <li><b><font face="Times New Roman">Calculate the result of 311/99 using single precision 
+                    hexadecimal floating point and display the result in decimal 
+                    scientific notation with the correct number of significant 
+                    digits without using CTD conversion macro. Submitted by <a href="http://z390.sourceforge.net/About.htm">Don Higgins</a> <a href="http://www.usf.edu/index.asp">
+                  University of South Florida</a></font></b><ol>
+                <li><b><font face="Times New Roman"><a href="contest/p7/P7EH1.TXT">P7EH1.MLC</a>/<a href="contest/p7/P7EH1.LOG">LOG</a> 
+                by John Erhman - using AW un-normalized add to align bits</font></b></li>
+                <li><b><font face="Times New Roman">?</font></b></li>
+                <li><b><font face="Times New Roman">?</font></b></li>
+                    </ol>
+                  </li>
+                <li><b><font face="Times New Roman">Calculate and display as many significant digits of PI as 
+                possible using extended floating point instructions and display 
+                the result in decimal scientific notation using the CTD and SNAP 
+                macro services.<br>
+                Submitted by <a href="http://z390.sourceforge.net/About.htm">Don Higgins</a> <a href="http://www.usf.edu/index.asp">
+                  University of South Florida</a></font></b><ol>
+                <li><b><font face="Times New Roman"><a href="contest/p8/P8MM1.TXT">P8MM1.MLC</a>/<a href="contest/p8/P8MM1.LOG">LOG</a> 
+                by Melvyn Maltz - using
+                <a href="http://ed-thelen.org/1401Project/Paul'sPageofPi_%20Gregory,Leibniz,andMachin.pdf">
+                Gregory/Leibniz/Machin</a> arctan series</font></b></li>
+                <li><b><font face="Times New Roman"><a href="contest/p8/P8LM1.TXT">P8LM1.MLC</a>/<a href="contest/p8/P8LM1.LOG">LOG</a> 
+                by Lindy Mayfield - using Rexx solution series with all positive 
+                terms</font></b></li>
+                <li><b><font face="Times New Roman">?</font></b></li>
+                    </ol>
+                  </li>
+                    <li><b><font face="Times New Roman">Convert DC PL8'-1234567.90&quot; to DC C&quot;&nbsp; 
+                    ($1,234,567.90)'.<br>
+                    Submitted
+                    by <a href="http://mark-dixon.com/">Mark 
+                    Dixon</a> <a href="http://www.uwa.edu.au/">University of 
+                    Western Australia</a></font></b><ol>
+                <li><b><font face="Times New Roman"><a href="contest/p9/P9MM2.TXT">P9MM2.MLC</a>/<a href="contest/p9/P9MM2.LOG">LOG</a> 
+                by Melvyn Maltz - EDMK with $() improved per Benyamin Dissen</font></b></li>
+                    </ol>
+                  </li>
+                    <li><b><font face="Times New Roman">Code instructions required to convert any unsigned 
+                    128 bit integer value in even/odd 64 bit general purpose 
+                    register pair generated by MLG or MLGR to EBCDIC decimal 
+                    display character format using as few basic instructions as 
+                    possible and no library services such as z390 CTD.&nbsp; 
+                    Note 2**127 has 39 significant digits, extended floating 
+                    point only supports 34 significant digits, and packed 
+                    decimal only supports 31 significant digits.&nbsp; Please 
+                    submit solutions using the <a href="#Download_ZMFACC_macro">
+                    ZMFACC macro</a> for portability across platforms.<br>
+                    Submitted by <a href="http://z390.sourceforge.net/About.htm">Don Higgins</a> <a href="http://www.usf.edu/index.asp">
+                  University of South Florida</a></font></b><ol>
+                <li><b><font face="Times New Roman">
+                <a href="contest/p10/P10MB1.TXT">P10MB1.MLC</a>/<a href="contest/p10/P10MB1.LOG">LOG</a> 
+                by Mats Broberg at SEB using fewer instr. and single ED (Note 
+                execution of this solution on z390 requires latest z390 v1.3.08h 
+                PTF to fix overflow bug)</font></b></li>
+                <li><b><font face="Times New Roman"><a href="contest/p10/P10DSH1.TXT">P10DSH1.MLC</a>/<a href="contest/p10/P10DSH1.LOG">LOG</a> by Don Higgins - using about 27 instructions and no loops</font></b></li>
+                <li><b><font face="Times New Roman">?</font></b></li>
+                <li><b><font face="Times New Roman">?.</font></b></li>
+                    </ol>
+                  </li>
+                    <li>
+                    <p class="MsoNormal">
+                    <font size="3" face="Times New Roman">
+                    <span style="font-size: 12.0pt; font-weight:700">Code two routines: one to 
+                    add 8 byte opcode mnemonic key and table entry address to a 
+                    hash table and another routine to retrieve the address of 
+                    opcode table entry given the 8 byte mnemonic as key.&nbsp; To 
+                    test the efficiency of the two routines a table of the 856 
+                    z390 mnemonic machine instructions and their hex opcodes is 
+                    provided in a copybook <a href="contest/p11/OPCODES.CPY">
+                    here</a>, and a model program using the ZMFACC macro to 
+                    build the table and then fetch all the opcodes 100 times is 
+                    provided <a href="contest/p11/P11MODEL.TXT">here</a>.&nbsp; 
+                    You can run the model program without change to verify it 
+                    works in your environment before adding your code.&nbsp; It 
+                    executes 689,307 instructions in the z390 environment doing 
+                    nothing in the add routine and simply returning the input 
+                    key address via LR in the find routine.&nbsp; See the 
+                    resulting log file <a href="contest/p11/P11MODEL.LOG">here</a>.&nbsp;&nbsp; 
+                    The fastest 3 solutions supporting random access will be 
+                    posted.</span></font><ol>
+                <li>
+                <p class="MsoNormal"><b><a href="contest/p11/P11DW1.TXT">
+                P11DW1.MLC</a>/<a href="contest/p11/P11DW1.LOG">LOG</a> by David 
+                Wilkinson using TR to convert first byte to 0-26 and hash table 
+                size of 35,393.&nbsp; 952,200 total instructions.</b></li>
+                <li>
+                <p class="MsoNormal"><b><font face="Times New Roman">
+                <a href="contest/p11/P11WR1.TXT">P11WR1.MLC</a>/<a href="contest/p11/P11WR1.LOG">LOG</a> 
+                by Werner Rams using linked list to handle duplicates requiring 
+                approximately only 12 * total entries for hash tables.&nbsp; 1876139 
+                total instr.</font></b></li>
+                <li>
+                <p class="MsoNormal"><b><font face="Times New Roman">
+                <a href="contest/p11/P11DSH1.TXT">P11DSH1.MLC</a>/<a href="contest/p11/P11DSH1.LOG">LOG</a> 
+                by Don Higgins using <a href="contest/p11/P11FIND1.TXT">P11FIND1.MLC</a>/<a href="contest/p11/P11FIND1.LOG">LOG</a> to find hash table with no dup keys 
+                (table size found 48011 which has density of &lt; 2% for 856 given 
+                keys). 1041979 total instr.</font></b></li>
+                <li>
+                <p class="MsoNormal"><b><font face="Times New Roman">
+                <a href="contest/p11/P11DSH2.TXT">P11DSH2.MLC</a>/<a href="contest/p11/P11DSH2.LOG">LOG</a> 
+                by Don Higgins using <a href="contest/p11/P11FIND2.TXT">P11FIND2.MLC</a>/<a href="contest/p11/P11FIND2.LOG">LOG</a> to find hash table with 
+                max of 2 duplicate key searches per entry (table size found 3473 
+                which has density of&nbsp; 25% for 856 given keys).&nbsp; This 
+                solution saves 180k storage for 10% increase in instruction 
+                count.).&nbsp; 1181713 total instr.</font></b></li>
+                    </ol>
+                    </li>
+                <li>
+                <p class="MsoNormal">
+                <span style="font-family: Times New Roman; color: navy; font-weight: 700">
+                Calculate the mean and standard deviation for a set of 500000 
+                response times using a precision of .001. Assume each value may 
+                not exceed 1000 seconds- by Tony Matharu.</span><ol>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                <a href="contest/p12/P12DSH1.TXT">P12DSH1.MLC</a>/<a href="contest/p12/P12DSH1.LOG">LOG</a> 
+                by Don Higgins  using BFP&nbsp; to calc
+                <a href="http://crop.unl.edu/claes/SALTA/StandardDeviation.html">
+                standard. deviation for (1, 2, 3, 6) = 1,87</a></span></font></li>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                <a href="contest/p12/P12DSH2.TXT">P12DSH2.MLC</a>/<a href="contest/p12/P12DSH2.LOG">LOG</a> 
+                by Don Higgins using HFP to calc
+                <a href="http://crop.unl.edu/claes/SALTA/StandardDeviation.html">
+                standard. deviation for (1, 2, 3, 6) = 1,87</a></span></font></li>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                <a href="contest/p12/P12DSH3.TXT">P12DSH3.MLC</a>/<a href="contest/p12/P12DSH3.LOG">LOG</a> 
+                by Don Higgins using DFP to calc
+                <a href="http://crop.unl.edu/claes/SALTA/StandardDeviation.html">
+                standard. deviation for (1, 2, 3, 6) = 1,87</a> Note this 
+                solution uses new z390 proto-type millicode for missing SQXTR 
+                instruction.</span></font></li>
+                    </ol>
+                </li>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                Given a decimal number with 2 decimal places representing the 
+                total cost of one or more items and another decimal number representing 
+                the quantify, calculate the unit price with 2 decimal places 
+                rounded half up?&nbsp; Problem was derived from question posted 
+                on <a href="http://www.listserv.uga.edu/archives/asm370.html">
+                IBM Mainframe Assembler-List</a> by Ludmila Koganer.</span></font><ol>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                <a href="contest/p13/P13SC1.TXT">P13SC1.MLC</a>/<a href="contest/p13/P13SC1.LOG">LOG</a> 
+                by <a href="http://www.trainersfriend.com/">Steve Comstock</a> - 
+                using 5 packed decimal instructions</span></font></li>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                <a href="contest/p13/P13DSH1.TXT">P13DSH1.MLC</a>/<a href="contest/p13/P13DSH1.LOG">LOG</a> 
+                by Don Higgins - using 7 DFP decimal floating point instructions</span></font></li>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">?</span></font></li>
+                    </ol>
+                </li>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                Code a macro assembler program to calculate the value of the 
+                Ackerman function a(4,1) = 65533.&nbsp; The Ackerman function 
+                a(m,n) is&nbsp; a recursively defined function.&nbsp; If 
+                m = 0, then a(m, n) = n+1.&nbsp; If 
+                m &gt; 0 and n = 0, then a(m, n) = a(m-1,1).&nbsp; If 
+                m&gt; 0 and n &gt; 0, then a(m,n) = a(m-1,a(m,n-1)).&nbsp; 
+                Submitted by Don Higgins:</span></font><ol>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                <a href="contest/p14/P14MW1.TXT">P14MW1.MLC</a>/<a href="contest/p14/P14MW1.LOG">LOG</a> 
+                by Martin Ward - using PD instructions to calculate solutions up 
+                to 31digits</span></font></li>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                <a href="contest/p14/P14DSH1.TXT">P14DSH1.MLC</a>/<a href="contest/p14/P14DSH1.LOG">LOG</a> 
+                by Don Higgins - using recursive macro code only (limited to 32 
+                bit integers) </span></font></li>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">?</span></font></li>
+                    </ol>
+                </li>
+                <li>
+                <p class="MsoNormal"><b>
+                <font face="Times New Roman" color="#000080">Given a number of 
+                the form 12345678.1234567, divide it by another number of the 
+                same format, rounding to 7 digits after decimal point using 
+                packed decimal.&nbsp; Submitted by Ludmila Koganer,</font> </b>
+                <ol>
+                  <li>
+                  <p class="MsoNormal"><b>
+                  <font face="Times New Roman" color="#000080">
+                  <a href="contest/p15/P15WR1.TXT">P15WR1.MLC</a>/<a href="contest/p15/P15WR1.LOG">LOG</a> 
+                  by Werner Rams using DP and SRP</font></b></li>
+                  <li>
+                  <p class="MsoNormal"><b>
+                  <font face="Times New Roman" color="#000080">
+                  <a href="contest/p15/P15DSH1.TXT">P15DSH1.MLC</a>/<a href="contest/p15/P15DSH1.LOG">LOG</a> 
+                  by Don Higgins using DP, AP, and CP</font> </b> </li>
+                  <li>
+                  <p class="MsoNormal"><b>
+                  <font face="Times New Roman" color="#000080">?</font></b></li>
+                </ol>
+                </li>
+                <li>
+                <p class="MsoNormal"><b>Given 
+                an input number 1 to x.&nbsp; Given a bit array of x bits where 
+                x is multiple of 8. (1) 
+                Code a routine to convert the input number into a bit setting in 
+                the bit array.&nbsp; (2) Code a routine to display the &quot;one&quot; 
+                bits as clrresponding decimal numbers.&nbsp; Submitted by Jim 
+                Connelley.</b><ol>
+                <li>
+                <p class="MsoNormal"><b><a href="contest/p16/P16WR1.TXT">
+                P16WR1.MLC</a>/<a href="contest/p16/P16WR1.LOG">LOG</a> by 
+                Werner Rams using simpler faster bit table for primes from 3 to 
+                97</b></li>
+                <li>
+                <p class="MsoNormal"><b><a href="contest/p16/P16DSH1.TXT">
+                P16DSH1.MLC</a>/<a href="contest/p16/P16DSH1.LOG">LOG</a> by Don 
+                Higgins using SETBIT and TESTBIT macro for primes 3 to 97</b></li>
+                <li>
+                <p class="MsoNormal"><b>?</b></li>
+                <li>
+                <p class="MsoNormal"><b>?</b></li>
+                    </ol>
+                  </li>
+                    <li>
+                <p class="MsoNormal"><b>Given the source character string DC 
+                CL80'LABEL&nbsp;&nbsp;&nbsp;&nbsp; OPCODE PARMS' code a 
+                transparent space compression routine to create compressed 
+                string and a decompression routine to expand the compressed 
+                string back to original.&nbsp; The wining solution will optimize 
+                speed and size.</b><ol>
+                <li>
+                <p class="MsoNormal"><b><a href="contest/p17/P17DW1.TXT">
+                P17DW1.MLC</a>/<a href="contest/p17/p17dw1.LOG">LOG</a> by David 
+                Wilkinson compress and decompress using TRT and CRB for total of 
+                628 instructions.</b></li>
+                <li>
+                <p class="MsoNormal"><b><a href="contest/p17/P17WR1.TXT">
+                P17WR1.MLC</a>/<a href="contest/p17/P17WR1.LOG">LOG</a> by 
+                Werner Rams compresses and decompresses 3 records using CLCL to 
+                find end of duplicate spaces for total of 827 instructions. </b></li>
+                <li>
+                <p class="MsoNormal"><b>?</b></li>
+                    </ol>
+                  </li>
+                    <li>
+                <p class="MsoNormal"><b>Write a benchmark program to calculate 
+                the percent&nbsp; performance improvement to 2 decimal places 
+                when replacing the following loop code: <br>
+                <br>
+                LOOP DS 0H<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BCTR&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                R1,0<br>
+                *** APPLICATION CODE COMMENTED OUT FOR TEST ***<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LTR&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                R1,R1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; JNE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                LOOP<br>
+                <br>
+                with the following optimized loop code using the new z10 compare 
+                and branch opcode code CIJNE:<br>
+                <br>
+                LOOP DS 0H<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BCTR&nbsp;&nbsp;&nbsp; 
+                R1,0<br>
+                *** APPLICATION CODE COMMENTED OUT FOR TEST ***<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CIJNE&nbsp; 
+                R1,0,LOOP<br>
+                <br>
+                The performance improvement in this case comes from replacing 2 
+                instruction cycles fetching a total of 6 bytes with a single 
+                instruction cycle fetching 6 bytes.&nbsp; You can use whatever 
+                interval timing method is available on your system such as TIME 
+                BIN (requires running standalone).&nbsp; The initial values in R1 
+                must be set to perform enough 
+                iterations to reduce the timing error due to interval timer 
+                precision etc.&nbsp; 
+                To code and unit test solution on z390 you will need the latest version 
+                v1.4.01+ with the new z10 opcode support.&nbsp; 
+                To run the real test, you will need an IBM z10 mainframe and updated HLASM.&nbsp; 
+                 
+                </b><ol>
+                <li>
+                <p class="MsoNormal"><b><a href="contest/P18/P18DSH1.TXT">
+                P18DSH1.MLC</a>/<a href="contest/P18/P18DSH1.LOG">LOG</a> - 
+                solution using new DAT.MLC interval timer display showing time 
+                of day JDBC time-stamp format down to nano-seconds, total 
+                instruction counts, and MIPS.&nbsp; Running z390 v1.4.01a on 
+                Intel 2.1 Duo Core chip, the MIP rates were 8.7 and 7.3 for 15% 
+                reduction in MIP rate but there was also an 8% reduction in 
+                elapsed time in nano-seconds using the z10 compare and branch 
+                loop with BCTR, CIJNE versus the BCTR, LTR, JNZ loop.&nbsp; The 
+                2 instruction loop has lower MIP rate but faster execution time 
+                than the 3 instruction loop.</b></li>
+                <li>
+                <p class="MsoNormal"><b>&nbsp;</b></li>
+                <li>
+                <p class="MsoNormal"><b>&nbsp;</b></li>
+                    </ol>
+                  </li>
+                <li>
+                <p class="MsoNormal"><b>Write code to find the last non-blank 
+                character in an 80 byte line of text with the fewest 
+                instructions.</b><ol>
+                <li>
+                <p class="MsoNormal"><b>&nbsp;<a href="contest/p19/P19WR1.TXT">P19WR1.MLC</a>/<a href="contest/p19/p19wr1.LOG">LOG</a> 
+                - by Werner Rams using TRTR executing 28 instructions.&nbsp; 
+                Honorable mention also goes to Steve (S.R.K&nbsp; </b>
+                <span style="font-size: 11.0pt; font-family: Calibri,sans-serif; font-weight: 700">
+                <a href="http://www.mysrk.com/">www.mysrk.com/</a>) for email 
+                suggesting TRTR before Werner submitted complete program the 
+                same day.</span></li>
+                <li>
+                <p class="MsoNormal"><b>&nbsp;</b></li>
+                <li>
+                <p class="MsoNormal"><b>&nbsp;</b></li>
+                    </ol>
+                  </li>
+                    <li>
+                <p class="MsoNormal"><b>&nbsp;Write integer random number 
+                generator and test program to determine the longest sequence 
+                without duplication that it produces for a given seed number.&nbsp; 
+                The longest sequence of non-repeating pseudo-random numbers 
+                wins.</b><ol>
+                <li>
+                <p class="MsoNormal"><b>&nbsp;<a href="contest/p20/P20WR1.TXT">P20WR1</a> 
+                - by Werner Rams using published random number reference (runs 
+                for hours)</b></li>
+                <li>
+                <p class="MsoNormal"><b>&nbsp;</b></li>
+                    </ol>
+                  </li>
+                    <li>
+                    <p class="MsoPlainText"><b>Code a binary search and test it, by 
+                    searching in turn, for all of the elements in a 20 entry 
+                    sorted integer array containing the values (1, 3, 7, 9, 13, 
+                    18, 19, 20, 25, 27, 30, 31, 32, 40, 41, 45, 47, 50, 65, 80) 
+                    plus the following values not in the array: 0, 28, and 99.&nbsp; 
+                    Submitted by David Wilkinson.</b><ol>
+                <li>
+                <p class="MsoPlainText"><b><a href="contest/p21/P21DW1.TXT">
+                P21DW1.MLC</a>/<a href="contest/p21/p21dw1.LOG">LOG</a> - by 
+                David Wilkinson using 1649 instructions</b></li>
+                <li>
+                <p class="MsoPlainText"><b>?</b></li>
+                <li>
+                <p class="MsoPlainText"><b>?</b></li>
+                    </ol>
+                </li>
+                <li>
+                <p class="MsoPlainText"><b><a name="P22">Code fastest instruction sequence to 
+                count bits in an arbitrary string of bytes using currently 
+                available z/Architecture instructions prior to new instruction 
+                coming with z196 which is estimated to be 5 times faster.</a></b><ol>
+                <li>
+                <p class="MsoPlainText"><b><a href="contest/P22/P22FS1.TXT">
+                P22FS1.MLC</a>/<a href="contest/P22/p22fs1.LOG">LOG </a>- by 
+                Fritz Schneider using 120 byte block loop with MVC, TR, AL, and 
+                BXLE for total of 194 instructions for 208 character string.</b></li>
+                <li>
+                <p class="MsoPlainText"><b><a href="contest/P22/P22GH1.TXT">
+                P22GH1.MLC</a>/<a href="contest/P22/P22GH1.LOG">LOG</a> - by 
+                Glen Herrmannsfeldt using loop with LG, SRLG, NGR, AGR, and BXLE 
+                for total of 630 instructions for 208 character string.</b></li>
+                <li>
+                <p class="MsoPlainText"><b><a href="contest/P22/P22MM1.TXT">
+                P22MM1.MLC</a>/<a href="contest/P22/P22MM1.LOG">LOG </a>- by 
+                Melvyn Maltz using single TROO followed by loop with MVC, ASI, 
+                and BXLE for total of 897 instructions for 208 character string.</b></li>
+                <li>
+                <p class="MsoPlainText"><b><a href="contest/P22/P22DSH1.TXT">
+                P22DSH1.MLC</a>/<a href="contest/P22/p22DSH1.LOG">LOG</a> - by 
+                Don Higgins using loop with IC, IC, AR, and BXLE for total of 
+                904 instructions for 208 character string. </b></li>
+                    </ol>
+                <p class="MsoPlainText"><b>Many thanks to David Bond for running 
+                these 4 solutions on a real z10-EC machine with the following 
+                results:</b><p class="MsoPlainText"><b>1) Glen Herrmannsfeldt 
+                0.127 microseconds<br>
+                2) Fritz Schneider 0.254 microseconds<br>
+                3) Don Higgins 0.452 microseconds<br>
+                4) Melvyn Maltz 8.102 microseconds</b><p class="MsoPlainText">
+                <b>This just proves that pipelining and register versus main 
+                memory instruction and data accesses really do matter for 
+                maximum performance on machines with caches etc.</b><p class="MsoPlainText">
+                <b>On 08/06/10 a test version of z390.jar with new POPCNT 
+                instruction was added based on SHARE Presentation on 08/04/10 by 
+                Don Greiner here:</b><p class="MsoPlainText">
+                <b>
+                <a href="http://share.confex.com/share/115/webprogram/Session7034.html">
+                http://share.confex.com/share/115/webprogram/Session7034.html</a>
+                </b><p class="MsoPlainText">
+                <b>Included with this z390 test version are 3 test programs:</b><p class="MsoPlainText">
+                <b>1.&nbsp; TESTINS1.MLC - test assembly of all opcodes 
+                including POPCNT</b><p class="MsoPlainText">
+                <b>2.&nbsp; TESTINS4.MLC - regression test POPCNT instruction 
+                (first of z196 opcodes)</b><p class="MsoPlainText">
+                <b>3.&nbsp; <a href="contest/P22/P22DSH2.TXT">P22DSH2.MLC</a>/<a href="contest/P22/P22DSH2.LOG">LOG</a> - solution to problem #22 using POPCNT 
+                which executes 282 instructions including support for odd bytes 
+                at start and end.&nbsp; The test files including updated java 
+                sources are here:</b><p class="MsoPlainText">
+                <b><a href="http://www.z390.org/test/z390_popcnt_test.zip">
+                http://www.z390.org/test/z390_popcnt_test.zip</a> </b></li>
+                    </ol>
+                  <p class="MsoPlainText">
+                &nbsp;<p class="MsoPlainText"><b>&nbsp;</b><p class="MsoNormal">&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" height="7">
+              <p align="center"><b><a name="Current Problem Category Index">
+              Current Problem Category Index</a></b></td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" height="7">
+              <ul>
+                <li><b>Benchmark Timing - 18</b></li>
+                <li><b>Boolean logic</b></li>
+                <li><b>Branch logic</b></li>
+                <li><b>Comparisons</b></li>
+                <li><b>Compression and de-compression - 17</b></li>
+                <li><b>Converting Data</b><ul>
+                  <li><b>Conversion to display characters - 3, 6, 9, 10</b></li>
+                  <li><b>Conversion of display characters to binary - 5</b></li>
+                </ul>
+                </li>
+                <li><b>Encryption and decryption</b></li>
+                <li><b>File access methods</b></li>
+                <li><b>Floating point calculations</b><ul>
+                  <li><b>Binary Floating Point (BFP)</b></li>
+                  <li><b>Calculate constants - 12&nbsp; (pi, e, golden ratio, 
+                  etc.)</b></li>
+                  <li><b>Decimal Floating Point (DFP) -13</b></li>
+                  <li><b>Extreme precision arithmetic</b></li>
+                  <li><b>Hexadecimal Floating Point (HFP)- 7</b></li>
+                  <li><b>Rounding - 13</b></li>
+                  <li><b>Statistics - 8 (Variance, Standard Deviation, Present 
+                  Value, Interest rate, etc.)</b></li>
+                  <li><b>Trig functions</b></li>
+                </ul>
+                </li>
+                <li><b>Heuristics</b></li>
+                <li><b>Integers (32, 64, 128 bit)</b><ul>
+                  <li><b>Calculate series: Prime numbers, Harmonic numbers, 
+                  Bernoulli Numbers, Fibonacci, Perfect Numbers</b></li>
+                  <li><b>Combinations</b></li>
+                  <li><b>Date math</b></li>
+                  <li><b>Factoring</b></li>
+                </ul>
+                </li>
+                <li><b>Manipulating data structures (add, delete, change, and 
+                find entries in lists, tables, stacks, queues, etc.)</b><ul>
+                  <li><b>Merging</b></li>
+                  <li><b>Searching - 11</b></li>
+                  <li><b>Sorting - 4</b></li>
+                  <li><b>String functions - 19</b></li>
+                  <li><b>Swapping - 1, 2</b></li>
+                </ul>
+                </li>
+                <li><b>Packed Decimal - 13, 15</b></li>
+                <li><b>Random numbers</b></li>
+                <li><b>Recursive functions - 14</b></li>
+                <li><b>Totally useless just for fun</b></li>
+              </ul>
+              </td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" height="3059">
+              <p align="center">
+              <b><font face="Times New Roman">&nbsp; <a name="How_to_submit_a_new_problem">How to submit a 
+              new problem</a></font></b></p>
+              <p>
+              <b><font face="Times New Roman">To submit a new problem for the contest, send a brief 
+              description of the problem along with your name and alma mater to
+              <a href="mailto:don@higgins.net?subject=ZMFACC New Problem for the z390 Mainframe Assembler Coding Contest">
+              ZMFACC Submit Problem</a>.&nbsp; Remember the problem must be 
+              solvable using less than 100 problem state mainframe assembler 
+              instructions.</font></b></p>
+              <p align="center">
+              <b><font face="Times New Roman"><a name="How_to_submit_a_solution_to_a_problem">How to submit a 
+              solution to a problem</a></font></b></p>
+              <p>
+              <b><font face="Times New Roman">To submit a solution for a problem attach the program code in 
+              an ASCII text file format and send it along with your name and 
+              optional alma mater to
+              <a href="mailto:don@higgins.net?subject=ZMFACC Solution for z390 Mainframe Assembler Coding Contest problem">
+              ZMFACC Submit Solution</a>.&nbsp;  All problems must be solvable using 
+              100 or less mainframe problem state instructions.&nbsp;&nbsp; Solutions must be submitted in 
+              the form of a single ASCII&nbsp; text type source program file which can 
+              be assembled, linked, and executed using the latest version of z390 on 
+              Windows or Linux for evaluation by contest judges.&nbsp; Any 
+              z/Architecture problem state instruction omissions or bugs should 
+              be reported via the
+              <a href="http://www.AutomatedSoftwareTools.com/z390/z390_Support_Request_Form.htm">
+              z390 RPI Request Form</a>.&nbsp; The 4 best solutions in the 
+              opinion of the 
+              <a href="#Volunteer_to_help_as_moderator_or_judge">judges</a> (currently me) will be posted on this 
+              contest web page.&nbsp; All solutions submitted will be posted on 
+              the contest group email for discussion by the members.&nbsp; 
+              Originality and timing count!&nbsp; The first 4 different 
+              solutions submitted will be the winners unless different solutions 
+              submitted later are deemed by the judges to warrant ranking in the 
+              top 4.&nbsp; Unless otherwise states, problem goals in order of 
+              importance are execution speed, minimum memory requirements, and 
+              best coding practices.</font></b></p>
+              <p align="center">
+              <b><font face="Times New Roman"><a name="Download_ZMFACC_macro">Download ZMFACC macro for your OS environment</a></font></b></p>
+              <p>
+              <b><font face="Times New Roman">Each solution must use ZMFACC macro calls to define the start 
+              and end of the code, input, and output sections.&nbsp;&nbsp; Click on the link for any of the 
+              <a href="#Current_Solutions">
+              ranked solutions</a> already submitted for 
+              examples such as <a href="contest/p6/P6RW1.TXT">P6RW1.MLC</a>.&nbsp; 
+              The ZMFACC macro is used to isolate the solution code from the 
+              specific operating environment used to assemble, link, and execute 
+              it.&nbsp; The default target operating system environment for the 
+              ZMFACC macro is z390.&nbsp; 
+              The macro now supports the following additional operating system 
+              environments by setting RUNSYS on the first call to ZMFACC as 
+              follows:</font></b></p>
+              <ul>
+                <li><b><font face="Times New Roman"><a href="contest/zmfacc/ZMFACC.TXT">Download ZMFACC macro 
+                source</a> generalized version supporting the following 
+                environments:</font></b><ul>
+                  <li><b><font face="Times New Roman">RUNSYS=390&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - default z390 generates 
+                  ASCII output on log file via WTO and SNAP.</font></b></li>
+                  <li><b><font face="Times New Roman">RUNSYS=MVS - generates EBCDIC output on SYSPRINT via 
+                  WTO and SNAP.</font></b></li>
+                  <li><b><font face="Times New Roman">RUNSYS=ZOS&nbsp; - generates EBCDIC output on SYSPRINT 
+                  via WTO and SNAP.</font></b></li>
+                  <li><b><font face="Times New Roman">RUNSYS=CMS - generates EBCDIC output via WRTERM and 
+                  LINEDIT.</font></b></li>
+                  <li><b><font face="Times New Roman">RUNSYS=VSE&nbsp; - generate EBCDIC output via WTO and 
+                  PDUMP.<br>
+                  If the RUNSYS= keyword is not specified on the first ZMFACC 
+                  macro call, then the target operating system can be specified 
+                  by externally setting global &amp;SYSPARM value via execution 
+                  options.&nbsp; For example, using z390 assembler, you can add 
+                  options &quot;SYSPARM(RUNSYS=MVS)&quot; and SYSMAC(mvs\maclib) to 
+                  override the default 390 option and generate code for 
+                  execution on Hercules MVS 3.8 using the
+                  <a href="index.html#Download_Links">MVS 3.8 macro library</a>.</font></b></li>
+                </ul>
+                </li>
+                <li><b><font face="Times New Roman">For more information on the different operating system 
+                environments for assembler see the following links:</font></b><ul>
+                <li><b><font face="Times New Roman"><a href="http://www.z390.org">z390</a> - 
+                <a href="http://z390.cvs.sourceforge.net/z390/z390/src/">open source Java</a> emulator running under 
+                <a href="http://java.sun.com/javase/6/">J2SE</a> for 
+                Windows and Linux</font></b></li>
+                <li><b><font face="Times New Roman"><a href="http://www.conmicro.cx/hercules/">Hercules</a> - 
+                <a href="http://www.softdevlabs.com/Hercules/hercgui-index.html">open source C</a> emulator for Windows and Linux</font></b><ul>
+                <li><b><font face="Times New Roman"><a href="http://hansen-family.com/mvs/">Hercules MVS 3.8</a> 
+                - thanks to Rafa Pereira for RUNSYS=MVS code</font></b></li>
+                <li><b><font face="Times New Roman"><a href="http://vmcms.freshlinks.net/vm/me.htm">Hercules 
+                VM/370 with CMS</a> - thanks to Chris Langford for RUNSYS=CMS 
+                code</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">
+                    <a href="http://www-03.ibm.com/servers/eserver/zseries/zos/">
+                    z/OS</a> - IBM licensed OS for System z (Use RUNSYS=ZOS uses 
+                same code as MVS)</font></b></li>
+                <li><b><font face="Times New Roman"><a href="http://www.vm.ibm.com/">zVM</a>&nbsp;- IBM licensed OS to run other guest OS's 
+                and 
+                CMS (use RUNSYS=CMS)</font></b></li>
+                <li><b><font face="Times New Roman">
+                    <a href="http://www-03.ibm.com/servers/eserver/zseries/zvse/solutions/">
+                    VSE</a>&nbsp;- IBM licensed Virtual Storage Extended OS (use 
+                RUNSYS=VSE - not 
+                tested yet)</font></b></li>
+                <li><b><font face="Times New Roman"><a href="http://www-03.ibm.com/systems/z/os/linux/">
+                    z/Linux</a> - IBM licensed Linux OS for System z (Since J2SE 
+                and z390 run on <a href="http://www.ubuntu.com/">Ubuntu Linux</a>&nbsp; 
+                for Intel PC's, I assume z390 could be run on z/Linux mainframe 
+                but no testing started 
+                yet?&nbsp; Note z390 Java code is aware of Windows versus Linux 
+                environment and makes some changes such as file separator, 
+                system utilities, and system commands, etc.)</font></b></li>
+              </ul>
+                </li>
+              </ul>
+              <p>
+              <b><font face="Times New Roman">Participants should use the <a href="contest/zmfacc/ZMFACC.TXT">ZMFACC macro</a> to 
+              assemble, link, and execute solutions in their own environment before submitting them.&nbsp; 
+              Submitted solutions should then be portable to all the other 
+              environments with the exception of solutions using newer 
+              problem state instructions or addressing modes not currently supported in some 
+              hardware and software environments.&nbsp; If there is 
+              not a customized ZMFACC macro yet for your environment, please 
+              download the current <a href="contest/zmfacc/ZMFACC.TXT">ZMFACC macro</a>, 
+              customize it to detect and run in your environment, and submit it to
+              <a href="mailto:don@higgins.net?subject=ZMFACC new macro for specific mainframe operating system environment">
+              ZMFACC Submit Macro</a> along with your name and the target environment 
+              it has been tested on for use by other participants.&nbsp; Thanks!</font></b></p>
+              <p align="center">
+              <b><font face="Times New Roman">
+              <a name="Join_contest_email_group">Join the contest email group for discussion of problems and 
+              solutions</a></font></b></p>
+              <p><b><font face="Times New Roman">
+              <a href="http://tech.groups.yahoo.com/group/z390-assembler-contest/">
+              http://tech.groups.yahoo.com/group/z390-assembler-contest/</a>
+              </font></b>
+              </p>
+              <p><b><font face="Times New Roman">This email group is for the use of participants who wish to 
+              discuss problems and solutions.&nbsp; All email posted to this 
+              group is reviewed by moderators to verify it is related to the 
+              contest and is no spam.&nbsp; </font></b></p>
+              <p align="center">
+              <b><font face="Times New Roman"><a name="Volunteer_to_help_as_moderator_or_judge">Volunteer to help part time as a moderator or judge</a></font></b></p>
+              <p>
+              <b><font face="Times New Roman">Send an email to
+              <a href="mailto:don@higgins.net?subject=ZMFACC volunteer to help as meail group moderator or contest solution judge">
+              ZMFACC Volunteer</a> with your name and what you would like to 
+              volunteer for.&nbsp; Several backup moderators for the email group 
+              would be helpful to check for pending posts and keep the mail 
+              flowing.&nbsp; A few contest solution judges willing to evaluate 
+              the relative merits of submitted solutions would also be helpful.&nbsp;
+              </font></b></p>
+              <p align="center">
+              <b><font face="Times New Roman"><a name="What_is_New">What's New Update Log</a></font></b></p>
+              <ul>
+                <li>08/06/10<ul>
+                <li>
+                <b> <a href="contest/P22/P22DSH2.TXT">P22DSH2.MLC</a>/<a href="contest/P22/P22DSH2.LOG">LOG</a></b> by Don Higgins using test version of z390 POPCNT instruction in loop with LG, POPCNT, MSGR, SRLG, AR, BXLE 
+                for total of 282 instructions for 208 character string.&nbsp; 
+                This test version of z390 is based on
+                <b>based on SHARE Presentation on 08/04/10 by Don Greiner here:</b><p class="MsoPlainText">
+                <b>
+                <a href="http://share.confex.com/share/115/webprogram/Session7034.html">
+                http://share.confex.com/share/115/webprogram/Session7034.html</a></b><p class="MsoPlainText">
+                <b>The test version with 3 test programs is here:</b><p class="MsoPlainText">
+                <b>&nbsp;<a href="http://www.z390.org/test/z390_popcnt_test.zip">http://www.z390.org/test/z390_popcnt_test.zip</a>
+                </b><p class="MsoPlainText">
+                <b>For more on problem #22 go <a href="#P22">here.</a></b></li>
+              </ul>
+                <p><b>08/02/10</b><ul>
+                <li>
+                <p class="MsoPlainText"><b><a href="contest/P22/P22FS1.TXT">
+                P22FS1.MLC</a>/<a href="contest/P22/p22fs1.LOG">LOG </a>- by 
+                Fritz Schneider using 120 byte block loop with MVC, TR, AL, and 
+                BXLE for total of 194 instructions for 208 character string.</b></li>
+                <li>
+                <p class="MsoPlainText"><b><a href="contest/P22/P22GH1.TXT">
+                P22GH1.MLC</a>/<a href="contest/P22/P22GH1.LOG">LOG</a> - by 
+                Glen Herrmannsfeldt using loop with LG, SRLG, NGR, AGR, and BXLE 
+                for total of 630 instructions for 208 character string.</b></li>
+                <li>
+                <p class="MsoPlainText"><b><a href="contest/P22/P22MM1.TXT">
+                P22MM1.MLC</a>/<a href="contest/P22/P22MM1.LOG">LOG </a>- by 
+                Melvyn Maltz using single TROO followed by loop with MVC, ASI, 
+                and BXLE for total of 897 instructions for 208 haracter string.</b></li>
+                <li>
+                <p class="MsoPlainText"><b><a href="contest/P22/P22DSH1.TXT">
+                P22DSH1.MLC</a>/<a href="contest/P22/p22DSH1.LOG">LOG</a> - by 
+                Don Higgins using loop with IC, IC, AR, and BXLE for total of 
+                904 instructions for 208 character string. </b></li>
+              </ul>
+                </li>
+                <li><b>07/30/10</b><ul>
+                <li><b>New problem #22 Code fastest instruction sequence to 
+                count bits in an arbitrary string of bytes using currently 
+                available z/Architecture instructions prior to new instruction 
+                coming with z196 which is estimated to be 5 times faster.</b></li>
+              </ul>
+                </li>
+                <li><b>09/21/08</b><ul>
+                <li><b><a href="contest/p11/P11DW1.TXT">P11DW1.MLC</a>/<a href="contest/p11/P11DW1.LOG">LOG</a> 
+                by David Wilkinson using TR to convert first byte to 0-26 and 
+                hash table size of 35,393.&nbsp; 952,200 total instructions.</b></li>
+              </ul>
+                </li>
+                <li><b>08/27/08 </b>
+              <ul>
+                <li><b><a href="contest/p5/P5DW1.TXT">P5DW1.MLC</a>/<a href="contest/p5/p5dw1.LOG">LOG</a> 
+                by David Wilkinson - using single TROT with truncated table to 
+                save memory</b></li>
+              </ul>
+                </li>
+                <li><b>08/14/08</b><ul>
+                <li><b><a href="contest/p21/P21DW1.TXT">P21DW1.MLC</a>/<a href="contest/p21/p21dw1.LOG">LOG</a> 
+                - by David Wilkinson using 1649 instructions</b></li>
+              </ul>
+                </li>
+                <li><b>08/11/08</b><ul>
+                <li><b><a href="contest/p17/P17DW1.TXT">P17DW1.MLC</a>/<a href="contest/p17/p17dw1.LOG">LOG</a> 
+                by David Wilkinson compress and decompress using TRT and CRB for 
+                total of 628 instructions (1st place)</b></li>
+                <li><b>Problem #21 binary search submitted by David Wilkinson.</b></li>
+              </ul>
+                </li>
+                <li><b>08/08/08</b><ul>
+                <li><b><font face="Times New Roman">
+                <a href="contest/p3/P3DW1.TXT">P3DW1.MLC</a>/<a href="contest/p3/P3DW1.LOG">LOG</a> 
+                by David Wilkinson - unpack and TR using 16 byte table for 4 
+                byte parm</font></b></li>
+                <li><b><a href="contest/p4/P4DW1.TXT">P4DW1.MLC</a>/<a href="contest/p4/P4DW1.LOG">LOG</a> 
+                by David Wilkinson - improved Quicksort using 1057 instructions 
+                (2nd place)</b></li>
+              </ul>
+                </li>
+                <li><b>06/09/08</b><ul>
+                <li><b><font face="Times New Roman"><a href="contest/p7/P7EH1.TXT">P7EH1.MLC</a>/<a href="contest/p7/P7EH1.LOG">LOG</a> 
+                by John Erhman - has been updated to remove work-around for AW 
+                since the latsest z390 PTF v1.4.01f now has support for AW and 
+                all the HFP unnormalized floating point instructions.</font></b></li>
+                <li><b><font face="Times New Roman">An email quiz question was 
+                posted about the most efficient way to test if the left most bit 
+                in any mask is on.&nbsp; The solution is to shift the mask 1 bit 
+                right and compare it to the selected bits AND'd with mask.&nbsp; 
+                If the selected bits are high then the high bit must be on.</font></b></li>
+              </ul>
+                </li>
+                <li><b>04/11/08</b><ul>
+                <li><b><a href="contest/p20/P20WR1.TXT">P20WR1</a> - by Werner 
+                Rams using published random number reference (runs for hours)</b></li>
+              </ul>
+                </li>
+                <li><b>03/28/08</b><ul>
+                <li>
+                <p class="MsoNormal"><b>&nbsp;<a href="contest/p19/P19WR1.TXT">P19WR1.MLC</a>/<a href="contest/p19/p19wr1.LOG">LOG</a> 
+                - by Werner Rams using TRTR executing 28 instructions.&nbsp; 
+                Note honorable mention goes to Steve (S.R.K&nbsp; </b>
+                <span style="font-size: 11.0pt; font-family: Calibri,sans-serif; font-weight: 700">
+                <a href="http://www.mysrk.com/">www.mysrk.com/</a>) for email 
+                suggesting TRTR before Werner submitted complete program the 
+                same day.</span></li>
+                    <li>
+                <p class="MsoNormal"><b>New problem #20 - Write integer random 
+                number generator and test program to determine the longest 
+                sequence without duplication that it produces for a given seed 
+                number.&nbsp; The longest sequence of non-repeating 
+                pseudo-random numbers wins.</b></li>
+              </ul>
+                </li>
+                <li><b>03/21/08</b><ul>
+                <li><b><a href="contest/P18/P18DSH1.TXT">P18DSH1.MLC</a>/<a href="contest/P18/P18DSH1.LOG">LOG</a> 
+                - solution using new DAT.MLC interval timer display showing time 
+                of day JDBC time-stamp format down to nano-seconds, total 
+                instruction counts, and MIPS.&nbsp; Running z390 v1.4.01a on 
+                Intel 2.1 Duo Core chip, the MIP rates were 8.7 and 7.3 for 15% 
+                reduction in MIP rate but there was also an 8% reduction in 
+                elapsed time in nano-seconds using the z10 compare and branch 
+                loop with BCTR, CIJNE versus the BCTR, LTR, JNZ loop.&nbsp; The 
+                2 instruction loop has lower MIP rate but faster execution time 
+                than the 3 instruction loop.</b></li>
+                <li><b>Add new problem #19 to find last non-blank character in a 
+                line of text with fewest instructions.</b></li>
+              </ul>
+                </li>
+                <li><b>03/09/08</b><ul>
+                <li><b>Correct my error on the number of instructions executed 
+                for solution to problem 17 by Werner Rams.&nbsp; The correct 
+                number is 827.&nbsp; </b></li>
+              </ul>
+                </li>
+                <li><b>03/07/08</b><ul>
+                <li><b><a href="contest/p17/P17WR1.TXT">P17WR1.MLC</a>/<a href="contest/p17/P17WR1.LOG">LOG</a> 
+                by Werner Rams compresses and decompresses 3 records using CLCL 
+                to find end of duplicate characters for total of 827 
+                instructions. </b></li>
+                <li><b>Add new problem #18 to calculate performance gain using 
+                new z10 compare and branch instructions.</b></li>
+              </ul>
+                </li>
+                <li><b>02/23/08</b><ul>
+                <li><b><a href="contest/p16/P16WR1.TXT">P16WR1.MLC</a>/<a href="contest/p16/P16WR1.LOG">LOG</a> 
+                by Werner Rams using simpler faster bit table for primes from 3 
+                to 97</b></li>
+              </ul>
+                </li>
+                <li><b>02/22/08</b><ul>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                <a href="contest/p12/P12DSH2.TXT">P12DSH2.MLC</a>/<a href="contest/p12/P12DSH2.LOG">LOG</a> 
+                by Don Higgins using HFP to calc
+                <a href="http://crop.unl.edu/claes/SALTA/StandardDeviation.html">
+                standard. deviation for (1, 2, 3, 6) = 1,87</a></span></font></li>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                <a href="contest/p12/P12DSH3.TXT">P12DSH3.MLC</a>/<a href="contest/p12/P12DSH3.LOG">LOG</a> 
+                by Don Higgins using DFP to calc
+                <a href="http://crop.unl.edu/claes/SALTA/StandardDeviation.html">
+                standard. deviation for (1, 2, 3, 6) = 1,87</a></span></font></li>
+                  <li>
+                  <p class="MsoNormal"><b>
+                  <font face="Times New Roman" color="#000080">
+                  <a href="contest/p15/P15WR1.TXT">P15WR1.MLC</a>/<a href="contest/p15/P15WR1.LOG">LOG</a> 
+                  by Werner Rams using DP and SRP to round 15 digit PD</font></b></li>
+                  <li>
+                  <p class="MsoNormal"><b>
+                  <font face="Times New Roman" color="#000080">
+                  <a href="contest/p15/P15DSH1.TXT">P15DSH1.MLC</a>/<a href="contest/p15/P15DSH1.LOG">LOG</a> 
+                  by Don Higgins using DP, AP, and CP</font> to round 15 digit 
+                  PD</b></li>
+                  <li><b><a href="contest/p16/P16DSH1.TXT">P16DSH1.MLC</a>/<a href="contest/p16/P16DSH1.LOG">LOG</a> 
+                  by Don Higgins using SETBIT and TESTBIT macro for primes 3 to 
+                  97</b></li>
+                <li><b>Add new problem #17 to calculate compressing and 
+                decompression routines</b></li>
+              </ul>
+                </li>
+                <li><b>02/05/08</b><ul>
+                <li><b><font face="Times New Roman">
+                <a href="contest/p11/P11WR1.TXT">P11WR1.MLC</a>/<a href="contest/p11/P11WR1.LOG">LOG</a> 
+                by Werner Rams using linked list to handle duplicates requiring 
+                approximately only 12 * number of table entries for hash tables. 1876139 
+                total instr.</font></b></li>
+              </ul>
+                </li>
+                <li><b>01/31/08</b><ul>
+                <li><b>Correct comments on problem #14 solution by Martin Ward.&nbsp; 
+                The solution supports up to 31 digits.</b></li>
+                <li><b>Add <a href="#Current Problem Category Index">Current 
+                Problem Category Index</a> thanks to suggestions from several 
+                participants.</b></li>
+              </ul>
+                </li>
+                <li><b>01/29/08</b><ul>
+                <li><b>Add new problem #15 to calculate 15 digit packed decimal 
+                rounded to 7 decimal places.</b></li>
+                <li><b>Post question about potential usefulness of problem 
+                techniques and suggested categories for additional problems.</b></li>
+                <li><b>Add new problem #16 to store and fetch numbers from bit 
+                array by Jim Connelley.</b></li>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                <a href="contest/p14/P14MW1.TXT">P14MW1.MLC</a>/<a href="contest/p14/P14MW1.LOG">LOG</a> 
+                by Martin Ward - using PD instructions to calculate solutions up 
+                to 15 digits</span></font></li>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                <a href="contest/p14/P14DSH1.TXT">P14DSH1.MLC</a>/<a href="contest/p14/P14DSH1.LOG">LOG</a> 
+                by Don Higgins - using recursive macro code only (limited to 32 
+                bit integers)</span></font></li>
+              </ul>
+                </li>
+                <li><b>01/27/08</b><ul>
+                <li><b>Add new problem #14 to calculate the Ackerman recursive 
+                function a(4,1) = 65533.</b></li>
+              </ul>
+                </li>
+                <li><b>01/26/08</b><ul>
+                <li><b>Correct problem #13 statement to clarify total cost is 
+                for one or more items and quantify is the total number of items 
+                to be divided into total cost to calculate unit price.</b></li>
+                <li><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                <a href="contest/p13/P13DSH1.TXT">P13DSH1.MLC</a>/<a href="contest/p13/P13DSH1.LOG">LOG</a> 
+                by Don Higgins - using 7 DFP decimal floating point instructions</span></font></li>
+              </ul>
+                </li>
+                <li><b>01/25/08</b><ul>
+                <li><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                <a href="contest/p13/P13SC1.TXT">P13SC1.MLC</a>/<a href="contest/p13/P13SC1.LOG">LOG</a> 
+                by <a href="http://www.trainersfriend.com/">Steve Comstock</a> - 
+                using 5 packed decimal instructions</span></font></li>
+              </ul>
+                </li>
+                <li><b>01/24/08</b><ul>
+                <li><b>New problem 13 - </b> <font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                Given a decimal number with 2 decimal places representing the 
+                total cost of an item and another decimal number representing 
+                the quantify, calculate the unit price with 2 decimal places 
+                rounded half up?&nbsp; Problem was derived from question posted 
+                on <a href="http://www.listserv.uga.edu/archives/asm370.html">
+                IBM Mainframe Assembler-List</a> by Ludmila Koganer.&nbsp; I 
+                believe that using Decimal Floating Point may be the most 
+                straight forward using the fewest instructions, but may not be 
+                the most efficient.</span></font></li>
+                <li><b><font face="Times New Roman">
+                <a href="contest/p11/P11DSH2.TXT">P11DSH2.MLC</a>/<a href="contest/p11/P11DSH2.LOG">LOG</a> 
+                by Don Higgins using <a href="contest/p11/P11FIND2.TXT">P11FIND2.MLC</a>/<a href="contest/p11/P11FIND2.LOG">LOG</a> to find hash table with 
+                max of 2 duplicate key searches per entry (table size found 3473 
+                which has density of&nbsp; 25% for 856 given keys).&nbsp; This 
+                solution saves 180k storage for 10% increase in instruction 
+                count.)</font></b></li>
+              </ul>
+                </li>
+                <li><b>01/18/08</b><ul>
+                <li>
+                <p class="MsoNormal"><b><font face="Times New Roman">
+                <a href="contest/p11/P11DSH1.TXT">P11DSH1.MLC</a>/<a href="contest/p11/P11DSH1.LOG">LOG</a> 
+                by Don Higgins using <a href="contest/p11/P11FIND.TXT">P11FIND.MLC</a> to find hash table with no dup keys</font></b></li>
+              </ul>
+                </li>
+                <li><b>01/14/08</b><ul>
+                <li><b><font face="Times New Roman">
+                <a href="contest/p10/P10MB1.TXT">P10MB1.MLC</a>/<a href="contest/p10/P10MB1.LOG">LOG</a> 
+                by Mats Broberg at SEB using fewer instructions and single ED (Note 
+                execution of this solution on z390 requires latest z390 v1.3.08h 
+                PTF to fix overflow bug)</font></b></li>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">
+                <a href="contest/p12/P12DSH1.TXT">P12DSH1.MLC</a>/<a href="contest/p12/P12DSH1.LOG">LOG</a> 
+                by Don Higgins -using BFP&nbsp; to calc
+                <a href="http://crop.unl.edu/claes/SALTA/StandardDeviation.html">
+                standard. deviation for (1, 2, 3, 6) = 1,87</a></span></font></li>
+                <li>
+                <p class="MsoNormal"><font color="#000080">
+                <span style="font-family: Times New Roman; font-weight: 700">?</span></font></li>
+                <li>&nbsp;</li>
+              </ul>
+                </li>
+                <li><b>01/06/08</b><ul>
+                <li><b><a href="contest/p4/P4APN2.TXT">P4APN2.MLC</a>/<a href="contest/p4/P4APN2.LOG">LOG</a> 
+                by Alfred Nykolya - counts sort using 853 instructions</b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">01/01/08</font></b><ul>
+                <li><b><font face="Times New Roman"><a href="contest/p10/P10DSH1.TXT">P10DSH1.MLC</a>/<a href="contest/p4/P4APN2.LOG">LOG</a> 
+                -by Don Higgins - using about 27 instructions and no loops</font></b></li>
+                <li><b><font face="Times New Roman"><a href="contest/p11/P11MODEL.TXT">New problem #11</a> 
+                - Code hash table add and find routines for fast access by Don 
+                Higgins.</font></b></li>
+                <li><b><font face="Times New Roman">
+                <a href="#Current_Solutions">New problem #12</a> - </font>
+                <span style="font-family: Times New Roman; color: navy">
+                Calculate the mean and standard deviation for a set of 500000 
+                response times using a precision of .001. Assume each value may 
+                not exceed 1000 seconds- by Tony Matharu.</span></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">12/30/07</font></b><ul>
+                <li><b><font face="Times New Roman"><a href="contest/p3/P3LKM1.TXT">P3LKM1.MLC</a>/<a href="contest/p3/P3LKM1.LOG">LOG</a> 
+                by Lindy Mayfield - uses loop to convert 4 bytes at a time to 
+                hex</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">12/27/07</font></b><ul>
+                <li><b><font face="Times New Roman"><a href="contest/p8/P8LM1.TXT">P8LM1.MLC</a>/<a href="contest/p8/P8LM1.LOG">LOG</a> 
+                by Lindy Mayfield - using Rexx model solution series with all 
+                positive terms which converges to 33 significant digits in 49 
+                iterations.&nbsp; This solution modified for z390 using CTD 
+                library services to display trial values of Pi and the error 
+                from known value.&nbsp; This solution also uses inline macros LX 
+                and STX to simplify loading and storing extended floating point 
+                values.</font></b></li>
+                <li><b><font face="Times New Roman">New problem #10 - Code instructions required to convert 
+                any unsigned 128 bit integer value in even/odd 64 bit general 
+                purpose register pair generated by MLG or MLGR instruction to 
+                EBCDIC decimal display character format using as few basic 
+                instructions as possible and no library services such as z390 
+                CTD.&nbsp; Note 2**127 has 39 significant digits, extended 
+                floating point only supports 34 significant digits, and packed 
+                decimal only supports 31 significant digits.&nbsp; Please submit 
+                solutions using the <a href="#Download_ZMFACC_macro">ZMFACC 
+                macro</a> for portability across platforms.&nbsp; Submitted by <a href="http://z390.sourceforge.net/About.htm">Don Higgins</a> <a href="http://www.usf.edu/index.asp">
+                  University of South Florida</a></font></b></li>
+                <li><b><font face="Times New Roman"><a href="contest/p4/P4RJ1.TXT">P4RJ1.MLC</a>/<a href="contest/p4/P4RJ1.LOG">LOG</a> 
+                by Mats Broberg, Roland Johansson, and SEB Sweden - improved 
+                version of Quicksort using 685 instructions.</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">12/23/07</font></b><ul>
+                <li><b><font face="Times New Roman"><a href="contest/p8/P8MM1.TXT">P8MM1.MLC</a>/<a href="contest/p8/P8MM1.LOG">LOG</a> 
+                by Melvyn Maltz - using
+                <a href="http://ed-thelen.org/1401Project/Paul'sPageofPi_%20Gregory,Leibniz,andMachin.pdf">
+                Gregory/Leibniz/Machin</a> arctan series with alternating signs 
+                which converges to 33 significant digits in 7&nbsp; iterations.&nbsp; 
+                This solution modified for z390 using CTD library services to 
+                display trail values of Pi and the error from known value.
+                </font></b></li>
+                <li><b><font face="Times New Roman">Update <a href="#Download_ZMFACC_macro">ZMFACC macro</a> 
+                to include all 16 floating point register EQU's indicating pairs</font></b></li>
+                <li><b><font face="Times New Roman"><a href="contest/p4/P4RAFA2.TXT">P4RAFA2.MLC</a>/<a href="contest/p4/P4RAFA2.LOG">LOG</a> 
+                by Rafa Pereira - improved qucksort using 1380 instructions</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">12/21/07</font></b><ul>
+                <li><b><font face="Times New Roman">Update <a href="#Download_ZMFACC_macro">ZMFACC macro</a> 
+                at 8 :00 EST to also display RUNSYS=??? at execution</font></b></li>
+                <li><b><font face="Times New Roman"><a href="contest/p7/P7EH1.TXT">P7EH1.MLC</a>/<a href="contest/p7/P7EH1.LOG">LOG</a> 
+                by John Erhman - using AW un-normalized add to align bits (See 
+                addition of alternate path&nbsp; work around for z390 AW 
+                instruction bug (RPI 767) by DSH plus display of intermediate EH 
+                and DH calculated values via CTD for verification.)</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">12/19/07</font></b><ul>
+                <li><b><font face="Times New Roman">Update <a href="#Download_ZMFACC_macro">ZMFACC macro</a> 
+                at 14:00 EST for Chris Langford and Rafa Pereira changes to correct MVS/ZOS 
+                SNAP headings and areas to be dumped, and truncate text lines to 
+                72.</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">12/18/07 </font></b>
+              <ul>
+                <li><b><font face="Times New Roman"><a href="#Download_ZMFACC_macro">
+                New generalized version of ZMFACC for z390, MVS, z/OS, CMS, and 
+                VSE</a><br>
+                Thanks to Chris Langford for CMS version and Rafa Pereira for 
+                MVS version<br>
+                Updated again at 5 PM EST as follows:</font></b><ul>
+                <li><b><font face="Times New Roman">Fixes for restrictions using IFOX00 per Rafa Pereira</font></b></li>
+                <li><b><font face="Times New Roman">Fixes to re-enable SYSPARM override to set environment 
+                externally, fixes for VSE to set base and save area and exit 
+                via EOJ macro call, and change target system keyword name to 
+                RUNSYS= per Chris Langford</font></b></li>
+              </ul>
+                </li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">12/17/07</font></b><ul>
+                <li><b><font face="Times New Roman"><a href="contest/p4/P4RAFA1.TXT">P4RAFA1.MLC</a>/<a href="contest/p4/P4RAFA1.LOG">LOG</a> 
+                by Rafa Pereira - quicksort of 20 elements using 1659 instr.</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">12/16/07</font></b><ul>
+                <li><b><font face="Times New Roman"><a href="#Download_ZMFACC_macro">
+                Rafa Pereira submitted version of ZMFACC macro tested on 
+                Hercules</a></font></b></li>
+                <li><b><font face="Times New Roman"><a href="#Download_ZMFACC_macro">
+                New generalized version of ZMFACC for z390 and MVS compatible 
+                environments</a></font></b><ul>
+                <li><b><font face="Times New Roman">Updated by Rafa Pereira for use with 
+                <a href="http://cbttape.org/~jmorrison/s370asm/html/tut-mvs-001.html">MVS 3.8 IFOX00</a> 
+                assembler restrictions</font></b></li>
+                <li><b><font face="Times New Roman">Lower case characters cannot be used in labels.</font></b></li>
+                <li><b><font face="Times New Roman">Underscore character &quot;_&quot; cannot be used in labels.</font></b></li>
+                <li><b><font face="Times New Roman">Labels cannot be more than 8 chars in length, including 
+                the prefixing dot if they have one.</font></b></li>
+                <li><b><font face="Times New Roman">Symbols must be declared.
+                </font></b></li>
+                <li><b><font face="Times New Roman">Symbols must appear between apostrophes in AIF 
+                statements: AIF ('&amp;RUNSYS' EQ ...)</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman"><a href="contest/p9/P9MM2.TXT">P9MM2.MLC</a>/<a href="contest/p9/P9MM2.LOG">LOG</a> 
+                by Melvyn Maltz - EDMK with $() improved per Benyamin Dissen</font></b></li>
+              </ul>
+                </li>
+                <li><b><font face="Times New Roman">12/15/07</font></b><ul>
+                  <li><b><font face="Times New Roman"><a href="contest/p9/P9MM1.TXT">P9MM1.MLC</a>/<a href="contest/p9/P9MM1.LOG">LOG</a> 
+                by Melvyn Maltz - EDMK followed by MVI's for $ and ()</font></b></li>
+                  <li><b><font face="Times New Roman"><a href="contest/p4/P4AN1.TXT">P4AN1.MLC</a>/<a href="contest/p4/P4AN1.LOG">LOG</a> 
+                by Alfred Nykolyn -shell sort sorts 20 elements using 1532 instr.</font></b></li>
+                  <li><b><font face="Times New Roman"><a href="contest/p1/P1RAFA1.TXT">P1RAFA1.MLC</a>/<a href="contest/p1/P1RAFA1.LOG">LOG</a> 
+                  by Rafa Pereira - swap 2 fields with 2 MVC's </font></b></li>
+                </ul>
+                </li>
+                <li><b><font face="Times New Roman">12/14/07 </font></b><ul>
+                  <li><b><font face="Times New Roman"><a href="contest/p6/P6BR1.TXT">P6BR1.MLC</a>/<a href="contest/p6/P6BR1.LOG">LOG</a> by Bob 
+                Rutledge - 6 register instruction loop and single store</font></b></li>
+                  <li><b><font face="Times New Roman">Mark Dixon added #9 - convert packed decimal to display 
+                  characters with $ and credit</font></b></li>
+                </ul>
+                </li>
+                <li><b><font face="Times New Roman">12/12/07 </font></b></li>
+                <li><b><font face="Times New Roman">12/11/07</font></b><ul>
+                  <li><b><font face="Times New Roman">Don Higgins added #4 - sort 20 word array</font></b></li>
+                  <li><b><font face="Times New Roman"><a href="contest/p4/P4DSH1.TXT">P4DSH1.MLC</a>/<a href="contest/p4/P4DSH1.LOG">LOG</a> by <a href="http://z390.sourceforge.net/About.htm">Don Higgins</a> <a href="http://www.usf.edu/index.asp">
+                  University of South Florida</a> - bubble sort using 2610 instr.</font></b></li>
+                  <li><b><font face="Times New Roman">Mark Dixon added #5 - convert hex characters to binary</font></b></li>
+                  <li><b><font face="Times New Roman">John Erhman added #6 - convert binary byte to 8 
+                  zero/one characters</font></b></li>
+                  <li><b><font face="Times New Roman"><a href="contest/p5/P5MM1.TXT">P5MM1.MLC</a>/<a href="contest/p5/P5MM1.LOG">LOG</a> by Melvyn Maltz 
+                -  TR and PACK</font></b></li>
+                  <li><b><font face="Times New Roman"><a href="contest/p2/P2MD1.TXT">P2MD1.MLC</a>/<a href="contest/p2/P2MD1.LOG">LOG</a> by <a href="http://mark-dixon.com/">Mark 
+                    Dixon</a> <a href="http://www.uwa.edu.au/">University of 
+                    Western Australia</a> - 3 XR'S (could also be XGR)</font></b></li>
+                  <li><b><font face="Times New Roman"><a href="contest/p6/P6PL1.TXT">P6PL1.MLC</a>/<a href="contest/p6/P6PL1.LOG">LOG</a> by
+                <a href="http://profiles.yahoo.com/philippe_leite">Philippe 
+                Leite</a> - first solution with 9 instruction loop </font></b></li>
+                  <li><b><font face="Times New Roman"><a href="contest/p6/P6RW1.TXT">P6RW1.MLC</a>/<a href="contest/p6/P6RW1.LOG">LOG</a> 
+                by Ray Wong - exactly&nbsp; 5 instructions to convert up to 32 
+                bytes</font></b></li>
+                  <li><b><font face="Times New Roman"><a href="contest/p6/P6PJF1.TXT">P6PJF1.MLC</a>/<a href="contest/p6/P6PJF1.LOG">LOG</a> by
+                <a href="http://profiles.yahoo.com/pjfarley3">Peter J. Farley</a> 
+                - 5 instruction loop</font></b></li>
+                </ul>
+                </li>
+                <li><b><font face="Times New Roman">12/10/07</font></b><ul>
+                  <li><b><font face="Times New Roman"><a href="contest/p1/P1C1.TXT">P1C1.MLC</a>/<a href="contest/p1/P1C1.LOG">LOG</a> by Chris 
+                  - 3 XC instructions</font></b></li>
+                  <li><b><font face="Times New Roman"><a href="contest/p3/P3MM1.TXT">P3MM1.MLC</a>/<a href="contest/p3/P3MM1.LOG">LOG</a> 
+                by Melvyn Maltz 
+                - single TROT (CC3 retry added per Michael Poil)</font></b></li>
+                </ul>
+                </li>
+              </ul>
+              </td>
+            </tr>
+            <tr>
+              <td align="left" valign="top" colspan="3" height="190">
+              <ul>
+                <li><b><a name="Assembler Test LInks">Assembler Test Links</a></b><ul>
+                  <li><b>
+                  <a href="http://sas-crash.homelinux.net/assemblertest.shtml">
+                  Assembler Language Technical Interview</a></b></li>
+                  <li>
+                  <a href="http://www.joelonsoftware.com/articles/GuerrillaInterviewing3.html">
+                  <span style="font-family: Times New Roman; font-weight: 700">
+                  Guerrilla</span><font face="Times New Roman"><b>
+                  Guide to Interviewing by developer Joel Spolsky</b></font></a></li>
+                  <li><b><a href="http://www.iccp.org/iccpnew/outlines.html#11">
+                  ICCP Certification in Systems Programming with free sample 
+                  test download available</a></b></li>
+                  <li><b>
+                  <a href="http://pages.cs.wisc.edu/~smoler/x86text/TOC.lectnotes.html">
+                  Lecture Notes on Assembly Language (for X86 but still useful)</a></b></li>
+                  <li><b>
+                  <a href="http://www.amazon.co.uk/Mainframe-Assembler-Programming-Bill-Qualls/dp/0471249939">
+                  Mainframe Assembler Programming by Bill Qualls</a></b></li>
+                  <li><b><a href="http://tech.groups.yahoo.com/group/PLST/">
+                  Programming Language Skill Tests for C++, COBOL, HLASM, HLA, 
+                  and Java</a></b></li>
+                  <li><b><a href="http://www.bixoft.com/english/hyde.htm">Why 
+                  Learn Assembler</a></b></li>
+                  <li><b><a href="http://www.oreilly.com/catalog/1593270038/">
+                  Write Great Code by Randall Hyde</a></b></li>
+                </ul>
+                </li>
+              </ul>
+              </td>
+            </tr>
+          </table>
+         
+        
+        </table>
+<p align="center"><b>IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS<br>
+&nbsp;are registered trademarks
+&nbsp;of International Business Machines Corporation</b></p>
+
+<p align="center"><b><font face="Times New Roman">&nbsp;<br>
+This page last updated
+<!--webbot bot="Timestamp" S-Type="EDITED" S-Format="%A %B %d, %Y" startspan -->Saturday August 07, 2010<!--webbot bot="Timestamp" i-checksum="59129" endspan -->.&nbsp;&nbsp;
+<a href="mailto:don@higgins.net?subject=Automated Software Tools">Webmaster</a>&nbsp; <br>
+Copyright 2008 Automated Software Tools Corporation<br>
+<br>
+&nbsp; </font></b> </p>
+
+</body>
+
+</html>

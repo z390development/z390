@@ -1,0 +1,68 @@
+         TITLE 'P22DSH1.MLC - Calc total bits in string of bytes'
+*********************************************************************
+* Program ID.  P22DSH1.MLC
+* Author.      Don Higgins.
+* Date.        07/30/10.
+*********************************************************************
+* 08/06/10 CORRECT BUG IN TRANSLATE TABLE FOR 5X FOUND BY TESTINS4
+*********************************************************************
+P22DSH1  ZMFACC CODE,START,NAME='DON HIGGINS'
+         WTO    'COUNT TOTAL BITS IN STRING AND DISPLAY RESULT'
+         CALL   BITCOUNT,(INPUT,LINPUT,COUNT)
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         DC     C'STRING='
+INPUT    DS    0D
+         DC    C'Code fastest instruction sequence to count bits '
+         DC    C'in an arbitrary string of bytes using currently '
+         DC    C'available z/Architecture instructions prior to '
+         DC    C'new instruction coming with z196 which is '
+         DC    C'estimated to be 5 times faster.'
+INPLEN   EQU   *-INPUT
+LINPUT   DC     A(INPLEN)
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         DC    C'TOTAL BIT COUNT ='
+COUNT    DC    F'0'
+         ZMFACC OUTPUT,END
+         LTORG
+         TITLE 'BITCOUNT - COUNT BITS IN STRING'
+BITCOUNT CSECT
+         USING *,R15
+         LM    R3,R5,0(R1)  R3=A(STRING) R4=A(LSTRING) R5=A(COUNT)
+         LA    R6,1         R6=INCRMENT FOR BXLE
+         L     R7,0(R4)     R4=LSTRING
+         LA    R7,0(R7,R3)  R7=A(STRING+LENGTH)                      
+         BCTR  R7,0         R7=A(LAST BYTE IN STRING) FOR BXLE)
+         SR    R8,R8        R8=COUNTER
+         SR    R2,R2        ZERO INDEX REG
+LOOP     EQU   *
+               IC  R2,0(R3) LOAD WORD FROM STRING
+               IC  R2,BYTECNT(R2)
+               AR  R8,R2
+         BXLE  R3,R6,LOOP  
+         ST    R8,0(R5)  STORE FINAL BIT COUNT
+         BR    R14       RETURN
+*                  X0 X1 X2 X3 X4 X5 X6 X7 X8 X9 XA XB XC XD XE XF   X
+BYTECNT  DS    0X
+         DC    AL1(00,01,01,02,01,02,02,03,01,02,02,03,02,03,03,04)  0
+         DC    AL1(01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05)  1
+         DC    AL1(01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05)  2
+         DC    AL1(02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06)  3
+         DC    AL1(01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05)  4
+         DC    AL1(02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06)  5
+         DC    AL1(02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06)  6
+         DC    AL1(03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07)  7
+         DC    AL1(01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05)  8
+         DC    AL1(02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06)  9
+         DC    AL1(02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06)  A
+         DC    AL1(03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07)  B
+         DC    AL1(02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06)  C
+         DC    AL1(03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07)  D
+         DC    AL1(03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07)  E
+         DC    AL1(04,05,05,06,05,06,06,07,05,06,06,07,06,07,07,08)  F
+         END
+
+                       
+
+
