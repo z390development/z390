@@ -16,17 +16,8 @@ class RunSortTests extends z390Test {
     ]
 
     var runOptions = [
-            "SYS390(${basePath('sort')})"
+            "SYS390(${basePath('linklib')})"
     ]
-
-    @BeforeAll
-    void build_sort() {
-        int rc = asml(this.basePath('sort', 'SORT'), *options)
-        this.printOutput()
-        if (rc != 0) {
-            throw new RuntimeException("Unable to assemble SORT")
-        }
-    }
 
     @Test
     void test_TESTSORT() {
