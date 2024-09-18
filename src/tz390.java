@@ -334,7 +334,8 @@ public  class  tz390 {
     * 2024-08-15 AFK #554 Correct OPTABLE(ESA,LIST) output to match HLASM
     * 2024-08-23 AFK #561 Correct OPTABLE(ZOP,LIST) output to match HLASM
     * 2024-09-04 #564 fix invalid argument in String compare
-  	********************************************************
+    * 2024-09-09 AFK #568 Correct OPTABLE(YOP,LIST) output to match HLASM
+    ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
 	/*
@@ -1144,6 +1145,7 @@ public  class  tz390 {
         "80:UNI=UNI",                                     // #503 #554
         "90:z390=z390",                                   // #503 #554
         };                                                // #503
+    int[]    machine_option_nr = null;                    // #568
     String[] machine_option_id = null;                    // #503
     String[] machines_optable = null; // machine's optable// #503
     String[] machine_optable_equivalence =                // #503
@@ -2315,19 +2317,8 @@ public  class  tz390 {
          "EF=LMD,28,280",        //   7030 "EF"    "LMD"      "SS4"  28
          };
      String[]   op_table_YOP =   // Table added for RPI 1209A
-        {"B280=LPP,7,70",   // S,LPP,D1(B1)   RPI 2221
-         "B284=LCCTL,7,70", // S,LCCTL,D1(B1) RPI 2221
-         "B285=LPCTL,7,70", // S,LPCTL,D1(B1) RPI 2221
-         "B286=QSI,7,70",   // S,QSI,D1(B1)   RPI 2221
-         "B287=LSCTL,7,70", // S,LSCTL,D1(B1) RPI 2221
-         "B28E=QCTRI,7,70", // S,QCTRI,D1(B1) RPI 2221
-         "B2A6=CU21,14,140",     //   3350 "B2A6"  "CU21"     "RRE"  14
+        {"B2A6=CU21,14,140",     //   3350 "B2A6"  "CU21"     "RRE"  14
          "B2A7=CU12,14,140",     //   3370 "B2A7"  "CU12"     "RRE"  14
-         "B2E0=SCCTR,14,142",    //   RRE,SCCTR,R1,R2 RPI 2221
-         "B2E1=SPCTR,14,142",    //   RRE,SPCTR,R1,R2 RPI 2221
-         "B2E4=ECCTR,14,142",    //   RRE   B2E4 R1,R2", // RPI 2221
-         "B2E5=EPCTR,14,142",    //   RRE   B2E5 R1,R2", // RPI 2221
-         "B2ED=ECPGA,14,142",    //   RRE   B2ED R1,R2", // RPI 2221
          "B32E=MAER,15,150",     //   3760 "B32E"  "MAER"     "RRF1" 15
          "B32F=MSER,15,150",     //   3770 "B32F"  "MSER"     "RRF1" 15
          "B33E=MADR,15,150",     //   3800 "B33E"  "MADR"     "RRF1" 15
@@ -2402,9 +2393,20 @@ public  class  tz390 {
         {"0104=PTFF,1,10",       //        "0104"  "PTFF"     "E"     1 Z9-1
          "010A=PFPO,1,10",       //     40 "010A"  "PFPO"     "E"     1  RPI 1013
          "B27C=STCKF,7,70",      //        "B27C"  "STCKF"    "S"     7 Z9-2
+         "B280=LPP,7,70",   // S,LPP,D1(B1)   RPI 2221
+         "B284=LCCTL,7,70", // S,LCCTL,D1(B1) RPI 2221
+         "B285=LPCTL,7,70", // S,LPCTL,D1(B1) RPI 2221
+         "B286=QSI,7,70",   // S,QSI,D1(B1)   RPI 2221
+         "B287=LSCTL,7,70", // S,LSCTL,D1(B1) RPI 2221
+         "B28E=QCTRI,7,70", // S,QCTRI,D1(B1) RPI 2221
          "B2B0=STFLE,7,70",      //        "B2B0"  "STFLE"    "S"     7 Z9-3
          "B2B9=SRNMT,7,71",      //   3395 "B2B9"  "SRNMT"    "S"     7 DFP 56
          "B2BD=LFAS,7,72",       //   3395 "B2BD"  "LFAS"     "S"     7 DFP 55
+         "B2E0=SCCTR,14,142",    //   RRE,SCCTR,R1,R2 RPI 2221
+         "B2E1=SPCTR,14,142",    //   RRE,SPCTR,R1,R2 RPI 2221
+         "B2E4=ECCTR,14,142",    //   RRE   B2E4 R1,R2", // RPI 2221
+         "B2E5=EPCTR,14,142",    //   RRE   B2E5 R1,R2", // RPI 2221
+         "B2ED=ECPGA,14,142",    //   RRE   B2ED R1,R2", // RPI 2221
          "B338=MAYLR,15,150",    //        "B338"  "MAYLR"    "RRF1" 15 Z9-4
          "B339=MYLR,15,150",     //        "B339"  "MYLR"     "RRF1" 15 Z9-5
          "B33A=MAYR,15,150",     //        "B33A"  "MAYR"     "RRF1" 15 Z9-6
@@ -3424,6 +3426,7 @@ public void init_option_tables()                                                
     int     i;                                                                                           // #503
     String  entry;                                                                                       // #503
                                                                                                          // #503
+    machine_option_nr = new    int[machine_optable_equivalence.length];                                  // #554 #568
     machine_option_id = new String[machine_optable_equivalence.length];                                  // #503
     machines_optable  = new String[machine_optable_equivalence.length];                                  // #503
     optable_option_nr = new    int[optable_optable_equivalence.length];                                  // #554
@@ -3486,6 +3489,7 @@ public void init_option_tables()                                                
             if (index2 >= optables_optable.length) // invalid index indicates not-found condition        // #503
                {abort_error(41,"Optable not defined for machine definition " + entry);                   // #503
                 }                                                                                        // #503
+            else machine_option_nr[index] = optable_option_nr[index2];                                   // #568
             }                                                                                            // #503
         catch (Exception e)                                                                              // #503
            {abort_error(41,"Error in machine option definition " + machine_optable_equivalence[index] + " - " + e.toString()); // #503
@@ -4788,7 +4792,7 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
                for(int i = 0; i < machine_option_id.length; i++)                   // #503
                   {if(machine_option_id[i].equals(opt_machine))                    // #503
                      {opt_machine_optable = machines_optable[i];                   // #503
-                      opt_optable_optb_nr = i;                                     // #554
+                      opt_optable_optb_nr = machine_option_nr[i];                  // #554 #568
                       break;                                                       // #503
                       }                                                            // #503
                    }                                                               // #503

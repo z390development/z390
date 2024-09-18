@@ -31,6 +31,7 @@ import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Comparator;                                // #568
 import java.util.Date;
 import java.util.Iterator;
 import java.util.TreeSet;
@@ -427,6 +428,7 @@ public  class  az390 implements Runnable {
         * 2024-08-12 #545 Extend generated java doco to include private methods
         * 2024-08-15 AFK #554 Correct OPTABLE(ESA,LIST) output to match HLASM
         * 2024-08-23 AFK #561 Correct OPTABLE(ZOP,LIST) output to match HLASM
+        * 2024-09-09 AFK #568 Correct OPTABLE(YOP,LIST) output to match HLASM
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -1741,9 +1743,9 @@ private void reset_lits(){
 
 
     /** // #500
-     * Lists all menmonics in the selected opcode table
+     * Lists all mnemonics in the selected opcode table
      *
-     * All menmonics from the current opcode table are converted into report entries
+     * All mnemonics from the current opcode table are converted into report entries
      * The report entries are sorted
      * The sorted entries are printed (three on a print line) preceded by a header line
      *
@@ -1900,7 +1902,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                        {if (short_op == 1)      // short opcode                        // #554
                            my_operands="M1,RI2";                                       // #554
                         else                    // full opcode                         // #554
-                           my_operands="RI2";   // mask implied by menmonic            // #554
+                           my_operands="RI2";   // mask implied by mnemonic            // #554
                         }
                     else                                                               // #554
                        {my_operands="R1,RI2";                                          // #554
@@ -1979,7 +1981,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                        {if (short_op == 1)      // short opcode                        // #554
                            my_operands="M1,RI2";                                       // #554
                         else                    // full opcode                         // #554
-                           my_operands="RI2";   // mask implied by menmonic            // #554
+                           my_operands="RI2";   // mask implied by mnemonic            // #554
                         }                                                              // #554
                     else if (tz390.op_trace_type[index]==163)                          // #554
                        {my_operands="R1,RI2";                                          // #554
@@ -2006,7 +2008,8 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     break;
                 case 18:
                     my_format="RXY";                                                   // #500
-                    if(tz390.opt_optable_optb_nr >= 4) // ESA and above                // #554
+                    if(   tz390.opt_optable_optb_nr == 4  // ESA or ZOP use RXE, but   //      #568
+                       || tz390.opt_optable_optb_nr == 5) // YOP ff. revert to RXY     // #554 #568
                        {my_format="RXE";                                               // #554
                         }                                                              // #554
                     if (tz390.op_trace_type[index]==189)
@@ -2023,6 +2026,9 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 20:
                     my_format="RSE";                                                   // #500 #554
                     my_operands="D1(B1),D2(B2)";                                       // #500
+                    if(tz390.opt_optable_optb_nr >= 6) // YOP ff. change to RSY        // #568
+                       {my_format="RSY";                                               // #568
+                        }                                                              // #568
                     if (tz390.op_trace_type[index]==201
                     ||  tz390.op_trace_type[index]==202
                         )
@@ -2095,7 +2101,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     if (short_op == 1)          // short opcode                        // #561
                        my_operands="M1,RI2";                                           // #561
                     else                        // full opcode                         // #561
-                       my_operands="RI2";       // mask implied by menmonic            // #561
+                       my_operands="RI2";       // mask implied by mnemonic            // #561
                     break;
                 case 34:
                     my_format="RRF";                                                   // #500
@@ -2237,6 +2243,11 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                        {my_format="RRF";                                               // #500
                         my_operands="R1,M3,R2";                                        // #500
                         }
+                    if (tz390.op_trace_type[index]==340)                               // #568
+                       {if (my_mnemonic.equals("IDTE"))                                // #568
+                         {my_operands="R1,R3,R2";                                      // #568
+                          }                                                            // #568
+                        }                                                              // #568
                     break;
                 case 55:
                     my_format="SSF";                                                   // #500
@@ -2380,7 +2391,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
             }
     index++;
     }
-    Arrays.sort(report_entries);
+    Arrays.sort(report_entries, new ReportEntryComparator());                      // #568
     // print the array in lines of three entries each                              // #500
     put_prn_line(" "+my_hdr+" "+my_hdr+" "+my_hdr.trim());                         // #500
     index = 0;
@@ -2407,6 +2418,41 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
        {put_prn_line(my_prn_line);                                                 // #500
         }                                                                          // #500
     }
+
+
+
+/**
+ * Comparator for mnemonics to mimic EBCDIC collating sequence
+ * The mnemonic portion occupies the first 8 positions of the ReportEntry
+ * and contains only uppercase characters and digits.
+ * Digits should sort higher than alphabetic characters.
+ */
+public class ReportEntryComparator implements Comparator<String>                   // #568
+ {@Override                                                                        // #568
+  public int compare(String str1, String str2)                                     // #568
+   {// special case: entries consisting of a single space sort first!              // #568
+    if (str1.charAt(0) == ' ') return 1;  // blank entry always smaller            // #568
+    if (str2.charAt(0) == ' ') return -1; // blank entry always smaller            // #568
+    for (int i=0; i<8; i++)                                                        // #568
+     {char c1 = str1.charAt(i);                                                    // #568
+      char c2 = str2.charAt(i);                                                    // #568
+      // if c1 == c2 then we continue on to the next character                     // #568
+      if (c1 != c2)                                                                // #568
+       {if (c1 == ' ') return -1; // Mnemonic 2 is longer                          // #568
+        if (c2 == ' ') return 1;  // Mnemonic 1 is longer                          // #568
+        if (c1 <= '9')                                                             // #568
+         {if (c2 <= '9') return (c1-c2); // compare two digits                     // #568
+          else return 1;                 // digit always larger                    // #568
+          }                                                                        // #568
+        else // c1 is not numeric                                                  // #568
+         {if (c2 <= '9') return -1; // digit always larger                         // #568
+          else return (c1-c2);      // compare two alphabetic chars                // #568
+          }                                                                        // #568
+        }                                                                          // #568
+      }                                                                            // #568
+    return 0; // First 8 characters are equal                                      // #568
+    }                                                                              // #568
+  }                                                                                // #568
 
 
 
