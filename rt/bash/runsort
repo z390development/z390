@@ -6,8 +6,8 @@ cd $(dirname $0)    # set to directory of script - rt/bash
 cd ..               # up to rt
 cd ..               # up to z390
 
-# rebuild sort/SORT, sort/TESTSRT[1-4]
-bash/asml sort/SORT $1 $2 $3 $4 $5
+# copy sort loadmod, assemble test programs
+cp linklib/SORT.390 sort/SORT.390
 bash/asml sort/TESTSRT1 $1 $2 $3 $4 $5
 bash/asml sort/TESTSRT2 $1 $2 $3 $4 $5
 bash/asml sort/TESTSRT3 $1 $2 $3 $4 $5
@@ -113,6 +113,7 @@ if [ "$rc" -ne "0" ]; then
 fi
 
 # done with tests
+if [ -f sort/SORT.390 ]; then rm sort/SORT.390; fi
 
 # if we get here, there were no errors
 echo "Verify all sort tests ok"
