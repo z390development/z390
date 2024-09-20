@@ -14,77 +14,78 @@ rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 pushd %~dps0..\..
 
 rem SORT load module resides in linklib subdirectory!
-set sortlib=linklib
+set linklib=linklib
+set sortlib=sort
 
 rem Assemble test programs
-call bat\ASML %z_TraceMode% sort\TESTSRT1 %1 %2 %3 %4 %5 || goto error
-call bat\ASML %z_TraceMode% sort\TESTSRT2 %1 %2 %3 %4 %5 || goto error
-call bat\ASML %z_TraceMode% sort\TESTSRT3 %1 %2 %3 %4 %5 || goto error
-call bat\ASML %z_TraceMode% sort\TESTSRT4 %1 %2 %3 %4 %5 || goto error
+call bat\ASML %z_TraceMode% %sortlib%\TESTSRT1 %1 %2 %3 %4 %5 || goto error
+call bat\ASML %z_TraceMode% %sortlib%\TESTSRT2 %1 %2 %3 %4 %5 || goto error
+call bat\ASML %z_TraceMode% %sortlib%\TESTSRT3 %1 %2 %3 %4 %5 || goto error
+call bat\ASML %z_TraceMode% %sortlib%\TESTSRT4 %1 %2 %3 %4 %5 || goto error
 
 rem Test 1: TESTSORT = SORT ASCII 21 RECORD SIMPLE SORT
-set SORTIN=sort\TESTSORT.IN[RECFM=FT,LRECL=80]
-set SORTOUT=sort\TESTSORT.OUT[RECMF=FT]
-set SYSIN=sort\TESTSORT.INI
-if exist sort\TESTSORT.OUT erase sort\TESTSORT.OUT
-call bat\EXEC %z_TraceMode% %sortlib%\SORT STATS %1 %2 %3 %4 %5
+set SORTIN=%sortlib%\TESTSORT.IN[RECFM=FT,LRECL=80]
+set SORTOUT=%sortlib%\TESTSORT.OUT[RECMF=FT]
+set SYSIN=%sortlib%\TESTSORT.INI
+if exist %sortlib%\TESTSORT.OUT erase %sortlib%\TESTSORT.OUT
+call bat\EXEC %z_TraceMode% %linklib%\SORT STATS(%sortlib%) SYSERR(%sortlib%) SYSLOG(%sortlib%) %1 %2 %3 %4 %5
 set z_ReturnCode=%ERRORLEVEL%
-copy %sortlib%\SORT.STA sort\SORT1.STA
+rename %sortlib%\SORT.STA SORT1.STA
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: sort failure in sort test 1
                          goto return
                          )
 
 rem Test 2: TESTSRT1/2 TEST ALL KEY TYPES WITH 21 20 byte records
-set SYSUT2=sort\TESTSRT1.IN
-call bat\EXEC %z_TraceMode% sort\TESTSRT1 %1 %2 %3 %4 %5
+set SYSUT2=%sortlib%\TESTSRT1.IN
+call bat\EXEC %z_TraceMode% %sortlib%\TESTSRT1 %1 %2 %3 %4 %5
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: sort failure in sort test 2
                          goto return
                          )
 
 rem Test 3: TESTSRT1/2 TEST ALL KEY TYPES WITH 21 20 byte records
-set SORTIN=sort\TESTSRT1.IN[RECFM=F,LRECL=20]
-set SORTOUT=sort\TESTSRT1.OUT
-set SYSIN=sort\TESTSRT1.INI
-if exist sort\TESTSRT1.OUT erase sort\TESTSRT1.OUT
-call bat\EXEC %z_TraceMode% %sortlib%\SORT STATS %1 %2 %3 %4 %5
+set SORTIN=%sortlib%\TESTSRT1.IN[RECFM=F,LRECL=20]
+set SORTOUT=%sortlib%\TESTSRT1.OUT
+set SYSIN=%sortlib%\TESTSRT1.INI
+if exist %sortlib%\TESTSRT1.OUT erase %sortlib%\TESTSRT1.OUT
+call bat\EXEC %z_TraceMode% %linklib%\SORT STATS(%sortlib%) SYSERR(%sortlib%) SYSLOG(%sortlib%) %1 %2 %3 %4 %5
 set z_ReturnCode=%ERRORLEVEL%
-copy %sortlib%\SORT.STA sort\SORT2.STA
+rename %sortlib%\SORT.STA SORT2.STA
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: sort failure in sort test 3
                          goto return
                          )
 
 rem Test 4: TESTSRT1/2 TEST ALL KEY TYPES WITH 21 20 byte records
-set SYSUT1=sort\TESTSRT1.OUT
-call bat\EXEC %z_TraceMode% sort\TESTSRT2 %1 %2 %3 %4 %5
+set SYSUT1=%sortlib%\TESTSRT1.OUT
+call bat\EXEC %z_TraceMode% %sortlib%\TESTSRT2 %1 %2 %3 %4 %5
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: sort failure in sort test 4 - verify TESTSRT1.OUT
                          goto return
                          )
 
 rem Test 5: TESTSRT3/4 TEST SORTING 100000 USING 1000 REC TABLE
-set SYSUT2=sort\TESTSRT3.IN
-call bat\EXEC %z_TraceMode% sort\TESTSRT3 PARM(100000) %1 %2 %3 %4 %5
+set SYSUT2=%sortlib%\TESTSRT3.IN
+call bat\EXEC %z_TraceMode% %sortlib%\TESTSRT3 PARM(100000) %1 %2 %3 %4 %5
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: sort failure in sort test 5
                          goto return
                          )
 
 rem Test 6: TESTSRT3/4 TEST SORTING 100000 USING 1000 REC TABLE
-set SORTIN=sort\TESTSRT3.IN[RECFM=F,LRECL=4]
-set SORTOUT=sort\TESTSRT3.OUT
-set SYSIN=sort\TESTSRT3.INI
-if exist sort\TESTSRT3.OUT erase sort\TESTSRT3.OUT
-call bat\EXEC %z_TraceMode% %sortlib%\SORT STATS PARM(1000) %1 %2 %3 %4 %5
+set SORTIN=%sortlib%\TESTSRT3.IN[RECFM=F,LRECL=4]
+set SORTOUT=%sortlib%\TESTSRT3.OUT
+set SYSIN=%sortlib%\TESTSRT3.INI
+if exist %sortlib%\TESTSRT3.OUT erase %sortlib%\TESTSRT3.OUT
+call bat\EXEC %z_TraceMode% %linklib%\SORT STATS(%sortlib%) SYSERR(%sortlib%) SYSLOG(%sortlib%) PARM(1000) %1 %2 %3 %4 %5
 set z_ReturnCode=%ERRORLEVEL%
-copy %sortlib%\SORT.STA sort\SORT3.STA
+rename %sortlib%\SORT.STA SORT3.STA
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: sort failure in sort test 6 - verify TESTSRT3.OUT
                          goto return
                          )
 
 rem Test 7: TESTSRT3/4 TEST SORTING 100000 USING 1000 REC TABLE
-set SYSUT1=sort\TESTSRT3.OUT
-call bat\EXEC %z_TraceMode% sort\TESTSRT4 PARM(100000) %1 %2 %3 %4 %5
+set SYSUT1=%sortlib%\TESTSRT3.OUT
+call bat\EXEC %z_TraceMode% %sortlib%\TESTSRT4 PARM(100000) %1 %2 %3 %4 %5
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: sort failure in sort test 7 - verify TESTSRT3.OUT
                          goto return
@@ -95,7 +96,10 @@ goto return
 echo %0 ERROR: Test program failed to assemble. See log and listings for details.
 
 :return
-
+if %z_ReturnCode% EQU 0 if exist %sortlib%\SORT.ERR erase %sortlib%\SORT.ERR
+if %z_ReturnCode% EQU 0 if exist %sortlib%\SORT.LOG erase %sortlib%\SORT.LOG
+if %z_ReturnCode% EQU 0 if exist %sortlib%\SORT.STA erase %sortlib%\SORT.STA
+                        if exist        SORTWK*.TMP erase SORTWK*.TMP
 popd
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 exit /b %z_ReturnCode%

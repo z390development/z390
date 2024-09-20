@@ -1,3 +1,9 @@
+rem
+rem Maintenance note: this procedure leaves trash behind.
+rem after successful execution it should clean up after itself.
+rem When a failure occurs these files should be left in place for diagnostic purposes.
+rem
+
 SET CICSPATH=cics\vsam
 SET PROGRAM=Z390CAT1
 CALL bat\MZ390 %CICSPATH%\%PROGRAM% SYSMAC(%CICSPATH%+MAC) SYSCPY(%CICSPATH%+MAC)
