@@ -34,7 +34,7 @@ set SORTOUT=%sortlib%\TESTSORT.OUT
 set SYSIN=%sortlib%\TESTSORT.INI
 if exist %SORTOUT% erase %SORTOUT%
 set SORTOUT=%SORTOUT%[RECFM=FT]
-rem use bash/ez390 instead of bash/exec so SORT.ERR, SORT.LOG,
+rem use bat\ez390 instead of bat\EXEC so SORT.ERR, SORT.LOG,
 rem and SORT.STA are created in the sort directory
 rem Note: SORT.390 is in linklib, not the sort directory
 call bat\ez390 %z_TraceMode% %sortlib%\SORT %sys390% STATS %1 %2 %3 %4 %5

@@ -113,6 +113,7 @@ fi
 
 # remove residual files from SORT executions
 rm -f sort/SORT.ERR sort/SORT.LOG sort/SORT.STA
+rm -f SORTWK*.TMP
 
 # if we get here, there were no errors
 echo "Verify all sort tests ok"
