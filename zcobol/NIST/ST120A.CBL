@@ -1,0 +1,78 @@
+000100 IDENTIFICATION DIVISION.
+000200 PROGRAM-ID.
+000300     ST120A.
+000400****************************************************************
+000500*                                                              *
+000600*    VALIDATION FOR:-                                          *
+000700*                                                              *
+000800*    "ON-SITE VALIDATION, NATIONAL INSTITUTE OF STD & TECH.     ".
+000900*                                                              *
+001000*    "COBOL 85 VERSION 4.2, Apr  1993 SSVG                      ".
+001100*                                                              *
+001200****************************************************************
+001300*                                                              *
+001400*      X-CARDS USED BY THIS PROGRAM ARE :-                     *
+001500*                                                              *
+001600*        X-55  - SYSTEM PRINTER NAME.                          *
+001700*        X-82  - SOURCE COMPUTER NAME.                         *
+001800*        X-83  - OBJECT COMPUTER NAME.                         *
+001900*                                                              *
+002000****************************************************************
+002100 ENVIRONMENT DIVISION.
+002200 CONFIGURATION SECTION.
+002300 SOURCE-COMPUTER.
+002400     XXXXX082.
+002500 OBJECT-COMPUTER.
+002600     XXXXX083.
+002700 INPUT-OUTPUT SECTION.
+002800 FILE-CONTROL.
+002900     SELECT SORTFILE-1B ASSIGN TO
+003000     XXXXX027.
+003100     SELECT SORTIN-1B ASSIGN TO
+003200     XXXXD001.
+003300     SELECT SORTOUT-1B ASSIGN TO
+003400     XXXXP002.
+003500 DATA DIVISION.
+003600 FILE SECTION.
+003700 SD  SORTFILE-1B
+003800     RECORD CONTAINS 120 CHARACTERS
+003900     DATA RECORD S-RECORD.
+004000 01  S-RECORD.
+004100     02  KEYS-GROUP.
+004200         03  KEY-1 PICTURE 9.
+004300         03  KEY-2 PICTURE 99.
+004400         03  KEY-3 PICTURE 999.
+004500         03  KEY-4 PICTURE 9999.
+004600         03  KEY-5 PICTURE 9(5).
+004700     02  FILLER  PICTURE X(105).
+004800 FD  SORTIN-1B
+004900     BLOCK CONTAINS 10 RECORDS
+005000     LABEL RECORDS ARE STANDARD
+005100C    VALUE OF
+005200C    XXXXX074
+005300C    IS
+005400C    XXXXX075
+005500G    XXXXX069
+005600     DATA RECORD IS INSORT.
+005700 01  INSORT PICTURE X(120).
+005800 FD  SORTOUT-1B
+005900     BLOCK CONTAINS 10 RECORDS
+006000     LABEL RECORD STANDARD
+006100C    VALUE OF
+006200C    XXXXX074
+006300C    IS
+006400C    XXXXX076
+006500G    XXXXX069
+006600     DATA RECORD OUTSORT.
+006700 01  OUTSORT PICTURE X(120).
+006800 PROCEDURE DIVISION.
+006900 SORT-STATEMENT.
+007000     SORT SORTFILE-1B
+007100         ON DESCENDING KEY KEY-1
+007200         ON ASCENDING KEY KEY-2
+007300         ON DESCENDING KEY KEY-3
+007400         ASCENDING KEY-4 KEY-5
+007500       USING SORTIN-1B
+007600       GIVING SORTOUT-1B.
+007700 STOP-RUN-STATEMENT.
+007800     STOP RUN.

@@ -1,0 +1,64 @@
+000100 IDENTIFICATION DIVISION.
+000200 PROGRAM-ID.
+000300     IC105A.
+000400****************************************************************
+000500*                                                              *
+000600*    VALIDATION FOR:-                                          *
+000700*                                                              *
+000800*    "ON-SITE VALIDATION, NATIONAL INSTITUTE OF STD & TECH.     ".
+000900*                                                              *
+001000*    "COBOL 85 VERSION 4.2, Apr  1993 SSVG                      ".
+001100*                                                              *
+001200****************************************************************
+001300*                                                              *
+001400*      X-CARDS USED BY THIS PROGRAM ARE :-                     *
+001500*                                                              *
+001600*        X-55  - SYSTEM PRINTER NAME.                          *
+001700*        X-82  - SOURCE COMPUTER NAME.                         *
+001800*        X-83  - OBJECT COMPUTER NAME.                         *
+001900*                                                              *
+002000****************************************************************
+002100*        THE SUBPROGRAM IC105 HAS TWO OPERANDS IN THE
+002200*    PROCEDURE DIVISION HEADER AND THE ROUTINE CONTAINS
+002300*    FOUR EXIT PROGRAM STATEMENTS.  THE CALLING PROGRAM
+002400*    IS IC103.
+002500 ENVIRONMENT DIVISION.
+002600 CONFIGURATION SECTION.
+002700 SOURCE-COMPUTER.
+002800     XXXXX082.
+002900 OBJECT-COMPUTER.
+003000     XXXXX083.
+003100 DATA DIVISION.
+003200 LINKAGE SECTION.
+003300 77  DN1 PICTURE 999.
+003400 77  DN2 PICTURE S99 COMPUTATIONAL.
+003500 PROCEDURE DIVISION  USING DN1 DN2.
+003600*        THIS SUBPROGRAM CONTANS FOUR EXIT PROGRAM STATEMENTS.
+003700*    REFERENCE  X3.23-1974, SECTION XII, 3.4.
+003800 SECT-IC105-0001 SECTION.
+003900 EXIT-TEST-001.
+004000     IF DN1 IS NOT EQUAL TO 1
+004100          GO TO EXIT-TEST-002.
+004200     MOVE 1 TO DN2.
+004300 EXIT-STATEMENT-001.
+004400     EXIT PROGRAM.
+004500 EXIT-TEST-002.
+004600     IF DN1 IS NOT EQUAL TO 2
+004700          GO TO EXIT-TEST-003.
+004800     MOVE 2 TO DN2.
+004900 EXIT-STATEMENT-002.
+005000     EXIT PROGRAM.
+005100 EXIT-TEST-003.
+005200     IF DN1 NOT EQUAL TO 3
+005300          GO TO EXIT-TEST-004.
+005400     MOVE 3 TO DN2.
+005500 EXIT-STATEMENT-003.
+005600     EXIT PROGRAM.
+005700 EXIT-TEST-004.
+005800     MOVE 4 TO DN2.
+005900     GO TO EXIT-STATEMENT-004.
+006000 EXTRANEOUS-PARAGRAPH.
+006100*        THIS PARAGRAPH IS NEVER EXECUTED.
+006200     MOVE 5 TO DN2.
+006300 EXIT-STATEMENT-004.
+006400     EXIT PROGRAM.
