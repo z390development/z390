@@ -12,6 +12,10 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..\..
+if /I "%1" == "*All" (set zcbl_all=yes
+                      shift /1
+              ) else (set zcbl_all=no)
+
 rem
 rem The following programs compile and link okay
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC102A NOTIME
@@ -34,7 +38,7 @@ CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC214A NOTIME
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC217A NOTIME
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC110M NOTIME
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC113M NOTIME
-
+if /I %zcb_all% NEQ yes goto return
 rem
 rem The following programs compile okay but fail to link
 rem OBIC1A calls OBIC2A and OBIC3A
