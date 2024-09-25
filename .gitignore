@@ -124,6 +124,7 @@ zcobol/demo/java/
 zcobol/demo/vce/
 zcobol/demo/z390/
 zcobol/test/z390/
+zcobol/NIST/*.[mM][lL][cC]
 
 # Generated .mlc files
 cics/TESTBEC1.[mM][lL][cC]
