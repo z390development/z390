@@ -89,6 +89,7 @@ if [ $rc -eq 0 ] || [ $rc -eq 4 ]; then
         fi
     else
         echo "cblcl ERROR: mz390 rc=$rc; see errors in mz390 generated $zFile.BAL/ERR/PRN file(s) and on console"
+        if [ -f "$zFile.OBJ" ]; then rm $zFile.OBJ; fi
     fi
 else
     echo "cblcl ERROR: zc390 rc=$rc; see errors in zc390 generated $zFile.MLC file and on console"
