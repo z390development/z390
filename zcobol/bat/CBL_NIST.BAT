@@ -22,47 +22,75 @@ rem during assembly some zcobol\mac directory is required
 rem for both copy members and macros
 set maclib=zcobol\mac
 set cpylib=zcobol\cpy
-set cblopt=syscpy(+%maclib%\*.MAC+%cpylib%\*.CPY) sysmac(+%maclib%\*.MAC) NOTIME STATS trace(M)
-
-
-
-rem temp test
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\CM101M %cblopt% MCALL
-goto return
-
-
-
-
-
-
+set cblopt=syscpy(+%maclib%\*.MAC+%cpylib%\*.CPY) sysmac(+%maclib%\*.MAC) NOTIME STATS
 
 rem
 rem The following programs compile and link okay
+rem Some programs are compiled out of sequence
+rem that is to avoid linkage issues
+
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC102A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC101A %cblopt%
+
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC104A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC105A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC103A %cblopt%
+
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC107A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC110A %cblopt%
-rem IC109A calls IC110A
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC109A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC106A %cblopt%
+
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC111A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC110A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC109A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC108A %cblopt%
+
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC113A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC117M %cblopt%
+
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC118M %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC117M %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC116M %cblopt%
+
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC202A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC204A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC206A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC211A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC212A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC214A %cblopt%
+
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC217A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC216A %cblopt%
+
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC110M %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC111A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC113M %cblopt%
-if /I %zcbl_all% NEQ yes goto return
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC124A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC126A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC127A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC131A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC133A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC135A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC136A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC137A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC140A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC141A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC210A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC220M %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC239A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC240A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC241A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC248A %cblopt%
+CALL bat\CBLCL %z_TraceMode% zcobol\NIST\OBIC3A %cblopt%
 rem
 rem The following programs compile okay but fail to link
+rem IC114A calls IC115A
+CALL bat\CBLC  %z_TraceMode% zcobol\NIST\IC114A %cblopt%
+rem IC209A calls IC210A
+CALL bat\CBLC  %z_TraceMode% zcobol\NIST\IC209A %cblopt%
+rem IC213A calls IC215A
+CALL bat\CBLC  %z_TraceMode% zcobol\NIST\IC213A %cblopt%
 rem OBIC1A calls OBIC2A and OBIC3A
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\OBIC1A %cblopt%
+CALL bat\CBLC  %z_TraceMode% zcobol\NIST\OBIC1A %cblopt%
+if /I %zcbl_all% NEQ yes goto return
 
 rem
 rem the following programs fail due to various reasons
@@ -85,24 +113,15 @@ CALL bat\CBLCL %z_TraceMode% zcobol\NIST\DB203A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\DB204A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\DB205A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\EXEC85 %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC101A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC103A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC106A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC108A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC112A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC115A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC114A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC116M %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC201A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC203A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC205A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC207A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC208A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC210A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC209A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC215A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC213A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IC216A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IF101A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IF102A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\IF103A %cblopt%
@@ -192,7 +211,6 @@ CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC106A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC107A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC108M %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC109M %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC111A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC112A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC114M %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC115A %cblopt%
@@ -204,21 +222,11 @@ CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC120A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC121M %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC122A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC123A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC124A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC125A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC126A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC127A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC131A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC132A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC133A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC134A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC135A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC136A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC137A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC138A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC139A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC140A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC141A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC170A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC171A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC172A %cblopt%
@@ -236,7 +244,6 @@ CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC206A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC207A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC208A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC209A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC210A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC211A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC214M %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC215A %cblopt%
@@ -244,7 +251,6 @@ CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC216A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC217A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC218A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC219A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC220M %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC221A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC222A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC223A %cblopt%
@@ -258,22 +264,17 @@ CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC235A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC236A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC237A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC238A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC239A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC240A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC241A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC242A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC243A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC244A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC245A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC246A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC247A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC248A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC250A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC251A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC252A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC253A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\NC254A %cblopt%
-CALL bat\CBLCL %z_TraceMode% zcobol\NIST\OBIC3A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\OBIC2A %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\OBNC1M %cblopt%
 CALL bat\CBLCL %z_TraceMode% zcobol\NIST\OBNC2M %cblopt%

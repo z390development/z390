@@ -903,11 +903,11 @@
          AEND
          AIF  ('&PIC_TYPE' EQ 'X'                                      X
                AND '&PIC_VAL' NE '')
-               :&AMP SETA ('&PIC_VAL' FIND '&&')
+               :&AMP SETA ('&PIC_VAL' FIND '&')
                AWHILE (&AMP GT 0)
-                  :&PIC_VAL SETC '&PIC_VAL'(1,&AMP).'&&'.'&PIC_VAL'(&AMX
-               P+1,*)
-                  :&NEXT_AMP SETA ('&PIC_VAL'(&AMP+2,*) FIND '&&')
+                  :&NEW_VAL SETC '&PIC_VAL'(1,&AMP).'&' head+ampersand
+                  :&PIC_VAL SETC '&NEW_VAL'.'&PIC_VAL'(&AMP+1,*) +tail
+                  :&NEXT_AMP SETA ('&PIC_VAL'(&AMP+2,*) FIND '&')
                   AIF (&NEXT_AMP GT 0)
                       :&AMP SETA &AMP+&NEXT_AMP+1
                   AELSE
