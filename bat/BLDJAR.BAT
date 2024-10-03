@@ -35,6 +35,7 @@ goto opt_loop
 rem compile java code and create jar file
 if not exist ".\jar\" mkdir jar
 cd jar
+if exist *.* erase *.* /Q
 
 rem compile z390 java sources to class vm object code
 if /I %z_dbg% EQU Debug (set jvopt=-g) else (set jvopt=-g:none)
