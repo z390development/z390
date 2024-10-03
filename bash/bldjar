@@ -13,7 +13,7 @@ cd ../jar
 
 # compile z390 java sources to class vm object code
 echo "Compiling ../src/*.java into jar directory"
-javac -d . -g:none ../src/*.java
+javac -d . -g:none -source 1.8 -target 1.8 ../src/*.java
 ec=$?
 echo "The exit code of the javac command is $ec"
 if [ $ec -ne 0 ]; then echo "bldjar: Error compiling Java sources"; exit $ec; fi
