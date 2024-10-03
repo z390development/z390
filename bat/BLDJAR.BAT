@@ -19,24 +19,27 @@ pushd %~dps0..
 rem both the compiler javac.exe and jar builder jar.exe must be on sdk path
 rem note you can use current z390.jar with compatible java runtime with sdk
 
-rem unless suppressed, generate javadoc. Ignore any errors
-if /I %1. NEQ Nodocs. (call bat\BLDJVDOC.BAT
-               ) else (shift /1
-                       )
+rem process options
+set z_docs=Y
+set z_dbg=N
+:opt_loop
+if /I %1. EQU . goto options_ok
+if /I %1. EQU Nodocs.  set z_docs=N
+if /I %1. EQU docs.    set z_docs=Y
+if /I %1. EQU Debug .  set z_dbg=Y
+if /I %1. EQU Nodebug. set z_dbg=N
+shift /1
+goto opt_loop
+:options_ok
 
 rem compile java code and create jar file
 if not exist ".\jar\" mkdir jar
-
-erase jar\*.java
-erase jar\*.class
-erase jar\z390.jar
-copy  src\*.java   jar
-copy  src\z390.man jar
 cd jar
+
 rem compile z390 java sources to class vm object code
-if /I %1. EQU Debug. (set jvopt=-g) else (set jvopt=-g:none)
+if /I %z_dbg% EQU Debug (set jvopt=-g) else (set jvopt=-g:none)
 java -version
-javac.exe %jvopt% -source 1.8 -target 1.8 *.java
+javac.exe %jvopt% -d . -source 1.8 -target 1.8 ..\src\*.java
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: Error compiling z390 java sources
                          goto return
@@ -50,7 +53,7 @@ if %z_ReturnCode% NEQ 0 (echo %0 ERROR: Error finding z390 version number
                          )
 
 rem build z390.jar with sdk utility
-jar.exe cmf z390.man z390.jar *.class ..\*.properties
+jar.exe cmf ..\src\Z390.MAN z390.jar *.class ..\*.properties
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: Error creating z390.jar file
                          goto return
@@ -60,10 +63,19 @@ if not exist z390.jar   (echo %0 ERROR: Error z390.jar file failed to be created
                          goto return
                          )
 
+rem back to z390 root dir
 cd ..
-copy jar\z390.jar
-dir z390.jar
-set z_ReturnCode=0
+
+rem unless suppressed, generate javadoc.
+if /I %z_docs% EQU Y call bat\BLDJVDOC.BAT
+if /I %z_docs% EQU Y set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% NEQ 0 goto return
+echo .
+
+if /I %z_docs% EQU Y (set z_msg=z390.jar and javadoc have been created okay
+              ) else (set z_msg=z390.jar has been created okay
+                      )
+if exist z390.jar echo %0 %z_msg%
 
 :return
 popd
