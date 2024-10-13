@@ -68,7 +68,7 @@ rem back to z390 root dir
 cd ..
 
 rem unless suppressed, generate javadoc.
-if /I %z_docs% EQU Y call bat\BLDJVDOC.BAT
+if /I %z_docs% EQU Y call bat\BLDJVDOC.BAT %z_TraceMode%
 if /I %z_docs% EQU Y set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 goto return
 echo .
@@ -76,7 +76,9 @@ echo .
 if /I %z_docs% EQU Y (set z_msg=z390.jar and javadoc have been created okay
               ) else (set z_msg=z390.jar has been created okay
                       )
-if exist z390.jar echo %0 %z_msg%
+if exist jar\z390.jar (copy jar\z390.jar .\z390.jar /B /V /Y
+                       echo %0 %z_msg%
+                       )
 
 :return
 popd
