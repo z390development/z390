@@ -20,6 +20,16 @@ You can check if this is available by running the following command:
     shell> javac -version
     javac 1.8.0_312`   # you should receive a message like this
 
+### Install git
+
+The z390 source code is maintained in a git repository.
+
+To install git on your system, go to https://git-scm.com/downloads
+to download the appropriate version for your system.
+
+You can find a quick reference for some frequently used git commands
+the bottom of this document.
+
 ### Clone the code
 
 Start with a clone of the main repository.
@@ -42,6 +52,10 @@ for more details.
     `bash> ./build.sh`
 
 If the job successfully runs, it means you are ready to start development.
+
+This build procedure invokes the full regression testing script.
+Build and regression testing both can take quite some time.
+Luckily, you do not need to do this very often.
 
 ### Rebuild the JAR
 
