@@ -1,0 +1,6 @@
+noallow
+  optable(ZS3,list)
+  stats
+noloadhigh
+nodump
+notest
