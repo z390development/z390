@@ -11,27 +11,30 @@ if /I "%1" == "tron" (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-if /I %1. == . (set /P z_file=Hit Enter for help or suppply name of mlc file to expand: 
+if /I %1. == . (set /P z_file=Hit Enter for help or supply name of mlc file to expand: 
         ) else (set z_file=%1)
 if /I %z_file%. == . goto help
 :chkfile
 rem convert Unix path notation to Windows before checking the file
 set z_file=%z_file:/=\%
-if exist %z_file%.MLC goto file_ok
-rem if user specified valid extension, strip it off
-if /I %z_file:~-4%. NEQ .MLC. goto help
-set z_file=%z_file:~0,-4%
-if exist %z_file%.MLC goto file_ok
-echo %0 ERROR: %z_file%.MLC was not found
-set z_ReturnCode=16
-goto return
+call bat\fparts.bat %z_TraceMode% %z_file%
+set z_file=%z_fdrv%%z_fpath%%z_fname%
+if exist %z_file%%z_fext% goto file_ok
+rem if extension specified: error because no default applies
+if /I %z_fext%. NEQ . goto notfound
+rem try with default extension of mlc
+set z_fext=.mlc
+if exist %z_file%%z_fext% goto file_ok
+:notfound
+echo Error: Source file %z_file%%z_fext% does not exist
+goto retry
 
 :file_ok
 if exist %z_file%.BAL erase %z_file%.BAL
 if exist %z_file%.ERR erase %z_file%.ERR
 if exist %z_file%.STA erase %z_file%.STA
 if exist %z_file%.TR* erase %z_file%.TR*
-call %~dps0mz390 %z_TraceMode% %z_file% bal noasm sysmac(%z_HomeDir%mac+.) syscpy(%z_HomeDir%mac+.) chksrc(0) chkmac(0) %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0mz390 %z_TraceMode% %z_file%%z_fext% bal noasm sysmac(%z_HomeDir%mac+.) syscpy(%z_HomeDir%mac+.) chksrc(0) chkmac(0) %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 rem any error or warning message has been issued by mz390
 if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (if exist %z_file%.OBJ (erase %z_file%.OBJ)
@@ -45,7 +48,9 @@ exit /b %z_ReturnCode%
 echo .
 echo the MAC.BAT procedure is intended to expand a single assembler program by running the macro processor
 echo .
-set /P z_file=Hit Enter for more help or suppply name of mlc file to expand: 
+:retry
+set z_file=
+set /P z_file=Hit Enter for more help or supply name of mlc file to expand: 
 if /I %z_file%. NEQ . goto chkfile
 
 call %~dps0help %z_TraceMode%
