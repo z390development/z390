@@ -1021,6 +1021,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#install-git" class="md-nav__link">
+    Install git
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#clone-the-code" class="md-nav__link">
     Clone the code
   </a>
@@ -1207,6 +1214,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#install-git" class="md-nav__link">
+    Install git
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#clone-the-code" class="md-nav__link">
     Clone the code
   </a>
@@ -1338,6 +1352,12 @@ project. For how to contribute to the documentation, see
 <div class="highlight"><pre><span></span><code>shell&gt; javac -version
 javac 1.8.0_312`   # you should receive a message like this
 </code></pre></div>
+<h3 id="install-git">Install git</h3>
+<p>The z390 source code is maintained in a git repository.</p>
+<p>To install git on your system, go to https://git-scm.com/downloads
+to download the appropriate version for your system.</p>
+<p>You can find a quick reference for some frequently used git commands
+the bottom of this document.</p>
 <h3 id="clone-the-code">Clone the code</h3>
 <p>Start with a clone of the main repository.</p>
 <div class="highlight"><pre><span></span><code>shell&gt; git clone https://github.com/z390development/z390.git
@@ -1355,6 +1375,9 @@ for more details.</p>
 </div>
 </div>
 <p>If the job successfully runs, it means you are ready to start development.</p>
+<p>This build procedure invokes the full regression testing script.
+Build and regression testing both can take quite some time.
+Luckily, you do not need to do this very often.</p>
 <h3 id="rebuild-the-jar">Rebuild the JAR</h3>
 <p>You can just recompile the JAR without running the full build job by running
 the bldjar script.</p>
@@ -1775,7 +1798,7 @@ git documentation:https://git-scm.com/doc</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.2-8-g407fc14"}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.fcfe8b6d.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": "v1.8.2-9-gee3ad6b"}</script>
     
     
       <script src="../../assets/javascripts/bundle.b1047164.min.js"></script>
