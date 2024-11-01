@@ -423,7 +423,7 @@ if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
 if %1. NEQ . goto return
 
 rem  Machine ARCH-7 - equivalent of Optable(ZS3)
-:ARCH-6
+:ARCH-7
 call rt\bat\RUNOPTABLE %z_TraceMode% machine ARCH-7 ZS3
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
