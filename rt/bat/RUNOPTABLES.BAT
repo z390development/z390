@@ -142,6 +142,27 @@ if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . if /I %1. NEQ /Q. goto return
 
+rem  Optable Z10 - Synonym of ZS4
+:Z10
+if %1. NEQ . if /I %1. EQU /Q. goto ZS4
+call rt\bat\RUNOPTABLE %z_TraceMode% optable Z10
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         set err_optable=%err_optable% Z10
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . if /I %1. NEQ /Q. goto return
+
+rem  Optable ZS4 - Synonym of Z10
+:ZS4
+call rt\bat\RUNOPTABLE %z_TraceMode% optable ZS4
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         set err_optable=%err_optable% ZS4
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . if /I %1. NEQ /Q. goto return
+
 rem  Optable uni **!! comparison to be enabled when optable(uni) has been fixed **!!
 :uni
 call rt\bat\RUNOPTABLE %z_TraceMode% optable UNI *None
@@ -423,12 +444,52 @@ if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
 if %1. NEQ . goto return
 
 rem  Machine ARCH-7 - equivalent of Optable(ZS3)
-:ARCH-6
+:ARCH-7
 call rt\bat\RUNOPTABLE %z_TraceMode% machine ARCH-7 ZS3
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
                          set err_machine=%err_machine% ARCH-7
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . goto return
+
+rem  Machine z10 - equivalent of Optable(ZS4)
+:machine_z10
+call rt\bat\RUNOPTABLE %z_TraceMode% machine z10 ZS4
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         set err_machine=%err_machine% z10
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . goto return
+
+rem  Machine zSeries-4 - equivalent of Optable(ZS4)
+:zSeries-4
+call rt\bat\RUNOPTABLE %z_TraceMode% machine zSeries-4 ZS4
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         set err_machine=%err_machine% zSeries-4
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . goto return
+
+rem  Machine ZS-4 - equivalent of Optable(ZS4)
+:ZS-4
+call rt\bat\RUNOPTABLE %z_TraceMode% machine ZS-4 ZS4
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         set err_machine=%err_machine% ZS-4
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . goto return
+
+rem  Machine ARCH-8 - equivalent of Optable(ZS4)
+:ARCH-8
+call rt\bat\RUNOPTABLE %z_TraceMode% machine ARCH-8 ZS4
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         set err_machine=%err_machine% ARCH-8
                          if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 
