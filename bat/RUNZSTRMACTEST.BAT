@@ -43,7 +43,7 @@ if %z_ReturnCode% GTR 0 (set z_ReturnCode=8
                          goto return
                          )
 
-echo Regen ZSTRMAC2 using mz390 support to ver zstrmac2.txt = mlc
+echo Regen ZSTRMAC2 using mz390 support to ver ZSTRMAC2.TXT = MLC
 set SYSUT1=rt\test\ZSTRMAC2.ZSM 
 set SYSUT2=rt\test\ZSTRMAC2.MLC 
 call bat\MZ390      %z_TraceMode% rt\test\ZSTRMAC2.ZSM NOASM NOTIMING STATS || goto error

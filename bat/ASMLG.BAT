@@ -1,5 +1,5 @@
 @if /I "%1" == "tron" (echo on) else (echo off)
-rem asmlg assemble, link, and go from mlc to 390 execution
+rem asmlg assemble, link, and go from MLC to 390 execution
 
 setlocal
 if /I "%1" == "tron" (set z_TraceMode=tron
@@ -11,7 +11,7 @@ if /I "%1" == "tron" (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-if /I %1. == . (set /P z_file=Hit Enter for help or supply name of mlc file to assemble, link, and execute: 
+if /I %1. == . (set /P z_file=Hit Enter for help or supply name of MLC file to assemble, link, and execute: 
         ) else (set z_file=%1)
 if /I %z_file%. == . goto help
 :chkfile
@@ -22,8 +22,8 @@ set z_file=%z_fdrv%%z_fpath%%z_fname%
 if exist %z_file%%z_fext% goto file_ok
 rem if extension specified: error because no default applies
 if /I %z_fext%. NEQ . goto notfound
-rem try with default extension of mlc
-set z_fext=.mlc
+rem try with default extension of MLC
+set z_fext=.MLC
 if exist %z_file%%z_fext% goto file_ok
 :notfound
 echo Error: Source file %z_file%%z_fext% does not exist
@@ -70,7 +70,7 @@ echo the ASMLG.BAT procedure is intended to assemble, link, and execute a single
 echo .
 :retry
 set z_file=
-set /P z_file=Hit Enter for more help or supply name of mlc file to assemble, link, and execute: 
+set /P z_file=Hit Enter for more help or supply name of MLC file to assemble, link, and execute: 
 if /I %z_file%. NEQ . goto chkfile
 
 call %~dps0help %z_TraceMode%
