@@ -169,7 +169,7 @@ call rt\bat\RUNOPTABLE %z_TraceMode% optable UNI *None
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
-                         set err_optable=%err_optable% uni
+                         set err_optable=%err_optable% UNI
                          if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . if /I %1. NEQ /Q. goto return
 
