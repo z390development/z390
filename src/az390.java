@@ -429,6 +429,7 @@ public  class  az390 implements Runnable {
         * 2024-08-15 AFK #554 Correct OPTABLE(ESA,LIST) output to match HLASM
         * 2024-08-23 AFK #561 Correct OPTABLE(ZOP,LIST) output to match HLASM
         * 2024-09-09 AFK #568 Correct OPTABLE(YOP,LIST) output to match HLASM
+        * 2024-10-13 AFK #573 Correct OPTABLE(Z9,LIST)  output to match HLASM
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -1924,6 +1925,16 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                         else if (tz390.op_name[index].equals("PALB"))
                            {my_operands="";                                            // #554
                             }                                                          // #554
+                        else if (tz390.op_name[index].equals("CUTFU")                  // #573
+                             ||  tz390.op_name[index].equals("CUUTF")                  // #573
+                             ||  tz390.op_name[index].equals("CU12")                   // #573
+                             ||  tz390.op_name[index].equals("CU21")                   // #573
+                             ||  tz390.op_name[index].equals("SSKE"))                  // #573
+                           {if (tz390.opt_optable_optb_nr >= 7) // Z9 and above        // #573
+                               {my_format="RRF";                                       // #573
+                                my_operands="R1,R2<,M3>";                              // #573
+                                }                                                      // #573
+                            }                                                          // #573
                         }
                     else if (tz390.op_trace_type[index]==142)
                        {if (tz390.op_name[index].equals("EFPC")
@@ -1936,13 +1947,18 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                            {my_operands="R1";                                          // #500
                             }
                         }
-    //**!!          else if (tz390.op_trace_type[index]==143)
-    //**!!             {if (!tz390.opt_optable.equals("ZOP")                           // #500
-    //**!!              &&  !tz390.opt_optable.equals("YOP")                           // #500
-    //**!!                  )                                                          // #500
-    //**!!                 {entry=entry+"R1,R2<,M3>";                                  // #500
-    //**!!                  }                                                          // #500
-    //**!!              }
+                    else if (tz390.op_trace_type[index]==143)                          // #573
+                       {if (tz390.op_name[index].equals("TROO")                        // #573
+                        ||  tz390.op_name[index].equals("TROT")                        // #573
+                        ||  tz390.op_name[index].equals("TRTO")                        // #573
+                        ||  tz390.op_name[index].equals("TRTT")                        // #573
+                            )                                                          // #573
+                           {if (tz390.opt_optable_optb_nr >= 7) // Z9 and above        // #573
+                               {my_format="RRF";                                       // #573
+                                my_operands="R1,R2<,M3>";                              // #573
+                                }                                                      // #573
+                            }                                                          // #573
+                        }                                                              // #573
                     else if (tz390.op_trace_type[index]==144)
                        {if (tz390.op_name[index].equals("ESEA")
                         ||  tz390.op_name[index].equals("EPAIR")
@@ -1959,6 +1975,13 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                                  )
                            {my_operands="";                                            // #500
                             }                                                          // #500
+                        else if (tz390.op_name[index].equals("CU14")                   // #573
+                             ||  tz390.op_name[index].equals("CU24"))                  // #573
+                           {if (tz390.opt_optable_optb_nr >= 7) // Z9 and above        // #573
+                               {my_format="RRF";                                       // #573
+                                my_operands="R1,R2<,M3>";                              // #573
+                                }                                                      // #573
+                            }                                                          // #573
                         }
                     else if (tz390.op_trace_type[index]==147)
                        {my_operands="R1";                                              // #500
@@ -1983,6 +2006,10 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                         else                    // full opcode                         // #554
                            my_operands="RI2";   // mask implied by mnemonic            // #554
                         }                                                              // #554
+                    else if (tz390.op_trace_type[index]==160                           // #573
+                         ||  tz390.op_trace_type[index]==161)                          // #573
+                       {my_operands="R1,I2";                                           // #573
+                        }                                                              // #573
                     else if (tz390.op_trace_type[index]==163)                          // #554
                        {my_operands="R1,RI2";                                          // #554
                         }                                                              // #554
@@ -2077,6 +2104,9 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 30:
                     my_format="RRF";                                                   // #500
                     my_operands="R1,R3,R2,M4";                                         // #554
+                    if (tz390.op_trace_type[index]==301)                               // #573
+                       {my_operands="R1,M3,R2,M4";                                     // #573
+                        }                                                              // #573
                     break;
                 case 31:
                     my_format="SS";                                                    // #500
@@ -2124,11 +2154,11 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 36:
                     // Alternate formats have mnemonics ending in 'A'
                     if (my_mnemonic.substring(my_mnemonic.length()-1).equals("A"))     // #500
-                       {my_format="RRF";                                               // #500
+                       {my_format="RRF";                                               // #500 #573
                         my_operands="R1,R2,R3,M4";                                     // #500
                         }
                     else
-                       {my_format="RRR";                                               // #500
+                       {my_format="RRF";                                               // #500 #573
                         my_operands="R1,R2,R3";                                        // #500
                         }
                     break;
