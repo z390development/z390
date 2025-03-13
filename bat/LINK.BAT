@@ -11,7 +11,7 @@ if /I "%1" == "tron" (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-if /I %1. == . (set /P z_file=Hit Enter for help or supply name of obj file to link: 
+if /I %1. == . (set /P z_file=Hit Enter for help or supply name of OBJ file to link: 
         ) else (set z_file=%1)
 if /I %z_file%. == . goto help
 :chkfile
@@ -23,7 +23,7 @@ if exist %z_file%%z_fext% goto file_ok
 rem if extension specified: error because no default applies
 if /I %z_fext%. NEQ . goto notfound
 rem try with default extension of obj
-set z_fext=.obj
+set z_fext=.OBJ
 if exist %z_file%%z_fext% goto file_ok
 :notfound
 echo Error: Source file %z_file%%z_fext% does not exist
@@ -51,7 +51,7 @@ echo the LINK.BAT procedure is intended to link a single program
 echo .
 :retry
 set z_file=
-set /P z_file=Hit Enter for more help or supply name of obj file to link: 
+set /P z_file=Hit Enter for more help or supply name of OBJ file to link: 
 if /I %z_file%. NEQ . goto chkfile
 
 call %~dps0help %z_TraceMode%
