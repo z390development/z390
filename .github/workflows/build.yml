@@ -25,7 +25,7 @@ jobs:
       - name: Build z390 distribution
         run: bash/blddist
       - name: Save the distribution
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dist
           path: ./dist/z390_${{ steps.version.outputs.VERSION }}.zip
@@ -40,7 +40,7 @@ jobs:
           distribution: 'temurin'
           java-version: '8'
       - name: get dist artefact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: dist
       - name: Install dist and run tests
@@ -64,7 +64,7 @@ jobs:
           distribution: 'temurin'
           java-version: '8'
       - name: get dist artefact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: dist
       - name: Install dist and run demos
@@ -86,7 +86,7 @@ jobs:
       - run-windows-demo
     steps:
       - name: get dist artefact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: dist
       - name: release
