@@ -68,7 +68,7 @@ rem back to z390 root dir
 cd ..
 
 rem unless suppressed, generate javadoc.
-if /I %z_docs% EQU Y call bat\BLDJVDOC.BAT
+if /I %z_docs% EQU Y call bat\BLDJVDOC.BAT %z_TraceMode%
 if /I %z_docs% EQU Y set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 goto return
 echo .
