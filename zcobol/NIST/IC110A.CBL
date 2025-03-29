@@ -1,0 +1,69 @@
+000100 IDENTIFICATION DIVISION.
+000200 PROGRAM-ID.
+000300     IC110A.
+000400****************************************************************
+000500*                                                              *
+000600*    VALIDATION FOR:-                                          *
+000700*                                                              *
+000800*    "ON-SITE VALIDATION, NATIONAL INSTITUTE OF STD & TECH.     ".
+000900*                                                              *
+001000*    "COBOL 85 VERSION 4.2, Apr  1993 SSVG                      ".
+001100*                                                              *
+001200****************************************************************
+001300*                                                              *
+001400*      X-CARDS USED BY THIS PROGRAM ARE :-                     *
+001500*                                                              *
+001600*        X-55  - SYSTEM PRINTER NAME.                          *
+001700*        X-82  - SOURCE COMPUTER NAME.                         *
+001800*        X-83  - OBJECT COMPUTER NAME.                         *
+001900*                                                              *
+002000****************************************************************
+002100*        THE SUBPROGRAM IC110 IS THE SECOND SUBPROGRAM IN A
+002200*    SEQUENCE OF CALLS WHICH START IN THE MAIN PROGRAM IC108.
+002300*    THIS SUBPROGRAM CALLS IC111 WITH OPERANDS IN THE LINKAGE
+002400*    SECTION AND IN THE WORKING-STORAGE SECTION.  THE SUBPROGRAM
+002500*    IC110 IS CALLED BY IC109.
+002600 ENVIRONMENT DIVISION.
+002700 CONFIGURATION SECTION.
+002800 SOURCE-COMPUTER.
+002900     XXXXX082.
+003000 OBJECT-COMPUTER.
+003100     XXXXX083.
+003200 INPUT-OUTPUT SECTION.
+003300 FILE-CONTROL.
+003400     SELECT PRINT-FILE ASSIGN TO
+003500     XXXXX055.
+003600 DATA DIVISION.
+003700 FILE SECTION.
+003800 FD  PRINT-FILE.
+003900 01  PRINT-REC PICTURE X(120).
+004000 01  DUMMY-RECORD PICTURE X(120).
+004100 WORKING-STORAGE SECTION.
+004200 77  WS2 PICTURE X.
+004300 LINKAGE SECTION.
+004400 01  GRP-01.
+004500     02  SUB-CALLED.
+004600         03  DN1 PICTURE X(6).
+004700         03  DN2 PICTURE X(6).
+004800         03  DN3 PICTURE X(6).
+004900     02  TIMES-CALLED.
+005000         03  DN4 PICTURE S999.
+005100         03  DN5 PICTURE S999.
+005200         03  DN6 PICTURE S999.
+005300     02  SPECIAL-FLAGS.
+005400         03  DN7 PICTURE X.
+005500         03  DN8 PICTURE X.
+005600         03  DN9 PICTURE X.
+005700 01  LS1 PICTURE X.
+005800 PROCEDURE DIVISION USING LS1 GRP-01.
+005900 SECT-IC110-0001 SECTION.
+006000 PARA-IC110.
+006100     MOVE "IC110A" TO DN2.
+006200     MOVE SPACE TO WS2.
+006300     CALL "IC111A" USING LS1 GRP-01 WS2.
+006400     MOVE WS2 TO DN7.
+006500     MOVE LS1 TO DN8.
+006600     ADD 1 TO DN5.
+006700     MOVE "B" TO LS1.
+006800 EXIT-IC110.
+006900     EXIT PROGRAM.
