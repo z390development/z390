@@ -336,6 +336,7 @@ public  class  tz390 {
     * 2024-09-04 #564 fix invalid argument in String compare
     * 2024-09-09 AFK #568 Correct OPTABLE(YOP,LIST) output to match HLASM
     * 2024-10-13 AFK #573 Correct OPTABLE(Z9,LIST)  output to match HLASM
+	* 2025-03-18 AFK #602 Correct OPTABLE(ZS4,LIST) output to match HLASM
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -2575,13 +2576,14 @@ public  class  tz390 {
          "E55C=CHSI,51,392",     //    440 "E55C"  "CHSI"     "SIL"  51 RPI 817
          "E55D=CLFHSI,51,392",   //    450 "E55D"  "CLFHSI"   "SIL"  51 RPI 817
          "EB4C=ECAG,20,203",     //    460 "EB4C"  "ECAG"     "RSY"  20 RPI 817
-		 "EB17=STCCTM,20,201",   //  RPI 2225 2226
          "EB6A=ASI,21,211",      //    470 "EB6A"  "ASI"      "SIY"  21 RPI 817
          "EB6E=ALSI,21,211",     //    480 "EB6E"  "ALSI"     "SIY"  21 RPI 817
          "EB7A=AGSI,21,212",     //    490 "EB7A"  "AGSI"     "SIY"  21 RPI 817
          "EB7E=ALGSI,21,212",    //    500 "EB7E"  "ALGSI"    "SIY"  21 RPI 817
          "EC54=RNSBG,52,400",    //    510 "EC54"  "RNSBG"    "RIE8" 52 RPI 817
          "EC54T=RNSBGT,52,400;*Extended",  //    520 "EC54T" "RNSBGT"   "RIE8" 52 RPI 817 #485
+		 "EC55=RISBG,52,400",                                                 // RPI 2202 #602
+		 "EC55=RISBGZ,52,400;*Extended",                                      // RPI 2202 #485 #602
          "EC56=ROSBG,52,400",    //    550 "EC56"  "ROSBG"    "RIE8" 52 RPI 817
          "EC56T=ROSBGT,52,400;*Extended",  //    560 "EC56T" "ROSBGT"   "RIE8" 52 RPI 817 #485
          "EC57=RXSBG,52,400",    //    570 "EC57"  "RXSBG"    "RIE8" 52 RPI 817
@@ -2603,13 +2605,13 @@ public  class  tz390 {
          "EC77=CLRJ,49,235",     //    220 "EC77"  "CLRJ"     "RIE6" 49 RPI 817 #485
          "EC77m=CLRJm,50,235;*Short;F=", //   "EC77m" "CLRJm"    "RIE7" 50      #485
          "EC7C=CGIJ,43,233",     //    290 "EC7C"  "CGIJ"     "RIE4" 43 RPI 817 #485
-         "EC7Cm=CGIJm,43,233;*Short;F=", //   "EC7Cm" "CGIJm"    "RIE5" 44      #485
+         "EC7Cm=CGIJm,44,233;*Short;F=", //   "EC7Cm" "CGIJm"    "RIE5" 44      #485 #602
          "EC7D=CLGIJ,43,233",    //    360 "EC7D"  "CLGIJ"    "RIE4" 43 RPI 817 #485
-         "EC7Dm=CLGIJm,43,233;*Short;F=", //  "EC7Dm" "CLGIJm"   "RIE5" 44      #485
+         "EC7Dm=CLGIJm,44,233;*Short;F=", //  "EC7Dm" "CLGIJm"   "RIE5" 44      #485 #602
          "EC7E=CIJ,43,236",      //    430 "EC7E"  "CIJ"      "RIE4" 43 RPI 817 #485
-         "EC7Em=CIJm,43,236;*Short;F=", //    "EC7Em" "CIJm"     "RIE5" 44      #485
+         "EC7Em=CIJm,44,236;*Short;F=", //    "EC7Em" "CIJm"     "RIE5" 44      #485 #602
          "EC7F=CLIJ,43,236",     //    500 "EC7F"  "CLIJ"     "RIE4" 43 RPI 817 #485
-         "EC7Fm=CLIJm,43,236;*Short;F=", //   "EC7Fm" "CLIJm"    "RIE5" 44      #485
+         "EC7Fm=CLIJm,44,236;*Short;F=", //   "EC7Fm" "CLIJm"    "RIE5" 44      #485 #602
          "ECE4=CGRB,45,370",     //    570 "ECE4"  "CGRB"     "RRS1" 45 RPI 817 #485
          "ECE4m=CGRBm,46,370;*Short;F=", //   "ECE4m" "CGRBm"    "RRS2" 46      #485
          "ECE5=CLGRB,45,370",    //    640 "ECE5"  "CLGRB"    "RRS1" 45 RPI 817 #485
@@ -3102,6 +3104,7 @@ public  class  tz390 {
             "E7FEe=VMNe,82,738;e=0123", // E7FE0-E7FE3 VRRc VMN* V1,V2,V3,M4 RPI 2202 #495
             "E7FF=VMX,82,738",    // E7FF  VRRc VMX  V1,V2,V3,M4 RPI 2202
             "E7FFe=VMXe,82,738;e=0123", // E7FF0-E7FF3 VRRc VMX* V1,V2,V3,M4 RPI 2202 #495
+            "EB17=STCCTM,20,201",   //  RPI 2225 2226
 			"EB23=CLT,20,201",       // EB23   RSYb CLT     R1,M3,D2(B2)       RPI 2202 #485
             "EB23m=CLTm,20,201;*Short;F=", // EB23   RSYb CLT     R1,M3,D2(B2) RPI 2202 #485
 			"EB2B=CLGT,20,201",      // EB2B   RSYb CLGT    R1,M3,D2(B2)       RPI 2202 #485
@@ -3300,8 +3303,6 @@ public  class  tz390 {
          "EC57$003100=XHHR,52,400;*Extended",   //   "EC57$003100","XOR HIGH (HIGH && HIGH) RXSBG","XHHR","RIE8",52         RPI 1164 #485
          "EC57$003132=XHLR,52,400;*Extended",   //   "EC57$003132","XOR HIGH (HIGH && LOW ) RXSBG","XHLR","RIE8",52         RPI 1164 #485
          "EC57$326332=XLHR,52,400;*Extended",   //   "EC57$326332","AOR HIGH (lOW  && HIGH) RXSBG","XLHR","RIE8",52         RPI 1164 #485
-		 "EC55=RISBGZ,52,400;*Extended",  // RPI 2202 #485
-		 "EC55=RISBG,52,400",             // RPI 2202
 		 "EC59=RISBGNZ,52,400;*Extended", // RPI 2202 #485
 		 "EC59=RISBGN,52,400",            // RPI 2202
          "EC5D=RISBHG,52,400",   //        "EC5D"  "RISBHG#"  "RIE8" 52 RPI 1125 Z196 RPI 1164
