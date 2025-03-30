@@ -3578,6 +3578,7 @@ private void process_bal_op(){
     	break;	
     	// 43 to 44 rpi 2202
     case 43:  // "RIE4" CIJ/CGIJ/CLIJ/CLGIJ oo13444422oo
+    case 44:                                 // #602
     	// r1,i2,m3,i4 
     	bal_op_ok = true;
     	loc_ctr = (loc_ctr+1)/2*2;

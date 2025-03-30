@@ -78,6 +78,9 @@ if /I %z_docs% EQU Y (set z_msg=z390.jar and javadoc have been created okay
                       )
 if exist z390.jar echo %0 %z_msg%
 
+rem replace jar file in z390 root
+copy jar\z390.jar . /Y
+
 :return
 popd
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
