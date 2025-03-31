@@ -28,13 +28,13 @@ else
     if [ ${GIT_REPO} != 0 ]; then
         echo >&2 "Not a git repo.";
     else
-        $(git describe > /dev/null 2>&1)
+        $(git describe --tags > /dev/null 2>&1)
         GIT_DESCRIBE=$?
         if [ ${GIT_DESCRIBE} != 0 ]; then
             echo >&2 "Unable to git describe - fetching tags from upstream"
             get_tags
         fi
-        VER=$(git describe);
+        VER=$(git describe --tags);
     fi    
 fi
 

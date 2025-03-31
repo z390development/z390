@@ -8,7 +8,7 @@ then
 fi
 
 # build the jar and required libs
-bash/bldjar
+bash/bldjar $1
 bash/bldzstrmac
 bash/bldlib
 bash/bldcbllib

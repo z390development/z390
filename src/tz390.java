@@ -335,6 +335,7 @@ public  class  tz390 {
     * 2024-08-23 AFK #561 Correct OPTABLE(ZOP,LIST) output to match HLASM
     * 2024-09-04 #564 fix invalid argument in String compare
     * 2024-09-09 AFK #568 Correct OPTABLE(YOP,LIST) output to match HLASM
+    * 2024-10-13 AFK #573 Correct OPTABLE(Z9,LIST)  output to match HLASM
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -2393,20 +2394,9 @@ public  class  tz390 {
         {"0104=PTFF,1,10",       //        "0104"  "PTFF"     "E"     1 Z9-1
          "010A=PFPO,1,10",       //     40 "010A"  "PFPO"     "E"     1  RPI 1013
          "B27C=STCKF,7,70",      //        "B27C"  "STCKF"    "S"     7 Z9-2
-         "B280=LPP,7,70",   // S,LPP,D1(B1)   RPI 2221
-         "B284=LCCTL,7,70", // S,LCCTL,D1(B1) RPI 2221
-         "B285=LPCTL,7,70", // S,LPCTL,D1(B1) RPI 2221
-         "B286=QSI,7,70",   // S,QSI,D1(B1)   RPI 2221
-         "B287=LSCTL,7,70", // S,LSCTL,D1(B1) RPI 2221
-         "B28E=QCTRI,7,70", // S,QCTRI,D1(B1) RPI 2221
          "B2B0=STFLE,7,70",      //        "B2B0"  "STFLE"    "S"     7 Z9-3
          "B2B9=SRNMT,7,71",      //   3395 "B2B9"  "SRNMT"    "S"     7 DFP 56
          "B2BD=LFAS,7,72",       //   3395 "B2BD"  "LFAS"     "S"     7 DFP 55
-         "B2E0=SCCTR,14,142",    //   RRE,SCCTR,R1,R2 RPI 2221
-         "B2E1=SPCTR,14,142",    //   RRE,SPCTR,R1,R2 RPI 2221
-         "B2E4=ECCTR,14,142",    //   RRE   B2E4 R1,R2", // RPI 2221
-         "B2E5=EPCTR,14,142",    //   RRE   B2E5 R1,R2", // RPI 2221
-         "B2ED=ECPGA,14,142",    //   RRE   B2ED R1,R2", // RPI 2221
          "B338=MAYLR,15,150",    //        "B338"  "MAYLR"    "RRF1" 15 Z9-4
          "B339=MYLR,15,150",     //        "B339"  "MYLR"     "RRF1" 15 Z9-5
          "B33A=MAYR,15,150",     //        "B33A"  "MAYR"     "RRF1" 15 Z9-6
@@ -2520,7 +2510,18 @@ public  class  tz390 {
          "ED59=TDGXT,24,241",    //                "TDGXT"    "RXE"  24 DFP 54
          };
      String[]   op_table_ZS4 =   // Table added for RPI 1209A
-        {"B928=PCKMO,14,144",    //        "B928"  "PCKMO"    "RE4"  14 RPI 1125 Z196
+        {"B280=LPP,7,70",   // S,LPP,D1(B1)   RPI 2221
+         "B284=LCCTL,7,70", // S,LCCTL,D1(B1) RPI 2221
+         "B285=LPCTL,7,70", // S,LPCTL,D1(B1) RPI 2221
+         "B286=QSI,7,70",   // S,QSI,D1(B1)   RPI 2221
+         "B287=LSCTL,7,70", // S,LSCTL,D1(B1) RPI 2221
+         "B28E=QCTRI,7,70", // S,QCTRI,D1(B1) RPI 2221
+         "B2E0=SCCTR,14,142",    //   RRE,SCCTR,R1,R2 RPI 2221
+         "B2E1=SPCTR,14,142",    //   RRE,SPCTR,R1,R2 RPI 2221
+         "B2E4=ECCTR,14,142",    //   RRE   B2E4 R1,R2", // RPI 2221
+         "B2E5=EPCTR,14,142",    //   RRE   B2E5 R1,R2", // RPI 2221
+         "B2ED=ECPGA,14,142",    //   RRE   B2ED R1,R2", // RPI 2221
+         "B928=PCKMO,14,144",    //        "B928"  "PCKMO"    "RE4"  14 RPI 1125 Z196
          "B960=CGRT,39,151",     //     10 "B960"  "CGRT"     "RRF5" 39 RPI 817 #485
          "B960m=CGRTm,40,151;*Short;F=", //   "B960m" "CGRTm"    "RRF6" 40      #485
          "B961=CLGRT,39,151",    //     10 "B961"  "CLGRT"    "RRF5" 39 RPI 817 #485
