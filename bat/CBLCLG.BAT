@@ -49,7 +49,7 @@ for %%f in ("%z_HomeDir%") do set "z_HomeDir=%%~ff"
 
 call %~dps0ZC390 %z_TraceMode% %z_file%%z_fext% %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
-rem any error or warning message has been issued by zc390
+rem any error or warning message has been issued by zc390?
 if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (erase %z_file%.MLC
                                                   goto return))
 
