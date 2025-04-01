@@ -430,6 +430,7 @@ public  class  az390 implements Runnable {
         * 2024-08-23 AFK #561 Correct OPTABLE(ZOP,LIST) output to match HLASM
         * 2024-09-09 AFK #568 Correct OPTABLE(YOP,LIST) output to match HLASM
         * 2024-10-13 AFK #573 Correct OPTABLE(Z9,LIST)  output to match HLASM
+        * 2025-03-18 AFK #602 Correct OPTABLE(Z10,LIST) output to match HLASM
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -2000,7 +2001,8 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     else                        // mask included!                      // #554
                        {short_op = 0;           // mark full opcode                    // #554
                         }                                                              // #554
-                    if (tz390.op_trace_type[index]==330)                               // #554
+                    if (tz390.op_trace_type[index]==330                                // #554 #602
+                    ||  tz390.op_trace_type[index]==169)                               // #554 #602
                        {if (short_op == 1)      // short opcode                        // #554
                            my_operands="M1,RI2";                                       // #554
                         else                    // full opcode                         // #554
@@ -2211,11 +2213,11 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     break;
                 case 43:
                     my_format="RIE";                                                   // #500
-                    my_operands="R1,I2,M3,I4";                                         // #500
+                    my_operands="R1,I2,M3,RI4";                                        // #500 #602
                     break;
                 case 44:
                     my_format="RIE";                                                   // #500
-                    my_operands="R1,I2,I4";                                            // #500
+                    my_operands="R1,I2,RI4";                                           // #500 #602
                     break;
                 case 45:
                     my_format="RRS";                                                   // #500
@@ -2235,11 +2237,11 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     break;
                 case 49:
                     my_format="RIE";                                                   // #500
-                    my_operands="R1,R2,M3,I4";                                         // #500
+                    my_operands="R1,R2,M3,RI4";                                        // #500 #602
                     break;
                 case 50:
                     my_format="RIE";                                                   // #500
-                    my_operands="R1,R2,I4";                                            // #500
+                    my_operands="R1,R2,RI4";                                           // #500 #602
                     break;
                 case 51:
                     my_format="SIL";                                                   // #500
@@ -3576,6 +3578,7 @@ private void process_bal_op(){
     	break;	
     	// 43 to 44 rpi 2202
     case 43:  // "RIE4" CIJ/CGIJ/CLIJ/CLGIJ oo13444422oo
+    case 44:                                 // #602
     	// r1,i2,m3,i4 
     	bal_op_ok = true;
     	loc_ctr = (loc_ctr+1)/2*2;
