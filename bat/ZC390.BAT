@@ -25,11 +25,11 @@ java -classpath %~dps0..\z390.jar -Xrs zc390 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 0  goto return
-if %z_ReturnCode% EQU 4 (echo %0 WARNING: See warnings on zc390 generated mlc file and console
+if %z_ReturnCode% EQU 4 (echo %0 WARNING: See warnings on zc390 generated MLC file and console
                          goto return
                          )
 rem ErrorLevel 1 for Java issues or ErrorLevel 8 / 12 for assembly issues
-echo %0 ERROR: See errors on zc390 generated mlc file and console
+echo %0 ERROR: See errors on zc390 generated MLC file and console
 
 :return
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9

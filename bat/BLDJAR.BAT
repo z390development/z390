@@ -76,7 +76,9 @@ echo .
 if /I %z_docs% EQU Y (set z_msg=z390.jar and javadoc have been created okay
               ) else (set z_msg=z390.jar has been created okay
                       )
-if exist z390.jar echo %0 %z_msg%
+if exist jar\z390.jar (copy jar\z390.jar .\z390.jar /B /V /Y
+                       echo %0 %z_msg%
+                       )
 
 rem replace jar file in z390 root (force overwrite)
 copy jar\z390.jar . /Y
