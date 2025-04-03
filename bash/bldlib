@@ -15,6 +15,7 @@ bash/asm linklib/CVTTOHEX bal notiming stats
 bash/asm linklib/SQXTR bal notiming stats
 bash/asm linklib/DAT bal notiming stats
 
+bash/asml  linklib/SORT notiming stats
 bash/asmlg linklib/IEFBR14 "sysobj(+linklib)"
 
 bash/asm  linklib/RTGENDIR noasm bal notiming stats "sysparm(RTGENDIR)"
