@@ -21,8 +21,8 @@ and modern IT solutions.
 Current jobs available include writing COBOL verb macros for currently unsupported
 verbs including SORT, MERGE. Optimizing the code generation macros
 to produce more efficient code and optional code based on
-[zCOBOL options](/user_guide/zCOBOL/zCOBOL_options) such as
-TRUNC, R64, etc. In addition major effort is still required to covert the
+[zCOBOL options](../user_guide/zCOBOL/zCOBOL_options.md) such as
+TRUNC, R64, etc. In addition, major effort is still required to covert the
 HLASM code generation macros to generated java, C, or MASM.
 
 For COBOL programmers there is the constant need to extend
@@ -38,7 +38,9 @@ support, and RPI 1012 miscellaneous syntax error corrections. Once some of the
 remaining critical support items such as COMPUTE are completed, these numbers
 should continue to significantly improve. The plan is to achieve 100% within
 the next few releases of zCOBOL and then provide optional regression test
-download for the NIST test suite for zCOBOL. These statistics were extracted from:
+download for the NIST test suite for zCOBOL.
+
+More details regarding NIST validation can be found in the [zCOBOL user guide](../user_guide/zCOBOL/zCOBOL_NIST_COBOL_1985_Test_Results.md).
 
 | Description                       | V1.5.00 | V1.5.00a | Notes                                                |
 |-----------------------------------|---------|----------|------------------------------------------------------|
