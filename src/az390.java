@@ -2106,7 +2106,13 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 30:
                     my_format="RRF";                                                   // #500
                     my_operands="R1,R3,R2,M4";                                         // #554
-                    if (tz390.op_trace_type[index]==301)                               // #573
+                    if (tz390.op_trace_type[index]==301                                // #573 #602
+                    ||  tz390.op_trace_type[index]==303                                //      #602
+                    ||  tz390.op_trace_type[index]==304                                //      #602
+                    ||  tz390.op_trace_type[index]==305                                //      #602
+                    ||  tz390.op_trace_type[index]==306                                //      #602
+                    ||  tz390.op_trace_type[index]==342                                //      #602
+                        )                                                              //      #602
                        {my_operands="R1,M3,R2,M4";                                     // #573
                         }                                                              // #573
                     break;
@@ -2177,6 +2183,26 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                        {my_format="RRE";                                               // #500
                         my_operands="R1,R2";                                           // #500
                         }
+                    else if (tz390.op_trace_type[index]==141)                          // #602
+                       {if (tz390.op_name[index].equals("LOCGR"))                      // #602
+                           {my_format="RRF";                                           // #602
+                            my_operands="R1,R2,M3";                                    // #602
+                            }                                                          // #602
+                        else                                                           // #602
+                           {my_format="RRF";                                           // #602
+                            my_operands="R1,R2";                                       // #602
+                            }                                                          // #602
+                        }                                                              // #602
+                    else if (tz390.op_trace_type[index]==142)                          // #602
+                       {if (tz390.op_name[index].equals("LOCR"))                       // #602
+                           {my_format="RRF";                                           // #602
+                            my_operands="R1,R2,M3";                                    // #602
+                            }                                                          // #602
+                        else                                                           // #602
+                           {my_format="RRF";                                           // #602
+                            my_operands="R1,R2";                                       // #602
+                            }                                                          // #602
+                        }                                                              // #602
                     else if (tz390.op_trace_type[index]==144)
                        {if (tz390.op_name[index].equals("CHLR"))
                            {my_format="RRE";                                           // #500
@@ -2187,12 +2213,22 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                             my_operands="R1,R2<,M3>";                                  // #500
                             }
                         }
-                    else if (tz390.op_trace_type[index]==153                           // #500
-                         ||  tz390.op_trace_type[index]==154                           // #500
-                         ||  tz390.op_trace_type[index]==410                           // #500
+                    else if (tz390.op_trace_type[index]==151)                          // #602
+                       {if (tz390.op_name[index].equals("POPCNT"))                     // #602
+                           {my_format="RRE";                                           // #602
+                            my_operands="R1,R2";                                       // #602
+                            }                                                          // #602
+                        else                                                           // #602
+                           {my_format="RRF";                                           // #602
+                            my_operands="R1,R2,M3";                                    // #602
+                            }                                                          // #602
+                        }                                                              // #602
+                    else if (tz390.op_trace_type[index]==153                           // #602
+                         ||  tz390.op_trace_type[index]==154                           // #602
+                         ||  tz390.op_trace_type[index]==410                           // #602
                              )
-                       {my_format="RRR";                                               // #500
-                        my_operands="R1,R2,R3";                                        // #500
+                       {my_format="RRF";                                               // #602
+                        my_operands="R1,R2,R3";                                        // #602
                         }
                     else
                        {my_format="RRF";                                               // #500
@@ -2288,7 +2324,16 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     break;
                 case 56:
                     my_format="RSY";                                                   // #500
-                    my_operands="R1,D2(B2),M3";                                        // #500
+                    if (tz390.op_name[index].equals("LOC")                             //      #602
+                    ||  tz390.op_name[index].equals("LOCG")                            //      #602
+                    ||  tz390.op_name[index].equals("STOC")                            //      #602
+                    ||  tz390.op_name[index].equals("STOCG")                           //      #602
+                        )                                                              //      #602
+                       {my_operands="R1,D2(B2),M3";                                    // #500 #602
+                        }                                                              //      #602
+                    else                                                               //      #602
+                       {my_operands="R1,D2(B2)";                                       // #500 #602
+                        }                                                              //      #602
                     break;
                 case 57:
                     my_format="RIE";                                                   // #500
