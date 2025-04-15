@@ -336,7 +336,8 @@ public  class  tz390 {
     * 2024-09-04 #564 fix invalid argument in String compare
     * 2024-09-09 AFK #568 Correct OPTABLE(YOP,LIST) output to match HLASM
     * 2024-10-13 AFK #573 Correct OPTABLE(Z9,LIST)  output to match HLASM
-	* 2025-03-18 AFK #602 Correct OPTABLE(ZS4,LIST) output to match HLASM
+    * 2025-03-18 AFK #602 Correct OPTABLE(ZS4,LIST) output to match HLASM
+    * 2025-04-02 AFK #612 Correct OPTABLE(ZS5,LIST) output to match HLASM
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -2582,8 +2583,8 @@ public  class  tz390 {
          "EB7E=ALGSI,21,212",    //    500 "EB7E"  "ALGSI"    "SIY"  21 RPI 817
          "EC54=RNSBG,52,400",    //    510 "EC54"  "RNSBG"    "RIE8" 52 RPI 817
          "EC54T=RNSBGT,52,400;*Extended",  //    520 "EC54T" "RNSBGT"   "RIE8" 52 RPI 817 #485
-         "EC55=RISBG,52,400",                                                 // RPI 2202 #602
-         "EC55=RISBGZ,52,400;*Extended",                                      // RPI 2202 #485 #602
+         "EC55=RISBG,52,400",                                                 // RPI 2202 #612
+         "EC55=RISBGZ,52,400;*Extended",                                      // RPI 2202 #485 #612
          "EC56=ROSBG,52,400",    //    550 "EC56"  "ROSBG"    "RIE8" 52 RPI 817
          "EC56T=ROSBGT,52,400;*Extended",  //    560 "EC56T" "ROSBGT"   "RIE8" 52 RPI 817 #485
          "EC57=RXSBG,52,400",    //    570 "EC57"  "RXSBG"    "RIE8" 52 RPI 817
@@ -2629,7 +2630,7 @@ public  class  tz390 {
          "ECFF=CLIB,47,381",     //   1060 "ECFF"  "CLIB"     "RRS3" 47 RPI 817 #485
          "ECFFm=CLIBm,48,381;*Short;F=", //   "ECFFm" "CLIBm"    "RRS4" 48      #485
          };
-     String[]   op_table_ZS5 =   // table added for Principles of operation SA22-7832-08 #602
+     String[]   op_table_ZS5 =   // table added for Principles of operation SA22-7832-08 #612
          {
          "B2B8=SRNMB,7,70",      //   3392 "B2B8"  "SRNMB"    "S"     7 RPI 1125
          "B344=LEDBRA,53,142",   //   3860 "B344"  "LEDBRA"   "RRE"  53 RPI 1125
@@ -2782,15 +2783,15 @@ public  class  tz390 {
          "ECDA=ALHSIK,57,420",   //        "ECDA"  "ALHSIK"   "RIE9" 57 RPI 1125 Z196
          "ECDB=ALGHSIK,57,430",  //        "ECDB"  "ALGHSIK"  "RIE9" 57 RPI 1125 Z196
          };
-     String[]   op_table_ZS5_ZS6 = // These definitions are valid for ZS5 and ZS6, ZS7 ff have a broader definition. #602
+     String[]   op_table_ZS5_ZS6 = // These definitions are valid for ZS5 and ZS6, ZS7 ff have a broader definition. #612
          {
-         "B9E2m=LOCGRm,39,141;*Short",    //  B9E2 RRF LOGGRH R1,R2   RPI 2202        #485 #602
-         "B9F2m=LOCRm,39,142;*Short",     // "B9F2"   "LOCR"  "RRF5" 39 RPI 1125 Z196 #485 #602
-         "EBE2m=LOCGm,56,207;*Short;F=",  // "EBE2"   "LOCG"  "RSY2" 56 RPI 1125 Z196 #485 #602
-         "EBE3m=STOCGm,56,207;*Short;F=", // "EBE3"   "STOCG" "RSY2" 56 RPI 1125 Z196 #485 #602
-         "EBF2m=LOCm,56,209;*Short;F=",   // "EBF2"   "LOC"   "RSY2" 56 RPI 1125 Z196 #485 #602
-         "EBF3m=STOCm,56,209;*Short;F=",  // "EBF3"   "STOC"  "RSY2" 56 RPI 1125 Z196 #485 #602
-         };                               //                                               #602
+         "B9E2m=LOCGRm,39,141;*Short",    //  B9E2 RRF LOGGRH R1,R2   RPI 2202        #485 #612
+         "B9F2m=LOCRm,39,142;*Short",     // "B9F2"   "LOCR"  "RRF5" 39 RPI 1125 Z196 #485 #612
+         "EBE2m=LOCGm,56,207;*Short;F=",  // "EBE2"   "LOCG"  "RSY2" 56 RPI 1125 Z196 #485 #612
+         "EBE3m=STOCGm,56,207;*Short;F=", // "EBE3"   "STOCG" "RSY2" 56 RPI 1125 Z196 #485 #612
+         "EBF2m=LOCm,56,209;*Short;F=",   // "EBF2"   "LOC"   "RSY2" 56 RPI 1125 Z196 #485 #612
+         "EBF3m=STOCm,56,209;*Short;F=",  // "EBF3"   "STOC"  "RSY2" 56 RPI 1125 Z196 #485 #612
+         };                               //                                               #612
      String[]   op_table_ZS4_notsupported =   // Table added for RPI 1209A
         {"BPP      SMI   C7   M1,RI2,D3(B3)", // RPI 1209K     supported for Z15, not ZS4 #486
          "BPRP     MII   C5   M1,RI2,RI3", // RPI 1209K        supported for Z15, not ZS4 #486
@@ -2818,12 +2819,12 @@ public  class  tz390 {
          };
      String[]   op_table_Z15 =   //  dsh table added for RPI 2202
          {
-         "B9E2m=LOCGRm,39,141",       // B9E2 RRF LOGGRH R1,R2        RPI 2202      #485 #602
-         "B9F2m=LOCRm,39,142",        //"B9F2"   "LOCR"     "RRF5" 39 RPI 1125 Z196 #485 #602
-         "EBE2m=LOCGm,56,207;0=;F=",  //"EBE2"   "LOCG"     "RSY2" 56 RPI 1125 Z196 #485 #602
-         "EBE3m=STOCGm,56,207;0=;F=", //"EBE3"   "STOCG"    "RSY2" 56 RPI 1125 Z196 #485 #602
-         "EBF2m=LOCm,56,209;0=;F=",   //"EBF2"   "LOC"      "RSY2" 56 RPI 1125 Z196 #485 #602
-         "EBF3m=STOCm,56,209;0=;F=",  //"EBF3"   "STOC"     "RSY2" 56 RPI 1125 Z196 #485 #602
+         "B9E2m=LOCGRm,39,141",       // B9E2 RRF LOGGRH R1,R2        RPI 2202      #485 #612
+         "B9F2m=LOCRm,39,142",        //"B9F2"   "LOCR"     "RRF5" 39 RPI 1125 Z196 #485 #612
+         "EBE2m=LOCGm,56,207;0=;F=",  //"EBE2"   "LOCG"     "RSY2" 56 RPI 1125 Z196 #485 #612
+         "EBE3m=STOCGm,56,207;0=;F=", //"EBE3"   "STOCG"    "RSY2" 56 RPI 1125 Z196 #485 #612
+         "EBF2m=LOCm,56,209;0=;F=",   //"EBF2"   "LOC"      "RSY2" 56 RPI 1125 Z196 #485 #612
+         "EBF3m=STOCm,56,209;0=;F=",  //"EBF3"   "STOC"     "RSY2" 56 RPI 1125 Z196 #485 #612
             "B2E8=PPA,40,151", // B2E8 RRFc 40,151 PPA R1,R2,M3 2202
             "B2EC=ETND,14,140", //  "B2EC RRE 14,140 ETND R1 RPI 2202
             "B2F8=TEND,7,70", //  "B2F8 S 7,70 TEND D2(B2) RPI 2202
@@ -3739,22 +3740,22 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
             }
-        if (opt_optable.equals("Z11"))                          // #602
-           {process_opcodes(op_table_360_20);                   // #602
-            process_opcodes(op_table_DOS);                      // #602
-            process_opcodes(op_table_370);                      // #602
-            process_opcodes(op_table_XA);                       // #602
-            process_opcodes(op_table_ESA);                      // #602
-            if (opt_allow) process_opcodes(op_table_ESA_allow); // #602
-            process_opcodes(op_table_ZOP);                      // #602
-            process_opcodes(op_table_YOP);                      // #602
-            process_opcodes(op_table_ZS3);                      // #602
-            process_opcodes(op_table_ZS4);                      // #602
-            process_opcodes(op_table_ZS5);                      // #602
-            process_opcodes(op_table_ZS5_ZS6);                  // #602
-            process_opcodes(op_table_360_20_directives);        // #602
-            process_opcodes(op_table_DOS_directives);           // #602
-            process_opcodes(op_table_370_directives);           // #602
+        if (opt_optable.equals("Z11"))                          // #612
+           {process_opcodes(op_table_360_20);                   // #612
+            process_opcodes(op_table_DOS);                      // #612
+            process_opcodes(op_table_370);                      // #612
+            process_opcodes(op_table_XA);                       // #612
+            process_opcodes(op_table_ESA);                      // #612
+            if (opt_allow) process_opcodes(op_table_ESA_allow); // #612
+            process_opcodes(op_table_ZOP);                      // #612
+            process_opcodes(op_table_YOP);                      // #612
+            process_opcodes(op_table_ZS3);                      // #612
+            process_opcodes(op_table_ZS4);                      // #612
+            process_opcodes(op_table_ZS5);                      // #612
+            process_opcodes(op_table_ZS5_ZS6);                  // #612
+            process_opcodes(op_table_360_20_directives);        // #612
+            process_opcodes(op_table_DOS_directives);           // #612
+            process_opcodes(op_table_370_directives);           // #612
             }
         // logic for optables Z11-Z14 is missing. See issue #510
         if (opt_optable.equals("Z15"))  // rpi 2202
@@ -3768,7 +3769,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_YOP);
             process_opcodes(op_table_ZS3);
             process_opcodes(op_table_ZS4);
-            process_opcodes(op_table_ZS5);                      // #602
+            process_opcodes(op_table_ZS5);                      // #612
             process_opcodes(op_table_Z15);  // rpi 2202
             process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
@@ -3785,7 +3786,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_YOP);              // #503
             process_opcodes(op_table_ZS3);              // #503
             process_opcodes(op_table_ZS4);              // #503
-            process_opcodes(op_table_ZS5);                      // #602
+            process_opcodes(op_table_ZS5);                      // #612
             process_opcodes(op_table_Z15);              // #503
             process_opcodes(op_table_Z16);              // #503
             process_opcodes(op_table_360_20_directives);       // #543
@@ -3808,7 +3809,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             process_opcodes(op_table_YOP);
             process_opcodes(op_table_ZS3);
             process_opcodes(op_table_ZS4);
-            process_opcodes(op_table_ZS5);                      // #602
+            process_opcodes(op_table_ZS5);                      // #612
             process_opcodes(op_table_Z15); // rpi 2202
             process_opcodes(op_table_UNI);
             process_opcodes(op_table_360_20_directives);       // #543
