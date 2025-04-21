@@ -71,7 +71,7 @@ so it is shared across multiple target language environments. All the macros
 are written in structured form using the z390 ZSTRMAC SPE structured programming
 extensions such as AIF, AELSEIF, AELSE, AEND, AWHILE, etc. As a result there are
 no explicit AGO or AIF labels in these macros. 
-See [Structured Macro Entensions documentation](/user_guide/z390/structured_macro) for more details.
+See [Structured Macro Entensions documentation](../z390/structured_macro.md) for more details.
 
 ## COMPUTE Statement Example
 
