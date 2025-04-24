@@ -1,0 +1,6 @@
+noallow
+  machine(ZEC12,list)
+  stats
+noloadhigh
+nodump
+notest
