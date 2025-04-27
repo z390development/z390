@@ -3139,6 +3139,7 @@ public  class  tz390 {
          };                               // #614
      String[]   op_table_ZS8 =            // #614
          {                                // #614
+         "E704e=VLLEZe,78,734;e=6",  //E704 VRX  VLLEZ*V1,D2(X2,B2)      RPI 2202 #495 #614
          "E74Af0=VFTCIfB,81,737;f=2",//E74A VRIe VFTCI*V1,V2,I3,M4,M5    RPI 2202 #495 #614
          "E74Af8=WFTCIfB,81,737;f=24",//E74AVRIe WFTCI*V1,V2,I3,M4,M5    RPI 2202 #495 #614
          "E750e=VPOPCTe,82,738;e=0123", // E7500-E7503 VRRa VPOPCT* V1,V2,M3 RPI 2202 #495
