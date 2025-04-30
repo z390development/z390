@@ -2543,388 +2543,162 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     break;                                                             // #613
                 case 78:                                                               // #614
                     my_format="VRX";                                                   // #614
-                    my_operands="V1,D2(X2,B2),M3";                                     // #614
-                    if (my_mnemonic.equals("VL")                                       // #614
-                    ||  my_mnemonic.equals("VST")                                      // #614
-                        )                                                              // #614
-                       {my_operands="V1,D2(X2,B2)<,M3>";                               // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.length() > 5)                                 // #614
-                       {if (my_mnemonic.substring(0,5).equals("VLLEZ")                 // #614
-                        ||  my_mnemonic.substring(0,5).equals("VLREP")                 // #614
-                            )                                                          // #614
-                           {my_operands="V1,D2(X2,B2)";                                // #614
-                            }                                                          // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.length() == 4)                                // #614
-                       {if (my_mnemonic.substring(0,3).equals("VST")                   // #614
-                            )                                                          // #614
-                           {my_operands="V1,R3,D2(B2)";                                // #614
-                            }                                                          // #614
+                    switch (tz390.op_trace_type[index])                                // #614
+                       {case 734:                                                      // #614
+                             my_operands="V1,D2(X2,B2),M3";                            // #614
+                             break;                                                    // #614
+                        case 739:                                                      // #614
+                             my_operands="V1,D2(X2,B2)<,M3>";                          // #614
+                             break;                                                    // #614
+                        case 740:                                                      // #614
+                             my_operands="V1,D2(X2,B2)";                               // #614
+                             break;                                                    // #614
+                        case 741:                                                      // #614
+                             my_operands="V1,R3,D2(B2)";                               // #614
+                             break;                                                    // #614
+                        default:                                                       // #614
+                             my_operands="*Unknown";                                   // #614
                         }                                                              // #614
                     break;                                                             // #614
                 case 80:                                                               // #614
                     my_format="VRS";                                                   // #614
-                    my_operands="V1,V3,D2(B2),M4";                                     // #614
-                    if (my_mnemonic.equals("VLGV"))                                    // #614
-                       {my_operands="R1,V3,D2(B2),M4";                                 // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VLL")                                 // #614
-                         ||  my_mnemonic.equals("VSTL")                                // #614
-                             )                                                         // #614
-                       {my_operands="V1,R3,D2(B2)";                                    // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VLVG"))                               // #614
-                       {my_operands="V1,R3,D2(B2),M4";                                 // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VLM")                                 // #614
-                         ||  my_mnemonic.equals("VSTM")                                // #614
-                             )                                                         // #614
-                       {my_operands="V1,V3,D2(B2)<,M4>";                               // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.length() > 5)                                 // #614
-                       {if (my_mnemonic.substring(0,5).equals("VERLL")                 // #614
-                        ||  my_mnemonic.substring(0,5).equals("VESRA")                 // #614
-                        ||  my_mnemonic.substring(0,5).equals("VESRL")                 // #614
-                            )                                                          // #614
-                           {my_operands="V1,V3,D2(B2)";                                // #614
-                            }                                                          // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.length() > 4)                                 // #614
-                       {if (my_mnemonic.substring(0,4).equals("VESL"))                 // #614
-                           {my_operands="V1,V3,D2(B2)";                                // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,4).equals("VLGV"))            // #614
-                           {my_operands="R1,V3,D2(B2)";                                // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,4).equals("VLVG"))            // #614
-                           {my_operands="V1,R3,D2(B2)";                                // #614
-                            }                                                          // #614
+                    switch (tz390.op_trace_type[index])                                // #614
+                       {case 736:                                                      // #614
+                             my_operands="V1,V3,D2(B2),M4";                            // #614
+                             break;                                                    // #614
+                        case 742:                                                      // #614
+                             my_operands="V1,V3,D2(B2)<,M4>";                          // #614
+                             break;                                                    // #614
+                        case 743:                                                      // #614
+                             my_operands="V1,V3,D2(B2)";                               // #614
+                             break;                                                    // #614
+                        case 744:                                                      // #614
+                             my_operands="R1,V3,D2(B2),M4";                            // #614
+                             break;                                                    // #614
+                        case 745:                                                      // #614
+                             my_operands="R1,V3,D2(B2)";                               // #614
+                             break;                                                    // #614
+                        case 746:                                                      // #614
+                             my_operands="V1,R3,D2(B2),M4";                            // #614
+                             break;                                                    // #614
+                        case 747:                                                      // #614
+                             my_operands="V1,R3,D2(B2)";                               // #614
+                             break;                                                    // #614
+                        default:                                                       // #614
+                             my_operands="*Unknown";                                   // #614
                         }                                                              // #614
                     break;                                                             // #614
                 case 81:                                                               // #614
                     my_format="VRI";                                                   // #614
-                    my_operands="V1,V2,V3,I4,M5";                                      // #614
-                    if (my_mnemonic.equals("VFTCI"))                                   // #614
-                       {my_operands="V1,V2,I3,M4,M5";                                  // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VGBM"))                               // #614
-                       {my_operands="V1,I2";                                           // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VLEIB")                               // #614
-                         ||  my_mnemonic.equals("VLEIF")                               // #614
-                         ||  my_mnemonic.equals("VLEIG")                               // #614
-                         ||  my_mnemonic.equals("VLEIH")                               // #614
-                         ||  my_mnemonic.equals("VREPI")                               // #614
-                             )                                                         // #614
-                       {my_operands="V1,I2,M3";                                        // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VGM"))                                // #614
-                       {my_operands="V1,I2,I3,M4";                                     // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VREP"))                               // #614
-                       {my_operands="V1,V3,I2,M4";                                     // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VSLDB"))                              // #614
-                       {my_operands="V1,V2,V3,I4";                                     // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VONE")                                // #614
-                         ||  my_mnemonic.equals("VZERO")                               // #614
-                             )                                                         // #614
-                       {my_operands="V1";                                              // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("WFTCIDB")                             // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2,I3";                                        // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.length() > 5)                                 // #614
-                       {if (my_mnemonic.substring(0,5).equals("VERIM")                 // #614
-                            )                                                          // #614
-                           {my_operands="V1,V2,V3,I4";                                 // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,5).equals("VFTCI"))           // #614
-                           {my_operands="V1,V2,I3";                                    // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,5).equals("VREPI"))           // #614
-                           {my_operands="V1,I2";                                       // #614
-                            }                                                          // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.length() > 4)                                 // #614
-                       {if (my_mnemonic.substring(0,4).equals("VREP"))                 // #614
-                           {my_operands="V1,V3,I2";                                    // #614
-                            }                                                          // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.length() > 3)                                 // #614
-                       {if (my_mnemonic.substring(0,3).equals("VGM"))                  // #614
-                           {my_operands="V1,I2,I3";                                    // #614
-                            }                                                          // #614
+                    switch (tz390.op_trace_type[index])                                // #614
+                       {case 737:                                                      // #614
+                             my_operands="V1,V2,V3,I4,M5";                             // #614
+                             break;                                                    // #614
+                        case 748:                                                      // #614
+                             my_operands="V1,V2,V3,I4";                                // #614
+                             break;                                                    // #614
+                        case 749:                                                      // #614
+                             my_operands="V1,V2,I3,M4,M5";                             // #614
+                             break;                                                    // #614
+                        case 750:                                                      // #614
+                             my_operands="V1,V2,I3";                                   // #614
+                             break;                                                    // #614
+                        case 751:                                                      // #614
+                             my_operands="V1,I2,M3";                                   // #614
+                             break;                                                    // #614
+                        case 752:                                                      // #614
+                             my_operands="V1,I2";                                      // #614
+                             break;                                                    // #614
+                        case 753:                                                      // #614
+                             my_operands="V1,V3,I2,M4";                                // #614
+                             break;                                                    // #614
+                        case 754:                                                      // #614
+                             my_operands="V1,V3,I2";                                   // #614
+                             break;                                                    // #614
+                        case 755:                                                      // #614
+                             my_operands="V1,I2,I3,M4";                                // #614
+                             break;                                                    // #614
+                        case 756:                                                      // #614
+                             my_operands="V1,I2,I3";                                   // #614
+                             break;                                                    // #614
+                        case 757:                                                      // #614
+                             my_operands="V1";                                         // #614
+                             break;                                                    // #614
+                        default:                                                       // #614
+                             my_operands="*Unknown";                                   // #614
                         }                                                              // #614
                     break;                                                             // #614
                 case 82:                                                               // #614
-// This whole case construct is quit a kludge - it should never have been necessary    // #614
-// The formatting should be derived from the table definitions to begin with           // #614
-// The issue now is, to fix those codes I need to modify the codes in the tables       // #614
-// defining the opcodes. But that is likely to cause breakage down the road. :-(       // #614
-// I don't have the guts to do it right now - I must necessarily postpone a proper     // #614
-// restructure of this code until relevant opcode test cases have been built.          // #614
                     my_format="VRR";                                                   // #614
-                    my_operands="V1,V2,V3";                                            // #614
-                    if (my_mnemonic.equals("VA")                                       // #614
-                    ||  my_mnemonic.equals("VACC")                                     // #614
-                    ||  my_mnemonic.equals("VAVG")                                     // #614
-                    ||  my_mnemonic.equals("VAVGL")                                    // #614
-                    ||  my_mnemonic.equals("VERLLV")                                   // #614
-                    ||  my_mnemonic.equals("VESLV")                                    // #614
-                    ||  my_mnemonic.equals("VESRAV")                                   // #614
-                    ||  my_mnemonic.equals("VESRLV")                                   // #614
-                    ||  my_mnemonic.equals("VGFM")                                     // #614
-                    ||  my_mnemonic.equals("VME")                                      // #614
-                    ||  my_mnemonic.equals("VMH")                                      // #614
-                    ||  my_mnemonic.equals("VML")                                      // #614
-                    ||  my_mnemonic.equals("VMLE")                                     // #614
-                    ||  my_mnemonic.equals("VMLH")                                     // #614
-                    ||  my_mnemonic.equals("VMLO")                                     // #614
-                    ||  my_mnemonic.equals("VMN")                                      // #614
-                    ||  my_mnemonic.equals("VMNL")                                     // #614
-                    ||  my_mnemonic.equals("VMO")                                      // #614
-                    ||  my_mnemonic.equals("VMRH")                                     // #614
-                    ||  my_mnemonic.equals("VMRL")                                     // #614
-                    ||  my_mnemonic.equals("VMX")                                      // #614
-                    ||  my_mnemonic.equals("VMXL")                                     // #614
-                    ||  my_mnemonic.equals("VPDI")                                     // #614
-                    ||  my_mnemonic.equals("VPK")                                      // #614
-                    ||  my_mnemonic.equals("VS")                                       // #614
-                    ||  my_mnemonic.equals("VSCBI")                                    // #614
-                    ||  my_mnemonic.equals("VSUM")                                     // #614
-                    ||  my_mnemonic.equals("VSUMG")                                    // #614
-                    ||  my_mnemonic.equals("VSUMQ")                                    // #614
-                        )                                                              // #614
-                       {my_operands="V1,V2,V3,M4";                                     // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VFAE")                                // #614
-                         ||  my_mnemonic.equals("VFEE")                                // #614
-                         ||  my_mnemonic.equals("VFENE")                               // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2,V3,M4<,M5>";                                // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VISTR")                               // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2,M3<,M5>";                                   // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VAC")                                 // #614
-                         ||  my_mnemonic.equals("VACCC")                               // #614
-                         ||  my_mnemonic.equals("VGFMA")                               // #614
-                         ||  my_mnemonic.equals("VMAE")                                // #614
-                         ||  my_mnemonic.equals("VMAH")                                // #614
-                         ||  my_mnemonic.equals("VMAL")                                // #614
-                         ||  my_mnemonic.equals("VMALE")                               // #614
-                         ||  my_mnemonic.equals("VMALH")                               // #614
-                         ||  my_mnemonic.equals("VMALO")                               // #614
-                         ||  my_mnemonic.equals("VMAO")                                // #614
-                         ||  my_mnemonic.equals("VSBCBI")                              // #614
-                         ||  my_mnemonic.equals("VSBI")                                // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2,V3,V4,M5";                                  // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VFMA")                                // #614
-                         ||  my_mnemonic.equals("VFMS")                                // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2,V3,V4,M5,M6";                               // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VCDG")                                // #614
-                         ||  my_mnemonic.equals("VCDLG")                               // #614
-                         ||  my_mnemonic.equals("VCGD")                                // #614
-                         ||  my_mnemonic.equals("VCLGD")                               // #614
-                         ||  my_mnemonic.equals("VFI")                                 // #614
-                         ||  my_mnemonic.equals("VFPSO")                               // #614
-                         ||  my_mnemonic.equals("VLED")                                // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2,M3,M4,M5";                                  // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VCEQ")                                // #614
-                         ||  my_mnemonic.equals("VCH")                                 // #614
-                         ||  my_mnemonic.equals("VCHL")                                // #614
-                         ||  my_mnemonic.equals("VFA")                                 // #614
-                         ||  my_mnemonic.equals("VFD")                                 // #614
-                         ||  my_mnemonic.equals("VFM")                                 // #614
-                         ||  my_mnemonic.equals("VFS")                                 // #614
-                         ||  my_mnemonic.equals("VPKLS")                               // #614
-                         ||  my_mnemonic.equals("VPKS")                                // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2,V3,M4,M5";                                  // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VFCE")                                // #614
-                         ||  my_mnemonic.equals("VFCH")                                // #614
-                         ||  my_mnemonic.equals("VFCHE")                               // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2,V3,M4,M5,M6";                               // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VCLZ")                                // #614
-                         ||  my_mnemonic.equals("VCTZ")                                // #614
-                         ||  my_mnemonic.equals("VEC")                                 // #614
-                         ||  my_mnemonic.equals("VECL")                                // #614
-                         ||  my_mnemonic.equals("VLC")                                 // #614
-                         ||  my_mnemonic.equals("VLP")                                 // #614
-                         ||  my_mnemonic.equals("VPOPCT")                              // #614
-                         ||  my_mnemonic.equals("VSEG")                                // #614
-                         ||  my_mnemonic.equals("VUPH")                                // #614
-                         ||  my_mnemonic.equals("VUPL")                                // #614
-                         ||  my_mnemonic.equals("VUPLH")                               // #614
-                         ||  my_mnemonic.equals("VUPLL")                               // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2,M3";                                        // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VLDE")                                // #614
-                         ||  my_mnemonic.equals("WFC")                                 // #614
-                         ||  my_mnemonic.equals("WFK")                                 // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2,M3,M4";                                     // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("WCDGB")                               // #614
-                         ||  my_mnemonic.equals("WCDLGB")                              // #614
-                         ||  my_mnemonic.equals("WCGDB")                               // #614
-                         ||  my_mnemonic.equals("WCLGDB")                              // #614
-                         ||  my_mnemonic.equals("WFIDB")                               // #614
-                         ||  my_mnemonic.equals("WLEDB")                               // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2,M4,M5";                                     // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VFLCDB")                              // #614
-                         ||  my_mnemonic.equals("VFLNDB")                              // #614
-                         ||  my_mnemonic.equals("VFLPDB")                              // #614
-                         ||  my_mnemonic.equals("VFSQDB")                              // #614
-                         ||  my_mnemonic.equals("VLDEB")                               // #614
-                         ||  my_mnemonic.equals("VLR")                                 // #614
-                         ||  my_mnemonic.equals("VNOT")                                // #614
-                         ||  my_mnemonic.equals("VTM")                                 // #614
-                         ||  my_mnemonic.equals("WFCDB")                               // #614
-                         ||  my_mnemonic.equals("WFKDB")                               // #614
-                         ||  my_mnemonic.equals("WFLCDB")                              // #614
-                         ||  my_mnemonic.equals("WFLNDB")                              // #614
-                         ||  my_mnemonic.equals("WFLPDB")                              // #614
-                         ||  my_mnemonic.equals("WFSQDB")                              // #614
-                         ||  my_mnemonic.equals("WLDEB")                               // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2";                                           // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VLVGP")                               // #614
-                             )                                                         // #614
-                       {my_operands="V1,R2,R3";                                        // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VPERM")                               // #614
-                         ||  my_mnemonic.equals("VSEL")                                // #614
-                         ||  my_mnemonic.equals("WFMADB")                              // #614
-                         ||  my_mnemonic.equals("WFMSDB")                              // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2,V3,V4";                                     // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("VSTRC")                               // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2,V3,V4,M5<,M6>";                             // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.equals("WFPSODB")                             // #614
-                             )                                                         // #614
-                       {my_operands="V1,V2,M5";                                        // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.length() > 5)                                 // #614
-                       {if (my_mnemonic.substring(0,5).equals("VACCC")                 // #614
-                        ||  my_mnemonic.substring(0,5).equals("VGFMA")                 // #614
-                        ||  my_mnemonic.substring(0,5).equals("VMALE")                 // #614
-                        ||  my_mnemonic.substring(0,5).equals("VMALH")                 // #614
-                        ||  my_mnemonic.substring(0,5).equals("VMALO")                 // #614
-                        ||  my_mnemonic.substring(0,6).equals("VSBCBI")                // #614
-                            )                                                          // #614
-                           {my_operands="V1,V2,V3,V4";                                 // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,5).equals("VCDLG")            // #614
-                             ||  my_mnemonic.substring(0,5).equals("VCLGD")            // #614
-                                 )                                                     // #614
-                           {my_operands="V1,V2,M4,M5";                                 // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,5).equals("VFENE")            // #614
-                                 )                                                     // #614
-                           {my_operands="V1,V2,V3<,M5>";                               // #614
-                            if (my_mnemonic.length() > 6)  /* BS, FS, etc */           // #614
-                                my_operands="V1,V2,V3";                                // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,5).equals("VISTR")            // #614
-                                 )                                                     // #614
-                           {my_operands="V1,V2<,M5>";                                  // #614
-                            if (my_mnemonic.length() > 6)  /* BS, FS, etc */           // #614
-                                my_operands="V1,V2";                                   // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,5).equals("VFPSO")            // #614
-                                 )                                                     // #614
-                           {my_operands="V1,V2,M5";                                    // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,5).equals("VSTRC")            // #614
-                                 )                                                     // #614
-                           {my_operands="V1,V2,V3,V4<,M6>";                            // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,5).equals("VUPLH")            // #614
-                             ||  my_mnemonic.substring(0,5).equals("VUPLL")            // #614
-                                 )                                                     // #614
-                           {my_operands="V1,V2";                                       // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,4).equals("VFAE")             // #614
-                                 )                                                     // #614
-                           {my_operands="V1,V2,V3<,M5>";                               // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,4).equals("VFMA")             // #614
-                             ||  my_mnemonic.substring(0,4).equals("VFMS")             // #614
-                                 )                                                     // #614
-                           {my_operands="V1,V2,V3,V4";                                 // #614
-                            }                                                          // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.length() > 4)                                 // #614
-                       {if (my_mnemonic.substring(0,4).equals("VACC"))                 // #614
-                           {my_operands="V1,V2,V3";                                    // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,4).equals("VMAE")             // #614
-                             ||  my_mnemonic.substring(0,4).equals("VMAH")             // #614
-                             ||  my_mnemonic.substring(0,4).equals("VMAL")             // #614
-                             ||  my_mnemonic.substring(0,4).equals("VMAO")             // #614
-                             ||  my_mnemonic.substring(0,4).equals("VSBI")             // #614
-                                 )                                                     // #614
-                           {my_operands="V1,V2,V3,V4";                                 // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,4).equals("VCDG")             // #614
-                             ||  my_mnemonic.substring(0,4).equals("VCGD")             // #614
-                             ||  my_mnemonic.substring(0,3).equals("VLE")              // #614
-                                 )                                                     // #614
-                           {my_operands="V1,V2,M4,M5";                                 // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,4).equals("VFAE")             // #614
-                             ||  my_mnemonic.substring(0,4).equals("VFEE")             // #614
-                                 )                                                     // #614
-                           {my_operands="V1,V2,V3<,M5>";                               // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,4).equals("VCLZ")             // #614
-                             ||  my_mnemonic.substring(0,4).equals("VCTZ")             // #614
-                             ||  my_mnemonic.substring(0,4).equals("VECL")             // #614
-                             ||  my_mnemonic.substring(0,4).equals("VSEG")             // #614
-                             ||  my_mnemonic.substring(0,4).equals("VUPH")             // #614
-                             ||  my_mnemonic.substring(0,4).equals("VUPL")             // #614
-                                 )                                                     // #614
-                           {my_operands="V1,V2";                                       // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,3).equals("VFI"))             // #614
-                           {my_operands="V1,V2,M4,M5";                                 // #614
-                            }                                                          // #614
-                        }                                                              // #614
-                    else if (my_mnemonic.length() > 3)                                 // #614
-                       {if (my_mnemonic.substring(0,3).equals("VAC"))                  // #614
-                           {my_operands="V1,V2,V3,V4";                                 // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,3).equals("VEC")              // #614
-                             ||  my_mnemonic.substring(0,3).equals("VLC")              // #614
-                             ||  my_mnemonic.substring(0,3).equals("VLP")              // #614
-                                 )                                                     // #614
-                           {my_operands="V1,V2";                                       // #614
-                            }                                                          // #614
-                        else if (my_mnemonic.substring(0,3).equals("VFS"))             // #614
-                           {my_operands="V1,V2,M3,M4";                                 // #614
-                            }                                                          // #614
+                    switch (tz390.op_trace_type[index])                                // #614
+                       {case 738:                                                      // #614
+                             my_operands="V1,V2,V3";                                   // #614
+                             break;                                                    // #614
+                        case 758:                                                      // #614
+                             my_operands="V1,V2,V3,M4";                                // #614
+                             break;                                                    // #614
+                        case 759:                                                      // #614
+                             my_operands="V1,V2,V3,M4,M5";                             // #614
+                             break;                                                    // #614
+                        case 760:                                                      // #614
+                             my_operands="V1,V2,V3,M4<,M5>";                           // #614
+                             break;                                                    // #614
+                        case 761:                                                      // #614
+                             my_operands="V1,V2,V3,M4<,M5>";                           // #614
+                             break;                                                    // #614
+                        case 762:                                                      // #614
+                             my_operands="V1,V2,V3,V4,M5";                             // #614
+                             break;                                                    // #614
+                        case 763:                                                      // #614
+                             my_operands="V1,V2,V3,V4,M5,M6";                          // #614
+                             break;                                                    // #614
+                        case 764:                                                      // #614
+                             my_operands="V1,V2,V3,V4,M5<,M6>";                        // #614
+                             break;                                                    // #614
+                        case 765:                                                      // #614
+                             my_operands="V1,V2,V3,M4,M5";                             // #614
+                             break;                                                    // #614
+                        case 766:                                                      // #614
+                             my_operands="V1,V2,V3,M4,M5,M6";                          // #614
+                             break;                                                    // #614
+                        case 767:                                                      // #614
+                             my_operands="V1,V2,M3";                                   // #614
+                             break;                                                    // #614
+                        case 768:                                                      // #614
+                             my_operands="V1,V2,M3,M4";                                // #614
+                             break;                                                    // #614
+                        case 769:                                                      // #614
+                             my_operands="V1,V2,M3,M4,M5";                             // #614
+                             break;                                                    // #614
+                        case 770:                                                      // #614
+                             my_operands="V1,V2,M5";                                   // #614
+                             break;                                                    // #614
+                        case 771:                                                      // #614
+                             my_operands="V1,V2,V3,V4";                                // #614
+                             break;                                                    // #614
+                        case 772:                                                      // #614
+                             my_operands="V1,V2";                                      // #614
+                             break;                                                    // #614
+                        case 773:                                                      // #614
+                             my_operands="V1,R2,R3";                                   // #614
+                             break;                                                    // #614
+                        case 774:                                                      // #614
+                             my_operands="V1,V2,M4,M5";                                // #614
+                             break;                                                    // #614
+                        case 775:                                                      // #614
+                             my_operands="V1,V2,V3<,M5>";                              // #614
+                             break;                                                    // #614
+                        case 776:                                                      // #614
+                             my_operands="V1,V2<,M5>";                                 // #614
+                             break;                                                    // #614
+                        case 777:                                                      // #614
+                             my_operands="V1,V2,V3,V4<,M6>";                           // #614
+                             break;                                                    // #614
+                        case 778:                                                      // #614
+                             my_operands="V1,V2,M3<,M5>";                              // #614
+                             break;                                                    // #614
+                        default:                                                       // #614
+                             my_operands="*Unknown";                                   // #614
                         }                                                              // #614
                     break;                                                             // #614
                 case 83:                                                               // #614
