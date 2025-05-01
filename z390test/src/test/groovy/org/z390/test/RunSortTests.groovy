@@ -16,7 +16,7 @@ class RunSortTests extends z390Test {
     ]
 
     var runOptions = [
-            'noloadhigh time(45)',
+            'time(45)',
             "SYS390(${basePath('linklib')})"
     ]
 
