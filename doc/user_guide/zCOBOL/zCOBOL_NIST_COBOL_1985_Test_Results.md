@@ -1,27 +1,6 @@
 # zCOBOL NIST COBOL 1985 Test Results
 
-**v1.5.06**
-
-*Automated Software Tools Corporation*
-
-[Overview]
-
-[Summary Statistics]
-
-[Translation to zcobol macro calls]
-
-[Generated HLASM Assembler Instructions]
-
-[Pending Priority List to complete test suite for HLASM target language]
-
-[Trademarks](#Trademarks)
-
-[Credits](#Credits)
-
-== *(C) Copyright 2009 Automated Software Tools Corporation.
-This is part of z390 distributed under open source GPL License* ==
-
-## Overview (#Overview)
+## Overview {: #Overview}
 
 The [NIST COBOL Tests](https://www.itl.nist.gov/div897/ctg/cobol_form.htm)
 have been downloaded and are being used as an initial test
@@ -29,7 +8,7 @@ of zCOBOL compliance with the COBOL 1985 Standard.  There are 459 COBOL test
 programs of which 409 are currently being tested with zcoboL.
 See the [summary statistics](???)
 showing translation, assembly, and execution by 2 character program name prefix.
-Currently they all translate without errors.
+Currently, they all translate without errors.
 
 See the [translation statistics](???)
 showing the frequency of each generated zCOBOL macro call listed in descending
@@ -84,39 +63,40 @@ There are existing example generation macros already included which support
 compiling the zcobol\demo\HELLO.CBL program into executable J2SE Java,
 Microsoft Visual C, and Intel MASM assembler.
 
-## Summary Statistics (#Summary)
+## Summary Statistics {: #Summary}
 
 The following summary report shows the current progress toward translating,
 assembling, and executing 409 NIST test programs for COBOL 1985 using zCOBOL
 and z390 version v1.5.01.
 This report was generated automatically using the following set of
 ZPAR utility commands:
-    ``` dos
-    call zpar\ZPARGEN  zpar\ZCCLG \work\nist\src\*.CBL
-    call zpar\ZPARSUM2            \work\nist\src\*.ERR
-    ```
 
-|      |     |XLAT |XLAT    |ASM      |ASM  |ASM     |EXEC |EXEC    |
-|ID    |TOT  |RC=0 |RC&gt;0 |RC&lt;=4 |RC=8 |RC&gt;8 |RC=0 |RC&gt;0 |
-|------|-----|-----|--------|---------|-----|--------|-----|--------|
-|CM    |  7  |   7 |      0 |       0 |   7 |      0 |   0 |      0 |
-|DB    | 10  |  10 |      0 |       0 |  10 |      0 |   0 |      0 |
-|EX    |  1  |   1 |      0 |       0 |   1 |      0 |   0 |      0 |
-|IC    | 35  |  35 |      0 |      26 |   9 |      0 |   7 |      7 |
-|IF    | 42  |  42 |      0 |       0 |  42 |      0 |   0 |      0 |
-|IX    | 38  |  38 |      0 |       0 |  38 |      0 |   0 |      0 |
-|NC    | 92  |  92 |      0 |      18 |  72 |      0 |   2 |     18 |
-|OB    |  9  |   9 |      0 |       3 |   6 |      0 |   0 |      2 |
-|RL    | 32  |  32 |      0 |       0 |  32 |      0 |   0 |      0 |
-|RW    |  4  |   4 |      0 |       0 |   4 |      0 |   0 |      0 |
-|SG    | 10  |  10 |      0 |       0 |  10 |      0 |   0 |      0 |
-|SM    |  7  |   7 |      0 |       1 |   6 |      0 |   0 |      1 |
-|SQ    | 82  |  82 |      0 |       0 |  82 |      0 |   0 |      0 |
-|ST    | 39  |  39 |      0 |       0 |  39 |      0 |   0 |      0 |
-|------|-----|-----|--------|---------|-----|--------|-----|--------|
-|Total |408  | 408 |      0 |      48 | 358 |      0 |   9 |     28 |
+``` dos
+call zpar\ZPARGEN  zpar\ZCCLG \work\nist\src\*.CBL
+call zpar\ZPARSUM2            \work\nist\src\*.ERR
+```
+
+
+| ID        | TOT     | XLATRC=0 | XLAT RC&gt;0 | ASM RC&lt;=4 | ASM RC=8 | ASM RC&gt;8 | EXEC RC=0 | EXEC RC&gt;0 |
+|-----------|---------|----------|--------------|--------------|----------|-------------|-----------|--------------|
+| CM        | 7       | 7        | 0            | 0            | 7        | 0           | 0         | 0            |
+| DB        | 10      | 10       | 0            | 0            | 10       | 0           | 0         | 0            |
+| EX        | 1       | 1        | 0            | 0            | 1        | 0           | 0         | 0            |
+| IC        | 35      | 35       | 0            | 26           | 9        | 0           | 7         | 7            |
+| IF        | 42      | 42       | 0            | 0            | 42       | 0           | 0         | 0            |
+| IX        | 38      | 38       | 0            | 0            | 38       | 0           | 0         | 0            |
+| NC        | 92      | 92       | 0            | 18           | 72       | 0           | 2         | 18           |
+| OB        | 9       | 9        | 0            | 3            | 6        | 0           | 0         | 2            |
+| RL        | 32      | 32       | 0            | 0            | 32       | 0           | 0         | 0            |
+| RW        | 4       | 4        | 0            | 0            | 4        | 0           | 0         | 0            |
+| SG        | 10      | 10       | 0            | 0            | 10       | 0           | 0         | 0            |
+| SM        | 7       | 7        | 0            | 1            | 6        | 0           | 0         | 1            |
+| SQ        | 82      | 82       | 0            | 0            | 82       | 0           | 0         | 0            |
+| ST        | 39      | 39       | 0            | 0            | 39       | 0           | 0         | 0            |
+| **Total** | **408** | **408**  | **0**        | **48**       | **358**  | **0**       | **9**     | **28**       |
 
 Notes:
+
 1. *The total NIST COBOL 1985 test suite includes 459 programs.*
 2. SM201A and SM206A have been removed pending completion of RPI 1068 support
    for split pseudo literal for COPY REPLACING.
@@ -132,13 +112,14 @@ Notes:
 7. The next step will be to add missing functions identified by MNOTEs in order
    to assemble and execute successfully.
 
-## Translation to zcobol Macro Calls (#Translation)
+## Translation to zcobol Macro Calls {: #Translation}
 
 All of the generated MLC files for the 409 NIST COBOL programs were read
 to produce this report using the command:
-    ``` dos
-    zpar\ZPARMLC \work\NIST\SRC\*.MLC
-    ```
+
+``` dos
+zpar\ZPARMLC \work\NIST\SRC\*.MLC
+```
 
 | Statistics                               |
 |------------------------------------------|
@@ -362,14 +343,15 @@ Notes:
 7. ZCSD counts SD sort definition sections (SD is an assembler instuction)
 8. ZCSTART counts START macro (START is an assembler control instruction)
 
-# Generated HLASM Assembler Instructions (#generated)
+## Generated HLASM Assembler Instructions {: #generated}
 
 The following report showing all the generated HLASM opcodes for all 409 of the
 NIST COBOL programs assembled using option BAL was generated using the following
 command:
-    ``` dos
-    zpar\ZPARMLC \work\NIST\src\*.BAL
-    ```
+
+``` dos
+zpar\ZPARMLC \work\NIST\src\*.BAL
+```
 
 | Statistics                               |
 |------------------------------------------|
@@ -674,7 +656,7 @@ Notes:
 3. @BLANK@ count blank lines.
 4. @ERROR@ count any lines without valid assembler opcode.
 
-## Pending Priority List for zcobol Development (#pending)
+## Pending Priority List for zcobol Development {: #Pending}
 
 The following priorities for the open source zCOBOL portable COBOL compiler
 are based on user feedback. Special thanks to Bill Klein for starting the process.
@@ -701,17 +683,6 @@ are based on user feedback. Special thanks to Bill Klein for starting the proces
     + Segmentation
     + Communications
 
-To submit your priorities, join the [zCOBOL user email group](???)
+To submit your priorities, refer to [Contributing](../../contributing/contributing_zcobol.md) 
 and post your requests:
 
-
-## Trademarks {#Trademarks}
-
-IBM, CICS, HLASM, MVS, OS/390, VSAM, z9, z10, and z/OS
-are registered trademarks  of International Business Machines Corporation
- 
-Dell, Windows, Java, and MASM are registered trademarks of their respective owners.
-
-## Credits {#Credits}
-
-Author : Don Higgins

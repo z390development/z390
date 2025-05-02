@@ -1,0 +1,6 @@
+noallow
+  machine(ZS-5,list)
+  stats
+noloadhigh
+nodump
+notest
