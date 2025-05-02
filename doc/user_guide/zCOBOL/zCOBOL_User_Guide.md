@@ -15,9 +15,9 @@ modernizing COBOL applications without requiring rewriting existing programs.
 
 ## Getting Started
 
-First, you will need to [install z390](/getting_started/install)
+First, you will need to [install z390](../../getting_started/install.md)
 
-Next, try the [zCOBOL Quickstart](/getting_started/quickstart#hello-zcobol) which walks through 
+Next, try the [zCOBOL Quickstart](../../getting_started/quickstart.md#hello-zcobol) which walks through 
 how to create and run your first zCOBOL program.
 
 You can compile and run the provided `HELLO` COBOL program by using the following command:
@@ -55,7 +55,7 @@ Once the programs have been successfully linked, then you can use the
 z390 `exec` command to execute a load module.
 
 For more about all the options available for z390 executable programs
-see the [z390 User Guide](/user_guide/z390/commands)
+see the [z390 User Guide](../z390/commands.md)
 
 ## Debugging your program
 
@@ -65,7 +65,7 @@ you can run it with the command `EXEC <filename>`.
 If the program aborts or fails to produce the expected results, the next step
 is to debug the problem.
 
-The zCOBOL option [TRACE](/user_guide/zCOBOL/zCOBOL_options#TRACE) can be specified 
+The zCOBOL option [TRACE](zCOBOL_options.md) can be specified 
 to generate a WTO display of the name of each COBOL paragraph when it is entered. 
 Along with listing of the program, this is sometimes enough to figure out why the 
 program did not work.

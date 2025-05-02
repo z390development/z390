@@ -2,8 +2,8 @@ plugins {
     id 'groovy'
 }
 
-group 'org.z390.test'
-version '1.0-SNAPSHOT'
+group = 'org.z390.test'
+version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
