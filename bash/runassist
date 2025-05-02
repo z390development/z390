@@ -49,4 +49,16 @@ if [ "$rc" -ne "0" ]; then
     exit $rc
 fi
 
+export XPRNT=assist/test/SOLP06.XPR
+bash/asmlg assist/test/SOLP06 ASSIST 'PARM(v)'
+rc=$?
+if [ "$rc" -ne "0" ]; then
+    echo "Error in SOLP06 rc=$rc - exiting"
+    exit $rc
+fi
+diff -q assist\test\SOLP06.XPR assist\test\SOLP06.TF1 &>/dev/null
+rc1=$?
+if [ $rc1 -eq 0 ]; then x=""; else x=" not"; fi
+echo "SOLP06: Test run was$x successful"
+
 echo "Verify ASSIST demo and test"

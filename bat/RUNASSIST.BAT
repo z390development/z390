@@ -27,12 +27,21 @@ call bat\asmlg %z_TraceMode% assist\test\TSTXDECI ASSIST PARM(v)  || goto error
 
 set XPRNT=assist\test\TSTXHEXI.XPR
 call bat\asmlg %z_TraceMode% assist\test\TSTXHEXI ASSIST PARM(v)  || goto error
+
+set XPRNT=assist\test\SOLP06.XPR
+call bat\asmlg %z_TraceMode% assist\test\SOLP06 ASSIST PARM(v)    || goto error
+call fc.exe assist\test\SOLP06.XPR assist\test\SOLP06.TF1         || goto error2
+
 set z_ReturnCode=0
 goto return
 
 :error
 set z_ReturnCode=%ERRORLEVEL%
 echo %0 ERROR: Encountered RC %z_ReturnCode% while creating %XPRNT% - exiting
+goto return
+:error2
+set z_ReturnCode=%ERRORLEVEL%
+echo %0 ERROR: created output in %XPRNT% does not match reference file - exiting
 :return
 popd
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
