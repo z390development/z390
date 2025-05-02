@@ -10,12 +10,13 @@ import org.junit.jupiter.api.TestInstance.Lifecycle
 class RunSortTests extends z390Test {
 
     var options = [
-            'noloadhigh',
+            'noloadhigh time(45)',
             "SYSMAC(${basePath("mac")})",
             "SYSCPY(${basePath("mac")})"
     ]
 
     var runOptions = [
+            'time(45)',
             "SYS390(${basePath('linklib')})"
     ]
 
