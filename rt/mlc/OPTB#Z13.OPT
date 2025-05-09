@@ -1,0 +1,6 @@
+noallow
+  optable(Z13,list)
+  stats
+noloadhigh
+nodump
+notest

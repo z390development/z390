@@ -1,0 +1,6 @@
+noallow
+  machine(Z13,list)
+  stats
+noloadhigh
+nodump
+notest

@@ -10,7 +10,7 @@ class TestOAttrib extends z390Test {
 
     @Test
     void test_OAttrib() {
-        this.printOutput = true
+        //[debug] this.printOutput = true
         int rc = this.asm(basePath('rt', 'mlc', 'ATTRIB$O'), *options)
         this.printOutput()
         assert rc == 0
@@ -48,11 +48,11 @@ class TestOAttrib extends z390Test {
         for(int i in 0..outputLines.size()){
             var line1Matcher = outputLines[i] =~ line1Regex
             if(line1Matcher.matches()){
-                println("Line ${i} = [${outputLines[i]}]")
+                //[debug] println("Line ${i} = [${outputLines[i]}]")
                 // Get next line and match
                 var line2Matcher = outputLines[i+1] =~ line2Regex
                 if(line2Matcher.matches()){
-                    println("Line ${i+1} = [${outputLines[i+1]}]")
+                    //[debug] println("Line ${i+1} = [${outputLines[i+1]}]")
                     Assertions.assertEquals(
                         line1Matcher.group("expected"),
                         line2Matcher.group("actual"),
