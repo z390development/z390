@@ -108,6 +108,74 @@ standard GitHub pull request model.
 Changes can be submitted to the project by creating a pull request on the 
 [z390 project repository](https://github.com/z390development/z390).
 
+## Creating a new release
+
+The z390 project uses a file-based versioning system with git tag support. Version
+numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) principles.
+
+### Version management
+
+To create a new release:
+
+1. Create a release branch from main:
+   ```bash
+   git checkout -b release/v1.2.3 main
+   ```
+
+2. Update the version using the `bash/bumpver` utility:
+   ```bash
+   # Bump patch version (1.0.0 -> 1.0.1)
+   bash/bumpver patch -m "Fix bug in xyz"
+
+   # Bump minor version (1.0.1 -> 1.1.0)
+   bash/bumpver minor -m "Add new feature xyz"
+
+   # Bump major version (1.1.0 -> 2.0.0)
+   bash/bumpver major -m "Breaking change xyz"
+   ```
+
+   The bumpver utility will:
+   1. Update the version in version.txt
+   2. Create a git commit with your message
+   3. Create a git tag (e.g. v1.0.1)
+
+3. Push your branch and create a pull request:
+   ```bash
+   git push -u origin release/v1.2.3
+   ```
+
+### Automated Release Process
+
+When a pull request containing changes to version.txt is merged to main, 
+the GitHub Actions workflow will automatically:
+
+1. Build the z390 distribution
+2. Run all tests
+3. Create a GitHub release using the version from version.txt
+4. Attach the distribution zip file to the release
+
+### Release Notes
+
+When creating a release pull request:
+
+1. Update the CHANGELOG.md file following the
+   [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
+2. Copy the relevant section from CHANGELOG.md to release.md for the
+   current release
+
+### Version Verification
+
+The build process verifies that git tags match the version.txt file. If you
+get version verification errors during PR validation, you can:
+
+1. Use FORCE parameter to bypass version checks:
+   ```bash
+   bash/relver FORCE
+   ```
+2. Or ensure your repository has all tags:
+   ```bash
+   git fetch --tags
+   ```
 
 ## Useful technical details
 
