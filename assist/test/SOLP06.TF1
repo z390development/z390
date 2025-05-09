@@ -1,0 +1,42 @@
+1                                                   Book Title Counts by Publisher
+                                                   First List of Publishers and Titles
+0         Publisher Name                          Publisher Prefix          Titles in Print          Titles in Preparation
+          ------------------------------          ----------------          ---------------          ---------------------
+0         .XRD test input file for ASSIS               -2147450880              -2147450880                    -2147450880
+0         lse 3 if EOD else 2 if I/O err               -2147450880              -2147450880                    -2147450880
+0         xbdddbddd' s1(x1),s2  reads li               -2147450880              -2147450880                    -2147450880
+0         x1) for length of s2 or defaul               -2147450880              -2147450880                    -2147450880
+1                                                   Book Title Counts by Publisher
+                                                  Second List of Publishers and Titles
+0         Publisher Name                          Publisher Prefix          Titles in Print          Titles in Preparation
+          ------------------------------          ----------------          ---------------          ---------------------
+0         .XRD test input file for ASSIS               -2147450880              -2147450880                    -2147450880
+0         lse 3 if EOD else 2 if I/O err               -2147450880              -2147450880                    -2147450880
+0         xbdddbddd' s1(x1),s2  reads li               -2147450880              -2147450880                    -2147450880
+0         x1) for length of s2 or defaul               -2147450880              -2147450880                    -2147450880
+1                                                   Book Title Counts by Publisher
+                                                  Merged List of Publishers and Titles
+0         Publisher Name                          Publisher Prefix          Titles in Print          Titles in Preparation
+          ------------------------------          ----------------          ---------------          ---------------------
+0         .XRD test input file for ASSIS               -2147450880              -2147450880                    -2147450880
+0         lse 3 if EOD else 2 if I/O err               -2147450880              -2147450880                    -2147450880
+0         xbdddbddd' s1(x1),s2  reads li               -2147450880              -2147450880                    -2147450880
+0         x1) for length of s2 or defaul               -2147450880              -2147450880                    -2147450880
+1                                                   Book Title Counts by Publisher
+                                              Updates to Titles in Print and Preparation
+0         Publisher Name                          Added to Titles in Print          Added to Titles in Preparation
+          ------------------------------          ------------------------          ------------------------------
+          Line 1 of 4 rt\test\TESTAST1.X      *** Error *** Publisher Name Not Found                                             -
+          Line 2 of 4 XREAD RXSS X'E00xb      *** Error *** Publisher Name Not Found                                             -
+          Line 3 of 4 into area at s1(x1      *** Error *** Publisher Name Not Found                                             -
+          Line 4 of 4 PSW CC=0 if ok els      *** Error *** Publisher Name Not Found                                             -
+-                        Total changes to Titles Published:              0
+0                        Total changes to Titles in Preparation:                                                 0
+1                                                   Book Title Counts by Publisher
+                                                 Updated List of Publishers and Titles
+0         Publisher Name                          Publisher Prefix          Titles in Print          Titles in Preparation
+          ------------------------------          ----------------          ---------------          ---------------------
+0         .XRD test input file for ASSIS               -2147450880              -2147450880                    -2147450880
+0         lse 3 if EOD else 2 if I/O err               -2147450880              -2147450880                    -2147450880
+0         xbdddbddd' s1(x1),s2  reads li               -2147450880              -2147450880                    -2147450880
+0         x1) for length of s2 or defaul               -2147450880              -2147450880                    -2147450880

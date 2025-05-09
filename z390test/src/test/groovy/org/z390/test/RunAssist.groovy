@@ -45,4 +45,18 @@ class RunAssist extends z390Test {
         assert rc == 0
     }
 
+    @Test
+    void test_SOLP06() {
+        this.env.put('XPRNT', basePath('assist', 'test', 'SOLP06.XPR'))
+        this.env.put('XREAD', basePath('assist', 'test', 'SOLP06.XRD'))
+        int rc = this.asmlg(basePath("assist", "test", "SOLP06"), *options, 'PARM(v)')
+        this.printOutput()
+        assert rc == 0
+        // Load files to fileData and compare
+        loadFile(basePath('demo', 'SOLP06.TF1'), 'TF1')
+        loadFile(basePath('demo', 'SOLP06.XPR'), 'XPR')
+        assert fileData.get('TF1') == fileData.get('XPR')
+        assert rc == 0
+    }
+
 }
