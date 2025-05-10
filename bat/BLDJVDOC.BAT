@@ -13,8 +13,8 @@ rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..
 rem generate javadoc
-if not exist ".\docenv\javadoc\" mkdir docenv\javadoc
-cd docenv\javadoc
+if not exist ".\build\javadoc\" mkdir build\javadoc
+cd build\javadoc
 call javadoc.exe ..\..\src\*.java -private || goto error
 cd ..\..
 goto return

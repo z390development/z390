@@ -32,16 +32,17 @@ echo /** > %DIST_DIR%\.gitignore
 if exist %DIST_DIR%\z390_%VERSION% rmdir /S /Q %DIST_DIR%\z390_%VERSION%
 if exist %DIST_DIR%\z390_%VERSION%.zip del /F /Q %DIST_DIR%\z390_%VERSION%.zip
 
-rem build javadocs
-call bat\BLDJVDOC.BAT %z_TraceMode% build\javadoc || goto error
-
 cd %DIST_DIR%
 mkdir z390_%VERSION%
 cd z390_%VERSION%
 
+echo on
 rem add core files to the build dir
 copy ..\..\z390.jar .
-for %%G in (bash bat mac zcobol cics linklib README.txt LICENSE) do (
+copy ..\..\README.txt .
+copy ..\..\LICENSE .
+
+for %%G in (bash bat mac zcobol cics linklib) do (
     xcopy /E /I /Y ..\..\%%G %%G > nul
 )
 
