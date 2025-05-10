@@ -83,11 +83,11 @@ jobs:
           VERSION: ${{ needs.build-distribution.outputs.VERSION }}
 
   create-release:
-    # Only run on merged PRs to main that modified version.txt
+    # Run on merged PRs to main that modified or added version.txt
     if: |
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
-      contains(github.event.commits[*].modified, 'version.txt')
+      (contains(github.event.commits[*].modified, 'version.txt') || contains(github.event.commits[*].added, 'version.txt'))
     runs-on: ubuntu-latest
     needs: 
       - build-distribution
