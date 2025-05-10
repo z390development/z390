@@ -1,51 +1,17 @@
 #!/bin/bash
 
-# relver: use git to set z390.properties version details
-# run with force parm to ignore issues retrieving the version
+# relver: read version from version.txt file
 
-set +e                  # need to handle errors in this script
-cd $(dirname $0)        # set to directory of script
+cd $(dirname $0)
 cd ..
 
-VER="Uncontrolled";
+VERSION_FILE="version.txt"
 
-get_tags() {
-    if ! git config remote.upstream.url > /dev/null; then
-        git remote add upstream https://github.com/z390development/z390.git
-    fi
-    git fetch -p upstream
-}
-
-# is git installed
-$(git --version > /dev/null 2>&1)
-GIT_INSTALLED=$?
-if [ ${GIT_INSTALLED} != 0 ]; then
-    echo >&2 "Git is not installed";
-else
-    # is in a git repo
-    $(git rev-parse --is-inside-work-tree > /dev/null 2>&1)
-    GIT_REPO=$?
-    if [ ${GIT_REPO} != 0 ]; then
-        echo >&2 "Not a git repo.";
-    else
-        $(git describe --tags > /dev/null 2>&1)
-        GIT_DESCRIBE=$?
-        if [ ${GIT_DESCRIBE} != 0 ]; then
-            echo >&2 "Unable to git describe - fetching tags from upstream"
-            get_tags
-        fi
-        VER=$(git describe --tags);
-    fi    
+if [ ! -f "$VERSION_FILE" ]; then
+    echo "Error: version.txt file not found"
+    exit 1
 fi
 
-set -e
-
-if [[ ${VER} == "Uncontrolled" ]]; then
-    parm=$(echo "$1" | tr '[:lower:]' '[:upper:]');
-    if [[ "$parm" != "FORCE" ]]; then
-        echo "Version is uncontrolled - add FORCE parm to ignore"
-        exit 8;
-    fi
-fi
+VER=$(cat "$VERSION_FILE")
 echo "version=${VER}" > z390.properties
-cat z390.properties;
+cat z390.properties

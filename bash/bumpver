@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# bumpver: Utility to bump version numbers
+# Usage: bumpver [major|minor|patch] [-m message]
+
+VERSION_FILE="../version.txt"
+cd $(dirname $0)
+
+# Check if in git repo
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+    echo "Error: Not in a git repository"
+    exit 1
+fi
+
+# Parse arguments
+version_type="patch"  # default
+message=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        major|minor|patch)
+            version_type="$1"
+            shift
+            ;;
+        -m|--message)
+            message="$2"
+            shift 2
+            ;;
+        *)
+            echo "Usage: bumpver [major|minor|patch] [-m message]"
+            exit 1
+            ;;
+    esac
+done
+
+if [ ! -f "$VERSION_FILE" ]; then
+    echo "1.0.0" > "$VERSION_FILE"
+fi
+
+current_version=$(cat "$VERSION_FILE")
+IFS='.' read -r -a version_parts <<< "$current_version"
+
+major="${version_parts[0]}"
+minor="${version_parts[1]}"
+patch="${version_parts[2]}"
+
+case "$version_type" in
+    "major")
+        major=$((major + 1))
+        minor=0
+        patch=0
+        ;;
+    "minor")
+        minor=$((minor + 1))
+        patch=0
+        ;;
+    "patch")
+        patch=$((patch + 1))
+        ;;
+esac
+
+new_version="${major}.${minor}.${patch}"
+
+# Check if working directory is clean
+if ! git diff --quiet HEAD; then
+    echo "Error: Working directory is not clean. Commit or stash changes first."
+    exit 1
+fi
+
+# Update version file
+echo "$new_version" > "$VERSION_FILE"
+
+# Create commit with version bump
+git add "$VERSION_FILE"
+if [ -z "$message" ]; then
+    message="Bump version to ${new_version}"
+fi
+git commit -m "$message"
+
+echo "Version bumped to $new_version"
+echo "Don't forget to push changes with: git push"
