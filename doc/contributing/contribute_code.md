@@ -16,7 +16,8 @@ The project has moved to the [Apache Adoptium Java SDK](https://adoptium.net)
 z390 is using java 21 to build the package but code must support Java 1.8.
 
 To ensure alignment with other developers, use of a Java SDK 21 or greater
-is recommended.
+is recommended. At a minimum, you will require an SDK of 9 or greater 
+as the build jobs use parameters not available in earlier versions.
 
 You can check if this is available by running the following command:
 
