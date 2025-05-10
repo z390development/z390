@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# relver: read version from version.txt file and verify git tag
+# relver: read version from version.txt file
 
 cd $(dirname $0)
 cd ..
@@ -13,17 +13,5 @@ if [ ! -f "$VERSION_FILE" ]; then
 fi
 
 VER=$(cat "$VERSION_FILE")
-
-# Verify git tag exists if in git repo
-if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
-    if ! git tag | grep -q "v${VER}"; then
-        echo "Warning: Git tag v${VER} not found"
-        if [[ "$1" != "FORCE" ]]; then
-            echo "Add FORCE parameter to ignore missing git tag"
-            exit 1
-        fi
-    fi
-fi
-
 echo "version=${VER}" > z390.properties
 cat z390.properties

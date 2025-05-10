@@ -157,29 +157,6 @@ the GitHub Actions workflow will automatically:
 4. Create a GitHub release using the version from version.txt
 5. Attach the distribution zip file to the release
 
-### Release Notes
-
-When creating a release pull request:
-
-1. Update the CHANGELOG.md file following the
-   [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format
-2. Copy the relevant section from CHANGELOG.md to release.md for the
-   current release
-
-### Version Verification
-
-The build process verifies that git tags match the version.txt file. If you
-get version verification errors during PR validation, you can:
-
-1. Use FORCE parameter to bypass version checks:
-   ```bash
-   bash/relver FORCE
-   ```
-2. Or ensure your repository has all tags:
-   ```bash
-   git fetch --tags
-   ```
-
 ## Useful technical details
 
 The following section is to provide some technical background for new developers.
