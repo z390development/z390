@@ -13,12 +13,15 @@ Make sure you have a Java SDK available to compile the application.
 The project has moved to the [Apache Adoptium Java SDK](https://adoptium.net) 
 (previously AdoptOpenJDK) for distribution builds.
 
-z390 requires Java 1.8 or greater.
+z390 is using java 21 to build the package but code must support Java 1.8.
+
+To ensure alignment with other developers, use of a Java SDK 21 or greater
+is recommended.
 
 You can check if this is available by running the following command:
 
     shell> javac -version
-    javac 1.8.0_312`   # you should receive a message like this
+    javac 21.0.0   # you should receive a message like this
 
 ### Install git
 
@@ -110,7 +113,7 @@ Changes can be submitted to the project by creating a pull request on the
 
 ## Creating a new release
 
-The z390 project uses a file-based versioning system with git tag support. Version
+The z390 project uses a file-based versioning system with git tags. Version
 numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) principles.
 
 ### Version management
@@ -137,7 +140,6 @@ To create a new release:
    The bumpver utility will:
    1. Update the version in version.txt
    2. Create a git commit with your message
-   3. Create a git tag (e.g. v1.0.1)
 
 3. Push your branch and create a pull request:
    ```bash
@@ -150,9 +152,10 @@ When a pull request containing changes to version.txt is merged to main,
 the GitHub Actions workflow will automatically:
 
 1. Build the z390 distribution
-2. Run all tests
-3. Create a GitHub release using the version from version.txt
-4. Attach the distribution zip file to the release
+2. Run all tests 
+3. Create a git tag for the version
+4. Create a GitHub release using the version from version.txt
+5. Attach the distribution zip file to the release
 
 ### Release Notes
 
