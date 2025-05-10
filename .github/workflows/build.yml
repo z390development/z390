@@ -1,9 +1,7 @@
 name: Build z390
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  - push
+  - pull_request
 
 env:
   JAVA_DISTRIBUTION: temurin
