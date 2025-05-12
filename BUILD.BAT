@@ -9,6 +9,7 @@ if /I "%1" == "tron" (set z_TraceMode=tron
                                      ) else (set z_TraceMode=)
                       )
 set /A z_NestLevel=%z_NestLevel%+1
+rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 pushd %~dps0
 
 rem Output Java version for CI/CD
