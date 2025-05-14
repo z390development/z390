@@ -10,7 +10,7 @@ project. For how to contribute to the documentation, see
 
 Make sure you have a Java SDK available to compile the application.
 
-The project has moved to the [Apache Adoptium Java SDK](https://adoptium.net) 
+The project has moved to the [Eclipse Temurin Java SDK](https://adoptium.net) 
 (previously AdoptOpenJDK) for distribution builds.
 
 z390 is using java 21 to build the package but code must support Java 1.8.

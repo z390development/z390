@@ -37,11 +37,10 @@ cd %DIST_DIR%
 mkdir z390_%VERSION%
 cd z390_%VERSION%
 
-echo on
 rem add core files to the build dir
-copy ..\..\z390.jar .
-copy ..\..\README.txt .
-copy ..\..\LICENSE .
+xcopy ..\..\z390.jar .
+xcopy ..\..\README.txt .
+xcopy ..\..\LICENSE .
 
 for %%G in (bash bat mac zcobol cics linklib) do (
     xcopy /E /I /Y ..\..\%%G %%G > nul
@@ -53,7 +52,7 @@ for %%G in (assist demo guam qsam bsam rt soa sort structuredmacros tests vsam1 
 )
 
 rem add structured programming macros to mac/spm folder
-mkdir mac\spm
+if not exist "mac\spm" mkdir mac\spm
 xcopy /E /I /Y ..\..\build\zstrmac\* mac\spm\ > nul
 
 rem add javadoc
@@ -65,7 +64,7 @@ del /F /Q bash\bldjar bat\BLDJAR.BAT bash\blddist bash\relver bat\RELVER.BAT
 
 rem create zip package
 cd ..
-powershell Compress-Archive -Path z390_%VERSION% -DestinationPath z390_%VERSION%.zip -Force
+powershell Compress-Archive -Path z390_%VERSION% -DestinationPath z390_%VERSION%.zip -Force || goto error
 
 set z_ReturnCode=0
 goto return

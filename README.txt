@@ -11,7 +11,7 @@ This distribution has been regression tested on Windows Server and Ubuntu Linux
 using GitHub Actions.
 
 Java runtime/SDK used for build: 
-Eclipse Adoptium OpenJDK 21 https://adoptium.net/?variant=openjdk21
+Eclipse Temurin 21 https://adoptium.net/temurin/releases/?variant=temurin21
 
 This distribution includes a prebuilt z390.jar file and scripts.
 All you need to install is a Java JRE (version 8 or above).
