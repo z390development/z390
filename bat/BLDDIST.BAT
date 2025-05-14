@@ -38,9 +38,9 @@ mkdir z390_%VERSION%
 cd z390_%VERSION%
 
 rem add core files to the build dir
-xcopy ..\..\z390.jar .
-xcopy ..\..\README.txt .
-xcopy ..\..\LICENSE .
+xcopy ..\..\z390.jar .   > nul
+xcopy ..\..\README.txt . > nul
+xcopy ..\..\LICENSE .    > nul
 
 for %%G in (bash bat mac zcobol cics linklib) do (
     xcopy /E /I /Y ..\..\%%G %%G > nul
