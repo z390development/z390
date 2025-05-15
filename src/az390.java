@@ -433,6 +433,7 @@ public  class  az390 implements Runnable {
         * 2025-03-18 AFK #602 Correct OPTABLE(Z10,LIST) output to match HLASM
         * 2025-04-02 AFK #612 Correct OPTABLE(Z11,LIST) output to match HLASM
         * 2025-04-15 AFK #613 Correct OPTABLE(Z11,LIST) output to match HLASM
+        * 2025-04-26 AFK #614 Correct OPTABLE(Z12,LIST) output to match HLASM
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -2102,10 +2103,32 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 23:
                     my_format="RIE";                                                   // #500
                     my_operands="R1,R3,RI2";                                           // #500 #561
+                    if (tz390.op_trace_type[index]==230)                               // #614
+                       {if (tz390.op_name[index].equals("LOCGHI")                      // #614
+                        ||  tz390.op_name[index].equals("LOCHHI")                      // #614
+                        ||  tz390.op_name[index].equals("LOCHI")                       // #614
+                            )                                                          // #614
+                           {my_operands="R1,I2,M3";                                    // #614
+                            }                                                          // #614
+                        else if (tz390.op_name[index].length() >= 6)                   // #614
+                           {if (tz390.op_name[index].substring(0,6).equals("LOCGHI")   // #614
+                            ||  tz390.op_name[index].substring(0,6).equals("LOCHHI")   // #614
+                            ||  tz390.op_name[index].substring(0,5).equals("LOCHI")    // #614
+                                )                                                      // #614
+                               {my_operands="R1,I2";                                   // #614
+                                }                                                      // #614
+                            }                                                          // #614
+                        }                                                              // #614
                     break;
                 case 24:
                     my_format="RXE";                                                   // #500
                     my_operands="R1,D2(X2,B2)";                                        // #500
+                    if (tz390.op_trace_type[index]==240)                               // #614
+                       {if (tz390.op_name[index].equals("LCBB")                        // #614
+                            )                                                          // #614
+                           {my_operands="R1,D2(X2,B2),M3";                             // #614
+                            }                                                          // #614
+                        }                                                              // #614
                     break;
                 case 25:
                     my_format="RXF";                                                   // #500
@@ -2247,8 +2270,23 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                             my_operands="R1,R2,M3";                                    // #612
                             }                                                          // #612
                         }                                                              // #612
-                    else if (tz390.op_trace_type[index]==153                           // #612
-                         ||  tz390.op_trace_type[index]==154                           // #612
+                    else if (tz390.op_trace_type[index]==153)                          // #612 #614
+                       {if (tz390.op_name[index].equals("LOCFHR"))                     // #612 #614
+                           {my_format="RRF";                                           // #612 #614
+                            my_operands="R1,R2,M3";                                    // #612 #614
+                            }                                                          // #612 #614
+                        else if (tz390.op_name[index].length() >= 6                    //      #614
+                             &&  tz390.op_name[index].substring(0,6).equals("LOCFHR")  //      #614
+                                 )                                                     //      #614
+                           {my_format="RRF";                                           //      #614
+                            my_operands="R1,R2";                                       //      #614
+                            }                                                          //      #614
+                        else                                                           // #612 #614
+                           {my_format="RRF";                                           // #612 #614
+                            my_operands="R1,R2,R3";                                    // #612 #614
+                            }                                                          // #612 #614
+                        }                                                              // #612 #614
+                    else if (tz390.op_trace_type[index]==154                           // #612 #614
                          ||  tz390.op_trace_type[index]==410                           // #612
                              )
                        {my_format="RRF";                                               // #612
@@ -2361,16 +2399,23 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     break;
                 case 56:
                     my_format="RSY";                                                   // #500
-                    if (tz390.op_name[index].equals("LOC")                             //      #612
-                    ||  tz390.op_name[index].equals("LOCG")                            //      #612
-                    ||  tz390.op_name[index].equals("STOC")                            //      #612
-                    ||  tz390.op_name[index].equals("STOCG")                           //      #612
-                        )                                                              //      #612
-                       {my_operands="R1,D2(B2),M3";                                    // #500 #612
-                        }                                                              //      #612
-                    else                                                               //      #612
-                       {my_operands="R1,D2(B2)";                                       // #500 #612
-                        }                                                              //      #612
+                    my_operands="R1,D2(B2)";                                           // #500 #612 #614
+                    if (tz390.op_trace_type[index]==207)                               //           #614
+                       {if (tz390.op_name[index].equals("LOCFH")                       //      #612 #614
+                        ||  tz390.op_name[index].equals("LOCG")                        //      #612 #614
+                        ||  tz390.op_name[index].equals("STOCFH")                      //      #612 #614
+                        ||  tz390.op_name[index].equals("STOCG")                       //      #612 #614
+                            )                                                          //      #612 #614
+                           {my_operands="R1,D2(B2),M3";                                // #500 #612 #614
+                            }                                                          //      #612 #614
+                        }                                                              //           #614
+                    else if (tz390.op_trace_type[index]==209)                          //           #614
+                       {if (tz390.op_name[index].equals("LOC")                         //      #612 #614
+                        ||  tz390.op_name[index].equals("STOC")                        //      #612 #614
+                            )                                                          //      #612 #614
+                           {my_operands="R1,D2(B2),M3";                                // #500 #612 #614
+                            }                                                          //      #612 #614
+                        }                                                              //           #614
                     break;
                 case 57:
                     my_format="RIE";                                                   // #500
@@ -2496,6 +2541,170 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     my_format="SMI";                                                   // #613
                     my_operands="M1,RI2,D3(B3)";                                       // #613
                     break;                                                             // #613
+                case 78:                                                               // #614
+                    my_format="VRX";                                                   // #614
+                    switch (tz390.op_trace_type[index])                                // #614
+                       {case 734:                                                      // #614
+                             my_operands="V1,D2(X2,B2),M3";                            // #614
+                             break;                                                    // #614
+                        case 739:                                                      // #614
+                             my_operands="V1,D2(X2,B2)<,M3>";                          // #614
+                             break;                                                    // #614
+                        case 740:                                                      // #614
+                             my_operands="V1,D2(X2,B2)";                               // #614
+                             break;                                                    // #614
+                        case 741:                                                      // #614
+                             my_operands="V1,R3,D2(B2)";                               // #614
+                             break;                                                    // #614
+                        default:                                                       // #614
+                             my_operands="*Unknown";                                   // #614
+                        }                                                              // #614
+                    break;                                                             // #614
+                case 80:                                                               // #614
+                    my_format="VRS";                                                   // #614
+                    switch (tz390.op_trace_type[index])                                // #614
+                       {case 736:                                                      // #614
+                             my_operands="V1,V3,D2(B2),M4";                            // #614
+                             break;                                                    // #614
+                        case 742:                                                      // #614
+                             my_operands="V1,V3,D2(B2)<,M4>";                          // #614
+                             break;                                                    // #614
+                        case 743:                                                      // #614
+                             my_operands="V1,V3,D2(B2)";                               // #614
+                             break;                                                    // #614
+                        case 744:                                                      // #614
+                             my_operands="R1,V3,D2(B2),M4";                            // #614
+                             break;                                                    // #614
+                        case 745:                                                      // #614
+                             my_operands="R1,V3,D2(B2)";                               // #614
+                             break;                                                    // #614
+                        case 746:                                                      // #614
+                             my_operands="V1,R3,D2(B2),M4";                            // #614
+                             break;                                                    // #614
+                        case 747:                                                      // #614
+                             my_operands="V1,R3,D2(B2)";                               // #614
+                             break;                                                    // #614
+                        default:                                                       // #614
+                             my_operands="*Unknown";                                   // #614
+                        }                                                              // #614
+                    break;                                                             // #614
+                case 81:                                                               // #614
+                    my_format="VRI";                                                   // #614
+                    switch (tz390.op_trace_type[index])                                // #614
+                       {case 737:                                                      // #614
+                             my_operands="V1,V2,V3,I4,M5";                             // #614
+                             break;                                                    // #614
+                        case 748:                                                      // #614
+                             my_operands="V1,V2,V3,I4";                                // #614
+                             break;                                                    // #614
+                        case 749:                                                      // #614
+                             my_operands="V1,V2,I3,M4,M5";                             // #614
+                             break;                                                    // #614
+                        case 750:                                                      // #614
+                             my_operands="V1,V2,I3";                                   // #614
+                             break;                                                    // #614
+                        case 751:                                                      // #614
+                             my_operands="V1,I2,M3";                                   // #614
+                             break;                                                    // #614
+                        case 752:                                                      // #614
+                             my_operands="V1,I2";                                      // #614
+                             break;                                                    // #614
+                        case 753:                                                      // #614
+                             my_operands="V1,V3,I2,M4";                                // #614
+                             break;                                                    // #614
+                        case 754:                                                      // #614
+                             my_operands="V1,V3,I2";                                   // #614
+                             break;                                                    // #614
+                        case 755:                                                      // #614
+                             my_operands="V1,I2,I3,M4";                                // #614
+                             break;                                                    // #614
+                        case 756:                                                      // #614
+                             my_operands="V1,I2,I3";                                   // #614
+                             break;                                                    // #614
+                        case 757:                                                      // #614
+                             my_operands="V1";                                         // #614
+                             break;                                                    // #614
+                        default:                                                       // #614
+                             my_operands="*Unknown";                                   // #614
+                        }                                                              // #614
+                    break;                                                             // #614
+                case 82:                                                               // #614
+                    my_format="VRR";                                                   // #614
+                    switch (tz390.op_trace_type[index])                                // #614
+                       {case 738:                                                      // #614
+                             my_operands="V1,V2,V3";                                   // #614
+                             break;                                                    // #614
+                        case 758:                                                      // #614
+                             my_operands="V1,V2,V3,M4";                                // #614
+                             break;                                                    // #614
+                        case 759:                                                      // #614
+                             my_operands="V1,V2,V3,M4,M5";                             // #614
+                             break;                                                    // #614
+                        case 760:                                                      // #614
+                             my_operands="V1,V2,V3,M4<,M5>";                           // #614
+                             break;                                                    // #614
+                        case 761:                                                      // #614
+                             my_operands="V1,V2,V3,M4<,M5>";                           // #614
+                             break;                                                    // #614
+                        case 762:                                                      // #614
+                             my_operands="V1,V2,V3,V4,M5";                             // #614
+                             break;                                                    // #614
+                        case 763:                                                      // #614
+                             my_operands="V1,V2,V3,V4,M5,M6";                          // #614
+                             break;                                                    // #614
+                        case 764:                                                      // #614
+                             my_operands="V1,V2,V3,V4,M5<,M6>";                        // #614
+                             break;                                                    // #614
+                        case 765:                                                      // #614
+                             my_operands="V1,V2,V3,M4,M5";                             // #614
+                             break;                                                    // #614
+                        case 766:                                                      // #614
+                             my_operands="V1,V2,V3,M4,M5,M6";                          // #614
+                             break;                                                    // #614
+                        case 767:                                                      // #614
+                             my_operands="V1,V2,M3";                                   // #614
+                             break;                                                    // #614
+                        case 768:                                                      // #614
+                             my_operands="V1,V2,M3,M4";                                // #614
+                             break;                                                    // #614
+                        case 769:                                                      // #614
+                             my_operands="V1,V2,M3,M4,M5";                             // #614
+                             break;                                                    // #614
+                        case 770:                                                      // #614
+                             my_operands="V1,V2,M5";                                   // #614
+                             break;                                                    // #614
+                        case 771:                                                      // #614
+                             my_operands="V1,V2,V3,V4";                                // #614
+                             break;                                                    // #614
+                        case 772:                                                      // #614
+                             my_operands="V1,V2";                                      // #614
+                             break;                                                    // #614
+                        case 773:                                                      // #614
+                             my_operands="V1,R2,R3";                                   // #614
+                             break;                                                    // #614
+                        case 774:                                                      // #614
+                             my_operands="V1,V2,M4,M5";                                // #614
+                             break;                                                    // #614
+                        case 775:                                                      // #614
+                             my_operands="V1,V2,V3<,M5>";                              // #614
+                             break;                                                    // #614
+                        case 776:                                                      // #614
+                             my_operands="V1,V2<,M5>";                                 // #614
+                             break;                                                    // #614
+                        case 777:                                                      // #614
+                             my_operands="V1,V2,V3,V4<,M6>";                           // #614
+                             break;                                                    // #614
+                        case 778:                                                      // #614
+                             my_operands="V1,V2,M3<,M5>";                              // #614
+                             break;                                                    // #614
+                        default:                                                       // #614
+                             my_operands="*Unknown";                                   // #614
+                        }                                                              // #614
+                    break;                                                             // #614
+                case 83:                                                               // #614
+                    my_format="VRV";                                                   // #614
+                    my_operands="V1,D2(V2,B2),M3";                                     // #614
+                    break;                                                             // #614
                 default:
                     my_format="???";                                                   // #500
                     my_operands="*Unknown";                                            // #500
