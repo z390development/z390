@@ -58,6 +58,12 @@ jobs:
           Z390_PROJECT_ROOT="../dist/z390_${VERSION}" z390test/gradlew -p z390test test 
         env:
           VERSION: ${{ needs.build-distribution.outputs.VERSION }}
+      - name: Upload z390Test output on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-output
+          path: ./z390test/build/z390test-output.txt
   
   run-windows-demo:
     runs-on: windows-latest

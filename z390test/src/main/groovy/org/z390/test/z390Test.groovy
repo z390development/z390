@@ -2,6 +2,7 @@ package org.z390.test
 
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInfo
 
 class z390Test {
 
@@ -31,6 +32,7 @@ class z390Test {
             printOutput = true
         }
     }
+
     @BeforeEach
     void setUp() {
         this.stdout = ""
@@ -38,7 +40,8 @@ class z390Test {
         this.fileData = [:]
     }
     @AfterEach
-    void cleanUp() {
+    void cleanUp(TestInfo testInfo) {
+        printOutput(testInfo.displayName)
         if (this.tempDir)
             this.tempDir.deleteDir()
     }
@@ -142,27 +145,42 @@ class z390Test {
         }
     }
 
-    static printFile(data, label) {
+    static String captureFile(data, label) {
         String linefeed = /\r\n|\n/
         String[] lines = data.toString().split(linefeed)
-        println(("*" * 20) + " ${label} (${lines.length} lines) " + ("*" * 20))
+        def sb = new StringBuilder()
+        sb << ("*" * 20) + " ${label} (${lines.length} lines) " + ("*" * 20) + "\n"
         lines.eachWithIndex{ String line, int lineNum ->
-            println("${String.format('%05d',lineNum)}  ${line}")
+            sb << "${String.format('%05d',lineNum)}  ${line}\n"
         }
+        return sb.toString()
     }
 
-    def printOutput(String... args) {
-        if (!printOutput) return
-        var label = args.join()
-        if (!label) {
-            label = "PRINT OUTPUT"
-        }
-        println("=-=-=-=-=-=-=-=-=-=-=  ${label} =-=-=-=-=-=-=-=-=-=-=")
-        printFile(this.stdout, 'stdout')
-        printFile(this.stderr, 'stderr')
+    def printOutput(String testName="", String... args) {
+
+        // If called without testName, just ignore. Legacy usage
+        if (testName == "") return;
+
+        def output = new StringBuilder()
+        output << "======================= TEST INFO =======================\n"
+        output << "Test Name : ${testName}\n"
+        output << "Timestamp : ${new Date()}\n"
+        output << "=========================================================\n"
+
+        output << captureFile(this.stdout, 'stdout')
+        output << captureFile(this.stderr, 'stderr')
         this.fileData.each { fileExt, data ->
-            printFile(data, fileExt)
+            output << captureFile(data, fileExt)
         }
+        
+        if (printOutput) {
+            print output.toString()
+        }
+        
+        // Write to file
+        def outFile = new File("build/z390test-output.txt")
+        outFile.parentFile.mkdirs()
+        outFile << output.toString()
     }
 
     def mz390(Map kwargs=[:], String asmFilename, String... args) {
