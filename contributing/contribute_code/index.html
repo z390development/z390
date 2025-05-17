@@ -1503,6 +1503,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#creating-a-new-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating a new release
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Creating a new release">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#version-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Version management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated-release-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automated Release Process
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#useful-technical-details" class="md-nav__link">
     <span class="md-ellipsis">
       Useful technical details
@@ -1744,6 +1777,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#creating-a-new-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating a new release
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Creating a new release">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#version-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Version management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automated-release-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automated Release Process
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#useful-technical-details" class="md-nav__link">
     <span class="md-ellipsis">
       Useful technical details
@@ -1820,12 +1886,15 @@ project. For how to contribute to the documentation, see
 <h2 id="setup-and-build">Setup and build</h2>
 <h3 id="install-java-sdk">Install Java SDK</h3>
 <p>Make sure you have a Java SDK available to compile the application.</p>
-<p>The project has moved to the <a href="https://adoptium.net">Apache Adoptium Java SDK</a> 
+<p>The project has moved to the <a href="https://adoptium.net">Eclipse Temurin Java SDK</a> 
 (previously AdoptOpenJDK) for distribution builds.</p>
-<p>z390 requires Java 1.8 or greater.</p>
+<p>z390 is using java 21 to build the package but code must support Java 1.8.</p>
+<p>To ensure alignment with other developers, use of a Java SDK 21 or greater
+is recommended. At a minimum, you will require an SDK of 9 or greater 
+as the build jobs use parameters not available in earlier versions.</p>
 <p>You can check if this is available by running the following command:</p>
 <div class="highlight"><pre><span></span><code>shell&gt; javac -version
-javac 1.8.0_312`   # you should receive a message like this
+javac 21.0.0   # you should receive a message like this
 </code></pre></div>
 <h3 id="install-git">Install git</h3>
 <p>The z390 source code is maintained in a git repository.</p>
@@ -1914,6 +1983,48 @@ standard GitHub pull request model.</p>
 <h2 id="submitting-changes">Submitting changes</h2>
 <p>Changes can be submitted to the project by creating a pull request on the 
 <a href="https://github.com/z390development/z390">z390 project repository</a>.</p>
+<h2 id="creating-a-new-release">Creating a new release</h2>
+<p>The z390 project uses a file-based versioning system with git tags. Version
+numbers follow <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a> principles.</p>
+<h3 id="version-management">Version management</h3>
+<p>To create a new release:</p>
+<ol>
+<li>
+<p>Create a release branch from main:
+   <div class="highlight"><pre><span></span><code>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>release/v1.2.3<span class="w"> </span>main
+</code></pre></div></p>
+</li>
+<li>
+<p>Update the version using the <code>bash/bumpver</code> utility:
+   <div class="highlight"><pre><span></span><code><span class="c1"># Bump patch version (1.0.0 -&gt; 1.0.1)</span>
+bash/bumpver<span class="w"> </span>patch<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Fix bug in xyz&quot;</span>
+
+<span class="c1"># Bump minor version (1.0.1 -&gt; 1.1.0)</span>
+bash/bumpver<span class="w"> </span>minor<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Add new feature xyz&quot;</span>
+
+<span class="c1"># Bump major version (1.1.0 -&gt; 2.0.0)</span>
+bash/bumpver<span class="w"> </span>major<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Breaking change xyz&quot;</span>
+</code></pre></div></p>
+</li>
+</ol>
+<p>The bumpver utility will:
+   1. Update the version in version.txt
+   2. Create a git commit with your message</p>
+<ol>
+<li>Push your branch and create a pull request:
+   <div class="highlight"><pre><span></span><code>git<span class="w"> </span>push<span class="w"> </span>-u<span class="w"> </span>origin<span class="w"> </span>release/v1.2.3
+</code></pre></div></li>
+</ol>
+<h3 id="automated-release-process">Automated Release Process</h3>
+<p>When a pull request containing changes to version.txt is merged to main, 
+the GitHub Actions workflow will automatically:</p>
+<ol>
+<li>Build the z390 distribution</li>
+<li>Run all tests </li>
+<li>Create a git tag for the version</li>
+<li>Create a GitHub release using the version from version.txt</li>
+<li>Attach the distribution zip file to the release</li>
+</ol>
 <h2 id="useful-technical-details">Useful technical details</h2>
 <p>The following section is to provide some technical background for new developers.</p>
 <h3 id="project-structure">Project structure</h3>
@@ -2256,7 +2367,7 @@ git documentation:https://git-scm.com/doc</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.2-21-g9c5ed30"}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.2-22-g2777b8c"}</script>
     
     
       <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
