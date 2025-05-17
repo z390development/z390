@@ -18,6 +18,51 @@ class RunAsmDemos extends z390Test {
         this.printOutput()
         assert rc == 0
     }
+    void test_DEMOBMK1() {
+        int rc = this.asmlg(basePath("demo", "DEMOBMK1"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    void test_DEMOBMK2() {
+        int rc = this.asmlg(basePath("demo", "DEMOBMK2"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    void test_DEMODFP1() {
+        int rc = this.asmlg(basePath("demo", "DEMODFP1"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    void test_DEMONUM1() {
+        int rc = this.asm(basePath("demo", "DEMONUM1"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    void test_DEMONUM2() {
+        int rc = this.asmlg(basePath("demo", "DEMONUM2"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    void test_DEMOSTR1() {
+        int rc = this.asmlg(basePath("demo", "DEMOSTR1"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    void test_DEMOWTO2() {
+        int rc = this.asmlg(basePath("demo", "DEMOSTO2"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    void test_SIEVE() {
+        int rc = this.asmlg(basePath("demo", "SIEVE"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    void test_STDDEVLB() {
+        int rc = this.asmlg(basePath("demo", "STDDEVLB"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
     @Test
     void test_TESTDCB1() {
         // Set input files
@@ -54,5 +99,4 @@ class RunAsmDemos extends z390Test {
         assert fileData.get('TF1') == fileData.get('TF2')
         assert rc == 0
     }
-
 }
