@@ -185,7 +185,7 @@ if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
 if %1. NEQ . if /I %1. NEQ /Q. goto return
 
 rem  Optable Z12 - Synonym of ZS6
-:Z11
+:Z12
 if %1. NEQ . if /I %1. EQU /Q. goto ZS6
 call rt\bat\RUNOPTABLE %z_TraceMode% optable Z12
 set z_ReturnCode=%ERRORLEVEL%
@@ -202,6 +202,27 @@ set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
                          set err_optable=%err_optable% ZS6
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . if /I %1. NEQ /Q. goto return
+
+rem  Optable Z13 - Synonym of ZS7
+:Z13
+if %1. NEQ . if /I %1. EQU /Q. goto ZS7
+call rt\bat\RUNOPTABLE %z_TraceMode% optable Z13
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         set err_optable=%err_optable% Z13
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . if /I %1. NEQ /Q. goto return
+
+rem  Optable ZS7 - Synonym of Z13
+:ZS7
+call rt\bat\RUNOPTABLE %z_TraceMode% optable ZS7
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         set err_optable=%err_optable% ZS7
                          if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . if /I %1. NEQ /Q. goto return
 
@@ -596,7 +617,7 @@ if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
 if %1. NEQ . goto return
 
 rem  Machine z12 - equivalent of Optable(ZS6)
-:machine_z11
+:machine_z12
 call rt\bat\RUNOPTABLE %z_TraceMode% machine z12 ZS6
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
@@ -652,6 +673,46 @@ set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
                          set err_machine=%err_machine% ARCH-10
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . goto return
+
+rem  Machine z13 - equivalent of Optable(ZS7)
+:machine_z13
+call rt\bat\RUNOPTABLE %z_TraceMode% machine z13 ZS7
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         set err_machine=%err_machine% z13
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . goto return
+
+rem  Machine zSeries-7 - equivalent of Optable(ZS7)
+:zSeries-7
+call rt\bat\RUNOPTABLE %z_TraceMode% machine zSeries-7 ZS7
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         set err_machine=%err_machine% zSeries-7
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . goto return
+
+rem  Machine ZS-7 - equivalent of Optable(ZS7)
+:ZS-7
+call rt\bat\RUNOPTABLE %z_TraceMode% machine ZS-7 ZS7
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         set err_machine=%err_machine% ZS-7
+                         if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
+if %1. NEQ . goto return
+
+rem  Machine ARCH-11 - equivalent of Optable(ZS7)
+:ARCH-11
+call rt\bat\RUNOPTABLE %z_TraceMode% machine ARCH-11 ZS7
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
+                         set /A count_err=%count_err%+1
+                         set err_machine=%err_machine% ARCH-11
                          if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . goto return
 

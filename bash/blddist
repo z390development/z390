@@ -1,40 +1,34 @@
 #!/bin/bash
 
 # blddist: Script to create z390 distribution zip file
-# passing parm "clean" will remove repo ignored files and rebuild prior to dist build
 
 set -e                                  # exit on all errors
 cd $(dirname $0)                        # set to directory of script
 cd ..                                   # cd back to root       
 
 ROOT_DIR=$(pwd)
-VERSION="$(git describe --tags)"
+VERSION=$(cat version.txt)
 echo "Building z390 ${VERSION}"
 DIST_DIR=dist
 
-if [ "$1" == "clean" ];                 # if "clean" parm passed
-then
-    git clean -dfX                            # delete all git ignored files
-fi
-
 # build jar
-bash/bldjar                                   # create the z390 jar
+bash/bldjar                            # create the z390 jar
 
 # generate HLASM compatible SPM's
 bash/bldzstrmac 'build/zstrmac'
 
 # build standard libraries
-bash/bldlib                                   # build standard libs
-bash/bldcbllib                                # build cobol libs
+bash/bldlib                            # build standard libs
+bash/bldcbllib                         # build cobol libs
 
 # Create/clean dist folder
-mkdir -p ${DIST_DIR}                       # create dist folder if does not exist
-echo "/**" > ${DIST_DIR}/.gitignore        # ignore the dist folder
+mkdir -p ${DIST_DIR}                   # create dist folder if does not exist
+echo "/**" > ${DIST_DIR}/.gitignore    # ignore the dist folder
 rm -rf ${DIST_DIR}/z390_${VERSION}     # delete version dist directory
 rm -f ${DIST_DIR}/z390_${VERSION}.zip  # delete the zip
 
 # build javadocs
-bash/bldjavadoc 'build/javadoc'               # docs in build/javadocs
+bash/bldjavadoc 'build/javadoc'        # docs in build/javadocs
 
 cd ${DIST_DIR}
 mkdir z390_${VERSION}
