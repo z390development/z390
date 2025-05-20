@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 
 class TestOptables extends z390Test {
 
-    var options = ["stats", "SYSMAC(${basePath("mac")})"]
+    var options = ["stats", "time(45)", "SYSMAC(${basePath("mac")})"]
 
 /* ********************************************************************************************* */
 /*                                                                                               */
@@ -280,6 +280,32 @@ class TestOptables extends z390Test {
         env = ['Z390PRN': basePath("rt", "mlc", "OPTB#ZS8.PRN"),
                'HLASMPRN': basePath("rt", "mlc", "OPTB#ZS8.TF1")]
         int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB#ZS8.OPT")}")
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_optable_Z15() {
+        /**
+         * test 14A - optable(Z15)
+         */
+        var z390prn = basePath("rt", "mlc", "OPTB#Z15.PRN")
+        env = ['Z390PRN': basePath("rt", "mlc", "OPTB#Z15.PRN"),
+               'HLASMPRN': basePath("rt", "mlc", "OPTB#Z15.TF1")]
+        int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB#Z15.OPT")}")
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_optable_ZS9() {
+        /**
+         * test 14B - optable(ZS9)
+         */
+        var z390prn = basePath("rt", "mlc", "OPTB#ZS9.PRN")
+        env = ['Z390PRN': basePath("rt", "mlc", "OPTB#ZS9.PRN"),
+               'HLASMPRN': basePath("rt", "mlc", "OPTB#ZS9.TF1")]
+        int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB#ZS9.OPT")}")
         this.printOutput()
         assert rc == 0
     }
@@ -960,6 +986,58 @@ class TestOptables extends z390Test {
         env = ['Z390PRN': basePath("rt", "mlc", "OPTB_ARCH-12.PRN"),
                'HLASMPRN': basePath("rt", "mlc", "OPTB#Z14.TF1")]
         int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB_ARCH-12.OPT")}")
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_machine_z15() {
+        /**
+         * test 14C - machine(z15)
+         */
+        var z390prn = basePath("rt", "mlc", "OPTB_z15.PRN")
+        env = ['Z390PRN': basePath("rt", "mlc", "OPTB_z15.PRN"),
+               'HLASMPRN': basePath("rt", "mlc", "OPTB#Z15.TF1")]
+        int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB_z15.OPT")}")
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_machine_zSeries9() {
+        /**
+         * test 14D - machine(zSeries-9)
+         */
+        var z390prn = basePath("rt", "mlc", "OPTB_zSeries-9.PRN")
+        env = ['Z390PRN': basePath("rt", "mlc", "OPTB_zSeries-9.PRN"),
+               'HLASMPRN': basePath("rt", "mlc", "OPTB#Z15.TF1")]
+        int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB_zSeries-9.OPT")}")
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_machine_ZS9() {
+        /**
+         * test 14E - machine(ZS-9)
+         */
+        var z390prn = basePath("rt", "mlc", "OPTB_ZS-9.PRN")
+        env = ['Z390PRN': basePath("rt", "mlc", "OPTB_ZS-9.PRN"),
+               'HLASMPRN': basePath("rt", "mlc", "OPTB#Z15.TF1")]
+        int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB_ZS-9.OPT")}")
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_machine_ARCH13() {
+        /**
+         * test 14F - machine(ARCH-13)
+         */
+        var z390prn = basePath("rt", "mlc", "OPTB_ARCH-13.PRN")
+        env = ['Z390PRN': basePath("rt", "mlc", "OPTB_ARCH-13.PRN"),
+               'HLASMPRN': basePath("rt", "mlc", "OPTB#Z15.TF1")]
+        int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB_ARCH-13.OPT")}")
         this.printOutput()
         assert rc == 0
     }
