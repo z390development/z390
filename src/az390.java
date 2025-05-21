@@ -436,6 +436,7 @@ public  class  az390 implements Runnable {
         * 2025-04-26 AFK #614 Correct OPTABLE(Z13,LIST) output to match HLASM
         * 2025-05-03 AFK #615 Correct OPTABLE(Z14,LIST) output to match HLASM
         * 2025-05-04 AFK #616 Correct OPTABLE(Z15,LIST) output to match HLASM
+        * 2025-05-07 AFK #617 Correct OPTABLE(Z16,LIST) output to match HLASM
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -1986,6 +1987,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                             }
                         else if (tz390.op_name[index].equals("PCC")
                              ||  tz390.op_name[index].equals("PCKMO")
+                             ||  tz390.op_name[index].equals("NNPA")                   // #617
                                  )
                            {my_operands="";                                            // #500
                             }                                                          // #500
@@ -2103,7 +2105,12 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     break;
                 case 21:
                     my_format="SIY";                                                   // #500
-                    my_operands="D1(B1),I2";                                           // #500
+                    if (tz390.op_name[index].equals("LPSWEY"))                         //      #617
+                       {my_operands="D1(B1)";                                          //      #617
+                        }                                                              //      #617
+                    else                                                               //      #617
+                       {my_operands="D1(B1),I2";                                       // #500 #617
+                        }                                                              //      #617
                     break;
                 case 22:
                     my_format="RSL";                                                   // #500
@@ -2165,7 +2172,12 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 30:
                     my_format="RRF";                                                   // #500
                     my_operands="R1,R3,R2,M4";                                         // #554
-                    if (tz390.op_trace_type[index]==301                                // #573 #612
+                    if (tz390.op_trace_type[index]==300                                // #617
+                    &&  tz390.op_name[index].equals("RDP")                             // #617
+                        )                                                              // #617
+                       {my_operands="R1,R3,R2<,M4>";                                   // #617
+                        }                                                              // #617
+                    else if (tz390.op_trace_type[index]==301                           // #573 #612 #617
                     ||  tz390.op_trace_type[index]==303                                //      #612
                     ||  tz390.op_trace_type[index]==304                                //      #612
                     ||  tz390.op_trace_type[index]==305                                //      #612
@@ -2383,6 +2395,15 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     if (my_hexop.indexOf("$") == -1)                                   // #500
                        {my_operands="R1,R2,I3,I4<,I5>";
                         }
+                    else if (tz390.op_name[index].equals("SLLHH")                      // #617
+                         ||  tz390.op_name[index].equals("SLLHL")                      // #617
+                         ||  tz390.op_name[index].equals("SLLLH")                      // #617
+                         ||  tz390.op_name[index].equals("SRLHH")                      // #617
+                         ||  tz390.op_name[index].equals("SRLHL")                      // #617
+                         ||  tz390.op_name[index].equals("SRLLH")                      // #617
+                             )                                                         // #617
+                       {my_operands="R1,R2,I3";                                        // #617
+                        }                                                              // #617
                     break;
                 case 53:
                     // Alternate formats have mnemonics ending in 'A'
@@ -2760,6 +2781,9 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                         case 785:                                                      // #615
                              my_operands="R1,V2,M3<,M4>";                              // #615
                              break;                                                    // #615
+                        case 786:                                                      // #617
+                             my_operands="V1,V2,V3,M5";                                // #617
+                             break;                                                    // #617
                         default:                                                       // #614
                              my_operands="*Unknown";                                   // #614
                         }                                                              // #614

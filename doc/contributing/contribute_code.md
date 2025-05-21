@@ -10,19 +10,15 @@ project. For how to contribute to the documentation, see
 
 Make sure you have a Java SDK available to compile the application.
 
-The project has moved to the [Eclipse Temurin Java SDK](https://adoptium.net) 
+The project has moved to the [Apache Adoptium Java SDK](https://adoptium.net) 
 (previously AdoptOpenJDK) for distribution builds.
 
-z390 is using java 21 to build the package but code must support Java 1.8.
-
-To ensure alignment with other developers, use of a Java SDK 21 or greater
-is recommended. At a minimum, you will require an SDK of 9 or greater 
-as the build jobs use parameters not available in earlier versions.
+z390 requires Java 1.8 or greater.
 
 You can check if this is available by running the following command:
 
     shell> javac -version
-    javac 21.0.0   # you should receive a message like this
+    javac 1.8.0_312`   # you should receive a message like this
 
 ### Install git
 
@@ -85,12 +81,13 @@ The test scripts are in subdirectory z390test\src\test\groovy\org\z390\test
 
 ### Quick reference with some gradle commands
 
-Action                                    | Command
-------------------------------------------|------------
-get a list of gradlew command options     | `gradlew --help`
-force a test run                          | `gradlew test --rerun`
-run a specific test/testset               | `gradlew test --tests 'pattern'`
-run all zCobol tests                      | `gradlew test --tests '*cbl*'`
+| Action                                    | Command                          |
+|-------------------------------------------|----------------------------------|
+| get a list of gradlew command options     | `gradlew --help`                 |
+| force a test run                          | `gradlew test --rerun`           |
+| run a specific test/testset               | `gradlew test --tests 'pattern'` |
+| run all zCobol tests                      | `gradlew test --tests '*cbl*'`   |
+| stop test after failure                   | `gradlew test --fail-fast`       |
 
 ## Proposing new functionality
 
@@ -112,51 +109,6 @@ standard GitHub pull request model.
 Changes can be submitted to the project by creating a pull request on the 
 [z390 project repository](https://github.com/z390development/z390).
 
-## Creating a new release
-
-The z390 project uses a file-based versioning system with git tags. Version
-numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) principles.
-
-### Version management
-
-To create a new release:
-
-1. Create a release branch from main:
-   ```bash
-   git checkout -b release/v1.2.3 main
-   ```
-
-2. Update the version using the `bash/bumpver` utility:
-   ```bash
-   # Bump patch version (1.0.0 -> 1.0.1)
-   bash/bumpver patch -m "Fix bug in xyz"
-
-   # Bump minor version (1.0.1 -> 1.1.0)
-   bash/bumpver minor -m "Add new feature xyz"
-
-   # Bump major version (1.1.0 -> 2.0.0)
-   bash/bumpver major -m "Breaking change xyz"
-   ```
-
-   The bumpver utility will:
-   1. Update the version in version.txt
-   2. Create a git commit with your message
-
-3. Push your branch and create a pull request:
-   ```bash
-   git push -u origin release/v1.2.3
-   ```
-
-### Automated Release Process
-
-When a pull request containing changes to version.txt is merged to main, 
-the GitHub Actions workflow will automatically:
-
-1. Build the z390 distribution
-2. Run all tests 
-3. Create a git tag for the version
-4. Create a GitHub release using the version from version.txt
-5. Attach the distribution zip file to the release
 
 ## Useful technical details
 
