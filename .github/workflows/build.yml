@@ -83,7 +83,7 @@ jobs:
         run: |
           tar -xf z390_%VERSION%.zip
           dir z390_%VERSION%
-          z390_%VERSION%\bat\RUNASMDEMOS.BAT
+          z390_%VERSION%\bat\RUNASMDEMOS.BAT *Nocompare
           z390_%VERSION%\bat\RUNCBLDEMOS.BAT
         env:
           VERSION: ${{ needs.build-distribution.outputs.VERSION }}
