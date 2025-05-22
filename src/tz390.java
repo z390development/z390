@@ -343,6 +343,7 @@ public  class  tz390 {
     * 2025-05-03 AFK #615 Correct OPTABLE(ZS8,LIST) output to match HLASM
     * 2025-05-04 AFK #616 Correct OPTABLE(ZS9,LIST) output to match HLASM
     * 2025-05-06 AFK #617 Correct OPTABLE(ZSA,LIST) output to match HLASM
+    * 2025-05-08 AFK #627 Correct OPTABLE(UNI,LIST) output to match HLASM
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -3897,7 +3898,13 @@ public void create_opcodes()  // Routine added for RPI 1209
                 }
             process_opcodes(op_table_XA);
             process_opcodes(op_table_ESA);
-            if (opt_optable.equals("DFLT") ||  opt_optable.equals("Z390") ||  opt_allow) process_opcodes(op_table_ESA_allow); // #561
+            if (opt_optable.equals("UNI"))           // #627
+               {process_opcodes(op_table_370_only);  // #627 2377 > 2311
+                process_opcodes(op_table_DOS_370);   // #627 2377 > 2320
+                }                                    // #627
+            else // DFLT or Z390                     //      #627
+               {process_opcodes(op_table_ESA_allow); // #561 #627
+                }                                    //      #627
             process_opcodes(op_table_ZOP);
             process_opcodes(op_table_YOP);
             process_opcodes(op_table_ZS3);
@@ -4655,37 +4662,33 @@ public void init_options(String[] args,String pgm_type){
          */
 
 private void check_options(){
-        if (!opt_asm){
-                if(opt_chkmac != 0){
-                        abort_error(26,"NOASM requires CHKMAC(0)"); // RPI 1053
-                }
-                if (opt_chksrc == 3){
-                        abort_error(27,"NOASM requires CHKSRC(0-2)"); // RPI 1053
-                }
-        }
-        // Check MACHINE and OPTABLE options for compatability RPI 1209A
-        if (opt_machine.equals("")) // no  machine specified: use specified or defaulted optable option  // #503
-           {}                                                                                            // #503
-        else if (opt_optable.equals("*DFLT")) // no optable specified: use machine-derived optable       // #503
-           {opt_optable=opt_machine_optable;                                                             // #503
-            }                                                                                            // #503
-        else // both machine and optable specified: check that they're compatible                        // #503
-             if (!opt_machine_optable.equals(opt_optable_optable))                                       // #503
-                {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE("+opt_machine+")"); // #503
-                 }                                                                                       // #503
-        // If no optable was requested, select proper default RPI 1209A
-        if (opt_optable.equals("*DFLT"))
-           {if (opt_allow)
-               {opt_optable="Z390";
-                }
-            else
-               {opt_optable="DFLT";                                                                     // #533
-                }
+    if (!opt_asm){
+            if(opt_chkmac != 0){
+                    abort_error(26,"NOASM requires CHKMAC(0)"); // RPI 1053
             }
-    // Suboption LIST for options MACHINE/OPTABLE is disallowed for optable UNI in compatibility mode   // #503
-    if (opt_optable.equals("UNI") && opt_optable_list.equals("LIST") && !opt_allow)                     // #503
-       {abort_error(30,"option LIST for optable UNI only allowed in non-compatibility mode");           // #543
-        }                                                                                               // #503
+            if (opt_chksrc == 3){
+                    abort_error(27,"NOASM requires CHKSRC(0-2)"); // RPI 1053
+            }
+    }
+    // Check MACHINE and OPTABLE options for compatability RPI 1209A
+    if (opt_machine.equals("")) // no  machine specified: use specified or defaulted optable option  // #503
+       {}                                                                                            // #503
+    else if (opt_optable.equals("*DFLT")) // no optable specified: use machine-derived optable       // #503
+       {opt_optable=opt_machine_optable;                                                             // #503
+        }                                                                                            // #503
+    else // both machine and optable specified: check that they're compatible                        // #503
+         if (!opt_machine_optable.equals(opt_optable_optable))                                       // #503
+            {abort_error(778,"OPTABLE("+opt_optable+") incompatible with MACHINE("+opt_machine+")"); // #503
+             }                                                                                       // #503
+    // If no optable was requested, select proper default RPI 1209A
+    if (opt_optable.equals("*DFLT"))
+       {if (opt_allow)
+           {opt_optable="Z390";
+            }
+        else
+           {opt_optable="DFLT";                                                                     // #533
+            }
+        }
     // Check vector support parameters RPI VF01
     if (opt_vsectsize != 8
         && opt_vsectsize != 16
