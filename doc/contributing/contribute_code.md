@@ -85,12 +85,13 @@ The test scripts are in subdirectory z390test\src\test\groovy\org\z390\test
 
 ### Quick reference with some gradle commands
 
-Action                                    | Command
-------------------------------------------|------------
-get a list of gradlew command options     | `gradlew --help`
-force a test run                          | `gradlew test --rerun`
-run a specific test/testset               | `gradlew test --tests 'pattern'`
-run all zCobol tests                      | `gradlew test --tests '*cbl*'`
+| Action                                    | Command                          |
+|-------------------------------------------|----------------------------------|
+| get a list of gradlew command options     | `gradlew --help`                 |
+| force a test run                          | `gradlew test --rerun`           |
+| run a specific test/testset               | `gradlew test --tests 'pattern'` |
+| run all zCobol tests                      | `gradlew test --tests '*cbl*'`   |
+| stop test after failure                   | `gradlew test --fail-fast`       |
 
 ## Proposing new functionality
 

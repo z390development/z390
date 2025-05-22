@@ -342,6 +342,7 @@ public  class  tz390 {
     * 2025-04-24 AFK #614 Correct OPTABLE(ZS7,LIST) output to match HLASM
     * 2025-05-03 AFK #615 Correct OPTABLE(ZS8,LIST) output to match HLASM
     * 2025-05-04 AFK #616 Correct OPTABLE(ZS9,LIST) output to match HLASM
+    * 2025-05-06 AFK #617 Correct OPTABLE(ZSA,LIST) output to match HLASM
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -3330,37 +3331,36 @@ public  class  tz390 {
          "E7C3f=VCfFB,82,774;f=2;2=VCEFB",  // E7C3  VRRa VCFPS   V1,V2,M3,M4,M5    RPI 2202 #495 #616
          "E7C3f8=WCfFB,82,774;f=2;2=WCEFB", // E7C3  VRRa VCFPS   V1,V2,M3,M4,M5    RPI 2202 #495 #616
          };
-     String[] op_table_Z16 =                  // #503
-         {"B200=LBEAR,7,70",                  // #503
-          "B201=STBEAR,7,70",                 // #503
-          "B28F=QPACI,7,70",                  // #503
-          "B93B=NNPA,14,144",                 // #503
-          "B98B=RDP,30,300",                  // #503
-          "C09=LFI,16,160;*Extended",         // #503
-          "C0F=LLGFI,16,160;*Extended",       // #503
-          "E651=VCLZDP,82,738",               // #503
-          "E654=VUPKZH,82,738",               // #503
-          "E655=VCNF,82,738",                 // #503
-          "E656=VCLFNH,82,738",               // #503
-          "E65C=VUPKZL,82,738",               // #503
-          "E65D=VCFN,82,738",                 // #503
-          "E65E=VCLFNL,82,738",               // #503
-          "E670=VPKZR,81,737",                // #503
-          "E672=VSRPR,81,737",                // #503
-          "E674=VSCHP,82,738",                // #503
-          "E674f=VSCHPf,82,738;f=234",        // #503
-          "E675=VCRNF,82,738",                // #503
-          "E67C=VSCSHP,82,738",               // #503
-          "E67D=VCSPH,82,738",                // #503
-          "EB17=STCCTM,20,201",   //  RPI 2225 2226
-          "EB71=LPSWEY,21,212",               // #503
-          "EC5D$3100=SLLHH,52,400;*Extended", // #503
-          "EC5D$3132=SLLHL,52,400;*Extended", // #503
-          "EC51$3132=SLLLH,52,400;*Extended", // #503
-          "EC5D$3100=SRLHH,52,400;*Extended", // #503
-          "EC5D$3132=SRLHL,52,400;*Extended", // #503
-          "EC51$3132=SRLLH,52,400;*Extended", // #503
-     };                                       // #503
+     String[] op_table_Z16 =                 // #503
+        {"B200=LBEAR,7,70",                  // #503
+         "B201=STBEAR,7,70",                 // #503
+         "B28F=QPACI,7,70",                  // #503
+         "B93B=NNPA,14,144",                 // #503
+         "B98B=RDP,30,300",                  // #503
+         "C09=LFI,16,160;*Extended",         // #503
+         "C0F=LLGFI,16,160;*Extended",       // #503
+         "E651=VCLZDP,82,767",               // #503 #617
+         "E654=VUPKZH,82,767",               // #503 #617
+         "E655=VCNF,82,768",                 // #503 #617
+         "E656=VCLFNH,82,768",               // #503 #617
+         "E65C=VUPKZL,82,767",               // #503 #617
+         "E65D=VCFN,82,768",                 // #503 #617
+         "E65E=VCLFNL,82,768",               // #503 #617
+         "E670=VPKZR,81,737",                // #503
+         "E672=VSRPR,81,737",                // #503
+         "E674=VSCHP,82,759",                // #503 #617
+         "E674f=VSCHfP,82,786;f=234",        // #503 #617
+         "E675=VCRNF,82,759",                // #503 #617
+         "E67C=VSCSHP,82,738",               // #503
+         "E67D=VCSPH,82,758",                // #503 #617
+         "EB71=LPSWEY,21,212",               // #503
+         "EC51$3132=SLLLH,52,400;*Extended", // #503
+         "EC51$3132=SRLLH,52,400;*Extended", // #503
+         "EC5D$3100=SLLHH,52,400;*Extended", // #503
+         "EC5D$3100=SRLHH,52,400;*Extended", // #503
+         "EC5D$3132=SLLHL,52,400;*Extended", // #503
+         "EC5D$3132=SRLHL,52,400;*Extended", // #503
+         };                                  // #503
      String[]   op_table_ASSIST = // Table added for RPI 1209A
         {"52=XDECO,37,50",       //   1193 "52"    "XDECO"    "RX"   37 RPI 812
          "53=XDECI,37,50",       //   1196 "53"    "XDECI"    "RX"   37 RPI 812
@@ -3378,6 +3378,7 @@ public  class  tz390 {
         {"83=DIAGNOSE,10,100",     // RPI 2213 ADD DIAGNOSE/DIAG RS
          "83=DIAG,10,100",         // RPI 2213 ADD DIAGNOSE/DIAG RS
 //       "B214=SIE,7,70",          // RPI 2213 ADD START INTERPRETIVE EXEC S    #543 - moved to optable for XA
+         "EB17=STCCTM,20,201",     // RPI 2225 2226
          };
      String[]   op_table_DFLT_directives = // Split directives from opcodes            #533
         {"--=ACALLPRM,228,--",   //   "ACALLPRM" resets ACALL parms just before AENTRY #533
