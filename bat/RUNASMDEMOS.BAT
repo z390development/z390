@@ -18,17 +18,17 @@ if /I %1. == *Nocompare. (set compflag=N
                   ) else (set compflag=Y)
 
 pushd %~dps0..
-call bat\ASMLG %z_TraceMode% demo\HELLO    %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASM   %z_TraceMode% demo\DEMOM8Q1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\DEMOBMK1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\DEMOBMK2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\DEMODFP1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASM   %z_TraceMode% demo\DEMONUM1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\DEMONUM2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\DEMOSTR1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\DEMOWTO2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\SIEVE    %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\STDDEVLB %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\HELLO    nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASM   %z_TraceMode% demo\DEMOM8Q1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\DEMOBMK1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\DEMOBMK2 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\DEMODFP1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASM   %z_TraceMode% demo\DEMONUM1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\DEMONUM2 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\DEMOSTR1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\DEMOWTO2 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\SIEVE    nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\STDDEVLB nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 
 set sysut1=demo\TESTDCB1.TF1
 set sysut2=demo\TESTDCB1.TF2

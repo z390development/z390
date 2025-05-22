@@ -6,6 +6,7 @@ class RunAsmDemos extends z390Test {
 
     var options = [
         'trace',
+        'nocon',
         'noloadhigh', 
         "SYSMAC(${basePath('mac')})",
         "SYSCPY(${basePath('mac')})",

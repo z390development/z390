@@ -14,15 +14,15 @@ echo "Verify rc=0; see PRN file for 8 queens solutions"
 
 # runasmdemos: run various programs
 
-bash/asmlg demo/DEMOBMK1 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asmlg demo/DEMOBMK2 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asmlg demo/DEMODFP1 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asm   demo/DEMONUM1 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asmlg demo/DEMONUM2 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asmlg demo/DEMOSTR1 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asmlg demo/DEMOWTO2 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asmlg demo/SIEVE    $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asmlg demo/STDDEVLB $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/DEMOBMK1 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/DEMOBMK2 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/DEMODFP1 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asm   demo/DEMONUM1 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/DEMONUM2 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/DEMOSTR1 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/DEMOWTO2 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/SIEVE    nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/STDDEVLB nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
 
 # runasmdemos: run TESTDCB1
 
