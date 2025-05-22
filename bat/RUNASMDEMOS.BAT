@@ -11,7 +11,6 @@ if /I "%1" == "tron" (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-rem during build on github server the compare steps fail - no clue why.
 rem parm *Nocompare was introduced to enable us to suppress the compare steps during build
 rem but keep the default to do run the compare steps when the RUNASMDEMOS is invoked without the parm
 if /I %1. == *Nocompare. (set compflag=N
