@@ -340,10 +340,11 @@ class TestOptables extends z390Test {
     void test_optable_UNI() {
         /**
          * test 98 - optable(UNI)
-         *           This table cannot (yet) be compared against HLASM
          */
         var z390prn = basePath("rt", "mlc", "OPTB#UNI.PRN")
-        int rc = this.asml(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB#UNI.OPT")}")
+        env = ['Z390PRN': basePath("rt", "mlc", "OPTB#UNI.PRN"),
+               'HLASMPRN': basePath("rt", "mlc", "OPTB#UNI.TF1")]
+        int rc = this.asmlg(basePath("rt", "mlc", "OPTB#"), *this.options, "sysprn(${z390prn})", "@${basePath("rt", "mlc", "OPTB#UNI.OPT")}")
         this.printOutput()
         assert rc == 0
     }

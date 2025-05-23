@@ -289,9 +289,9 @@ if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          if %z_ReturnCode% GTR %z_MaxRetCode% (set z_MaxRetCode=%z_ReturnCode%) )
 if %1. NEQ . if /I %1. NEQ /Q. goto return
 
-rem  Optable uni **!! comparison to be enabled when optable(uni) has been fixed **!!
-:uni
-call rt\bat\RUNOPTABLE %z_TraceMode% optable UNI *None
+rem  Optable UNI
+:UNI
+call rt\bat\RUNOPTABLE %z_TraceMode% optable UNI
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 0 (set /A count_ok=%count_ok%+1) else (
                          set /A count_err=%count_err%+1
