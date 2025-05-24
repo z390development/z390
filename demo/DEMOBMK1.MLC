@@ -20,8 +20,8 @@
 * Date   - 09/30/05                                                 *
 *********************************************************************
 DEMOBMK1 SUBENTRY
-         WTO  'DEMO2 Z390 FIRST EMULATION BENCHMARK FOR 2,000,000 INS'
-         L    1,=A(2000000)
+         WTO  'DEMO2 Z390 FIRST EMULATION BENCHMARK FOR 100,000 INS'
+         L    1,=A(100000)
 LOOP     EQU  *
          BCT  1,LOOP
          SUBEXIT

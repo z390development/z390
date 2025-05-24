@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# runasmdemos: run HELLO, DEMOM8Q1, TESTDCB1
+# runasmdemos: run HELLO, DEMOM8Q1
 
 set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script
@@ -11,6 +11,20 @@ echo "Verify Hello World WTO"
 
 bash/asm demo/DEMOM8Q1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 echo "Verify rc=0; see PRN file for 8 queens solutions"
+
+# runasmdemos: run various programs
+
+bash/asmlg demo/DEMOBMK1 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/DEMOBMK2 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/DEMODFP1 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asm   demo/DEMONUM1 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/DEMONUM2 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/DEMOSTR1 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/DEMOWTO2 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/SIEVE    nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/STDDEVLB nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+
+# runasmdemos: run TESTDCB1
 
 export SYSUT1=demo/TESTDCB1.TF1
 export SYSUT2=demo/TESTDCB1.TF2
@@ -25,6 +39,8 @@ if [ $rc1 -eq 0 ]; then x=""; else x=" not"; fi
 echo "TESTDCB1: Copy demo/TESTDCB1.TF1 to demo/TESTDCB1.TF2$x successful"
 echo "Verify demo/TESTDCB1 copied demo/TESTDCB1.TF1 to demo/TESTDCB1.TF2"
 echo "Verify demo/TESTDCB1 wrote to demo/TESTDCB1.TF3"
+
+# runasmdemos: run TESTDCB2
 
 export SYSUT1=demo/TESTDCB2.TF1
 export SYSUT2=demo/TESTDCB2.TF2

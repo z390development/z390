@@ -4,7 +4,14 @@ import org.junit.jupiter.api.Test
 
 class RunAsmDemos extends z390Test {
 
-    var options = ['trace', 'noloadhigh', "SYSMAC(${basePath("mac")})"]
+    var options = [
+        'trace',
+        'nocon',
+        'noloadhigh', 
+        "SYSMAC(${basePath('mac')})",
+        "SYSCPY(${basePath('mac')})",
+        "SYSOBJ(${basePath('linklib')})"
+    ]
 
     @Test
     void test_HELLO() {
@@ -15,6 +22,60 @@ class RunAsmDemos extends z390Test {
     @Test
     void test_DEMOM8Q1() {
         int rc = this.asm(basePath("demo", "DEMOM8Q1"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_DEMOBMK1() {
+        int rc = this.asmlg(basePath("demo", "DEMOBMK1"), *options, "MAXSIZE(150)")
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_DEMOBMK2() {
+        int rc = this.asmlg(basePath("demo", "DEMOBMK2"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_DEMODFP1() {
+        int rc = this.asmlg(basePath("demo", "DEMODFP1"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_DEMONUM1() {
+        int rc = this.asm(basePath("demo", "DEMONUM1"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_DEMONUM2() {
+        int rc = this.asmlg(basePath("demo", "DEMONUM2"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_DEMOSTR1() {
+        int rc = this.asmlg(basePath("demo", "DEMOSTR1"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_DEMOWTO2() {
+        int rc = this.asmlg(basePath("demo", "DEMOWTO2"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_SIEVE() {
+        int rc = this.asmlg(basePath("demo", "SIEVE"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_STDDEVLB() {
+        int rc = this.asmlg(basePath("demo", "STDDEVLB"), *options)
         this.printOutput()
         assert rc == 0
     }
@@ -54,5 +115,4 @@ class RunAsmDemos extends z390Test {
         assert fileData.get('TF1') == fileData.get('TF2')
         assert rc == 0
     }
-
 }
