@@ -35,8 +35,8 @@ call bat\ASMLG %z_TraceMode% demo\TESTDCB1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto er
 REM Normalize line endings for comparison (remove CRs) using only batch commands
 if exist "%TEMP%\dcb1_1.tmp" del "%TEMP%\dcb1_1.tmp"
 if exist "%TEMP%\dcb1_2.tmp" del "%TEMP%\dcb1_2.tmp"
-findstr /V /R "" demo\TESTDCB1.TF1 > "%TEMP%\dcb1_1.tmp"
-findstr /V /R "" demo\TESTDCB1.TF2 > "%TEMP%\dcb1_2.tmp"
+findstr /V /R "" demo\TESTDCB1.TF1 > "%TEMP%\dcb1_1.tmp" 2>nul
+findstr /V /R "" demo\TESTDCB1.TF2 > "%TEMP%\dcb1_2.tmp" 2>nul
 comp.exe "%TEMP%\dcb1_1.tmp" "%TEMP%\dcb1_2.tmp" /A /M || goto error_dcb1
 
 set sysut1=demo\TESTDCB2.TF1
@@ -47,8 +47,8 @@ set sysout=demo\TESTDCB2.TF3
 REM Normalize line endings for comparison (remove CRs) using only batch commands
 if exist "%TEMP%\dcb2_1.tmp" del "%TEMP%\dcb2_1.tmp"
 if exist "%TEMP%\dcb2_2.tmp" del "%TEMP%\dcb2_2.tmp"
-findstr /V /R "" demo\TESTDCB2.TF1 > "%TEMP%\dcb2_1.tmp"
-findstr /V /R "" demo\TESTDCB2.TF2 > "%TEMP%\dcb2_2.tmp"
+findstr /V /R "" demo\TESTDCB2.TF1 > "%TEMP%\dcb2_1.tmp" 2>nul
+findstr /V /R "" demo\TESTDCB2.TF2 > "%TEMP%\dcb2_2.tmp" 2>nul
 comp.exe "%TEMP%\dcb2_1.tmp" "%TEMP%\dcb2_2.tmp" /A /M || goto error_dcb2
 
 set z_ReturnCode=0
