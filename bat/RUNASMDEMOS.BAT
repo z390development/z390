@@ -30,14 +30,26 @@ rem we've disabled the file compares as of May 24, 2022. Issue 643 covers this c
 set sysut1=demo\TESTDCB1.TF1
 set sysut2=demo\TESTDCB1.TF2
 set sysout=demo\TESTDCB1.TF3
-    call bat\ASMLG %z_TraceMode% demo\TESTDCB1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-rem call comp.exe demo\TESTDCB1.TF1 demo\TESTDCB1.TF2 /A /M               || goto error_dcb1
+call bat\ASMLG %z_TraceMode% demo\TESTDCB1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+
+REM Normalize line endings for comparison (remove CRs) using only batch commands
+if exist "%TEMP%\dcb1_1.tmp" del "%TEMP%\dcb1_1.tmp"
+if exist "%TEMP%\dcb1_2.tmp" del "%TEMP%\dcb1_2.tmp"
+findstr /V /R "" demo\TESTDCB1.TF1 > "%TEMP%\dcb1_1.tmp"
+findstr /V /R "" demo\TESTDCB1.TF2 > "%TEMP%\dcb1_2.tmp"
+comp.exe "%TEMP%\dcb1_1.tmp" "%TEMP%\dcb1_2.tmp" /A /M || goto error_dcb1
 
 set sysut1=demo\TESTDCB2.TF1
 set sysut2=demo\TESTDCB2.TF2
 set sysout=demo\TESTDCB2.TF3
     call bat\ASMLG %z_TraceMode% demo\TESTDCB2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-rem call comp.exe demo\TESTDCB2.TF1 demo\TESTDCB2.TF2 /A /M               || goto error_dcb2
+
+REM Normalize line endings for comparison (remove CRs) using only batch commands
+if exist "%TEMP%\dcb2_1.tmp" del "%TEMP%\dcb2_1.tmp"
+if exist "%TEMP%\dcb2_2.tmp" del "%TEMP%\dcb2_2.tmp"
+findstr /V /R "" demo\TESTDCB2.TF1 > "%TEMP%\dcb2_1.tmp"
+findstr /V /R "" demo\TESTDCB2.TF2 > "%TEMP%\dcb2_2.tmp"
+comp.exe "%TEMP%\dcb2_1.tmp" "%TEMP%\dcb2_2.tmp" /A /M || goto error_dcb2
 
 set z_ReturnCode=0
 goto return
