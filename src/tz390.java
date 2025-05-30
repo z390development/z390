@@ -344,6 +344,7 @@ public  class  tz390 {
     * 2025-05-04 AFK #616 Correct OPTABLE(ZS9,LIST) output to match HLASM
     * 2025-05-06 AFK #617 Correct OPTABLE(ZSA,LIST) output to match HLASM
     * 2025-05-08 AFK #627 Correct OPTABLE(UNI,LIST) output to match HLASM
+    * 2025-05-30 AFK #631 Improve opcode table definitions
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -1135,22 +1136,22 @@ public  class  tz390 {
         "05:ZS1=ZOP",                                     // #503 #554
         "06:YOP=YOP",                                     // #503 #554
         "06:ZS2=YOP",                                     // #503 #554
-        "07:Z9=Z9",                                       // #503 #554
-        "07:ZS3=Z9",                                      // #503 #554
-        "08:Z10=Z10",                                     // #503 #554
-        "08:ZS4=Z10",                                     // #503 #554
-        "09:Z11=Z11",                                     // #503 #554
-        "09:ZS5=Z11",                                     // #503 #554
-        "10:Z12=Z12",                                     // #503 #554
-        "10:ZS6=Z12",                                     // #503 #554
-        "11:Z13=Z13",                                     // #503 #554
-        "11:ZS7=Z13",                                     // #503 #554
-        "12:Z14=Z14",                                     // #503 #554
-        "12:ZS8=Z14",                                     // #503 #554
-        "13:Z15=Z15",                                     // #503 #554
-        "13:ZS9=Z15",                                     // #503 #554
-        "14:Z16=Z16",                                     // #503 #554
-        "14:ZSA=Z16",                                     // #503 #554
+        "09:Z9=Z9",                                       // #503 #554 #631
+        "09:ZS3=Z9",                                      // #503 #554 #631
+        "10:Z10=Z10",                                     // #503 #554 #631
+        "10:ZS4=Z10",                                     // #503 #554 #631
+        "11:Z11=Z11",                                     // #503 #554 #631
+        "11:ZS5=Z11",                                     // #503 #554 #631
+        "12:Z12=Z12",                                     // #503 #554 #631
+        "12:ZS6=Z12",                                     // #503 #554 #631
+        "13:Z13=Z13",                                     // #503 #554 #631
+        "13:ZS7=Z13",                                     // #503 #554 #631
+        "14:Z14=Z14",                                     // #503 #554 #631
+        "14:ZS8=Z14",                                     // #503 #554 #631
+        "15:Z15=Z15",                                     // #503 #554 #631
+        "15:ZS9=Z15",                                     // #503 #554 #631
+        "16:Z16=Z16",                                     // #503 #554 #631
+        "16:ZSA=Z16",                                     // #503 #554 #631
         "80:UNI=UNI",                                     // #503 #554
         "90:z390=z390",                                   // #503 #554
         };                                                // #503
@@ -1397,6 +1398,8 @@ public  class  tz390 {
         {"??=*,0,00",            //     00 comments
          };
      // Following table has the instructions that are supported for both DOS and the S360/20     // #543
+     // as defined in publication A26-5847-3 IBM System 360 Model 20 Functional Characteristics  // #631
+     //        and in publication A22-6821-7 IBM System 360 Principles of Operation              // #631
      String[]   op_table_360_20 =   // Instructions shared with optable(DOS)         #543 
         {"07=BCR,RR-m,30",       //    120 "07"    "BCR"      "RR"    2 // Extended mnemonics not supported for S360/20 RPI 1209N #543
          "07m=BmR,RR-mx,30;0=NOPR", //     "07m"   "BmR, NOPR" "BRX"  3 // RPI 1209N #543 Note: S360/20 only defined NOPR and BR we do all extended mnemonics!
@@ -1494,6 +1497,8 @@ public  class  tz390 {
          "--=XFR,114,--",        //                                 114  #543
          };             //                                               #543
      // op_table_DOS below contains the instructions NOT shared with S360/20.              #543
+     // as defined in publication A26-5847-3 IBM System 360 Model 20 Functional Characteristics  // #631
+     //        and in publication A22-6821-7 IBM System 360 Principles of Operation              // #631
      String[]   op_table_DOS =   // Table added for RPI 1209A
         {"04=SPM,RR-n,20",       //     90 "04"    "SPM"      "RR"    2 // RPI 1209N
          "05=BALR,RR,20",        //    100 "05"    "BALR"     "RR"    2 // RPI 1209N
@@ -1636,6 +1641,7 @@ public  class  tz390 {
          "F0=SRP,29,290",        //   7040 "F0"    "SRP"      "SS5"  29
          };
      // op_table_DOS below contains the instructions valid from S360-S370    #543
+     // as defined in publication GA22-7000-4 IBM System 370 Principles of Operation // #631
      String[]   op_table_DOS_370 =                                      //   #543
         {"08=SSK,RR,20",         //    100 "08"    "SSK"      "RR"    2 // RPI 1209N #500 #543
          "09=ISK,RR,20",         //    100 "09"    "ISK"      "RR"    2 // RPI 1209N #500 #543
@@ -1667,6 +1673,14 @@ public  class  tz390 {
          "--=PUNCH,223,--",      //   7570         "PUNCH"          223  
          "--=WXTRN,120,--",      //   7330         "WXTRN"          120  
          };
+     // op_table_vector below contains the instructions for the old vector facility               // #631
+     // as defined in publication SA22-7125-3 ESA370 Vector Operations                            // #631
+     //        and in publication SA22-7207-00 ESA390 Vector Operations                           // #631
+     // The (optional) vector facility was available in addition to the 370 and 390 architectures // #631
+     // In z390 the old vector facility can be used with z/Architecture opcode tables up to       // #631
+     // SA22-7832-09 zArchitecture Principles of Operation (aka z12)                              // #631
+     // With the z13 SA22-7832-10 zArchitecture Principles of Operation the new vector facility   // #631
+     //              was introduced and the old vector facility cannot be forward anymore         // #631
      String[]   op_table_vector =   // Table added for RPI 1209A
         {"A400=VAE,VST,600",     //        "A400"  "VAE"      "VST" 60
          "A401=VSE,VST,600",     //        "A401"  "VSE"      "VST" 60
@@ -1860,6 +1874,8 @@ public  class  tz390 {
          "E425=VSLL,RSEv,630",   //        "E425"  "VSLL"     "RSE" 63
          "E428=VLBIX,RSEv,630",  //        "E428"  "VLBIX"    "RSE" 63
          };
+     // op_table_370 below contains the instructions valid from S370                 // #631
+     // as defined in publication GA22-7000-4 IBM System 370 Principles of Operation // #631
      String[]   op_table_370 =   // Table added for RPI 1209A
         {"0D=BASR,RR,20",        //    320 "0D"    "BASR"     "RR"    2 // RPI 1209N
          "4D=BAS,5,50",          //   1150 "4D"    "BAS"      "RX"    5
@@ -1919,6 +1935,8 @@ public  class  tz390 {
          "--=SETCF,219,--",      //   7780         "SETCF"          219
          "--=XATTR,121,--",      //   7340         "XATTR"          121
          };
+     // op_table_XA below contains the instructions valid from S370-XA               // #631
+     // as defined in publication (unknown)                                          // #631
      String[]   op_table_XA =    // Table added for RPI 1209A
         {"0102=UPT,1,10",        //     20 "0102"  "UPT"      "E"     1
          "0B=BSM,RR,20",         //    300 "0B"    "BSM"      "RR"    2 // RPI 1209N
@@ -1944,6 +1962,8 @@ public  class  tz390 {
          "B244=SQDR,14,142",     //   3030 "B244"  "SQDR"     "RRE"  14
          "B245=SQER,14,142",     //   3040 "B245"  "SQER"     "RRE"  14
          };
+     // op_table_ESA below contains the instructions valid from S390          // #631
+     // as defined in publication SA22-7201-08 ESA390 Principles of Operation // #631
      String[]   op_table_ESA =   // Table added for RPI 1209A
         {"0101=PR,1,10",         //     10 "0101"  "PR"       "E"     1
          "0107=SCKPF,1,10",      //     30 "0107"  "SCKPF"    "E"     1
@@ -2165,6 +2185,9 @@ public  class  tz390 {
         {"B22E=PGIN,14,140",     //   2860 "B22E"  "PGIN"     "RRE"  14 #561
          "B22F=PGOUT,14,140",    //   2870 "B22F"  "PGOUT"    "RRE"  14 #561
          };                                                          // #561
+     // op_table_ZOP below contains the instructions valid from z Architecture       // #631
+     // as defined in publication SA22-7832-00 zArchitecture Principles of Operation // #631
+     //           and publication SA22-7832-01 zArchitecture Principles of Operation // #631
      String[]   op_table_ZOP =   // Table added for RPI 1209A
         {"010E=SAM64,1,10",      //     70 "010E"  "SAM64"    "E"     1
          "A50=IIHH,73,730",      //   1820 "A50"   "IIHH"     "RI"   12 // RPI 1522
@@ -2325,6 +2348,9 @@ public  class  tz390 {
          "EC45=JXLEG,23,230;*Extended",    //   6610 "EC45"  "JXLEG"    "RIE"  23 #485
          "EF=LMD,28,280",        //   7030 "EF"    "LMD"      "SS4"  28
          };
+     // op_table_YOP below contains the instructions valid from z Architecture       // #631
+     // as defined in publication SA22-7832-02 zArchitecture Principles of Operation // #631
+     //           and publication SA22-7832-03 zArchitecture Principles of Operation // #631
      String[]   op_table_YOP =   // Table added for RPI 1209A
         {"B2A6=CU21,14,140",     //   3350 "B2A6"  "CU21"     "RRE"  14
          "B2A7=CU12,14,140",     //   3370 "B2A7"  "CU12"     "RRE"  14
@@ -2398,7 +2424,10 @@ public  class  tz390 {
          "ED66=STEY,18,180",     //   7000 "ED66"  "STEY"     "RXY"  18
          "ED67=STDY,18,180",     //   7010 "ED67"  "STDY"     "RXY"  18
          };
-     String[]   op_table_ZS3 =   // Table added for RPI 1209A
+     // op_table_Z9 below contains the instructions valid from z Architecture        // #631
+     // as defined in publication SA22-7832-04 zArchitecture Principles of Operation // #631
+     //           and publication SA22-7832-05 zArchitecture Principles of Operation // #631
+     String[]   op_table_Z9 =    // Table added for RPI 1209A                        // #631
         {"0104=PTFF,1,10",       //        "0104"  "PTFF"     "E"     1 Z9-1
          "010A=PFPO,1,10",       //     40 "010A"  "PFPO"     "E"     1  RPI 1013
          "B27C=STCKF,7,70",      //        "B27C"  "STCKF"    "S"     7 Z9-2
@@ -2517,7 +2546,10 @@ public  class  tz390 {
          "ED58=TDCXT,24,241",    //                "TDCXT"    "RXE"  24 DFP 53
          "ED59=TDGXT,24,241",    //                "TDGXT"    "RXE"  24 DFP 54
          };
-     String[]   op_table_ZS4 =   // Table added for RPI 1209A
+     // op_table_Z10 below contains the instructions valid from z Architecture       // #631
+     // as defined in publication SA22-7832-06 zArchitecture Principles of Operation // #631
+     //           and publication SA22-7832-07 zArchitecture Principles of Operation // #631
+     String[]   op_table_Z10 =   // Table added for RPI 1209A                           #631
         {"B280=LPP,7,70",   // S,LPP,D1(B1)   RPI 2221
          "B284=LCCTL,7,70", // S,LCCTL,D1(B1) RPI 2221
          "B285=LPCTL,7,70", // S,LPCTL,D1(B1) RPI 2221
@@ -2636,7 +2668,9 @@ public  class  tz390 {
          "ECFF=CLIB,47,381",     //   1060 "ECFF"  "CLIB"     "RRS3" 47 RPI 817 #485
          "ECFFm=CLIBm,48,381;*Short;F=", //   "ECFFm" "CLIBm"    "RRS4" 48      #485
          };
-     String[]   op_table_ZS5 =   // table added for Principles of operation SA22-7832-08 #612
+     // op_table_Z11 below contains the instructions valid from z Architecture       // #631
+     // as defined in publication SA22-7832-08 zArchitecture Principles of Operation // #631
+     String[]   op_table_Z11 =   // table added for Principles of operation SA22-7832-08 #612 #631
          {
          "B2B8=SRNMB,7,70",      //   3392 "B2B8"  "SRNMB"    "S"     7 RPI 1125
          "B344=LEDBRA,53,142",   //   3860 "B344"  "LEDBRA"   "RRE"  53 RPI 1125
@@ -2789,7 +2823,7 @@ public  class  tz390 {
          "ECDA=ALHSIK,57,420",   //        "ECDA"  "ALHSIK"   "RIE9" 57 RPI 1125 Z196
          "ECDB=ALGHSIK,57,430",  //        "ECDB"  "ALGHSIK"  "RIE9" 57 RPI 1125 Z196
          };
-     String[]   op_table_ZS5_ZS6 = // These definitions are valid for ZS5 and ZS6, ZS7 ff have a broader definition. #612
+     String[]   op_table_Z11_Z12 = // These definitions are valid for ZS5 and ZS6, ZS7 ff have a broader definition. #612 #631
          {
          "B9E2m=LOCGRm,39,141;*Short",    //  B9E2 RRF LOGGRH R1,R2   RPI 2202        #485 #612
          "B9F2m=LOCRm,39,142;*Short",     // "B9F2"   "LOCR"  "RRF5" 39 RPI 1125 Z196 #485 #612
@@ -2798,7 +2832,9 @@ public  class  tz390 {
          "EBF2m=LOCm,56,209;*Short;F=",   // "EBF2"   "LOC"   "RSY2" 56 RPI 1125 Z196 #485 #612
          "EBF3m=STOCm,56,209;*Short;F=",  // "EBF3"   "STOC"  "RSY2" 56 RPI 1125 Z196 #485 #612
          };                               //                                               #612
-     String[]   op_table_ZS6 =            // #613
+     // op_table_Z12 below contains the instructions valid from z Architecture       // #631
+     // as defined in publication SA22-7832-09 zArchitecture Principles of Operation // #631
+     String[]   op_table_Z12 =            // #613 #631
          {                                // #613
          "B2E8=PPA,40,151", // B2E8 RRFc 40,151 PPA R1,R2,M3 2202
          "B2EC=ETND,14,140", //  "B2EC RRE 14,140 ETND R1 RPI 2202
@@ -2828,7 +2864,9 @@ public  class  tz390 {
          "EDAA=CDZT,22,230",   // EDAA  RSLb CDZT   R1,D2(l2,B2),M3 RPI 2202
          "EDAB=CXZT,22,230",   // EDAB  RSLb CXZT   R1,D2(l2,B2),M3 RPI 2202
          };                               //                                               #613
-     String[]   op_table_ZS7 =              // #614
+     // op_table_Z13 below contains the instructions valid from z Architecture       // #631
+     // as defined in publication SA22-7832-10 zArchitecture Principles of Operation // #631
+     String[]   op_table_Z13 =              // #614                                     #631
          {                                  // #614
          "B9E0=LOCFHR,39,153",              // B9E0  RRF  LOCFHR  R1,R2             RPI 2202
          "B9E0m=LOCFHRm,39,153;0=;F=",      // B9E0  RRF  LOCFHR  R1,R2             RPI 2202      #485
@@ -3141,7 +3179,9 @@ public  class  tz390 {
          "EDAE=CDPT,22,230",                // EDAE  RSLb CDPT    R1,D2(l2,B2),M3   RPI 2202
          "EDAF=CXPT,22,230",                // EDAF  RSLb CXPT    R1,D2(l2,B2),M3   RPI 2202
          };                                 // #614
-     String[]   op_table_ZS8 =              // #614
+     // op_table_Z14 below contains the instructions valid from z Architecture       // #631
+     // as defined in publication SA22-7832-11 zArchitecture Principles of Operation // #631
+     String[]   op_table_Z14 =              // #614 #631
          {                                  // #614
          "B929=KMA,54,340",                 // B929  RRFb KMA     R1,M3,R2          RPI 2202
          "B93C=PRNO,14,144",                // B93C  RRE  PRNO    R1,R2             RPI 2202
@@ -3261,11 +3301,13 @@ public  class  tz390 {
          "E7EFf0=VFMAXfB,82,781;f=23",      // E7EF  VRSc VFMAX   V1,V2,V3,M4,M5,M6 RPI 2202 #495      #615
          "E7EFf8=WFMAXfB,82,781;f=234",     // E7EF  VRSc VFMAX   V1,V2,V3,M4,M5,M6 RPI 2202 #495      #615
          };                                 // #614
-     String[]   op_table_ZS8_only =         // #616
+     String[]   op_table_Z14_only =         // #616 #631
         {                                   // #616
          "E650=VCVB,82,779",                // E650  VRRi VCVB    R1,V2,M3,M4       RPI 2202 #615
          "E652=VCVBG,82,779",               // E652  VRRi VCVBG   R1,V2,M3,M4       RPI 2202 #615
          };                                 // #616
+     // op_table_Z15 below contains the instructions valid from z Architecture       // #631
+     // as defined in publication SA22-7832-12 zArchitecture Principles of Operation // #631
      String[]   op_table_Z15 =   //  dsh table added for RPI 2202
         {
          "B938=SORTL,14,144",               //       RRE  SORTL   R1,R2             RPI 2221
@@ -3332,6 +3374,8 @@ public  class  tz390 {
          "E7C3f=VCfFB,82,774;f=2;2=VCEFB",  // E7C3  VRRa VCFPS   V1,V2,M3,M4,M5    RPI 2202 #495 #616
          "E7C3f8=WCfFB,82,774;f=2;2=WCEFB", // E7C3  VRRa VCFPS   V1,V2,M3,M4,M5    RPI 2202 #495 #616
          };
+     // op_table_Z16 below contains the instructions valid from z Architecture       // #631
+     // as defined in publication SA22-7832-13 zArchitecture Principles of Operation // #631
      String[] op_table_Z16 =                 // #503
         {"B200=LBEAR,7,70",                  // #503
          "B201=STBEAR,7,70",                 // #503
@@ -3753,7 +3797,7 @@ public void create_opcodes()  // Routine added for RPI 1209
             if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
             process_opcodes(op_table_ZOP);
             process_opcodes(op_table_YOP);
-            process_opcodes(op_table_ZS3);
+            process_opcodes(op_table_Z9);                      // #631
             process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
@@ -3767,8 +3811,8 @@ public void create_opcodes()  // Routine added for RPI 1209
             if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
             process_opcodes(op_table_ZOP);
             process_opcodes(op_table_YOP);
-            process_opcodes(op_table_ZS3);
-            process_opcodes(op_table_ZS4);
+            process_opcodes(op_table_Z9);                      // #631
+            process_opcodes(op_table_Z10);                     // #631
             process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
             process_opcodes(op_table_370_directives);
@@ -3782,10 +3826,10 @@ public void create_opcodes()  // Routine added for RPI 1209
             if (opt_allow) process_opcodes(op_table_ESA_allow); // #612
             process_opcodes(op_table_ZOP);                      // #612
             process_opcodes(op_table_YOP);                      // #612
-            process_opcodes(op_table_ZS3);                      // #612
-            process_opcodes(op_table_ZS4);                      // #612
-            process_opcodes(op_table_ZS5);                      // #612
-            process_opcodes(op_table_ZS5_ZS6);                  // #612
+            process_opcodes(op_table_Z9);                       // #612 #631
+            process_opcodes(op_table_Z10);                      // #612 #631
+            process_opcodes(op_table_Z11);                      // #612 #631
+            process_opcodes(op_table_Z11_Z12);                  // #612 #631
             process_opcodes(op_table_360_20_directives);        // #612
             process_opcodes(op_table_DOS_directives);           // #612
             process_opcodes(op_table_370_directives);           // #612
@@ -3799,11 +3843,11 @@ public void create_opcodes()  // Routine added for RPI 1209
             if (opt_allow) process_opcodes(op_table_ESA_allow); // #613
             process_opcodes(op_table_ZOP);                      // #613
             process_opcodes(op_table_YOP);                      // #613
-            process_opcodes(op_table_ZS3);                      // #613
-            process_opcodes(op_table_ZS4);                      // #613
-            process_opcodes(op_table_ZS5);                      // #613
-            process_opcodes(op_table_ZS5_ZS6);                  // #613
-            process_opcodes(op_table_ZS6);                      // #613
+            process_opcodes(op_table_Z9);                       // #613 #631
+            process_opcodes(op_table_Z10);                      // #613 #631
+            process_opcodes(op_table_Z11);                      // #613 #631
+            process_opcodes(op_table_Z11_Z12);                  // #613 #631
+            process_opcodes(op_table_Z12);                      // #613 #631
             process_opcodes(op_table_360_20_directives);        // #613
             process_opcodes(op_table_DOS_directives);           // #613
             process_opcodes(op_table_370_directives);           // #613
@@ -3817,11 +3861,11 @@ public void create_opcodes()  // Routine added for RPI 1209
             if (opt_allow) process_opcodes(op_table_ESA_allow); // #614
             process_opcodes(op_table_ZOP);                      // #614
             process_opcodes(op_table_YOP);                      // #614
-            process_opcodes(op_table_ZS3);                      // #614
-            process_opcodes(op_table_ZS4);                      // #614
-            process_opcodes(op_table_ZS5);                      // #614
-            process_opcodes(op_table_ZS6);                      // #614
-            process_opcodes(op_table_ZS7);                      // #614
+            process_opcodes(op_table_Z9);                       // #614 #631
+            process_opcodes(op_table_Z10);                      // #614 #631
+            process_opcodes(op_table_Z11);                      // #614 #631
+            process_opcodes(op_table_Z12);                      // #614 #631
+            process_opcodes(op_table_Z13);                      // #614 #631
             process_opcodes(op_table_360_20_directives);        // #614
             process_opcodes(op_table_DOS_directives);           // #614
             process_opcodes(op_table_370_directives);           // #614
@@ -3835,13 +3879,13 @@ public void create_opcodes()  // Routine added for RPI 1209
             if (opt_allow) process_opcodes(op_table_ESA_allow); // #615
             process_opcodes(op_table_ZOP);                      // #615
             process_opcodes(op_table_YOP);                      // #615
-            process_opcodes(op_table_ZS3);                      // #615
-            process_opcodes(op_table_ZS4);                      // #615
-            process_opcodes(op_table_ZS5);                      // #615
-            process_opcodes(op_table_ZS6);                      // #615
-            process_opcodes(op_table_ZS7);                      // #615
-            process_opcodes(op_table_ZS8);                      // #615
-            process_opcodes(op_table_ZS8_only);                 // #615
+            process_opcodes(op_table_Z9);                       // #615 #631
+            process_opcodes(op_table_Z10);                      // #615 #631
+            process_opcodes(op_table_Z11);                      // #615 #631
+            process_opcodes(op_table_Z12);                      // #615 #631
+            process_opcodes(op_table_Z13);                      // #615 #631
+            process_opcodes(op_table_Z14);                      // #615 #631
+            process_opcodes(op_table_Z14_only);                 // #615 #631
             process_opcodes(op_table_360_20_directives);        // #615
             process_opcodes(op_table_DOS_directives);           // #615
             process_opcodes(op_table_370_directives);           // #615
@@ -3855,12 +3899,12 @@ public void create_opcodes()  // Routine added for RPI 1209
             if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
             process_opcodes(op_table_ZOP);
             process_opcodes(op_table_YOP);
-            process_opcodes(op_table_ZS3);
-            process_opcodes(op_table_ZS4);
-            process_opcodes(op_table_ZS5);                      // #612
-            process_opcodes(op_table_ZS6);                      // #613
-            process_opcodes(op_table_ZS7);                      // #614
-            process_opcodes(op_table_ZS8);                      // #614
+            process_opcodes(op_table_Z9);                       // #631
+            process_opcodes(op_table_Z10);                      // #631
+            process_opcodes(op_table_Z11);                      // #612 #631
+            process_opcodes(op_table_Z12);                      // #613 #631
+            process_opcodes(op_table_Z13);                      // #614 #631
+            process_opcodes(op_table_Z14);                      // #614 #631
             process_opcodes(op_table_Z15);  // rpi 2202
             process_opcodes(op_table_360_20_directives);       // #543
             process_opcodes(op_table_DOS_directives);
@@ -3875,12 +3919,12 @@ public void create_opcodes()  // Routine added for RPI 1209
             if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
             process_opcodes(op_table_ZOP);              // #503
             process_opcodes(op_table_YOP);              // #503
-            process_opcodes(op_table_ZS3);              // #503
-            process_opcodes(op_table_ZS4);              // #503
-            process_opcodes(op_table_ZS5);                      // #612
-            process_opcodes(op_table_ZS6);                      // #613
-            process_opcodes(op_table_ZS7);                      // #614
-            process_opcodes(op_table_ZS8);                      // #614
+            process_opcodes(op_table_Z9);               // #503 // #631
+            process_opcodes(op_table_Z10);              // #503 // #631
+            process_opcodes(op_table_Z11);                      // #612 #631
+            process_opcodes(op_table_Z12);                      // #613 #631
+            process_opcodes(op_table_Z13);                      // #614 #631
+            process_opcodes(op_table_Z14);                      // #614 #631
             process_opcodes(op_table_Z15);              // #503
             process_opcodes(op_table_Z16);              // #503
             process_opcodes(op_table_360_20_directives);       // #543
@@ -3907,12 +3951,12 @@ public void create_opcodes()  // Routine added for RPI 1209
                 }                                    //      #627
             process_opcodes(op_table_ZOP);
             process_opcodes(op_table_YOP);
-            process_opcodes(op_table_ZS3);
-            process_opcodes(op_table_ZS4);
-            process_opcodes(op_table_ZS5);                      // #612
-            process_opcodes(op_table_ZS6);                      // #613
-            process_opcodes(op_table_ZS7);                      // #614
-            process_opcodes(op_table_ZS8);                      // #614
+            process_opcodes(op_table_Z9);                       // #631
+            process_opcodes(op_table_Z10);                      // #631
+            process_opcodes(op_table_Z11);                      // #612 #631
+            process_opcodes(op_table_Z12);                      // #613 #631
+            process_opcodes(op_table_Z13);                      // #614 #631
+            process_opcodes(op_table_Z14);                      // #614 #631
             process_opcodes(op_table_Z15); // rpi 2202
             process_opcodes(op_table_Z16);                      // #616
             process_opcodes(op_table_360_20_directives);       // #543
