@@ -319,7 +319,8 @@ get list of all defined branches          | `git branch -v --all`
 prepare commit                            | `git add .`
 commit a set of changes                   | `git commit -m"descriptive comments"`
 push changes to your own fork             | `git push`
+remove ignored and added files from repo  | `git clean -d -f -X`
 graphical display of branches             | `git log --graph --oneline --decorate --all`
--- > when viewing the bracnches displayed | `<Enter> to scroll 1 line, <PgDn> to scroll a page, q to quit`
+-- > when viewing the branches displayed  | `<Enter> to scroll 1 line, <PgDn> to scroll a page, q to quit`
 go 'back in time' to a specific commit    | `git branch -f <new_branch> [<start-point>]`
                                           | `git switch <new_branch>`
