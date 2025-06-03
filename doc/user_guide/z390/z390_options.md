@@ -6,10 +6,10 @@ hide:
 
 The scope value details where the option is used.
 
-* M - mz390 macro processor which reads ASCII assembler source and generates expanded BAL
-* A - az390 assembler which reads BAL and generated OBJ relocatable object code
-* L - lz390 linker which reads OBJ relocatable object files and generates 390 load module
-* E - ez390 emulator runtime which loads and executes 390 load module
+- M - mz390 macro processor which reads ASCII assembler source and generates expanded BAL
+- A - az390 assembler which reads BAL and generated OBJ relocatable object code
+- L - lz390 linker which reads OBJ relocatable object files and generates 390 load module
+- E - ez390 emulator runtime which loads and executes 390 load module
 
 !!! Note: most options can be prefixed with NO to turn the feature off.
 
