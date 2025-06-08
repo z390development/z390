@@ -411,7 +411,7 @@ public  class  tz390 {
     String  opt_optable  = "*DFLT"; // default optable depends on z390/HLASM mode as indicated by allow option RPI 1209A
     String  opt_optable_list = "NOLIST"; // do not to list instructions RPI 1209A
     String  opt_optable_optable = ""; // effective optable associated with specified optable option #503
-    int     opt_optable_optb_nr = 0 ; // nr associated with effective optable #554
+    int     opt_optable_optb_nr = OPCODE_FOR_DFLT ; // nr associated with effective optable #554 #631
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
     boolean opt_pc       = true;  // generate macro pseudo code
     boolean opt_pcopt    = true;  // optimize pc code for speed
@@ -1133,6 +1133,8 @@ public  class  tz390 {
     public static final int OPCODE_FOR_ESA    =  4;       // #631
     public static final int OPCODE_FOR_ZOP    =  5;       // #631
     public static final int OPCODE_FOR_YOP    =  6;       // #631
+    // value skipped to assign 9 to Z9           7;       // #631
+    // value skipped to assign 9 to Z9           8;       // #631
     public static final int OPCODE_FOR_Z9     =  9;       // #631
     public static final int OPCODE_FOR_Z10    = 10;       // #631
     public static final int OPCODE_FOR_Z11    = 11;       // #631
@@ -1141,6 +1143,9 @@ public  class  tz390 {
     public static final int OPCODE_FOR_Z14    = 14;       // #631
     public static final int OPCODE_FOR_Z15    = 15;       // #631
     public static final int OPCODE_FOR_Z16    = 16;       // #631
+    public static final int OPCODE_FOR_UNI    = 80;       // #631
+    public static final int OPCODE_FOR_Z390   = 90;       // #631
+    public static final int OPCODE_FOR_DFLT   = 91;       // #631
     static final String[] optable_optable_equivalence =   // #503 #631
        {"00:360-20=360-20",                               // #543 #554
         "01:DOS=DOS",                                     // #503 #554
@@ -1151,6 +1156,8 @@ public  class  tz390 {
         "05:ZS1=ZOP",                                     // #503 #554
         "06:YOP=YOP",                                     // #503 #554
         "06:ZS2=YOP",                                     // #503 #554
+     // "07:reserved" 07 skipped to assign 09 to z9       // #631
+     // "08:reserved" 08 skipped to assign 09 to z9       // #631
         "09:Z9=Z9",                                       // #503 #554 #631
         "09:ZS3=Z9",                                      // #503 #554 #631
         "10:Z10=Z10",                                     // #503 #554 #631
@@ -1169,6 +1176,7 @@ public  class  tz390 {
         "16:ZSA=Z16",                                     // #503 #554 #631
         "80:UNI=UNI",                                     // #503 #554
         "90:z390=z390",                                   // #503 #554
+        "91:DFLT=DFLT",                                   // #503 #554 #631
         };                                                // #503
     int[]    machine_option_nr = null;                    // #568
     String[] machine_option_id = null;                    // #503
@@ -1249,9 +1257,9 @@ public  class  tz390 {
     static final int max_ins_type = 100; // RPI 315 #631
     static final int max_asm_type = 200; //         #631
     static final int max_mac_type = 300; //         #631
-	//  When adding new opcode case: // RPI 407 type 35 for CSDTR etc
-	//  1.  Increase the above max.  // no longer relevant // RPI 1209G
-	//  2.  Change above op_type_len table which must match // no longer relevant // RPI 1209G
+    //  When adding new opcode case: // RPI 407 type 35 for CSDTR etc
+    //  1.  Increase the above max.  // no longer relevant // RPI 1209G
+    //  2.  Change above op_type_len table which must match // no longer relevant // RPI 1209G
     //  1.  Update routine gen_list_mnemonics in az390 when adding new opcode formats to table opcode_formats below  // RPI 1209G
     //  2.  Extend routine process_bal_op     in az390 when adding new opcode formats to table opcode_formats below  // RPI 1209G
     //  3.  Change az390 instruction format cases in az390 routine process_bal_op // RPI 1209N
@@ -1507,7 +1515,7 @@ public  class  tz390 {
      // Incompatibilites:                                                #543
      // 1. DCCW aligns on halfword, but we align on Fullword             #543
      // 2. XFR is not the same as ENTRY, yet we process it as such       #543
-     static final String[]   op_table_360_20_only_directives = // Directives shared with optable(DOS) #543 #631
+     static final String[]   op_table_360_20_only_directives = // Directives defined for S360/20 only #543 #631
         {"--=DCCW,101,--",       //                                 101  #543
          "--=XFR,114,--",        //                                 114  #543
          };             //                                               #543
@@ -3722,270 +3730,416 @@ public void create_opcodes()  // Routine added for RPI 1209
     while (index2 <= 1)
        {op_code_count = 0;
         op_directives_count = 0;
-        process_opcodes(op_table_start);
-        if (opt_assist == true)               // RPI 1209M
-           {process_opcodes(op_table_ASSIST); // RPI 1209M
-            }                                 // RPI 1209M
-        if (opt_optable.equals("Z390")       // #533
-        ||  opt_allow)                       // #533
-           {process_opcodes(op_table_z390);  // #533
-            }                                // #533
-        if (opt_optable.equals("360-20"))                      // #543
-           {process_opcodes(op_table_360_20);                  // #543
-            process_opcodes(op_table_360_20_only);             // #543
-            process_opcodes(op_table_360_20_directives);       // #543
-            process_opcodes(op_table_360_20_only_directives);  // #543
-            }                                                  // #543
-        if (opt_optable.equals("DOS"))
-           {process_opcodes(op_table_360_20);                  // #543
-            process_opcodes(op_table_DOS);
-            process_opcodes(op_table_DOS_370);                 // #543
-            process_opcodes(op_table_360_20_directives);       // #543
-            process_opcodes(op_table_DOS_directives);
-            }
-        if (opt_optable.equals("370"))
-           {process_opcodes(op_table_360_20);                  // #543
-            process_opcodes(op_table_DOS);
-            process_opcodes(op_table_DOS_370);                 // #543
-            process_opcodes(op_table_370);
-            process_opcodes(op_table_370_only);
-            process_opcodes(op_table_vector); // #533
-            process_opcodes(op_table_360_20_directives);       // #543
-            process_opcodes(op_table_DOS_directives);
-            process_opcodes(op_table_370_directives);
-            }
-        if (opt_optable.equals("XA"))
-           {process_opcodes(op_table_360_20);          // #543
-            process_opcodes(op_table_DOS);
-            process_opcodes(op_table_370);
-            process_opcodes(op_table_vector); // #533
-            process_opcodes(op_table_XA);
-            process_opcodes(op_table_360_20_directives);       // #543
-            process_opcodes(op_table_DOS_directives);
-            process_opcodes(op_table_370_directives);
-            }
-        if (opt_optable.equals("ESA"))
-           {process_opcodes(op_table_360_20);          // #543
-            process_opcodes(op_table_DOS);
-            process_opcodes(op_table_370);
-            process_opcodes(op_table_vector); // #533
-            process_opcodes(op_table_XA);
-            process_opcodes(op_table_ESA);
-            process_opcodes(op_table_ESA_only); // #554
-            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
-            process_opcodes(op_table_360_20_directives);       // #543
-            process_opcodes(op_table_DOS_directives);
-            process_opcodes(op_table_370_directives);
-            }
-        if (opt_optable.equals("ZOP"))
-           {process_opcodes(op_table_360_20);          // #543
-            process_opcodes(op_table_DOS);
-            process_opcodes(op_table_370);
-            process_opcodes(op_table_XA);
-            process_opcodes(op_table_ESA);
-            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
-            process_opcodes(op_table_ZOP);
-            process_opcodes(op_table_360_20_directives);       // #543
-            process_opcodes(op_table_DOS_directives);
-            process_opcodes(op_table_370_directives);
-            }
-        if (opt_optable.equals("YOP"))
-           {process_opcodes(op_table_360_20);          // #543
-            process_opcodes(op_table_DOS);
-            process_opcodes(op_table_370);
-            process_opcodes(op_table_XA);
-            process_opcodes(op_table_ESA);
-            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
-            process_opcodes(op_table_ZOP);
-            process_opcodes(op_table_YOP);
-            process_opcodes(op_table_360_20_directives);       // #543
-            process_opcodes(op_table_DOS_directives);
-            process_opcodes(op_table_370_directives);
-            }
-        if (opt_optable.equals("Z9"))                   // #503
-           {process_opcodes(op_table_360_20);           // #543
-            process_opcodes(op_table_DOS);
-            process_opcodes(op_table_370);
-            process_opcodes(op_table_XA);
-            process_opcodes(op_table_ESA);
-            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
-            process_opcodes(op_table_ZOP);
-            process_opcodes(op_table_YOP);
-            process_opcodes(op_table_Z9);                      // #631
-            process_opcodes(op_table_360_20_directives);       // #543
-            process_opcodes(op_table_DOS_directives);
-            process_opcodes(op_table_370_directives);
-            }
-        if (opt_optable.equals("Z10"))                  // #503
-           {process_opcodes(op_table_360_20);           // #543
-            process_opcodes(op_table_DOS);
-            process_opcodes(op_table_370);
-            process_opcodes(op_table_XA);
-            process_opcodes(op_table_ESA);
-            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
-            process_opcodes(op_table_ZOP);
-            process_opcodes(op_table_YOP);
-            process_opcodes(op_table_Z9);                      // #631
-            process_opcodes(op_table_Z10);                     // #631
-            process_opcodes(op_table_360_20_directives);       // #543
-            process_opcodes(op_table_DOS_directives);
-            process_opcodes(op_table_370_directives);
-            }
-        if (opt_optable.equals("Z11"))                          // #612
-           {process_opcodes(op_table_360_20);                   // #612
-            process_opcodes(op_table_DOS);                      // #612
-            process_opcodes(op_table_370);                      // #612
-            process_opcodes(op_table_XA);                       // #612
-            process_opcodes(op_table_ESA);                      // #612
-            if (opt_allow) process_opcodes(op_table_ESA_allow); // #612
-            process_opcodes(op_table_ZOP);                      // #612
-            process_opcodes(op_table_YOP);                      // #612
-            process_opcodes(op_table_Z9);                       // #612 #631
-            process_opcodes(op_table_Z10);                      // #612 #631
-            process_opcodes(op_table_Z11);                      // #612 #631
-            process_opcodes(op_table_Z11_Z12);                  // #612 #631
-            process_opcodes(op_table_360_20_directives);        // #612
-            process_opcodes(op_table_DOS_directives);           // #612
-            process_opcodes(op_table_370_directives);           // #612
-            }                                                   // #612
-        if (opt_optable.equals("Z12"))                          // #613
-           {process_opcodes(op_table_360_20);                   // #613
-            process_opcodes(op_table_DOS);                      // #613
-            process_opcodes(op_table_370);                      // #613
-            process_opcodes(op_table_XA);                       // #613
-            process_opcodes(op_table_ESA);                      // #613
-            if (opt_allow) process_opcodes(op_table_ESA_allow); // #613
-            process_opcodes(op_table_ZOP);                      // #613
-            process_opcodes(op_table_YOP);                      // #613
-            process_opcodes(op_table_Z9);                       // #613 #631
-            process_opcodes(op_table_Z10);                      // #613 #631
-            process_opcodes(op_table_Z11);                      // #613 #631
-            process_opcodes(op_table_Z11_Z12);                  // #613 #631
-            process_opcodes(op_table_Z12);                      // #613 #631
-            process_opcodes(op_table_360_20_directives);        // #613
-            process_opcodes(op_table_DOS_directives);           // #613
-            process_opcodes(op_table_370_directives);           // #613
-            }                                                   // #613
-        if (opt_optable.equals("Z13"))                          // #614
-           {process_opcodes(op_table_360_20);                   // #614
-            process_opcodes(op_table_DOS);                      // #614
-            process_opcodes(op_table_370);                      // #614
-            process_opcodes(op_table_XA);                       // #614
-            process_opcodes(op_table_ESA);                      // #614
-            if (opt_allow) process_opcodes(op_table_ESA_allow); // #614
-            process_opcodes(op_table_ZOP);                      // #614
-            process_opcodes(op_table_YOP);                      // #614
-            process_opcodes(op_table_Z9);                       // #614 #631
-            process_opcodes(op_table_Z10);                      // #614 #631
-            process_opcodes(op_table_Z11);                      // #614 #631
-            process_opcodes(op_table_Z12);                      // #614 #631
-            process_opcodes(op_table_Z13);                      // #614 #631
-            process_opcodes(op_table_360_20_directives);        // #614
-            process_opcodes(op_table_DOS_directives);           // #614
-            process_opcodes(op_table_370_directives);           // #614
-            }                                                   // #614
-        if (opt_optable.equals("Z14"))                          // #615
-           {process_opcodes(op_table_360_20);                   // #615
-            process_opcodes(op_table_DOS);                      // #615
-            process_opcodes(op_table_370);                      // #615
-            process_opcodes(op_table_XA);                       // #615
-            process_opcodes(op_table_ESA);                      // #615
-            if (opt_allow) process_opcodes(op_table_ESA_allow); // #615
-            process_opcodes(op_table_ZOP);                      // #615
-            process_opcodes(op_table_YOP);                      // #615
-            process_opcodes(op_table_Z9);                       // #615 #631
-            process_opcodes(op_table_Z10);                      // #615 #631
-            process_opcodes(op_table_Z11);                      // #615 #631
-            process_opcodes(op_table_Z12);                      // #615 #631
-            process_opcodes(op_table_Z13);                      // #615 #631
-            process_opcodes(op_table_Z14);                      // #615 #631
-            process_opcodes(op_table_Z14_only);                 // #615 #631
-            process_opcodes(op_table_360_20_directives);        // #615
-            process_opcodes(op_table_DOS_directives);           // #615
-            process_opcodes(op_table_370_directives);           // #615
-            }                                                   // #615
-        if (opt_optable.equals("Z15"))  // rpi 2202
-           {process_opcodes(op_table_360_20);          // #543
-            process_opcodes(op_table_DOS);
-            process_opcodes(op_table_370);
-            process_opcodes(op_table_XA);
-            process_opcodes(op_table_ESA);
-            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
-            process_opcodes(op_table_ZOP);
-            process_opcodes(op_table_YOP);
-            process_opcodes(op_table_Z9);                       // #631
-            process_opcodes(op_table_Z10);                      // #631
-            process_opcodes(op_table_Z11);                      // #612 #631
-            process_opcodes(op_table_Z12);                      // #613 #631
-            process_opcodes(op_table_Z13);                      // #614 #631
-            process_opcodes(op_table_Z14);                      // #614 #631
-            process_opcodes(op_table_Z15);  // rpi 2202
-            process_opcodes(op_table_360_20_directives);       // #543
-            process_opcodes(op_table_DOS_directives);
-            process_opcodes(op_table_370_directives);
-            }
-        if (opt_optable.equals("Z16"))               // #503
-           {process_opcodes(op_table_360_20);           // #543
-            process_opcodes(op_table_DOS);              // #503
-            process_opcodes(op_table_370);              // #503
-            process_opcodes(op_table_XA);               // #503
-            process_opcodes(op_table_ESA);              // #503
-            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
-            process_opcodes(op_table_ZOP);              // #503
-            process_opcodes(op_table_YOP);              // #503
-            process_opcodes(op_table_Z9);               // #503 // #631
-            process_opcodes(op_table_Z10);              // #503 // #631
-            process_opcodes(op_table_Z11);                      // #612 #631
-            process_opcodes(op_table_Z12);                      // #613 #631
-            process_opcodes(op_table_Z13);                      // #614 #631
-            process_opcodes(op_table_Z14);                      // #614 #631
-            process_opcodes(op_table_Z15);              // #503
-            process_opcodes(op_table_Z16);              // #503
-            process_opcodes(op_table_360_20_directives);       // #543
-            process_opcodes(op_table_DOS_directives);   // #503
-            process_opcodes(op_table_370_directives);   // #503
-            }                                           // #503
-        if (opt_optable.equals("UNI")         // #533
-        ||  opt_optable.equals("DFLT")        // #533
-        ||  opt_optable.equals("Z390"))       // #533
-           {process_opcodes(op_table_360_20); // #543
-            process_opcodes(op_table_DOS);
-            process_opcodes(op_table_370);
-            if (opt_vector) // RPI VF01
-               {process_opcodes(op_table_vector);
-                }
-            process_opcodes(op_table_XA);
-            process_opcodes(op_table_ESA);
-            if (opt_optable.equals("UNI"))           // #627
-               {process_opcodes(op_table_370_only);  // #627 2377 > 2311
-                process_opcodes(op_table_DOS_370);   // #627 2377 > 2320
-                }                                    // #627
-            else // DFLT or Z390                     //      #627
-               {process_opcodes(op_table_ESA_allow); // #561 #627
-                }                                    //      #627
-            process_opcodes(op_table_ZOP);
-            process_opcodes(op_table_YOP);
-            process_opcodes(op_table_Z9);                       // #631
-            process_opcodes(op_table_Z10);                      // #631
-            process_opcodes(op_table_Z11);                      // #612 #631
-            process_opcodes(op_table_Z12);                      // #613 #631
-            process_opcodes(op_table_Z13);                      // #614 #631
-            process_opcodes(op_table_Z14);                      // #614 #631
-            process_opcodes(op_table_Z15); // rpi 2202
-            process_opcodes(op_table_Z16);                      // #616
-            process_opcodes(op_table_360_20_directives);       // #543
-            process_opcodes(op_table_DOS_directives);
-            process_opcodes(op_table_370_directives);
-            }
-        if (opt_optable.equals("DFLT")                  // #533
-        ||  opt_optable.equals("Z390")                  // #533
-        ||  opt_allow)                                  // #533
-           {process_opcodes(op_table_DFLT_directives);  // #533
-            }                                           // #533
-        if (opt_optable.equals("Z390")                  // #533
-        ||  opt_allow)                                  // #533
-           {process_opcodes(op_table_z390_directives);  // #533
-            }                                           // #533
+        // Always required                                       // #631
+        process_opcodes(op_table_start);                         // #631
+        // Instructions defined for S360/20 only                 // #631
+        if (opt_optable_optb_nr == OPCODE_FOR_360_20)            // #631
+           {process_opcodes(op_table_360_20_only);               // #631
+            }                                                    // #631
+        // Instructions shared with optable(DOS) ff.             // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_360_20)            // #631
+           {process_opcodes(op_table_360_20);                    // #631
+            }                                                    // #631
+        // Instructions not shared with S360/20                  // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_DOS)               // #631
+           {process_opcodes(op_table_DOS);                       // #631
+            }                                                    // #631
+        // Instructions valid from S360 through S370             // #631
+        if (  (   opt_optable_optb_nr >= OPCODE_FOR_DOS          // #631
+               && opt_optable_optb_nr <= OPCODE_FOR_370          // #631
+               )                                                 // #631
+            || opt_optable_optb_nr >= OPCODE_FOR_UNI             // #631
+            )                                                    // #631
+           {process_opcodes(op_table_DOS_370);                   // #631
+            }                                                    // #631
+        // Instructions for optable 370 only                     // #631
+        if (opt_optable_optb_nr == OPCODE_FOR_370                // #631
+        ||  opt_optable_optb_nr >= OPCODE_FOR_UNI)               // #631
+           {process_opcodes(op_table_370_only);                  // #631
+            }                                                    // #631
+        // Instructions valid from S370                          // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_370)               // #631
+           {process_opcodes(op_table_370);                       // #631
+            }                                                    // #631
+        // Old vector facility is required for S370-ESA          // #631
+        // (and optional for z390 until new vector in z14)       // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_370                // #631
+        &&  opt_optable_optb_nr <= OPCODE_FOR_ESA)               // #631
+           {opt_vector = true;                                   // #631
+            }                                                    // #631
+        // Instructions valid from S370-XA                       // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_XA)                // #631
+           {process_opcodes(op_table_XA);                        // #631
+            }                                                    // #631
+        // Instructions valid for S390 only                      // #631
+        if (opt_optable_optb_nr == OPCODE_FOR_ESA)               // #631
+           {process_opcodes(op_table_ESA_only);                  // #631
+            }                                                    // #631
+        // Instructions valid from S390                          // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_ESA)               // #631
+           {process_opcodes(op_table_ESA);                       // #631
+            }                                                    // #631
+        // Instructions valid from ESA but never supported by HLASM #631
+        if (   (   opt_optable_optb_nr >= OPCODE_FOR_ESA         // #631
+                && opt_allow                                     // #631
+                )                                                // #631
+            || opt_optable_optb_nr == OPCODE_FOR_Z390            // #631
+            )                                                    // #631
+           {process_opcodes(op_table_ESA_allow);                 // #631
+            }                                                    // #631
+        // Instructions valid from z Architecture z800/z900      // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_ZOP)               // #631
+           {process_opcodes(op_table_ZOP);                       // #631
+            }                                                    // #631
+        // Instructions valid from z Architecture z890/z990      // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_YOP)               // #631
+           {process_opcodes(op_table_YOP);                       // #631
+            }                                                    // #631
+        // Instructions valid from z Architecture z9             // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_Z9)                // #631
+           {process_opcodes(op_table_Z9);                        // #631
+            }                                                    // #631
+        // Instructions valid from z Architecture z10            // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_Z10)               // #631
+           {process_opcodes(op_table_Z10);                       // #631
+            }                                                    // #631
+        // Instructions valid from z Architecture z11            // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_Z11)               // #631
+           {process_opcodes(op_table_Z11);                       // #631
+            }                                                    // #631
+        // Instructions valid for z Architecture z11 and z12 only   #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_Z11                // #631
+        &&  opt_optable_optb_nr <= OPCODE_FOR_Z12)               // #631
+           {process_opcodes(op_table_Z11_Z12);                   // #631
+            }                                                    // #631
+        // Instructions valid from z Architecture z12            // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_Z12)               // #631
+           {process_opcodes(op_table_Z12);                       // #631
+            }                                                    // #631
+        // Instructions valid from z Architecture z13            // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_Z13)               // #631
+           {process_opcodes(op_table_Z13);                       // #631
+            }                                                    // #631
+        // Instructions valid for z Architecture z14 only        // #631
+        if (opt_optable_optb_nr == OPCODE_FOR_Z14)               // #631
+           {process_opcodes(op_table_Z14_only);                  // #631
+            }                                                    // #631
+        // Instructions valid from z Architecture z14            // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_Z14)               // #631
+           {process_opcodes(op_table_Z14);                       // #631
+            }                                                    // #631
+        // Instructions valid from z Architecture z15            // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_Z15)               // #631
+           {process_opcodes(op_table_Z15);                       // #631
+            }                                                    // #631
+        // Instructions valid from z Architecture z16            // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_Z16)               // #631
+           {process_opcodes(op_table_Z16);                       // #631
+            }                                                    // #631
+        // Old vector facility is required for S370-ESA          // #631
+        // and optional for z390 until new vector in z14         // #631
+        if (opt_vector)                                          // #631
+           {process_opcodes(op_table_vector);                    // #631
+            }                                                    // #631
+        // Instructions valid for ASSIST extension               // #631
+        if (opt_assist)                                          // #631
+           {process_opcodes(op_table_ASSIST);                    // #631
+            }                                                    // #631
+        // Instructions valid for z390 extensions                // #631
+        if (opt_optable_optb_nr == OPCODE_FOR_Z390               // #631
+        ||  opt_allow)                                           // #631
+           {process_opcodes(op_table_z390);                      // #631
+            }                                                    // #631
+        // ------------- DIRECTIVES ------------------           // #631
+        // Directives defined for S360/20 only                   // #631
+        if (opt_optable_optb_nr == OPCODE_FOR_360_20)            // #631
+           {process_opcodes(op_table_360_20_only_directives);    // #631
+            }                                                    // #631
+        // Directives shared with optable(DOS)                   // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_360_20)            // #631
+           {process_opcodes(op_table_360_20_directives);         // #631
+            }                                                    // #631
+        // Directives not shared with S360/20                    // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_DOS)               // #631
+           {process_opcodes(op_table_DOS_directives);            // #631
+            }                                                    // #631
+        // Directives valid from S370                            // #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_370)               // #631
+           {process_opcodes(op_table_370_directives);            // #631
+            }                                                    // #631
+        // Directives valid for z390 extensions                  // #631
+        if (opt_optable_optb_nr == OPCODE_FOR_Z390               // #631
+        ||  opt_allow)                                           // #631
+           {process_opcodes(op_table_z390_directives);           // #631
+            }                                                    // #631
+        // Directives that are valid only with the default (unspecified) optable #631
+        if (opt_optable_optb_nr >= OPCODE_FOR_Z390               // #631
+        ||  opt_allow)                                           // #631
+           {process_opcodes(op_table_DFLT_directives);           // #631
+            }                                                    // #631
+//        if (opt_assist == true)               // RPI 1209M
+//           {process_opcodes(op_table_ASSIST); // RPI 1209M
+//            }                                 // RPI 1209M
+//        if (opt_optable.equals("Z390")       // #533
+//        ||  opt_allow)                       // #533
+//           {process_opcodes(op_table_z390);  // #533
+//            }                                // #533
+//        if (opt_optable.equals("360-20"))                      // #543
+//           {process_opcodes(op_table_360_20);                  // #543
+//            process_opcodes(op_table_360_20_only);             // #543
+//            process_opcodes(op_table_360_20_directives);       // #543
+//            process_opcodes(op_table_360_20_only_directives);  // #543
+//            }                                                  // #543
+//        if (opt_optable.equals("DOS"))
+//           {process_opcodes(op_table_360_20);                  // #543
+//            process_opcodes(op_table_DOS);
+//            process_opcodes(op_table_DOS_370);                 // #543
+//            process_opcodes(op_table_360_20_directives);       // #543
+//            process_opcodes(op_table_DOS_directives);
+//            }
+//        if (opt_optable.equals("370"))
+//           {process_opcodes(op_table_360_20);                  // #543
+//            process_opcodes(op_table_DOS);
+//            process_opcodes(op_table_DOS_370);                 // #543
+//            process_opcodes(op_table_370);
+//            process_opcodes(op_table_370_only);
+//            process_opcodes(op_table_vector); // #533
+//            process_opcodes(op_table_360_20_directives);       // #543
+//            process_opcodes(op_table_DOS_directives);
+//            process_opcodes(op_table_370_directives);
+//            }
+//        if (opt_optable.equals("XA"))
+//           {process_opcodes(op_table_360_20);          // #543
+//            process_opcodes(op_table_DOS);
+//            process_opcodes(op_table_370);
+//            process_opcodes(op_table_vector); // #533
+//            process_opcodes(op_table_XA);
+//            process_opcodes(op_table_360_20_directives);       // #543
+//            process_opcodes(op_table_DOS_directives);
+//            process_opcodes(op_table_370_directives);
+//            }
+//        if (opt_optable.equals("ESA"))
+//           {process_opcodes(op_table_360_20);          // #543
+//            process_opcodes(op_table_DOS);
+//            process_opcodes(op_table_370);
+//            process_opcodes(op_table_vector); // #533
+//            process_opcodes(op_table_XA);
+//            process_opcodes(op_table_ESA);
+//            process_opcodes(op_table_ESA_only); // #554
+//            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
+//            process_opcodes(op_table_360_20_directives);       // #543
+//            process_opcodes(op_table_DOS_directives);
+//            process_opcodes(op_table_370_directives);
+//            }
+//        if (opt_optable.equals("ZOP"))
+//           {process_opcodes(op_table_360_20);          // #543
+//            process_opcodes(op_table_DOS);
+//            process_opcodes(op_table_370);
+//            process_opcodes(op_table_XA);
+//            process_opcodes(op_table_ESA);
+//            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
+//            process_opcodes(op_table_ZOP);
+//            process_opcodes(op_table_360_20_directives);       // #543
+//            process_opcodes(op_table_DOS_directives);
+//            process_opcodes(op_table_370_directives);
+//            }
+//        if (opt_optable.equals("YOP"))
+//           {process_opcodes(op_table_360_20);          // #543
+//            process_opcodes(op_table_DOS);
+//            process_opcodes(op_table_370);
+//            process_opcodes(op_table_XA);
+//            process_opcodes(op_table_ESA);
+//            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
+//            process_opcodes(op_table_ZOP);
+//            process_opcodes(op_table_YOP);
+//            process_opcodes(op_table_360_20_directives);       // #543
+//            process_opcodes(op_table_DOS_directives);
+//            process_opcodes(op_table_370_directives);
+//            }
+//        if (opt_optable.equals("Z9"))                   // #503
+//           {process_opcodes(op_table_360_20);           // #543
+//            process_opcodes(op_table_DOS);
+//            process_opcodes(op_table_370);
+//            process_opcodes(op_table_XA);
+//            process_opcodes(op_table_ESA);
+//            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
+//            process_opcodes(op_table_ZOP);
+//            process_opcodes(op_table_YOP);
+//            process_opcodes(op_table_Z9);                      // #631
+//            process_opcodes(op_table_360_20_directives);       // #543
+//            process_opcodes(op_table_DOS_directives);
+//            process_opcodes(op_table_370_directives);
+//            }
+//        if (opt_optable.equals("Z10"))                  // #503
+//           {process_opcodes(op_table_360_20);           // #543
+//            process_opcodes(op_table_DOS);
+//            process_opcodes(op_table_370);
+//            process_opcodes(op_table_XA);
+//            process_opcodes(op_table_ESA);
+//            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
+//            process_opcodes(op_table_ZOP);
+//            process_opcodes(op_table_YOP);
+//            process_opcodes(op_table_Z9);                      // #631
+//            process_opcodes(op_table_Z10);                     // #631
+//            process_opcodes(op_table_360_20_directives);       // #543
+//            process_opcodes(op_table_DOS_directives);
+//            process_opcodes(op_table_370_directives);
+//            }
+//        if (opt_optable.equals("Z11"))                          // #612
+//           {process_opcodes(op_table_360_20);                   // #612
+//            process_opcodes(op_table_DOS);                      // #612
+//            process_opcodes(op_table_370);                      // #612
+//            process_opcodes(op_table_XA);                       // #612
+//            process_opcodes(op_table_ESA);                      // #612
+//            if (opt_allow) process_opcodes(op_table_ESA_allow); // #612
+//            process_opcodes(op_table_ZOP);                      // #612
+//            process_opcodes(op_table_YOP);                      // #612
+//            process_opcodes(op_table_Z9);                       // #612 #631
+//            process_opcodes(op_table_Z10);                      // #612 #631
+//            process_opcodes(op_table_Z11);                      // #612 #631
+//            process_opcodes(op_table_Z11_Z12);                  // #612 #631
+//            process_opcodes(op_table_360_20_directives);        // #612
+//            process_opcodes(op_table_DOS_directives);           // #612
+//            process_opcodes(op_table_370_directives);           // #612
+//            }                                                   // #612
+//        if (opt_optable.equals("Z12"))                          // #613
+//           {process_opcodes(op_table_360_20);                   // #613
+//            process_opcodes(op_table_DOS);                      // #613
+//            process_opcodes(op_table_370);                      // #613
+//            process_opcodes(op_table_XA);                       // #613
+//            process_opcodes(op_table_ESA);                      // #613
+//            if (opt_allow) process_opcodes(op_table_ESA_allow); // #613
+//            process_opcodes(op_table_ZOP);                      // #613
+//            process_opcodes(op_table_YOP);                      // #613
+//            process_opcodes(op_table_Z9);                       // #613 #631
+//            process_opcodes(op_table_Z10);                      // #613 #631
+//            process_opcodes(op_table_Z11);                      // #613 #631
+//            process_opcodes(op_table_Z11_Z12);                  // #613 #631
+//            process_opcodes(op_table_Z12);                      // #613 #631
+//            process_opcodes(op_table_360_20_directives);        // #613
+//            process_opcodes(op_table_DOS_directives);           // #613
+//            process_opcodes(op_table_370_directives);           // #613
+//            }                                                   // #613
+//        if (opt_optable.equals("Z13"))                          // #614
+//           {process_opcodes(op_table_360_20);                   // #614
+//            process_opcodes(op_table_DOS);                      // #614
+//            process_opcodes(op_table_370);                      // #614
+//            process_opcodes(op_table_XA);                       // #614
+//            process_opcodes(op_table_ESA);                      // #614
+//            if (opt_allow) process_opcodes(op_table_ESA_allow); // #614
+//            process_opcodes(op_table_ZOP);                      // #614
+//            process_opcodes(op_table_YOP);                      // #614
+//            process_opcodes(op_table_Z9);                       // #614 #631
+//            process_opcodes(op_table_Z10);                      // #614 #631
+//            process_opcodes(op_table_Z11);                      // #614 #631
+//            process_opcodes(op_table_Z12);                      // #614 #631
+//            process_opcodes(op_table_Z13);                      // #614 #631
+//            process_opcodes(op_table_360_20_directives);        // #614
+//            process_opcodes(op_table_DOS_directives);           // #614
+//            process_opcodes(op_table_370_directives);           // #614
+//            }                                                   // #614
+//        if (opt_optable.equals("Z14"))                          // #615
+//           {process_opcodes(op_table_360_20);                   // #615
+//            process_opcodes(op_table_DOS);                      // #615
+//            process_opcodes(op_table_370);                      // #615
+//            process_opcodes(op_table_XA);                       // #615
+//            process_opcodes(op_table_ESA);                      // #615
+//            if (opt_allow) process_opcodes(op_table_ESA_allow); // #615
+//            process_opcodes(op_table_ZOP);                      // #615
+//            process_opcodes(op_table_YOP);                      // #615
+//            process_opcodes(op_table_Z9);                       // #615 #631
+//            process_opcodes(op_table_Z10);                      // #615 #631
+//            process_opcodes(op_table_Z11);                      // #615 #631
+//            process_opcodes(op_table_Z12);                      // #615 #631
+//            process_opcodes(op_table_Z13);                      // #615 #631
+//            process_opcodes(op_table_Z14);                      // #615 #631
+//            process_opcodes(op_table_Z14_only);                 // #615 #631
+//            process_opcodes(op_table_360_20_directives);        // #615
+//            process_opcodes(op_table_DOS_directives);           // #615
+//            process_opcodes(op_table_370_directives);           // #615
+//            }                                                   // #615
+//        if (opt_optable.equals("Z15"))  // rpi 2202
+//           {process_opcodes(op_table_360_20);          // #543
+//            process_opcodes(op_table_DOS);
+//            process_opcodes(op_table_370);
+//            process_opcodes(op_table_XA);
+//            process_opcodes(op_table_ESA);
+//            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
+//            process_opcodes(op_table_ZOP);
+//            process_opcodes(op_table_YOP);
+//            process_opcodes(op_table_Z9);                       // #631
+//            process_opcodes(op_table_Z10);                      // #631
+//            process_opcodes(op_table_Z11);                      // #612 #631
+//            process_opcodes(op_table_Z12);                      // #613 #631
+//            process_opcodes(op_table_Z13);                      // #614 #631
+//            process_opcodes(op_table_Z14);                      // #614 #631
+//            process_opcodes(op_table_Z15);  // rpi 2202
+//            process_opcodes(op_table_360_20_directives);       // #543
+//            process_opcodes(op_table_DOS_directives);
+//            process_opcodes(op_table_370_directives);
+//            }
+//        if (opt_optable.equals("Z16"))               // #503
+//           {process_opcodes(op_table_360_20);           // #543
+//            process_opcodes(op_table_DOS);              // #503
+//            process_opcodes(op_table_370);              // #503
+//            process_opcodes(op_table_XA);               // #503
+//            process_opcodes(op_table_ESA);              // #503
+//            if (opt_allow) process_opcodes(op_table_ESA_allow); // #561
+//            process_opcodes(op_table_ZOP);              // #503
+//            process_opcodes(op_table_YOP);              // #503
+//            process_opcodes(op_table_Z9);               // #503 // #631
+//            process_opcodes(op_table_Z10);              // #503 // #631
+//            process_opcodes(op_table_Z11);                      // #612 #631
+//            process_opcodes(op_table_Z12);                      // #613 #631
+//            process_opcodes(op_table_Z13);                      // #614 #631
+//            process_opcodes(op_table_Z14);                      // #614 #631
+//            process_opcodes(op_table_Z15);              // #503
+//            process_opcodes(op_table_Z16);              // #503
+//            process_opcodes(op_table_360_20_directives);       // #543
+//            process_opcodes(op_table_DOS_directives);   // #503
+//            process_opcodes(op_table_370_directives);   // #503
+//            }                                           // #503
+//        if (opt_optable.equals("UNI")         // #533
+//        ||  opt_optable.equals("DFLT")        // #533
+//        ||  opt_optable.equals("Z390"))       // #533
+//           {process_opcodes(op_table_360_20); // #543
+//            process_opcodes(op_table_DOS);
+//            process_opcodes(op_table_370);
+//            if (opt_vector) // RPI VF01
+//               {process_opcodes(op_table_vector);
+//                }
+//            process_opcodes(op_table_XA);
+//            process_opcodes(op_table_ESA);
+//            if (opt_optable.equals("UNI"))           // #627
+//               {process_opcodes(op_table_370_only);  // #627 2377 > 2311
+//                process_opcodes(op_table_DOS_370);   // #627 2377 > 2320
+//                }                                    // #627
+//            else // DFLT or Z390                     //      #627
+//               {process_opcodes(op_table_ESA_allow); // #561 #627
+//                }                                    //      #627
+//            process_opcodes(op_table_ZOP);
+//            process_opcodes(op_table_YOP);
+//            process_opcodes(op_table_Z9);                       // #631
+//            process_opcodes(op_table_Z10);                      // #631
+//            process_opcodes(op_table_Z11);                      // #612 #631
+//            process_opcodes(op_table_Z12);                      // #613 #631
+//            process_opcodes(op_table_Z13);                      // #614 #631
+//            process_opcodes(op_table_Z14);                      // #614 #631
+//            process_opcodes(op_table_Z15); // rpi 2202
+//            process_opcodes(op_table_Z16);                      // #616
+//            process_opcodes(op_table_360_20_directives);       // #543
+//            process_opcodes(op_table_DOS_directives);
+//            process_opcodes(op_table_370_directives);
+//            }
+//        if (opt_optable.equals("DFLT")                  // #533
+//        ||  opt_optable.equals("Z390")                  // #533
+//        ||  opt_allow)                                  // #533
+//           {process_opcodes(op_table_DFLT_directives);  // #533
+//            }                                           // #533
+//        if (opt_optable.equals("Z390")                  // #533
+//        ||  opt_allow)                                  // #533
+//           {process_opcodes(op_table_z390_directives);  // #533
+//            }                                           // #533
         if (index2 == 0) // only on first pass: allocate tables
            {op_code       = new String[op_code_count]; // no entries allocated for directives
             op_name       = new String[op_code_count+op_directives_count];
@@ -4742,9 +4896,11 @@ private void check_options(){
     if (opt_optable.equals("*DFLT"))
        {if (opt_allow)
            {opt_optable="Z390";
+            opt_optable_optb_nr=OPCODE_FOR_Z390;                                                    // #631
             }
         else
            {opt_optable="DFLT";                                                                     // #533
+            opt_optable_optb_nr=OPCODE_FOR_DFLT;                                                    // #631
             }
         }
     // Check vector support parameters RPI VF01
@@ -5831,7 +5987,7 @@ private String get_short_file_name(String file_name){
 public synchronized void abort_error(int error,String msg){ // RPI 397
 
 	if (tz390_recursive_abort){ // RPI 935
-		System.out.println("TZ390E recurive abort exit");
+		System.out.println("TZ390E recursive abort exit"); // #631
 		System.exit(16);
 	}
 	tz390_recursive_abort = true;
