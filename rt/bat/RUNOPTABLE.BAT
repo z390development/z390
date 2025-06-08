@@ -41,8 +41,10 @@ if %4. NEQ . goto error4
 rem  %option% %optval%
 set Z390OPT=rt\mlc\OPTB%infix%%optval%.OPT
 set Z390PRN=rt\mlc\OPTB%infix%%optval%.PRN
+set Z390ERR=rt\mlc\OPTB%infix%%optval%.ERR
+set Z390STA=rt\mlc\OPTB%infix%%optval%.STA
 set HLASMPRN=rt\mlc\OPTB#%suffix%.TF1
-call bat\%asmbat%.bat %z_TraceMode% rt\mlc\OPTB# @%Z390OPT% sysprn(%Z390PRN%)
+call bat\%asmbat%.bat %z_TraceMode% rt\mlc\OPTB# @%Z390OPT% sysprn(%Z390PRN%) syserr(%Z390ERR%) stats(%Z390STA%)
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% EQU 0 echo %0 - OPTB# "%option%(%optval%)" is okay
 if %z_ReturnCode% NEQ 0 echo %0 ERROR: OPTB# returned %z_ReturnCode% for "%option%(%optval%) == OPTABLE(%suffix%)"
