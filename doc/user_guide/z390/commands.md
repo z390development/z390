@@ -25,12 +25,14 @@ Start the GUI interface with optional startup command file input.
 
 ### mac
 
-Run mz390 macro processor to expand MLC macro source file to BAL assembler source file. 
+Run mz390 macro processor to expand macro source file to BAL assembler source file. \
+The default extension for the input source file is MLC
 
 ### asm
 
-Run mz390 and az390 assembler to expand MLC macro assembler source file and 
-generate relocatable OBJ relocatable object file.  
+Run mz390 and az390 assembler to expand macro assembler source file and 
+generate relocatable OBJ relocatable object file.
+The default extension for the input source file is MLC
 
 !!! Note 
     The default object file format is binary 80 byte record mainframe compatible 
@@ -42,13 +44,15 @@ generate relocatable OBJ relocatable object file.
     
 ### asml 
 
-Run mz390, az390, and lz390 to expand MLC macro assembler source, assemble, and 
+Run mz390, az390, and lz390 to expand macro assembler source, assemble, and 
 link to generate 390 load module.
+The default extension for the input source file is MLC
 
 ###	asmlg
 
-Run mz390, az390, lz390 and ez390 to expand MLC macro source, assemble, link, 
+Run mz390, az390, lz390 and ez390 to expand macro source, assemble, link, 
 and execute 390 load module.
+The default extension for the input source file is MLC
 
 ### link
 
@@ -63,7 +67,7 @@ See [z390 options](z390_options.md) for more details.
 The linker includes options for AMODE and RMODE to control loading and execution 
 modes.  
 
-The linker also has optional input command file with suffix LKD which may 
+The linker also has optional input command file (with default suffix LKD) which may 
 contain explicit INCLUDE, ENTRY, ALIAS, and NAME commands.  
 
 ### exec
