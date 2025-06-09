@@ -8,7 +8,14 @@ class RunCblDemos extends z390Test {
 
     @Test
     void test_COBOL_HELLO() {
-        int rc = this.cblclg(basePath("zcobol", "demo", "HELLO"))
+        int rc = this.cblclg(basePath("zcobol", "demo", "HELLO.CBL"))
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_COBOL_HELLO2() {
+        int rc = this.cblclg(basePath("zcobol", "demo", "HELLO2.Cobol"))
         this.printOutput()
         assert rc == 0
     }
