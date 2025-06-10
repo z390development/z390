@@ -12,17 +12,18 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..
-call bat\ASMLG %z_TraceMode% demo\HELLO    nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASM   %z_TraceMode% demo\DEMOM8Q1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\DEMOBMK1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\DEMOBMK2 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\DEMODFP1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASM   %z_TraceMode% demo\DEMONUM1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\DEMONUM2 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\DEMOSTR1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\DEMOWTO2 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\SIEVE    nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\STDDEVLB nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\HELLO.MLC  nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\HELLO2.asm nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASM   %z_TraceMode% demo\DEMOM8Q1   nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\DEMOBMK1   nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\DEMOBMK2   nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\DEMODFP1   nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASM   %z_TraceMode% demo\DEMONUM1   nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\DEMONUM2   nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\DEMOSTR1   nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\DEMOWTO2   nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\SIEVE      nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\STDDEVLB   nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 
 rem when running this script using a pre-built distribution, the line endings are Linux-type causing file compares to fail
 rem we've disabled the file compares as of May 24, 2022. Issue 643 covers this case and requests a repair.
