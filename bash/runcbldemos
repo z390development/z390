@@ -7,8 +7,11 @@ cd ..
 
 demopath=zcobol/demo
 
-bash/cblclg ${demopath}/HELLO $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg ${demopath}/HELLO.CBL $1 $2 $3 $4 $5 $6 $7 $8 $9
 echo "Verify Hello World"
+
+bash/cblclg ${demopath}/HELLO.Cobol $1 $2 $3 $4 $5 $6 $7 $8 $9
+echo "Verify Hello Again World"
 
 bash/cblclg ${demopath}/DATETIME $1 $2 $3 $4 $5 $6 $7 $8 $9
 echo "Verify date and time"
