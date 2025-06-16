@@ -17,7 +17,7 @@ if /I %z_file%. == . goto help
 :chkfile
 rem convert Unix path notation to Windows before checking the file
 set z_file=%z_file:/=\%
-call bat\fparts.bat %z_TraceMode% %z_file%
+call %~dps0fparts.bat %z_TraceMode% %z_file%
 set z_file=%z_fdrv%%z_fpath%%z_fname%
 if exist %z_file%%z_fext% goto file_ok
 rem if extension specified: error because no default applies
