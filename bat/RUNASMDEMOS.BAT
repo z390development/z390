@@ -22,7 +22,10 @@ call bat\ASMLG %z_TraceMode% demo\DEMONUM2 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || g
 call bat\ASMLG %z_TraceMode% demo\DEMOSTR1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% demo\DEMOWTO2 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% demo\SIEVE    nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\STDDEVLB nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+rem test assembly from source dir
+cd demo
+call ..\bat\ASMLG %z_TraceMode%   STDDEVLB nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+cd ..
 
 rem when running this script using a pre-built distribution, the line endings are Linux-type causing file compares to fail
 rem we've disabled the file compares as of May 24, 2022. Issue 643 covers this case and requests a repair.
