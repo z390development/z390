@@ -47,14 +47,18 @@ for %%f in ("%z_HomeDir%") do set "z_HomeDir=%%~ff"
 call %~dps0mz390 %z_TraceMode% %z_file%%z_fext% sysmac(+%z_HomeDir%mac) syscpy(+%z_HomeDir%mac) %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 rem any error or warning message has been issued by mz390
-if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (if exist %z_file%.OBJ (erase %z_file%.OBJ)
-                                                  goto return))
+if %z_ReturnCode% EQU 0 goto lz390
+if %z_ReturnCode% EQU 4 goto lz390
+if exist %z_file%.OBJ erase %z_file%.OBJ
+goto return
 
+:lz390
 call %~dps0lz390 %z_TraceMode% %z_file% %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 rem any error or warning message has been issued by lz390
-if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (if exist %z_file%.390 (erase %z_file%.390)
-                                                  goto return))
+if %z_ReturnCode% EQU 0 goto ez390
+if %z_ReturnCode% EQU 4 goto ez390
+if exist %z_file%.390 erase %z_file%.390
 
 :return
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
