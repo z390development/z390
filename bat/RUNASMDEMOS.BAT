@@ -12,6 +12,7 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..
+goto DEMOEXT
 call bat\ASMLG %z_TraceMode% demo\HELLO    nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASM   %z_TraceMode% demo\DEMOM8Q1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% demo\DEMOBMK1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
@@ -51,7 +52,7 @@ call findstr.exe /V /R "" demo\TESTDCB2.TF2 > "%TEMP%\dcb2_2.tmp" 2>nul
 call comp.exe "%TEMP%\dcb2_1.tmp" "%TEMP%\dcb2_2.tmp" /A /M || goto error_dcb2
 
 REM demo usage of non-default filetypes
-:demoext
+:DEMOEXT
 if     exist demo\DEMOEXT.390      del  demo\DEMOEXT.390      >nul
 if     exist demo\DEMOEXT.OBJ      del  demo\DEMOEXT.OBJ      >nul
 if     exist demo\DEMOEXT.TRE      del  demo\DEMOEXT.TRE      >nul
@@ -65,7 +66,8 @@ if     exist demo\DEMOEXT.zLog.*   del  demo\DEMOEXT.zLog.*   >nul
 if     exist demo\DEMOEXT.zPunch   del  demo\DEMOEXT.zPunch   >nul
 if     exist demo\DEMOEXT.zStats   del  demo\DEMOEXT.zStats   >nul
 if     exist demo\DEMOEXT.zTerm    del  demo\DEMOEXT.zTerm    >nul
-call bat\mz390 %z_TraceMode% demo\DEMOEXT.zAsm @demo\DEMOEXT0.zOptions >nul || goto error
+rem call bat\mz390 %z_TraceMode% demo\DEMOEXT.zAsm @demo\DEMOEXT0.zOptions >nul || goto error
+java -classpath %~dps0..\z390.jar -Xrs -Xms150000K -Xmx150000K %J2SEOPTIONS% mz390 DEMOEXT.zASM @demo\DEMOEXT0.zOptions || goto error
 call bat\lz390 %z_TraceMode% demo\DEMOEXT.OBJ  @demo\DEMOEXT0.zOptions      || goto error
 call bat\ez390 %z_TraceMode% demo\DEMOEXT      @demo\DEMOEXT1.zOptions      || goto error
 if not exist demo\DEMOEXT.390      echo demo\DEMOEXT.390      was not created && goto error_file

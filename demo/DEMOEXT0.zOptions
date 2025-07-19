@@ -10,7 +10,7 @@
   syslog(demo\*.zLOGfile)      * -- ignored: log() takes precedence
   syslst(demo\*.zBindOut)      * works okay
   sysmac(demo\*.zMacro)        * works okay
-* sysmlc(demo\*.zAsm)          * -- kinda hard to test
+  sysmlc(demo\)                * -- accepts path only (final \ required)
   sysobj(demo)                 * -- accepts path only
   sysopt(demo\*.zOptions)      * works okay
   syspch(demo\*.zPunch)        * works okay
