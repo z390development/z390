@@ -34,6 +34,11 @@ if exist %z_file%.BAL erase %z_file%.BAL
 if exist %z_file%.ERR erase %z_file%.ERR
 if exist %z_file%.STA erase %z_file%.STA
 if exist %z_file%.TR* erase %z_file%.TR*
+
+rem get the z390 directory
+set "z_HomeDir=%~dps0..\"
+for %%f in ("%z_HomeDir%") do set "z_HomeDir=%%~ff"
+
 call %~dps0mz390 %z_TraceMode% %z_file%%z_fext% bal noasm sysmac(%z_HomeDir%mac+.) syscpy(%z_HomeDir%mac+.) chksrc(0) chkmac(0) %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 rem any error or warning message has been issued by mz390

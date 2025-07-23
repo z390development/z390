@@ -12,7 +12,6 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..
-goto DEMOEXT
 call bat\ASMLG %z_TraceMode% demo\HELLO    nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASM   %z_TraceMode% demo\DEMOM8Q1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% demo\DEMOBMK1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
@@ -22,7 +21,7 @@ call bat\ASM   %z_TraceMode% demo\DEMONUM1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || g
 call bat\ASMLG %z_TraceMode% demo\DEMONUM2 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% demo\DEMOSTR1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% demo\DEMOWTO2 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% demo\SIEVE    nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\SIEVE    nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 time(20) || goto error
 rem test assembly from source dir
 cd demo
 call ..\bat\ASMLG %z_TraceMode%   STDDEVLB nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
