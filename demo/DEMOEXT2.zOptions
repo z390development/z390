@@ -1,0 +1,6 @@
+  allow
+  bal
+nocon
+  list
+noloadhigh
+  trace(*)

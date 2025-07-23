@@ -1,0 +1,13 @@
+         MACRO
+&LABEL   DEMOEXTM &Amode
+.*********************************************************************
+.* Start create : 18-07-2025
+.* 1st delivery :
+.* Designer     : AF Kornelis
+.* Programmer   : AF Kornelis
+.* Purpose      : For testing non-default file extension handling
+.*********************************************************************
+&LABEL   RSECT ,                       *
+&LABEL   AMODE &Amode
+&LABEL   RMODE &Amode
+         MEND

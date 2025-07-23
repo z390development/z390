@@ -7,7 +7,14 @@ class RunAsmDemos extends z390Test {
     var options = [
         'trace',
         'nocon',
-        'noloadhigh', 
+        "SYSMAC(${basePath('mac')})",
+        "SYSCPY(${basePath('mac')})",
+        "SYSOBJ(${basePath('linklib')})"
+    ]
+    var options_20s = [
+        'trace',
+        'nocon',
+        'time(20)',
         "SYSMAC(${basePath('mac')})",
         "SYSCPY(${basePath('mac')})",
         "SYSOBJ(${basePath('linklib')})"
@@ -69,7 +76,7 @@ class RunAsmDemos extends z390Test {
     }
     @Test
     void test_SIEVE() {
-        int rc = this.asmlg(basePath("demo", "SIEVE"), *options)
+        int rc = this.asmlg(basePath("demo", "SIEVE"), *options_20s)
         this.printOutput()
         assert rc == 0
     }

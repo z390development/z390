@@ -104,6 +104,7 @@ public class zc390{
     * 17-01-22 RPI JH 1546 Test on literal with embedded parenthesis not branching correctly
     * 2021-04-19 jjg Change way init_zc390 obtains program name to allow paths that begin with ".."
     * 2023-10-07 #518 jjg Setting program name fails when '.' in directory name in file path
+    * 2025-06-09 #645 afk ZC390 issues error when input file has explicit extension
     ****************************************************
     *                                         last RPI *
 	****************************************************
@@ -311,7 +312,7 @@ public class zc390{
 		lab_file_name = tz390.fix_file_separators(args[0]);                                    // #518
 		index = lab_file_name.lastIndexOf(File.separator);                                     // #518
 		int ixp = lab_file_name.substring(index+1).indexOf('.');                               // #518
-		if (ixp != -1 && lab_file_name.substring(ixp+1).indexOf('.') != -1) {                  // #518
+		if (ixp != -1 && lab_file_name.substring(index+1+ixp+1).indexOf('.') != -1) {          // #518 #645
 		    abort_error("zcobol: invalid file name - "+lab_file_name);                         // #518
 		}                                                                                      // #518
 		// if no '.' to right of last file separator                                           // #518
