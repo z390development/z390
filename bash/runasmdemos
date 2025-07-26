@@ -6,8 +6,11 @@ set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script
 cd ..
 
-bash/asmlg demo/HELLO $1 $2 $3 $4 $5 $6 $7 $8 $9
+# validate explicit extensions default/non-default
+bash/asmlg demo/HELLO.MLC $1 $2 $3 $4 $5 $6 $7 $8 $9
 echo "Verify Hello World WTO"
+bash/asmlg demo/HELLO2.asm $1 $2 $3 $4 $5 $6 $7 $8 $9
+echo "Verify Hello World Again WTO"
 
 bash/asm demo/DEMOM8Q1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 echo "Verify rc=0; see PRN file for 8 queens solutions"
@@ -21,7 +24,8 @@ bash/asm   demo/DEMONUM1 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/asmlg demo/DEMONUM2 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/asmlg demo/DEMOSTR1 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/asmlg demo/DEMOWTO2 nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/asmlg demo/SIEVE    nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asmlg demo/SIEVE    nocon $1 $2 $3 $4 $5 $6 $7 $8 $9 time(20)
+# test assembly from source dir
 bash/asmlg demo/STDDEVLB nocon $1 $2 $3 $4 $5 $6 $7 $8 $9
 
 # runasmdemos: run TESTDCB1

@@ -260,7 +260,12 @@ class z390Test {
                           "SYSMAC(${basePath('zcobol', 'mac')}+${basePath('mac')})".toString(),
                           "SYSCPY(${cobfiledir}+${basePath('zcobol', 'cpy')})".toString()
         ]
-        rc = this.callZ390(cobFilename, 'mz390', *(cobOptions + args.toList()))
+        // Strip extension for subsequent calls if present
+        var cobFilenameNoExt = cobFilename
+        if (cobFilename.lastIndexOf('.') > cobFilename.lastIndexOf(File.separator)) {
+            cobFilenameNoExt = filenameWithoutExtension(cobFilename)
+        }
+        rc = this.callZ390(cobFilenameNoExt, 'mz390', *(cobOptions + args.toList()))
         return rc
     }
 
@@ -280,11 +285,16 @@ class z390Test {
         ]
         var runOptions = ["SYS390(${basePath('zcobol', 'lib')}+${cobfiledir})"]
 
-        rc = this.callZ390(cobFilename, 'mz390', *(cobOptions + args.toList()))
+        // Strip extension for subsequent calls if present
+        var cobFilenameNoExt = cobFilename
+        if (cobFilename.lastIndexOf('.') > cobFilename.lastIndexOf(File.separator)) {
+            cobFilenameNoExt = filenameWithoutExtension(cobFilename)
+        }
+        rc = this.callZ390(cobFilenameNoExt, 'mz390', *(cobOptions + args.toList()))
         if (rc == 0) {
-            rc = this.callZ390(cobFilename, 'lz390', *args)
+            rc = this.callZ390(cobFilenameNoExt, 'lz390', *args)
             if (rc == 0) {
-                rc = this.callZ390(cobFilename, 'ez390', *runOptions)
+                rc = this.callZ390(cobFilenameNoExt, 'ez390', *runOptions)
             }
         }
         return rc
