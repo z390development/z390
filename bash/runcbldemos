@@ -7,9 +7,9 @@ cd ..
 
 demopath=zcobol/demo
 
+# validate compilation with explicit extension default/non-default
 bash/cblclg ${demopath}/HELLO.CBL $1 $2 $3 $4 $5 $6 $7 $8 $9
 echo "Verify Hello World"
-
 bash/cblclg ${demopath}/HELLO.Cobol $1 $2 $3 $4 $5 $6 $7 $8 $9
 echo "Verify Hello Again World"
 

@@ -7,6 +7,7 @@ import java.util.regex.Pattern
 class RunCblDemos extends z390Test {
 
     @Test
+    // Test use of explicit default extension
     void test_COBOL_HELLO() {
         int rc = this.cblclg(basePath("zcobol", "demo", "HELLO.CBL"))
         this.printOutput()
@@ -14,6 +15,7 @@ class RunCblDemos extends z390Test {
     }
 
     @Test
+    // Test use of explicit non-default extension
     void test_COBOL_HELLO2() {
         int rc = this.cblclg(basePath("zcobol", "demo", "HELLO2.Cobol"))
         this.printOutput()

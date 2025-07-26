@@ -10,10 +10,10 @@ but have to be specified explicitly.
 
 The scope value details where the option is used.
 
-* M - mz390 macro processor which reads ASCII assembler source and generates expanded BAL
-* A - az390 assembler which reads BAL and generated OBJ relocatable object code
-* L - lz390 linker which reads OBJ relocatable object files and generates 390 load module
-* E - ez390 emulator runtime which loads and executes 390 load module
+- M - mz390 macro processor which reads ASCII assembler source and generates expanded BAL
+- A - az390 assembler which reads BAL and generated OBJ relocatable object code
+- L - lz390 linker which reads OBJ relocatable object files and generates 390 load module
+- E - ez390 emulator runtime which loads and executes 390 load module
 
 | Extension | Scope | Format | File Description                                                                                     | File or Report Format Description                                                                                                                                                                                         |
 | ----------|-------|--------|------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -193,13 +193,13 @@ Executable z390 load modules created by linker from OBJ files and loaded by emul
 
 The 390 load modules contain 20 byte header with the following:
 
-1)  4 byte ASCII character version '1002'
-2)  1 byte flag AMODE31 'T' or 'F'
-3)  1 byte flag RMODE31 'T' or 'F'
-4)  2 bytes reserved '??'
-5)  4 byte length of code
-6)  4  byte offset to entry
-7)  4 byte count of RLD's following code
+1) 4 byte ASCII character version '1002'
+2) 1 byte flag AMODE31 'T' or 'F'
+3) 1 byte flag RMODE31 'T' or 'F'
+4) 2 bytes reserved '??'
+5) 4 byte length of code
+6) 4  byte offset to entry
+7) 4 byte count of RLD's following code
 
 The code for all CSECT's follows the header.
 The RLD table follows the code if any.
@@ -207,7 +207,7 @@ Each RLD field in load module is relocated by the load address determined at loa
 
 The 5 byte RLD records are as follows:
 
-1)  4 byte offset to RLD field in code
+1) 4 byte offset to RLD field in code
 2) 1 byte field length
 
 See option MOD and file type MOD to create code without header or any RLD's.
