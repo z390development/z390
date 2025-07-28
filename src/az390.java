@@ -43,6 +43,9 @@ import java.util.regex.Pattern;
 
 import javax.swing.JTextArea;
 
+/**
+  * Class az390 implements the assembler part of z390
+  */
 public  class  az390 implements Runnable {
    /*
     az390 is the assembler component of z390 which can be called from
@@ -438,731 +441,735 @@ public  class  az390 implements Runnable {
         * 2025-05-04 AFK #616 Correct OPTABLE(Z15,LIST) output to match HLASM
         * 2025-05-07 AFK #617 Correct OPTABLE(Z16,LIST) output to match HLASM
     * 2025-05-30 AFK #631 Improve opcode table definitions
+    * 2025-07-27 AFK      Add javadoc comments
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
-	tz390 tz390 = null;
-	String msg_id = "AZ390I ";
-    int az390_rc = 0;
-    int az390_errors = 0;
-    int mz390_errors = 0; // RPI 415 passed from mz390 if option asm
-    String mz390_started_msg = ""; // RPI 755
-    boolean mz390_abort = false;
-    boolean az390_recursive_abort = false; // RPI 935
-    int mz390_rc     = 0; // RPI 415 passed from mz390 if option asm
-    int cur_pass = 1;
-    Date cur_date = new Date();
-    long tod_start = cur_date.getTime();
-    long tod_end   = 0;
-    long tot_sec = 0;
-    boolean stats_to_obj = false;
-    int tot_obj_bytes = 0;
-    File bal_file = null;
-    BufferedReader bal_file_buff = null;
-    RandomAccessFile obj_file = null;
-    File prn_file = null;
-    BufferedWriter prn_file_buff = null;
-    String bal_line = null;
-    String mnote_warning_msg = ""; // RPI 1056
-    int mcall_bal_index = 22;
-    int mcall_lv_index  = 16;
-    String bal_xref_file_name = null;
-    char   bal_xref_file_type = ' ';
-    char   cur_line_type  = ' '; // RPI 581
-    int    cur_line_file_num = 0;
-    String bal_xref_file_path = null;
-    int    bal_xref_file_num  = 0;
-    int    bal_xref_file_line = 0;
-    int    tot_xref_files = 0;
-    String[] xref_file_name = null;
-    String[] xref_file_path = null; // RPI 425
-    int[]    xref_file_errors = null;
-    char[]   xref_file_type   = null; // RPI 540 '+' macro '=' copy
-    int    mz390_xref_file = 0;
-    int    mz390_xref_line = 0;
-    String bal_label   = null;
-    String opsyn_label = null;
-    String bal_op = null;
-    boolean bal_op_ok = false;
-    boolean bal_label_ok = false; // RPI 451
-    String bal_parms = null;
-    boolean list_use      = false;
-    int      mac_inline_level = 0;      // rpi 581
-    int      mac_inline_op_macro = 220; // rpi 581
-    int      mac_inline_op_mend  = 221; // rpi 581
-    int      mac_inline_op_other = 226; // rpi 581
+    /** variable      */ tz390 tz390 = null;
+    /** variable      */ String msg_id = "AZ390I ";
+    /** variable      */ int az390_rc = 0;
+    /** variable      */ int az390_errors = 0;
+    /** variable      */ int mz390_errors = 0; // RPI 415 passed from mz390 if option asm
+    /** variable      */ String mz390_started_msg = ""; // RPI 755
+    /** variable      */ boolean mz390_abort = false;
+    /** variable      */ boolean az390_recursive_abort = false; // RPI 935
+    /** variable      */ int mz390_rc     = 0; // RPI 415 passed from mz390 if option asm
+    /** variable      */ int cur_pass = 1;
+    /** variable      */ Date cur_date = new Date();
+    /** variable      */ long tod_start = cur_date.getTime();
+    /** variable      */ long tod_end   = 0;
+    /** variable      */ long tot_sec = 0;
+    /** variable      */ boolean stats_to_obj = false;
+    /** variable      */ int tot_obj_bytes = 0;
+    /** variable      */ File bal_file = null;
+    /** variable      */ BufferedReader bal_file_buff = null;
+    /** variable      */ RandomAccessFile obj_file = null;
+    /** variable      */ File prn_file = null;
+    /** variable      */ BufferedWriter prn_file_buff = null;
+    /** variable      */ String bal_line = null;
+    /** variable      */ String mnote_warning_msg = ""; // RPI 1056
+    /** variable      */ int mcall_bal_index = 22;
+    /** variable      */ int mcall_lv_index  = 16;
+    /** variable      */ String bal_xref_file_name = null;
+    /** variable      */ char   bal_xref_file_type = ' ';
+    /** variable      */ char   cur_line_type  = ' '; // RPI 581
+    /** variable      */ int    cur_line_file_num = 0;
+    /** variable      */ String bal_xref_file_path = null;
+    /** variable      */ int    bal_xref_file_num  = 0;
+    /** variable      */ int    bal_xref_file_line = 0;
+    /** variable      */ int    tot_xref_files = 0;
+    /** variable      */ String[] xref_file_name = null;
+    /** variable      */ String[] xref_file_path = null; // RPI 425
+    /** variable      */ int[]    xref_file_errors = null;
+    /** variable      */ char[]   xref_file_type   = null; // RPI 540 '+' macro '=' copy
+    /** variable      */ int    mz390_xref_file = 0;
+    /** variable      */ int    mz390_xref_line = 0;
+    /** variable      */ String bal_label   = null;
+    /** variable      */ String opsyn_label = null;
+    /** variable      */ String bal_op = null;
+    /** variable      */ boolean bal_op_ok = false;
+    /** variable      */ boolean bal_label_ok = false; // RPI 451
+    /** variable      */ String bal_parms = null;
+    /** variable      */ boolean list_use      = false;
+    /** variable      */ int      mac_inline_level = 0;      // rpi 581
+    /** variable      */ int      mac_inline_op_macro = 220; // rpi 581
+    /** variable      */ int      mac_inline_op_mend  = 221; // rpi 581
+    /** variable      */ int      mac_inline_op_other = 226; // rpi 581
 
-	boolean bal_abort = false;
-    int bal_op_index = 0;
-    int end_loc = 0; // RPI 605
-    boolean report_label_changes = true; // RPI 605
-    boolean report_equ_changes = true;   // RPI 605
-    boolean bal_eof = false;
-    boolean end_found = false;
-    String end_entry = "";                // RPI 1197
-    int    end_entry_sid = 0;            // RPI 1197
-    boolean end_entry_found = false; // RPI 1197
-	SimpleDateFormat mmddyy = new SimpleDateFormat("MM/dd/yy");
-	SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
-    boolean log_tod = true; 
-    JTextArea z390_log_text = null;
-    /*
-     * semaphores used to synchronize mz390 and az390
-     */
-	Thread  az390_thread = null;    // RPI 415
-	boolean az390_running = false;  // RPI 415
-    boolean mz390_call = false;     // RPI 415
-    boolean lookahead_mode  = false;     // RPI 415
-    boolean sym_lock = false;
-    String  sym_lock_desc = null;
-    final Lock      lock            = new ReentrantLock();
-    final Condition lock_condition  = lock.newCondition();
-    boolean bal_line_full = false; 
-    String pass_bal_line = null;
-    String pass_xref_file_name = null;
-    char   pass_xref_file_type = ' ';
-    int    pass_xref_file_num = 0;
-    int    pass_xref_file_line = 0;
-    String xref_file_line = null;
-    int    xref_bal_index = 0;
-    boolean pass_bal_eof = false;
-    boolean az390_waiting = false;
-    boolean az390_private_sect = false; // RPI 995
-    /*
-     * static limits
-     */
-    int sort_index_bias = 100000; // must be > tz390.opt_maxsym and tz390.opt_maxsym
-    int sort_index_len  = 6;      // digits in key_index_bias
-    int max_exp_stk = 500;
-    int max_exp_rld = 500;
-    int max_hh = 0x7ffff; // RPI 387
-    int min_hh = 0xfff80000; // RPI 387
-    int max_text_buff_len = 16;
-    long[] max_fh = {((long)(-1) >>> 57),
-    		         ((long)(-1) >>> 49),
-    		         ((long)(-1) >>> 41),
-    		         ((long)(-1) >>> 33),
-    		         ((long)(-1) >>> 25),
-    		         ((long)(-1) >>> 17),
-    		         ((long)(-1) >>> 9),
-    		         ((long)(-1) >>> 1),
-    		         };
-    long[] min_fh = {((long)(-1) << 7),
-    		         ((long)(-1) << 15),
-    		         ((long)(-1) << 23),
-    		         ((long)(-1) << 31),
-    		         ((long)(-1) << 39),
-    		         ((long)(-1) << 47),
-    		         ((long)(-1) << 55),
-    		         ((long)(-1) << 63),
-    		         };
-     /*
-     * bal file global variables
-     */
-    long    tod_time_limit = 0;
-    int tot_bal_line = 1;
-	int tot_mac_copy = 0;
-    int tot_mnote_warning = 0;
-    int tot_mnote_errors  = 0;
-    int max_mnote_level   = 0;
-    String[]  bal_line_text = null; //logical bal line from 1 or more physical lines
-    int[]     bal_line_num  = null; //starting generated BAL physical line #
-    int[]     bal_line_xref_file_num  = null;
-    int[]     bal_line_xref_file_line = null;
-    boolean bal_line_gen = true;
-    String trace_pfx = null;
-    String parm_name = null;
-    String parm_value = null;
-    int bal_line_index = 1; //current mac line index
-    Pattern exp_pattern = null;
-    Matcher exp_match   = null;
-    Pattern label_pattern = null;
-    Matcher label_match   = null;
-    Pattern extrn_pattern = null;
-    Matcher extrn_match   = null;
-    Pattern dcc_sq_pattern = null;  // EBCDIC or ASCII
-    Pattern dcc_dq_pattern = null;  //RPI5  C".." ASCII
-    Pattern dcc_eq_pattern = null;  //RPI73 C!..! EBCDIC
-    Matcher dcc_match   = null;
-    /*
-     * location counter and ESD tables
-     */
-    int loc_ctr = 0;
-    int loc_start = 0;
-    int start_loc = 0; // Value specified on START instruction // RPI 1523
-    int loc_len = 0;
-	int cur_esd_sid = 0;
-    int tot_esd = 0;
-    int cur_esd = 0;
-    int cur_esd_base = 0;   // RPI 301 first section 
-    int first_cst_esd = 0;
-    int esd_sdt = 0;
-    int esd_cpx_rld = -1;
-    int[]     esd_sid  = null;
-    int[]     esd_base = null; // RPI 301
-    int[]     esd_loc  = null; // RPI 778 current loc within section
-    int tot_loc_stmt   = 0;    // RPI 920
-    /*
-     * using global data
-     */
-    int cur_use_start = 0;
-    int cur_use_end   = 0;
-    boolean explicit_drop_reg = false; // RPI 1052
-    int[] push_cur_use_start = null;
-    int[] push_cur_use_end   = null;
-    int cur_use = 0;
-    boolean cur_use_depend = false;
-    boolean use_eof = false;
-    int cur_use_base_esd = 0;
-    int cur_use_base_loc = 0;
-    int cur_use_base_len = 0;
-    int cur_use_reg = -1;
-    int cur_use_neg_reg = -1;
-    int cur_use_off = 0x80000; // RPI 387 max 20 bit+1
-    int cur_use_neg_off = 0xfff00000; // RPI 387 min 20 bit-1
-    String cur_use_lab = "";
-    String[] use_lab      = null;
-    int[]    use_base_esd = null;
-    int[]    use_base_loc = null;
-    int[]    use_base_len = null;
-    int[]    use_reg      = null;
-    int[]    use_reg_loc  = null;
-    int      use_domain_tot = 0; // rpi 776
-    /*
-     * push, pop, and, print data
-     */
-    int using_level = 0;
-    int print_level = 0;
-    int[]     using_start = null;
-    int[]     using_end   = null;
-    boolean[] print_on    = null;
-    boolean[] print_gen   = null;
-    boolean[] print_data  = null;
-    boolean  force_list_bal = false; // RPI 285 RPI 891 force msg on PRN
-    boolean  list_bal_line  = true; // RPI 891 assume all BAL on PRN
-    /*
-     * set mac_call_gen on after printing
-     * *MCALL LV= 1 and set off after
-     * print *MEXIT LV= 1
-     */
-    boolean  mac_call_gen   = false;
-    boolean  mac_call_first = false;
-    boolean  mac_call_last  = false;
-    /*
-     * symbol table global variables
-     */
-    byte sym_sdt   = 0;  // dec, b'', c'', h''
-    byte sym_cst   = 1;  // CSECT )alias REL)
-    byte sym_dst   = 2;  // DSECT (alias REL)
-    byte sym_ent   = 3;  // ENTRY (alias REL)
-    byte sym_ext   = 4;  // EXTRN external link
-    byte sym_rel   = 5;  // RX (CST.DST,ENT)_
-    byte sym_rld   = 6;  // complex rld exp
-    byte sym_lct   = 7;  // loctr (changed to cst/dst). 
-    byte sym_wxt   = 8;  // WXTRN weak external link RPI182
-    byte sym_und   = 9;  // undefined symbol RPI 694
-    int tot_sym = 0;
-    int tot_sym_find = 0;
-    int tot_sym_comp = 0;
-    int cur_sid = 0;
-    int prev_sect_sid = 0;
-    int prev_sect_esd = 0;
-    boolean cur_sym_sect = false; // RPI 553 indicate if sym is sect or not
-    boolean sect_change = false;
-    byte prev_sect_type = sym_cst;
-    String private_csect = "$PRIVATE"; // RPI 995
-    String[] sym_type_desc = {
-    	"ABS","CST","DST","ENT","EXT","REL","RLD","LCT","WXT","UND"}; //RPI182 RPI 694
-    String[]  sym_name         = null;
-    int[]     sym_def          = null;
-    byte[]    sym_type         = null;
-    byte[]    sym_dc_type      = null; // RPI 790
-    byte[]    sym_dc_type_sfx  = null; // RPI 790
-    byte[]    sym_attr         = null; // RPI 340
-    byte[]    sym_attr_elt     = null; // RPI 415 explicit length type attribute
-	int[]     sym_scale        = null; // scale factor for int or fp exp
-	int[]     sym_attrp        = null; // equ 4th program attribute 4 ebcdic char stored as int
-	String[]  sym_attra        = null; // equ 5th assember attribute int RPI 415
-    int[]     sym_esd          = null;
-    int[]     sym_loc          = null;
-    int[]     sym_max_loc      = null;
-    int[]     sym_len          = null;
-    int[]     sym_sect_type    = null;
-    int[]     sym_sect_prev    = null;
-    int[]     sym_sect_next    = null;
-    TreeSet<Integer>[] sym_xref = null;
-    int last_xref_index = 0;
-    int last_xref_line  = 0;
-    int sym_def_ref       = 0;  // symbol referenced but not defined
-    int sym_def_lookahead = -1; // symbol defined during lookahead
-	/*
-	 * vector registers v1-v4 rxb extended high bits
-	 *   get_hex_vreg(int vreg) sets corresponding bits
-	 *   get_hex_vreg_rxb appends rxb bits to code and resets vreg_rxb
-	 */
-	 int vreg_rxb = 0;
-    /*
-     * ERRSUM critical error data
-     */
-    int max_missing = 1000;  // rpi 2202 raised from 100 for testins6 debugging
-    int tot_missing_copy = 0;
-    int tot_missing_macro = 0;
-    int tot_missing_sym = 0;
-    String missing_copy[] = new String[max_missing];
-    String missing_macro[] = new String[max_missing];
-    /*
-     * DS/DC type and attribute tables
-     */
-    String dc_type_table    = "ABCDEFHLPSVXYZ";
-    String dc_type_explicit = "RBCKKGGKPRVXRZ";
-    int[] dc_type_len = {
-    		4,  // A
-			1,  // B
-			1,  // C
-			8,  // D
-			4,  // E
-			4,  // F
-			2,  // H
-			16, // L
-			1,  // P
-			2,  // S
-			4,  // V
-			1,  // X
-			2,  // Y
-			1   // Z
-			};
-    int[] dc_type_align = {
-    		4,  // A
-			0,  // B
-			0,  // C
-			8,  // D
-			4,  // E
-			4,  // F
-			2,  // H
-			8,  // L
-			0,  // P
-			2,  // S
-			4,  // V
-			0,  // X
-			2,  // Y
-			0   // Z
-			};
-    char[] dc_type_delimiter = {
-    		'(',  // A
-			'\'', // B
-			'\'', // C
-			'\'', // D
-			'\'', // E
-			'\'', // F
-			'\'', // H
-			'\'', // L
-			'\'', // P
-			'(',  // S
-			'(',  // V
-			'\'', // X
-			'(',  // Y
-			'\''  // Z
-			};
-    String[] sym_attra_type = {
-    		"AR",   // Register - Access
-    		"CR",   // CR Register - Control
-    		"CR32", // Register - Control 32-bit
-    		"CR64", // Register - Control 64-bit
-    		"FPR",  // Register - Floating-Point
-    		"GR",   // Register - General
-    		"GR32", // Register - General 32-bit
-    		"GR64"  // Register - General 64-bit
-            };
-    byte    bal_lab_attr = 0;
-    byte    sym_attr_elt_def = 0; // null char
-    byte    bal_lab_attr_elt = sym_attr_elt_def; // RPI 415 explicit length attr
-    /*
-     * literal table for next pool at LTORG or END
-     */
-    int tot_lit = 0;
-    int cur_lit = 0;
-    boolean lit_loc_ref = false;
-    int cur_lit_pool = 1;
-    String[]  lit_name         = null;
-    int[]     lit_pool         = null;
-    int[]     lit_line         = null;
-    int[]     lit_line_loc     = null;
-    int[]     lit_esd          = null;
-    int[]     lit_loc          = null;
-    int[]     lit_len          = null;
-    int[]     lit_dup          = null;  // RPI 1200 use dup*len for alignment sizing
-    int[]     lit_scale        = null;  // RPI 790
-    byte[]    lit_dc_type      = null;  // RPI 790
-    byte[]    lit_dc_type_sfx  = null;  // RPI 790
-    byte[]    lit_gen          = null;
-    int[]     lit_def          = null;
-    TreeSet<Integer>[] lit_xref = null;
-    
-    /*
-     * bal operation code data and tables
-     */
-    String hex_tab   = "0123456789ABCDEF";
-    String hex_op    = null;
-    String hex_ll    = null;
-    String hex_len1  = null;
-    String hex_len2  = null;
-    String hex_bddd  = null;
-    String hex_bddd1 = null;
-    boolean get_bdddhh = false; // RPI 387
-    String hex_bddd2 = null; // returns bdddhh if get_bdddhh true
-    String hex_bddd_loc  = null;
-    String hex_bddd1_loc = null;
-    String hex_bddd2_loc = null;
-    /*
-     * expression global variables
-     * including polish notation var and op stacks
-     */
-	String  exp_text  = ""; // expression text
-    int     exp_index = 0;  // current starting index
-	boolean check_prev_op = true;
-	int     exp_val   = 0;
-	int     exp_esd   = 0;
-	byte    exp_type  = 0;
-    byte    exp_attr  = 0;
-	int     exp_state = 0;
-    int     exp_level = 0;
-    String  exp_use_lab = null;
-    boolean exp_term = false;
-    boolean exp_eot  = false;  // end of text terminator
-    String  exp_term_op = "~";
-    String  exp_start_op = exp_term_op;
-    String  exp_token = null;
-    String  exp_op    = " ";
-    int     sym_esd1  = 0;
-    int     sym_esd2  = 0;
-    byte    sym_type1 = 0;
-    byte    sym_type2 = 0;
-    int     sym_val1  = 0;
-    int     sym_val2  = 0;
-    String  exp_prev_op = exp_start_op;
-    int     exp_sym_index = -1;  // symbol index
-    boolean exp_sym_pushed = false;
-    boolean exp_sym_last = false; 
-    boolean exp_first_sym_len = true; // is this first exp sym len
-    boolean exp_equ     = false; // RPI 749
-    boolean exp_lit_mod = false; // RPI 749
-    int exp_len = 1;    
-    int tot_exp_stk_sym = 0;
-    int tot_exp_stk_op  = 0;
-    int[]     exp_stk_sym_esd  = (int[])Array.newInstance(int.class,max_exp_stk);
-    int[]     exp_stk_sym_val  = (int[])Array.newInstance(int.class,max_exp_stk);
-    String[]  exp_stk_op   = new String[max_exp_stk];
-    int[]     exp_op_class = (int[])Array.newInstance(int.class,256);
-    /*
-     * define exp actions based on last and
-     * next operator class
-     *    1 2 3 4 5 6
-     *   +-* /( ) ?'~             col = next_op
-     *                            row = prev_op
-     */ 
-          int tot_classes = 6;
-          int[] exp_action = {  
-          1,3,3,1,3,1,   // 1 +-  prev add/sub
-          2,2,3,2,3,2,   // 2 * / prev mpy/div
-          3,3,3,4,3,0,   // 3 (   prev open
-          0,0,0,0,3,0,   // 4 )   prev close
-		  5,5,3,5,3,5,   // 5 ?'  prev pfx oper L' U+/= RPI 313 RPI 991 pfx/pfx=3
-          3,3,7,6,3,6,   // 6 ~   prev terminator
-		  };
-     /* action code routines:
-      *   0 error
-      *   1 add/sub
-      *   2 mpy/div
-      *   3 push op
-      *   4 POP  op
-      *   5 length attribute of symbol or * instr.
-      *   6 exit with result of expression
-      *   7 check ( for terminator if last_val 
-      */
-     /*
-      * expression relocation definitions RLDS
-      */
-      int     exp_rld_mod_val = 0;     // RPI 632    
-      boolean exp_rld_mod_set = false; // RPI 632
-      byte exp_rld_len = 0;  // gen rlds if 3 or 4
-      int tot_exp_rld_add = 0;
-      int tot_exp_rld_sub = 0;
-      int[]     exp_rld_add_esd = (int[])Array.newInstance(int.class,max_exp_rld);
-      int[]     exp_rld_sub_esd = (int[])Array.newInstance(int.class,max_exp_rld);
-      /*
-       * global relocation definitions RLDS
-       */
-       int tot_rld = 0;
-       char rld_add = '+';
-       char rld_sub = '-';
-       int[]     rld_fld_esd = null;
-       int[]     rld_fld_loc = null;
-       byte[]    rld_fld_len = null;
-       char[]    rld_fld_sgn = null;
-       int[]     rld_xrf_esd = null;
-  /*
-   * object code text buffer variables
-   */  
-      boolean gen_obj_code = false;
-  	  String obj_code = "";
-  	  int    list_obj_loc  = 0;
-  	  String list_obj_code = "";
-      String cur_text_buff = null;
-      int cur_text_loc = 0;
-      int cur_text_len = 0;
-      int cur_text_esd = 0;
-  /*
-   * binary obj file buffer and layouts
-   */
-     byte[] bin_byte = new byte[80];
-     byte obj_bin_id = 0x02; // first bin obj byte
-     byte[] bin_esd_type = {'E','S','D'};
-     byte[] bin_txt_type = {'T','X','T'};
-     byte[] bin_rld_type = {'R','L','D'};
-     byte[] bin_end_type = {'E','N','D'};
-  /*
-   * DS/DC global variables
-   */
-      boolean dc_op   = false;  // ds vs dc bal op
-      boolean dc_eod  = false;  // ds/dc end of fields
-      boolean dc_len_explicit = false;
-      boolean dc_scale_explicit = false; // RPI 777
-      boolean dc_exp_explicit = false;   // RPI 777
-      boolean dc_bit_len  = false;  // RPI 417
-      boolean dc_unsigned = false;  // RPI 893
-      BigInteger dc_bit_buff  = null;
-      byte[]     dc_bit_bytes = null;
-      long       dc_bit_value = 0;
-      String     dc_bit_hex   = null;
-      int     dc_bit_tot      = 0;
-      int     dc_bit_byte_len = 0;
-      int     dc_bit_fill     = 0;
-      int     dcb_len = 0;
-      int     dcb_pad = 0;
-      String  dcb_bin = null;
-      String  dcc_text = null;
-      char    dcc_quote = ' ';
-      int     dcc_len  = 0;
-      int     dcp_len  = 0;
-  	  char    dcp_sign;
-      int     dcx_len  = 0;
-      boolean dc_first_field = true;  // is this first dc field
-      boolean dc_lit_ref = false;
-      boolean dc_lit_gen = false;
-      int     dc_lit_index_start = 0;
-      String dc_field = null;
-      char   dc_type  = ' '; // ds/ds field type char
-      byte    dc_attr_elt = sym_attr_elt_def; // ds/dc explicit length field type char
-      boolean dcv_type = false;
-      boolean dca_ignore_refs = false;
-      char   dc_type_sfx = ' ';
-      String fp_text  = null; // RPI 790 fp text for use by DFP
-      double fp_log2  = Math.log(2);
-	  double fp_log10 = Math.log(10);
-      MathContext fp_context = null;
-      BigDecimal fp_big_dec1 = BigDecimal.ZERO;
-      BigDecimal fp_big_dec2 = BigDecimal.ZERO;
-      BigDecimal fp_big_dec3 = BigDecimal.ZERO;
-      BigDecimal fp_bd_two  = BigDecimal.valueOf(2);
-      byte[] fp_big_byte = null;
-      byte[] fp_data_byte = new byte[16];
-      ByteBuffer fp_data_buff = ByteBuffer.wrap(fp_data_byte,0,16);
-      BigInteger fp_big_int1 = BigInteger.ZERO;
-      BigInteger fp_big_int2 = BigInteger.ZERO;
-	  BigInteger fp_big_int_one_bits = BigInteger.ONE.shiftLeft(113).subtract(BigInteger.ONE);
-	  BigInteger fp_big_int_lx_man_bits = BigInteger.ONE.shiftLeft(112).subtract(BigInteger.ONE); // RPI 821
-	  BigInteger fp_big_int_dh_man_bits = BigInteger.ONE.shiftLeft(56).subtract(BigInteger.ONE);  // RPI 821
-	  int    fp_int1 = 0;
-	  int    fp_round_bit = 0;
-      int fp_int_eb_one_bits  = 0xffffff;
-      int fp_int_eb_man_bits  = 0x7fffff;
-      int fp_int_eh_man_bits  = 0xffffff;
-      long   fp_long1 = 0;
-      long fp_long_db_one_bits = ((long)(1) << 53) - 1;
-      long fp_long_db_man_bits = ((long)(1) << 52) - 1;
-      long fp_long_dh_man_bits = ((long)(1) << 56) - 1;
-      int    dc_index = 0;
-      int    dc_data_start = 0;
-      int    dc_dup   = 0;
-      int    dc_dup_loc = 0; // rel offset for dup of a/v/s data with loc_ctr
-      int    dc_len   = 0;
-      int    dc_scale = 0;
-      String  dc_digits = "";       // rpi 777 digits in P or Z value
-      boolean dc_dec_point = false; // rpi 777 decimal point found in P/Z
-      int     dc_dec_scale = 0;     // rpi 777 decimals to right of poind
-      int    dc_exp   = 0;
-      int    dc_first_len = 0;
-      int    dc_first_dup = 9; // RPI 1200
-      int    dc_first_loc = 0;
-      char   dc_first_type = ' ';  // dc first field type char
-      char   dc_first_type_sfx = ' '; // dc first type suffix  RPI 790
-      int    dc_first_scale = 0;   // RPI 481
-      byte   dc_first_attr_elt = ' '; // dc first explicit length field type char 
-      String dc_hex = null;
-      byte[]     dc_data_byte = (byte[])Array.newInstance(byte.class,256);
-      ByteBuffer dc_data = ByteBuffer.wrap(dc_data_byte,0,256);
-      int dc_type_index = 0;
-      BigDecimal  dc_bd_val = null;
-      BigInteger  dc_bi_val = null;
-      byte[]      dc_byte_val = null;
-      boolean     dcc_ascii_req = false;
-      byte ascii_lf = 0x0a;
-      byte ascii_cr = 0x0d;
-      byte ascii_period =  (int)'.';
-      byte ascii_space = (int) ' ';
-      byte ebcdic_period = 0x4B;
-      byte ebcdic_space = 0x40;
-  /*
-   * EXEC CICS DFHRESP(type) literal data substitution per RPI 626
-   */
-      String[] dfhresp_type = {
-    		  "NORMAL)",          // 1 - =F'0'
-    		  "ERROR)",           // 2 - =F'1'
-    		  "TERMIDERR)",       // 3 - =F'11' RPI 928
-    		  "FILENOTFOUND)",    // 4 - =F'12' RPI 687
-    		  "DSIDERR)",         // 5 - =F'12' RPI 905
-    		  "NOTFND)",          // 6 - =F'13' RPI 687, RPI 690
-    		  "DUPREC)",          // 7 - =F'14' RPI 687
-    		  "DUPKEY)",          // 8 - =F'15' RPI 687
-    		  "INVREQ)",          // 9 - =F'16'
-    		  "IOERR)",           //10 - =F'17' RPI 928
-    		  "NOSPACE)",         //11 - =F'18' RPI 687
-    		  "NOTOPEN)",         //12 - =F'19' RPI 687
-    		  "ENDFILE)",         //13 - =F'20' RPI 687
-    		  "ILLOGIC)",         //14 - =F'21' RPI 729
-    		  "LENGERR)",         //15 - =F'22'   		  
-    		  "ITEMERR)",         //16 - =F'26' RPI 662
-    		  "PGMIDERR)",        //17 - =F'27'
-    		  "TRANSIDERR)",      //18 - =F'28' RPI 928
-    		  "ENDDATA)",         //19 - =F'29' RPI 928
-    		  "EXPIRED)",         //20 - =F'31' RPI 751
-    		  "MAPFAIL)",         //21 - =F'36' RPI 841
-    		  "INVMPSZ)",         //22 - =F'38' RPI 841
-    		  "OVERFLOW)",        //23 - =F'40' RPI 841
-    		  "QIDERR)",          //24 - =F'44' RPI 662
-    		  "ENQBUSY)",         //25 - =F'55' RPI 951
-    		  "ENVDEFERR)",       //26 - =F'56' RPI 928
-    		  "NOTALLOC)",        //27 - =F'61' RPI 1079
-    		  "SUPPRESSED)",      //28 - =F'72' RPI 1057
-    		  "END)",             //29 - =F'83' RPI 1057
-    		  "DISABLED)",        //30 - =F'84' RPI 687
-    		  "ACTIVITYERR)",     //31 - =F'109' RPI 1168
-    		  "CONTAINERERR)",    //32 - =F'110' RPI 1168
-    		  "TOKENERR)",        //33 - =F'112' RPI 1168
-    		  "CHANNELERR)",      //34 - =F'122' RPI 1168
-    		  };
-      String[] dfhresp_lit = {
-    		  "=F'0'",           // 1 "NORMAL)" 
-    		  "=F'1'",           // 2 "ERROR)" 
-    		  "=F'11'",          // 3 "TERMIDERR"     RPI 928
-    		  "=F'12'",          // 4 "FILENOTFOUND)" RPI 687
-    		  "=F'12'",          // 5 "DSIDERR"       RPI 905
-    		  "=F'13'",          // 6 "NOTFND)" RPI 687, RPI 690 
-    		  "=F'14'",          // 7 "DUPREC)" RPI 687
-    		  "=F'15'",          // 8 "DUPKEY)" RPI 687 
-    		  "=F'16'",          // 9 "INVREQ)" 
-    		  "=F'17'",          //10 "IOERR"    RPI 928
-    		  "=F'18'",          //11 "NOSPACE)" RPI 687 
-    		  "=F'19'",          //12 "NOTOPEN)" RPI 687 
-    		  "=F'20'",          //13 "ENDFILE)" RPI 687 
-    		  "=F'21'",          //14 "ILLOGIC)" RPI 729
-    		  "=F'22'",          //15 "LENGERR)" 
-    		  "=F'26'",          //16 "ITEMERR)" RPI 662
-    		  "=F'27'",          //17 "PGMIDERR)"
-    		  "=F'28'",          //18 "TRANSIDERR"  RPI 928
-    		  "=F'29'",          //19 "ENDDATA"     RPI 928
-    		  "=F'31'",          //20 "EXPIRED)"  RPI 751
-    		  "=F'36'",          //21 "MAPFAIL)"  RPI 841
-    		  "=F'38'",          //22 "INVMPSZ)"  RPI 841
-    		  "=F'40'",          //23 "OVERFLOW)" RPI 841
-    		  "=F'44'",          //24 "QIDERR)"   RPI 662
-    		  "=F'55'",          //25 "ENQBUSY)"  RPI 951
-    		  "=F'56'",          //26 "ENVDEFERR)" RPI 928
-    		  "=F'61'",          //27 "NOTALLOC)"  RPI 1079
-    		  "=F'72'",          //28 "SUPPRESSED)" RPI 1057
-    		  "=F'83'",          //29 "END)"      RPI 1057
-    		  "=F'84'",          //30 "DISABLED)" RPI 687
-    		  "=F'109'",         //31 "ACTIVITYERR)"  RPI 1168
-    		  "=F'110'",         //32 "CONTAINERERR)" RPI 1168
-    		  "=F'112'",         //33 "TOKENERR)"     RPI 1168
-    		  "=F'122'",         //33 "CHANNELERR)",  RPI 1168
-    		  };
-  /*
-   * EXEC CICS DFHVALUE(type) literal substitution
-   */
-      String[] dfhvalue_type = {
-              "NOTAPPLIC)",       // 1 - =F'1'
-              "VSAM)",            // 2 - =F'3'
-              "ESDS)",            // 3 - =F'5'
-              "KSDS)",            // 4 - =F'6'
-              "RRDS)",            // 5 - =F'7'
-              "BASE)",            // 6 - =F'10'
-              "PATH)",            // 7 - =F'11'
-              "FIXED)",           // 8 - =F'12'
-              "VARIABLE)",        // 9 - =F'13'
-              "OPEN)",            //10 - =F'18'
-              "CLOSED)",          //11 - =F'19'
-              "ENABLED)",         //12 - =F'23'
-              "DISABLED)",        //13 - =F'24'
-              "UNENABLED)",       //14 - =F'33'
-              "READABLE)",        //15 - =F'35'
-              "NOTREADABLE)",     //16 - =F'36'
-              "UPDATABLE)",       //17 - =F'37'
-              "NOTUPDATABLE)",    //18 - =F'38'
-              "BROWSABLE)",       //19 - =F'39'
-              "NOTBROWSABLE)",    //20 - =F'40'
-              "ADDABLE)",         //21 - =F'41'
-              "NOTADDABLE)",      //22 - =F'42'
-              "DELETABLE)",       //23 - =F'43'
-              "NOTDELETABLE)",    //24 - =F'44'
-              "VRRDS)",           //25 - =F'732'
-              };
-  String[] dfhvalue_lit = {
-              "=F'1'",            // 1 "NOTAPPLIC)"
-              "=F'3'",            // 2 "VSAM)"
-              "=F'5'",            // 3 "ESDS)"
-              "=F'6'",            // 4 "KSDS)"
-              "=F'7'",            // 5 "RRDS)"
-              "=F'10'",           // 6 "BASE)"
-              "=F'11'",           // 7 "PATH)"
-              "=F'12'",           // 8 "FIXED)"
-              "=F'13'",           // 9 "VARIABLE)"
-              "=F'18'",           //10 "OPEN)"
-              "=F'19'",           //11 "CLOSED)"
-              "=F'23'",           //12 "ENABLED)"
-              "=F'24'",           //13 "DISABLED)"
-              "=F'33'",           //14 "UNENABLED)"
-              "=F'35'",           //15 "READABLE)"
-              "=F'36'",           //16 "NOTREADABLE)"
-              "=F'37'",           //17 "UPDATABLE)"
-              "=F'38'",           //18 "NOTUPDATABLE)"
-              "=F'39'",           //19 "BROWSABLE)"
-              "=F'40'",           //20 "NOTBROWSABLE)"
-              "=F'41'",           //21 "ADDABLE)"
-              "=F'42'",           //22 "NOTADDABLE)"
-              "=F'43'",           //23 "DELETABLE)"
-              "=F'44'",           //24 "NOTDELETABLE)"
-              "=F'732'",          //25 "VRRDS)"
-              };
-  /* 
-   * end of global az390 class data and start of procs
-   */
+    /** variable      */ boolean bal_abort = false;
+    /** variable      */ int bal_op_index = 0;
+    /** variable      */ int end_loc = 0; // RPI 605
+    /** variable      */ boolean report_label_changes = true; // RPI 605
+    /** variable      */ boolean report_equ_changes = true;   // RPI 605
+    /** variable      */ boolean bal_eof = false;
+    /** variable      */ boolean end_found = false;
+    /** variable      */ String end_entry = "";                // RPI 1197
+    /** variable      */ int    end_entry_sid = 0;            // RPI 1197
+    /** variable      */ boolean end_entry_found = false; // RPI 1197
+    /** variable      */ SimpleDateFormat mmddyy = new SimpleDateFormat("MM/dd/yy");
+    /** variable      */ SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
+    /** variable      */ boolean log_tod = true; 
+    /** variable      */ JTextArea z390_log_text = null;
+                     /*
+                      * semaphores used to synchronize mz390 and az390
+                      */
+    /** variable      */ Thread  az390_thread = null;    // RPI 415
+    /** variable      */ boolean az390_running = false;  // RPI 415
+    /** variable      */ boolean mz390_call = false;     // RPI 415
+    /** variable      */ boolean lookahead_mode  = false;     // RPI 415
+    /** variable      */ boolean sym_lock = false;
+    /** variable      */ String  sym_lock_desc = null;
+    /** variable      */ final Lock      lock            = new ReentrantLock();
+    /** variable      */ final Condition lock_condition  = lock.newCondition();
+    /** variable      */ boolean bal_line_full = false; 
+    /** variable      */ String pass_bal_line = null;
+    /** variable      */ String pass_xref_file_name = null;
+    /** variable      */ char   pass_xref_file_type = ' ';
+    /** variable      */ int    pass_xref_file_num = 0;
+    /** variable      */ int    pass_xref_file_line = 0;
+    /** variable      */ String xref_file_line = null;
+    /** variable      */ int    xref_bal_index = 0;
+    /** variable      */ boolean pass_bal_eof = false;
+    /** variable      */ boolean az390_waiting = false;
+    /** variable      */ boolean az390_private_sect = false; // RPI 995
+                     /*
+                      * static limits
+                      */
+    /** variable      */ int sort_index_bias = 100000; // must be > tz390.opt_maxsym and tz390.opt_maxsym
+    /** variable      */ int sort_index_len  = 6;      // digits in key_index_bias
+    /** variable      */ int max_exp_stk = 500;
+    /** variable      */ int max_exp_rld = 500;
+    /** variable      */ int max_hh = 0x7ffff; // RPI 387
+    /** variable      */ int min_hh = 0xfff80000; // RPI 387
+    /** variable      */ int max_text_buff_len = 16;
+    /** variable      */ long[] max_fh = {((long)(-1) >>> 57),
+                                          ((long)(-1) >>> 49),
+                                          ((long)(-1) >>> 41),
+                                          ((long)(-1) >>> 33),
+                                          ((long)(-1) >>> 25),
+                                          ((long)(-1) >>> 17),
+                                          ((long)(-1) >>> 9),
+                                          ((long)(-1) >>> 1),
+                                          };
+    /** variable      */ long[] min_fh = {((long)(-1) << 7),
+                                          ((long)(-1) << 15),
+                                          ((long)(-1) << 23),
+                                          ((long)(-1) << 31),
+                                          ((long)(-1) << 39),
+                                          ((long)(-1) << 47),
+                                          ((long)(-1) << 55),
+                                          ((long)(-1) << 63),
+                                          };
+                      /*
+                      * bal file global variables
+                      */
+    /** variable      */ long    tod_time_limit = 0;
+    /** variable      */ int tot_bal_line = 1;
+    /** variable      */ int tot_mac_copy = 0;
+    /** variable      */ int tot_mnote_warning = 0;
+    /** variable      */ int tot_mnote_errors  = 0;
+    /** variable      */ int max_mnote_level   = 0;
+    /** variable      */ String[]  bal_line_text = null; //logical bal line from 1 or more physical lines
+    /** variable      */ int[]     bal_line_num  = null; //starting generated BAL physical line #
+    /** variable      */ int[]     bal_line_xref_file_num  = null;
+    /** variable      */ int[]     bal_line_xref_file_line = null;
+    /** variable      */ boolean bal_line_gen = true;
+    /** variable      */ String trace_pfx = null;
+    /** variable      */ String parm_name = null;
+    /** variable      */ String parm_value = null;
+    /** variable      */ int bal_line_index = 1; //current mac line index
+    /** variable      */ Pattern exp_pattern = null;
+    /** variable      */ Matcher exp_match   = null;
+    /** variable      */ Pattern label_pattern = null;
+    /** variable      */ Matcher label_match   = null;
+    /** variable      */ Pattern extrn_pattern = null;
+    /** variable      */ Matcher extrn_match   = null;
+    /** variable      */ Pattern dcc_sq_pattern = null;  // EBCDIC or ASCII
+    /** variable      */ Pattern dcc_dq_pattern = null;  //RPI5  C".." ASCII
+    /** variable      */ Pattern dcc_eq_pattern = null;  //RPI73 C!..! EBCDIC
+    /** variable      */ Matcher dcc_match   = null;
+                     /*
+                      * location counter and ESD tables
+                      */
+    /** variable      */ int loc_ctr = 0;
+    /** variable      */ int loc_start = 0;
+    /** variable      */ int start_loc = 0; // Value specified on START instruction // RPI 1523
+    /** variable      */ int loc_len = 0;
+    /** variable      */ int cur_esd_sid = 0;
+    /** variable      */ int tot_esd = 0;
+    /** variable      */ int cur_esd = 0;
+    /** variable      */ int cur_esd_base = 0;   // RPI 301 first section 
+    /** variable      */ int first_cst_esd = 0;
+    /** variable      */ int esd_sdt = 0;
+    /** variable      */ int esd_cpx_rld = -1;
+    /** variable      */ int[]     esd_sid  = null;
+    /** variable      */ int[]     esd_base = null; // RPI 301
+    /** variable      */ int[]     esd_loc  = null; // RPI 778 current loc within section
+    /** variable      */ int tot_loc_stmt   = 0;    // RPI 920
+                     /*
+                      * using global data
+                      */
+    /** variable      */ int cur_use_start = 0;
+    /** variable      */ int cur_use_end   = 0;
+    /** variable      */ boolean explicit_drop_reg = false; // RPI 1052
+    /** variable      */ int[] push_cur_use_start = null;
+    /** variable      */ int[] push_cur_use_end   = null;
+    /** variable      */ int cur_use = 0;
+    /** variable      */ boolean cur_use_depend = false;
+    /** variable      */ boolean use_eof = false;
+    /** variable      */ int cur_use_base_esd = 0;
+    /** variable      */ int cur_use_base_loc = 0;
+    /** variable      */ int cur_use_base_len = 0;
+    /** variable      */ int cur_use_reg = -1;
+    /** variable      */ int cur_use_neg_reg = -1;
+    /** variable      */ int cur_use_off = 0x80000; // RPI 387 max 20 bit+1
+    /** variable      */ int cur_use_neg_off = 0xfff00000; // RPI 387 min 20 bit-1
+    /** variable      */ String cur_use_lab = "";
+    /** variable      */ String[] use_lab      = null;
+    /** variable      */ int[]    use_base_esd = null;
+    /** variable      */ int[]    use_base_loc = null;
+    /** variable      */ int[]    use_base_len = null;
+    /** variable      */ int[]    use_reg      = null;
+    /** variable      */ int[]    use_reg_loc  = null;
+    /** variable      */ int      use_domain_tot = 0; // rpi 776
+                     /*
+                      * push, pop, and, print data
+                      */
+    /** variable      */ int using_level = 0;
+    /** variable      */ int print_level = 0;
+    /** variable      */ int[]     using_start = null;
+    /** variable      */ int[]     using_end   = null;
+    /** variable      */ boolean[] print_on    = null;
+    /** variable      */ boolean[] print_gen   = null;
+    /** variable      */ boolean[] print_data  = null;
+    /** variable      */ boolean  force_list_bal = false; // RPI 285 RPI 891 force msg on PRN
+    /** variable      */ boolean  list_bal_line  = true; // RPI 891 assume all BAL on PRN
+                     /*
+                      * set mac_call_gen on after printing
+                      * *MCALL LV= 1 and set off after
+                      * print *MEXIT LV= 1
+                      */
+    /** variable      */ boolean  mac_call_gen   = false;
+    /** variable      */ boolean  mac_call_first = false;
+    /** variable      */ boolean  mac_call_last  = false;
+                     /*
+                      * symbol table global variables
+                      */
+    /** variable      */ byte sym_sdt   = 0;  // dec, b'', c'', h''
+    /** variable      */ byte sym_cst   = 1;  // CSECT )alias REL)
+    /** variable      */ byte sym_dst   = 2;  // DSECT (alias REL)
+    /** variable      */ byte sym_ent   = 3;  // ENTRY (alias REL)
+    /** variable      */ byte sym_ext   = 4;  // EXTRN external link
+    /** variable      */ byte sym_rel   = 5;  // RX (CST.DST,ENT)_
+    /** variable      */ byte sym_rld   = 6;  // complex rld exp
+    /** variable      */ byte sym_lct   = 7;  // loctr (changed to cst/dst). 
+    /** variable      */ byte sym_wxt   = 8;  // WXTRN weak external link RPI182
+    /** variable      */ byte sym_und   = 9;  // undefined symbol RPI 694
+    /** variable      */ int tot_sym = 0;
+    /** variable      */ int tot_sym_find = 0;
+    /** variable      */ int tot_sym_comp = 0;
+    /** variable      */ int cur_sid = 0;
+    /** variable      */ int prev_sect_sid = 0;
+    /** variable      */ int prev_sect_esd = 0;
+    /** variable      */ boolean cur_sym_sect = false; // RPI 553 indicate if sym is sect or not
+    /** variable      */ boolean sect_change = false;
+    /** variable      */ byte prev_sect_type = sym_cst;
+    /** variable      */ String private_csect = "$PRIVATE"; // RPI 995
+    /** variable      */ String[] sym_type_desc = {"ABS","CST","DST","ENT","EXT","REL","RLD","LCT","WXT","UND"}; //RPI182 RPI 694
+    /** variable      */ String[]  sym_name         = null;
+    /** variable      */ int[]     sym_def          = null;
+    /** variable      */ byte[]    sym_type         = null;
+    /** variable      */ byte[]    sym_dc_type      = null; // RPI 790
+    /** variable      */ byte[]    sym_dc_type_sfx  = null; // RPI 790
+    /** variable      */ byte[]    sym_attr         = null; // RPI 340
+    /** variable      */ byte[]    sym_attr_elt     = null; // RPI 415 explicit length type attribute
+    /** variable      */ int[]     sym_scale        = null; // scale factor for int or fp exp
+    /** variable      */ int[]     sym_attrp        = null; // equ 4th program attribute 4 ebcdic char stored as int
+    /** variable      */ String[]  sym_attra        = null; // equ 5th assember attribute int RPI 415
+    /** variable      */ int[]     sym_esd          = null;
+    /** variable      */ int[]     sym_loc          = null;
+    /** variable      */ int[]     sym_max_loc      = null;
+    /** variable      */ int[]     sym_len          = null;
+    /** variable      */ int[]     sym_sect_type    = null;
+    /** variable      */ int[]     sym_sect_prev    = null;
+    /** variable      */ int[]     sym_sect_next    = null;
+    /** variable      */ TreeSet<Integer>[] sym_xref = null;
+    /** variable      */ int last_xref_index = 0;
+    /** variable      */ int last_xref_line  = 0;
+    /** variable      */ int sym_def_ref       = 0;  // symbol referenced but not defined
+    /** variable      */ int sym_def_lookahead = -1; // symbol defined during lookahead
+                     /*
+                      * vector registers v1-v4 rxb extended high bits
+                      *   get_hex_vreg(int vreg) sets corresponding bits
+                      *   get_hex_vreg_rxb appends rxb bits to code and resets vreg_rxb
+                      */
+    /** variable      */ int vreg_rxb = 0;
+                     /*
+                      * ERRSUM critical error data
+                      */
+    /** variable      */ int max_missing = 1000;  // rpi 2202 raised from 100 for testins6 debugging
+    /** variable      */ int tot_missing_copy = 0;
+    /** variable      */ int tot_missing_macro = 0;
+    /** variable      */ int tot_missing_sym = 0;
+    /** variable      */ String missing_copy[] = new String[max_missing];
+    /** variable      */ String missing_macro[] = new String[max_missing];
+                     /*
+                      * DS/DC type and attribute tables
+                      */
+    /** variable      */ String dc_type_table    = "ABCDEFHLPSVXYZ";
+    /** variable      */ String dc_type_explicit = "RBCKKGGKPRVXRZ";
+    /** variable      */ int[] dc_type_len = {4,  // A
+                                              1,  // B
+                                              1,  // C
+                                              8,  // D
+                                              4,  // E
+                                              4,  // F
+                                              2,  // H
+                                              16, // L
+                                              1,  // P
+                                              2,  // S
+                                              4,  // V
+                                              1,  // X
+                                              2,  // Y
+                                              1   // Z
+                                              };
+    /** variable      */ int[] dc_type_align = {4,  // A
+                                                0,  // B
+                                                0,  // C
+                                                8,  // D
+                                                4,  // E
+                                                4,  // F
+                                                2,  // H
+                                                8,  // L
+                                                0,  // P
+                                                2,  // S
+                                                4,  // V
+                                                0,  // X
+                                                2,  // Y
+                                                0   // Z
+                                                };
+    /** variable      */ char[] dc_type_delimiter = {'(',  // A
+                                                     '\'', // B
+                                                     '\'', // C
+                                                     '\'', // D
+                                                     '\'', // E
+                                                     '\'', // F
+                                                     '\'', // H
+                                                     '\'', // L
+                                                     '\'', // P
+                                                     '(',  // S
+                                                     '(',  // V
+                                                     '\'', // X
+                                                     '(',  // Y
+                                                     '\''  // Z
+                                                     };
+    /** variable      */ String[] sym_attra_type = {"AR",   // Register - Access
+                                                    "CR",   // CR Register - Control
+                                                    "CR32", // Register - Control 32-bit
+                                                    "CR64", // Register - Control 64-bit
+                                                    "FPR",  // Register - Floating-Point
+                                                    "GR",   // Register - General
+                                                    "GR32", // Register - General 32-bit
+                                                    "GR64"  // Register - General 64-bit
+                                                    };
+    /** variable      */ byte    bal_lab_attr = 0;
+    /** variable      */ byte    sym_attr_elt_def = 0; // null char
+    /** variable      */ byte    bal_lab_attr_elt = sym_attr_elt_def; // RPI 415 explicit length attr
+                     /*
+                      * literal table for next pool at LTORG or END
+                      */
+    /** variable      */ int tot_lit = 0;
+    /** variable      */ int cur_lit = 0;
+    /** variable      */ boolean lit_loc_ref = false;
+    /** variable      */ int cur_lit_pool = 1;
+    /** variable      */ String[]  lit_name         = null;
+    /** variable      */ int[]     lit_pool         = null;
+    /** variable      */ int[]     lit_line         = null;
+    /** variable      */ int[]     lit_line_loc     = null;
+    /** variable      */ int[]     lit_esd          = null;
+    /** variable      */ int[]     lit_loc          = null;
+    /** variable      */ int[]     lit_len          = null;
+    /** variable      */ int[]     lit_dup          = null;  // RPI 1200 use dup*len for alignment sizing
+    /** variable      */ int[]     lit_scale        = null;  // RPI 790
+    /** variable      */ byte[]    lit_dc_type      = null;  // RPI 790
+    /** variable      */ byte[]    lit_dc_type_sfx  = null;  // RPI 790
+    /** variable      */ byte[]    lit_gen          = null;
+    /** variable      */ int[]     lit_def          = null;
+    /** variable      */ TreeSet<Integer>[] lit_xref = null;
+                     /*
+                      * bal operation code data and tables
+                      */
+    /** variable      */ String hex_tab   = "0123456789ABCDEF";
+    /** variable      */ String hex_op    = null;
+    /** variable      */ String hex_ll    = null;
+    /** variable      */ String hex_len1  = null;
+    /** variable      */ String hex_len2  = null;
+    /** variable      */ String hex_bddd  = null;
+    /** variable      */ String hex_bddd1 = null;
+    /** variable      */ boolean get_bdddhh = false; // RPI 387
+    /** variable      */ String hex_bddd2 = null; // returns bdddhh if get_bdddhh true
+    /** variable      */ String hex_bddd_loc  = null;
+    /** variable      */ String hex_bddd1_loc = null;
+    /** variable      */ String hex_bddd2_loc = null;
+                     /*
+                      * expression global variables
+                      * including polish notation var and op stacks
+                      */
+    /** variable      */ String  exp_text  = ""; // expression text
+    /** variable      */ int     exp_index = 0;  // current starting index
+    /** variable      */ boolean check_prev_op = true;
+    /** variable      */ int     exp_val   = 0;
+    /** variable      */ int     exp_esd   = 0;
+    /** variable      */ byte    exp_type  = 0;
+    /** variable      */ byte    exp_attr  = 0;
+    /** variable      */ int     exp_state = 0;
+    /** variable      */ int     exp_level = 0;
+    /** variable      */ String  exp_use_lab = null;
+    /** variable      */ boolean exp_term = false;
+    /** variable      */ boolean exp_eot  = false;  // end of text terminator
+    /** variable      */ String  exp_term_op = "~";
+    /** variable      */ String  exp_start_op = exp_term_op;
+    /** variable      */ String  exp_token = null;
+    /** variable      */ String  exp_op    = " ";
+    /** variable      */ int     sym_esd1  = 0;
+    /** variable      */ int     sym_esd2  = 0;
+    /** variable      */ byte    sym_type1 = 0;
+    /** variable      */ byte    sym_type2 = 0;
+    /** variable      */ int     sym_val1  = 0;
+    /** variable      */ int     sym_val2  = 0;
+    /** variable      */ String  exp_prev_op = exp_start_op;
+    /** variable      */ int     exp_sym_index = -1;  // symbol index
+    /** variable      */ boolean exp_sym_pushed = false;
+    /** variable      */ boolean exp_sym_last = false; 
+    /** variable      */ boolean exp_first_sym_len = true; // is this first exp sym len
+    /** variable      */ boolean exp_equ     = false; // RPI 749
+    /** variable      */ boolean exp_lit_mod = false; // RPI 749
+    /** variable      */ int exp_len = 1;    
+    /** variable      */ int tot_exp_stk_sym = 0;
+    /** variable      */ int tot_exp_stk_op  = 0;
+    /** variable      */ int[]     exp_stk_sym_esd  = (int[])Array.newInstance(int.class,max_exp_stk);
+    /** variable      */ int[]     exp_stk_sym_val  = (int[])Array.newInstance(int.class,max_exp_stk);
+    /** variable      */ String[]  exp_stk_op   = new String[max_exp_stk];
+    /** variable      */ int[]     exp_op_class = (int[])Array.newInstance(int.class,256);
+                     /*
+                      * define exp actions based on last and
+                      * next operator class
+                      *    1 2 3 4 5 6
+                      *   +-* /( ) ?'~             col = next_op
+                      *                            row = prev_op
+                      */ 
+    /** variable      */ int tot_classes = 6;
+    /** variable      */ int[] exp_action = {1,3,3,1,3,1,   // 1 +-  prev add/sub
+                                             2,2,3,2,3,2,   // 2 * / prev mpy/div
+                                             3,3,3,4,3,0,   // 3 (   prev open
+                                             0,0,0,0,3,0,   // 4 )   prev close
+                                             5,5,3,5,3,5,   // 5 ?'  prev pfx oper L' U+/= RPI 313 RPI 991 pfx/pfx=3
+                                             3,3,7,6,3,6,   // 6 ~   prev terminator
+                                             };
+                     /* action code routines:
+                      *   0 error
+                      *   1 add/sub
+                      *   2 mpy/div
+                      *   3 push op
+                      *   4 POP  op
+                      *   5 length attribute of symbol or * instr.
+                      *   6 exit with result of expression
+                      *   7 check ( for terminator if last_val 
+                      */
+                     /*
+                      * expression relocation definitions RLDS
+                      */
+    /** variable      */ int     exp_rld_mod_val = 0;     // RPI 632    
+    /** variable      */ boolean exp_rld_mod_set = false; // RPI 632
+    /** variable      */ byte exp_rld_len = 0;  // gen rlds if 3 or 4
+    /** variable      */ int tot_exp_rld_add = 0;
+    /** variable      */ int tot_exp_rld_sub = 0;
+    /** variable      */ int[]     exp_rld_add_esd = (int[])Array.newInstance(int.class,max_exp_rld);
+    /** variable      */ int[]     exp_rld_sub_esd = (int[])Array.newInstance(int.class,max_exp_rld);
+                     /*
+                      * global relocation definitions RLDS
+                      */
+    /** variable      */ int tot_rld = 0;
+    /** variable      */ char rld_add = '+';
+    /** variable      */ char rld_sub = '-';
+    /** variable      */ int[]     rld_fld_esd = null;
+    /** variable      */ int[]     rld_fld_loc = null;
+    /** variable      */ byte[]    rld_fld_len = null;
+    /** variable      */ char[]    rld_fld_sgn = null;
+    /** variable      */ int[]     rld_xrf_esd = null;
+                     /*
+                      * object code text buffer variables
+                      */  
+    /** variable      */ boolean gen_obj_code = false;
+    /** variable      */ String obj_code = "";
+    /** variable      */ int    list_obj_loc  = 0;
+    /** variable      */ String list_obj_code = "";
+    /** variable      */ String cur_text_buff = null;
+    /** variable      */ int cur_text_loc = 0;
+    /** variable      */ int cur_text_len = 0;
+    /** variable      */ int cur_text_esd = 0;
+                     /*
+                      * binary obj file buffer and layouts
+                      */
+    /** variable      */ byte[] bin_byte = new byte[80];
+    /** variable      */ byte obj_bin_id = 0x02; // first bin obj byte
+    /** variable      */ byte[] bin_esd_type = {'E','S','D'};
+    /** variable      */ byte[] bin_txt_type = {'T','X','T'};
+    /** variable      */ byte[] bin_rld_type = {'R','L','D'};
+    /** variable      */ byte[] bin_end_type = {'E','N','D'};
+                     /*
+                      * DS/DC global variables
+                      */
+    /** variable      */ boolean dc_op   = false;  // ds vs dc bal op
+    /** variable      */ boolean dc_eod  = false;  // ds/dc end of fields
+    /** variable      */ boolean dc_len_explicit = false;
+    /** variable      */ boolean dc_scale_explicit = false; // RPI 777
+    /** variable      */ boolean dc_exp_explicit = false;   // RPI 777
+    /** variable      */ boolean dc_bit_len  = false;  // RPI 417
+    /** variable      */ boolean dc_unsigned = false;  // RPI 893
+    /** variable      */ BigInteger dc_bit_buff  = null;
+    /** variable      */ byte[]     dc_bit_bytes = null;
+    /** variable      */ long       dc_bit_value = 0;
+    /** variable      */ String     dc_bit_hex   = null;
+    /** variable      */ int     dc_bit_tot      = 0;
+    /** variable      */ int     dc_bit_byte_len = 0;
+    /** variable      */ int     dc_bit_fill     = 0;
+    /** variable      */ int     dcb_len = 0;
+    /** variable      */ int     dcb_pad = 0;
+    /** variable      */ String  dcb_bin = null;
+    /** variable      */ String  dcc_text = null;
+    /** variable      */ char    dcc_quote = ' ';
+    /** variable      */ int     dcc_len  = 0;
+    /** variable      */ int     dcp_len  = 0;
+    /** variable      */ char    dcp_sign;
+    /** variable      */ int     dcx_len  = 0;
+    /** variable      */ boolean dc_first_field = true;  // is this first dc field
+    /** variable      */ boolean dc_lit_ref = false;
+    /** variable      */ boolean dc_lit_gen = false;
+    /** variable      */ int     dc_lit_index_start = 0;
+    /** variable      */ String dc_field = null;
+    /** variable      */ char   dc_type  = ' '; // ds/ds field type char
+    /** variable      */ byte    dc_attr_elt = sym_attr_elt_def; // ds/dc explicit length field type char
+    /** variable      */ boolean dcv_type = false;
+    /** variable      */ boolean dca_ignore_refs = false;
+    /** variable      */ char   dc_type_sfx = ' ';
+    /** variable      */ String fp_text  = null; // RPI 790 fp text for use by DFP
+    /** variable      */ double fp_log2  = Math.log(2);
+    /** variable      */ double fp_log10 = Math.log(10);
+    /** variable      */ MathContext fp_context = null;
+    /** variable      */ BigDecimal fp_big_dec1 = BigDecimal.ZERO;
+    /** variable      */ BigDecimal fp_big_dec2 = BigDecimal.ZERO;
+    /** variable      */ BigDecimal fp_big_dec3 = BigDecimal.ZERO;
+    /** variable      */ BigDecimal fp_bd_two  = BigDecimal.valueOf(2);
+    /** variable      */ byte[] fp_big_byte = null;
+    /** variable      */ byte[] fp_data_byte = new byte[16];
+    /** variable      */ ByteBuffer fp_data_buff = ByteBuffer.wrap(fp_data_byte,0,16);
+    /** variable      */ BigInteger fp_big_int1 = BigInteger.ZERO;
+    /** variable      */ BigInteger fp_big_int2 = BigInteger.ZERO;
+    /** variable      */ BigInteger fp_big_int_one_bits = BigInteger.ONE.shiftLeft(113).subtract(BigInteger.ONE);
+    /** variable      */ BigInteger fp_big_int_lx_man_bits = BigInteger.ONE.shiftLeft(112).subtract(BigInteger.ONE); // RPI 821
+    /** variable      */ BigInteger fp_big_int_dh_man_bits = BigInteger.ONE.shiftLeft(56).subtract(BigInteger.ONE);  // RPI 821
+    /** variable      */ int    fp_int1 = 0;
+    /** variable      */ int    fp_round_bit = 0;
+    /** variable      */ int fp_int_eb_one_bits  = 0xffffff;
+    /** variable      */ int fp_int_eb_man_bits  = 0x7fffff;
+    /** variable      */ int fp_int_eh_man_bits  = 0xffffff;
+    /** variable      */ long   fp_long1 = 0;
+    /** variable      */ long fp_long_db_one_bits = ((long)(1) << 53) - 1;
+    /** variable      */ long fp_long_db_man_bits = ((long)(1) << 52) - 1;
+    /** variable      */ long fp_long_dh_man_bits = ((long)(1) << 56) - 1;
+    /** variable      */ int    dc_index = 0;
+    /** variable      */ int    dc_data_start = 0;
+    /** variable      */ int    dc_dup   = 0;
+    /** variable      */ int    dc_dup_loc = 0; // rel offset for dup of a/v/s data with loc_ctr
+    /** variable      */ int    dc_len   = 0;
+    /** variable      */ int    dc_scale = 0;
+    /** variable      */ String  dc_digits = "";       // rpi 777 digits in P or Z value
+    /** variable      */ boolean dc_dec_point = false; // rpi 777 decimal point found in P/Z
+    /** variable      */ int     dc_dec_scale = 0;     // rpi 777 decimals to right of poind
+    /** variable      */ int    dc_exp   = 0;
+    /** variable      */ int    dc_first_len = 0;
+    /** variable      */ int    dc_first_dup = 9; // RPI 1200
+    /** variable      */ int    dc_first_loc = 0;
+    /** variable      */ char   dc_first_type = ' ';  // dc first field type char
+    /** variable      */ char   dc_first_type_sfx = ' '; // dc first type suffix  RPI 790
+    /** variable      */ int    dc_first_scale = 0;   // RPI 481
+    /** variable      */ byte   dc_first_attr_elt = ' '; // dc first explicit length field type char 
+    /** variable      */ String dc_hex = null;
+    /** variable      */ byte[]     dc_data_byte = (byte[])Array.newInstance(byte.class,256);
+    /** variable      */ ByteBuffer dc_data = ByteBuffer.wrap(dc_data_byte,0,256);
+    /** variable      */ int dc_type_index = 0;
+    /** variable      */ BigDecimal  dc_bd_val = null;
+    /** variable      */ BigInteger  dc_bi_val = null;
+    /** variable      */ byte[]      dc_byte_val = null;
+    /** variable      */ boolean     dcc_ascii_req = false;
+    /** variable      */ byte ascii_lf = 0x0a;
+    /** variable      */ byte ascii_cr = 0x0d;
+    /** variable      */ byte ascii_period =  (int)'.';
+    /** variable      */ byte ascii_space = (int) ' ';
+    /** variable      */ byte ebcdic_period = 0x4B;
+    /** variable      */ byte ebcdic_space = 0x40;
+                     /*
+                      * EXEC CICS DFHRESP(type) literal data substitution per RPI 626
+                      */
+    /** variable      */ String[] dfhresp_type = {"NORMAL)",          // 1 - =F'0'
+                                                  "ERROR)",           // 2 - =F'1'
+                                                  "TERMIDERR)",       // 3 - =F'11' RPI 928
+                                                  "FILENOTFOUND)",    // 4 - =F'12' RPI 687
+                                                  "DSIDERR)",         // 5 - =F'12' RPI 905
+                                                  "NOTFND)",          // 6 - =F'13' RPI 687, RPI 690
+                                                  "DUPREC)",          // 7 - =F'14' RPI 687
+                                                  "DUPKEY)",          // 8 - =F'15' RPI 687
+                                                  "INVREQ)",          // 9 - =F'16'
+                                                  "IOERR)",           //10 - =F'17' RPI 928
+                                                  "NOSPACE)",         //11 - =F'18' RPI 687
+                                                  "NOTOPEN)",         //12 - =F'19' RPI 687
+                                                  "ENDFILE)",         //13 - =F'20' RPI 687
+                                                  "ILLOGIC)",         //14 - =F'21' RPI 729
+                                                  "LENGERR)",         //15 - =F'22'
+                                                  "ITEMERR)",         //16 - =F'26' RPI 662
+                                                  "PGMIDERR)",        //17 - =F'27'
+                                                  "TRANSIDERR)",      //18 - =F'28' RPI 928
+                                                  "ENDDATA)",         //19 - =F'29' RPI 928
+                                                  "EXPIRED)",         //20 - =F'31' RPI 751
+                                                  "MAPFAIL)",         //21 - =F'36' RPI 841
+                                                  "INVMPSZ)",         //22 - =F'38' RPI 841
+                                                  "OVERFLOW)",        //23 - =F'40' RPI 841
+                                                  "QIDERR)",          //24 - =F'44' RPI 662
+                                                  "ENQBUSY)",         //25 - =F'55' RPI 951
+                                                  "ENVDEFERR)",       //26 - =F'56' RPI 928
+                                                  "NOTALLOC)",        //27 - =F'61' RPI 1079
+                                                  "SUPPRESSED)",      //28 - =F'72' RPI 1057
+                                                  "END)",             //29 - =F'83' RPI 1057
+                                                  "DISABLED)",        //30 - =F'84' RPI 687
+                                                  "ACTIVITYERR)",     //31 - =F'109' RPI 1168
+                                                  "CONTAINERERR)",    //32 - =F'110' RPI 1168
+                                                  "TOKENERR)",        //33 - =F'112' RPI 1168
+                                                  "CHANNELERR)",      //34 - =F'122' RPI 1168
+                                                  };
+    /** variable      */ String[] dfhresp_lit = {"=F'0'",           // 1 "NORMAL)" 
+                                                 "=F'1'",           // 2 "ERROR)" 
+                                                 "=F'11'",          // 3 "TERMIDERR"     RPI 928
+                                                 "=F'12'",          // 4 "FILENOTFOUND)" RPI 687
+                                                 "=F'12'",          // 5 "DSIDERR"       RPI 905
+                                                 "=F'13'",          // 6 "NOTFND)" RPI 687, RPI 690 
+                                                 "=F'14'",          // 7 "DUPREC)" RPI 687
+                                                 "=F'15'",          // 8 "DUPKEY)" RPI 687 
+                                                 "=F'16'",          // 9 "INVREQ)" 
+                                                 "=F'17'",          //10 "IOERR"    RPI 928
+                                                 "=F'18'",          //11 "NOSPACE)" RPI 687 
+                                                 "=F'19'",          //12 "NOTOPEN)" RPI 687 
+                                                 "=F'20'",          //13 "ENDFILE)" RPI 687 
+                                                 "=F'21'",          //14 "ILLOGIC)" RPI 729
+                                                 "=F'22'",          //15 "LENGERR)" 
+                                                 "=F'26'",          //16 "ITEMERR)" RPI 662
+                                                 "=F'27'",          //17 "PGMIDERR)"
+                                                 "=F'28'",          //18 "TRANSIDERR"  RPI 928
+                                                 "=F'29'",          //19 "ENDDATA"     RPI 928
+                                                 "=F'31'",          //20 "EXPIRED)"  RPI 751
+                                                 "=F'36'",          //21 "MAPFAIL)"  RPI 841
+                                                 "=F'38'",          //22 "INVMPSZ)"  RPI 841
+                                                 "=F'40'",          //23 "OVERFLOW)" RPI 841
+                                                 "=F'44'",          //24 "QIDERR)"   RPI 662
+                                                 "=F'55'",          //25 "ENQBUSY)"  RPI 951
+                                                 "=F'56'",          //26 "ENVDEFERR)" RPI 928
+                                                 "=F'61'",          //27 "NOTALLOC)"  RPI 1079
+                                                 "=F'72'",          //28 "SUPPRESSED)" RPI 1057
+                                                 "=F'83'",          //29 "END)"      RPI 1057
+                                                 "=F'84'",          //30 "DISABLED)" RPI 687
+                                                 "=F'109'",         //31 "ACTIVITYERR)"  RPI 1168
+                                                 "=F'110'",         //32 "CONTAINERERR)" RPI 1168
+                                                 "=F'112'",         //33 "TOKENERR)"     RPI 1168
+                                                 "=F'122'",         //33 "CHANNELERR)",  RPI 1168
+                                                 };
+                     /*
+                      * EXEC CICS DFHVALUE(type) literal substitution
+                      */
+    /** variable      */ String[] dfhvalue_type = {"NOTAPPLIC)",       // 1 - =F'1'
+                                                   "VSAM)",            // 2 - =F'3'
+                                                   "ESDS)",            // 3 - =F'5'
+                                                   "KSDS)",            // 4 - =F'6'
+                                                   "RRDS)",            // 5 - =F'7'
+                                                   "BASE)",            // 6 - =F'10'
+                                                   "PATH)",            // 7 - =F'11'
+                                                   "FIXED)",           // 8 - =F'12'
+                                                   "VARIABLE)",        // 9 - =F'13'
+                                                   "OPEN)",            //10 - =F'18'
+                                                   "CLOSED)",          //11 - =F'19'
+                                                   "ENABLED)",         //12 - =F'23'
+                                                   "DISABLED)",        //13 - =F'24'
+                                                   "UNENABLED)",       //14 - =F'33'
+                                                   "READABLE)",        //15 - =F'35'
+                                                   "NOTREADABLE)",     //16 - =F'36'
+                                                   "UPDATABLE)",       //17 - =F'37'
+                                                   "NOTUPDATABLE)",    //18 - =F'38'
+                                                   "BROWSABLE)",       //19 - =F'39'
+                                                   "NOTBROWSABLE)",    //20 - =F'40'
+                                                   "ADDABLE)",         //21 - =F'41'
+                                                   "NOTADDABLE)",      //22 - =F'42'
+                                                   "DELETABLE)",       //23 - =F'43'
+                                                   "NOTDELETABLE)",    //24 - =F'44'
+                                                   "VRRDS)",           //25 - =F'732'
+                                                   };
+    /** variable      */ String[] dfhvalue_lit = {"=F'1'",            // 1 "NOTAPPLIC)"
+                                                  "=F'3'",            // 2 "VSAM)"
+                                                  "=F'5'",            // 3 "ESDS)"
+                                                  "=F'6'",            // 4 "KSDS)"
+                                                  "=F'7'",            // 5 "RRDS)"
+                                                  "=F'10'",           // 6 "BASE)"
+                                                  "=F'11'",           // 7 "PATH)"
+                                                  "=F'12'",           // 8 "FIXED)"
+                                                  "=F'13'",           // 9 "VARIABLE)"
+                                                  "=F'18'",           //10 "OPEN)"
+                                                  "=F'19'",           //11 "CLOSED)"
+                                                  "=F'23'",           //12 "ENABLED)"
+                                                  "=F'24'",           //13 "DISABLED)"
+                                                  "=F'33'",           //14 "UNENABLED)"
+                                                  "=F'35'",           //15 "READABLE)"
+                                                  "=F'36'",           //16 "NOTREADABLE)"
+                                                  "=F'37'",           //17 "UPDATABLE)"
+                                                  "=F'38'",           //18 "NOTUPDATABLE)"
+                                                  "=F'39'",           //19 "BROWSABLE)"
+                                                  "=F'40'",           //20 "NOTBROWSABLE)"
+                                                  "=F'41'",           //21 "ADDABLE)"
+                                                  "=F'42'",           //22 "NOTADDABLE)"
+                                                  "=F'43'",           //23 "DELETABLE)"
+                                                  "=F'44'",           //24 "NOTDELETABLE)"
+                                                  "=F'732'",          //25 "VRRDS)"
+                                                  };
+                     /* 
+                      * end of global az390 class data and start of procs
+                      */
+
+
+
+   /**
+    * main is entry when executed from command line
+    * Create instance of az390 class and pass
+    * parms to az390 like z390 does.
+    * @param args - argument string - same as z390
+    */
 public static void main(String[] args) {
-  /*
-   * main is entry when executed from command line
-   * Create instance of az390 class and pass
-   * parms to az390 like z390 does.
-   */
       az390 pgm = new az390();
 	  pgm.init_az390(args,null,null,null);
       pgm.process_az390();
 }
+
+
+
+   /**
+    * initialize z390 when called from mz390
+    * to receive bal directly and share the
+    * symbol table with mz390.
+    * @param args               - argumebnt string
+    * @param z390_log           - log data
+    * @param mz390_systerm_file - file handle for systerm
+    * @param mz390_stats_file   - file handle for statistics
+    */
+
+
+
 public void start_az390_thread(String[] args,JTextArea z390_log, RandomAccessFile mz390_systerm_file,RandomAccessFile mz390_stats_file){
-	/*
-	 * initialize z390 when called from mz390
-	 * to receive bal directly and share the
-	 * symbol table with mz390.
-	 */
 	mz390_call = true;
 	init_az390(args, null, mz390_systerm_file, mz390_stats_file);
 	az390_thread = new Thread(this);
@@ -1175,14 +1182,25 @@ public void start_az390_thread(String[] args,JTextArea z390_log, RandomAccessFil
     cur_esd_sid = tz390.opt_maxsym-1;
     sym_type[tz390.opt_maxsym-1] = sym_cst;
 }
+
+
+
+   /**
+    * save xref file names and error counts for
+    * cross reference at end of PRN
+    * @param mac_file_path   - file path for macros
+    * @param mac_file_errors - macro error data
+    */
 public void finish_az390(String[] mac_file_path,int[] mac_file_errors){
-	/*
-	 * save xref file names and error counts for
-	 * cross reference at end of PRN
-	 */
 	xref_file_path = mac_file_path;
 	xref_file_errors = mac_file_errors;
 }
+
+
+
+   /**
+    * run the assembler
+    */
 public void run() {
 	if (az390_thread == Thread.currentThread()){
 		if (tz390.opt_trap){ // RPI 423
@@ -1205,8 +1223,10 @@ public void run() {
 	   	}
 	}
 }
-private void process_az390(){
-   /*
+
+
+
+   /**
     *  assemble bal source file into
     *  relocatable OBJ file and
     *  generate optional PRN file.
@@ -1226,80 +1246,94 @@ private void process_az390(){
     *       synchronize passing bal record
     *       from mz390 to az390 process.
     */
-    	if (tz390.opt_trap){
-     	   try {
-        	    load_bal();
-                process_bal();
-     	   } catch (Exception e){
-     		   abort_error(79,"internal system exception - " + e.toString());
-     	   }
-     	} else {
-        	load_bal();
-     		process_bal();
-     	}
-	    exit_az390();
+private void process_az390(){
+	if (tz390.opt_trap){
+ 	   try {
+    	    load_bal();
+            process_bal();
+ 	   } catch (Exception e){
+ 		   abort_error(79,"internal system exception - " + e.toString());
+ 	   }
+ 	} else {
+    	load_bal();
+ 		process_bal();
+ 	}
+    exit_az390();
 }
+
+
+
+   /**
+    * 1.  initialize log routing
+    * 2.  set options
+    * 3.  compile regular expression parsers
+    * 4.  open bal and obj buffered I/O files
+    * 5.  Init ascii/ebcdic translation table
+    * @param args     - argumebnt string
+    * @param log_text - log data
+    * @param systerm  - file handle for systerm
+    * @param stats    - file handle for statistics
+    */
 private void init_az390(String[] args, JTextArea log_text,
                         RandomAccessFile systerm,
                         RandomAccessFile stats) {
-	/*
-	 * 1.  initialize log routing
-	 * 2.  set options
-	 * 3.  compile regular expression parsers
-	 * 4.  open bal and obj buffered I/O files
-	 * 5.  Init ascii/ebcdic translation table
-	 */
-	    if  (log_text != null){
-	    	z390_log_text = log_text;
-	    }
-    	tz390 = new tz390();
-    	tz390.init_tz390();  // RPI 1080
-    	if (!tz390.check_java_version()){ // RPI 1175
-    		abort_error(88,"unknown java version "
-    	    + tz390.java_vendor + " " + tz390.java_version);  
-    	}
-    	tz390.init_options(args,tz390.bal_type);
-    	tz390.systerm_file = systerm;  // share the mz390 ERR file
-    	tz390.stats_file = stats;  // RPI 737
-    	tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " AZ390 ";
-    	if (!mz390_call){
-   			tz390.open_systerm("AZ390");
-   		} else {
-   			tz390.systerm_start = System.currentTimeMillis();
-   			tz390.started_msg = mz390_started_msg;
-   		}
-   		tz390.init_codepage(tz390.codepage);  // RPI 1069
-	    if (!tz390.init_opcode_name_keys()){
-	    	abort_error(87,"opcode key search table exceeded");
-	    }
-        init_arrays();
-	    init_push_pop();
-		open_files();
-		tz390.force_nocon = true;   // RPI 755
-		put_log(tz390.started_msg); // RPI 755
-		tz390.force_nocon = false;  // RPI 755
-		put_copyright();
-        compile_patterns();
-        tod_time_limit = tz390.max_time_seconds * 1000 + tod_start;
-        if (tz390.opt_optable_list.equals("LIST")) // RPI 1209A
-           {gen_list_mnemonics();                  // RPI 1209A
-            }                                      // RPI 1209A
+    if  (log_text != null){
+    	z390_log_text = log_text;
+    }
+	tz390 = new tz390();
+	tz390.init_tz390();  // RPI 1080
+	if (!tz390.check_java_version()){ // RPI 1175
+		abort_error(88,"unknown java version "
+	    + tz390.java_vendor + " " + tz390.java_version);  
+	}
+	tz390.init_options(args,tz390.bal_type);
+	tz390.systerm_file = systerm;  // share the mz390 ERR file
+	tz390.stats_file = stats;  // RPI 737
+	tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " AZ390 ";
+	if (!mz390_call){
+		tz390.open_systerm("AZ390");
+	} else {
+		tz390.systerm_start = System.currentTimeMillis();
+		tz390.started_msg = mz390_started_msg;
+	}
+	tz390.init_codepage(tz390.codepage);  // RPI 1069
+    if (!tz390.init_opcode_name_keys()){
+    	abort_error(87,"opcode key search table exceeded");
+    }
+    init_arrays();
+    init_push_pop();
+	open_files();
+	tz390.force_nocon = true;   // RPI 755
+	put_log(tz390.started_msg); // RPI 755
+	tz390.force_nocon = false;  // RPI 755
+	put_copyright();
+    compile_patterns();
+    tod_time_limit = tz390.max_time_seconds * 1000 + tod_start;
+    if (tz390.opt_optable_list.equals("LIST")) // RPI 1209A
+       {gen_list_mnemonics();                  // RPI 1209A
+        }                                      // RPI 1209A
 }
+
+
+
+   /**
+    * init push/pop using and print
+    */
 private void init_push_pop(){
-	/*
-	 * init push/pop using and print
-	 */
     using_start[0] = 0;
     using_end[0]   = 0;
     print_on[0] = true;
     print_gen[0] = true;
     print_data[0] = false;
 }
+
+
+
+   /**
+    * initialize arrays using tz390.opt_max???
+    */
 @SuppressWarnings("unchecked")
 private void init_arrays(){
-	/*
-	 * initialize arrays using tz390.opt_max???
-	 */
 	/*
 	 * opt_maxcall - maximum call/push/using
 	 */
@@ -1377,169 +1411,176 @@ private void init_arrays(){
     lit_def          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
     lit_xref = (TreeSet<Integer>[])Array.newInstance(TreeSet.class,tz390.opt_maxsym);
 }
+
+
+
+   /**
+    * compile regular expression parsers
+    */
 private void compile_patterns(){
-	/* 
-	 * compile regular expression parsers
-	 */
 	/*
      * label_pattern  .lll
      */
-    	try {
-    	    label_pattern = Pattern.compile(
-    			"([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"   // RPI 253        
-			  );
-    	} catch (Exception e){
-    		  abort_error(1,"label pattern errror - " + e.toString());
-    	}
-    	/*
-         * extrn and entry pattern
-         */
-        	try {
-        	    extrn_pattern = Pattern.compile(
-        			"([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)" // RPI 253
-        	       +"|([,\\s])" //RPI181
-    			  );
-        	} catch (Exception e){
-        		  abort_error(1,"extrn pattern errror - " + e.toString());
-        	}
-        /*
-         * expression pattern
-         *   1. B'01', C'ABC', X'0F' sdts
-         *   2. USING label.
-         *   3. symbolst  
-         *   3. + - * / ( ) L'
-         */
-        	try {
-        	    exp_pattern = Pattern.compile(
-      				"([0-9]+([.][0-9]*)*([eE]([\\+]|[\\-])*[0-9]+)*)" // RPI 232 fp/int
-     		      + "|([\\s,'\\+\\-\\*\\/\\(\\)=])"        // RPI 159, RPI181
-  		    	  + "|([bB]['][0|1]+['])"                  // sdt B'01'
-  		    	  +	"|([cC][aAeE]*[']([^']|(['][']))*['])" // ebcdic/ascii mode //RPI 270
-  		    	  +	"|([cC][!]([^!]|([!][!]))*[!])"        // ebcdic always
-  		    	  +	"|([cC][\"]([^\"]|([\"][\"]))*[\"])"   // ascii  always
-	    		  +	"|([xX]['][0-9a-fA-F]+['])"            // sdt X'1F'
-        		  + "|([iIlLsS]['])"                       // length op  RPI9 RPI 790 add I',S' ops
-        		  +	"|([a-zA-Z$@#_][a-zA-Z0-9$@#_]*[\\.]?)" // labeled using or symbol  RPI 253
-        	    );
-        	} catch (Exception e){
-        		  abort_error(2,"expression pattern errror - " + e.toString());
-        	}
-            /*
-             * define exp_class with operator
-             * precedence classes indexed by 
-             * expression operator
-             */
-             exp_op_class['+'] = 1;
-             exp_op_class['-'] = 1;
-             exp_op_class['*'] = 2;
-             exp_op_class['/'] = 2;
-             exp_op_class['('] = 3;
-             exp_op_class[')'] = 4;
-             exp_op_class['I'] = 5; // Integer pfx // RPI 790
-             exp_op_class['L'] = 5; // length  pfx
-             exp_op_class['S'] = 5; // Scale   pfx // RPI 790
-             exp_op_class['U'] = 5; // unary   pfx
-             exp_op_class[' '] = 6;
-             exp_op_class[','] = 6;
-             exp_op_class['~'] = 6;
-             /*
-              * dcc_sq_pattern for quoted string:
-              *   1.  '...''...'
-              * */
-         	try {
-         	    dcc_sq_pattern = Pattern.compile(
-         	        "([']['])"
-         	      + "|([&][&])" //RPI192
-				  + "|(['&])"   //RPI192
-       			  + "|([^'&]+)" 
-     			  );
-         	} catch (Exception e){
-         		  abort_error(1,"dcc pattern errror - " + e.toString());
-         	}
-            /*
-             * dcc_dq_pattern for quoted string:
-             *   1.  "...""..."
-             * */
-        	try {
-        	    dcc_dq_pattern = Pattern.compile(
-        	        "([\"][\"])"
-            	  + "|([']['])"	//RPI192
-         	      + "|([&][&])" //RPI192
-				  + "|([\"'&])" //RPI192
-      			  + "|([^\"]+)" 
-    			  );
-        	} catch (Exception e){
-        		  abort_error(1,"dcc pattern errror - " + e.toString());
-        	}
-            /*
-             * dcc_eq_pattern for quoted string:
-             *   1.  !...!!...!
-             * */
-        	try {
-        	    dcc_eq_pattern = Pattern.compile(
-        	        "([!][!])"
-                  + "|([']['])"	//RPI192
-         	      + "|([&][&])" //RPI192
-				  + "|([!'&])"  //RPI192
-      			  + "|([^!]+)" 
-    			  );
-        	} catch (Exception e){
-        		  abort_error(1,"dcc pattern errror - " + e.toString());
-        	}
+	try {
+	    label_pattern = Pattern.compile(
+			"([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"   // RPI 253        
+		  );
+	} catch (Exception e){
+		  abort_error(1,"label pattern errror - " + e.toString());
+	}
+	/*
+     * extrn and entry pattern
+     */
+	try {
+	    extrn_pattern = Pattern.compile(
+			"([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)" // RPI 253
+	       +"|([,\\s])" //RPI181
+		  );
+	} catch (Exception e){
+		  abort_error(1,"extrn pattern errror - " + e.toString());
+	}
+    /*
+     * expression pattern
+     *   1. B'01', C'ABC', X'0F' sdts
+     *   2. USING label.
+     *   3. symbolst  
+     *   3. + - * / ( ) L'
+     */
+	try {
+	    exp_pattern = Pattern.compile(
+			"([0-9]+([.][0-9]*)*([eE]([\\+]|[\\-])*[0-9]+)*)" // RPI 232 fp/int
+	      + "|([\\s,'\\+\\-\\*\\/\\(\\)=])"        // RPI 159, RPI181
+    	  + "|([bB]['][0|1]+['])"                  // sdt B'01'
+    	  +	"|([cC][aAeE]*[']([^']|(['][']))*['])" // ebcdic/ascii mode //RPI 270
+    	  +	"|([cC][!]([^!]|([!][!]))*[!])"        // ebcdic always
+    	  +	"|([cC][\"]([^\"]|([\"][\"]))*[\"])"   // ascii  always
+		  +	"|([xX]['][0-9a-fA-F]+['])"            // sdt X'1F'
+		  + "|([iIlLsS]['])"                       // length op  RPI9 RPI 790 add I',S' ops
+		  +	"|([a-zA-Z$@#_][a-zA-Z0-9$@#_]*[\\.]?)" // labeled using or symbol  RPI 253
+	    );
+	} catch (Exception e){
+		  abort_error(2,"expression pattern errror - " + e.toString());
+	}
+    /*
+     * define exp_class with operator
+     * precedence classes indexed by 
+     * expression operator
+     */
+     exp_op_class['+'] = 1;
+     exp_op_class['-'] = 1;
+     exp_op_class['*'] = 2;
+     exp_op_class['/'] = 2;
+     exp_op_class['('] = 3;
+     exp_op_class[')'] = 4;
+     exp_op_class['I'] = 5; // Integer pfx // RPI 790
+     exp_op_class['L'] = 5; // length  pfx
+     exp_op_class['S'] = 5; // Scale   pfx // RPI 790
+     exp_op_class['U'] = 5; // unary   pfx
+     exp_op_class[' '] = 6;
+     exp_op_class[','] = 6;
+     exp_op_class['~'] = 6;
+     /*
+      * dcc_sq_pattern for quoted string:
+      *   1.  '...''...'
+      * */
+ 	try {
+ 	    dcc_sq_pattern = Pattern.compile(
+ 	        "([']['])"
+ 	      + "|([&][&])" //RPI192
+		  + "|(['&])"   //RPI192
+		  + "|([^'&]+)" 
+		  );
+ 	} catch (Exception e){
+ 		  abort_error(1,"dcc pattern errror - " + e.toString());
+ 	}
+    /*
+     * dcc_dq_pattern for quoted string:
+     *   1.  "...""..."
+     * */
+	try {
+	    dcc_dq_pattern = Pattern.compile(
+	        "([\"][\"])"
+    	  + "|([']['])"	//RPI192
+ 	      + "|([&][&])" //RPI192
+		  + "|([\"'&])" //RPI192
+		  + "|([^\"]+)" 
+		  );
+	} catch (Exception e){
+		  abort_error(1,"dcc pattern errror - " + e.toString());
+	}
+    /*
+     * dcc_eq_pattern for quoted string:
+     *   1.  !...!!...!
+     * */
+	try {
+	    dcc_eq_pattern = Pattern.compile(
+	        "([!][!])"
+          + "|([']['])"	//RPI192
+ 	      + "|([&][&])" //RPI192
+		  + "|([!'&])"  //RPI192
+		  + "|([^!]+)" 
+		  );
+	} catch (Exception e){
+		  abort_error(1,"dcc pattern errror - " + e.toString());
+	}
+}
 
-}
+
+
+   /**
+    * 1.  Set trace file name
+    * 2.  Open obj and prn files
+    */
 private void open_files(){
-	/*
-	 * 1.  Set trace file name
-	 * 2.  Open obj and prn files
-	 */
-	    if (tz390.trace_file_name == null){  // RPI 719
-	    	tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.tra_type;
-	    } else {
-	    	tz390.trace_file_name = tz390.trace_file_name + tz390.tra_type;
-	    }
-       	if (tz390.opt_obj){  // RPI 694
-       		try {
-       			obj_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.obj_type,"rw"); 
-       		} catch (Exception e){
-       			abort_error(4,"I/O error on obj open - " + e.toString());
-       		}
-       	}
-       	if (tz390.opt_list){
-       		String prn_file_name = tz390.get_file_name(tz390.dir_prn,tz390.pgm_name,tz390.prn_type); // RPI 866
-            try {
-            	prn_file = new File(prn_file_name); // RPI 908 catch null error
-       	        prn_file_buff = tz390.getWriterForDefaultCharset(prn_file);
-       	    } catch (Exception e){
-       		    abort_error(4,"I/O error on prn open - " + e.toString());
-       	    }
-       	}
+    if (tz390.trace_file_name == null){  // RPI 719
+    	tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.tra_type;
+    } else {
+    	tz390.trace_file_name = tz390.trace_file_name + tz390.tra_type;
+    }
+   	if (tz390.opt_obj){  // RPI 694
+   		try {
+   			obj_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.obj_type,"rw"); 
+   		} catch (Exception e){
+   			abort_error(4,"I/O error on obj open - " + e.toString());
+   		}
+   	}
+   	if (tz390.opt_list){
+   		String prn_file_name = tz390.get_file_name(tz390.dir_prn,tz390.pgm_name,tz390.prn_type); // RPI 866
+        try {
+        	prn_file = new File(prn_file_name); // RPI 908 catch null error
+   	        prn_file_buff = tz390.getWriterForDefaultCharset(prn_file);
+   	    } catch (Exception e){
+   		    abort_error(4,"I/O error on prn open - " + e.toString());
+   	    }
+   	}
 }
+
+
+
+   /**
+    * assemble bal source into obj relocatable
+    * object code file                           
+    */
 private void process_bal(){
-	/* 
-	 * assemble bal source into obj relocatable
-	 * object code file                           
-	 *   
-	 */
-	     resolve_symbols();
-	     list_bal_line = true; // RPI 891 
-	     gen_obj_esds();
-	     gen_obj_text();
-	     gen_obj_rlds();
-	     gen_obj_end();   // RPI 1197
-	     if (tz390.opt_list){
-	    	list_bal_line = true; // RPI 891  
-	     	gen_sym_list();
-	     	gen_lit_xref_list(); //RPI198
-	     }	     
+    resolve_symbols();
+    list_bal_line = true; // RPI 891 
+    gen_obj_esds();
+    gen_obj_text();
+    gen_obj_rlds();
+    gen_obj_end();   // RPI 1197
+    if (tz390.opt_list){
+   	list_bal_line = true; // RPI 891  
+    	gen_sym_list();
+    	gen_lit_xref_list(); //RPI198
+    }	     
 }
+   /**
+    * if errors occurred during loading of bal
+    * repeat symbol update passes until there 
+    * are no errors or minimum error or max
+    * passes are reached.
+    */
 private void resolve_symbols(){
-	/*
-	 * if errors occurred during loading of bal
-	 * repeat symbol update passes until there 
-	 * are no errors or minimum error or max
-	 * passes are reached.
-	 */
 	reset_lits();
 	tz390.reset_opsyn();
     if  (az390_errors > 0 || sect_change){ // RPI 605 
@@ -1571,39 +1612,45 @@ private void resolve_symbols(){
     bal_abort = false; // RPI 920 prevent obj ESD error
 	cur_pass++;  // incr to last pass
 }
+
+
+
+   /**
+    * scan bal source and update symbols
+    */
 private void update_symbols(){
-    /*
-     * scan bal source and update symbols
-     */
-         loc_ctr = 0;
-         cur_lit_pool = 1;
-         cur_esd = 0;
-         bal_eof = false;
-         end_found = false;
-         bal_line_index = 1;
-	     while (!bal_eof){
-	    	  check_timeout();
-		      if  (bal_line_index == tot_bal_line){
-	           	  bal_eof = true;
-		      } else {
-	               bal_line = bal_line_text[bal_line_index];
-	               xref_bal_index = bal_line_index;
-	               parse_bal_line();
-	               bal_op_index = find_bal_op();
-	               if (bal_op_index > -1){  // RPI 274
-	           	      process_bal_op();    
-	               }
-			       bal_line_index++;
-	          }
-	     }
-	     if (!end_found){
-	    	 process_end();
-	     }
+    loc_ctr = 0;
+    cur_lit_pool = 1;
+    cur_esd = 0;
+    bal_eof = false;
+    end_found = false;
+    bal_line_index = 1;
+    while (!bal_eof){
+    	check_timeout();
+	    if (bal_line_index == tot_bal_line){
+            bal_eof = true;
+	    } else {
+            bal_line = bal_line_text[bal_line_index];
+            xref_bal_index = bal_line_index;
+            parse_bal_line();
+            bal_op_index = find_bal_op();
+            if (bal_op_index > -1){  // RPI 274
+                process_bal_op();
+            }
+		    bal_line_index++;
+        }
+     }
+     if (!end_found){
+    	process_end();
+     }
 }
+
+
+
+   /**
+    * check if timeout expired
+    */
 private void check_timeout(){
-	/*
-	 * check if timeout expired
-	 */
 	if (tz390.opt_time){
 		cur_date = new Date();
 		tod_end = cur_date.getTime();
@@ -1612,23 +1659,26 @@ private void check_timeout(){
 		}
 	}
 }
+
+
+
+   /**
+    * update each section starting address
+    * and max length, and reset current length
+    * and current esd_loc
+    * 
+    * Notes:
+    *   1.  If any section start address or 
+    *       max length changes issue error
+    *       to force additional passes.
+    *   2.  sym_cst CSECT's start at 0 and are
+    *       contiguous within LOCTR's
+    *   3.  Each new CSECT is aligned to *8
+    *   4.  sym_dst DSECT's always start at 0
+    *   5.  Set esd_base to root section
+    *       for cst, dst, and loctors
+    */
 private void update_sects(){
-	/*
-	 * update each section starting address
-	 * and max length, and reset current length
-	 * and current esd_loc
-	 * 
-	 * Notes:
-	 *   1.  If any section start address or 
-	 *       max length changes issue error
-	 *       to force additional passes.
-	 *   2.  sym_cst CSECT's start at 0 and are
-	 *       contiguous within LOCTR's
-	 *   3.  Each new CSECT is aligned to *8
-	 *   4.  sym_dst DSECT's always start at 0
-	 *   5.  Set esd_base to root section
-	 *       for cst, dst, and loctors
-	 **/
 	if (tot_loc_stmt > 0 && cur_pass == 1){ // RPI 632 
 		sect_change_error();  // RPI 632 force first 2 passes if LOCTR found
 	} else {
@@ -1697,20 +1747,26 @@ private void update_sects(){
 	}
 	loc_ctr = 0;
 }
+
+
+
+   /**
+    * set sect_change 
+    */
 private void sect_change_error(){
-	/*
-	 * set sect_change 
-	 */
 	sect_change = true;  // RPI 632
 }
+
+
+
+   /**
+    * update loctr sections with contiguous
+    * starting addresses from CSECT/DSECT
+    * and issue errors if any start address
+    * or length changes and reset length for
+    * next pass.
+    */
 private void update_loctrs(){
-	/*
-	 * update loctr sections with contiguous
-	 * starting addresses from CSECT/DSECT
-	 * and issue errors if any start address
-	 * or length changes and reset length for
-	 * next pass.
-	 */
 	int index = cur_sid;
 	while (sym_sect_next[index] > 0){
 		index = sym_sect_next[index];
@@ -1739,11 +1795,14 @@ private void update_loctrs(){
 		sym_len[index] = 0;
 	}
 }
+
+
+
+   /**
+    * reset lit_gen flags to force reallocation
+    * on each pass
+    */
 private void reset_lits(){
-	/*
-	 * reset lit_gen flags to force reallocation
-	 * on each pass
-	 */
 	if (tot_lit > 0){
 		Arrays.fill(lit_gen,0,tot_lit,(byte)0); // RPI 411
 	}
@@ -1751,14 +1810,14 @@ private void reset_lits(){
 
 
 
-    /** // #500
-     * Lists all mnemonics in the selected opcode table
-     *
-     * All mnemonics from the current opcode table are converted into report entries
-     * The report entries are sorted
-     * The sorted entries are printed (three on a print line) preceded by a header line
-     *
-     */
+   /** // #500
+    * Lists all mnemonics in the selected opcode table
+    *
+    * All mnemonics from the current opcode table are converted into report entries
+    * The report entries are sorted
+    * The sorted entries are printed (three on a print line) preceded by a header line
+    *
+    */
 private void gen_list_mnemonics() // Routine added for RPI 1209A
    {int     index;
     String  entry;
@@ -2844,47 +2903,47 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
 
 
 
-/**
- * Comparator for mnemonics to mimic EBCDIC collating sequence
- * The mnemonic portion occupies the first 8 positions of the ReportEntry
- * and contains only uppercase characters and digits.
- * Digits should sort higher than alphabetic characters.
- */
-public class ReportEntryComparator implements Comparator<String>                   // #568
- {@Override                                                                        // #568
-  public int compare(String str1, String str2)                                     // #568
-   {// special case: entries consisting of a single space sort first!              // #568
-    if (str1.charAt(0) == ' ') return 1;  // blank entry always smaller            // #568
-    if (str2.charAt(0) == ' ') return -1; // blank entry always smaller            // #568
-    for (int i=0; i<8; i++)                                                        // #568
-     {char c1 = str1.charAt(i);                                                    // #568
-      char c2 = str2.charAt(i);                                                    // #568
-      // if c1 == c2 then we continue on to the next character                     // #568
-      if (c1 != c2)                                                                // #568
-       {if (c1 == ' ') return -1; // Mnemonic 2 is longer                          // #568
-        if (c2 == ' ') return 1;  // Mnemonic 1 is longer                          // #568
-        if (c1 <= '9')                                                             // #568
-         {if (c2 <= '9') return (c1-c2); // compare two digits                     // #568
-          else return 1;                 // digit always larger                    // #568
-          }                                                                        // #568
-        else // c1 is not numeric                                                  // #568
-         {if (c2 <= '9') return -1; // digit always larger                         // #568
-          else return (c1-c2);      // compare two alphabetic chars                // #568
-          }                                                                        // #568
-        }                                                                          // #568
-      }                                                                            // #568
-    return 0; // First 8 characters are equal                                      // #568
-    }                                                                              // #568
-  }                                                                                // #568
+   /**
+    * Comparator for mnemonics to mimic EBCDIC collating sequence
+    * The mnemonic portion occupies the first 8 positions of the ReportEntry
+    * and contains only uppercase characters and digits.
+    * Digits should sort higher than alphabetic characters.
+    */
+public class ReportEntryComparator implements Comparator<String>                     // #568
+   {@Override                                                                        // #568
+    public int compare(String str1, String str2)                                     // #568
+       {// special case: entries consisting of a single space sort first!            // #568
+        if (str1.charAt(0) == ' ') return 1;  // blank entry always smaller          // #568
+        if (str2.charAt(0) == ' ') return -1; // blank entry always smaller          // #568
+        for (int i=0; i<8; i++)                                                      // #568
+           {char c1 = str1.charAt(i);                                                // #568
+            char c2 = str2.charAt(i);                                                // #568
+            // if c1 == c2 then we continue on to the next character                 // #568
+            if (c1 != c2)                                                            // #568
+               {if (c1 == ' ') return -1; // Mnemonic 2 is longer                    // #568
+                if (c2 == ' ') return 1;  // Mnemonic 1 is longer                    // #568
+                if (c1 <= '9')                                                       // #568
+                   {if (c2 <= '9') return (c1-c2); // compare two digits             // #568
+                    else return 1;                 // digit always larger            // #568
+                    }                                                                // #568
+                else // c1 is not numeric                                            // #568
+                   {if (c2 <= '9') return -1; // digit always larger                 // #568
+                    else return (c1-c2);      // compare two alphabetic chars        // #568
+                    }                                                                // #568
+                }                                                                    // #568
+            }                                                                        // #568
+        return 0; // First 8 characters are equal                                    // #568
+        }                                                                            // #568
+    }                                                                                // #568
 
 
 
+   /**
+    * write ESD's for CSECTS, EXTRNS, and ENTRIES
+    * to the OBJ file in ascii hex 
+    * and list on PRN if option LIST
+    */
 private void gen_obj_esds(){
-	/*
-	 * write ESD's for CSECTS, EXTRNS, and ENTRIES
-	 * to the OBJ file in ascii hex 
-	 * and list on PRN if option LIST
-	 */
 	xref_bal_index = -1;
 	if (tot_esd > 0 && tz390.opt_list){
 		put_prn_line("External Symbol Definitions");
@@ -2927,21 +2986,28 @@ private void gen_obj_esds(){
 		cur_esd++;
 	}
 }
+
+
+
+   /**
+    * return esd type
+    * @return type of ESD
+    */
 private String get_esd_type(){
-	/*
-	 * return esd type
-	 */
 	String esd_type = sym_type_desc[sym_type[esd_sid[cur_esd]]];
     if (esd_type.equals("REL")){
     	esd_type = "ENT";
     }
 	return esd_type;
 }
+
+
+
+   /**
+    * generate object code for bal instructions
+    * in CSECT's on final pass
+    */
 private void gen_obj_text(){
-	/*
-	 * generate object code for bal instructions
-	 * in CSECT's on final pass
-	 */
 	gen_obj_code = true;
 	tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " " + "AZ390 "; // RPI 755 RPI 938 switch from mz390
 	put_prn_line("Assembler Listing");
@@ -2981,16 +3047,19 @@ private void gen_obj_text(){
 	}
 	list_bal_line = true; // RPI 891 restore 
 }
+
+
+
+   /**
+    * allocate or generate object code for bal op
+    * 
+    * 1.  Note op_type index values must match
+    *     op_name array values.  
+    * 2.  Indexes less than 100 and CNOP are machine instr. types RPI 743
+    * 3.  Indexes more than 100 are assembler instr.
+    *
+    */
 private void process_bal_op(){
-	/*
-	 * allocate or generate object code for bal op
-	 * 
-	 * 1.  Note op_type index values must match
-	 *     op_name array values.  
-	 * 2.  Indexes < 100 and CNOP are machine instr. types RPI 743
-	 * 3.  Indexes > 100 are assembler instr.
-	 *
-	 */
 	loc_len = 0;
 	exp_text  = bal_parms;
 	exp_index = 0;
@@ -5715,51 +5784,58 @@ private void process_bal_op(){
 	}
 	loc_ctr = loc_ctr + loc_len;
 }
+
+
+
+   /**
+    * list bal line with first 8 bytes of
+    * object code if any 
+    * and turn off list_bal_line request
+    * Notes:
+    *   1.  See comments processing case 0
+    *       for update of mac_call_gen,
+    *       call reformating, and delay flags
+    *       mac_call_first and mac_call_last.
+    */
 private void list_bal_line(){
-	/*
-	 * list bal line with first 8 bytes of
-	 * object code if any 
-	 * and turn off list_bal_line request
-	 * Notes:
-	 *   1.  See comments processing case 0
-	 *       for update of mac_call_gen,
-	 *       call reformating, and delay flags
-	 *       mac_call_first and mac_call_last.
-	 */
-	    if (!check_list_bal_line()){ // RPI 484 RPI 891
-	    	update_list_bal_line();
-	    	return;
-	    }
-	    if (list_obj_code.length() < 16){
-	    	list_obj_code = list_obj_code.concat("                ").substring(0,16);
-	    } 
-	    list_obj_loc = loc_start;
-	    if (gen_obj_code){ // RPI 581
-	    	cur_line_type     = xref_file_type[bal_line_xref_file_num[bal_line_index]];
-	    	cur_line_file_num = bal_line_xref_file_num[bal_line_index];
-	    	put_prn_line(tz390.get_hex(list_obj_loc,6)
-    		  + " " + list_obj_code.substring(0,16) 
-    		  + " " + hex_bddd1_loc 
-    		  + " " + hex_bddd2_loc 
-    		  + " " + tz390.get_cur_bal_line_id(cur_line_file_num,
-                      bal_line_xref_file_line[bal_line_index],
-                      bal_line_num[bal_line_index],
-                      mac_call_gen, // RPI 891 
-                      cur_line_type) 
-    		  + bal_line);
-	    }
-	    force_list_bal = false;   // RPI 285
-        update_list_bal_line();
-	    if (list_use){
-	    	list_use();
-	    	list_use = false;
-	    }
+    if (!check_list_bal_line()){ // RPI 484 RPI 891
+    	update_list_bal_line();
+    	return;
+    }
+    if (list_obj_code.length() < 16){
+    	list_obj_code = list_obj_code.concat("                ").substring(0,16);
+    } 
+    list_obj_loc = loc_start;
+    if (gen_obj_code){ // RPI 581
+    	cur_line_type     = xref_file_type[bal_line_xref_file_num[bal_line_index]];
+    	cur_line_file_num = bal_line_xref_file_num[bal_line_index];
+    	put_prn_line(tz390.get_hex(list_obj_loc,6)
+		  + " " + list_obj_code.substring(0,16) 
+		  + " " + hex_bddd1_loc 
+		  + " " + hex_bddd2_loc 
+		  + " " + tz390.get_cur_bal_line_id(cur_line_file_num,
+                  bal_line_xref_file_line[bal_line_index],
+                  bal_line_num[bal_line_index],
+                  mac_call_gen, // RPI 891 
+                  cur_line_type) 
+		  + bal_line);
+    }
+    force_list_bal = false;   // RPI 285
+    update_list_bal_line();
+    if (list_use){
+    	list_use();
+    	list_use = false;
+    }
 }
+
+
+
+   /**
+    * set true if ok to list BAL line
+    * on PRN file
+    * @return true if BAL line to be printed; false to suppress
+    */
 private boolean check_list_bal_line(){
-	/*
-	 * set true if ok to list BAL line
-	 * on PRN file
-	 */
 	if (!tz390.opt_list){ 
 		// no PRN file generated  // rpi 895 no ERRSUM check
 		return false; 
@@ -5782,10 +5858,13 @@ private boolean check_list_bal_line(){
     	return false;
     }
 }
+
+
+
+   /**
+    * update mac_call_gen after prn
+    */
 private void update_list_bal_line(){
-	/*
-	 * update mac_call_gen after prn
-	 */
     if (mac_call_first){
     	mac_call_first = false;
     	mac_call_gen   = true; // RPI 891 
@@ -5797,10 +5876,14 @@ private void update_list_bal_line(){
         list_bal_line = true;   // RPI 891 
     }
 }
+
+
+
+   /**
+    * add plus rld
+    * @param exp_esd ???
+    */
 private void add_rld(int exp_esd){
-	/*
-	 * add plus rld
-	 */
 	if (cur_esd == 0 || sym_type[esd_sid[esd_base[cur_esd]]] != sym_cst){
 		return; // RPI 1208
 	}		       
@@ -5809,10 +5892,14 @@ private void add_rld(int exp_esd){
 		tot_exp_rld_add++;
 	}
 }
+
+
+
+   /**
+    * sub rld
+    * @param exp_esd ???
+    */
 private void sub_rld(int exp_esd){
-	/*
-	 * sub rld
-	 */
 	if (cur_esd == 0 || sym_type[esd_sid[esd_base[cur_esd]]] != sym_cst){
 		return; // RPI 1208
 	}	
@@ -5821,10 +5908,13 @@ private void sub_rld(int exp_esd){
 		tot_exp_rld_sub++;
 	}
 }
+
+
+
+   /**
+    * reduce rld on stack
+    */
 private void reduce_exp_rld(){
-	/*
-	 * reduce rld on stack 
-	 */
 	int index1 = 0;
 	int index2 = 0;
 	while (index1 < tot_exp_rld_add){
@@ -5857,16 +5947,19 @@ private void reduce_exp_rld(){
 		exp_type = sym_rld;
 	}
 }
+
+
+
+   /**
+    * generate rlds for expression
+    * Notes:
+    *   1.  convert to rel csect vs rel module
+    *       offsets for linker use. 
+    *   2.  Original exp_val saved in rld_exp_val
+    *       for use in PRN display (i.e. show addresses
+    *       relative to module versus CSECT).
+    */
 private void gen_exp_rld(){
-	/*
-	 * generate rlds for expression
-	 * Notes:
-	 *   1.  convert to rel csect vs rel module
-	 *       offsets for linker use. 
-	 *   2.  Original exp_val saved in rld_exp_val
-	 *       for use in PRN display (i.e. show addresses
-	 *       relative to module versus CSECT).
-	 */
 	if (cur_esd == 0 || sym_type[esd_sid[esd_base[cur_esd]]] != sym_cst){ // RPI 1208
 		return;
 	}        
@@ -5919,10 +6012,13 @@ private void gen_exp_rld(){
 		index++;
 	}
 }
+
+
+
+   /**
+    * write RLD's to the OBJ file in ascii hex
+    */
 private void gen_obj_rlds(){
-	/*
-	 * write RLD's to the OBJ file in ascii hex
-	 */
 	xref_bal_index = -1;
 	if (tot_rld > 0){
 		put_prn_line("Relocation Definitions");
@@ -5940,10 +6036,13 @@ private void gen_obj_rlds(){
 		index++;
 	}
 }
+
+
+
+   /**
+    * write END object record with entry if specified  RPI 1197
+    */
 private void gen_obj_end(){
-	/*
-	 * write END object record with entry if specified  RPI 1197
-	 */
 	if (end_entry_found){
 		put_obj_line(".END" + " ESD=" + tz390.get_hex(sym_esd[end_entry_sid],4)
 		                    + " LOC=" + tz390.get_hex(sym_loc[end_entry_sid]-sym_loc[esd_sid[sym_esd[end_entry_sid]]],8));
@@ -5952,11 +6051,14 @@ private void gen_obj_end(){
                             + " LOC=00000000");
 	}
 }
+
+
+
+   /**
+    * list symbols in alpah order 
+    * with optional cross reference
+    */
 private void gen_sym_list(){
-	/*
-	 * list symbols in alpah order 
-	 * with optional cross reference
-	 */
 	 put_prn_line(tz390.newline +  // RPI 500
 	 		"Symbol Table Listing" + tz390.newline);
 	 TreeSet<String> sort_sym = new TreeSet<String>();
@@ -6008,11 +6110,14 @@ private void gen_sym_list(){
         }
 	 }
 }
+
+
+
+   /**
+    * list literals in alpha order
+    * with optional cross reference
+    */
 private void gen_lit_xref_list(){
-	/*
-	 * list literals in alpha order
-	 * with optional cross reference
-	 */
 	 put_prn_line(tz390.newline + "Literal Table Listing" + tz390.newline); // RPI 500
 	 TreeSet<String> sort_lit = new TreeSet<String>();
 	 int index = 0;
@@ -6053,59 +6158,70 @@ private void gen_lit_xref_list(){
 	 }
 	 put_prn_line(" ");
 }
+
+
+
+   /**
+    * load bal source
+    * 
+    * 1.  Concatentate any continuations indicated
+    *     by non-blank in position 72.  Each 
+    *     continuation must start at position 16.
+    */
 private void load_bal(){
-	/*
-	 * load bal source
-	 * 
-	 * 1.  Concatentate any continuations indicated
-	 *     by non-blank in position 72.  Each 
-	 *     continuation must start at position 16.
-	 */
-	    if (!mz390_call){ // RPI 415
-       		String bal_file_name = tz390.get_file_name(tz390.dir_bal,tz390.pgm_name,tz390.pgm_type); // RPI 866
-	    	bal_file = new File(bal_file_name);
-     	    try {
-     	    	bal_file_buff = tz390.getReaderForDefaultCharset(bal_file);
-     	    } catch (Exception e){
-     	    	abort_error(6,"I/O error on bal open - " + e.toString());
-     	    }
-	    }
-		get_bal_line();
-		while (!bal_eof && bal_line != null){
-            save_bal_line();
-			parse_bal_line();
-            bal_op_index = find_bal_op();
-            if (bal_op_index > -1){ // RPI 274 OPSYN cancel
-	           	process_bal_op();    
+    if (!mz390_call){ // RPI 415
+   		String bal_file_name = tz390.get_file_name(tz390.dir_bal,tz390.pgm_name,tz390.pgm_type); // RPI 866
+    	bal_file = new File(bal_file_name);
+ 	    try {
+ 	    	bal_file_buff = tz390.getReaderForDefaultCharset(bal_file);
+ 	    } catch (Exception e){
+ 	    	abort_error(6,"I/O error on bal open - " + e.toString());
+ 	    }
+    }
+	get_bal_line();
+	while (!bal_eof && bal_line != null){
+        save_bal_line();
+		parse_bal_line();
+        bal_op_index = find_bal_op();
+        if (bal_op_index > -1){ // RPI 274 OPSYN cancel
+           	process_bal_op();    
+        }
+		if  (bal_line != null){
+			tot_bal_line++;
+			if (tot_bal_line >= tz390.opt_maxline){ // issue #343 moved here to catch before end
+		        abort_error(83,"maximum source lines exceeded");
 	        }
- 			if  (bal_line != null){
-				tot_bal_line++;
-				if (tot_bal_line >= tz390.opt_maxline){ // issue #343 moved here to catch before end
-			        abort_error(83,"maximum source lines exceeded");
-		        }
-	            get_bal_line();
-			}
+            get_bal_line();
 		}
-		if (!end_found){
-			process_end();
-		}		
-        if (tz390.opt_tracea){
-        	tz390.put_trace("PASS " + cur_pass + " TOTAL ERRORS = " + az390_errors);
-        }
-        if (!mz390_call){ // RPI 415
-        	try {
-        		bal_file_buff.close();
-        	} catch (Exception e){
-        		abort_error(7,"I/O error on BAL file close " + e.toString());
-        	}
-        }
+	}
+	if (!end_found){
+		process_end();
+	}		
+    if (tz390.opt_tracea){
+    	tz390.put_trace("PASS " + cur_pass + " TOTAL ERRORS = " + az390_errors);
+    }
+    if (!mz390_call){ // RPI 415
+    	try {
+    		bal_file_buff.close();
+    	} catch (Exception e){
+    		abort_error(7,"I/O error on BAL file close " + e.toString());
+    	}
+    }
 }
+
+
+
+   /**
+    * 1.  pass mz390 bal_line to az390 bal_line
+    *     with synchronization of threads.
+    * 2.  ignore BAL after END
+    * @param new_bal_line       - source line
+    * @param new_xref_file_name - file name for cross ref
+    * @param new_xref_file_type - file type for cross ref
+    * @param new_xref_file_num  - file nr   for cross ref
+    * @param new_xref_line_num  - file line for cross ref
+    */
 public void pass_bal_line(String new_bal_line,String new_xref_file_name, char new_xref_file_type,int new_xref_file_num, int new_xref_line_num){
-	/*
-	 * 1.  pass mz390 bal_line to az390 bal_line
-	 *     with synchronization of threads.
-	 * 2.  ignore BAL after END
-	 */
 	if (sym_lock){
 		abort_error(168,"bal pass sym lock error on line - " + new_bal_line);
 	}
@@ -6133,45 +6249,56 @@ public void pass_bal_line(String new_bal_line,String new_xref_file_name, char ne
    		lock.unlock();
    	}
 }
+
+
+
+   /**
+    * 1.  Block mz390 until az390 is waiting
+    *     for next bal.
+    * 2.  Set sym_lock
+    * 
+    * Notes:
+    *   1.  See az390 pass_bal for lock check.
+    *   2,  See mz390 put_bal_line for lock reset. 
+    * 
+    * @param desc - description
+    */
 public  void set_sym_lock(String desc){
-	/*
-	 * 1.  Block mz390 until az390 is waiting
-	 *     for next bal.
-	 * 2.  Set sym_lock
-	 * 
-	 * Notes:
-	 *   1.  See az390 pass_bal for lock check.
-     *   2,  See mz390 put_bal_line for lock reset. 
-	 */
-	    if (tz390.opt_traceall){ // RPI 403
-    		tz390.put_trace("az390 set symbol lock" + desc);
-    	}
-	    sym_lock_desc = desc;
-        // wait for az390 to processing pending bal
-	    while (az390_running 
-        		&& (bal_line_full // RPI 485
-        			|| !az390_waiting)){
-        	Thread.yield();
-        }
-		if (!lookahead_mode 
-			&& az390_thread != Thread.currentThread()){
-			sym_lock = true;
-    	} else {
-			abort_error(167,"invalid set sym lock request - " + sym_lock_desc);
-	    }
+    if (tz390.opt_traceall){ // RPI 403
+		tz390.put_trace("az390 set symbol lock" + desc);
+	}
+    sym_lock_desc = desc;
+    // wait for az390 to processing pending bal
+    while (az390_running 
+    		&& (bal_line_full // RPI 485
+    			|| !az390_waiting)){
+    	Thread.yield();
+    }
+	if (!lookahead_mode 
+		&& az390_thread != Thread.currentThread()){
+		sym_lock = true;
+	} else {
+		abort_error(167,"invalid set sym lock request - " + sym_lock_desc);
+    }
 }
+
+
+
+   /**
+    * reset sym lock at next mz390 bal line
+    * and at start of lookahead mode.
+    */
 public  void reset_sym_lock(){
-	/*
-	 * reset sym lock at next mz390 bal line
-	 * and at start of lookahead mode.
-	 */
 	sym_lock = false;
 }
+
+
+
+   /**
+    * get next bal line from bal file
+    * or from mz390 parallel thread pass
+    */
 private void get_bal_line(){
-	/*
-	 * get next bal line from bal file
-	 * or from mz390 parallel thread pass
-	 */
 	check_timeout();
 	if (mz390_call){
 		lock.lock();
@@ -6250,10 +6377,13 @@ private void get_bal_line(){
        	abort_error(9,"I/O error on file read " + e.toString());
     }
 }
+
+
+
+   /**
+    * save bal line during loading for log_error use
+    */
 private void save_bal_line(){
-	/* 
-	 * save bal line during loading for log_error use
-	 */
 	bal_line_index = tot_bal_line;
 	bal_line_text[tot_bal_line] = bal_line;
 	bal_line_num[tot_bal_line] = tz390.cur_bal_line_num;
@@ -6261,10 +6391,13 @@ private void save_bal_line(){
 	bal_line_xref_file_line[tot_bal_line] = bal_xref_file_line;
     xref_bal_index = tot_bal_line; // for error xref during lookahead
 }
+
+
+
+   /**
+    * set bal_label and bal_op
+    */
 private void parse_bal_line(){
-	/*
-	 * set bal_label and bal_op
-	 */
 	if (tz390.opt_tracea){
 		if (bal_line_xref_file_num[bal_line_index] == 0){
 			trace_pfx = "OPEN CODE" + tz390.right_justify("" + bal_line_xref_file_line[bal_line_index],6) + tz390.right_justify("" + bal_line_num[bal_line_index],7) + " ";
@@ -6291,10 +6424,16 @@ private void parse_bal_line(){
     }
     bal_parms = tz390.split_parms;
 }
+
+
+
+   /**
+    * return base file name from path\file.sfx
+    *
+    * @param file_name - file name
+    * @return  base name of the file (without extension)
+    */
 private String get_base_name(String file_name){
-	/*
-	 * return base file name from path\file.sfx
-	 */
 	int index1 = file_name.lastIndexOf(File.separator);
     int index2 = file_name.lastIndexOf('.');
     if (index2 <= index1){  // RPI 1210 
@@ -6302,14 +6441,18 @@ private String get_base_name(String file_name){
     }
     return file_name.substring(index1+1,index2);
 }
+
+
+
+   /**
+    * return index of bal operation
+    * or return  0 for comments
+    * or return -1 if undefined operation
+    * or return -2 if cancelled OPSYN
+    *
+    * @return index of bal operation, or -1=undefine, -2=cancelled OPSYN, 0=comment
+    */
 private int find_bal_op(){
-	/*
-	 * return index of bal operation 
-	 * or return -1 if undefined operation
-	 * or return -2 if cancelled OPSYN
-	 * 
-	 * return 0 for comments
-	 */
 	int index = 0;
 	if  (bal_op != null 
 		 && bal_op.length() > 0){
@@ -6343,132 +6486,159 @@ private int find_bal_op(){
 		return - 1;
 	}
 }
+
+
+
+   /**
+    * process EXTRN, ENTRY, or WXTRN statement
+    * @param esd_type - ???
+    */
 private void process_esd(byte esd_type){
-	/*
-	 * process EXTRN, ENTRY, or WXTRN statement
-	 */
 	String token = null;
 	boolean extrn_eod = false;
     extrn_match = extrn_pattern.matcher(bal_parms);
 	while (!bal_abort && !extrn_eod
-			&& extrn_match.find()){
-	       token = extrn_match.group();
-	       switch (token.charAt(0)){
-	       case ',':
-	    	   break;
-	       case '\t':  //tab  RPI181
-	       case '\r':  //cr
-	       case '\n':  //lf
-	       case ' ':   //space
-	           extrn_eod = true;
-	           break;
-	       default:
-	    	   switch (esd_type){
-	    	   case 3: // sym_ent
-	    	   	   cur_sid = find_sym(token);
-    	    	   if (cur_sid != -1 // RPI 489
-    	    		   && sym_def[cur_sid] > sym_def_ref){ 
-	        	       add_entry(token);
-	        	   } else {
-	        		   log_error(156,"ENTRY not found - " + token);
-	        	   }
-	               break;
-    	       case 4: // sym_ext
-    	    	   cur_sid = find_sym(token);
-    	    	   if (!lookahead_mode
-    	    		   && (cur_sid == -1
-    	    		       || sym_def[cur_sid] == sym_def_lookahead) // RPI 415 
-    	    		       || sym_def[cur_sid] != sym_cst){ // RPI 1044
-    	    		   cur_sid = add_extrn(token);
-    	    	   }
-    	    	   break;
-    	       case 8: // sym_wxt
-    	    	   cur_sid = find_sym(token);
-    	    	   if (!lookahead_mode
-    	    		   && (cur_sid == -1
-    	    		       || sym_def[cur_sid] == sym_def_lookahead) // RPI 415 
-    	    		       || sym_def[cur_sid] != sym_cst){ // RPI 1044
-    	    		   cur_sid = add_wxtrn(token);
-    	    	   }
-    	    	   break;
+		&& extrn_match.find()){
+	   token = extrn_match.group();
+	   switch (token.charAt(0)){
+	   case ',':
+		   break;
+	   case '\t':  //tab  RPI181
+	   case '\r':  //cr
+	   case '\n':  //lf
+	   case ' ':   //space
+	       extrn_eod = true;
+	       break;
+	   default:
+		   switch (esd_type){
+		   case 3: // sym_ent
+		   	   cur_sid = find_sym(token);
+        	   if (cur_sid != -1 // RPI 489
+        		   && sym_def[cur_sid] > sym_def_ref){ 
+	    	       add_entry(token);
+	    	   } else {
+	    		   log_error(156,"ENTRY not found - " + token);
 	    	   }
-	       }
+	           break;
+           case 4: // sym_ext
+        	   cur_sid = find_sym(token);
+        	   if (!lookahead_mode
+        		   && (cur_sid == -1
+        		       || sym_def[cur_sid] == sym_def_lookahead) // RPI 415 
+        		       || sym_def[cur_sid] != sym_cst){ // RPI 1044
+        		   cur_sid = add_extrn(token);
+        	   }
+        	   break;
+           case 8: // sym_wxt
+        	   cur_sid = find_sym(token);
+        	   if (!lookahead_mode
+        		   && (cur_sid == -1
+        		       || sym_def[cur_sid] == sym_def_lookahead) // RPI 415 
+        		       || sym_def[cur_sid] != sym_cst){ // RPI 1044
+        		   cur_sid = add_wxtrn(token);
+        	   }
+        	   break;
+		   }
+	   }
 	}
 }
+
+
+
+   /**
+    * add EXTRN using V vs S key index
+    *
+    * @param token - input token
+    * @return index of token
+    */
 private int add_extrn(String token){
-	/*
-	 * add EXTRN using V vs S key index
-	 */
-	   int index  = tz390.find_key_index('V',token.toUpperCase());
-	   if (index == -1){
-		   index = add_sym(token);
-	   }
-	   if (index >= 1){
-		   if (sym_def[index] == sym_def_ref
-			   && sym_attr[index] == tz390.ascii_to_ebcdic['U']){ 			   
-			   sym_type[index] = sym_ext;
-			   sym_attr[index] = tz390.ascii_to_ebcdic['T']; // RPI 415
-			   sym_esd[index] = add_esd(index,sym_ext);
-		   }
-	   } else {
-		   abort_error(153,"symbol table error on add extrn " + token);
-	   }
-	   return index; // RPI 1044
+	int index  = tz390.find_key_index('V',token.toUpperCase());
+	if (index == -1){
+	    index = add_sym(token);
+	}
+	if (index >= 1){
+	    if (sym_def[index] == sym_def_ref
+		    && sym_attr[index] == tz390.ascii_to_ebcdic['U']){
+		    sym_type[index] = sym_ext;
+		    sym_attr[index] = tz390.ascii_to_ebcdic['T']; // RPI 415
+		    sym_esd[index] = add_esd(index,sym_ext);
+	    }
+	} else {
+	    abort_error(153,"symbol table error on add extrn " + token);
+	}
+	return index; // RPI 1044
 }
+
+
+
+   /**
+    * add WXTRN using V vs S key index
+    *
+    * @param token - input token
+    * @return index of token
+    */
 private int add_wxtrn(String token){
-	/*
-	 * add WXTRN using V vs S key index
-	 */
-	   int index  = tz390.find_key_index('V',token.toUpperCase());
-	   if (index == -1){
-		   index = add_sym(token);
+   int index  = tz390.find_key_index('V',token.toUpperCase());
+   if (index == -1){
+	   index = add_sym(token);
+   }
+   if (index >= 1){
+	   if (sym_def[index] == sym_def_ref
+		   && sym_attr[index] == tz390.ascii_to_ebcdic['U']){ 			   
+		   sym_type[index] = sym_wxt;
+		   sym_attr[index] = tz390.ascii_to_ebcdic['S']; // RPI 415
+		   sym_esd[index] = add_esd(index,sym_wxt);
 	   }
-	   if (index >= 1){
-		   if (sym_def[index] == sym_def_ref
-			   && sym_attr[index] == tz390.ascii_to_ebcdic['U']){ 			   
-			   sym_type[index] = sym_wxt;
-			   sym_attr[index] = tz390.ascii_to_ebcdic['S']; // RPI 415
-			   sym_esd[index] = add_esd(index,sym_wxt);
-		   }
-	   } else {
-		   abort_error(154,"symbol table error on add wxtrn " + token);
-	   }
-	   return index; // RPI 1044
+   } else {
+	   abort_error(154,"symbol table error on add wxtrn " + token);
+   }
+   return index; // RPI 1044
 }
+
+
+
+   /**
+    * add ENTRY 
+    *
+    * @param token - input token
+    */
 private void add_entry(String token){
-	/*
-	 * add ENTRY 
-	 */
-	   if (sym_type[cur_sid] == sym_rel 
-			|| sym_type[cur_sid] == sym_cst){ // RPI 288
-           int index = 1;
-           while (index <= tot_esd){ 
-        	   if (esd_sid[index] == cur_sid){
-        		   return;  // ESD already defined
-        	   }
-        	   index++;
-           }
-		   add_esd(cur_sid,sym_ent);
-       } else {
-		   log_error(97,"invalid entry type symbol - " + sym_name[cur_sid]);
-		   cur_sid = -1;
-       }
+    if (sym_type[cur_sid] == sym_rel 
+		|| sym_type[cur_sid] == sym_cst){ // RPI 288
+        int index = 1;
+        while (index <= tot_esd){ 
+    	    if (esd_sid[index] == cur_sid){
+    		    return;  // ESD already defined
+    	    }
+    	    index++;
+        }
+	    add_esd(cur_sid,sym_ent);
+    } else {
+	    log_error(97,"invalid entry type symbol - " + sym_name[cur_sid]);
+	    cur_sid = -1;
+    }
 }
+
+
+
+   /**
+    * add or update csect, dsect, or loctr
+    * indicated by sym_cst, sym_dst, or sym_lct type parm
+    * Steps:
+    *   1.  Update previous section if any with 
+    *       max length and any loctr pointers
+    *   2.  If name omitted used private cst/dst  RPI 254
+    *   3.  Add new section if not found or external
+    *       reference found as local label.
+    *   4.  Reset location counter to end of 
+    *       current section.
+    *   5.  Update prev section type and sid for
+    *       use in processing sym_lct sections.
+    *
+    * @param sect_type - section type: CSECT / DSECT / RSECT
+    * @param sect_name - section name
+    */
 private void process_sect(byte sect_type,String sect_name){
-	/*
-	 * add or update csect, dsect, or loctr
-	 * indicated by sym_cst, sym_dst, or sym_lct type parm
-	 * Steps:
-	 *   1.  Update previous section if any with 
-	 *       max length and any loctr pointers
-	 *   2.  If name omitted used private cst/dst  RPI 254
-	 *   3.  Add new section if not found or external
-	 *       reference found as local label.
-	 *   4.  Reset location counter to end of 
-	 *       current section.
-	 *   5.  Update prev section type and sid for
-	 *       use in processing sym_lct sections.
-	 */
 	cur_sym_sect = true;  // RPI 553
 	if (cur_esd_sid > 0){
 		update_sect();
@@ -6572,14 +6742,19 @@ private void process_sect(byte sect_type,String sect_name){
 		loc_start = loc_ctr;
 	}
 }
+
+
+
+   /**
+    * 1.  Return defined symbol index else -1
+    * 2.  If not lookahead mode
+    *        if found, add xref
+    *        else if vcon mode, add extrn
+    *
+    * @param name - input symbol: label or variable name
+    * @return index of symbol, or -1 if not defined
+    */
 public int find_sym(String name){ // RPI 415 public
-	/*
-	 * 1.  Return defined symbol index else -1
-	 * 2.  If not lookahead mode
-	 *        if found, add xref
-	 *        else if vcon mode, add extrn
-	 * 
-	 */
 	int index = 0;
 	if (dcv_type){
 		index  = tz390.find_key_index('V',name.toUpperCase());
@@ -6608,11 +6783,13 @@ public int find_sym(String name){ // RPI 415 public
 	return index;
 }
 
+
+
+   /**
+    * add or update relative labels
+    * and exclude CST, DST, EQU, USING symbols
+    */
 public void update_label(){ // RPI 415
-	/*
-	 * add or update relative labels
-	 * and exclude CST, DST, EQU, USING symbols
-	 */
 	label_match = label_pattern.matcher(bal_label);  // RPI 253
 	if (!label_match.find()
 	   || !label_match.group().equals(bal_label)){
@@ -6661,11 +6838,14 @@ public void update_label(){ // RPI 415
 		duplicate_symbol_error();
 	}
 }
+
+
+
+   /**
+    * init sym variables for new or 
+    * existing lookahead symbol table entry
+    */
 private void init_sym_entry(){
-	/*
-	 * init sym variables for new or 
-	 * existing lookahead symbol table entry
-	 */
 	   if (lookahead_mode){
 		   sym_def[cur_sid] = sym_def_lookahead;
 	   } else {
@@ -6685,10 +6865,16 @@ private void init_sym_entry(){
 		   sym_len[cur_sid] = loc_len;
 	   }
 }
+
+
+
+   /**
+    * return total length of csect or dsect
+    *
+    * @param index value
+    * @return length in bytes
+    */
 private int get_sym_len(int index){
-	/*
-	 * return total length of csect or dsect
-	 */
     switch (sym_type[index]){
     case 1: // CSECT or CSECT LOCTR
     case 2: // DSECT or DSECT LOCTR
@@ -6705,32 +6891,40 @@ private int get_sym_len(int index){
     	return sym_len[index];
     }
 }
+
+
+
+   /**
+    * update length of current section
+    * and save current loc_ctr for continue
+    */
 private void update_sect(){
-	/*
-	 * update length of current section
-	 * and save current loc_ctr for continue
-	 */
 	 if (loc_ctr - sym_loc[cur_esd_sid] > sym_len[cur_esd_sid]){
 	 	sym_len[cur_esd_sid] = loc_ctr - sym_loc[cur_esd_sid];
 	 }
 	 esd_loc[cur_esd] = loc_ctr; // rpi 778
 }
+
+
+
+   /**
+    * processing by request type:
+    * 1.  parse ds/dc bal statement and allocate
+    *     or gen data items including alignment
+    *     bytes where required.
+    * 2.  find or add literal table entry using
+    *     ds/dc type single parm following = parm
+    * 3.  generate literal pool dc using loc_ctr
+    *     set to referenced instruction.
+    *
+    * if LTORG, gen lits
+    *
+    * if not DC/DS/LTORG set dc_lit and process first
+    * field as literal and update exp_index
+    *
+    * @param request_type - request type code: 1=parse, 2=find, 3=generate
+    */
 public void process_dc(int request_type){ // RPI 415
-    /*
-     * processing by request type:
-     * 1.  parse ds/dc bal statement and allocate
-     *     or gen data items including alignment
-     *     bytes where required.
-     * 2.  find or add literal table entry using
-     *     ds/dc type single parm following = parm
-     * 3.  generate literal pool dc using loc_ctr
-     *     set to referenced instruction.
-     * 
-     * if LTORG, gen lits
-     * 
-     * if not DC/DS/LTORG set dc_lit and process first
-     * field as literal and update exp_index
-     */
 	 switch (request_type){
 	     case 1: // process ds/dc statements
 	    	 check_private_csect(); 
@@ -6914,10 +7108,15 @@ public void process_dc(int request_type){ // RPI 415
 		 log_error(174,"location counter / hex object code error");
 	 }
 }
+
+
+
+   /**
+    * calculate abs value else abort
+    *
+    * @return true if absolute expression, false otherwise
+    */
 private boolean calc_abs_exp(){
-	/*
-	 * calculate abs value else abort
-	 */
 	if (calc_exp()
 			&& exp_esd == 0){
 		return true;
@@ -6926,10 +7125,15 @@ private boolean calc_abs_exp(){
 	}
 	return false;
 }
+
+
+
+   /**
+    * calculate rel value else abort
+    *
+    * @return true if relative expression, false otherwise
+    */
 private boolean calc_rel_exp(){
-	/*
-	 * calculate rel value else abort
-	 */
 	if (calc_exp()
 			&& exp_esd > 0){
 		return true;
@@ -6938,11 +7142,16 @@ private boolean calc_rel_exp(){
 	}
 	return false;
 }
+
+
+
+   /**
+    * set dca_ignore_refs for A and V type
+    * symbol refs if DS or DSECT
+    *
+    * @return true if valid DC A() expression, false otherwise
+    */
 private boolean calc_dca_exp(){
-	/*
-	 * set dca_ignore_refs for A and V type
-	 * symbol refs if DS or DSECT
-	 */
 	if (!dc_op || dcv_type){ 
 		dca_ignore_refs = true;
 		boolean temp_rc = calc_exp();
@@ -6952,16 +7161,21 @@ private boolean calc_dca_exp(){
 		return calc_exp();
 	}
 }
+
+
+
+   /**
+    * parse abs/rel expression starting at
+    * exp_text.charAt(exp_index)
+    * return true if ok and set
+    * 1. exp_val = abs or rel offset
+    * 2. exp_esd = abs 0 or cst/dst esd
+    * 3. exp_index = index to terminator
+    * which can be end of string, or (),
+    *
+    * @return true if valid absolute or relative expression, false otherwise
+    */
 private boolean calc_exp(){
-	/*
-	 * parse abs/rel expression starting at
-	 * exp_text.charAt(exp_index)
-	 * return true if ok and set
-	 * 1. exp_val = abs or rel offset
-	 * 2. exp_esd = abs 0 or cst/dst esd
-	 * 3. exp_index = index to terminator
-	 * which can be end of string, or (),
-	 */
 	   if (exp_text == null || exp_index > exp_text.length()){
 	   	   exp_text = ""; // RPI 356
 		   return false;
@@ -7002,13 +7216,16 @@ private boolean calc_exp(){
        	  return false;
        }
 }
+
+
+
+   /**
+    * parse general expression tokens
+    *   1. push sym or sdt
+    *   2. exec or push operations + - * /
+    *   3. terminate on end of string or (),
+    */
 private void proc_exp_token(){
-	/*
-	 * parse general expression tokens
-	 *   1. push sym or sdt
-	 *   2. exec or push operations + - * /
-	 *   3. terminate on end of string or (),
-	 */
 	check_prev_op = true;
 	while (check_prev_op && !bal_abort){
 	    exp_op = exp_token.toUpperCase();
@@ -7130,10 +7347,13 @@ private void proc_exp_token(){
 	    }
 	}
 }
+
+
+
+   /**
+    * push current location counter on stack
+    */
 private void proc_loc_ctr(){
-	/*
-	 * push current location counter on stack
-	 */
     exp_sym_last = true;
     check_prev_op = false;
 	if (inc_tot_exp_stk_sym()){
@@ -7150,6 +7370,12 @@ private void proc_loc_ctr(){
 	   }
     }
 }
+
+
+
+   /**
+    * description missing
+    */
 private void proc_exp_sym(){
 	if (exp_token.length() > 1 && exp_token.charAt(exp_token.length()-1) == '.'){
 		if (gen_obj_code){
@@ -7161,11 +7387,23 @@ private void proc_exp_sym(){
 	}
     check_prev_op = false;
 }
+
+
+
+   /**
+    * description missing
+    */
 private void proc_exp_sdt(){
 	exp_sym_last = true;
     push_exp_sdt(exp_token);  // RPI 415 (was exp_op in caps)
     check_prev_op = false;
 }
+
+
+
+   /**
+    * description missing
+    */
 private void proc_exp_op(){
 	if  (tot_exp_stk_op > 0){
 	    exp_prev_op = exp_stk_op[tot_exp_stk_op -1];
@@ -7269,10 +7507,14 @@ private void proc_exp_op(){
     	log_error(13,"expression parsing error"); // RPI 260
     }
 }
+
+
+
+   /**
+    * add top of stack value to prev. value
+    * and pop the top stack value off
+    */
 private void exp_add(){
-	/* add top of stack value to prev. value
-	 * and pop the top stack value off
-	 */
 	get_stk_sym();
 	if  (sym_esd1 != 0 || sym_esd2 != 0){
 	    if  ((sym_esd1 > 0) && (sym_esd2 > 0)){
@@ -7297,10 +7539,14 @@ private void exp_add(){
 	sym_val1 = sym_val1 + sym_val2;
 	put_stk_sym();
 }
+
+
+
+   /**
+    * sub top of stack value from prev. value
+    * and pop the top stack value off
+    */
 private void exp_sub(){
-	/* sub top of stack value from prev. value
-	 * and pop the top stack value off
-	 */
 	get_stk_sym();
 	if  (sym_esd1 > 0 || sym_esd2 > 0){
 	    if  (sym_esd1 > 0 && sym_esd2 > 0){
@@ -7330,9 +7576,13 @@ private void exp_sub(){
 	sym_val1 = sym_val1 - sym_val2;
 	put_stk_sym();
 }
+
+
+
+   /**
+    * mpy top of stack value to prev. value * and pop the top stack value off
+    */
 private void exp_mpy(){
-	/* mpy top of stack value to prev. value * and pop the top stack value off
-	 */
 	get_stk_sym();
 	if (sym_esd1 != 0 || sym_esd2 != 0){
 		log_error(58,"invalid rld multiplication - " + exp_text.substring(0,exp_index));
@@ -7341,10 +7591,14 @@ private void exp_mpy(){
 	sym_val1 = sym_val1 * sym_val2;
 	put_stk_sym();
 }
+
+
+
+   /**
+    * div top of stack value into prev. value
+    * and pop the top stack value off
+    */
 private void exp_div(){
-	/* div top of stack value into prev. value
-	 * and pop the top stack value off
-	 */
 	get_stk_sym();
 	if (sym_esd1 != 0 || sym_esd2 != 0){
 		log_error(59,"invalid rld division - " + exp_text.substring(0,exp_index));
@@ -7361,11 +7615,14 @@ private void exp_div(){
 	}
 	put_stk_sym();
 }
+
+
+
+   /**
+    * replace sym or lit on stack
+    * with integer I' attribute value
+    */
 private void exp_integer_op(){ // RPI 790
-	/*
-	 * replace sym or lit on stack
-	 * with integer I' attribute value
-	 */
 	if (tot_exp_stk_sym >= 1){
 		int temp_int = -1;
 		if (cur_sid >  0){
@@ -7383,11 +7640,14 @@ private void exp_integer_op(){ // RPI 790
 		log_error(26,"missing symbol for integer attribute");
 	}
 }
+
+
+
+   /**
+    * replace sym or lit on stack
+    * with length value
+    */
 private void exp_len_op(){
-	/*
-	 * replace sym or lit on stack
-	 * with length value
-	 */
 	if (tot_exp_stk_sym >= 1){
 		int temp_len = -1;
 		if (cur_sid >  0){
@@ -7405,11 +7665,14 @@ private void exp_len_op(){
 		log_error(26,"missing symbol for length attribute");
 	}
 }
+
+
+
+   /**
+    * replace sym or lit on stack
+    * with scale value
+    */
 private void exp_scale_op(){ // RPI 790
-	/*
-	 * replace sym or lit on stack
-	 * with scale value
-	 */
 	if (tot_exp_stk_sym >= 1){
 		int temp_scale = -1;
 		if (cur_sid >  0){
@@ -7427,10 +7690,13 @@ private void exp_scale_op(){ // RPI 790
 		log_error(26,"missing symbol for length attribute");
 	}
 }
+
+
+
+   /**
+    * set stk_values 1 and and 2 from top of stack
+    */
 private void get_stk_sym(){
-	/*
-	 * set stk_value1 & 2 from top of stack
-	 */
 	if (tot_exp_stk_sym >= 2){
 	    sym_esd1 = exp_stk_sym_esd[tot_exp_stk_sym - 2];
 		sym_val1 = exp_stk_sym_val[tot_exp_stk_sym - 2];
@@ -7450,13 +7716,16 @@ private void get_stk_sym(){
 		log_error(17,"expression parsing error"); // RPI 260
 	}
 }
+
+
+
+   /**
+    * pop operator from op stack
+    * pop sym_val2 off var stack
+    * replace original sym_val1 
+    * on top of stack with result
+    */
 private void put_stk_sym(){
-	/*
-	 * pop operator from op stack
-	 * pop sym_val2 off var stack
-	 * replace original sym_val1 
-	 * on top of stack with result
-	 */
 	if ((tot_exp_stk_sym >= 2) && (tot_exp_stk_op > 0)){
 		tot_exp_stk_op--;
 		tot_exp_stk_sym--;
@@ -7468,13 +7737,15 @@ private void put_stk_sym(){
 	exp_sym_last = true;
 }
 
+
+
+   /**
+    * put current op on stack
+    * 
+    * if unary minus push 0 var first
+    * if unary plus skip the push
+    */
 private void exp_push_op(){
-	/*
-	 * put current op on stack
-	 * 
-	 * if unary minus push 0 var first
-	 * if unary plus skip the push
-	 */
    	if (tot_exp_stk_op > max_exp_stk){
    		abort_error(20,"stack operation size exceeded");
    	}
@@ -7483,20 +7754,26 @@ private void exp_push_op(){
    	exp_sym_pushed = false;
    	exp_sym_last = false;
 }
+
+
+
+   /**
+    * pop current op on stack
+    */
 private void exp_pop_op(){
-	/*
-	 * pop current op on stack
-	 */
       tot_exp_stk_op--;
       if (tot_exp_stk_op < 0){
       	 log_error(21,"expression parsing error"); // RPI 260
       }
 }
+
+
+
+   /**
+    * terminate expression returning
+    * value on stack if no errors
+    */
 private void exp_term(){
-	/*
-	 * terminate expression returning
-	 * value on stack if no errors
-	 */
 	if (tot_exp_stk_sym == 1 && tot_exp_stk_op == 0){
 		exp_term = true;
     	exp_val = exp_stk_sym_val[0];
@@ -7528,11 +7805,14 @@ private void exp_term(){
 		log_error(35,"expression parsing error"); // RPI 260
 	}
 }
+
+
+
+   /**
+    * push symbol on stack else abort
+    * set cur_sid > 0 used by L'
+    */
 private void push_exp_sym(){
-	/*
-	 * push symbol on stack else abort
-	 * set cur_sid > 0 used by L'
-	 */
 	if (inc_tot_exp_stk_sym()){
 	   cur_sid = find_sym(exp_token);
 	   if (cur_sid > 0 && sym_type[cur_sid] == sym_und){
@@ -7563,19 +7843,22 @@ private void push_exp_sym(){
 	   }
     }
 }
+
+
+
+   /**
+    * push literal on stack else abort
+    * and set cur_lit >= 0 and cur_sit = -1
+    * for L' to determine that literal is on
+    * the stack
+    * Note:
+    *  1. Literal must be first term in exp
+    *     since it may use calc_exp during
+    *     DC processing and then resets
+    *     exp stack with lit address
+    *     
+    */
 private void push_exp_lit(){  // RPI 365
-	/*
-	 * push literal on stack else abort
-	 * and set cur_lit >= 0 and cur_sit = -1
-	 * for L' to determine that literal is on
-	 * the stack
-	 * Note:
-	 *  1. Literal must be first term in exp
-	 *     since it may use calc_exp during
-	 *     DC processing and then resets
-	 *     exp stack with lit address
-	 *     
-	 */
 	cur_sid = -1; // RPI 365
 	if (inc_tot_exp_stk_sym()){
 	   exp_index--;	
@@ -7599,11 +7882,16 @@ private void push_exp_lit(){  // RPI 365
 	exp_sym_last = true;
 	check_prev_op = false;
 }
+
+
+
+   /**
+    * check if room to add to exp_stack
+    * and return true else abort
+    *
+    * @return true if stack has room, abort otherwise
+    */
 private boolean inc_tot_exp_stk_sym(){
-	/*
-	 * check if room to add to exp_stack
-	 * and return true else abort
-	 */
 	if (tot_exp_stk_sym < max_exp_stk){
 		tot_exp_stk_sym++;
 		exp_sym_pushed = true;
@@ -7613,10 +7901,15 @@ private boolean inc_tot_exp_stk_sym(){
 	    return false;
 	}
 }
+
+
+
+   /**
+    * push self defining abs term on stack
+    *
+    * @param sdt - self-defining term
+    */
 private void push_exp_sdt(String sdt){
-	/*
-	 * push self defining abs term on stack
-	 */
     	if (inc_tot_exp_stk_sym()){
            exp_stk_sym_esd[tot_exp_stk_sym-1] = sym_sdt;
            try {
@@ -7644,14 +7937,16 @@ private void push_exp_sdt(String sdt){
     	}
 }
 
+
+
+   /**
+    * put stats and display total errors
+    * after mz390 is done and close files.
+    * Note:
+    *   1.  return az390 return code for use by mz390
+    *       when called from mz390 when mfc option on.
+    */
 public void exit_az390(){
-	/*
-	 * put stats and display total errors
-	 * after mz390 is done and close files.
-	 * Note:
-	 *   1.  return az390 return code for use by mz390
-	 *       when called from mz390 when mfc option on.
-	 */
       if (!mz390_call){ // RPI 935 let mz390 do it if running
     	  put_stats(); // rpi 846
       }
@@ -7666,12 +7961,15 @@ public void exit_az390(){
 	  }
    	  System.exit(az390_rc);
 }
+
+
+
+   /**
+    * display statistics on STA and 
+    * totals on STA and TRM including
+    * MZ and AZ totals.
+    */
 public void put_stats(){
-	/*
-	 * display statistics on STA and 
-	 * totals on STA and TRM including
-	 * MZ and AZ totals.
-	 */
 	force_list_bal = true; // RPI 285
 	tz390.force_nocon = true; // RPI 755
 	if (tz390.opt_stats){  // RPI 453
@@ -7727,20 +8025,28 @@ public void put_stats(){
 	}
 	tz390.force_nocon = false; // RPI 755
 }
+
+
+
+   /**
+    * routine statistics line to PRN or STATS(file)
+    *
+    * @param msg - message
+    */
 private void put_stat_line(String msg){
-	/*
-	 * routine statistics line to PRN or STATS(file)
-	 */
 	if (tz390.stats_file != null){
 		tz390.put_stat_line(msg);
 	} else {
 		put_log(msg_id + msg);
 	}
 }
+
+
+
+   /**
+    * close output obj, prn, err, tra
+    */
 public void close_files(){
-	/*
-	 * close output obj, prn, err, tra
-	 */
 	  if (obj_file != null){
 	  	  try {
 	  	  	  obj_file.close();
@@ -7773,15 +8079,21 @@ public void close_files(){
 	    }
 	  tz390.close_trace_file();
 }
+
+
+
+   /**
+    * issue error msg to log with prefix and
+    * inc error total
+    * Notes:
+    *   1.  Set bal_abort if not set else exit
+    *   2.  supress if not gen_obj and not trace
+    *   3.  print bal line first if list on
+    *
+    * @param error - error number
+    * @param msg   - message text
+    */
 private void log_error(int error,String msg){
-	/*
-	 * issue error msg to log with prefix and
-	 * inc error total
-	 * Notes:
-	 *   1.  Set bal_abort if not set else exit
-	 *   2.  supress if not gen_obj and not trace
-	 *   3.  print bal line first if list on
-	 */
 	  if (bal_abort)return; // only 1 error per line
 	  bal_abort = true;
 	  az390_errors++;
@@ -7823,11 +8135,14 @@ private void log_error(int error,String msg){
 	  	 abort_error(49,"max errors exceeded");	 
 	  }
 }
+
+
+
+   /**
+    * set xref_file_line passed from mz390
+    * if available for use in error messages
+    */
 private void set_file_line_xref(){
-	/*
-	 * set xref_file_line passed from mz390
-	 * if available for use in error messages
-	 */
 	     if (mz390_call && xref_bal_index > -1){  // RPI 425 RPI 935
 	    	 if (gen_obj_code){  // RPI 935 
 	    		 xref_file_errors[bal_line_xref_file_num[xref_bal_index]]++;
@@ -7837,11 +8152,16 @@ private void set_file_line_xref(){
    	    	 xref_file_line = "";
    	     }
 }
+
+
+
+   /**
+    * issue error msg to log with prefix and
+    * inc error total
+    * @param error - error number
+    * @param msg   - error message
+    */
 private synchronized void abort_error(int error,String msg){ // RPI 646
-	/*
-	 * issue error msg to log with prefix and
-	 * inc error total
-	 */
 	  az390_errors++;
 	  az390_rc = 16; // RPI 1062
 	  if (az390_recursive_abort || tz390.z390_abort){
@@ -7873,402 +8193,452 @@ private synchronized void abort_error(int error,String msg){ // RPI 646
 	  tz390.put_systerm(error_msg);
       exit_az390();
 }
+
+
+
+   /**
+    * display az390 version, timestamp,
+    * and copyright if running standalone
+    */
 private void put_copyright(){
-	   /*
-	    * display az390 version, timestamp,
-	    * and copyright if running standalone
-	    */
-	    tz390.force_nocon = true; // RPI 755
-	   	if  (z390_log_text == null){
-			put_log(msg_id + "Copyright (c) 2021 z390 Assembler LLC");
-			put_log(msg_id + "z390 comes with ABSOLUTELY NO WARRANTY;");   
-			put_log(msg_id + "This is free software, and you are welcome to redistribute it");
-			put_log(msg_id + "under certain conditions; see included LICENSE file for details.");
-	   	}
-	   	put_log(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name);
-	   	put_log(msg_id + "options = " + tz390.cmd_parms);
-	    tz390.force_nocon = false; // RPI 755
-       }
-	   private synchronized void put_log(String msg) {
-	   	/*
-	   	 * Write message to z390_log_text or console
-	   	 * if running standalone
-	   	 * 
-	   	 */
-   	    	put_prn_line(msg);
-   	    	if (tz390.force_nocon){
-   	    		return; // RPI 755
-   	    	}
-	        if  (z390_log_text != null){
-  	        	z390_log_text.append(msg + "\n");
-   	        } else {
-   	        	if (tz390.opt_con){ // RPI 453
-   	    	        System.out.println(msg);
-   	        	}
-   	        }
-	   }
-	   private void put_prn_line(String msg){
-	   /*
-	    * put line to prt listing file
-	    * if print_on and not surpressed by nogen.
-	    * if print data, print all data.
-	    */
-		   String temp_hex;
-		   if (tz390.opt_tracea){
-		   	   tz390.put_trace(msg); // RPI 564 additional tracea info
-		   }
-	   	   if (check_list_bal_line()){ // RPI 484  RPI 694 RPI 891
-               String str;  // replace non-printable chars with '.'
-	   	       try {
-	   	    	  tz390.systerm_io++;
-				  if (tz390.opt_writenonprintable) { // write all characters
-	   	    	      prn_file_buff.write(msg + tz390.newline); // RPI 500
-	   	    	  } else {
-	   	    	      str = tz390.replaceNonPrintableChars(msg, tz390.ascii_charset_name);
-	   	    	      prn_file_buff.write(str + tz390.newline);
-	   	    	  }
-	   	          if (prn_file.length() > tz390.max_file_size){
-	   	        	  abort_error(118,"maximum prn file size exceeded");
-	   	          }
-	   	          int index = 16;
-	   	          while (print_data[print_level]
-	   	                 && index < list_obj_code.length()){
-	   	        	  list_obj_loc = list_obj_loc + 8;
-	   	        	  if (index + 16 > list_obj_code.length()){
-	   	        		  temp_hex = list_obj_code.substring(index);
-	   	        	  } else {
-	   	        		  temp_hex = list_obj_code.substring(index,index+16);
-	   	        	  }	   	        	  
-	   	        	  String data_line = tz390.get_hex(list_obj_loc,6) + " " + temp_hex;
-	   	        	  if (tz390.opt_tracea){
-	   	        		  tz390.put_trace(data_line); // RPI 564 additional tracea info
-	   	        	  }
-	   	        	  tz390.systerm_io++;
-	   	        	  // no non-printable characters on these lines
-   	    	          str = tz390.replaceNonPrintableChars(data_line, tz390.ascii_charset_name);
-	   	    	      prn_file_buff.write(str + tz390.newline);  // RPI 500
-		   	          if (prn_file.length() > tz390.max_file_size){
-		   	        	  abort_error(118,"maximum prn file size exceeded");
-		   	          }
-	   	        	  index = index + 16;
-	   	          }
-	   	       if (mnote_warning_msg.length() > 0){ // RPI 1056
-                   mnote_warning_msg = "AZ390E " + mnote_warning_msg;
-				   if (tz390.opt_writenonprintable) { // write all characters
-	   	    	       prn_file_buff.write(mnote_warning_msg + tz390.newline); // RPI 500
-	   	    	   } else {
-	   	    	       str = tz390.replaceNonPrintableChars(mnote_warning_msg, tz390.ascii_charset_name);
-	   	    	       prn_file_buff.write(str + tz390.newline);
-	   	    	   }
-                   tot_mnote_warning++;
-                   if (az390_rc < 4){
-                           az390_rc = 4;
-                   }
-                   if (max_mnote_level < 4){
-                           max_mnote_level = 4;
-                   }
-                   tz390.put_systerm(mnote_warning_msg); // RPI 1056
-                   mnote_warning_msg = "";
-           }
-	   	      } catch (Exception e){
-	              az390_errors++;
-	   	      }
-	   	   }
-	   }
-	   private void check_end_parms(){
-		   /*
-		    * check if generated object code equals instruction length
-		    * and
-		    * check for extra parms beyond end
-		    * of last instruction parm and issue error
-		    */
-		   if (obj_code.length() != (2*loc_len)) {
-			   log_error(122,"hex code not equal instruction length");
-		   }
-		   if (!exp_eot 
-			   && exp_index < exp_text.length()
-			   && exp_text.charAt(exp_index) > ' '){  //RPI181
-			   log_error(122,"extra parameter found - " + exp_text.substring(exp_index));
-		   }
-	   }
-	   private void put_obj_line(String msg){
-		   /*
-		    * put object code to obj file in
-		    * hex or binary format
-		    */
-		    if (obj_file == null || tz390.z390_abort){
-		    	return;
-		    }
-		    if (tz390.opt_traceall){
-		    	tz390.put_trace(msg); // RPI 564 additional traceall info
-		    }
-		   	try {
-		   		if (tz390.opt_objhex){
-		   			tz390.systerm_io++;
-		   			obj_file.writeBytes(msg + tz390.newline); // RPI 500
-		   		} else {
-		   			cvt_obj_hex_to_bin(msg);
-		   			if (!bal_abort){
-		   				tz390.systerm_io++;
-		   				obj_file.write(bin_byte);
-		   			}
-		   		}
-		   		if (obj_file.length() > tz390.max_file_size){
-	   	       	  abort_error(119,"maximum obj file size exceeded");
-		   		}
-		   	} catch (Exception e){
-		   	    abort_error(28,"I/O error on OBJ file write - " + e.toString());
-		   	}
-		   }
-	   private void cvt_obj_hex_to_bin(String hex_rcd){
-		   /*
-		    * convert ascii hex object string to
-		    * binary 80 byte EBCDIC format for 
-		    * mainframe compatiblity.  See DFSMS
-		    * Program Management Manual reference.
-		    */
-		try {
-		   int index = 0;
-		   int index1 = 0;
-		   bin_byte[0] = 0x02;        // 1    binary OBJ ID code
-		   String type = hex_rcd.substring(1,4);
-		   if (type.equals("ESD")){   // 2-4 .ESD
-			    bin_byte[1] = tz390.ascii_to_ebcdic['E'];
-				bin_byte[2] = tz390.ascii_to_ebcdic['S'];
-				bin_byte[3] = tz390.ascii_to_ebcdic['D'];
-				Arrays.fill(bin_byte,4,14,ebcdic_space);
-  		                             // 15-16 ESD ID
-				bin_byte[14] = (byte)Integer.valueOf(hex_rcd.substring(9,11),16).intValue();
-				bin_byte[15] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
-				index = 16;          // 17-72 up to 3 ESD entries
-				index1 = 54;
-				while (index < 24){  // name at entry 1 - 8
-					if (index1 < hex_rcd.length()){
-						bin_byte[index] = tz390.ascii_to_ebcdic[hex_rcd.charAt(index1)];
-						index1++;
-					} else {
-						bin_byte[index] = ebcdic_space;
-					}
-					index++;
-				}
-				if (hex_rcd.substring(45,48).equals("CST")){ 
-					bin_byte[10] = 0;    // 11-12 SD entry bytes
-					bin_byte[11] = 16;
-					bin_byte[24] = 0x00; // SD type at entry 9
-					                     // 24 bit address at entry 10-12
-					if (!hex_rcd.substring(18,20).equals("00")){
-						abort_error(132,"SD invalid 24 bit address - " + hex_rcd);
-					}
-					bin_byte[25] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
-					bin_byte[26] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
-					bin_byte[27] = (byte)Integer.valueOf(hex_rcd.substring(24,26),16).intValue();
-					bin_byte[28] = 0x07;  // double word align at entry 13
-					if (!hex_rcd.substring(31,33).equals("00")){
-						log_error(133,"SD invalid 24 bit length - " + hex_rcd); // RPI 851
-					    return;
-					}
-					bin_byte[29] = (byte)Integer.valueOf(hex_rcd.substring(33,35),16).intValue();
-					bin_byte[30] = (byte)Integer.valueOf(hex_rcd.substring(35,37),16).intValue();
-					bin_byte[31] = (byte)Integer.valueOf(hex_rcd.substring(37,39),16).intValue();
-					Arrays.fill(bin_byte,32,80,ebcdic_space);
-				} else if (hex_rcd.substring(45,48).equals("EXT")){ 
-					bin_byte[10] = 0;    // 11-12 ER entry bytes
-					bin_byte[11] = 13;
-					bin_byte[24] = 0x02; // ER type at entry 9
-					Arrays.fill(bin_byte,25,28,ebcdic_space); // blank address at entry 10
-					bin_byte[28] = 0x00; // byte alignment at entry 13
-					Arrays.fill(bin_byte,29,80,ebcdic_space);
-				} else if (hex_rcd.substring(45,48).equals("WXT")){ 
-					bin_byte[10] = 0;    // 11-12 WX entry bytes
-					bin_byte[11] = 13;
-					bin_byte[24] = 0x0A; // WX type at entry 9
-					Arrays.fill(bin_byte,25,28,ebcdic_space); // blank address at entry 10
-					bin_byte[28] = 0x00; // byte alignment at entry 13
-					Arrays.fill(bin_byte,29,80,ebcdic_space);
-				} else if (hex_rcd.substring(45,48).equals("ENT")){ 
-					bin_byte[10] = 0;    // 11-12 :D entry bytes
-					bin_byte[11] = 16;
-					bin_byte[24] = 0x01; // LD type at entry 9
-					Arrays.fill(bin_byte,25,28,ebcdic_space); // blank ESD type 12-14 for LD
-					if (!hex_rcd.substring(18,20).equals("00")){
-						log_error(134,"LD invalid 24 bit address - " + hex_rcd); // RPI 851
-					    return;
-					}
-					bin_byte[25] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
-					bin_byte[26] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
-					bin_byte[27] = (byte)Integer.valueOf(hex_rcd.substring(24,26),16).intValue();
-					bin_byte[28] = 0x00; // byte align at entry 13}
-					bin_byte[29] = 0x00; // SD identifier for entry
-					bin_byte[30] = (byte)Integer.valueOf(hex_rcd.substring(9,11),16).intValue();
-					bin_byte[31] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
-					Arrays.fill(bin_byte,32,80,ebcdic_space);
-				} else {
-					log_error(131,"invalid ESD type " + hex_rcd); // RPI 851
-					return;
-				}
-		   } else if (type.equals("TXT")){
-				bin_byte[1] = tz390.ascii_to_ebcdic['T'];
-				bin_byte[2] = tz390.ascii_to_ebcdic['X'];
-				bin_byte[3] = tz390.ascii_to_ebcdic['T'];
-				bin_byte[4] = ebcdic_space;
-				                        // 6-8 address at 
-				if (!hex_rcd.substring(18,20).equals("00")){
-					log_error(134,"TXT invalid 24 bit address - " + hex_rcd);
-					return;
-				}
-				bin_byte[5] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
-				bin_byte[6] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
-				bin_byte[7] = (byte)Integer.valueOf(hex_rcd.substring(24,26),16).intValue();
-				bin_byte[8] = ebcdic_space;
-				bin_byte[9] = ebcdic_space;
-				bin_byte[10] = 00;       // 11-12 number of text bytes
-				bin_byte[11] = (byte)Integer.valueOf(hex_rcd.substring(31,33),16).intValue();
-				bin_byte[12] = ebcdic_space;
-				bin_byte[13] = ebcdic_space;
-				                         // 15-16 SD type
-				bin_byte[14] = (byte)Integer.valueOf(hex_rcd.substring(9,11),16).intValue();
-				bin_byte[15] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
-				index = 16;
-				index1 = 34;
-				int count = bin_byte[11];
-				while (count > 0){
-					bin_byte[index] = (byte)Integer.valueOf(hex_rcd.substring(index1,index1+2),16).intValue();
-				    index++;
-				    index1 = index1+2;
-				    count--;
-				}
-				Arrays.fill(bin_byte,index,80,ebcdic_space);
-		   } else if (type.equals("RLD")){
-				bin_byte[1] = tz390.ascii_to_ebcdic['R'];
-				bin_byte[2] = tz390.ascii_to_ebcdic['L'];
-				bin_byte[3] = tz390.ascii_to_ebcdic['D'];
-				Arrays.fill(bin_byte,4,10,ebcdic_space);
-				bin_byte[10] = 0;        // 11-12 number of bytes for RLD entries
-				bin_byte[11] = 8;
-				Arrays.fill(bin_byte,12,16,ebcdic_space);
-                                         // 17-18 ESD ID of referenced ESD
-				bin_byte[16] = (byte)Integer.valueOf(hex_rcd.substring(45,47),16).intValue();
-				bin_byte[17] = (byte)Integer.valueOf(hex_rcd.substring(47,49),16).intValue();
-                                         // 19-20 ESD ID of SD containing RLD field
-				bin_byte[18] = (byte)Integer.valueOf(hex_rcd.substring(9,11),16).intValue();
-				bin_byte[19] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
-                                         // 20 flags TTTTLLSN
-				int  rld_len =  Integer.valueOf(hex_rcd.substring(31,32),16).intValue()
-				             - 1; // rld field len -1  4=3, 3=2, 2=1, 8=0 RPI 270 RPI 894
-				if (rld_len == 7){
-					rld_len = 0;  // RPI 270 RPI 894 
-				}
-				char rld_sign = hex_rcd.charAt(38);
-				if (rld_sign == '+'){
-					bin_byte[20] = (byte)(rld_len << 2); // pos rld
-				} else {
-					bin_byte[20] = (byte)(rld_len << 2 + 2); // neg rld
-				}
-				                         // 22-24 address at 
-				if (!hex_rcd.substring(18,20).equals("00")){
-					log_error(135,"RLD invalid 24 bit address - " + hex_rcd); // RPI 851
-					return;
-				}
-				bin_byte[21] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
-				bin_byte[22] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
-				bin_byte[23] = (byte)Integer.valueOf(hex_rcd.substring(24,26),16).intValue();
-				Arrays.fill(bin_byte,24,80,ebcdic_space);
-		   } else if (type.equals("END")){
-				bin_byte[1] = tz390.ascii_to_ebcdic['E'];
-				bin_byte[2] = tz390.ascii_to_ebcdic['N'];
-				bin_byte[3] = tz390.ascii_to_ebcdic['D'];				
-				Arrays.fill(bin_byte,4,80,ebcdic_space);
-                // 15-16 ESD ID of referenced ESD  RPI 1197
-		        bin_byte[14] = (byte)Integer.valueOf(hex_rcd.substring(9,11),16).intValue();
-		        bin_byte[15] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
-                // 6-8 relative entry address in ESD  RPI 1197
-		        if (!hex_rcd.substring(18,20).equals("00")){
-					log_error(211,"END invalid 24 bit entry address - " + hex_rcd); // RPI 851
-					return;
-				}
-				bin_byte[5] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
-				bin_byte[6] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
-				bin_byte[7] = (byte)Integer.valueOf(hex_rcd.substring(24,26),16).intValue();
-				
-		   } else {
-			   log_error(130,"invalid object record - " + hex_rcd); // RPI 851
-			   return;
-		   }
-		} catch (Exception e){
-			if (az390_errors == 0){ // ignore if prior errors
-				log_error(136,"Invalid ascii hex object code - " + hex_rcd);
-			}
-		}
-	   }
-	   private String get_long_hex(long work_long) {
-	   	/*
-	   	 * Format long into 16 byte hex string
-	   	 */
-	   	    String work_hex = Long.toHexString(work_long);
-			return ("0000000000000000" + work_hex).substring(work_hex.length()).toUpperCase();
-	   }
-	   private String string_to_hex(String text,boolean ascii){
-	   	/*
-	   	 * Format text string into hex string
-	   	 * If ascii_req true, gen ascii else ebcdic hex
-	   	 */
-		    int work_int = 0;
-            StringBuffer hex = new StringBuffer(2 * text.length());
-            int index = 0;
-            while (index < text.length()){
-            	if (ascii){
-            		work_int = text.charAt(index) & 0xff;
-            	} else {
-            		work_int = tz390.ascii_to_ebcdic[text.charAt(index) & 0xff] & 0xff; // RPI 737
-            	}
-				String temp_string = Integer.toHexString(work_int);
-                if  (temp_string.length() == 1){
-                	hex.append("0" + temp_string);
-                } else {
-                	hex.append(temp_string);
-                }
-				index++;
-            }
-            return hex.toString().toUpperCase();            
-	   } 
-private String bytes_to_hex(byte[] bytes,int byte_start,int byte_length,int chunk){
-	   	/*
-	   	 * Format bytes into hex string
-	   	 * If chuck > 0 insert space after each chuck
-	   	 */
-	        StringBuffer hex = new StringBuffer(72);
-	        int index1 = 0;
-	        int hex_bytes = 0;
-	        while (index1 < byte_length){
-	        	int work_int = bytes[byte_start + index1] & 0xff;
-				String temp_string = Integer.toHexString(work_int);
-	            if  (temp_string.length() == 1){
-	            	hex.append("0" + temp_string);
-	            } else {
-	            	hex.append(temp_string);
-	            }
-	            if (chunk > 0){
-	               hex_bytes++;
-	               if (hex_bytes >= chunk){
-	            	  hex.append(" ");
-	            	  hex_bytes = 0;
-	               }
-	            }
-			    index1++;
-	        }
-	        return hex.toString().toUpperCase();   
+    tz390.force_nocon = true; // RPI 755
+   	if  (z390_log_text == null){
+		put_log(msg_id + "Copyright (c) 2021 z390 Assembler LLC");
+		put_log(msg_id + "z390 comes with ABSOLUTELY NO WARRANTY;");   
+		put_log(msg_id + "This is free software, and you are welcome to redistribute it");
+		put_log(msg_id + "under certain conditions; see included LICENSE file for details.");
+   	}
+   	put_log(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name);
+   	put_log(msg_id + "options = " + tz390.cmd_parms);
+    tz390.force_nocon = false; // RPI 755
+   }
+
+
+
+   /**
+    * Write message to z390_log_text or console
+    * if running standalone
+    *
+    * @param msg - message
+    */
+private synchronized void put_log(String msg) {
+    put_prn_line(msg);
+    if (tz390.force_nocon){
+    	return; // RPI 755
+    }
+    if  (z390_log_text != null){
+    	z390_log_text.append(msg + "\n");
+    } else {
+    	if (tz390.opt_con){ // RPI 453
+            System.out.println(msg);
+    	}
+    }
 }
+
+
+
+   /**
+    * put line to prt listing file
+    * if print_on and not surpressed by nogen.
+    * if print data, print all data.
+    *
+    * @param msg - message
+    */
+private void put_prn_line(String msg){
+   String temp_hex;
+   if (tz390.opt_tracea){
+   	   tz390.put_trace(msg); // RPI 564 additional tracea info
+   }
+   if (check_list_bal_line()){ // RPI 484  RPI 694 RPI 891
+       String str;  // replace non-printable chars with '.'
+       try {
+    	  tz390.systerm_io++;
+		  if (tz390.opt_writenonprintable) { // write all characters
+    	      prn_file_buff.write(msg + tz390.newline); // RPI 500
+    	  } else {
+    	      str = tz390.replaceNonPrintableChars(msg, tz390.ascii_charset_name);
+    	      prn_file_buff.write(str + tz390.newline);
+    	  }
+          if (prn_file.length() > tz390.max_file_size){
+        	  abort_error(118,"maximum prn file size exceeded");
+          }
+          int index = 16;
+          while (print_data[print_level]
+                 && index < list_obj_code.length()){
+        	  list_obj_loc = list_obj_loc + 8;
+        	  if (index + 16 > list_obj_code.length()){
+        		  temp_hex = list_obj_code.substring(index);
+        	  } else {
+        		  temp_hex = list_obj_code.substring(index,index+16);
+        	  }	   	        	  
+        	  String data_line = tz390.get_hex(list_obj_loc,6) + " " + temp_hex;
+        	  if (tz390.opt_tracea){
+        		  tz390.put_trace(data_line); // RPI 564 additional tracea info
+        	  }
+        	  tz390.systerm_io++;
+        	  // no non-printable characters on these lines
+	          str = tz390.replaceNonPrintableChars(data_line, tz390.ascii_charset_name);
+    	      prn_file_buff.write(str + tz390.newline);  // RPI 500
+   	          if (prn_file.length() > tz390.max_file_size){
+   	        	  abort_error(118,"maximum prn file size exceeded");
+   	          }
+        	  index = index + 16;
+          }
+       if (mnote_warning_msg.length() > 0){ // RPI 1056
+           mnote_warning_msg = "AZ390E " + mnote_warning_msg;
+		   if (tz390.opt_writenonprintable) { // write all characters
+    	       prn_file_buff.write(mnote_warning_msg + tz390.newline); // RPI 500
+    	   } else {
+    	       str = tz390.replaceNonPrintableChars(mnote_warning_msg, tz390.ascii_charset_name);
+    	       prn_file_buff.write(str + tz390.newline);
+    	   }
+           tot_mnote_warning++;
+           if (az390_rc < 4){
+                   az390_rc = 4;
+           }
+           if (max_mnote_level < 4){
+                   max_mnote_level = 4;
+           }
+           tz390.put_systerm(mnote_warning_msg); // RPI 1056
+           mnote_warning_msg = "";
+   }
+      } catch (Exception e){
+          az390_errors++;
+      }
+   }
+}
+
+
+
+   /**
+    * check if generated object code equals instruction length
+    * and
+    * check for extra parms beyond end
+    * of last instruction parm and issue error
+    */
+private void check_end_parms(){
+   if (obj_code.length() != (2*loc_len)) {
+	   log_error(122,"hex code not equal instruction length");
+   }
+   if (!exp_eot 
+	   && exp_index < exp_text.length()
+	   && exp_text.charAt(exp_index) > ' '){  //RPI181
+	   log_error(122,"extra parameter found - " + exp_text.substring(exp_index));
+   }
+}
+
+
+
+   /**
+    * put object code to obj file in
+    * hex or binary format
+    *
+    * @param msg - message
+    */
+private void put_obj_line(String msg){
+    if (obj_file == null || tz390.z390_abort){
+    	return;
+    }
+    if (tz390.opt_traceall){
+    	tz390.put_trace(msg); // RPI 564 additional traceall info
+    }
+    try {
+    	if (tz390.opt_objhex){
+    		tz390.systerm_io++;
+    		obj_file.writeBytes(msg + tz390.newline); // RPI 500
+    	} else {
+    		cvt_obj_hex_to_bin(msg);
+    		if (!bal_abort){
+    			tz390.systerm_io++;
+    			obj_file.write(bin_byte);
+    		}
+    	}
+    	if (obj_file.length() > tz390.max_file_size){
+       	  abort_error(119,"maximum obj file size exceeded");
+    	}
+    } catch (Exception e){
+        abort_error(28,"I/O error on OBJ file write - " + e.toString());
+    }
+}
+
+
+
+   /**
+    * convert ascii hex object string to
+    * binary 80 byte EBCDIC format for 
+    * mainframe compatiblity.  See DFSMS
+    * Program Management Manual reference.
+    *
+    * @param hex_rcd - ???
+    */
+private void cvt_obj_hex_to_bin(String hex_rcd){
+	try {
+	   int index = 0;
+	   int index1 = 0;
+	   bin_byte[0] = 0x02;        // 1    binary OBJ ID code
+	   String type = hex_rcd.substring(1,4);
+	   if (type.equals("ESD")){   // 2-4 .ESD
+		    bin_byte[1] = tz390.ascii_to_ebcdic['E'];
+			bin_byte[2] = tz390.ascii_to_ebcdic['S'];
+			bin_byte[3] = tz390.ascii_to_ebcdic['D'];
+			Arrays.fill(bin_byte,4,14,ebcdic_space);
+	                             // 15-16 ESD ID
+			bin_byte[14] = (byte)Integer.valueOf(hex_rcd.substring(9,11),16).intValue();
+			bin_byte[15] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
+			index = 16;          // 17-72 up to 3 ESD entries
+			index1 = 54;
+			while (index < 24){  // name at entry 1 - 8
+				if (index1 < hex_rcd.length()){
+					bin_byte[index] = tz390.ascii_to_ebcdic[hex_rcd.charAt(index1)];
+					index1++;
+				} else {
+					bin_byte[index] = ebcdic_space;
+				}
+				index++;
+			}
+			if (hex_rcd.substring(45,48).equals("CST")){ 
+				bin_byte[10] = 0;    // 11-12 SD entry bytes
+				bin_byte[11] = 16;
+				bin_byte[24] = 0x00; // SD type at entry 9
+				                     // 24 bit address at entry 10-12
+				if (!hex_rcd.substring(18,20).equals("00")){
+					abort_error(132,"SD invalid 24 bit address - " + hex_rcd);
+				}
+				bin_byte[25] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
+				bin_byte[26] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
+				bin_byte[27] = (byte)Integer.valueOf(hex_rcd.substring(24,26),16).intValue();
+				bin_byte[28] = 0x07;  // double word align at entry 13
+				if (!hex_rcd.substring(31,33).equals("00")){
+					log_error(133,"SD invalid 24 bit length - " + hex_rcd); // RPI 851
+				    return;
+				}
+				bin_byte[29] = (byte)Integer.valueOf(hex_rcd.substring(33,35),16).intValue();
+				bin_byte[30] = (byte)Integer.valueOf(hex_rcd.substring(35,37),16).intValue();
+				bin_byte[31] = (byte)Integer.valueOf(hex_rcd.substring(37,39),16).intValue();
+				Arrays.fill(bin_byte,32,80,ebcdic_space);
+			} else if (hex_rcd.substring(45,48).equals("EXT")){ 
+				bin_byte[10] = 0;    // 11-12 ER entry bytes
+				bin_byte[11] = 13;
+				bin_byte[24] = 0x02; // ER type at entry 9
+				Arrays.fill(bin_byte,25,28,ebcdic_space); // blank address at entry 10
+				bin_byte[28] = 0x00; // byte alignment at entry 13
+				Arrays.fill(bin_byte,29,80,ebcdic_space);
+			} else if (hex_rcd.substring(45,48).equals("WXT")){ 
+				bin_byte[10] = 0;    // 11-12 WX entry bytes
+				bin_byte[11] = 13;
+				bin_byte[24] = 0x0A; // WX type at entry 9
+				Arrays.fill(bin_byte,25,28,ebcdic_space); // blank address at entry 10
+				bin_byte[28] = 0x00; // byte alignment at entry 13
+				Arrays.fill(bin_byte,29,80,ebcdic_space);
+			} else if (hex_rcd.substring(45,48).equals("ENT")){ 
+				bin_byte[10] = 0;    // 11-12 :D entry bytes
+				bin_byte[11] = 16;
+				bin_byte[24] = 0x01; // LD type at entry 9
+				Arrays.fill(bin_byte,25,28,ebcdic_space); // blank ESD type 12-14 for LD
+				if (!hex_rcd.substring(18,20).equals("00")){
+					log_error(134,"LD invalid 24 bit address - " + hex_rcd); // RPI 851
+				    return;
+				}
+				bin_byte[25] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
+				bin_byte[26] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
+				bin_byte[27] = (byte)Integer.valueOf(hex_rcd.substring(24,26),16).intValue();
+				bin_byte[28] = 0x00; // byte align at entry 13}
+				bin_byte[29] = 0x00; // SD identifier for entry
+				bin_byte[30] = (byte)Integer.valueOf(hex_rcd.substring(9,11),16).intValue();
+				bin_byte[31] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
+				Arrays.fill(bin_byte,32,80,ebcdic_space);
+			} else {
+				log_error(131,"invalid ESD type " + hex_rcd); // RPI 851
+				return;
+			}
+	   } else if (type.equals("TXT")){
+			bin_byte[1] = tz390.ascii_to_ebcdic['T'];
+			bin_byte[2] = tz390.ascii_to_ebcdic['X'];
+			bin_byte[3] = tz390.ascii_to_ebcdic['T'];
+			bin_byte[4] = ebcdic_space;
+			                        // 6-8 address at 
+			if (!hex_rcd.substring(18,20).equals("00")){
+				log_error(134,"TXT invalid 24 bit address - " + hex_rcd);
+				return;
+			}
+			bin_byte[5] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
+			bin_byte[6] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
+			bin_byte[7] = (byte)Integer.valueOf(hex_rcd.substring(24,26),16).intValue();
+			bin_byte[8] = ebcdic_space;
+			bin_byte[9] = ebcdic_space;
+			bin_byte[10] = 00;       // 11-12 number of text bytes
+			bin_byte[11] = (byte)Integer.valueOf(hex_rcd.substring(31,33),16).intValue();
+			bin_byte[12] = ebcdic_space;
+			bin_byte[13] = ebcdic_space;
+			                         // 15-16 SD type
+			bin_byte[14] = (byte)Integer.valueOf(hex_rcd.substring(9,11),16).intValue();
+			bin_byte[15] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
+			index = 16;
+			index1 = 34;
+			int count = bin_byte[11];
+			while (count > 0){
+				bin_byte[index] = (byte)Integer.valueOf(hex_rcd.substring(index1,index1+2),16).intValue();
+			    index++;
+			    index1 = index1+2;
+			    count--;
+			}
+			Arrays.fill(bin_byte,index,80,ebcdic_space);
+	   } else if (type.equals("RLD")){
+			bin_byte[1] = tz390.ascii_to_ebcdic['R'];
+			bin_byte[2] = tz390.ascii_to_ebcdic['L'];
+			bin_byte[3] = tz390.ascii_to_ebcdic['D'];
+			Arrays.fill(bin_byte,4,10,ebcdic_space);
+			bin_byte[10] = 0;        // 11-12 number of bytes for RLD entries
+			bin_byte[11] = 8;
+			Arrays.fill(bin_byte,12,16,ebcdic_space);
+                                     // 17-18 ESD ID of referenced ESD
+			bin_byte[16] = (byte)Integer.valueOf(hex_rcd.substring(45,47),16).intValue();
+			bin_byte[17] = (byte)Integer.valueOf(hex_rcd.substring(47,49),16).intValue();
+                                     // 19-20 ESD ID of SD containing RLD field
+			bin_byte[18] = (byte)Integer.valueOf(hex_rcd.substring(9,11),16).intValue();
+			bin_byte[19] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
+                                     // 20 flags TTTTLLSN
+			int  rld_len =  Integer.valueOf(hex_rcd.substring(31,32),16).intValue()
+			             - 1; // rld field len -1  4=3, 3=2, 2=1, 8=0 RPI 270 RPI 894
+			if (rld_len == 7){
+				rld_len = 0;  // RPI 270 RPI 894 
+			}
+			char rld_sign = hex_rcd.charAt(38);
+			if (rld_sign == '+'){
+				bin_byte[20] = (byte)(rld_len << 2); // pos rld
+			} else {
+				bin_byte[20] = (byte)(rld_len << 2 + 2); // neg rld
+			}
+			                         // 22-24 address at 
+			if (!hex_rcd.substring(18,20).equals("00")){
+				log_error(135,"RLD invalid 24 bit address - " + hex_rcd); // RPI 851
+				return;
+			}
+			bin_byte[21] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
+			bin_byte[22] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
+			bin_byte[23] = (byte)Integer.valueOf(hex_rcd.substring(24,26),16).intValue();
+			Arrays.fill(bin_byte,24,80,ebcdic_space);
+	   } else if (type.equals("END")){
+			bin_byte[1] = tz390.ascii_to_ebcdic['E'];
+			bin_byte[2] = tz390.ascii_to_ebcdic['N'];
+			bin_byte[3] = tz390.ascii_to_ebcdic['D'];				
+			Arrays.fill(bin_byte,4,80,ebcdic_space);
+            // 15-16 ESD ID of referenced ESD  RPI 1197
+	        bin_byte[14] = (byte)Integer.valueOf(hex_rcd.substring(9,11),16).intValue();
+	        bin_byte[15] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
+            // 6-8 relative entry address in ESD  RPI 1197
+	        if (!hex_rcd.substring(18,20).equals("00")){
+				log_error(211,"END invalid 24 bit entry address - " + hex_rcd); // RPI 851
+				return;
+			}
+			bin_byte[5] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
+			bin_byte[6] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
+			bin_byte[7] = (byte)Integer.valueOf(hex_rcd.substring(24,26),16).intValue();
+			
+	   } else {
+		   log_error(130,"invalid object record - " + hex_rcd); // RPI 851
+		   return;
+	   }
+	} catch (Exception e){
+		if (az390_errors == 0){ // ignore if prior errors
+			log_error(136,"Invalid ascii hex object code - " + hex_rcd);
+		}
+	}
+}
+
+
+
+   /**
+    * Format long into 16 byte hex string
+    *
+    * @param work_long - long
+    * @return hex string equivalent of input
+    */
+private String get_long_hex(long work_long) {
+    String work_hex = Long.toHexString(work_long);
+	return ("0000000000000000" + work_hex).substring(work_hex.length()).toUpperCase();
+}
+
+
+
+   /**
+    * Format text string into hex string
+    * If ascii_req true, gen ascii else ebcdic hex
+    *
+    * @param text - text
+    * @param ascii - character set indicator
+    * @return formatted text
+    */
+private String string_to_hex(String text,boolean ascii){
+    int work_int = 0;
+    StringBuffer hex = new StringBuffer(2 * text.length());
+    int index = 0;
+    while (index < text.length()){
+    	if (ascii){
+    		work_int = text.charAt(index) & 0xff;
+    	} else {
+    		work_int = tz390.ascii_to_ebcdic[text.charAt(index) & 0xff] & 0xff; // RPI 737
+    	}
+		String temp_string = Integer.toHexString(work_int);
+        if  (temp_string.length() == 1){
+        	hex.append("0" + temp_string);
+        } else {
+        	hex.append(temp_string);
+        }
+		index++;
+    }
+    return hex.toString().toUpperCase();            
+}
+
+
+
+   /**
+    * Format bytes into hex string
+    * If chunk more than 0 insert space after each chuck
+    *
+    * @param bytes       - byte array
+    * @param byte_start  - start address
+    * @param byte_length - length in bytes
+    * @param chunk       - chunk indicator
+    * @return hex string for selected bytes
+    */
+private String bytes_to_hex(byte[] bytes,int byte_start,int byte_length,int chunk){
+    StringBuffer hex = new StringBuffer(72);
+    int index1 = 0;
+    int hex_bytes = 0;
+    while (index1 < byte_length){
+    	int work_int = bytes[byte_start + index1] & 0xff;
+		String temp_string = Integer.toHexString(work_int);
+        if  (temp_string.length() == 1){
+        	hex.append("0" + temp_string);
+        } else {
+        	hex.append(temp_string);
+        }
+        if (chunk > 0){
+           hex_bytes++;
+           if (hex_bytes >= chunk){
+        	  hex.append(" ");
+        	  hex_bytes = 0;
+           }
+        }
+	    index1++;
+    }
+    return hex.toString().toUpperCase();
+}
+
+
+
+   /**
+    * 1.  Append obj_code to list_obj_code for 
+    *     print line (reguired by mult DC calls).
+    * 2.  Exit if gen_obj_code not on or not CSECT
+    * 3.  Buffer output of ojbect text code for
+    *     contiguous data in same ESD.
+    * 4.  Called from END processing with BAL_EOF
+    *     to flush buffer.
+    * 5.  Reset obj_code for use by DC routines
+    */
 private void put_obj_text(){
-	/*
-	 * 1.  Append obj_code to list_obj_code for 
-	 *     print line (reguired by mult DC calls).
-	 * 2.  Exit if gen_obj_code not on or not CSECT
-	 * 3.  Buffer output of ojbect text code for
-	 *     contiguous data in same ESD.
-	 * 4.  Called from END processing with BAL_EOF
-	 *     to flush buffer.
-	 * 5.  Reset obj_code for use by DC routines
-	 */
 	 if (tz390.z390_abort || mz390_abort){
 		 return;
 	 }
@@ -8320,19 +8690,25 @@ private void put_obj_text(){
 	}
 	obj_code = "";
 }
+
+
+
+   /**
+    * start private csect if no csect or dsect
+    */
 private void check_private_csect(){
-	/*
-	 * start private csect if no csect or dsect
-	 */
     if (cur_esd == 0){
      	process_sect(sym_cst,"");
     	first_cst_esd = cur_esd;
     }
 }
+
+
+
+   /**
+    * add or replace USING for code generation
+    */
 private void add_using(){
-	/*
-	 * add or replace USING for code generation
-	 */
 	if (bal_parms == null){ // RPI 651
 		log_error(195,"missing USING parms");
 		return;
@@ -8364,10 +8740,13 @@ private void add_using(){
     	list_use = true;
     }
 }
+
+
+
+   /**
+    * set cur_use_base esd,loc, and len
+    */
 private void get_use_range(){
-	/*
-	 * set cur_use_base esd,loc, and len
-	 */
 	cur_use_base_esd = 0;
 	cur_use_base_loc = 0;
 	cur_use_base_len = 0;
@@ -8408,14 +8787,17 @@ private void get_use_range(){
 		}
 	}
 }
+
+
+
+   /**
+    * set cur_use_reg and cur_use_off
+    * from exp_text at exp_index set by get_use_range
+    * Notes:
+    *   1.  get_rel_exp_bddd is called for dependent
+    *       using expressions to find reg and loc
+    */
 private void get_use_domain(){
-	/*
-	 * set cur_use_reg and cur_use_off
-	 * from exp_text at exp_index set by get_use_range
-	 * Notes:
-	 *   1.  get_rel_exp_bddd is called for dependent
-	 *       using expressions to find reg and loc
-	 */
 	cur_use_depend = false;
 	cur_use_reg = 0;
 	cur_use_off = 0;
@@ -8439,11 +8821,14 @@ private void get_use_domain(){
 		use_eof =true;
 	}	
 }
+
+
+
+   /**
+    * drop duplicate unlabeled dependent
+    * USING for same section and offset
+    */
 private void drop_dependent_using(){ // RPI 1056
-	/*
-	 * drop duplicate unlabeled dependent
-	 * USING for same section and offset
-	 */
 	int index = cur_use_start;
 	while (index < cur_use_end){  
 		if (use_lab[index] == ""
@@ -8457,11 +8842,14 @@ private void drop_dependent_using(){ // RPI 1056
 		index++;
 	}
 }
+
+
+
+   /**
+    * drop one or more using 
+    * registers or labeled using
+    */
 private void drop_using(){
-	/*
-	 * drop one or more using 
-	 * registers or labeled using
-	 */
 	if (tz390.opt_listuse){
 		list_use = true;
 	}
@@ -8502,10 +8890,13 @@ private void drop_using(){
 		}
 	}
 }
+
+
+
+   /**
+    * remove labeled using if found
+    */
 private void drop_cur_use_label(){
-	/*
-	 * remove labeled using if found
-	 */
 	int index = cur_use_start;
 	while (index < cur_use_end){  
 		if (use_lab[index] != null && use_lab[index].equals(cur_use_lab)){
@@ -8518,11 +8909,14 @@ private void drop_cur_use_label(){
 	}
 	
 }
+
+
+
+   /**
+    * Remove cur_use_reg entries if found
+    * but not labeled usings.
+    */
 private void drop_cur_use_reg(){
-	/*
-	 * Remove cur_use_reg entries if found
-	 * but not labeled usings.
-	 */
 	int index = cur_use_start;
 	int dropped = 0; // RPI 1206
 	while (index < cur_use_end){
@@ -8542,10 +8936,16 @@ private void drop_cur_use_reg(){
 		log_error(207,"Active USING not found for DROP register - " + cur_use_reg); // RPI 1052
 	}
 }
+
+
+
+   /**
+    * move use entry from index1 to index2
+    *
+    * @param index1 - origin index
+    * @param index2 - target index
+    */
 private void move_use_entry(int index1,int index2){
-	/*
-	 * move use entry from index1 to index2
-	 */
 	use_lab[index2] = use_lab[index1];
 	use_base_esd[index2] = use_base_esd[index1];
 	use_base_loc[index2] = use_base_loc[index1];
@@ -8553,10 +8953,13 @@ private void move_use_entry(int index1,int index2){
 	use_reg[index2] = use_reg[index1];
 	use_reg_loc[index2] = use_reg_loc[index1];
 }
+
+
+
+   /**
+    * add use entry
+    */
 private void add_use_entry(){
-	/*
-	 * add use entry
-	 */
 	if (cur_use_end < tz390.opt_maxcall){
 		cur_use = cur_use_end;
 		cur_use_end++;
@@ -8577,10 +8980,13 @@ private void add_use_entry(){
 		log_error(100,"maximum active using table exceeded");
 	}
 }
+
+
+
+   /**
+    * list current use table if LISTUSE
+    */
 private void list_use(){
-	/*
-	 * list current use table if LISTUSE
-	 */
 	int index = cur_use_start;
 	boolean none = true;
 	while (index < cur_use_end){
@@ -8601,12 +9007,18 @@ private void list_use(){
 		put_prn_line("LISTUSE NONE");
 	}
 }
+
+
+
+   /**
+    * initialize object code with op code
+    * and initialize exp parser with parms
+    * if op_offset = 1
+    *
+    * @param op_offset - ???
+    * @param op_len    - instruction length in bytes?
+    */
 private void get_hex_op(int op_offset, int op_len){
-	/*
-	 * initialize object code with op code
-	 * and initialize exp parser with parms
-	 * if op_offset = 1
-	 */
 	hex_op = tz390.op_code[bal_op_index].substring(op_offset-1,op_offset - 1 + op_len);
 	obj_code = obj_code + hex_op;
 	if (op_offset == 1){
@@ -8614,6 +9026,12 @@ private void get_hex_op(int op_offset, int op_len){
 	   exp_index = 0;
 	}
 }
+
+
+
+   /**
+    * missing description
+    */
 private void or_last_op(){
 	// dsh for issue #230 or last op added to prev op added and remove last op (see operation E78A
     int obj_len = obj_code.length();
@@ -8627,10 +9045,14 @@ private void or_last_op(){
 				Integer.parseInt(obj_code.substring(obj_len-1,obj_len),16)
 			   ,1);	
 }
+
+
+
+   /**
+    * return single hex nibble char 0-f
+    * @return 1-character string
+    */
 private String get_hex_nib(){
-	/*
-	 * return single hex nibble char 0-f
-	 */
 	if (calc_abs_exp()){
 		if (exp_val >= 0 && exp_val <= 15){
 		    return tz390.get_hex(exp_val,1);
@@ -8642,10 +9064,15 @@ private String get_hex_nib(){
 	}
 	return "h";
 }
+
+
+
+   /**
+    * append vector hex reg low 4 bits from next parm and set corresponding vreg_rxb high bit for 16-31 vregs 
+    *
+    * @param vreg - vector register number
+    */
 private void get_hex_vreg(int vreg){
-	/*
-	 * append vector hex reg low 4 bits from next parm and set corresponding vreg_rxb high bit for 16-31 vregs 
-	 */
 	if (calc_abs_exp()){
 		if (exp_val >= 0 && exp_val <= 15){
 		    obj_code = obj_code + tz390.get_hex(exp_val,1);
@@ -8677,10 +9104,13 @@ private void get_hex_vreg(int vreg){
 		obj_code = obj_code + "r";
 	}
 }
+
+
+
+   /**
+    * append hex reg from next parm
+    */
 private void get_hex_reg(){
-	/*
-	 * append hex reg from next parm
-	 */
 	if (calc_abs_exp()){
 		if (exp_val >= 0 && exp_val <= 15){
 		    obj_code = obj_code + tz390.get_hex(exp_val,1);
@@ -8693,10 +9123,13 @@ private void get_hex_reg(){
 		obj_code = obj_code + "r";
 	}
 }
-private void get_hex_reg_even() // RPI 1209N
-   {/*
-     * append hex reg from next parm - if it is an even register
-     */
+
+
+
+   /**
+    * append hex reg from next parm - if it is an even register
+    */
+private void get_hex_reg_even() {// RPI 1209N
     if (calc_abs_exp())
        {if (exp_val >= 0 && exp_val <= 15)
            {if ((exp_val/2)*2-exp_val == 0) // check for even register number
@@ -8716,35 +9149,49 @@ private void get_hex_reg_even() // RPI 1209N
         obj_code = obj_code + "r";
         }
     }
+
+
+
+   /**
+    * vector register 1-5 high bits to support registers 16-31
+    *    reset for next set of high bits
+    */
 private void get_hex_vreg_rxb() {
-	/*
-	 * vector register 1-5 high bits to support registers 16-31
-	 *    reset for next set of high bits
-	 */
 	obj_code = obj_code + tz390.get_hex(vreg_rxb,1);
 	vreg_rxb = 0;
 }
+
+
+
+   /**
+    * append zero nibbles
+    *
+    * @param hex_ll - nr of nibbles to append
+    */
 private void get_hex_zero(int hex_ll){
-	/*
-	 * append zero nibbles
-	 */
 	String zeros = "00000000";
 	obj_code = obj_code.concat(zeros.substring(0,hex_ll));
 }
+
+
+
+   /**
+    * verify and skip comma
+    */
 private void skip_comma(){
-	/*
-	 * verify and skip comma
-	 */
 	 if (!bal_abort && exp_next_char(',')){
 	 	exp_index++;
 	 } else {
 	 	log_error(50,"missing operand comma - " + exp_text.substring(0,exp_index));
 	 }
 }
+
+
+
+   /**
+    * append hex byte from next parm
+    */
 private void get_hex_byte(){
-	/*
-	 * append hex byte from next parm
-	 */
 	if (calc_abs_exp() 
 		&& exp_val < 256){
 		obj_code = obj_code + tz390.get_hex(exp_val,2);
@@ -8753,10 +9200,13 @@ private void get_hex_byte(){
 		obj_code = obj_code + "ii";
 	}
 }
+
+
+
+   /**
+    * append hex halfword from next parm
+    */
 private void get_hex_halfword(){
-	/*
-	 * append hex halfword from next parm
-	 */
 	if (calc_abs_exp() 
 		&& exp_val < 65536){
 		obj_code = obj_code + tz390.get_hex(exp_val,4);
@@ -8765,10 +9215,15 @@ private void get_hex_halfword(){
 		obj_code = obj_code + "iiii";
 	}
 }
+
+
+
+   /**
+    * append hex integer from next parm
+    *
+    * @param bits - length in bits
+    */
 private void get_hex_int(int bits){
-	/*
-	 * append hex integer from next parm
-	 */
 	if (calc_exp()){
 		if  (exp_type == sym_rel){
 			log_error(42,"invalid immediate integer bits = " + bits + " value =" + exp_val);
@@ -8793,10 +9248,15 @@ private void get_hex_int(int bits){
 		log_error(42,"invalid expression");
 	}
 }
+
+
+
+   /**
+    * append hex relative offset from current instruction
+    *
+    * @param bits - length in bits
+    */
 private void get_hex_relative_offset(int bits){
-	/*
-	 * append hex relative offset from current instruction
-	 */
 	if (calc_exp()){
 		if  (exp_type == sym_rel){
 			if (bits == 12){
@@ -8820,10 +9280,13 @@ private void get_hex_relative_offset(int bits){
 		log_error(42,"invalid relative offset expression");
 	}
 }
+
+
+
+   /**
+    * append signed byte from next parm RPI 1146
+    */
 private void get_hex_byte_signed(){
-	/*
-	 * append signed byte from next parm RPI 1146
-	 */
 	if (calc_exp() 
 		&& exp_val < 128
 		&& exp_val >= -128){  
@@ -8833,11 +9296,14 @@ private void get_hex_byte_signed(){
 		obj_code = obj_code + "ii";
 	}
 }
+
+
+
+   /**
+    * set hex_len, hex_bddd, and hex_bddd_loc
+    * from next parm
+    */
 private void get_hex_llbddd(){
-	/*
-	 * set hex_len, hex_bddd, and hex_bddd_loc
-	 * from next parm
-	 */
 	int ll = 1;
 	int b  = 0;
 	int ddd = 0;
@@ -8889,11 +9355,16 @@ private void get_hex_llbddd(){
 		 }
 	}
 }
+
+
+
+   /**
+    * return explicit or implied length
+    * from exp_len
+    *
+    * @return length in bytes
+    */
 private int get_exp_ll(){
-	/*
-	 * return explicit or implied length
-	 * from exp_len
-	 */
 	int ll = exp_len;
 	if (exp_next_char('(')){
 		if (calc_abs_exp()){
@@ -8909,11 +9380,14 @@ private int get_exp_ll(){
 		return 1;	
 	}
 }
+
+
+
+   /**
+    * append xbddd or xbdddhh hex object code
+    * from next parm
+    */
 private void get_hex_v2xbddd(){ // rpi 2202 syooirt for   v2 index
-	/*
-	 * append xbddd or xbdddhh hex object code
-	 * from next parm
-	 */
 	String hex_xbddd = "llbddd";
     calc_lit_or_exp();
 	if (!bal_abort){
@@ -8927,11 +9401,14 @@ private void get_hex_v2xbddd(){ // rpi 2202 syooirt for   v2 index
 	}
 	obj_code = obj_code + hex_xbddd;
 }
+
+
+
+   /**
+    * append xbddd or xbdddhh hex object code
+    * from next parm
+    */
 private void get_hex_xbddd(){
-	/*
-	 * append xbddd or xbdddhh hex object code
-	 * from next parm
-	 */
 	String hex_xbddd = "llbddd";
     calc_lit_or_exp();
 	if (!bal_abort){
@@ -8945,10 +9422,15 @@ private void get_hex_xbddd(){
 	}
 	obj_code = obj_code + hex_xbddd;
 }
+
+
+
+   /**
+    * get hex x from next (x) else 0
+    *
+    * @return ???
+    */
 private String get_exp_v2x(){ // rpi 2202 support v2 as x2
-	/*
-	 * get hex x from next (x) else 0
-	 */
 	if  (exp_next_char('(')){
 		exp_index++;
 		if (calc_abs_exp() && exp_val >= 0 && exp_val <= 31){
@@ -8966,10 +9448,15 @@ private String get_exp_v2x(){ // rpi 2202 support v2 as x2
 		return "0";
 	}
 }
+
+
+
+   /**
+    * get hex x from next (x) else 0
+    *
+    * @return ???
+    */
 private String get_exp_x(){
-	/*
-	 * get hex x from next (x) else 0
-	 */
 	if  (exp_next_char('(')){
 		exp_index++;
 		if (calc_abs_exp() && exp_val >= 0 && exp_val <= 15){
@@ -8983,22 +9470,30 @@ private String get_exp_x(){
 		return "0";
 	}
 }
+
+
+
+   /**
+    * append xbddd hex object code from next parm
+    */
 private void get_hex_xbdddhh2(){
-	/*
-	 * append xbddd hex object code from next parm
-	 */
 	get_bdddhh = true; // RPI 387         
 	get_hex_xbddd();   //RPI161,RPI166
 	get_bdddhh = false;
 }
+
+
+
+   /**
+    * if add_code
+    *    append bddd or bdddhh hex object code
+    *    from next parm 
+    * else 
+    *    just set hex_bddd2
+    *
+    * @param add_code - flag to set or add base-displacement code
+    */
 private void get_hex_bddd2(boolean add_code){
-	/*
-	 * if add_code
-	 *    append bddd or bdddhh hex object code
-	 *    from next parm 
-	 * else 
-	 *    just set hex_bddd2
-	 */
 	hex_bddd2 = null;
 	calc_lit_or_exp();
 	if  (!bal_abort){
@@ -9015,11 +9510,17 @@ private void get_hex_bddd2(boolean add_code){
 		obj_code = obj_code + hex_bddd2;
 	}
 }
+
+
+
+   /**
+    * return true if next exp_text char
+    * at exp_index is next_char
+    *
+    * @param next_char - next character
+    * @return true if equal, false otherwise
+    */
 private boolean exp_next_char(char next_char){
-	/*
-	 * return true if next exp_text char
-	 * at exp_index is next_char
-	 */
 	if (exp_text != null && exp_index < exp_text.length() // RPI 822 
 		&& exp_text.charAt(exp_index) == next_char){
 		return true;
@@ -9027,19 +9528,25 @@ private boolean exp_next_char(char next_char){
 		return false;
 	}
 }
+
+
+
+   /**
+    * gen bdddhh where hhddd is 20 bit
+    * signed offset to b. RPI 387
+    */
 private void get_hex_bdddhh2(){
-	/*
-	 * gen bdddhh where hhddd is 20 bit
-	 * signed offset to b. RPI 387
-	 */
 	get_bdddhh = true;   // RPI 387
 	get_hex_bddd2(true);
 	get_bdddhh = false;
 }
+
+
+
+   /**
+    * gen 32 bit RLD or abs value with loc ctr at start of ins.
+    */
 private void get_hex_rld_long(){
-	/*
-	 * gen 32 bit RLD or abs value with loc ctr at start of ins.
-	 */
 	 loc_ctr = loc_ctr + 2;
 	 exp_rld_len = 4; // allow rld rpi 2223
 	 calc_lit_or_exp();
@@ -9049,10 +9556,13 @@ private void get_hex_rld_long(){
 	 obj_code = obj_code + tz390.get_hex(exp_val,8);
 	 loc_ctr = loc_ctr - 2;
 }
+
+
+
+   /**
+    * append iiiiiiii signed offset (calc for label)
+    */
 private void get_hex_relative_offset_long(){
-	/*
-	 * append iiiiiiii signed offset (calc for label)
-	 */
     String hex_iiiiiiii = "iiiiiiii";
     calc_lit_or_exp();  // RPI 954
 	if (!bal_abort){ // RPI 954
@@ -9066,10 +9576,15 @@ private void get_hex_relative_offset_long(){
 	}
 	obj_code = obj_code + hex_iiiiiiii;
 }
+
+
+
+   /**
+    * return relative 12 bit relative halfword offset
+    *
+    * @return ???
+    */
 private String get_hex_relative_offset_12(){
-	/*
-	 * return relative 12 bit relative halfword offset
-	 */
 	String hex_iii = "iii";
 	if (exp_esd == esd_base[cur_esd] || tz390.opt_allow){ // RPI 301 RPI 988
 		if ((exp_val & 0x1) == 0){
@@ -9083,10 +9598,15 @@ private String get_hex_relative_offset_12(){
 	}
 	return hex_iii;
 }
+
+
+
+   /**
+    * return relative 16 bit relative halfword offset
+    *
+    * @return ???
+    */
 private String get_hex_relative_offset_16(){
-	/*
-	 * return relative 16 bit relative halfword offset
-	 */
 	String hex_iiii = "iiii";
 	if (exp_esd == esd_base[cur_esd] || tz390.opt_allow){ // RPI 301 RPI 988
 		if ((exp_val & 0x1) == 0){
@@ -9100,14 +9620,19 @@ private String get_hex_relative_offset_16(){
 	}
 	return hex_iiii;
 }
+
+
+
+   /**
+    * return relative signed half word offset
+    * from psw_loc to symbol in same csect at
+    * even address
+    * Notes:
+    *   1.  Error if not same csect or odd address
+    *
+    * @return ???
+    */
 private String get_hex_relative_offset_32(){
-	/*
-	 * return relative signed half word offset
-	 * from psw_loc to symbol in same csect at
-	 * even address
-	 * Notes:
-	 *   1.  Error if not same csect or odd address
-	 */
 	String hex_llllllll= "llllllll";
 	if (exp_esd == esd_base[cur_esd] || tz390.opt_allow){ // RPI 301 RPI 988
 		if ((exp_val & 0x1) == 0){
@@ -9121,14 +9646,19 @@ private String get_hex_relative_offset_32(){
 	}
 	return hex_llllllll;
 }
+
+
+
+   /**
+    * return relative 24 bit halfword offset
+    * from psw_loc to symbol in same csect at
+    * even address
+    * Notes:
+    *   1.  Error if not same csect or odd address
+    *
+    * @return ???
+    */
 private String get_hex_rel_offset_24(){
-	/*
-	 * return relative 24 bit halfword offset
-	 * from psw_loc to symbol in same csect at
-	 * even address
-	 * Notes:
-	 *   1.  Error if not same csect or odd address
-	 */
     String hex_llllll= "llllll";
 	if (exp_esd == esd_base[cur_esd] || tz390.opt_allow){ // RPI 301 RPI 988
 		if ((exp_val & 0x1) == 0){
@@ -9142,20 +9672,25 @@ private String get_hex_rel_offset_24(){
 	}
 	return hex_llllll;
 }
+
+
+
+   /**
+    * 1.  Return hex bddd based on exp_esd 
+    *     and exp_val set by calc_exp or calc_lit.
+    * 2.  If get_bdddhh is set,
+    *     then 20 bit signed offset will be
+    *     returned as bdddhh. RPI 387
+    * 
+    * 2.  Set cur_reg and cur_reg_loc for use
+    *     when called from dependent using with
+    *     domain expression.
+    * 3.  If exp_use_lab is not null restrict
+    *     using entries to labelled using.
+    *
+    * @return ???
+    */
 private String get_exp_bddd(){ // RPI 1148 supp 31 bit abs
-	/*
-	 * 1.  Return hex bddd based on exp_esd 
-	 *     and exp_val set by calc_exp or calc_lit.
-	 * 2.  If get_bdddhh is set,
-	 *     then 20 bit signed offset will be
-	 *     returned as bdddhh. RPI 387
-	 * 
-	 * 2.  Set cur_reg and cur_reg_loc for use
-	 *     when called from dependent using with
-	 *     domain expression.
-	 * 3.  If exp_use_lab is not null restrict
-	 *     using entries to labelled using.  
-	 */
 	if (!gen_obj_code){
         return get_default_bddd();
 	}
@@ -9229,11 +9764,16 @@ private String get_exp_bddd(){ // RPI 1148 supp 31 bit abs
 		return get_default_bddd();
 	}
 }
+
+
+
+   /**
+    * return bddd or bdddhh from
+    * explicit ddd(b) with ddd in exp_val
+    *
+    * @return ???
+    */
 private String get_exp_abs_bddd(){
-	/*
-	 * return bddd or bdddhh from
-	 * explicit ddd(b) with ddd in exp_val
-	 */
 	int b   = 0;
 	int ddd = exp_val;
 	if (exp_next_char('(')){
@@ -9255,11 +9795,16 @@ private String get_exp_abs_bddd(){
 	}
 	return get_exp_abs_bddd(b,ddd);
 }
+
+
+
+   /**
+    * return xbddd or xbdddhh from
+    * explicit ddd(x,b) with ddd in exp_val
+    *
+    * @return ???
+    */
 private String get_exp_abs_v2xbddd(){ // ROI 2202 support v2 as x in abs ddd(x,b)
-	/*
-	 * return xbddd or xbdddhh from
-	 * explicit ddd(x,b) with ddd in exp_val
-	 */
 	int x  = 0;
 	int b   = 0;
 	int ddd = exp_val;
@@ -9295,11 +9840,16 @@ private String get_exp_abs_v2xbddd(){ // ROI 2202 support v2 as x in abs ddd(x,b
 	}
 	return tz390.get_hex(x,1) + get_exp_abs_bddd(b,ddd);
 }
+
+
+
+   /**
+    * return xbddd or xbdddhh from
+    * explicit ddd(x,b) with ddd in exp_val
+    *
+    * @return ???
+    */
 private String get_exp_abs_xbddd(){
-	/*
-	 * return xbddd or xbdddhh from
-	 * explicit ddd(x,b) with ddd in exp_val
-	 */
 	int x  = 0;
 	int b   = 0;
 	int ddd = exp_val;
@@ -9331,11 +9881,18 @@ private String get_exp_abs_xbddd(){
 	}
 	return tz390.get_hex(x,1) + get_exp_abs_bddd(b,ddd);
 }
+
+
+
+   /**
+    * return bddd or bdddhh 
+    * using exp_val displacement
+    *
+    * @param b     - base register number
+    * @param dddhh - displacement in bytes
+    * @return ???
+    */
 private String get_exp_abs_bddd(int b,int dddhh){
-	/*
-	 * return bddd or bdddhh 
-	 * using exp_val displacement
-	 */
 	if (b < 0 || b > 15){
 		log_error(146,"base out of range = " + b);
 	    return get_default_bddd();
@@ -9361,10 +9918,13 @@ private String get_exp_abs_bddd(int b,int dddhh){
 		}
 	}
 }
+
+
+
+   /**
+    * return dup factor for dc_field else 1
+    */
 private void get_dc_field_dup(){
-    /*
-     * return dup factor for dc_field else 1
-     */
 	 dc_dup_loc = 0;
 	 dc_dup = 1;
 	 if (dc_index >= dc_field.length()){
@@ -9386,12 +9946,14 @@ private void get_dc_field_dup(){
     	 log_error(43,"invalid dc duplication factor");
      }
 }
-private void get_dc_field_type(){
-	/* 
-	 * set dc_type and dc_type_index 
-	 * and verify valid type else abort
 
-	 */
+
+
+   /**
+    * set dc_type and dc_type_index 
+    * and verify valid type else abort
+    */
+private void get_dc_field_type(){
 	  if (bal_abort || dc_index >= dc_field.length()){
 		  dc_type_index = -1;
 		  log_error(145,"missing DC field type");
@@ -9404,19 +9966,22 @@ private void get_dc_field_type(){
       	 log_error(51,"invalid dc type - " + dc_field.substring(0,dc_index));
       }      	 
 }
+
+
+
+   /**
+    * 1.  Set L, S, E defaults
+    * 2.  Check modifiiers based on type
+    *     a.  if DEL check for B/D/H and set tz390.fp_type
+    *     b.  if C check for A/E and set dc_type_sfx  // RPI 270
+    *     c.  if AFV check for D and set dc_type_sfx  // RPI 270
+    *     d.  if LQ ignore the Q for 16 byte default
+    *     e.  If S check for Y and set length 3
+    * 3.  Process explicit L length, S scale, and E exponent
+    *     modifiers in any order
+    * 4.  Align and save first length if req'd
+    */
 private void get_dc_field_modifiers(){
-	/*
-	 * 1.  Set L, S, E defaults
-	 * 2.  Check modifiiers based on type
-	 *     a.  if DEL check for B/D/H and set tz390.fp_type
-	 *     b.  if C check for A/E and set dc_type_sfx  // RPI 270
-	 *     c.  if AFV check for D and set dc_type_sfx  // RPI 270
-	 *     d.  if LQ ignore the Q for 16 byte default
-	 *     e.  If S check for Y and set length 3
-	 * 3.  Process explicit L length, S scale, and E exponent
-	 *     modifiers in any order
-	 * 4.  Align and save first length if req'd
-	 */
 	if (dc_type_index != -1){
 		dc_attr_elt = sym_attr_elt_def; // default for not explicit length
     	dc_len = dc_type_len[dc_type_index];
@@ -9590,19 +10155,27 @@ private void get_dc_field_modifiers(){
 	 	loc_start = loc_ctr;
 	 }
 }
+
+
+
+   /**
+    * align to mult of align_len from loc_ctr
+    * If align_len more than 8 use 8  RPI 373 removed by RPI 1108
+    *
+    * @param align_len - alignment unit in bytes
+    */
 private void dc_align(int align_len){
-	/*
-	 * align to mult of align_len from loc_ctr
-	 * If align_len > 8 use 8  RPI 373 removed by RPI 1108
-	 */
 	 dc_fill((loc_ctr + align_len -1)/align_len*align_len - loc_ctr);
 }
+
+
+
+   /**
+    * flush any bits in dc_bit_buff to 
+    * align to byte boundary for next field
+    * or end of DS.DC
+    */
 private void flush_dc_bits(){
-	/*
-	 * flush any bits in dc_bit_buff to 
-	 * align to byte boundary for next field
-	 * or end of DS.DC
-	 */
 	if (dc_bit_tot > 0){
 		dc_bit_byte_len = (dc_bit_tot + 7)/8;
 		if (dc_op){
@@ -9638,12 +10211,17 @@ private void flush_dc_bits(){
 	}
 	dc_bit_len = false;
 }
+
+
+
+   /**
+    * 1.  increment loc_ctr by bytes if not bit mode
+    *     else shift bits by bit length
+    * 2.  if DC and not first field fill with zeros 
+    *
+    * @param fill_len - length
+    */
 private void dc_fill(int fill_len){
-	/*
-	 * 1.  increment loc_ctr by bytes if not bit mode
-	 *     else shift bits by bit length
-	 * 2.  if DC and not first field fill with zeros 
-	 */
 	  if (dc_bit_len){
 		  dc_bit_buff = dc_bit_buff.shiftLeft(fill_len);
 		  dc_bit_tot  = dc_bit_tot + fill_len;
@@ -9657,12 +10235,15 @@ private void dc_fill(int fill_len){
 		  }
 	  }
 }
+
+
+
+   /**
+    * alloc or gen DS/DC A/V/Y type parms using prev.
+    * settings for dc_dup and dc_len.  Also save
+    * first field dc_type, dc_len
+    */
 private void process_dca_data(){
-	/*
-	 * alloc or gen DS/DC A/V/Y type parms using prev.
-	 * settings for dc_dup and dc_len.  Also save
-	 * first field dc_type, dc_len
-	 */
 	exp_text = dc_field;
 	dc_index++;   // start inside (,,,)
 	dc_data_start = dc_index; 
@@ -9710,12 +10291,15 @@ private void process_dca_data(){
 	}
 	exp_rld_len = 0;
 }
+
+
+
+   /**
+    * gen dca exp_val in dc_bit_buff
+    * Notes:
+    *   1.  Shared by gen_dcb_bits
+    */
 private void gen_dca_bits(){
-	/*
-	 * gen dca exp_val in dc_bit_buff
-	 * Notes:
-	 *   1.  Shared by gen_dcb_bits
-	 */
 	dc_bit_tot = dc_bit_tot + dc_len;
 	if (dc_op && dc_dup > 0){
 		dc_bit_buff = dc_bit_buff.shiftLeft(dc_len);
@@ -9727,10 +10311,13 @@ private void gen_dca_bits(){
 		}
 	} 
 }
+
+
+
+   /**
+    * gen dca byte field
+    */
 private void gen_dca_bytes(){
-	/*
-	 * gen dca byte field
-	 */
 	if (dc_op && dc_dup > 0){
 		if (exp_val >= 0 || dc_len <= 4){
 			obj_code = obj_code + tz390.get_hex(exp_val,2*dc_len);
@@ -9744,15 +10331,18 @@ private void gen_dca_bytes(){
 		dc_dup_loc = dc_dup_loc + dc_len;
 	}
 }
+
+
+
+   /**
+    * alloc or gen DS/DC B type parms using prev.
+    * settings for dc_dup and dc_len.  Also save
+    * first field dc_len
+    * Notes:
+    *   1.  binary values are right aligned in 
+    *       explicit length fields.
+    */
 private void process_dcb_data(){
-	/*
-	 * alloc or gen DS/DC B type parms using prev.
-	 * settings for dc_dup and dc_len.  Also save
-	 * first field dc_len
-	 * Notes:
-	 *   1.  binary values are right aligned in 
-	 *       explicit length fields.
-	 */
 	dc_index++;   // start inside 'bin1,bin2,,'
     dc_data_start = dc_index; 
 	while (!dc_eod && !bal_abort){
@@ -9799,10 +10389,13 @@ private void process_dcb_data(){
 	}
 	exp_rld_len = 0;
 }
+
+
+
+   /**
+    * gen dcb type bit field in dc_bit_buff
+    */
 private void gen_dcb_bits(){
-	/*
-	 * gen dcb type bit field in dc_bit_buff
-	 */
 	try {
 		exp_val = Integer.valueOf(dcb_bin,2);
 	} catch (Exception e){
@@ -9811,10 +10404,13 @@ private void gen_dcb_bits(){
 	}
 	gen_dca_bits();
 }
+
+
+
+   /**
+    * gen dcb byte length field 
+    */
 private void gen_dcb_bytes(){
-	/*
-	 * gen dcb byte length field 
-	 */
 	int index = 0;
 	dc_hex = "";
 	try {
@@ -9854,18 +10450,21 @@ private void gen_dcb_bytes(){
 	   loc_ctr = loc_ctr + dc_len;
 	}
 }
+
+
+
+   /**
+    * allocate or generate dc Cln'...' data
+    * using dc_dup and explicit dc_len if any
+    * Notes:
+    *   1.  C'..' default EBCDIC unless ASCII option
+    *   2.  C".." always ASCII regardless of option
+    *   3.  C!..! always EBCDIC regardless of option
+    *   4.  ''|""|!! or double ampersand replaced with single '|"|! or ampersand
+    *   5.  CA'...' always ASCII   RPI 270
+    *   6.  CE'...' always EBCDIC  RPi 270
+    */
 private void process_dcc_data(){
-	/*
-	 * allocate or generate dc Cln'...' data
-	 * using dc_dup and explicit dc_len if any
-	 * Notes:
-	 *   1.  C'..' default EBCDIC unless ASCII option
-	 *   2.  C".." always ASCII regardless of option
-	 *   3.  C!..! always EBCDIC regardless of option
-	 *   4.  ''|""|!! or && replaced with single '|"|! or &
-	 *   5.  CA'...' always ASCII   RPI 270
-	 *   6.  CE'...' always EBCDIC  RPi 270
-	 */
 	dcc_text = "";
 	dcc_len  = 0;
 	String token = null;
@@ -9919,10 +10518,13 @@ private void process_dcc_data(){
 	}                                                                // #509
 	dc_len = 0;
 }
+
+
+
+   /**
+    * gen dcc bit field
+    */
 private void gen_dcc_bits(){
-	/*
-	 * gen dcc bit field
-	 */
 	dc_bit_tot = dc_bit_tot + dc_len;
 	if (dc_op && dc_dup > 0){
 		int index = 0;
@@ -9949,10 +10551,13 @@ private void gen_dcc_bits(){
 		}
 	} 
 }
+
+
+
+   /**
+    * gen dcc bytes
+    */
 private void gen_dcc_bytes(){
-	/*
-	 * gen dcc bytes
-	 */
 	if  (dc_len_explicit){
     	if  (dc_len > dcc_len){
     		dcc_text = tz390.left_justify(dcc_text,dc_len); // RPI 411
@@ -9978,13 +10583,16 @@ private void gen_dcc_bytes(){
    	    dc_dup--;
 	}
 }
+
+
+
+   /**
+    * alloc or gen DS/DC D, E, or L type data using
+    * prev settings for dc_type, dc_type_sfx,
+    * dc_dup and dc_len.  Also save
+    * first field dc_type, dc_len
+    */
 private void process_dc_fp_data(){
-	/*
-	 * alloc or gen DS/DC D, E, or L type data using
-	 * prev settings for dc_type, dc_type_sfx,
-	 * dc_dup and dc_len.  Also save
-	 * first field dc_type, dc_len
-	 */
 	exp_text = dc_field;
 	dc_index++;   // start inside (,,,)
 	exp_index = dc_index;
@@ -10018,10 +10626,13 @@ private void process_dc_fp_data(){
 	}
 	exp_rld_len = 0;
 }
+
+
+
+   /**
+    * gen del bit length field
+    */
 private void gen_dc_fp_bits(){
-	/*
-	 * gen del bit length field
-	 */
 	dc_bit_tot = dc_bit_tot + dc_len;
 	if (dc_op && dc_dup > 0){
 		int index = 0;
@@ -10036,10 +10647,13 @@ private void gen_dc_fp_bits(){
 		}
 	} 
 }
+
+
+
+   /**
+    * gen del byte length field
+    */
 private void gen_dc_fp_bytes(){
-	/*
-	 * gen del byte length field
-	 */
 	if (dc_len_explicit){
 		if (dc_len * 2 <= dc_hex.length()){
 			dc_hex = dc_hex.substring(0,dc_len*2);
@@ -10057,15 +10671,20 @@ private void gen_dc_fp_bytes(){
 	   loc_ctr = loc_ctr + dc_len;
 	}
 }
+
+
+
+   /**
+    * set dc_bd_val from next floating point
+    * sdt in dc_field at dc_index
+    * Note:
+    *  1.  Apply any scale factor 
+    *      or exponent to dc_bd_value.
+    *  2.  Set dc_unsigned true/false
+    *
+    * @return true if unsigned, false if signed
+    */
 private boolean get_dc_bd_val(){
-	/*
-	 * set dc_bd_val from next floating point
-	 * sdt in dc_field at dc_index
-	 * Note:
-	 *  1.  Apply any scale factor 
-	 *      or exponent to dc_bd_value.
-	 *  2.  Set dc_unsigned true/false
-	 */
 	dc_unsigned = false;
 	if (dc_field.charAt(dc_index) == '\''){
 		dc_eod = true;
@@ -10104,15 +10723,28 @@ private boolean get_dc_bd_val(){
 	}
 	return false;
 }
+
+
+
+   /**
+    * remove blanks allowed within numeric DC fields BDEFHLPXZ
+    *
+    * @param text_in - input text
+    * @return text with extraneous blanks removed
+    */
 private String remove_blanks(String text_in){
-	// DSH #233 remove blanks allowed within numeric DC fields BDEFHLPXZ 
 	return text_in.replace(" ", ""); // #233
 }
+
+
+
+   /**
+    * get 1-16 byte hex value for F or H
+    * constant from dc_bd_val
+    *
+    * @return hex string
+    */
 private String get_dc_fh_hex_val(){
-	/*
-	 * get 1-16 byte hex value for F or H
-	 * constant from dc_bd_val
-	 */
 	try {
     	if (dc_len <= 8){  // RPI 893
 	        return tz390.get_long_hex(dc_bd_val.longValueExact(),2*dc_len); 
@@ -10151,11 +10783,18 @@ private String get_dc_fh_hex_val(){
    	    return "";
     }
 }
+
+
+
+   /**
+    * set dc_hex for D, E, or L 
+    * floating point sdt starting at text index
+    *
+    * @param text  - input string
+    * @param index - position
+    *
+    */
 private void get_dc_fp_hex(String text,int index){
-	/*
-	 * set dc_hex for D, E, or L 
-	 * floating point sdt starting at text index
-	 */
 	if (text.charAt(index) == ','){
 		index++;
 	}
@@ -10173,12 +10812,15 @@ private void get_dc_fp_hex(String text,int index){
 	fp_text = text.substring(index,index+text_end); // RPI 790
 	fp_get_hex();
 }
+
+
+
+   /**
+    * alloc or gen DS/DC F type parms using prev.
+    * settings for dc_dup and dc_len.  Also save
+    * first field dc_type, dc_len
+    */
 private void process_dcf_data(){
-	/*
-	 * alloc or gen DS/DC F type parms using prev.
-	 * settings for dc_dup and dc_len.  Also save
-	 * first field dc_type, dc_len
-	 */
 	dc_index++;   // start inside ',,,'
 	dc_data_start = dc_index; 
 	while (!dc_eod && !bal_abort){
@@ -10210,10 +10852,13 @@ private void process_dcf_data(){
 	}
 	exp_rld_len = 0;
 }
+
+
+
+   /**
+    * gen F or H bit field
+    */
 private void gen_dc_fh_bits(){
-	/*
-	 * gen F or H bit field
-	 */
 	dc_bit_tot = dc_bit_tot + dc_len;
 	if (dc_op && dc_dup > 0){
 		dc_bit_buff = dc_bit_buff.shiftLeft(dc_len);
@@ -10226,10 +10871,13 @@ private void gen_dc_fh_bits(){
 		}
 	} 
 }
+
+
+
+   /**
+    * gen F or H byte field
+    */
 private void gen_dc_fh_bytes(){
-	/*
-	 * gen F or H byte field
-	 */
     if (dc_op && dc_dup > 0){
         obj_code = obj_code + get_dc_fh_hex_val();
         put_obj_text();
@@ -10238,12 +10886,15 @@ private void gen_dc_fh_bytes(){
 	   loc_ctr = loc_ctr + dc_len;
 	}
 }
+
+
+
+   /**
+    * alloc or gen DS/DC H type parms using prev.
+    * settings for dc_dup and dc_len.  Also save
+    * first field dc_type, dc_len
+    */
 private void process_dch_data(){
-	/*
-	 * alloc or gen DS/DC H type parms using prev.
-	 * settings for dc_dup and dc_len.  Also save
-	 * first field dc_type, dc_len
-	 */
 	dc_index++;   // start inside (,,,)
 	dc_data_start = dc_index; 
 	while (!dc_eod && !bal_abort){
@@ -10275,12 +10926,15 @@ private void process_dch_data(){
 	}
 	exp_rld_len = 0;
 }
+
+
+
+   /**
+    * alloc or gen DS/DC P type parms using prev.
+    * settings for dc_dup and dc_len.  Also save
+    * first field dc_type, dc_len
+    */
 private void process_dcp_data(){
-	/*
-	 * alloc or gen DS/DC P type parms using prev.
-	 * settings for dc_dup and dc_len.  Also save
-	 * first field dc_type, dc_len
-	 */
 	dc_index++;   // start inside delimiter 'n,n'
 	dc_data_start = dc_index; 
 	while (!dc_eod && !bal_abort){
@@ -10347,10 +11001,13 @@ private void process_dcp_data(){
 	}
 	dc_len = 0; // don't double count RPI 538
 }
+
+
+
+   /**
+    * gen P bit field
+    */
 private void gen_dcp_bits(){
-	/*
-	 * gen P bit field
-	 */
 	dc_bit_tot = dc_bit_tot + dc_len;
 	if (dc_op && dc_dup > 0){
 		dc_bit_buff = dc_bit_buff.shiftLeft(dc_len);
@@ -10363,10 +11020,13 @@ private void gen_dcp_bits(){
 		dc_bit_buff = dc_bit_buff.add(dc_bi_val);
 	} 
 }
+
+
+
+   /**
+    * gen P byte field
+    */
 private void gen_dcp_bytes(){
-	/*
-	 * gen P byte field
-	 */
     if (dc_len_explicit){
     	if (dcp_len < dc_len){
     		dc_hex = tz390.get_dup_string("0",2*(dc_len-dcp_len)) + dc_hex;
@@ -10392,12 +11052,15 @@ private void gen_dcp_bytes(){
 	   loc_ctr = loc_ctr + dc_len;
     }
 }
+
+
+
+   /**
+    * alloc or gen DS/DC Z type parms using prev.
+    * settings for dc_dup and dc_len.  Also save
+    * first field dc_type, dc_len
+    */
 private void process_dcz_data(){
-	/*
-	 * alloc or gen DS/DC Z type parms using prev.
-	 * settings for dc_dup and dc_len.  Also save
-	 * first field dc_type, dc_len
-	 */
 	dc_index++;   // start inside delimiter 'n,n'
 	dc_data_start = dc_index; 
 	while (!dc_eod && !bal_abort){
@@ -10474,12 +11137,15 @@ private void process_dcz_data(){
 	}
 	dc_len = 0; // don't double count RPI 538
 }
+
+
+
+   /**
+    * alloc or gen DS/DC S type parms using prev.
+    * settings for dc_dup and dc_len.  Also save
+    * first field dc_type, dc_len
+    */
 private void process_dcs_data(){
-	/*
-	 * alloc or gen DS/DC S type parms using prev.
-	 * settings for dc_dup and dc_len.  Also save
-	 * first field dc_type, dc_len
-	 */
 	exp_text = dc_field;
 	dc_index++;   // start inside (,,,)
 	exp_index = dc_index;
@@ -10549,16 +11215,19 @@ private void process_dcs_data(){
 	}
 	exp_rld_len = 0;
 }
+
+
+
+   /**
+    * alloc or gen DS/DC X type parms using prev.
+    * settings for dc_dup and dc_len.  Also save
+    * first field dc_len
+    * Notes:
+    *   1.  hex values are right aligned in 
+    *       explicit length fields.
+    *   2.  Spaces are ignored in data RPI 371
+    */
 private void process_dcx_data(){
-	/*
-	 * alloc or gen DS/DC X type parms using prev.
-	 * settings for dc_dup and dc_len.  Also save
-	 * first field dc_len
-	 * Notes:
-	 *   1.  hex values are right aligned in 
-	 *       explicit length fields.
-	 *   2.  Spaces are ignored in data RPI 371
-	 */
 	dc_index++;   // start inside 'hex1,hex2,,'
 	dc_data_start = dc_index; 
 	while (!dc_eod && !bal_abort){
@@ -10609,10 +11278,13 @@ private void process_dcx_data(){
     dc_index++; // skip terminator
     dc_len = 0; // don't double count
 }
+
+
+
+   /**
+    * gen X bit field
+    */
 private void gen_dcx_bits(){
-	/*
-	 * gen X bit field
-	 */
 	dc_bit_tot = dc_bit_tot + dc_len;
 	if (dc_op && dc_dup > 0){
 		dc_bit_buff = dc_bit_buff.shiftLeft(dc_len);
@@ -10625,10 +11297,13 @@ private void gen_dcx_bits(){
 		dc_bit_buff = dc_bit_buff.add(dc_bi_val);
 	} 
 }
+
+
+
+   /**
+    * gen X byte field
+    */
 private void gen_dcx_bytes(){
-	/*
-	 * gen X byte field
-	 */
 	if (dc_len_explicit){
 		if (dcx_len < dc_len){ // RPI 411
 			dc_hex = tz390.get_dup_string("0",2*(dc_len-dcx_len)) + dc_hex;
@@ -10653,11 +11328,16 @@ private void gen_dcx_bytes(){
 	   loc_ctr = loc_ctr + dc_len;
 	}
 }
+
+
+
+   /**
+    * return integer expression in (...)
+    * or decimal number for modifier
+    *
+    * @return number value
+    */
 private int get_dc_mod_int(){
-	/*
-	 * return integer expression in (...)
-	 * or decimal number for modifier
-	 */
  	if (dc_field.length() <= dc_index+1){  // RPI 1077 
  		log_error(208,"DS/DC missing modifier - " + dc_field);
  	    return 1;
@@ -10676,11 +11356,17 @@ private int get_dc_mod_int(){
         return get_dc_int(dc_index+1);
  	}
 }
+
+
+
+   /**
+    * return next number from dc_field at index
+    * else return 1 and update dc_index
+    *
+    * @param index - index value
+    * @return number value
+    */
 private int get_dc_int(int index){
-	/*
-	 * return next number from dc_field at index
-	 * else return 1 and update dc_index
-	 */
 	dc_index = index;
  	while (dc_index < dc_field.length() 
  			&& dc_field.charAt(dc_index) <= '9'
@@ -10693,11 +11379,14 @@ private int get_dc_int(int index){
  		return 1;
  	}
 }
+
+
+
+   /**
+    * generate one or more 0700 instr.
+    * to align to specified boundary
+    */
 private void process_cnop(){
-	/*
-	 * generate one or more 0700 instr.
-	 * to align to specified boundary
-	 */
    	loc_ctr = (loc_ctr+1)/2*2; // skip odd byte preceeding CNOP RPI 941
     loc_start = loc_ctr;
 	exp_text = bal_parms;
@@ -10741,12 +11430,15 @@ private void process_cnop(){
 		 }
 	}
 }
+
+
+
+   /**
+    * perform END processing at END 
+    * statement or end of MLC source
+    * at end of each pass
+    */
 private void process_end(){
-	/*
-	 * perform END processing at END 
-	 * statement or end of MLC source
-	 * at end of each pass
-	 */
 	if (cur_esd > 0){
   		update_sect();
 	}
@@ -10783,18 +11475,21 @@ private void process_end(){
 	update_sects();
 	list_bal_line = false; // RPI 891 supress END after auto LTORG
 }
+
+
+
+   /** 
+    * define or update symbol definition
+    *   1. Set sym_loc to first pos value
+    *   2. Set sym_len to optional
+    *      2nd pos value else 
+    *      set sym_len to 1.
+    *   3. Set sym_attr to optional
+    *      3rd pos value.
+    *   4. Set sym_attrp 4th program type
+    *   5. Set sym_attra 5th assembler type
+    */
 public void process_equ(){ // RPI 415
-	/* 
-	 * define or update symbol definition
-	 *   1. Set sym_loc to first pos value
-	 *   2. Set sym_len to optional
-	 *      2nd pos value else 
-	 *      set sym_len to 1.
-	 *   3. Set sym_attr to optional
-	 *      3rd pos value.
-	 *   4. Set sym_attrp 4th program type
-	 *   5. Set sym_attra 5th assembler type
-	 */
     int index = 0;
 	check_private_csect();
 	loc_start = loc_ctr;
@@ -10901,10 +11596,13 @@ public void process_equ(){ // RPI 415
 	}
 	exp_equ = false; // RPI 749
 }
+
+
+
+   /**
+    * reset current location in same csect
+    */
 private void process_org(){
-	/*
-	 * reset current location in same csect
-	 */
 	update_sect(); // RPI 340 
 	loc_start = loc_ctr;
 	if (bal_parms == null 
@@ -10932,11 +11630,13 @@ private void process_org(){
 		log_error(102,"org expression must be in same section");
 	}
 }
+
+
+
+   /**                                                          // RPI 1523
+    * set current location first csect                          // RPI 1523
+    */                                                          // RPI 1523
 private void process_start()                                    // RPI 1523 routine copied from process_org
-    /*                                                          // RPI 1523
-     *                                                          // RPI 1523
-     * set current location first csect                         // RPI 1523
-     */                                                         // RPI 1523
    {if (bal_parms           == null                             // RPI 1523
      || bal_parms.length()  == 0                                // RPI 1523
      || bal_parms.charAt(0) == ','                              // RPI 1523
@@ -10956,10 +11656,13 @@ private void process_start()                                    // RPI 1523 rout
             }                                                   // RPI 1523
         }                                                       // RPI 1523
     }                                                           // RPI 1523
+
+
+
+   /**
+    * push print or using level if any
+    */
 private void process_push(){
-	/*
-	 * push print or using level if any
-	 */
 	init_get_next_parm(bal_parms);
 	String parm = get_next_parm();
     while (parm != null){
@@ -10997,10 +11700,13 @@ private void process_push(){
 		parm = get_next_parm();
 	}	
 }
+
+
+
+   /**
+    * pop print or using level if any
+    */
 private void process_pop(){
-	/*
-	 * pop print or using level if any
-	 */
 	init_get_next_parm(bal_parms);
 	String parm = get_next_parm();
     while (parm != null){
@@ -11022,11 +11728,14 @@ private void process_pop(){
 		parm = get_next_parm();
 	}	
 }
+
+
+
+   /**
+    * process print options
+    * (unsupported options ignored)
+    */
 private void process_print(){
-	/*
-	 * process print options
-	 * (unsupported options ignored)
-	 */
 	init_get_next_parm(bal_parms);
 	String parm = get_next_parm();
     while (parm != null){
@@ -11048,24 +11757,32 @@ private void process_print(){
 		parm = get_next_parm();
 	}
 }
+
+
+
+   /**
+    * use tz390.parm_match to find and return next parm
+    * separated by commas else return null.
+    *
+    * @param parms - parameter string
+    */
 private void init_get_next_parm(String parms){
-	/*
-	 * use tz390.parm_match to find and return next parm
-	 * separated by commas else return null.
-	 * 
-	 */
 	if (parms != null && parms.length() > 0){
 		tz390.parm_match = tz390.parm_pattern.matcher(parms);
 	} else {
 		tz390.parm_match = null;
 	}
 }
+
+
+
+   /**
+    * use tz390.parm_match to find and return next parm
+    * in upper case else return null.
+    *
+    * @return single parameter in uppercase
+    */
 private String get_next_parm(){
-	/*
-	 * use tz390.parm_match to find and return next parm
-	 * in upper case else return null.
-	 * 
-	 */
 	if (tz390.parm_match != null){
 		while (tz390.parm_match.find()){
 			String parm = tz390.parm_match.group().toUpperCase();
@@ -11079,17 +11796,23 @@ private String get_next_parm(){
 	}
 	return null;
 }
+
+
+
+   /**
+    * issue error for duplicate symbol definition
+    */
 private void duplicate_symbol_error(){
-	/*
-	 * issue error for duplicate symbol definition
-	 */
 	log_error(72,"duplicate symbol " + sym_name[cur_sid] + " on line " + bal_line_num[bal_line_index] + " and " + bal_line_num[sym_def[cur_sid]]);
 }
+
+
+
+   /**
+    * calc rel exp for lit or explicit offset
+    * for following offset(index,base)
+    */
 private void calc_lit_or_exp(){
-	/*
-	 * calc rel exp for lit or explicit offset
-	 * for following offset(index,base)
-	 */
 	if (exp_next_char('=')){
 		calc_lit();
 	} else if (exp_text != null && exp_text.substring(exp_index).length() > 8  // RPI 626 rpi 822
@@ -11122,15 +11845,20 @@ private void calc_lit_or_exp(){
 		calc_exp();
 	}
 }
+
+
+
+   /**
+    * 1.  Find or add literal and set 
+    *     exp_type, exp_val, and exp_esd.
+    * 2.  If literal followed by '-' or '+'
+    *     caculcate expression  
+    *     add to lit address
+    *     and return abs val else error.
+    *
+    * @return ???
+    */
 private boolean calc_lit(){
-	/*
-	 * 1.  Find or add literal and set 
-	 *     exp_type, exp_val, and exp_esd.
-     * 2.  If literal followed by '-' or '+'
-     *     caculcate expression  
-     *     add to lit address
-     *     and return abs val else error.
-	 */
     get_lit_addr();
 	if (cur_lit != -1){
 		if (exp_next_char('-')){
@@ -11168,23 +11896,31 @@ private boolean calc_lit(){
 	}
 	return false;
 }
+
+
+
+   /** 
+    * return bddd or bdddhh 
+    *
+    * @return base-displacement type as "bddd" or "bdddhh"
+    */
 private String get_default_bddd(){
-	/* 
-	 * return bddd or bdddhh 
-	 */
 	if (get_bdddhh){
 		return "bdddhh";
 	} else {
 		return "bddd";
 	}
 }
+
+
+
+   /**
+    * find or add literal and set:
+    *   1. cur_lit = lit table index
+    *   2. exp_val = lit address
+    *   3. exp_esd = lit esd
+    */
 private void get_lit_addr(){
-	/*
-	 * find or add literal and set:
-	 *   1. cur_lit = lit table index
-	 *   2. exp_val = lit address
-	 *   3. exp_esd = lit esd
-	 */
 	String lit_key = "";
 	process_dc(2);
 	if (!bal_abort){
@@ -11230,22 +11966,30 @@ private void get_lit_addr(){
     exp_val = 0;
     exp_esd = 0;
 }
+
+
+
+   /** 
+    * generate ltorg at current location in csect
+    */
 private void gen_ltorg(){
-	/* 
-	 * generate ltorg at current location in csect
-	 */
 	loc_ctr = (loc_ctr + 7)/8*8;
 	gen_lit_size(8);
 	gen_lit_size(4);
 	gen_lit_size(2);
 	gen_lit_size(1);
 }
+
+
+
+   /**
+    * generate literal dc's of specified size
+    * force all length 1 lits to even addr for access by relative halfword offsets in LARL etc.  per issue #327
+    * see regression test rt\test\TESTLITS.MLC which fails on previous releases
+    *
+    * @param size - size of DC to generate
+    */
 private void gen_lit_size(int size){
-	/*
-	 * generate literal dc's of specified size
-           * force all length 1 lits to even addr for access by relative halfword offsets in LARL etc.  per issue #327
-           * see regression test rt\test\TESTLITS.MLC which fails on previous releases
-	 */
 	cur_lit = 0;
 	while (cur_lit < tot_lit){
 		if (lit_len[cur_lit]*lit_dup[cur_lit] == lit_len[cur_lit]*lit_dup[cur_lit]/size*size // RPI 1200 use dup for aligning
@@ -11275,10 +12019,15 @@ private void gen_lit_size(int size){
 		cur_lit++;
 	}
 }
+
+
+
+   /**
+    * add literal xref
+    *
+    * @param index - target index
+    */
 private void add_lit_xref(int index){
-	/*
-	 * add literal xref
-	 */
 	if (!tz390.opt_xref || !gen_obj_code){  //RPI165
 		return;
 	}
@@ -11287,11 +12036,18 @@ private void add_lit_xref(int index){
 	}
 	lit_xref[index].add(bal_line_num[bal_line_index]);
 }
+
+
+
+   /**
+    * add new esd chained to sid 
+    * and return index else abort
+    *
+    * @param sid - section id
+    * @param sect_type - type of section
+    * @return index value
+    */
 private int add_esd(int sid,byte sect_type){
-	/*
-	 * add new esd chained to sid 
-	 * and return index else abort
-	 */
 	   if (tot_esd < tz390.opt_maxesd-1){ // RPI 284
 		   tot_esd++;
 		   esd_sid[tot_esd] = sid;
@@ -11306,35 +12062,46 @@ private int add_esd(int sid,byte sect_type){
 	   }
 	   return tot_esd;
 }
+
+
+
+   /**
+    * add symbol table entry name and return
+    * index for use in setting remaining fields
+    * Notes:
+    *   1.  If lookahead mode, set sym_def = -1
+    *
+    * @param name - name of synbol to add
+    * @return index of new entry
+    */
 public int add_sym(String name){ // RPI 415 public
-	/*
-	 * add symbol table entry name and return
-	 * index for use in setting remaining fields
-	 * Notes:
-	 *   1.  If lookahead mode, set sym_def = -1
-	 */
-	   if (tot_sym < tz390.opt_maxsym - 1){
-		   tot_sym++;
-		   sym_name[tot_sym] = name.toUpperCase(); // RPI 415
-		   sym_attr[tot_sym] = tz390.ascii_to_ebcdic['U'];
-		   if (!tz390.add_key_index(tot_sym)){
-			   return -1;
-		   }
-		   if (lookahead_mode){
-			   sym_def[tot_sym] = sym_def_lookahead;
-		   } else {
-			   add_sym_xref(tot_sym);
-		   }
-		   return tot_sym;
-	   } else {
-		   abort_error(10,"maximum symbol table size exceeded");
+   if (tot_sym < tz390.opt_maxsym - 1){
+	   tot_sym++;
+	   sym_name[tot_sym] = name.toUpperCase(); // RPI 415
+	   sym_attr[tot_sym] = tz390.ascii_to_ebcdic['U'];
+	   if (!tz390.add_key_index(tot_sym)){
 		   return -1;
 	   }
+	   if (lookahead_mode){
+		   sym_def[tot_sym] = sym_def_lookahead;
+	   } else {
+		   add_sym_xref(tot_sym);
+	   }
+	   return tot_sym;
+   } else {
+	   abort_error(10,"maximum symbol table size exceeded");
+	   return -1;
+   }
 }
+
+
+
+   /**
+    * add symbol xref
+    *
+    * @param index - index value
+    */
 private void add_sym_xref(int index){
-	/*
-	 * add symbol xref
-	 */
 	if (!tz390.opt_xref 
 		|| !gen_obj_code  //RPI165
 		|| (last_xref_index   == index 
@@ -11348,11 +12115,14 @@ private void add_sym_xref(int index){
 	}
 	sym_xref[index].add(bal_line_num[bal_line_index]);
 }
+
+
+
+   /**
+    * generate 8 byte aligned CCW0
+    * op8,addr24,flags8,zero8,len16
+    */
 private void gen_ccw0(){  // RPI 567
-	/*
-	 * generate 8 byte aligned CCW0
-	 * op8,addr24,flags8,zero8,len16
-	 */
 	dc_align(8);
 	loc_start = loc_ctr;
 	exp_text = bal_parms;
@@ -11397,11 +12167,14 @@ private void gen_ccw0(){  // RPI 567
 	loc_len = 0;
 	exp_rld_len = 0;
 }
+
+
+
+   /**
+    * generate 8 byte aligned CCW1
+    * op8,flags8,len16,addr32
+    */
 private void gen_ccw1(){  // RPI 567
-	/*
-	 * generate 8 byte aligned CCW1
-	 * op8,flags8,len16,addr32
-	 */
 	String ccw_op    = null;
 	String ccw_flags = null;
 	String ccw_len   = null;
@@ -11449,33 +12222,36 @@ private void gen_ccw1(){  // RPI 567
 		list_obj_code = list_obj_code.substring(8)+list_obj_code.substring(0,8);
 	}
 }
+
+
+
+   /**
+    * set dc_hex for floating point
+    * string fp_text
+    * in scientific notation 0.314159E1 etc.
+    * format is based on fp type 0-8 (db,dd,dh,eb,ed,eh,lb,ld,lh)
+    *
+    * Notes:
+    *   1.  This is very tricky code!
+    *   2.  Use BigDecimal for all types to 
+    *       insure DH and EH exponents beyond 
+    *       range of DB and EB will be correctly
+    *       handled without error.
+    *   3.  The fp_context is set to significant
+    *       decimal digits plus fp_guard_digts to insure 
+    *       sufficient significant bits for proper
+    *       rounding occurs.
+    *   4.  The preferred DFP exponent  
+    *       (BigDecimal scale factor) is
+    *       set based on explicit decimal poiint
+    *       with significant trailing decimal places
+    *       including zeros else use 0. RPI 790
+    * 
+    * First convert string constant to positive
+    * big_dec1 value with sufficent sig. bits.
+    * Exit with artbitrary format if zero.
+    */
 private void fp_get_hex(){
-	/*
-	 * set dc_hex for floating point
-	 * string fp_text
-	 * in scientific notation 0.314159E1 etc.
-	 * format is based on fp type 0-8 (db,dd,dh,eb,ed,eh,lb,ld,lh)
-	 *
-	 * Notes:
-	 *   1.  This is very tricky code!
-	 *   2.  Use BigDecimal for all types to 
-	 *       insure DH and EH exponents beyond 
-	 *       range of DB and EB will be correctly
-	 *       handled without error.
-	 *   3.  The fp_context is set to significant
-	 *       decimal digits plus fp_guard_digts to insure 
-	 *       sufficient significant bits for proper
-	 *       rounding occurs.
-	 *   4.  The preferred DFP exponent  
-	 *       (BigDecimal scale factor) is
-	 *       set based on explicit decimal poiint
-	 *       with significant trailing decimal places
-	 *       including zeros else use 0. RPI 790
-	 * 
-	 * First convert string constant to positive
-	 * big_dec1 value with sufficent sig. bits.
-	 * Exit with artbitrary format if zero.
-	 */
 	char fp_sign = '+';
 	if (fp_text.charAt(0) =='-'){ // RPI 834
 		fp_sign = '-';
@@ -11692,27 +12468,30 @@ private void fp_get_hex(){
 		break;
 	}
 }
+
+
+
+   /** *****************************************
+    * calc tz390.fp_exp and big_dec2 such that:      
+    * big_dec1 = big_dec2 * 2  ** tz390.fp_exp      
+    * ************************************** 
+    * 
+    * tz390.fp_exp = log(big_dec1) / log(2)
+    *
+    * Since the exponent range of LB exceeds  
+    * native double, the log of big_dec1 is
+    * calculated using equivalent:
+    *   log(X*10**N) = log(X) + N*log(10)
+    * The exponent must then be offset by the number
+    * of bits in the required binary mantissa in 
+    * order to retain significant bits when big_dec2
+    * is converted to big_int format.  The exponent
+    * is also reduced by 1 for assumed bit in binary 
+    * formats plus 1 additional to insure rounding for
+    * irrational values is done by shifting right.
+    * 
+    */ 
 	private void cvt_fp_exp_to_base_2(){
-	/*******************************************
-	 * calc tz390.fp_exp and big_dec2 such that:      
-	 * big_dec1 = big_dec2 * 2  ** tz390.fp_exp      
-	 *************************************** 
-	 * 
-	 * tz390.fp_exp = log(big_dec1) / log(2)
-	 * 	 *                                           
-	 * Since the exponent range of LB exceeds  
-	 * native double, the log of big_dec1 is
-	 * calculated using equivalent:
-	 *   log(X*10**N) = log(X) + N*log(10)
-	 * The exponent must then be offset by the number
-	 * of bits in the required binary mantissa in 
-	 * order to retain significant bits when big_dec2
-	 * is converted to big_int format.  The exponent
-	 * is also reduced by 1 for assumed bit in binary 
-	 * formats plus 1 additional to insure rounding for
-	 * irrational values is done by shifting right.
-	 * 
-	 */ 
 	fp_big_dec1 = fp_big_dec1.stripTrailingZeros(); // RPI 821	
 	int    work_scale  =  - fp_big_dec1.scale();
 	double work_man    =    fp_big_dec1.multiply(
@@ -11740,6 +12519,9 @@ private void fp_get_hex(){
 		dc_hex = "FFFF000000000000";
 		return;
 	}
+
+
+
 	/*
 	 * retrieve fp_big_dec2 mantissa bits as big_int and
 	 * adjust tz390.fp_exp by mantissa bits
@@ -11747,18 +12529,21 @@ private void fp_get_hex(){
 	fp_big_int1 = fp_big_dec2.toBigInteger();
     tz390.fp_exp = tz390.fp_exp + tz390.fp_man_bits[tz390.fp_type];
 	}
+
+
+
+   /**
+    * 1.  BFP - Adjust mantiss and base 2 exponent
+    *     to align for assumed 1 bit.
+    * 2.  HFP - Adjust mantissa and base 2
+    *     exponent to base 16 exponent.
+    * 3.  DFP - Set base 10 exponent based on
+    *     explicit decimal point and trailing
+    *     significant digits including zeros
+    *     else use preferred exponent of 0.  RPI 790
+    * 
+    */
 	private void fp_cvt_bd_to_hex(){
-	/*
-	 * 1.  BFP - Adjust mantiss and base 2 exponent
-	 *     to align for assumed 1 bit.
-	 * 2.  HFP - Adjust mantissa and base 2
-	 *     exponent to base 16 exponent.
-	 * 3.  DFP - Set base 10 exponent based on
-	 *     explicit decimal point and trailing
-	 *     significant digits including zeros
-	 *     else use preferred exponent of 0.  RPI 790
-	 * 
-	 */
 	switch (tz390.fp_type){  // gen hex for fp type
 	case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
 		fp_long1 = fp_big_int1.longValue();
@@ -11971,12 +12756,15 @@ private void fp_get_hex(){
 		break;
 	}	
 }
+
+
+
+   /**
+    * set DFP preferred base 10 exponent
+    * for fp_big_dec1 value if explicit
+    * decimal found in fp_text.
+    */
 	private void set_dfp_preferred_exp(){
-		/*
-		 * set DFP preferred base 10 exponent
-		 * for fp_big_dec1 value if explicit
-		 * decimal found in fp_text.
-		 */
 		int tot   = 0;
 		int index = fp_text.indexOf('.');
 		if (index != -1){
@@ -11996,10 +12784,16 @@ private void fp_get_hex(){
 		}
 		dc_scale = fp_big_dec1.scale();
 	}
-    public boolean add_missing_copy(String name){
-	/*
-	 * add missing copy file for ERRSUM
-	 */
+
+
+
+   /**
+    * add missing copy file for ERRSUM
+    *
+    * @param name - name of missing COPY file
+    * @return true if successful, false otherwise
+    */
+public boolean add_missing_copy(String name){
 	int index = 0;
 	while (index < tot_missing_copy){
 		if (name.equals(missing_copy[index])){
@@ -12015,10 +12809,16 @@ private void fp_get_hex(){
 		return false;
 	}	
 }
+
+
+
+   /**
+    * add missing macro file for ERRSUM
+    *
+    * @param name - name of missing macro
+    * @return true if successful, false otherwise
+    */
 private boolean add_missing_macro(String name){
-	/*
-	 * add nussubg ciot file for ERRSUM
-	 */
 	int index = 0;
 	while (index < tot_missing_macro){
 		if (name.equals(missing_macro[index])){
@@ -12034,11 +12834,14 @@ private boolean add_missing_macro(String name){
 		return false;
 	}
 }
+
+
+
+   /**
+    * report critical errors on ERR file
+    * and console for ERRSUM option
+    */
 public void report_critical_errors(){
-	/*
-	 * report critical errors on ERR file
-	 * and console for ERRSUM option
-	 */
 	if (tot_missing_macro+tot_missing_copy+tot_missing_sym == 0){
 		return; // RPI 959
 	}
@@ -12073,10 +12876,15 @@ public void report_critical_errors(){
 	}
 	put_errsum("ERRSUM total az390 errors    = " + az390_errors); // RPI 659 RPI 945
 }
+
+
+
+   /**
+    * put ERRSUM msgs on ERR file and console
+    *
+    * @param msg - message text
+    */
 private void put_errsum(String msg){
-	/*
-	 * put ERRSUM msgs on ERR file and console
-	 */
 	msg = "AZ390E " + msg;
 	System.out.println(msg);
 	if (prn_file != null){ 
@@ -12085,11 +12893,20 @@ private void put_errsum(String msg){
 	}
 	tz390.put_systerm(msg);
 }
+
+
+
+   /**
+    * return I' integer pfx value for symbol
+    * based on length and scale per ref.
+    *
+    * @param type     - field type (DC type character)
+    * @param type_sfx - field subtype (DC based)
+    * @param len      - length in bytes
+    * @param scale    - scaling factor
+    * @return Integer result value
+    */
 public int get_int_pfx(byte type,byte type_sfx,int len,int scale){
-	/*
-	 * return I' integer pfx value for symbol
-	 * based on length and scale per ref.
-	 */
 	switch (type){  // RPI 790
 	case 'F':
 	case 'H':
