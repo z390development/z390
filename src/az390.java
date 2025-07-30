@@ -1143,6 +1143,15 @@ public  class  az390 implements Runnable {
 
 
 
+    /**
+     * Dummy constructor - no initialization needed
+     */
+public az390()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
    /**
     * main is entry when executed from command line
     * Create instance of az390 class and pass
@@ -2910,7 +2919,16 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
     * Digits should sort higher than alphabetic characters.
     */
 public class ReportEntryComparator implements Comparator<String>                     // #568
-   {@Override                                                                        // #568
+   {/**
+     * Dummy constructor - no initialization needed
+     */
+    public ReportEntryComparator()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
+    @Override                                                                        // #568
     public int compare(String str1, String str2)                                     // #568
        {// special case: entries consisting of a single space sort first!            // #568
         if (str1.charAt(0) == ' ') return 1;  // blank entry always smaller          // #568
