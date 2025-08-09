@@ -1156,7 +1156,8 @@ public az390()
     * main is entry when executed from command line
     * Create instance of az390 class and pass
     * parms to az390 like z390 does.
-    * @param args - argument string - same as z390
+    *
+    * @param args argument string - same as z390
     */
 public static void main(String[] args) {
       az390 pgm = new az390();
@@ -1170,14 +1171,12 @@ public static void main(String[] args) {
     * initialize z390 when called from mz390
     * to receive bal directly and share the
     * symbol table with mz390.
-    * @param args               - argumebnt string
-    * @param z390_log           - log data
-    * @param mz390_systerm_file - file handle for systerm
-    * @param mz390_stats_file   - file handle for statistics
+    *
+    * @param args               argumebnt string
+    * @param z390_log           log data
+    * @param mz390_systerm_file file handle for systerm
+    * @param mz390_stats_file   file handle for statistics
     */
-
-
-
 public void start_az390_thread(String[] args,JTextArea z390_log, RandomAccessFile mz390_systerm_file,RandomAccessFile mz390_stats_file){
 	mz390_call = true;
 	init_az390(args, null, mz390_systerm_file, mz390_stats_file);
@@ -1197,8 +1196,9 @@ public void start_az390_thread(String[] args,JTextArea z390_log, RandomAccessFil
    /**
     * save xref file names and error counts for
     * cross reference at end of PRN
-    * @param mac_file_path   - file path for macros
-    * @param mac_file_errors - macro error data
+    *
+    * @param mac_file_path   file path for macros
+    * @param mac_file_errors macro error data
     */
 public void finish_az390(String[] mac_file_path,int[] mac_file_errors){
 	xref_file_path = mac_file_path;
@@ -1240,20 +1240,26 @@ public void run() {
     *  relocatable OBJ file and
     *  generate optional PRN file.
     *
-    * Notes;
-    *   1.  az390 may be called from:
-    *       a. z390 GUI Windows command via main();
-    *       b. Windows command prompt via main();
-    *       c. mz390 call via process_az390_call();
-    *   2.  If called from z390 GUI Windows command, the
-    *       console output will be redirected to
-    *       to the z390 GUI log.
-    *   3.  If called from mz390 via process_az390_call,
-    *       az390 process will run on separate
-    *       thread and the get_bal_line and
-    *       receive_bal_line methods will
-    *       synchronize passing bal record
-    *       from mz390 to az390 process.
+    * <br />
+    * Notes:
+    * <ol>
+    *  <li>az390 may be called from:
+    *   <ol>
+    *    <li> z390 GUI Windows command via main();</li>
+    *    <li> Windows command prompt via main();</li>
+    *    <li> mz390 call via process_az390_call();</li>
+    *   </ol>
+    *  </li>
+    *  <li>If called from z390 GUI Windows command, the
+    *    console output will be redirected to
+    *    to the z390 GUI log.</li>
+    *  <li>If called from mz390 via process_az390_call,
+    *    az390 process will run on separate
+    *    thread and the get_bal_line and
+    *    receive_bal_line methods will
+    *    synchronize passing bal record
+    *    from mz390 to az390 process.</li>
+    * </ol>
     */
 private void process_az390(){
 	if (tz390.opt_trap){
@@ -1273,15 +1279,18 @@ private void process_az390(){
 
 
    /**
-    * 1.  initialize log routing
-    * 2.  set options
-    * 3.  compile regular expression parsers
-    * 4.  open bal and obj buffered I/O files
-    * 5.  Init ascii/ebcdic translation table
-    * @param args     - argumebnt string
-    * @param log_text - log data
-    * @param systerm  - file handle for systerm
-    * @param stats    - file handle for statistics
+    * <ol>
+    *  <li> initialize log routing</li>
+    *  <li> set options</li>
+    *  <li> compile regular expression parsers</li>
+    *  <li> open bal and obj buffered I/O files</li>
+    *  <li> Init ascii/ebcdic translation table</li>
+    * </ol>
+    *
+    * @param args     argumebnt string
+    * @param log_text log data
+    * @param systerm  file handle for systerm
+    * @param stats    file handle for statistics
     */
 private void init_az390(String[] args, JTextArea log_text,
                         RandomAccessFile systerm,
@@ -1537,8 +1546,7 @@ private void compile_patterns(){
 
 
    /**
-    * 1.  Set trace file name
-    * 2.  Open obj and prn files
+    * Set trace file name; then open obj and prn files
     */
 private void open_files(){
     if (tz390.trace_file_name == null){  // RPI 719
@@ -1568,7 +1576,7 @@ private void open_files(){
 
    /**
     * assemble bal source into obj relocatable
-    * object code file                           
+    * object code file
     */
 private void process_bal(){
     resolve_symbols();
@@ -1675,17 +1683,19 @@ private void check_timeout(){
     * update each section starting address
     * and max length, and reset current length
     * and current esd_loc
-    * 
+    * <br />
     * Notes:
-    *   1.  If any section start address or 
-    *       max length changes issue error
-    *       to force additional passes.
-    *   2.  sym_cst CSECT's start at 0 and are
-    *       contiguous within LOCTR's
-    *   3.  Each new CSECT is aligned to *8
-    *   4.  sym_dst DSECT's always start at 0
-    *   5.  Set esd_base to root section
-    *       for cst, dst, and loctors
+    * <ol>
+    *  <li>If any section start address or 
+    *      max length changes issue error
+    *      to force additional passes.</li>
+    *  <li>sym_cst CSECT's start at 0 and are
+    *      contiguous within LOCTR's</li>
+    *  <li>Each new CSECT is aligned to 8</li>
+    *  <li>sym_dst DSECT's always start at 0</li>
+    *  <li>Set esd_base to root section
+    *        for cst, dst, and loctors</li>
+    * </ol>
     */
 private void update_sects(){
 	if (tot_loc_stmt > 0 && cur_pass == 1){ // RPI 632 
@@ -1819,14 +1829,14 @@ private void reset_lits(){
 
 
 
-   /** // #500
+   /**
     * Lists all mnemonics in the selected opcode table
-    *
-    * All mnemonics from the current opcode table are converted into report entries
-    * The report entries are sorted
-    * The sorted entries are printed (three on a print line) preceded by a header line
-    *
-    */
+    * <ol>
+    *  <li>All mnemonics from the current opcode table are converted into report entries</li>
+    *  <li>The report entries are sorted</li>
+    *  <li>The sorted entries are printed (three on a print line) preceded by a header line</li>
+    * </ol>
+    */                                                                                 // #500
 private void gen_list_mnemonics() // Routine added for RPI 1209A
    {int     index;
     String  entry;
@@ -3009,6 +3019,7 @@ private void gen_obj_esds(){
 
    /**
     * return esd type
+    *
     * @return type of ESD
     */
 private String get_esd_type(){
@@ -3070,12 +3081,11 @@ private void gen_obj_text(){
 
    /**
     * allocate or generate object code for bal op
-    * 
-    * 1.  Note op_type index values must match
-    *     op_name array values.  
-    * 2.  Indexes less than 100 and CNOP are machine instr. types RPI 743
-    * 3.  Indexes more than 100 are assembler instr.
-    *
+    * <ol>
+    *  <li>Note op_type index values must match op_name array values.</li>
+    *  <li>Indexes less than 100 and CNOP are machine instr. types RPI 743</li>
+    *  <li>Indexes more than 100 are assembler instr.</li>
+    * </ol>
     */
 private void process_bal_op(){
 	loc_len = 0;
@@ -5809,11 +5819,12 @@ private void process_bal_op(){
     * list bal line with first 8 bytes of
     * object code if any 
     * and turn off list_bal_line request
-    * Notes:
-    *   1.  See comments processing case 0
-    *       for update of mac_call_gen,
-    *       call reformating, and delay flags
-    *       mac_call_first and mac_call_last.
+    * <br />
+    * Note:
+    *    See comments processing case 0
+    *    for update of mac_call_gen,
+    *    call reformating, and delay flags
+    *    mac_call_first and mac_call_last.
     */
 private void list_bal_line(){
     if (!check_list_bal_line()){ // RPI 484 RPI 891
@@ -5851,6 +5862,7 @@ private void list_bal_line(){
    /**
     * set true if ok to list BAL line
     * on PRN file
+    *
     * @return true if BAL line to be printed; false to suppress
     */
 private boolean check_list_bal_line(){
@@ -5899,6 +5911,7 @@ private void update_list_bal_line(){
 
    /**
     * add plus rld
+    *
     * @param exp_esd ???
     */
 private void add_rld(int exp_esd){
@@ -5915,6 +5928,7 @@ private void add_rld(int exp_esd){
 
    /**
     * sub rld
+    *
     * @param exp_esd ???
     */
 private void sub_rld(int exp_esd){
@@ -5969,13 +5983,15 @@ private void reduce_exp_rld(){
 
 
    /**
-    * generate rlds for expression
+    * generate rlds for expression<br />
     * Notes:
-    *   1.  convert to rel csect vs rel module
-    *       offsets for linker use. 
-    *   2.  Original exp_val saved in rld_exp_val
-    *       for use in PRN display (i.e. show addresses
-    *       relative to module versus CSECT).
+    * <ol>
+    *  <li>convert to rel csect vs rel module
+    *      offsets for linker use.</li>
+    *  <li>Original exp_val saved in rld_exp_val
+    *      for use in PRN display (i.e. show addresses
+    *      relative to module versus CSECT).</li>
+    * </ol>
     */
 private void gen_exp_rld(){
 	if (cur_esd == 0 || sym_type[esd_sid[esd_base[cur_esd]]] != sym_cst){ // RPI 1208
@@ -6058,8 +6074,8 @@ private void gen_obj_rlds(){
 
 
    /**
-    * write END object record with entry if specified  RPI 1197
-    */
+    * write END object record with entry if specified
+    */                                                          //  RPI 1197
 private void gen_obj_end(){
 	if (end_entry_found){
 		put_obj_line(".END" + " ESD=" + tz390.get_hex(sym_esd[end_entry_sid],4)
@@ -6181,10 +6197,10 @@ private void gen_lit_xref_list(){
 
    /**
     * load bal source
-    * 
-    * 1.  Concatentate any continuations indicated
-    *     by non-blank in position 72.  Each 
-    *     continuation must start at position 16.
+    * <br />
+    * Concatentate any continuations indicated
+    * by non-blank in position 72.  Each
+    * continuation must start at position 16.
     */
 private void load_bal(){
     if (!mz390_call){ // RPI 415
@@ -6230,14 +6246,16 @@ private void load_bal(){
 
 
    /**
-    * 1.  pass mz390 bal_line to az390 bal_line
-    *     with synchronization of threads.
-    * 2.  ignore BAL after END
-    * @param new_bal_line       - source line
-    * @param new_xref_file_name - file name for cross ref
-    * @param new_xref_file_type - file type for cross ref
-    * @param new_xref_file_num  - file nr   for cross ref
-    * @param new_xref_line_num  - file line for cross ref
+    * <ol>
+    *  <li>pass mz390 bal_line to az390 bal_line with synchronization of threads.</li>
+    *  <li>ignore BAL after END</li>
+    * </ol>
+    *
+    * @param new_bal_line       source line
+    * @param new_xref_file_name file name for cross ref
+    * @param new_xref_file_type file type for cross ref
+    * @param new_xref_file_num  file nr   for cross ref
+    * @param new_xref_line_num  file line for cross ref
     */
 public void pass_bal_line(String new_bal_line,String new_xref_file_name, char new_xref_file_type,int new_xref_file_num, int new_xref_line_num){
 	if (sym_lock){
@@ -6271,15 +6289,17 @@ public void pass_bal_line(String new_bal_line,String new_xref_file_name, char ne
 
 
    /**
-    * 1.  Block mz390 until az390 is waiting
-    *     for next bal.
-    * 2.  Set sym_lock
-    * 
+    * <ol>
+    *  <li>Block mz390 until az390 is waiting for next bal.</li>
+    *  <li>Set sym_lock</li>
+    * </ol>
     * Notes:
-    *   1.  See az390 pass_bal for lock check.
-    *   2,  See mz390 put_bal_line for lock reset. 
-    * 
-    * @param desc - description
+    * <ol>
+    *  <li>See az390 pass_bal for lock check.</li>
+    *  <li>See mz390 put_bal_line for lock reset.</li>
+    * </ol>
+    *
+    * @param desc description
     */
 public  void set_sym_lock(String desc){
     if (tz390.opt_traceall){ // RPI 403
@@ -6448,7 +6468,7 @@ private void parse_bal_line(){
    /**
     * return base file name from path\file.sfx
     *
-    * @param file_name - file name
+    * @param file_name file name
     * @return  base name of the file (without extension)
     */
 private String get_base_name(String file_name){
@@ -6463,9 +6483,9 @@ private String get_base_name(String file_name){
 
 
    /**
-    * return index of bal operation
-    * or return  0 for comments
-    * or return -1 if undefined operation
+    * return index of bal operation<br />
+    * or return  0 for comments<br />
+    * or return -1 if undefined operation<br />
     * or return -2 if cancelled OPSYN
     *
     * @return index of bal operation, or -1=undefine, -2=cancelled OPSYN, 0=comment
@@ -6509,7 +6529,8 @@ private int find_bal_op(){
 
    /**
     * process EXTRN, ENTRY, or WXTRN statement
-    * @param esd_type - ???
+    *
+    * @param esd_type ???
     */
 private void process_esd(byte esd_type){
 	String token = null;
@@ -6566,7 +6587,7 @@ private void process_esd(byte esd_type){
    /**
     * add EXTRN using V vs S key index
     *
-    * @param token - input token
+    * @param token input token
     * @return index of token
     */
 private int add_extrn(String token){
@@ -6592,7 +6613,7 @@ private int add_extrn(String token){
    /**
     * add WXTRN using V vs S key index
     *
-    * @param token - input token
+    * @param token input token
     * @return index of token
     */
 private int add_wxtrn(String token){
@@ -6618,7 +6639,7 @@ private int add_wxtrn(String token){
    /**
     * add ENTRY 
     *
-    * @param token - input token
+    * @param token input token
     */
 private void add_entry(String token){
     if (sym_type[cur_sid] == sym_rel 
@@ -6641,20 +6662,18 @@ private void add_entry(String token){
 
    /**
     * add or update csect, dsect, or loctr
-    * indicated by sym_cst, sym_dst, or sym_lct type parm
+    * indicated by sym_cst, sym_dst, or sym_lct type parm<br />
     * Steps:
-    *   1.  Update previous section if any with 
-    *       max length and any loctr pointers
-    *   2.  If name omitted used private cst/dst  RPI 254
-    *   3.  Add new section if not found or external
-    *       reference found as local label.
-    *   4.  Reset location counter to end of 
-    *       current section.
-    *   5.  Update prev section type and sid for
-    *       use in processing sym_lct sections.
+    * <ol>
+    *  <li>Update previous section if any with max length and any loctr pointers</li>
+    *  <li>If name omitted used private cst/dst</li>
+    *  <li>Add new section if not found or external reference found as local label</li>
+    *  <li>Reset location counter to end of current section</li>
+    *  <li>Update prev section type and sid for use in processing sym_lct sections</li>
+    * </ol>
     *
-    * @param sect_type - section type: CSECT / DSECT / RSECT
-    * @param sect_name - section name
+    * @param sect_type section type: CSECT / DSECT / RSECT
+    * @param sect_name section name
     */
 private void process_sect(byte sect_type,String sect_name){
 	cur_sym_sect = true;  // RPI 553
@@ -6764,12 +6783,17 @@ private void process_sect(byte sect_type,String sect_name){
 
 
    /**
-    * 1.  Return defined symbol index else -1
-    * 2.  If not lookahead mode
-    *        if found, add xref
-    *        else if vcon mode, add extrn
+    * <ol>
+    *  <li>Return defined symbol index else -1</li>
+    *  <li>If not lookahead mode:
+    *   <ul>
+    *    <li>if found, add xref</li>
+    *    <li>else if vcon mode, add extrn</li>
+    *   </ul>
+    *  </li>
+    * </ol>
     *
-    * @param name - input symbol: label or variable name
+    * @param name input symbol: label or variable name
     * @return index of symbol, or -1 if not defined
     */
 public int find_sym(String name){ // RPI 415 public
@@ -6927,20 +6951,20 @@ private void update_sect(){
 
    /**
     * processing by request type:
-    * 1.  parse ds/dc bal statement and allocate
-    *     or gen data items including alignment
-    *     bytes where required.
-    * 2.  find or add literal table entry using
-    *     ds/dc type single parm following = parm
-    * 3.  generate literal pool dc using loc_ctr
-    *     set to referenced instruction.
-    *
-    * if LTORG, gen lits
-    *
+    * <ol>
+    *  <li>parse ds/dc bal statement and allocate
+    *      or gen data items including alignment
+    *      bytes where required.</li>
+    *  <li>find or add literal table entry using
+    *      ds/dc type single parm following = parm</li>
+    *  <li>generate literal pool dc using loc_ctr
+    *     set to referenced instruction.</li>
+    * </ol>
+    * if LTORG, gen lits<br />
     * if not DC/DS/LTORG set dc_lit and process first
     * field as literal and update exp_index
     *
-    * @param request_type - request type code: 1=parse, 2=find, 3=generate
+    * @param request_type request type code: 1=parse, 2=find, 3=generate
     */
 public void process_dc(int request_type){ // RPI 415
 	 switch (request_type){
@@ -7184,12 +7208,13 @@ private boolean calc_dca_exp(){
 
    /**
     * parse abs/rel expression starting at
-    * exp_text.charAt(exp_index)
-    * return true if ok and set
-    * 1. exp_val = abs or rel offset
-    * 2. exp_esd = abs 0 or cst/dst esd
-    * 3. exp_index = index to terminator
-    * which can be end of string, or (),
+    * exp_text.charAt(exp_index)<br />
+    * return true if ok and set:
+    * <ol>
+    *  <li>exp_val = abs or rel offset</li>
+    *  <li>exp_esd = abs 0 or cst/dst esd</li>
+    *  <li>exp_index = index to terminator which can be end of string, or ()</li>
+    * </ol>
     *
     * @return true if valid absolute or relative expression, false otherwise
     */
@@ -7238,10 +7263,12 @@ private boolean calc_exp(){
 
 
    /**
-    * parse general expression tokens
-    *   1. push sym or sdt
-    *   2. exec or push operations + - * /
-    *   3. terminate on end of string or (),
+    * parse general expression tokens:
+    * <ol>
+    *  <li>push sym or sdt</li>
+    *  <li>exec or push operations + - * /</li>
+    *  <li>terminate on end of string or ()</li>
+    * </ol>
     */
 private void proc_exp_token(){
 	check_prev_op = true;
@@ -7738,10 +7765,11 @@ private void get_stk_sym(){
 
 
    /**
-    * pop operator from op stack
-    * pop sym_val2 off var stack
-    * replace original sym_val1 
-    * on top of stack with result
+    * <ol>
+    *  <li>pop operator from op stack</li>
+    *  <li>pop sym_val2 off var stack</li>
+    *  <li>replace original sym_val1 on top of stack with result</li>
+    * </ol>
     */
 private void put_stk_sym(){
 	if ((tot_exp_stk_sym >= 2) && (tot_exp_stk_op > 0)){
@@ -7758,9 +7786,9 @@ private void put_stk_sym(){
 
 
    /**
-    * put current op on stack
+    * put current op on stack<br />
     * 
-    * if unary minus push 0 var first
+    * if unary minus push 0 var first<br />
     * if unary plus skip the push
     */
 private void exp_push_op(){
@@ -7827,7 +7855,7 @@ private void exp_term(){
 
 
    /**
-    * push symbol on stack else abort
+    * push symbol on stack else abort<br />
     * set cur_sid > 0 used by L'
     */
 private void push_exp_sym(){
@@ -7868,13 +7896,11 @@ private void push_exp_sym(){
     * push literal on stack else abort
     * and set cur_lit >= 0 and cur_sit = -1
     * for L' to determine that literal is on
-    * the stack
-    * Note:
-    *  1. Literal must be first term in exp
+    * the stack<br />
+    * Note: Literal must be first term in exp
     *     since it may use calc_exp during
     *     DC processing and then resets
     *     exp stack with lit address
-    *     
     */
 private void push_exp_lit(){  // RPI 365
 	cur_sid = -1; // RPI 365
@@ -7925,7 +7951,7 @@ private boolean inc_tot_exp_stk_sym(){
    /**
     * push self defining abs term on stack
     *
-    * @param sdt - self-defining term
+    * @param sdt self-defining term
     */
 private void push_exp_sdt(String sdt){
     	if (inc_tot_exp_stk_sym()){
@@ -7959,9 +7985,8 @@ private void push_exp_sdt(String sdt){
 
    /**
     * put stats and display total errors
-    * after mz390 is done and close files.
-    * Note:
-    *   1.  return az390 return code for use by mz390
+    * after mz390 is done and close files.<br />
+    * Note: return az390 return code for use by mz390
     *       when called from mz390 when mfc option on.
     */
 public void exit_az390(){
@@ -8049,7 +8074,7 @@ public void put_stats(){
    /**
     * routine statistics line to PRN or STATS(file)
     *
-    * @param msg - message
+    * @param msg message
     */
 private void put_stat_line(String msg){
 	if (tz390.stats_file != null){
@@ -8102,14 +8127,16 @@ public void close_files(){
 
    /**
     * issue error msg to log with prefix and
-    * inc error total
+    * inc error total<br />
     * Notes:
-    *   1.  Set bal_abort if not set else exit
-    *   2.  supress if not gen_obj and not trace
-    *   3.  print bal line first if list on
+    * <ol>
+    *  <li>Set bal_abort if not set else exit</li>
+    *  <li>supress if not gen_obj and not trace</li>
+    *  <li>print bal line first if list on</li>
+    * </ol>
     *
-    * @param error - error number
-    * @param msg   - message text
+    * @param error error number
+    * @param msg   message text
     */
 private void log_error(int error,String msg){
 	  if (bal_abort)return; // only 1 error per line
@@ -8176,8 +8203,9 @@ private void set_file_line_xref(){
    /**
     * issue error msg to log with prefix and
     * inc error total
-    * @param error - error number
-    * @param msg   - error message
+    *
+    * @param error error number
+    * @param msg   error message
     */
 private synchronized void abort_error(int error,String msg){ // RPI 646
 	  az390_errors++;
@@ -8237,7 +8265,7 @@ private void put_copyright(){
     * Write message to z390_log_text or console
     * if running standalone
     *
-    * @param msg - message
+    * @param msg message
     */
 private synchronized void put_log(String msg) {
     put_prn_line(msg);
@@ -8260,7 +8288,7 @@ private synchronized void put_log(String msg) {
     * if print_on and not surpressed by nogen.
     * if print data, print all data.
     *
-    * @param msg - message
+    * @param msg message
     */
 private void put_prn_line(String msg){
    String temp_hex;
@@ -8351,7 +8379,7 @@ private void check_end_parms(){
     * put object code to obj file in
     * hex or binary format
     *
-    * @param msg - message
+    * @param msg message
     */
 private void put_obj_line(String msg){
     if (obj_file == null || tz390.z390_abort){
@@ -8387,7 +8415,7 @@ private void put_obj_line(String msg){
     * mainframe compatiblity.  See DFSMS
     * Program Management Manual reference.
     *
-    * @param hex_rcd - ???
+    * @param hex_rcd ???
     */
 private void cvt_obj_hex_to_bin(String hex_rcd){
 	try {
@@ -8569,7 +8597,7 @@ private void cvt_obj_hex_to_bin(String hex_rcd){
    /**
     * Format long into 16 byte hex string
     *
-    * @param work_long - long
+    * @param work_long long
     * @return hex string equivalent of input
     */
 private String get_long_hex(long work_long) {
@@ -8583,8 +8611,8 @@ private String get_long_hex(long work_long) {
     * Format text string into hex string
     * If ascii_req true, gen ascii else ebcdic hex
     *
-    * @param text - text
-    * @param ascii - character set indicator
+    * @param text  text
+    * @param ascii character set indicator
     * @return formatted text
     */
 private String string_to_hex(String text,boolean ascii){
@@ -8614,10 +8642,10 @@ private String string_to_hex(String text,boolean ascii){
     * Format bytes into hex string
     * If chunk more than 0 insert space after each chuck
     *
-    * @param bytes       - byte array
-    * @param byte_start  - start address
-    * @param byte_length - length in bytes
-    * @param chunk       - chunk indicator
+    * @param bytes       byte array
+    * @param byte_start  start address
+    * @param byte_length length in bytes
+    * @param chunk       chunk indicator
     * @return hex string for selected bytes
     */
 private String bytes_to_hex(byte[] bytes,int byte_start,int byte_length,int chunk){
@@ -8647,14 +8675,13 @@ private String bytes_to_hex(byte[] bytes,int byte_start,int byte_length,int chun
 
 
    /**
-    * 1.  Append obj_code to list_obj_code for 
-    *     print line (reguired by mult DC calls).
-    * 2.  Exit if gen_obj_code not on or not CSECT
-    * 3.  Buffer output of ojbect text code for
-    *     contiguous data in same ESD.
-    * 4.  Called from END processing with BAL_EOF
-    *     to flush buffer.
-    * 5.  Reset obj_code for use by DC routines
+    * <ol>
+    *  <li>Append obj_code to list_obj_code for print line (reguired by mult DC calls).</li>
+    *  <li>Exit if gen_obj_code not on or not CSECT</li>
+    *  <li>Buffer output of ojbect text code for contiguous data in same ESD.</li>
+    *  <li>Called from END processing with BAL_EOF to flush buffer.</li>
+    *  <li>Reset obj_code for use by DC routines</li>
+    * </ol>
     */
 private void put_obj_text(){
 	 if (tz390.z390_abort || mz390_abort){
@@ -8810,9 +8837,8 @@ private void get_use_range(){
 
    /**
     * set cur_use_reg and cur_use_off
-    * from exp_text at exp_index set by get_use_range
-    * Notes:
-    *   1.  get_rel_exp_bddd is called for dependent
+    * from exp_text at exp_index set by get_use_range<br />
+    * Note: get_rel_exp_bddd is called for dependent
     *       using expressions to find reg and loc
     */
 private void get_use_domain(){
@@ -8960,8 +8986,8 @@ private void drop_cur_use_reg(){
    /**
     * move use entry from index1 to index2
     *
-    * @param index1 - origin index
-    * @param index2 - target index
+    * @param index1 origin index
+    * @param index2 target index
     */
 private void move_use_entry(int index1,int index2){
 	use_lab[index2] = use_lab[index1];
@@ -9033,8 +9059,8 @@ private void list_use(){
     * and initialize exp parser with parms
     * if op_offset = 1
     *
-    * @param op_offset - ???
-    * @param op_len    - instruction length in bytes?
+    * @param op_offset ???
+    * @param op_len    instruction length in bytes?
     */
 private void get_hex_op(int op_offset, int op_len){
 	hex_op = tz390.op_code[bal_op_index].substring(op_offset-1,op_offset - 1 + op_len);
@@ -9068,6 +9094,7 @@ private void or_last_op(){
 
    /**
     * return single hex nibble char 0-f
+    *
     * @return 1-character string
     */
 private String get_hex_nib(){
@@ -9088,7 +9115,7 @@ private String get_hex_nib(){
    /**
     * append vector hex reg low 4 bits from next parm and set corresponding vreg_rxb high bit for 16-31 vregs 
     *
-    * @param vreg - vector register number
+    * @param vreg vector register number
     */
 private void get_hex_vreg(int vreg){
 	if (calc_abs_exp()){
@@ -9184,7 +9211,7 @@ private void get_hex_vreg_rxb() {
    /**
     * append zero nibbles
     *
-    * @param hex_ll - nr of nibbles to append
+    * @param hex_ll nr of nibbles to append
     */
 private void get_hex_zero(int hex_ll){
 	String zeros = "00000000";
@@ -9239,7 +9266,7 @@ private void get_hex_halfword(){
    /**
     * append hex integer from next parm
     *
-    * @param bits - length in bits
+    * @param bits length in bits
     */
 private void get_hex_int(int bits){
 	if (calc_exp()){
@@ -9272,7 +9299,7 @@ private void get_hex_int(int bits){
    /**
     * append hex relative offset from current instruction
     *
-    * @param bits - length in bits
+    * @param bits length in bits
     */
 private void get_hex_relative_offset(int bits){
 	if (calc_exp()){
@@ -9503,13 +9530,11 @@ private void get_hex_xbdddhh2(){
 
 
    /**
-    * if add_code
-    *    append bddd or bdddhh hex object code
-    *    from next parm 
-    * else 
-    *    just set hex_bddd2
+    * if add_code<br />
+    * then append bddd or bdddhh hex object code from next parm<br />
+    * else just set hex_bddd2
     *
-    * @param add_code - flag to set or add base-displacement code
+    * @param add_code flag to set or add base-displacement code
     */
 private void get_hex_bddd2(boolean add_code){
 	hex_bddd2 = null;
@@ -9535,7 +9560,7 @@ private void get_hex_bddd2(boolean add_code){
     * return true if next exp_text char
     * at exp_index is next_char
     *
-    * @param next_char - next character
+    * @param next_char next character
     * @return true if equal, false otherwise
     */
 private boolean exp_next_char(char next_char){
@@ -9644,9 +9669,8 @@ private String get_hex_relative_offset_16(){
    /**
     * return relative signed half word offset
     * from psw_loc to symbol in same csect at
-    * even address
-    * Notes:
-    *   1.  Error if not same csect or odd address
+    * even address<br />
+    * Note: Error if not same csect or odd address
     *
     * @return ???
     */
@@ -9670,9 +9694,8 @@ private String get_hex_relative_offset_32(){
    /**
     * return relative 24 bit halfword offset
     * from psw_loc to symbol in same csect at
-    * even address
-    * Notes:
-    *   1.  Error if not same csect or odd address
+    * even address<br />
+    * Note: Error if not same csect or odd address
     *
     * @return ???
     */
@@ -9694,17 +9717,15 @@ private String get_hex_rel_offset_24(){
 
 
    /**
-    * 1.  Return hex bddd based on exp_esd 
-    *     and exp_val set by calc_exp or calc_lit.
-    * 2.  If get_bdddhh is set,
-    *     then 20 bit signed offset will be
-    *     returned as bdddhh. RPI 387
-    * 
-    * 2.  Set cur_reg and cur_reg_loc for use
-    *     when called from dependent using with
-    *     domain expression.
-    * 3.  If exp_use_lab is not null restrict
-    *     using entries to labelled using.
+    * <ol>
+    *  <li>Return hex bddd based on exp_esd 
+    *      and exp_val set by calc_exp or calc_lit.</li>
+    *  <li>If get_bdddhh is set, then 20 bit signed offset will be
+    *     returned as bdddhh.</li>
+    *  <li>Set cur_reg and cur_reg_loc for use when called from
+    *      dependent using with domain expression.</li>
+    *  <li>If exp_use_lab is not null restrict using entries to labelled using.</li>
+    * </ol>
     *
     * @return ???
     */
@@ -9906,8 +9927,8 @@ private String get_exp_abs_xbddd(){
     * return bddd or bdddhh 
     * using exp_val displacement
     *
-    * @param b     - base register number
-    * @param dddhh - displacement in bytes
+    * @param b     base register number
+    * @param dddhh displacement in bytes
     * @return ???
     */
 private String get_exp_abs_bddd(int b,int dddhh){
@@ -9988,16 +10009,20 @@ private void get_dc_field_type(){
 
 
    /**
-    * 1.  Set L, S, E defaults
-    * 2.  Check modifiiers based on type
-    *     a.  if DEL check for B/D/H and set tz390.fp_type
-    *     b.  if C check for A/E and set dc_type_sfx  // RPI 270
-    *     c.  if AFV check for D and set dc_type_sfx  // RPI 270
-    *     d.  if LQ ignore the Q for 16 byte default
-    *     e.  If S check for Y and set length 3
-    * 3.  Process explicit L length, S scale, and E exponent
-    *     modifiers in any order
-    * 4.  Align and save first length if req'd
+    * <ol>
+    * <li>Set L, S, E defaults</li>
+    * <li>Check modifiiers based on type
+    *  <ol>
+    *   <li>if DEL check for B/D/H and set tz390.fp_type</li>
+    *   <li>if C check for A/E and set dc_type_sfx</li>
+    *   <li>if AFV check for D and set dc_type_sfx</li>
+    *   <li>if LQ ignore the Q for 16 byte default</li>
+    *   <li>If S check for Y and set length 3</li>
+    *   </ol>
+    *  </li>
+    *  <li>Process explicit L length, S scale, and E exponent modifiers in any order</li>
+    *  <li>Align and save first length if req'd</li>
+    * </ol>
     */
 private void get_dc_field_modifiers(){
 	if (dc_type_index != -1){
@@ -10177,10 +10202,10 @@ private void get_dc_field_modifiers(){
 
 
    /**
-    * align to mult of align_len from loc_ctr
-    * If align_len more than 8 use 8  RPI 373 removed by RPI 1108
+    * align to mult of align_len from loc_ctr<br />
+    * If align_len more than 8 use 8
     *
-    * @param align_len - alignment unit in bytes
+    * @param align_len alignment unit in bytes
     */
 private void dc_align(int align_len){
 	 dc_fill((loc_ctr + align_len -1)/align_len*align_len - loc_ctr);
@@ -10233,11 +10258,12 @@ private void flush_dc_bits(){
 
 
    /**
-    * 1.  increment loc_ctr by bytes if not bit mode
-    *     else shift bits by bit length
-    * 2.  if DC and not first field fill with zeros 
+    * <ol>
+    *  <li>increment loc_ctr by bytes if not bit mode else shift bits by bit length</li>
+    *  <li>if DC and not first field fill with zeros</li>
+    * </ol>
     *
-    * @param fill_len - length
+    * @param fill_len length
     */
 private void dc_fill(int fill_len){
 	  if (dc_bit_len){
@@ -10313,9 +10339,8 @@ private void process_dca_data(){
 
 
    /**
-    * gen dca exp_val in dc_bit_buff
-    * Notes:
-    *   1.  Shared by gen_dcb_bits
+    * gen dca exp_val in dc_bit_buff<br />
+    * Note: Shared by gen_dcb_bits
     */
 private void gen_dca_bits(){
 	dc_bit_tot = dc_bit_tot + dc_len;
@@ -10355,9 +10380,8 @@ private void gen_dca_bytes(){
    /**
     * alloc or gen DS/DC B type parms using prev.
     * settings for dc_dup and dc_len.  Also save
-    * first field dc_len
-    * Notes:
-    *   1.  binary values are right aligned in 
+    * first field dc_len<br />
+    * Note: binary values are right aligned in
     *       explicit length fields.
     */
 private void process_dcb_data(){
@@ -10473,14 +10497,16 @@ private void gen_dcb_bytes(){
 
    /**
     * allocate or generate dc Cln'...' data
-    * using dc_dup and explicit dc_len if any
+    * using dc_dup and explicit dc_len if any<br />
     * Notes:
-    *   1.  C'..' default EBCDIC unless ASCII option
-    *   2.  C".." always ASCII regardless of option
-    *   3.  C!..! always EBCDIC regardless of option
-    *   4.  ''|""|!! or double ampersand replaced with single '|"|! or ampersand
-    *   5.  CA'...' always ASCII   RPI 270
-    *   6.  CE'...' always EBCDIC  RPi 270
+    * <ol>
+    *  <li>C'..' default EBCDIC unless ASCII option</li>
+    *  <li>C".." always ASCII regardless of option</li>
+    *  <li>C!..! always EBCDIC regardless of option</li>
+    *  <li>''|""|!! or double ampersand replaced with single '|"|! or ampersand</li>
+    *  <li>CA'...' always ASCII</li>
+    *  <li>CE'...' always EBCDIC</li>
+    * </ol>
     */
 private void process_dcc_data(){
 	dcc_text = "";
@@ -10694,11 +10720,12 @@ private void gen_dc_fp_bytes(){
 
    /**
     * set dc_bd_val from next floating point
-    * sdt in dc_field at dc_index
-    * Note:
-    *  1.  Apply any scale factor 
-    *      or exponent to dc_bd_value.
-    *  2.  Set dc_unsigned true/false
+    * sdt in dc_field at dc_index<br />
+    * Notes:
+    * <ol>
+    *  <li>Apply any scale factor or exponent to dc_bd_value.</li>
+    *  <li>Set dc_unsigned true/false</li>
+    * </ol>
     *
     * @return true if unsigned, false if signed
     */
@@ -10747,7 +10774,7 @@ private boolean get_dc_bd_val(){
    /**
     * remove blanks allowed within numeric DC fields BDEFHLPXZ
     *
-    * @param text_in - input text
+    * @param text_in input text
     * @return text with extraneous blanks removed
     */
 private String remove_blanks(String text_in){
@@ -10808,9 +10835,8 @@ private String get_dc_fh_hex_val(){
     * set dc_hex for D, E, or L 
     * floating point sdt starting at text index
     *
-    * @param text  - input string
-    * @param index - position
-    *
+    * @param text  input string
+    * @param index position
     */
 private void get_dc_fp_hex(String text,int index){
 	if (text.charAt(index) == ','){
@@ -11239,11 +11265,12 @@ private void process_dcs_data(){
    /**
     * alloc or gen DS/DC X type parms using prev.
     * settings for dc_dup and dc_len.  Also save
-    * first field dc_len
+    * first field dc_len<br />
     * Notes:
-    *   1.  hex values are right aligned in 
-    *       explicit length fields.
-    *   2.  Spaces are ignored in data RPI 371
+    * <ol>
+    *  <li>hex values are right aligned in explicit length fields.</li>
+    *  <li>Spaces are ignored in data</li>
+    * </ol>
     */
 private void process_dcx_data(){
 	dc_index++;   // start inside 'hex1,hex2,,'
@@ -11381,7 +11408,7 @@ private int get_dc_mod_int(){
     * return next number from dc_field at index
     * else return 1 and update dc_index
     *
-    * @param index - index value
+    * @param index index value
     * @return number value
     */
 private int get_dc_int(int index){
@@ -11497,15 +11524,14 @@ private void process_end(){
 
 
    /** 
-    * define or update symbol definition
-    *   1. Set sym_loc to first pos value
-    *   2. Set sym_len to optional
-    *      2nd pos value else 
-    *      set sym_len to 1.
-    *   3. Set sym_attr to optional
-    *      3rd pos value.
-    *   4. Set sym_attrp 4th program type
-    *   5. Set sym_attra 5th assembler type
+    * define or update symbol definition:
+    * <ol>
+    *  <li>Set sym_loc to first pos value</li>
+    *  <li>Set sym_len to optional 2nd pos value else set sym_len to 1.</li>
+    *  <li>Set sym_attr to optional 3rd pos value.</li>
+    *  <li>Set sym_attrp 4th program type</li>
+    *  <li>Set sym_attra 5th assembler type</li>
+    * </ol>
     */
 public void process_equ(){ // RPI 415
     int index = 0;
@@ -11651,8 +11677,8 @@ private void process_org(){
 
 
 
-   /**                                                          // RPI 1523
-    * set current location first csect                          // RPI 1523
+   /**
+    * set current location first csect
     */                                                          // RPI 1523
 private void process_start()                                    // RPI 1523 routine copied from process_org
    {if (bal_parms           == null                             // RPI 1523
@@ -11782,7 +11808,7 @@ private void process_print(){
     * use tz390.parm_match to find and return next parm
     * separated by commas else return null.
     *
-    * @param parms - parameter string
+    * @param parms parameter string
     */
 private void init_get_next_parm(String parms){
 	if (parms != null && parms.length() > 0){
@@ -11867,12 +11893,11 @@ private void calc_lit_or_exp(){
 
 
    /**
-    * 1.  Find or add literal and set 
-    *     exp_type, exp_val, and exp_esd.
-    * 2.  If literal followed by '-' or '+'
-    *     caculcate expression  
-    *     add to lit address
-    *     and return abs val else error.
+    * <ol>
+    *  <li>Find or add literal and set exp_type, exp_val, and exp_esd.</li>
+    *  <li>If literal followed by '-' or '+' calculate expression
+    *     add to lit address and return abs val else error.</li>
+    * </ol>
     *
     * @return ???
     */
@@ -11934,9 +11959,11 @@ private String get_default_bddd(){
 
    /**
     * find or add literal and set:
-    *   1. cur_lit = lit table index
-    *   2. exp_val = lit address
-    *   3. exp_esd = lit esd
+    * <ol>
+    *  <li>cur_lit = lit table index</li>
+    *  <li>exp_val = lit address</li>
+    *  <li>exp_esd = lit esd</li>
+    * </ol>
     */
 private void get_lit_addr(){
 	String lit_key = "";
@@ -12001,11 +12028,11 @@ private void gen_ltorg(){
 
 
    /**
-    * generate literal dc's of specified size
-    * force all length 1 lits to even addr for access by relative halfword offsets in LARL etc.  per issue #327
+    * generate literal dc's of specified size<br />
+    * force all length 1 lits to even addr for access by relative halfword offsets in LARL etc. per issue #327<br />
     * see regression test rt\test\TESTLITS.MLC which fails on previous releases
     *
-    * @param size - size of DC to generate
+    * @param size size of DC to generate
     */
 private void gen_lit_size(int size){
 	cur_lit = 0;
@@ -12043,7 +12070,7 @@ private void gen_lit_size(int size){
    /**
     * add literal xref
     *
-    * @param index - target index
+    * @param index target index
     */
 private void add_lit_xref(int index){
 	if (!tz390.opt_xref || !gen_obj_code){  //RPI165
@@ -12061,8 +12088,8 @@ private void add_lit_xref(int index){
     * add new esd chained to sid 
     * and return index else abort
     *
-    * @param sid - section id
-    * @param sect_type - type of section
+    * @param sid       section id
+    * @param sect_type type of section
     * @return index value
     */
 private int add_esd(int sid,byte sect_type){
@@ -12085,11 +12112,10 @@ private int add_esd(int sid,byte sect_type){
 
    /**
     * add symbol table entry name and return
-    * index for use in setting remaining fields
-    * Notes:
-    *   1.  If lookahead mode, set sym_def = -1
+    * index for use in setting remaining fields<br />
+    * Note: If lookahead mode, set sym_def = -1
     *
-    * @param name - name of synbol to add
+    * @param name name of synbol to add
     * @return index of new entry
     */
 public int add_sym(String name){ // RPI 415 public
@@ -12117,7 +12143,7 @@ public int add_sym(String name){ // RPI 415 public
    /**
     * add symbol xref
     *
-    * @param index - index value
+    * @param index index value
     */
 private void add_sym_xref(int index){
 	if (!tz390.opt_xref 
@@ -12137,7 +12163,7 @@ private void add_sym_xref(int index){
 
 
    /**
-    * generate 8 byte aligned CCW0
+    * generate 8 byte aligned CCW0:
     * op8,addr24,flags8,zero8,len16
     */
 private void gen_ccw0(){  // RPI 567
@@ -12189,7 +12215,7 @@ private void gen_ccw0(){  // RPI 567
 
 
    /**
-    * generate 8 byte aligned CCW1
+    * generate 8 byte aligned CCW1:
     * op8,flags8,len16,addr32
     */
 private void gen_ccw1(){  // RPI 567
@@ -12244,29 +12270,29 @@ private void gen_ccw1(){  // RPI 567
 
 
    /**
-    * set dc_hex for floating point
-    * string fp_text
-    * in scientific notation 0.314159E1 etc.
-    * format is based on fp type 0-8 (db,dd,dh,eb,ed,eh,lb,ld,lh)
-    *
+    * set dc_hex for floating point string fp_text
+    * in scientific notation 0.314159E1 etc.<br />
+    * format is based on fp type 0-8 (db,dd,dh,eb,ed,eh,lb,ld,lh)<br />
     * Notes:
-    *   1.  This is very tricky code!
-    *   2.  Use BigDecimal for all types to 
-    *       insure DH and EH exponents beyond 
-    *       range of DB and EB will be correctly
-    *       handled without error.
-    *   3.  The fp_context is set to significant
-    *       decimal digits plus fp_guard_digts to insure 
-    *       sufficient significant bits for proper
-    *       rounding occurs.
-    *   4.  The preferred DFP exponent  
-    *       (BigDecimal scale factor) is
-    *       set based on explicit decimal poiint
-    *       with significant trailing decimal places
-    *       including zeros else use 0. RPI 790
+    * <ol>
+    *  <li>This is very tricky code!</li>
+    *  <li>Use BigDecimal for all types to
+    *      insure DH and EH exponents beyond
+    *      range of DB and EB will be correctly
+    *      handled without error.</li>
+    *  <li>The fp_context is set to significant
+    *      decimal digits plus fp_guard_digts to insure
+    *      sufficient significant bits for proper
+    *      rounding occurs.</li>
+    *  <li>The preferred DFP exponent
+    *      (BigDecimal scale factor) is
+    *      set based on explicit decimal poiint
+    *      with significant trailing decimal places
+    *      including zeros else use 0.</li>
+    * </ol>
     * 
     * First convert string constant to positive
-    * big_dec1 value with sufficent sig. bits.
+    * big_dec1 value with sufficent sig. bits.<br />
     * Exit with artbitrary format if zero.
     */
 private void fp_get_hex(){
@@ -12489,25 +12515,23 @@ private void fp_get_hex(){
 
 
 
-   /** *****************************************
-    * calc tz390.fp_exp and big_dec2 such that:      
-    * big_dec1 = big_dec2 * 2  ** tz390.fp_exp      
-    * ************************************** 
-    * 
+   /**
+    * calc tz390.fp_exp and big_dec2 such that:
+    * big_dec1 = big_dec2 * 2  ** tz390.fp_exp
+    * <br />
     * tz390.fp_exp = log(big_dec1) / log(2)
-    *
-    * Since the exponent range of LB exceeds  
+    * <br />
+    * Since the exponent range of LB exceeds
     * native double, the log of big_dec1 is
     * calculated using equivalent:
-    *   log(X*10**N) = log(X) + N*log(10)
+    *   log(X*10**N) = log(X) + N*log(10)<br />
     * The exponent must then be offset by the number
     * of bits in the required binary mantissa in 
     * order to retain significant bits when big_dec2
-    * is converted to big_int format.  The exponent
+    * is converted to big_int format. The exponent
     * is also reduced by 1 for assumed bit in binary 
     * formats plus 1 additional to insure rounding for
     * irrational values is done by shifting right.
-    * 
     */ 
 	private void cvt_fp_exp_to_base_2(){
 	fp_big_dec1 = fp_big_dec1.stripTrailingZeros(); // RPI 821	
@@ -12537,9 +12561,6 @@ private void fp_get_hex(){
 		dc_hex = "FFFF000000000000";
 		return;
 	}
-
-
-
 	/*
 	 * retrieve fp_big_dec2 mantissa bits as big_int and
 	 * adjust tz390.fp_exp by mantissa bits
@@ -12551,15 +12572,12 @@ private void fp_get_hex(){
 
 
    /**
-    * 1.  BFP - Adjust mantiss and base 2 exponent
-    *     to align for assumed 1 bit.
-    * 2.  HFP - Adjust mantissa and base 2
-    *     exponent to base 16 exponent.
-    * 3.  DFP - Set base 10 exponent based on
-    *     explicit decimal point and trailing
-    *     significant digits including zeros
-    *     else use preferred exponent of 0.  RPI 790
-    * 
+    * <ol>
+    *  <li>BFP - Adjust mantiss and base 2 exponent to align for assumed 1 bit.</li>
+    *  <li>HFP - Adjust mantissa and base 2 exponent to base 16 exponent.</li>
+    *  <li>DFP - Set base 10 exponent based on explicit decimal point and trailing
+    *     significant digits including zeros else use preferred exponent of 0.</li>
+    * </ol>
     */
 	private void fp_cvt_bd_to_hex(){
 	switch (tz390.fp_type){  // gen hex for fp type
@@ -12808,7 +12826,7 @@ private void fp_get_hex(){
    /**
     * add missing copy file for ERRSUM
     *
-    * @param name - name of missing COPY file
+    * @param name name of missing COPY file
     * @return true if successful, false otherwise
     */
 public boolean add_missing_copy(String name){
@@ -12833,7 +12851,7 @@ public boolean add_missing_copy(String name){
    /**
     * add missing macro file for ERRSUM
     *
-    * @param name - name of missing macro
+    * @param name name of missing macro
     * @return true if successful, false otherwise
     */
 private boolean add_missing_macro(String name){
@@ -12900,7 +12918,7 @@ public void report_critical_errors(){
    /**
     * put ERRSUM msgs on ERR file and console
     *
-    * @param msg - message text
+    * @param msg message text
     */
 private void put_errsum(String msg){
 	msg = "AZ390E " + msg;
@@ -12918,10 +12936,10 @@ private void put_errsum(String msg){
     * return I' integer pfx value for symbol
     * based on length and scale per ref.
     *
-    * @param type     - field type (DC type character)
-    * @param type_sfx - field subtype (DC based)
-    * @param len      - length in bytes
-    * @param scale    - scaling factor
+    * @param type     field type (DC type character)
+    * @param type_sfx field subtype (DC based)
+    * @param len      length in bytes
+    * @param scale    scaling factor
     * @return Integer result value
     */
 public int get_int_pfx(byte type,byte type_sfx,int len,int scale){
