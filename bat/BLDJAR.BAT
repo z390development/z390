@@ -32,6 +32,21 @@ shift /1
 goto opt_loop
 :options_ok
 
+rem -- determine java version
+for /f "usebackq tokens=2 delims= " %%i in (`javac -version 2^>^&1`) do (set z_ver=%%i)
+for /f "tokens=1,2,3 delims=." %%a in ("%z_ver%") do (
+    set z_major=%%a
+    set z_minor=%%b
+    set z_patch=%%c
+)
+echo Java compiler is at %z_major% %z_minor% %z_patch%
+if %z_major% LSS 9 (set jvopt=-source 8 -target 8) else (set jvopt=--release 8)
+echo jvopt is %jvopt%
+if /I %z_dbg% EQU Debug (set jvopt=%jvopt% -g) else (set jvopt=%jvopt% -g:none)
+echo jvopt is %jvopt%
+goto return
+
+
 rem compile java code and create jar file
 if not exist ".\jar\" mkdir jar
 cd jar
