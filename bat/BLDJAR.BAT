@@ -49,6 +49,7 @@ if /I %z_dbg% EQU Debug (set jvopt=%jvopt% -g -d .) else (set jvopt=%jvopt% -g:n
 
 rem compile z390 java sources to class vm object code
 java -version
+echo javac %jvopt% ..\src\*.java
 javac.exe %jvopt% ..\src\*.java
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: Error compiling z390 java sources
