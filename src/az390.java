@@ -1143,22 +1143,22 @@ public  class  az390 implements Runnable {
 
 
 
-    /**
-     * Dummy constructor - no initialization needed
-     */
+/**
+ * Dummy constructor - no initialization needed
+ */
 public az390()
        {// dummy constructor - no initialization needed.
         }
 
 
 
-   /**
-    * main is entry when executed from command line
-    * Create instance of az390 class and pass
-    * parms to az390 like z390 does.
-    *
-    * @param args argument string - same as z390
-    */
+/**
+ * main is entry when executed from command line
+ * Create instance of az390 class and pass
+ * parms to az390 like z390 does.
+ *
+ * @param args argument string - same as z390
+ */
 public static void main(String[] args) {
       az390 pgm = new az390();
 	  pgm.init_az390(args,null,null,null);
@@ -1167,16 +1167,16 @@ public static void main(String[] args) {
 
 
 
-   /**
-    * initialize z390 when called from mz390
-    * to receive bal directly and share the
-    * symbol table with mz390.
-    *
-    * @param args               argumebnt string
-    * @param z390_log           log data
-    * @param mz390_systerm_file file handle for systerm
-    * @param mz390_stats_file   file handle for statistics
-    */
+/**
+ * initialize z390 when called from mz390
+ * to receive bal directly and share the
+ * symbol table with mz390.
+ *
+ * @param args               argumebnt string
+ * @param z390_log           log data
+ * @param mz390_systerm_file file handle for systerm
+ * @param mz390_stats_file   file handle for statistics
+ */
 public void start_az390_thread(String[] args,JTextArea z390_log, RandomAccessFile mz390_systerm_file,RandomAccessFile mz390_stats_file){
 	mz390_call = true;
 	init_az390(args, null, mz390_systerm_file, mz390_stats_file);
