@@ -345,6 +345,7 @@ public  class  tz390 {
     * 2025-05-06 AFK #617 Correct OPTABLE(ZSA,LIST) output to match HLASM
     * 2025-05-08 AFK #627 Correct OPTABLE(UNI,LIST) output to match HLASM
     * 2025-05-30 AFK #631 Improve opcode table definitions
+    * 2025-08-08 AFK #661 Add z17 instructions to opcode tables
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -1143,6 +1144,7 @@ public  class  tz390 {
     public static final int OPCODE_FOR_Z14    = 14;       // #631
     public static final int OPCODE_FOR_Z15    = 15;       // #631
     public static final int OPCODE_FOR_Z16    = 16;       // #631
+    public static final int OPCODE_FOR_Z17    = 17;       // #661
     public static final int OPCODE_FOR_UNI    = 80;       // #631
     public static final int OPCODE_FOR_Z390   = 90;       // #631
     public static final int OPCODE_FOR_DFLT   = 91;       // #631
@@ -1174,6 +1176,8 @@ public  class  tz390 {
         "15:ZS9=Z15",                                     // #503 #554 #631
         "16:Z16=Z16",                                     // #503 #554 #631
         "16:ZSA=Z16",                                     // #503 #554 #631
+        "17:Z17=Z17",                                     // #661
+        "17:ZSB=Z17",                                     // #661
         "80:UNI=UNI",                                     // #503 #554
         "90:z390=z390",                                   // #503 #554
         "91:DFLT=DFLT",                                   // #503 #554 #631
@@ -1241,6 +1245,10 @@ public  class  tz390 {
         "ARCH-14=Z16",                                    // #503
         "zSeries-10=Z16",                                 // #503
         "ZS-10=Z16",                                      // #503
+        "z17=Z17",                                        // #661
+        "ARCH-15=Z17",                                    // #661
+        "zSeries-11=Z17",                                 // #661
+        "ZS-11=Z17",                                      // #661
         "z390=z390",                                      // #503
         };                                                // #503
   /*
@@ -2384,8 +2392,6 @@ public  class  tz390 {
          "B91E=KMAC,14,144",     //   4720 "B91E"  "KMAC"     "RRE"  14
          "B92E=KM,14,144",       //   4770 "B92E"  "KM"       "RRE"  14
          "B92F=KMC,14,144",      //   4780 "B92F"  "KMC"      "RRE"  14
-         "B93E=KIMD,14,144",     //   4810 "B93E"  "KIMD"     "RRE"  14
-         "B93F=KLMD,14,144",     //   4820 "B93F"  "KLMD"     "RRE"  14
          "B98A=CSPG,14,144",     //   4910 "B98A"  "CSPG"     "RRE"  14
          "B98E=IDTE,54,340",     //   4930 "B98E"  "IDTE"     "RRF2" 34 // dsh RPI 2202 move from 34 to 54 for optional m4
          "B99A=EPAIR,14,144",    //   5020 "B99A"  "EPAIR"    "RRE"  14
@@ -2447,6 +2453,11 @@ public  class  tz390 {
          "ED66=STEY,18,180",     //   7000 "ED66"  "STEY"     "RXY"  18
          "ED67=STDY,18,180",     //   7010 "ED67"  "STDY"     "RXY"  18
          };
+     static final String[]   op_table_YOP_Z16 = // These definitions are valid for YOP thru Z16 // #661
+         {                                                                           // #661
+         "B93E=KIMD,14,144",     //   4810 "B93E"  "KIMD"     "RRE"  14
+         "B93F=KLMD,14,144",     //   4820 "B93F"  "KLMD"     "RRE"  14
+         };                               //                                         // #661
      // op_table_Z9 below contains the instructions valid from z Architecture        // #631
      // as defined in publication SA22-7832-04 zArchitecture Principles of Operation // #631
      //           and publication SA22-7832-05 zArchitecture Principles of Operation // #631
@@ -3236,7 +3247,6 @@ public  class  tz390 {
          "E659=VSRP,81,783",                // E659  VRIg VSRP    V1,V2,I3,I4,M5    RPI 2202 #615
          "E65A=VCVDG,81,780",               // E65A  VRIi VCVDG   V1,R2,I3,M4       RPI 2202 #615
          "E65B=VPSOP,81,783",               // E65A  VRIg VPSOP   V1,V2,I3,I4,M5    RPI 2202 #615
-         "E65F=VTP,82,784",                 // E65F  VRRg VTP     V1                RPI 2202 #615
          "E671=VAP,81,737",                 // E671  VRIf VAP     V1,V2,V3,I4,M5    RPI 2202
          "E673=VSP,81,737",                 // E673  VRIf VSP     V1,V2,V3,I4,M5    RPI 2202
          "E677=VCP,82,767",                 // E677  VRRh VCP     V1,V2,V3,M4       RPI 2202 #615
@@ -3329,6 +3339,10 @@ public  class  tz390 {
          "E650=VCVB,82,779",                // E650  VRRi VCVB    R1,V2,M3,M4       RPI 2202 #615
          "E652=VCVBG,82,779",               // E652  VRRi VCVBG   R1,V2,M3,M4       RPI 2202 #615
          };                                 // #616
+     static final String[]   op_table_Z14_Z16 =         // #661
+        {                                   // #661
+         "E65F=VTP,82,784",                 // E65F  VRRg VTP     V1                RPI 2202 #615
+         };                                 // #661
      // op_table_Z15 below contains the instructions valid from z Architecture       // #631
      // as defined in publication SA22-7832-12 zArchitecture Principles of Operation // #631
      static final String[]   op_table_Z15 =   //  dsh table added for RPI 2202 #631
@@ -3429,6 +3443,84 @@ public  class  tz390 {
          "EC5D$3132=SLLHL,52,400;*Extended", // #503
          "EC5D$3132=SRLHL,52,400;*Extended", // #503
          };                                  // #503
+     // op_table_Z17 below contains the instructions valid from z Architecture       // #661
+     // as defined in publication SA22-7832-14 zArchitecture Principles of Operation // #661
+     static final String[] op_table_Z17 =    // #661
+        {"A5F=LLGHI,73,730",                 // #661
+         "B93E=KIMD,14,140", // Add <M3>     // #661
+         "B93F=KLMD,14,140", // Add <M3>     // #661
+         "B968=CLZG,14,144",                 // #661
+         "B969=CTZG,14,144",                 // #661
+         "B96C=BEXTG,39,154",                // #661
+         "B96D=BDEPG,39,154",                // #661
+         "C86=CAL,55,321",                   // #661
+         "C87=CALG,55,321",                  // #661
+         "C8F=CALGF,55,321",                 // #661
+         "E360=LXAB,18,189",                 // #661
+         "E361=LLXAB,18,189",                // #661
+         "E362=LXAH,18,189",                 // #661
+         "E363=LLXAH,18,189",                // #661
+         "E364=LXAF,18,189",                 // #661
+         "E365=LLXAF,18,189",                // #661
+         "E366=LXAG,18,189",                 // #661
+         "E367=LLXAG,18,189",                // #661
+         "E368=LXAQ,18,189",                 // #661
+         "E369=LLXAQ,18,189",                // #661
+         "E64A=VCVDQ,81,787",                // #661
+         "E64E=VCVBQ,82,767",                // #661
+         "E65F=VTP,82,789",  // Add <,I2>    // #661
+         "E67F=VTZ,81,750",                  // #661
+         "E752e=VCTZe,82,772;e=4",           // #616
+         "E753e=VCLZe,82,772;e=4",           // #616
+         "E754=VGEM,82,767",                 // #661
+         "E754e=VGEMe,82,772;e=01234",       // #661
+         "E788=VEVAL,81,788",                // #661
+         "E789=VBLEND,82,762",               // #661
+         "E789e=VBLENDe,82,771;e=01234",     // #661
+         "E7A1e=VMLHe,82,738;e=34",          // #661
+         "E7A2e=VMLe,82,738;e=34",           // #661
+         "E7A3e=VMHe,82,738;e=34",           // #661
+         "E7A4e=VMLEe,82,738;e=3",           // #661
+         "E7A5e=VMLOe,82,738;e=3",           // #661
+         "E7A6e=VMEe,82,738;e=3",            // #661
+         "E7A7e=VMOe,82,738;e=3",            // #661
+         "E7A9e=VMALHe,82,771;e=34",         // #661
+         "E7AAe=VMALe,82,771;e=34",          // #661
+         "E7ABe=VMAHe,82,771;e=34",          // #661
+         "E7ACe=VMALEe,82,771;e=3",          // #661
+         "E7ADe=VMALOe,82,771;e=3",          // #661
+         "E7AEe=VMAEe,82,771;e=3",           // #661
+         "E7AFe=VMAOe,82,771;e=3",           // #661
+         "E7B0=VDL,82,759",                  // #661
+         "E7B0e=VDLe,82,786;e=234",          // #661
+         "E7B1=VRL,82,759",                  // #661
+         "E7B1e=VRLe,82,786;e=234",          // #661
+         "E7B2=VD,82,765",                   // #661
+         "E7B2e=VDe,82,786;e=234",           // #661
+         "E7B3=VR,82,759",                   // #661
+         "E7B3e=VRe,82,786;e=234",           // #661
+         "E7D4e=VUPLLe,82,772;e=3",          // #661
+         "E7D5e=VUPLHe,82,772;e=3",          // #661
+         "E7D6e=VUPLe,82,772;e=3",           // #661
+         "E7D7e=VUPHe,82,772;e=3",           // #661
+         "E7D9e=VECLe,82,772;e=4",           // #661
+         "E7DBe=VECe,82,772;e=4",            // #661
+         "E7DEe=VLCe,82,772;e=4",            // #661
+         "E7DFe=VLPe,82,772;e=4",            // #661
+         "E7F0e=VAVGLe,82,738;e=4",          // #661
+         "E7F2e=VAVGe,82,738;e=4",           // #616
+         "E7F8e0=VCEQe,82,738;e=4",          // #661
+         "E7F8e1=VCEQeS,82,738;e=4",         // #661
+         "E7F9e0=VCHLe,82,738;e=4",          // #661
+         "E7F9e1=VCHLeS,82,738;e=4",         // #661
+         "E7FBe0=VCHe,82,738;e=4",           // #616
+         "E7FBe1=VCHeS,82,738;e=4",          // #616
+         "E7FCe=VMNLe,82,738;e=4",           // #661
+         "E7FDe=VMXLe,82,738;e=4",           // #661
+         "E7FEe=VMNe,82,738;e=4",            // #661
+         "E7FFe=VMXe,82,738;e=4",            // #661
+         "EB16=PFCR,20,205",                 // #661
+         };                                  // #661
      static final String[]   op_table_ASSIST = // Table added for RPI 1209A #631
         {"52=XDECO,37,50",       //   1193 "52"    "XDECO"    "RX"   37 RPI 812
          "53=XDECI,37,50",       //   1196 "53"    "XDECI"    "RX"   37 RPI 812
@@ -3445,7 +3537,17 @@ public  class  tz390 {
      static final String[]   op_table_z390 =  // Table added for RPI 1209 #631
         {"83=DIAGNOSE,10,100",     // RPI 2213 ADD DIAGNOSE/DIAG RS
          "83=DIAG,10,100",         // RPI 2213 ADD DIAGNOSE/DIAG RS
-         "EB17=STCCTM,20,201",     // RPI 2225 2226
+         "B284=LCCTL,64,640",      // LPP/CPU Measurement Facility #661 
+         "B285=LPCTL,64,640",      // LPP/CPU Measurement Facility #661 
+         "B286=QSI,64,640",        // LPP/CPU Measurement Facility #661 
+         "B287=LSCTL,64,640",      // LPP/CPU Measurement Facility #661 
+         "B28E=QCTRI,64,640",      // LPP/CPU Measurement Facility #661 
+         "B2E0=SCCTR,39,140",      // LPP/CPU Measurement Facility #661 
+         "B2E1=SPCTR,39,140",      // LPP/CPU Measurement Facility #661 
+         "B2E4=ECCTR,39,140",      // LPP/CPU Measurement Facility #661 
+         "B2E5=EPCTR,39,140",      // LPP/CPU Measurement Facility #661 
+         "B2ED=ECPGA,39,140",      // LPP/CPU Measurement Facility #661 
+         "EB17=STCCTM,20,202",     // LPP/CPU Measurement Facility RPI 2225 2226 #661
          };
      static final String[]   op_table_DFLT_directives = // Split directives from opcodes            #533 #631
         {"--=ACALLPRM,228,--",   //   "ACALLPRM" resets ACALL parms just before AENTRY #533
@@ -3796,6 +3898,11 @@ public void create_opcodes()  // Routine added for RPI 1209
         if (opt_optable_optb_nr >= OPCODE_FOR_YOP)               // #631
            {process_opcodes(op_table_YOP);                       // #631
             }                                                    // #631
+        // Instructions valid from z Arch z890/z990 thru z16 only// #661
+        if (opt_optable_optb_nr >= OPCODE_FOR_YOP                // #661
+        &&  opt_optable_optb_nr <= OPCODE_FOR_Z16)               // #661
+           {process_opcodes(op_table_YOP_Z16);                   // #661
+            }                                                    // #661
         // Instructions valid from z Architecture z9             // #631
         if (opt_optable_optb_nr >= OPCODE_FOR_Z9)                // #631
            {process_opcodes(op_table_Z9);                        // #631
@@ -3808,7 +3915,7 @@ public void create_opcodes()  // Routine added for RPI 1209
         if (opt_optable_optb_nr >= OPCODE_FOR_Z11)               // #631
            {process_opcodes(op_table_Z11);                       // #631
             }                                                    // #631
-        // Instructions valid for z Architecture z11 and z12 only   #631
+        // Instructions valid for z Architecture z11 and z12 only// #631
         if (opt_optable_optb_nr >= OPCODE_FOR_Z11                // #631
         &&  opt_optable_optb_nr <= OPCODE_FOR_Z12)               // #631
            {process_opcodes(op_table_Z11_Z12);                   // #631
@@ -3829,6 +3936,11 @@ public void create_opcodes()  // Routine added for RPI 1209
         if (opt_optable_optb_nr >= OPCODE_FOR_Z14)               // #631
            {process_opcodes(op_table_Z14);                       // #631
             }                                                    // #631
+        // Instructions valid from z Arch z14 thru z16 only      // #661
+        if (opt_optable_optb_nr >= OPCODE_FOR_Z14                // #661
+        &&  opt_optable_optb_nr <= OPCODE_FOR_Z16)               // #661
+           {process_opcodes(op_table_Z14_Z16);                   // #661
+            }                                                    // #661
         // Instructions valid from z Architecture z15            // #631
         if (opt_optable_optb_nr >= OPCODE_FOR_Z15)               // #631
            {process_opcodes(op_table_Z15);                       // #631
@@ -3837,6 +3949,10 @@ public void create_opcodes()  // Routine added for RPI 1209
         if (opt_optable_optb_nr >= OPCODE_FOR_Z16)               // #631
            {process_opcodes(op_table_Z16);                       // #631
             }                                                    // #631
+        // Instructions valid from z Architecture z17            // #661
+        if (opt_optable_optb_nr >= OPCODE_FOR_Z17)               // #661
+           {process_opcodes(op_table_Z17);                       // #661
+            }                                                    // #661
         // Old vector facility is required for S370-ESA          // #631
         // and optional for z390 until new vector in z14         // #631
         if (opt_vector)                                          // #631
@@ -4042,7 +4158,7 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
             if (i>2) {i=i-1;}                                  // length in halfwords (1-3)
             instruction_length=2*i;
             if (instruction_length != op_type_len[optype_nr])
-               {abort_error(777,"Instruction length mismatch for opcode definition " + op_tables[index]);
+               {abort_error(777,"Instruction length=" + instruction_length + " mismatch ("+op_type_len[optype_nr]+") for opcode definition " + op_tables[index]);
                 }
               }
         // convert op_trace_type to an integer value and check its validity

@@ -438,6 +438,7 @@ public  class  az390 implements Runnable {
         * 2025-05-04 AFK #616 Correct OPTABLE(Z15,LIST) output to match HLASM
         * 2025-05-07 AFK #617 Correct OPTABLE(Z16,LIST) output to match HLASM
     * 2025-05-30 AFK #631 Improve opcode table definitions
+    * 2025-08-08 AFK #661 Add z17 instructions to opcode tables
 	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -1945,7 +1946,9 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                              ||  tz390.op_name[index].equals("CUUTF")                  // #573
                              ||  tz390.op_name[index].equals("CU12")                   // #573
                              ||  tz390.op_name[index].equals("CU21")                   // #573
-                             ||  tz390.op_name[index].equals("SSKE"))                  // #573
+                             ||  tz390.op_name[index].equals("SSKE")                   // #573
+                             ||  tz390.op_name[index].equals("KIMD")  // from z17      // #661
+                             ||  tz390.op_name[index].equals("KLMD")) // from z17      // #661
                            {if (tz390.opt_optable_optb_nr >= tz390.OPCODE_FOR_Z9) // Z9 and above // #573 #631
                                {my_format="RRF";                                       // #573
                                 my_operands="R1,R2<,M3>";                              // #573
@@ -2059,6 +2062,19 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                         }                                                              // #554
                     if (tz390.op_trace_type[index]==189)
                        {my_operands="M1,D2(X2,B2)";                                    // #500
+                        if (tz390.op_name[index].equals("LLXAB")                       // #661
+                        ||  tz390.op_name[index].equals("LLXAF")                       // #661
+                        ||  tz390.op_name[index].equals("LLXAG")                       // #661
+                        ||  tz390.op_name[index].equals("LLXAH")                       // #661
+                        ||  tz390.op_name[index].equals("LLXAQ")                       // #661
+                        ||  tz390.op_name[index].equals("LXAB")                        // #661
+                        ||  tz390.op_name[index].equals("LXAF")                        // #661
+                        ||  tz390.op_name[index].equals("LXAG")                        // #661
+                        ||  tz390.op_name[index].equals("LXAH")                        // #661
+                        ||  tz390.op_name[index].equals("LXAQ")                        // #661
+                            )                                                          // #661
+                           {my_operands="R1,DX2(X2,B2)";                               // #661
+                            }                                                          // #661
                         }
                     else
                        {my_operands="R1,D2(X2,B2)";                                    // #500
@@ -2694,6 +2710,12 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                         case 783:                                                      // #615
                              my_operands="V1,V2,I3,I4,M5";                             // #615
                              break;                                                    // #615
+                        case 787:                                                      // #661
+                             my_operands="V1,V2,I3,M4";                                // #661
+                             break;                                                    // #661
+                        case 788:                                                      // #661
+                             my_operands="V1,V2,V3,V4,I5";                             // #661
+                             break;                                                    // #661
                         default:                                                       // #614
                              my_operands="*Unknown";                                   // #614
                         }                                                              // #614
@@ -2785,6 +2807,9 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                         case 786:                                                      // #617
                              my_operands="V1,V2,V3,M5";                                // #617
                              break;                                                    // #617
+                        case 789:                                                      // #661
+                             my_operands="V1<,I2>";                                    // #661
+                             break;                                                    // #661
                         default:                                                       // #614
                              my_operands="*Unknown";                                   // #614
                         }                                                              // #614
