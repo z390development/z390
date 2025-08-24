@@ -3537,16 +3537,6 @@ public  class  tz390 {
      static final String[]   op_table_z390 =  // Table added for RPI 1209 #631
         {"83=DIAGNOSE,10,100",     // RPI 2213 ADD DIAGNOSE/DIAG RS
          "83=DIAG,10,100",         // RPI 2213 ADD DIAGNOSE/DIAG RS
-         "B284=LCCTL,64,640",      // LPP/CPU Measurement Facility #661 
-         "B285=LPCTL,64,640",      // LPP/CPU Measurement Facility #661 
-         "B286=QSI,64,640",        // LPP/CPU Measurement Facility #661 
-         "B287=LSCTL,64,640",      // LPP/CPU Measurement Facility #661 
-         "B28E=QCTRI,64,640",      // LPP/CPU Measurement Facility #661 
-         "B2E0=SCCTR,39,140",      // LPP/CPU Measurement Facility #661 
-         "B2E1=SPCTR,39,140",      // LPP/CPU Measurement Facility #661 
-         "B2E4=ECCTR,39,140",      // LPP/CPU Measurement Facility #661 
-         "B2E5=EPCTR,39,140",      // LPP/CPU Measurement Facility #661 
-         "B2ED=ECPGA,39,140",      // LPP/CPU Measurement Facility #661 
          "EB17=STCCTM,20,202",     // LPP/CPU Measurement Facility RPI 2225 2226 #661
          };
      static final String[]   op_table_DFLT_directives = // Split directives from opcodes            #533 #631
