@@ -7,7 +7,7 @@ cd ../..            # up to root
 
 # optables - # prefix
 rt/bash/runoptable "optable" "360-20" "*None"
-rt/bash/runoptable "optable" "DOS"
+rt/bash/runoptable -x "optable" "DOS"
 rt/bash/runoptable "optable" "370"
 rt/bash/runoptable "optable" "XA"
 rt/bash/runoptable "optable" "ESA"

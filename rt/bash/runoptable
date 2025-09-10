@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x
 # $1 = option   - either "optable" or "machine"
 # $2 = filename - option value: the optable of machine name
 # $3 = suffix   - for reference file with HLASM output
@@ -31,4 +31,5 @@ if [ "${3}" = "*None" ]
        cmd="bash/asml rt/mlc/OPTB# @${Z390OPT} sysprn(${Z390PRN}) syserr(${Z390ERR} stats(${Z390STA})"
 fi
 echo "${cmd}"
+echo "HLASMPRN=${HLASMPRN} Z390PRN=${Z390PRN}"
 (${cmd})
