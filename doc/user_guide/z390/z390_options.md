@@ -184,44 +184,46 @@ TRACE(\*) will also set TRACEALL. Note the &SYSTRACE global SETC variable can be
 
 # <a name="machine" id="machine">Machine</a> and <a name="optable" id="optable">optable</a> options and equivalences
 
-| Machine   | Machine   | Optable | Optable | Description                                                                  |
-|-----------|-----------|---------|---------|------------------------------------------------------------------------------|
-| S360-20   |           | 360-20  |         | z390 extension: S360-20 specific subset of DOS instructions                  |
-|           |           | DOS     |         |                                                                              |
-| S370      |           | 370     |         |                                                                              |
-| S370XA    | ARCH-0    | XA      |         |                                                                              |
-| S370ESA   | ARCH-1    | ESA     |         | Synonyms for ESA                                                             |
-| S390      | ARCH-2    | ESA     |         |                                                                              |
-| S390E     | ARCH-3    | ESA     |         |                                                                              |
-|           | ARCH-4    | ESA     |         |                                                                              |
-| zSeries   | ZSeries-1 | ZS1     | ZOP     | Synonyms for ZOP                                                             |
-| ZS        | ZS-1      | ZS1     | ZOP     |                                                                              |
-| z800      | z900      | ZS1     | ZOP     |                                                                              |
-|           | ARCH-5    | ZS1     | ZOP     |                                                                              |
-| z890      | z990      | ZS2     | YOP     | Synonyms for YOP                                                             |
-| zSeries-2 | ZS-2      | ZS2     | YOP     |                                                                              |
-|           | ARCH-6    | ZS2     | YOP     |                                                                              |
-| zSeries-3 | ZS-3      | ZS3     | Z9      | Synonyms for Z9                                                              |
-| z9        | ARCH-7    | ZS3     | Z9      |                                                                              |
-| zSeries-4 | ZS-4      | ZS4     | Z10     | Synonyms for Z10                                                             |
-| z10       | ARCH-8    | ZS4     | Z10     |                                                                              |
-| zSeries-5 | ZS-5      | ZS5     | Z11     | Synonyms for Z11                                                             |
-| z114      | z196      | ZS5     | Z11     |                                                                              |
-| z11       | ARCH-9    | ZS5     | Z11     |                                                                              |
-| zSeries-6 | ZS-6      | ZS6     | Z12     | Synonyms for Z12                                                             |
-| zBC12     | zEC12     | ZS6     | Z12     |                                                                              |
-| z12       | ARCH-10   | ZS6     | Z12     |                                                                              |
-| zSeries-7 | ZS-7      | ZS7     | Z13     | Synonyms for Z13                                                             |
-| z13       | ARCH-11   | ZS7     | Z13     |                                                                              |
-| zSeries-8 | ZS-8      | ZS8     | Z14     | Synonyms for Z14                                                             |
-| z14       | ARCH-12   | ZS8     | Z14     |                                                                              |
-| zSeries-9 | ZS-9      | ZS9     | Z15     | Synonyms for Z15                                                             |
-| z15       | ARCH-13   | ZS9     | Z15     |                                                                              |
-| zSeries-10| ZS-10     | ZSA     | Z16     | Synonyms for Z16                                                             |
-| z16       | ARCH-14   | ZSA     | Z16     |                                                                              |
-|           |           | UNI     |         | All current instructions from optables above                                 |
-|           |           | [DFLT]  |         | Cannot be specified, same as UNI plus one z390 directive for zCobol support  |
-|           |           | z390    |         | UNI plus all z390 instructions; not compatible with HLASM                    |
+| Machine    | Machine   | Optable | Optable | Description                                                                  |
+|------------|-----------|---------|---------|------------------------------------------------------------------------------|
+| S360-20    |           | 360-20  |         | z390 extension: S360-20 specific subset of DOS instructions                  |
+|            |           | DOS     |         |                                                                              |
+| S370       |           | 370     |         |                                                                              |
+| S370XA     | ARCH-0    | XA      |         |                                                                              |
+| S370ESA    | ARCH-1    | ESA     |         | Synonyms for ESA                                                             |
+| S390       | ARCH-2    | ESA     |         |                                                                              |
+| S390E      | ARCH-3    | ESA     |         |                                                                              |
+|            | ARCH-4    | ESA     |         |                                                                              |
+| zSeries    | ZSeries-1 | ZS1     | ZOP     | Synonyms for ZOP                                                             |
+| ZS         | ZS-1      | ZS1     | ZOP     |                                                                              |
+| z800       | z900      | ZS1     | ZOP     |                                                                              |
+|            | ARCH-5    | ZS1     | ZOP     |                                                                              |
+| z890       | z990      | ZS2     | YOP     | Synonyms for YOP                                                             |
+| zSeries-2  | ZS-2      | ZS2     | YOP     |                                                                              |
+|            | ARCH-6    | ZS2     | YOP     |                                                                              |
+| zSeries-3  | ZS-3      | ZS3     | Z9      | Synonyms for Z9                                                              |
+| z9         | ARCH-7    | ZS3     | Z9      |                                                                              |
+| zSeries-4  | ZS-4      | ZS4     | Z10     | Synonyms for Z10                                                             |
+| z10        | ARCH-8    | ZS4     | Z10     |                                                                              |
+| zSeries-5  | ZS-5      | ZS5     | Z11     | Synonyms for Z11                                                             |
+| z114       | z196      | ZS5     | Z11     |                                                                              |
+| z11        | ARCH-9    | ZS5     | Z11     |                                                                              |
+| zSeries-6  | ZS-6      | ZS6     | Z12     | Synonyms for Z12                                                             |
+| zBC12      | zEC12     | ZS6     | Z12     |                                                                              |
+| z12        | ARCH-10   | ZS6     | Z12     |                                                                              |
+| zSeries-7  | ZS-7      | ZS7     | Z13     | Synonyms for Z13                                                             |
+| z13        | ARCH-11   | ZS7     | Z13     |                                                                              |
+| zSeries-8  | ZS-8      | ZS8     | Z14     | Synonyms for Z14                                                             |
+| z14        | ARCH-12   | ZS8     | Z14     |                                                                              |
+| zSeries-9  | ZS-9      | ZS9     | Z15     | Synonyms for Z15                                                             |
+| z15        | ARCH-13   | ZS9     | Z15     |                                                                              |
+| zSeries-10 | ZS-10     | ZSA     | Z16     | Synonyms for Z16                                                             |
+| z16        | ARCH-14   | ZSA     | Z16     |                                                                              |
+| zSeries-11 | ZS-11     | ZSB     | Z17     | Synonyms for Z17                                                             |
+| z17        | ARCH-15   | ZSB     | Z17     |                                                                              |
+|            |           | UNI     |         | All current instructions from optables above                                 |
+|            |           | [DFLT]  |         | Cannot be specified, same as UNI plus one z390 directive for zCobol support  |
+|            |           | z390    |         | UNI plus all z390 instructions; not compatible with HLASM                    |
 
 Remark: there is no machine option keyword equivalent for optable(DOS).
 
