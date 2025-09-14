@@ -339,18 +339,20 @@ private void run_pgm(int zcvt_pgm_addr){
 
 
 /** 
- * <pre>
- * 1.  Check for trace msg and log if found
- * 2.  Execute test commands if test mode
- * 3.  Dump registers if reqister trace option
- * 4.  Run pz390 to next interrupt
- * 5.  Check for trace msg and log if found
- * 6.  If svc interrupt, exec svc
- * 7.  else if psw_check 
- *             if svc_exit exit normally
- *             else psw_handler for abend
- *                  or espie/estae restart
- * </pre>
+ * <ol>
+ *  <li>Check for trace msg and log if found</li>
+ *  <li>Execute test commands if test mode</li>
+ *  <li>Dump registers if reqister trace option</li>
+ *  <li>Run pz390 to next interrupt</li>
+ *  <li>Check for trace msg and log if found</li>
+ *  <li>If svc interrupt, exec svc</li>
+ *  <li>else
+ *   <ol>
+ *    <li>if psw_check if svc_exit exit normally</li>
+ *    <li>else psw_handler for abend or espie/estae restart</li>
+ *   </ol>
+ *  </li>
+ * </ol>
  */
 private void exec_pz390(){
     pz390_thread = new Thread(this);
