@@ -583,7 +583,7 @@ public static void main(String[] args) {
 
 /**
  * Set main program execution mode and
- * Set security permissions
+ * Set security permissions<br />
  * 
  * Notes:
  * <ol>
@@ -2931,7 +2931,7 @@ private void tn_next_input_field(){
 
 
 /**
- * return true if scn_addr is in unprotected input field and set cur_fld_addr
+ * return true if scn_addr is in unprotected input field and set cur_fld_addr<br />
  *
  * Note:
  * <ol>
@@ -2967,7 +2967,7 @@ private boolean tn_input_field(){
 
 /**
  * update modified field attribute 
- * bit at fld_addr if any input fields
+ * bit at fld_addr if any input fields<br />
  *
  * Note:
  * <ol>
@@ -2988,7 +2988,7 @@ private void tn_modify_field(){
 
 /**
  * update cursor for IC command or change
- * in focus due to screen input or tab.\
+ * in focus due to screen input or tab.
  * <ol>
  *  <li>Update scn_addr to next input field position or turn off cursor if none found.</li>
  *  <li>Turn on blinking cursor at position found</li>
@@ -3090,7 +3090,7 @@ private void tn_get_screen_input(){
 
 /**
  * return all modified bytes on screen
- * when no field formatting.  RPI 671
+ * when no field formatting.
  */
 private void tn_unformatted_input(){
 	tget_index = 3;             
@@ -3211,7 +3211,7 @@ private void tn_write_control_char(){
 
 
 /**
- * sound alarm by sending ascii bell x'07' to System.out
+ * sound alarm by sending ascii bell x'07' to System.out<br />
  *
  * Notes:
  * <ol>
@@ -3698,7 +3698,7 @@ public void start_guam(String title,tz390 shared_tz390){
 
 
 /**
- * set gz390 GUAM GUI window title 
+ * set gz390 GUAM GUI window title<br />
  * 
  * Notes:
  * <ol>
