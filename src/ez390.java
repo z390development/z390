@@ -28,13 +28,14 @@ import java.util.Date;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.Timer;
-;public  class  ez390 implements Runnable {
-   /*
-    ez390 is the emulator component of z390 which can be called from
-    z390 gui interface or from command line to execute 390 load
-    module files.  
 
-    ****************************************************
+/**
+ * ez390 is the emulator component of z390 which can be called from
+ * z390 gui interface or from command line to execute 390 load
+ * module files.  
+ */
+public  class  ez390 implements Runnable {
+   /****************************************************
     * Maintenance
     ****************************************************
     * 04/18/05 copied from lz390.java and modified
@@ -176,87 +177,99 @@ import javax.swing.Timer;
     * 07/30/11 RPI 1175 use tz390.check_java_version()
     * 2023-01-22 RPI 1598 re-implement javadoc changes by Hugh Sweeney
     * 2024-08-12 #545 Extend generated java doco to include private methods
+    * 2025-09-13 AFK  Add javadoc comments
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
 	/* 
 	 * shared global variables
 	 */
-	tz390 tz390 = null;
-	pz390 pz390 = null;
-	sz390 sz390 = null;
-	vz390 vz390 = null; // RPI 644
-	Thread  pz390_thread = null;
-	boolean pz390_running = false;
-    String load_file_name = null;
-    boolean exit_request = false;
+    /** variable      */ tz390 tz390 = null;
+    /** variable      */ pz390 pz390 = null;
+    /** variable      */ sz390 sz390 = null;
+    /** variable      */ vz390 vz390 = null; // RPI 644
+    /** variable      */ Thread  pz390_thread = null;
+    /** variable      */ boolean pz390_running = false;
+    /** variable      */ String load_file_name = null;
+    /** variable      */ boolean exit_request = false;
+
     /*
      * Monitor variables
      */   
-        int     ins_count = 0;  
-        int     io_count  = 0;
-        Timer   monitor_timer = null;
-        long    monitor_cmd_time_total = 0;
-	    long    monitor_last_time = 0;
-        long    monitor_next_time = 0;
-        long    monitor_cur_interval = 0;
-        int     monitor_last_ins_count = 0;
-        int     monitor_next_ins_count = 0;
-        int     monitor_last_io_count = 0;
-        int     monitor_next_io_count = 0;
-        long    monitor_cur_ins  = 0;
-        long    monitor_cur_int  = 0;
-        long    monitor_cur_rate = 0;
-        String  cmd_read_line = null;
+    /** variable      */ int     ins_count = 0;  
+    /** variable      */ int     io_count  = 0;
+    /** variable      */ Timer   monitor_timer = null;
+    /** variable      */ long    monitor_cmd_time_total = 0;
+    /** variable      */ long    monitor_last_time = 0;
+    /** variable      */ long    monitor_next_time = 0;
+    /** variable      */ long    monitor_cur_interval = 0;
+    /** variable      */ int     monitor_last_ins_count = 0;
+    /** variable      */ int     monitor_next_ins_count = 0;
+    /** variable      */ int     monitor_last_io_count = 0;
+    /** variable      */ int     monitor_next_io_count = 0;
+    /** variable      */ long    monitor_cur_ins  = 0;
+    /** variable      */ long    monitor_cur_int  = 0;
+    /** variable      */ long    monitor_cur_rate = 0;
+    /** variable      */ String  cmd_read_line = null;
+
     /*
      * time and date variables
      */
-    SimpleDateFormat cur_date_MMddyy = new SimpleDateFormat("MM/dd/yy");
-    SimpleDateFormat cur_tod_hhmmss = new SimpleDateFormat("HH:mm:ss");
-    SimpleDateFormat cur_tod_hhmmss00 = new SimpleDateFormat("HHmmss00");
-    SimpleDateFormat cur_date_yyyy     = new SimpleDateFormat("yyyy");
-    SimpleDateFormat cur_date_MM       = new SimpleDateFormat("MM");
-    SimpleDateFormat cur_date_dd       = new SimpleDateFormat("dd");
-    SimpleDateFormat cur_date_HH       = new SimpleDateFormat("HH");
-    SimpleDateFormat cur_date_mm       = new SimpleDateFormat("mm");
-    SimpleDateFormat cur_date_ss       = new SimpleDateFormat("ss");
-    SimpleDateFormat cur_date_ms       = new SimpleDateFormat("SSS");
-    SimpleDateFormat cur_date_yyddd    = new SimpleDateFormat("yyDDD");
-    SimpleDateFormat cur_date_yyyyddd  = new SimpleDateFormat("yyyyDDD");
-    SimpleDateFormat cur_date_MMddyyyy = new SimpleDateFormat("MMddyyyy");
-    SimpleDateFormat cur_date_ddMMyyyy = new SimpleDateFormat("ddMMyyyy");
-    SimpleDateFormat cur_date_yyyyMMdd = new SimpleDateFormat("yyyyMMdd");
-    int  cur_date_year  = 0;
-    int  cur_date_month = 0;
-    int  cur_date_day   = 0;
-    int  tod_hour  = 0;
-    int  tod_min   = 0;
-    int  tod_sec   = 0;
-    int  tod_msec  = 0;  // 0-999 fraction of sec
-    long time_mil   = 0;  // milli-seconds 
-    Calendar cur_date_cal = null;
-    long tod_start_day = 0;
-    long tod_start_pgm = 0;
-    long tod_end_pgm   = 0;
-    long tot_sec = 0;
-    long tod_time_limit = 0;
-    int  next_time_ins   = 0x1000;
-    int  next_time_check = next_time_ins;
-    boolean log_tod = true; 
-    JTextArea z390_log_text = null;
-    JTextField  z390_command_text = null;
+    /** variable      */ SimpleDateFormat cur_date_MMddyy = new SimpleDateFormat("MM/dd/yy");
+    /** variable      */ SimpleDateFormat cur_tod_hhmmss = new SimpleDateFormat("HH:mm:ss");
+    /** variable      */ SimpleDateFormat cur_tod_hhmmss00 = new SimpleDateFormat("HHmmss00");
+    /** variable      */ SimpleDateFormat cur_date_yyyy     = new SimpleDateFormat("yyyy");
+    /** variable      */ SimpleDateFormat cur_date_MM       = new SimpleDateFormat("MM");
+    /** variable      */ SimpleDateFormat cur_date_dd       = new SimpleDateFormat("dd");
+    /** variable      */ SimpleDateFormat cur_date_HH       = new SimpleDateFormat("HH");
+    /** variable      */ SimpleDateFormat cur_date_mm       = new SimpleDateFormat("mm");
+    /** variable      */ SimpleDateFormat cur_date_ss       = new SimpleDateFormat("ss");
+    /** variable      */ SimpleDateFormat cur_date_ms       = new SimpleDateFormat("SSS");
+    /** variable      */ SimpleDateFormat cur_date_yyddd    = new SimpleDateFormat("yyDDD");
+    /** variable      */ SimpleDateFormat cur_date_yyyyddd  = new SimpleDateFormat("yyyyDDD");
+    /** variable      */ SimpleDateFormat cur_date_MMddyyyy = new SimpleDateFormat("MMddyyyy");
+    /** variable      */ SimpleDateFormat cur_date_ddMMyyyy = new SimpleDateFormat("ddMMyyyy");
+    /** variable      */ SimpleDateFormat cur_date_yyyyMMdd = new SimpleDateFormat("yyyyMMdd");
+    /** variable      */ int  cur_date_year  = 0;
+    /** variable      */ int  cur_date_month = 0;
+    /** variable      */ int  cur_date_day   = 0;
+    /** variable      */ int  tod_hour  = 0;
+    /** variable      */ int  tod_min   = 0;
+    /** variable      */ int  tod_sec   = 0;
+    /** variable      */ int  tod_msec  = 0;  // 0-999 fraction of sec
+    /** variable      */ long time_mil   = 0;  // milli-seconds 
+    /** variable      */ Calendar cur_date_cal = null;
+    /** variable      */ long tod_start_day = 0;
+    /** variable      */ long tod_start_pgm = 0;
+    /** variable      */ long tod_end_pgm   = 0;
+    /** variable      */ long tot_sec = 0;
+    /** variable      */ long tod_time_limit = 0;
+    /** variable      */ int  next_time_ins   = 0x1000;
+    /** variable      */ int  next_time_check = next_time_ins;
+    /** variable      */ boolean log_tod = true; 
+    /** variable      */ JTextArea z390_log_text = null;
+    /** variable      */ JTextField  z390_command_text = null;
   /*
    * end of global ez390 class data and start of procs
    */
 
 
 
-   /**
-    * main is entry when executed from command line
-    * Create instance of ez390 class and pass
-    * parms to ez390 like z390 does.
-    * @param args - argument string - same as z390
-    */
+/**
+ * Dummy constructor - no initialization needed
+ */
+public ez390()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
+/**
+ * main is entry when executed from command line
+ * Create instance of ez390 class and pass
+ * parms to ez390 like z390 does.
+ * @param args - argument string - same as z390
+ */
 public static void main(String[] args) {
 
   ez390 pgm = new ez390();
@@ -265,18 +278,18 @@ public static void main(String[] args) {
 
 
 
-   /**
-    * execute 390 load module file passed as first arg
-    *
-    * Note this may be called directly from z390 GUI or
-    * from main when lz370 run from windows command line.
-    * if called from main, the log_text balect will be null
-    * and local put_log function will route to console instead
-    * of the z390 log window.
-    * @param args - argument string (same as z390)
-    * @param log_text - 
-    * @param command_text - 
-    */
+/**
+ * execute 390 load module file passed as first arg
+ *
+ * Note this may be called directly from z390 GUI or
+ * from main when lz370 run from windows command line.
+ * if called from main, the log_text balect will be null
+ * and local put_log function will route to console instead
+ * of the z390 log window.
+ * @param args - argument string (same as z390)
+ * @param log_text - 
+ * @param command_text - 
+ */
 public void process_ez390(String[] args,JTextArea log_text,JTextField command_text){
 
     init_ez390(args,log_text,command_text);
@@ -292,11 +305,11 @@ public void process_ez390(String[] args,JTextArea log_text,JTextField command_te
 
 
 
-    /**
-     * execute IPL pgm and/or application pgm
-     *
-     * @param zcvt_pgm_addr - address of 8 byte field containing name of program to run
-     */
+/**
+ * execute IPL pgm and/or application pgm
+ *
+ * @param zcvt_pgm_addr - address of 8 byte field containing name of program to run
+ */
 private void run_pgm(int zcvt_pgm_addr){
 	pz390.reg.putInt(pz390.r13,pz390.zcvt_save);
 	pz390.reg.putInt(pz390.r14,pz390.zcvt_exit);
@@ -325,20 +338,20 @@ private void run_pgm(int zcvt_pgm_addr){
 
 
 
-    /** 
-     * <pre>
-     * 1.  Check for trace msg and log if found
-     * 2.  Execute test commands if test mode
-     * 3.  Dump registers if reqister trace option
-     * 4.  Run pz390 to next interrupt
-     * 5.  Check for trace msg and log if found
-     * 6.  If svc interrupt, exec svc
-     * 7.  else if psw_check 
-     *             if svc_exit exit normally
-     *             else psw_handler for abend
-     *                  or espie/estae restart
-     * </pre>
-     */
+/** 
+ * <pre>
+ * 1.  Check for trace msg and log if found
+ * 2.  Execute test commands if test mode
+ * 3.  Dump registers if reqister trace option
+ * 4.  Run pz390 to next interrupt
+ * 5.  Check for trace msg and log if found
+ * 6.  If svc interrupt, exec svc
+ * 7.  else if psw_check 
+ *             if svc_exit exit normally
+ *             else psw_handler for abend
+ *                  or espie/estae restart
+ * </pre>
+ */
 private void exec_pz390(){
     pz390_thread = new Thread(this);
     pz390_running = true;
@@ -358,22 +371,21 @@ private void exec_pz390(){
 
 
 
-    /**
-     * Logic:
-     * <pre>
-     * 1.  initialize log routing
-     * 2.  init ascii to ebcdic table
-     * 3.  init reqular expression paser for test
-     * 4.  set options
-     * 5.  initialize memory
-     * 6.  set runtime hooks for cancel
-     * 7.  start monitor for cmd processor and
-     *     timeout, and cpu rate statistics
-     * </pre>
-     * @param args - text - argument string
-     * @param log_text - JTextArea -
-     * @param command_text - JTextField - 
-     */
+/**
+ * Logic:
+ * <ol>
+ *  <li>initialize log routing</li>
+ *  <li>init ascii to ebcdic table</li>
+ *  <li>init reqular expression paser for test</li>
+ *  <li>set options</li>
+ *  <li>initialize memory</li>
+ *  <li>set runtime hooks for cancel</li>
+ *  <li>start monitor for cmd processor and timeout, and cpu rate statistics</li>
+ * </ol>
+ * @param args - text - argument string
+ * @param log_text - JTextArea -
+ * @param command_text - JTextField - 
+ */
 private void init_ez390(String[] args, JTextArea log_text, JTextField command_text){
 	    if  (log_text != null){
 	    	z390_log_text = log_text;
@@ -409,11 +421,10 @@ private void init_ez390(String[] args, JTextArea log_text, JTextField command_te
 
 
 
-	/**
-	 * start monitor to terminate cmd 
-	 * command if timeout limit reached
-	 */
-
+/**
+ * start monitor to terminate cmd 
+ * command if timeout limit reached
+ */
 private void monitor_startup(){
     monitor_last_time = System.currentTimeMillis();
     monitor_last_ins_count = ins_count;
@@ -432,31 +443,22 @@ private void monitor_startup(){
 
 
 
-	/**
-     *     <pre>
-	 * 1.  At monitor_wait intervals, update the
-	 *     the cpu instruction rate and monitor
-	 *     cmd processes if running with timeout
-	 *  
-	 * 2.  If CMD running and 
-	 *     monitor_wait_total &gt; timeout_interval
-	 *     then abort cmd process with timeout
-	 *  
-	 * 3.  If current time beyond timeout
-	 *     terminate.
-	 * 4.  If WTOR pending, check for reply and post
-	 *     ecb.
-	 * 5.  If stimer_exit_addr set, check for stimer_Exit_tod
-	 *     passed and take exit if tod passed:
-	 *     a.  Save r13-r15 and PSW for restore at end of exit
-	 *     b.  Set r13 to save, r14 to svc 3 instr, and r15 to exit
-	 *     c.  Set stimer_exit_pending for svc 3
-	 *     d.  change PSW to r15 exit addr
-	 * 6.  If GUAM TN3270 screen active, 
-	 *     process pending typed keys    
-     *     </pre>
-	 */
-
+/**
+ * <ol>
+ *  <li>At monitor_wait intervals, update the the cpu instruction rate and monitor cmd processes if running with timeout</li>
+ *  <li>If CMD running and monitor_wait_total &gt; timeout_interval then abort cmd process with timeout</li>
+ *  <li>If current time beyond timeout terminate.</li>
+ *  <li>If WTOR pending, check for reply and post ecb.</li>
+ *  <li>If stimer_exit_addr set, check for stimer_Exit_tod passed and take exit if tod passed:
+ *   <ol>
+ *    <li>Save r13-r15 and PSW for restore at end of exit</li>
+ *    <li>Set r13 to save, r14 to svc 3 instr, and r15 to exit</li>
+ *    <li>Set stimer_exit_pending for svc 3</li>
+ *    <li>change PSW to r15 exit addr</li>
+ *   </ol>
+ *  <li>If GUAM TN3270 screen active, process pending typed keys</li>
+ * </ol>
+ */
 private void monitor_update(){
 	monitor_next_time = System.currentTimeMillis();
 	monitor_next_ins_count = ins_count;
@@ -551,6 +553,9 @@ private void monitor_update(){
 
 
 
+/**
+ * run method
+ */
 
 public void run() {
 	if (pz390_thread == Thread.currentThread()){
@@ -590,12 +595,11 @@ public void run() {
 
 
 
-
+/**
+ * display ez390 version, timestamp,
+ * and copyright if running standalone
+ */
 private void put_copyright(){
-	   /*
-	    * display ez390 version, timestamp,
-	    * and copyright if running standalone
-	    */
 	    tz390.force_nocon = true;  // RPI 755
 	   	if  (z390_log_text == null){
 	   		sz390.put_log("EZ390I Copyright (c) 2021 z390 Assembler LLC");
