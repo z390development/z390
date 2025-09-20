@@ -14,6 +14,9 @@ Markdown uses simple text files with specific syntax for formatting. See [the ma
 
 You can also use functions provided by the admonition extension in mkdocs. See the [doco for admonition](https://python-markdown.github.io/extensions/admonition/)
 
+**Note:** As part of the normal build process the documentation library for the Java code is generated from the java source code using the standard java tool javadoc.
+Generated documents can be found in z390 subdirectory build\javadoc or build/javadoc depending on your Operating System. These documents are *not* published to the web.
+
 ### Structure
 
 All the documentation is contained in the `doc` folder.

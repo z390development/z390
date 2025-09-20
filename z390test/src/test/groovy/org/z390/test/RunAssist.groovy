@@ -53,8 +53,8 @@ class RunAssist extends z390Test {
         this.printOutput()
         assert rc == 0
         // Load files to fileData and compare
-        loadFile(basePath('demo', 'SOLP06.TF1'), 'TF1')
-        loadFile(basePath('demo', 'SOLP06.XPR'), 'XPR')
+        loadFile(basePath('assist', 'test', 'SOLP06.TF1'), 'TF1')
+        loadFile(basePath('assist', 'test', 'SOLP06.XPR'), 'XPR')
         assert fileData.get('TF1') == fileData.get('XPR')
         assert rc == 0
     }
