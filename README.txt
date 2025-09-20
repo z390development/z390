@@ -10,11 +10,11 @@ at https://github.com/z390development/z390/releases
 This distribution has been regression tested on Windows Server and Ubuntu Linux 
 using GitHub Actions.
 
-Java runtime/SDK used: 
-Eclipse Adoptium OpenJDK 8 https://adoptium.net/?variant=openjdk8
+Java runtime/SDK used for build: 
+Eclipse Temurin 21 https://adoptium.net/temurin/releases/?variant=temurin21
 
-This distribution includes a prebuilt z390.jar file and scripts which along with 
-a Java JRE (version 8 or above) is all you need to run z390.
+This distribution includes a prebuilt z390.jar file and scripts.
+All you need to install is a Java JRE (version 8 or above).
 
 This distribution DOES NOT include the z390 Java sources.
 If you wish to rebuild the jar from source, please refer to the 

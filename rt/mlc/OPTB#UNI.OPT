@@ -1,4 +1,4 @@
-  allow
+noallow
   optable(UNI,list)
   stats
 noloadhigh
