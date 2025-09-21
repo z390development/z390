@@ -20,7 +20,8 @@ call bat\asm   %z_TraceMode% linklib\FPCONMFC bal notiming stats       || goto e
 call bat\asm   %z_TraceMode% linklib\CVTTOHEX bal notiming stats       || goto error
 call bat\asm   %z_TraceMode% linklib\SQXTR    bal notiming stats       || goto error
 call bat\asm   %z_TraceMode% linklib\DAT      bal notiming stats       || goto error
-call bat\asmlg %z_TraceMode% linklib\IEFBR14  sysobj(+linklib)         || goto error
+call bat\asml  %z_TraceMode% linklib\SORT         notiming stats       || goto error
+call bat\asmlg %z_TraceMode% linklib\IEFBR14      notiming stats sysobj(+linklib) || goto error
 
 rem call bat\asm   %z_TraceMode% linklib\RTGENDIR noasm bal notiming stats sysparm(RTGENDIR) || goto error
 rem call bat\asm   %z_TraceMode% linklib\RTGENCMP noasm bal notiming stats sysparm(RTGENCMP) || goto error

@@ -1,6 +1,6 @@
 site_name: z390
 site_author: z390 Development team
-copyright: "&copy; 2022 z390 Assembler LLC. All rights reserved"
+copyright: "&copy; 2025 z390 Assembler LLC. All rights reserved"
 repo_name: z390development/z390
 repo_url: https://github.com/z390development/z390
 edit_uri: edit/main/doc/
@@ -40,13 +40,13 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.superfences
   - pymdownx.tabbed:
-      # alternate_style: true 
+       alternate_style: true
   - pymdownx.critic
   - pymdownx.smartsymbols
   - pymdownx.keys
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 nav:
   - Home: index.md

@@ -93,7 +93,7 @@ will be similar to the following:
 21:13:19 hello     EZ390 ENDED   RC= 0 SEC= 0 MEM(MB)= 17 IO=185 INS=41
 ```
 
-Learn more in the [zCOBOL user guide](/user_guide/zCOBOL/zCOBOL_User_Guide)
+Learn more in the [zCOBOL user guide](../user_guide/zCOBOL/zCOBOL_User_Guide.md)
 
 ## Hello zCICS
 

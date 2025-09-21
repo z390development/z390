@@ -1,0 +1,141 @@
+1                                                   Book Title Counts by Publisher
+                                                   First List of Publishers and Titles
+0         Publisher Name                          Publisher Prefix          Titles in Print          Titles in Preparation
+          ------------------------------          ----------------          ---------------          ---------------------
+0         Academic Press                                        12                   234567                              0
+0         Addison-Wesley                                       201                    23456                            111
+0         Addison-Wesley                                       321                    34567                          65433
+0         Cambridge                                            521                    98765                            999
+0         Freeman                                             7167                     5555                           5555
+0         Knopf                                                394                        1                              1
+0         Microsoft Press                                     7356                     9876                             99
+0         Norton                                               393                    56789                              0
+0         NIU Press                                          87580                      123                             99
+0         O'Reilly                                             596                    12345                              0
+0         Oxford                                                19                   345678                              1
+0         Prentice-Hall                                         13                      123                              0
+0         Que                                                 7897                     6543                              0
+0         Reston                                              8359                     9999                              1
+0         Sams                                                 672                    45678                          11111
+0         Springer-Verlag                                      387                     9999                              1
+0         Viking                                               670                    76543                              0
+1                                                   Book Title Counts by Publisher
+                                                  Second List of Publishers and Titles
+0         Publisher Name                          Publisher Prefix          Titles in Print          Titles in Preparation
+          ------------------------------          ----------------          ---------------          ---------------------
+0         Arlington House                                    87000                      123                             99
+0         Atlantic Monthly Press                              8021                     5555                           5555
+0         Basic Books                                          465                   234567                              0
+0         Cosmo Dogood's Urban Almanac                     9761989                        9                              0
+0         Cricket Books                                       8126                     6543                              0
+0         Doubleday                                            385                    34567                          65433
+0         Farrar, Strauss and Giroux                           374                    98765                            999
+0         Henry Holt                                          8050                     9876                             99
+0         Insight Press                                     935218                       99                              0
+0         Liberty Press                                     913966                       88                              9
+0         London Town Press                                9666490                        2                              9
+0         Princeton University Press                           691                      123                              0
+0         Putnam                                               399                    56789                              0
+0         Random House                                         679                    76543                              0
+0         Scribner's                                           684                    12345                              0
+0         Simon & Schuster                                    7432                     6543                            123
+0         Simon & Schuster                                     684                    12345                             99
+0         Thunder Bay Press                                   7924                     9999                              1
+0         Walker & Company                                    8027                     6543                            999
+0         Warner Books                                         440                    45678                          11111
+1                                                   Book Title Counts by Publisher
+                                                  Merged List of Publishers and Titles
+0         Publisher Name                          Publisher Prefix          Titles in Print          Titles in Preparation
+          ------------------------------          ----------------          ---------------          ---------------------
+0         Academic Press                                        12                   234567                              0
+0         Addison-Wesley                                       201                    23456                            111
+0         Addison-Wesley                                       321                    34567                          65433
+0         Arlington House                                    87000                      123                             99
+0         Atlantic Monthly Press                              8021                     5555                           5555
+0         Basic Books                                          465                   234567                              0
+0         Cambridge                                            521                    98765                            999
+0         Cosmo Dogood's Urban Almanac                     9761989                        9                              0
+0         Cricket Books                                       8126                     6543                              0
+0         Doubleday                                            385                    34567                          65433
+0         Farrar, Strauss and Giroux                           374                    98765                            999
+0         Freeman                                             7167                     5555                           5555
+0         Henry Holt                                          8050                     9876                             99
+0         Insight Press                                     935218                       99                              0
+0         Knopf                                                394                        1                              1
+0         Liberty Press                                     913966                       88                              9
+0         London Town Press                                9666490                        2                              9
+0         Microsoft Press                                     7356                     9876                             99
+0         Norton                                               393                    56789                              0
+0         NIU Press                                          87580                      123                             99
+0         O'Reilly                                             596                    12345                              0
+0         Oxford                                                19                   345678                              1
+0         Prentice-Hall                                         13                      123                              0
+0         Princeton University Press                           691                      123                              0
+0         Putnam                                               399                    56789                              0
+0         Que                                                 7897                     6543                              0
+0         Random House                                         679                    76543                              0
+0         Reston                                              8359                     9999                              1
+0         Sams                                                 672                    45678                          11111
+0         Scribner's                                           684                    12345                              0
+0         Simon & Schuster                                    7432                     6543                            123
+0         Simon & Schuster                                     684                    12345                             99
+0         Springer-Verlag                                      387                     9999                              1
+0         Thunder Bay Press                                   7924                     9999                              1
+0         Viking                                               670                    76543                              0
+0         Walker & Company                                    8027                     6543                            999
+0         Warner Books                                         440                    45678                          11111
+1                                                   Book Title Counts by Publisher
+                                              Updates to Titles in Print and Preparation
+0         Publisher Name                          Added to Titles in Print          Added to Titles in Preparation
+          ------------------------------          ------------------------          ------------------------------
+          Thunder Bay Press                                              0                                       0
+          NIU Press                                                      2                                      -2
+          Princeton University Press                                    25                                       0
+          London Town Press                                              9                                      -9
+          Liberty PRess                       *** Error *** Publisher Name Not Found                                             -
+          Springer-Verlag                                              -99                                      19
+          Putman                              *** Error *** Publisher Name Not Found                                             -
+          Academic Press                                              1234                                    2345
+-                        Total changes to Titles Published:           1171
+0                        Total changes to Titles in Preparation:                                              2353
+1                                                   Book Title Counts by Publisher
+                                                 Updated List of Publishers and Titles
+0         Publisher Name                          Publisher Prefix          Titles in Print          Titles in Preparation
+          ------------------------------          ----------------          ---------------          ---------------------
+0         Academic Press                                        12                   235801                           2345
+0         Addison-Wesley                                       201                    23456                            111
+0         Addison-Wesley                                       321                    34567                          65433
+0         Arlington House                                    87000                      123                             99
+0         Atlantic Monthly Press                              8021                     5555                           5555
+0         Basic Books                                          465                   234567                              0
+0         Cambridge                                            521                    98765                            999
+0         Cosmo Dogood's Urban Almanac                     9761989                        9                              0
+0         Cricket Books                                       8126                     6543                              0
+0         Doubleday                                            385                    34567                          65433
+0         Farrar, Strauss and Giroux                           374                    98765                            999
+0         Freeman                                             7167                     5555                           5555
+0         Henry Holt                                          8050                     9876                             99
+0         Insight Press                                     935218                       99                              0
+0         Knopf                                                394                        1                              1
+0         Liberty Press                                     913966                       88                              9
+0         London Town Press                                9666490                       11                              0
+0         Microsoft Press                                     7356                     9876                             99
+0         Norton                                               393                    56789                              0
+0         NIU Press                                          87580                      125                             97
+0         O'Reilly                                             596                    12345                              0
+0         Oxford                                                19                   345678                              1
+0         Prentice-Hall                                         13                      123                              0
+0         Princeton University Press                           691                      148                              0
+0         Putnam                                               399                    56789                              0
+0         Que                                                 7897                     6543                              0
+0         Random House                                         679                    76543                              0
+0         Reston                                              8359                     9999                              1
+0         Sams                                                 672                    45678                          11111
+0         Scribner's                                           684                    12345                              0
+0         Simon & Schuster                                    7432                     6543                            123
+0         Simon & Schuster                                     684                    12345                             99
+0         Springer-Verlag                                      387                     9900                             20
+0         Thunder Bay Press                                   7924                     9999                              1
+0         Viking                                               670                    76543                              0
+0         Walker & Company                                    8027                     6543                            999
+0         Warner Books                                         440                    45678                          11111

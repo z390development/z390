@@ -10,23 +10,15 @@ import org.junit.jupiter.api.TestInstance.Lifecycle
 class RunSortTests extends z390Test {
 
     var options = [
-            'noloadhigh',
+            'noloadhigh time(45)',
             "SYSMAC(${basePath("mac")})",
             "SYSCPY(${basePath("mac")})"
     ]
 
     var runOptions = [
-            "SYS390(${basePath('sort')})"
+            'time(45)',
+            "SYS390(${basePath('linklib')})"
     ]
-
-    @BeforeAll
-    void build_sort() {
-        int rc = asml(this.basePath('sort', 'SORT'), *options)
-        this.printOutput()
-        if (rc != 0) {
-            throw new RuntimeException("Unable to assemble SORT")
-        }
-    }
 
     @Test
     void test_TESTSORT() {
