@@ -1696,58 +1696,63 @@ specifying the full path.</p>
 <h3 id="z390">z390</h3>
 <p>Start the GUI interface with optional startup command file input.</p>
 <h3 id="mac">mac</h3>
-<p>Run mz390 macro processor to expand MLC macro source file to BAL assembler source file. </p>
+<p>Run mz390 macro processor to expand macro source file to BAL assembler source file. \
+The default extension for the input source file is MLC.</p>
 <h3 id="asm">asm</h3>
-<p>Run mz390 and az390 assembler to expand MLC macro assembler source file and 
-generate relocatable OBJ relocatable object file.  </p>
+<p>Run mz390 and az390 assembler to expand macro assembler source file and
+generate relocatable OBJ relocatable object file. \
+The default extension for the input source file is MLC.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The default object file format is binary 80 byte record mainframe compatible 
-format.<br />
-Use option OBJHEX for ASCII text format containing hex format for object 
-code.  The OBJHEX format supports single CSECT’s over 16 MB and you can read 
-the OBJ file for debugging purposes. 
+<p>The default object file format is binary 80 byte record mainframe compatible
+format. \
+Use option OBJHEX for ASCII text format containing hex format for object
+code.  The OBJHEX format supports single CSECT’s over 16 MB and you can read
+the OBJ file for debugging purposes.
 See <a href="../z390_options/">Z390 options</a> for more details.</p>
 </div>
 <h3 id="asml">asml</h3>
-<p>Run mz390, az390, and lz390 to expand MLC macro assembler source, assemble, and 
-link to generate 390 load module.</p>
+<p>Run mz390, az390, and lz390 to expand macro assembler source, assemble, and
+link to generate 390 load module. \
+The default extension for the input source file is MLC.</p>
 <h3 id="asmlg">asmlg</h3>
-<p>Run mz390, az390, lz390 and ez390 to expand MLC macro source, assemble, link, 
-and execute 390 load module.</p>
+<p>Run mz390, az390, lz390 and ez390 to expand macro source, assemble, link,
+and execute 390 load module. \
+The default extension for the input source file is MLC.</p>
 <h3 id="link">link</h3>
-<p>Run lz390 linker to read one or more relocatable OBJ files and create binary 
-relocatable 390 load module file.  </p>
-<p>If the linker option AUTOLINK is on, the linker will search SYSLIB OBJ file 
-directory for external references to be statically linked. </p>
-<p>See <a href="../z390_options/">z390 options</a> for more details. </p>
-<p>The linker includes options for AMODE and RMODE to control loading and execution 
-modes.  </p>
-<p>The linker also has optional input command file with suffix LKD which may 
-contain explicit INCLUDE, ENTRY, ALIAS, and NAME commands.  </p>
+<p>Run lz390 linker to read one or more relocatable OBJ files and create binary
+relocatable 390 load module file.</p>
+<p>If the linker option AUTOLINK is on, the linker will search SYSLIB OBJ file
+directory for external references to be statically linked.</p>
+<p>See <a href="../z390_options/">z390 options</a> for more details.</p>
+<p>The linker includes options for AMODE and RMODE to control loading and execution modes.</p>
+<p>The linker also has optional input command file (with default suffix LKD) which may
+contain explicit INCLUDE, ENTRY, ALIAS, and NAME commands.</p>
 <h3 id="exec">exec</h3>
-<p>Run ez390 emulator to execute 390 load module. </p>
+<p>Run ez390 emulator to execute 390 load module.</p>
 <h4 id="interactive-debugger">Interactive debugger</h4>
-<p>The ez390 emulator supports the following interactive test commands when the 
+<p>The ez390 emulator supports the following interactive test commands when the
 <a href="../z390_options/">TEST option</a> is specified:</p>
 <ul>
-<li><code>addr=sdt</code> – set memory value  (i.e. 1r?=x'80' changes mem at (r1) 31 bit</li>
-<li><code>reg=sdt</code> - set register value (i.e. 15r=8 changes reg 15 to 8)</li>
-<li><code>A addr</code> – set or reset up to 100 instruction address stops with hex address or relative expression such as *+4</li>
+<li><code>addr=sdt</code> – set memory value  (i.e. <code>1r?=x'80'</code> changes mem at (r1) 31 bit</li>
+<li><code>reg=sdt</code> - set register value (i.e. <code>15r=8</code> changes reg 15 to 8)</li>
+<li><code>A addr</code> – set or reset up to 100 instruction address stops with hex address or relative expression such as <code>*+4</code></li>
 <li><code>AR nn</code> – display specified access register else all AR 0-15</li>
-<li><code>B=addr</code> - set base for rel addr (ie B=15r% sets base to (r15) 24 bit</li>
+<li><code>B=addr</code> - set base for rel addr (i.e. <code>B=15r%</code> sets base to (r15) 24 bit</li>
 <li><code>D</code> – display DCB file information from TIOT</li>
 <li><code>E</code> – toggle between EBCDIC and ASCII mode</li>
 <li><code>F nn</code> – display floating point register else FPC and all FPR 0-15</li>
 <li><code>FPC</code> – display floating-point-control register</li>
 <li><code>FPC+</code> – display floating-point-control register in verbose mode</li>
-<li><code>G</code> - nn/addr/opcode - exec nn instr. or until specified instruction address or opcode is found with no trace.  One instruction is always executed before next opcode break even if it’s the same instruction such as a BCT 1,<em>.  Addresses are distinguished from count by hex . or relative expression term such as </em>, +, or -.</li>
+<li><code>G</code> - nn/addr/opcode - exec nn instr. or until specified instruction address or opcode is found with no trace.
+   One instruction is always executed before next opcode break even if it's the same instruction such as a <code>BCT 1,*</code>.
+   Addresses are distinguished from count by hex . or relative expression term such as <code>*</code>, <code>+</code>, or <code>-</code>.</li>
 <li><code>H</code>  -  list help command summary</li>
 <li><code>J addr</code> -  jump to new addr and trace instruction</li>
 <li><code>L</code>  - list all regs and trace current instruction</li>
-<li><code>L reg</code> - list contents of register (ie l 1r dumps register 1</li>
-<li><code>L addr len</code> - list contents of memory area (ie l 10. 4 dumps cvt addr</li>
-<li><code>M</code> – display total memory in MB and total allocate and free bytes </li>
+<li><code>L reg</code> - list contents of register (ie <code>l 1r</code> dumps register 1</li>
+<li><code>L addr len</code> - list contents of memory area (i.e. <code>l 10. 4</code> dumps cvt addr</li>
+<li><code>M</code> – display total memory in MB and total allocate and free bytes</li>
 <li><code>P</code> – display current loaded program information from CDE including name, entry and length</li>
 <li><code>PSW</code> – display current PSW</li>
 <li><code>PSW+</code> – display current PSW in verbose mode</li>
@@ -1757,18 +1762,31 @@ contain explicit INCLUDE, ENTRY, ALIAS, and NAME commands.  </p>
 <li><code>S</code>  - clear register, address, and memory breaks</li>
 <li><code>S reg??sdt</code>  - set break on register change</li>
 <li><code>S addr??sdt</code> - set break on memory change</li>
-<li><code>T nn/addr/opcode</code> - trace nn instr. or until specified instruction address or opcode is found.  One instruction is always executed before next opcode break even if it’s the same instruction such as a BCT 1,<em>.  Addresses are distinguished from count by hex . or relative expression term such as </em>, +, or -.  The symbol EPA may be used in place of address to refer to last program load point address.</li>
-<li><code>V</code> - validate/verify<ul>
+<li><code>T nn/addr/opcode</code> - trace nn instr. or until specified instruction address or opcode is found.
+   One instruction is always executed before next opcode break even if it's the same instruction such as a <code>BCT 1,*</code>.
+   Addresses are distinguished from count by hex . or relative expression term such as <code>*</code>, <code>+</code>, or <code>-</code>.
+   The symbol EPA may be used in place of address to refer to last program load point address.</li>
+<li><code>V</code> - validate/verify</li>
+<li>
+<ul>
 <li><code>V * nn</code> - validate nn bytes starting at PSW address</li>
+</ul>
+</li>
+<li>
+<ul>
 <li><code>V psw.subfield</code> - validate PSW subfield</li>
+</ul>
+</li>
+<li>
+<ul>
 <li><code>V nnr</code> - validate GPR nn</li>
 </ul>
 </li>
 <li><code>Z</code>  - exit test and run to end of program without trace</li>
-<li><code>* addr</code> = hex.,+-hex, *+-hex, dec, nnr% (24 bit), nnr? (31 bit)</li>
+<li><code>* addr</code> = <code>hex.</code>,<code>+-hex</code>, <code>*+-hex</code>, <code>dec</code>, <code>nnr%</code> (24 bit), <code>nnr?</code> (31 bit)</li>
 <li><code>* reg</code> = nnr where nn = 0-15</li>
-<li><code>* sdt</code> = self defining term (b'01',c'ab',f'1',h'2',x'ff')</li>
-<li><code>* ??</code> = break compare operator (=,!=,&lt;,&lt;=,&gt;,&gt;=)</li>
+<li><code>* sdt</code> = self defining term (<code>b'01'</code>, <code>c'ab'</code>, <code>f'1'</code>, <code>h'2'</code>, <code>x'ff'</code>)</li>
+<li><code>* ??</code> = break compare operator (<code>=</code>, <code>!=</code>, <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code>)</li>
 </ul>
 
 
@@ -1828,7 +1846,7 @@ contain explicit INCLUDE, ENTRY, ALIAS, and NAME commands.  </p>
     
     
       
-      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.3-11-ga91a4999"}</script>
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.3-12-g5578f2b9"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
