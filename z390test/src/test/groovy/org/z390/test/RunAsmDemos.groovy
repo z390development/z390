@@ -19,14 +19,6 @@ class RunAsmDemos extends z390Test {
         "SYSCPY(${basePath('mac')})",
         "SYSOBJ(${basePath('linklib')})"
     ]
-    var options_20s = [
-        'trace',
-        'nocon',
-        'time(20)',
-        "SYSMAC(${basePath('mac')})",
-        "SYSCPY(${basePath('mac')})",
-        "SYSOBJ(${basePath('linklib')})"
-    ]
 
     @Test
     // Test usage of explicit default extension
