@@ -12,7 +12,10 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..
-call bat\ASMLG %z_TraceMode% demo\HELLO    nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+rem -- validate explicit default/non-default extension
+call bat\ASMLG %z_TraceMode% demo\HELLO.MLC  nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% demo\HELLO2.asm nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+
 call bat\ASM   %z_TraceMode% demo\DEMOM8Q1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% demo\DEMOBMK1 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% demo\DEMOBMK2 nocon %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error

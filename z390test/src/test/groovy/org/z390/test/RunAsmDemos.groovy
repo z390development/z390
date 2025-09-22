@@ -19,10 +19,26 @@ class RunAsmDemos extends z390Test {
         "SYSCPY(${basePath('mac')})",
         "SYSOBJ(${basePath('linklib')})"
     ]
+    var options_20s = [
+        'trace',
+        'nocon',
+        'time(20)',
+        "SYSMAC(${basePath('mac')})",
+        "SYSCPY(${basePath('mac')})",
+        "SYSOBJ(${basePath('linklib')})"
+    ]
 
     @Test
+    // Test usage of explicit default extension
     void test_HELLO() {
-        int rc = this.asmlg(basePath("demo", "HELLO"), *options)
+        int rc = this.asmlg(basePath("demo", "HELLO.MLC"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    // Test usage of explicit non-default extension
+    void test_HELLO2() {
+        int rc = this.asmlg(basePath("demo", "HELLO2.asm"), *options)
         this.printOutput()
         assert rc == 0
     }
