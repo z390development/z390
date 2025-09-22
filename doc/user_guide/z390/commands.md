@@ -13,7 +13,7 @@ specifying the full path.
     `(z390 install dir)\bat`
 
 === "MacOS/Unix"
-        
+
     `(z390 install dir)/bash`
 
 
@@ -26,57 +26,56 @@ Start the GUI interface with optional startup command file input.
 ### mac
 
 Run mz390 macro processor to expand macro source file to BAL assembler source file. \
-The default extension for the input source file is MLC
+The default extension for the input source file is MLC.
 
 ### asm
 
-Run mz390 and az390 assembler to expand macro assembler source file and 
-generate relocatable OBJ relocatable object file.
-The default extension for the input source file is MLC
+Run mz390 and az390 assembler to expand macro assembler source file and
+generate relocatable OBJ relocatable object file. \
+The default extension for the input source file is MLC.
 
-!!! Note 
-    The default object file format is binary 80 byte record mainframe compatible 
-    format.  
-    Use option OBJHEX for ASCII text format containing hex format for object 
-    code.  The OBJHEX format supports single CSECT’s over 16 MB and you can read 
-    the OBJ file for debugging purposes. 
+!!! Note
+    The default object file format is binary 80 byte record mainframe compatible
+    format. \
+    Use option OBJHEX for ASCII text format containing hex format for object
+    code.  The OBJHEX format supports single CSECT’s over 16 MB and you can read
+    the OBJ file for debugging purposes.
     See [Z390 options](z390_options.md) for more details.
-    
-### asml 
 
-Run mz390, az390, and lz390 to expand macro assembler source, assemble, and 
-link to generate 390 load module.
-The default extension for the input source file is MLC
+### asml
+
+Run mz390, az390, and lz390 to expand macro assembler source, assemble, and
+link to generate 390 load module. \
+The default extension for the input source file is MLC.
 
 ###	asmlg
 
-Run mz390, az390, lz390 and ez390 to expand macro source, assemble, link, 
-and execute 390 load module.
-The default extension for the input source file is MLC
+Run mz390, az390, lz390 and ez390 to expand macro source, assemble, link,
+and execute 390 load module. \
+The default extension for the input source file is MLC.
 
 ### link
 
-Run lz390 linker to read one or more relocatable OBJ files and create binary 
-relocatable 390 load module file.  
+Run lz390 linker to read one or more relocatable OBJ files and create binary
+relocatable 390 load module file.
 
-If the linker option AUTOLINK is on, the linker will search SYSLIB OBJ file 
-directory for external references to be statically linked. 
+If the linker option AUTOLINK is on, the linker will search SYSLIB OBJ file
+directory for external references to be statically linked.
 
-See [z390 options](z390_options.md) for more details. 
+See [z390 options](z390_options.md) for more details.
 
-The linker includes options for AMODE and RMODE to control loading and execution 
-modes.  
+The linker includes options for AMODE and RMODE to control loading and execution modes.
 
-The linker also has optional input command file (with default suffix LKD) which may 
-contain explicit INCLUDE, ENTRY, ALIAS, and NAME commands.  
+The linker also has optional input command file (with default suffix LKD) which may
+contain explicit INCLUDE, ENTRY, ALIAS, and NAME commands.
 
 ### exec
 
-Run ez390 emulator to execute 390 load module. 
+Run ez390 emulator to execute 390 load module.
 
 #### Interactive debugger
 
-The ez390 emulator supports the following interactive test commands when the 
+The ez390 emulator supports the following interactive test commands when the
 [TEST option](z390_options.md) is specified:
 
 - `addr=sdt` – set memory value  (i.e. `1r?=x'80'` changes mem at (r1) 31 bit
@@ -97,7 +96,7 @@ The ez390 emulator supports the following interactive test commands when the
 - `L`  - list all regs and trace current instruction
 - `L reg` - list contents of register (ie `l 1r` dumps register 1
 - `L addr len` - list contents of memory area (i.e. `l 10. 4` dumps cvt addr
-- `M` – display total memory in MB and total allocate and free bytes 
+- `M` – display total memory in MB and total allocate and free bytes
 - `P` – display current loaded program information from CDE including name, entry and length
 - `PSW` – display current PSW
 - `PSW+` – display current PSW in verbose mode
