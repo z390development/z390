@@ -1,0 +1,35 @@
+#!/bin/bash
+set -x
+# $1 = option   - either "optable" or "machine"
+# $2 = filename - option value: the optable of machine name
+# $3 = suffix   - for reference file with HLASM output
+
+INFIX="_"
+if [ "${1}" = "optable" ]
+  then INFIX="#"
+fi
+
+SUFFIX=""
+if [ -z "${3}" ]
+  then SUFFIX=${2}
+fi
+
+# runoptable: regression test z390 optables
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ../..            # up to root
+
+Z390OPT="rt/mlc/OPTB${INFIX}${2}.OPT"
+Z390PRN="rt/mlc/OPTB${INFIX}${2}.PRN"
+Z390ERR="rt/mlc/OPTB${INFIX}${2}.ERR"
+Z390STA="rt/mlc/OPTB${INFIX}${2}.STA"
+HLASMPRN="rt/mlc/OPTB#${3}.TF1"
+
+cmd="bash/asmlg rt/mlc/OPTB# @${Z390OPT} sysprn(${Z390PRN}) syserr(${Z390ERR} stats(${Z390STA})"
+if [ "${3}" = "*None" ]
+  then HLASMPRN=""
+       cmd="bash/asml rt/mlc/OPTB# @${Z390OPT} sysprn(${Z390PRN}) syserr(${Z390ERR} stats(${Z390STA})"
+fi
+echo "${cmd}"
+echo "HLASMPRN=${HLASMPRN} Z390PRN=${Z390PRN}"
+(${cmd})
