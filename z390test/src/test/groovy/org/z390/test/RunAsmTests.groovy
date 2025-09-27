@@ -97,6 +97,12 @@ class RunAsmTests extends z390Test {
         assert rc == 0
     }
     @Test
+    void test_IS659() {
+        int rc = this.asmlg(basePath("rt", "mlc", "IS659"), *options, 'optable(z390)')
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
     void test_TESTDC1() {
         int rc = this.asmlg(basePath("rt", "mlc", "TESTDC1"), *options, 'optable(z390)', "SYSOBJ(${basePath("linklib")})")
         this.printOutput()

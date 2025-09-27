@@ -1,0 +1,144 @@
+***********************************************************************
+* Test program for issue 659
+*
+* Problem reported was the "*-8" in the samples CCW, CCW1
+* shown below resulted in incorrect values -- 1 too large
+* for the CCW and 4 too large for the CCW1.
+*
+* Sample CCWs supplied by submitter of the issue
+***********************************************************************
+*
+IS659    CSECT ,
+         STM   14,12,12(13)        Save caller's registers
+         LR    12,15               R12 = base register
+         USING IS659,12            Establish addressability
+         LA    14,SA               Usable save area
+         ST    13,4(,14)           Chain
+         ST    14,8(,13)                 save areas
+         LR    13,14               Current save area
+*
+         SR    11,11               R11 will be return code
+         SR    10,10               Test number
+         LM    7,9,CCW@@           R7 -> 1st, R8 = len 1, R9 -> last
+LP1      DS    0H
+         AHI   10,1                Test number
+         LM    2,3,0(7)            2 -> CCW actual, 3 -> CCW expected
+         CLC   0(8,2),0(3)         actual : expected
+         BE    NX1                 If equal success; next test
+         WTO   'IS659 test failed; R10 = test number'
+         WTO   'IS769 R2 -> actual CCW, R3 -> expected CCW'
+         BAS   14,ErrMsg           Show error message ACT : EXP
+         LA    11,8                Error return code
+*         ABEND 101,DUMP            Don't continue
+NX1      DS    0H
+         BXLE  7,8,LP1             Do all tests
+*
+         LTR   11,11               All tests succeeded?
+         BZ    Success             Yes
+         WTO   'IS659 ERROR; at least one test failed'
+         B     Exit                Done
+Success  DS    0H
+         WTO   'IS659 all tests successfull'
+Exit     DS    0H
+         LR    15,11               Return code
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except R15
+         BR    14                  Return to caller
+*
+* CCW COMMANDS:
+CCWCTIC  EQU   X'08'    TIC
+CCWCSEEK EQU   X'07'    SEEK
+CCWCSIDE EQU   X'31'    SEARCH ID EQUAL
+CCWCRDAT EQU   X'06'    READ DATA
+*
+* CCW FLAGS:
+CCWFCD   EQU   X'80'    CHAIN DATA
+CCWFCC   EQU   X'40'    CHAIN COMMAND
+CCWFSLI  EQU   X'20'    SUPPRESS INCORRECT LENGTH INDICATION
+CCWFSKIP EQU   X'10'    SKIP DATA TRANSFER ON RD/RDBK/SENSE 
+CCWFPCI  EQU   X'08'    PROGRAM CONTROLLED INTERRUPTION
+*
+* CCW/CCW0
+CCW      DS    0D
+         CCW   CCWCSEEK,SEEKADDR,CCWFCC,L'SEEKADDR
+SRCHID0  CCW   CCWCSIDE,BLKADDR,CCWFCC,L'BLKADDR
+         CCW   CCWCTIC,*-8,0,0
+         CCW   CCWCRDAT,BUFFER,CCWFSLI,L'BUFFER
+* CCW1
+CCW1     DS    0D
+         CCW1  CCWCSEEK,SEEKADDR,CCWFCC,L'SEEKADDR
+SRCHID1  CCW1  CCWCSIDE,BLKADDR,CCWFCC,L'BLKADDR
+         CCW1  CCWCTIC,*-8,0,0
+         CCW1  CCWCRDAT,BUFFER,CCWFSLI,L'BUFFER
+*
+SEEKADDR DS    XL6      BBCCHH
+BLKADDR  DS    XL5      CCHHR
+BUFFER   DS    CL80
+*
+SA       DC    18F'-1'
+*
+***********************************************************************
+* ErrMsg  Show actual CCW and expected CCW
+*
+* R2 -> actual CCW
+* R3 -> expected CCW
+* R13 usable save area
+* R14 return address
+***********************************************************************
+ErrMsg   DS    0H
+         STM   14,12,12(13)        Save caller's registers
+         UNPK  WA(9),0(5,2)        First half of doubleword
+         UNPK  WA+8(9),4(5,2)      Second half of doubleword
+         TR    WA,H2P              Finish conversion to printable hex
+         MVC   W1ACT,WA            Copy to WTO
+         UNPK  WA(9),0(5,3)        First half of doubleword
+         UNPK  WA+8(9),4(5,3)      Second half of doubleword
+         TR    WA,H2P              Finish conversion
+         MVC   W1EXP,WA            Copy to WTO
+         WTO   MF=(E,WTO1)         Issue WTO
+         LM    14,12,12(13)        Restore caller's registers
+         BR    14                  Return to caller
+*
+WTO1     WTO   'IS659E CCW ACT xxxxxxxxxxxxxxxx  EXP xxxxxxxxxxxxxxxx',X
+               MF=L
+W1ACT    EQU   WTO1+4+15,16,C'C'
+W1EXP    EQU   WTO1+4+37,16,C'C'
+*
+         DS    0D
+WA       DS    XL16,XL1            Work area to build prt hex dbl wd
+H2P      EQU   *-240               Convert to printable hex
+         DC    C'0123456789ABCDEF'
+*
+CCW@@    DC    A(CCW@,8,CCW@N,0)
+*
+CCW@     DS    0D
+         DC    A(CCW+0,CCWV+0)     A(actual CCW), A(expected CCW)
+         DC    A(CCW+8,CCWV+8)
+         DC    A(CCW+16,CCWV+16)
+         DC    A(CCW+24,CCWV+24)
+*
+         DC    A(CCW1+0,CCW1V+0)
+         DC    A(CCW1+8,CCW1V+8)
+         DC    A(CCW1+16,CCW1V+16)
+         DC    A(CCW1+24,CCW1V+24)
+***********************************************************************
+*        Put new entries above this line
+***********************************************************************
+CCW@N    EQU   *-8
+*
+CCWV     DS    0D
+      DC AL1(CCWCSEEK),AL3(SEEKADDR),AL1(CCWFCC),AL1(0),AL2(L'SEEKADDR)
+      DC AL1(CCWCSIDE),AL3(BLKADDR),AL1(CCWFCC),AL1(0),AL2(L'BLKADDR)
+      DC AL1(CCWCTIC),AL3(SRCHID0),AL1(0),AL1(0),AL2(0)
+      DC AL1(CCWCRDAT),AL3(BUFFER),AL1(CCWFSLI),AL1(0),AL2(L'BUFFER)
+*
+CCW1V    DS    0D
+         DC    AL1(CCWCSEEK),AL1(CCWFCC),AL2(L'SEEKADDR),AL4(SEEKADDR)
+         DC    AL1(CCWCSIDE),AL1(CCWFCC),AL2(L'BLKADDR),AL4(BLKADDR)
+         DC    AL1(CCWCTIC),AL1(0),AL2(0),AL4(SRCHID1)
+         DC    AL1(CCWCRDAT),AL1(CCWFSLI),AL2(L'BUFFER),AL4(BUFFER)
+*
+         LTORG ,
+*
+         END
