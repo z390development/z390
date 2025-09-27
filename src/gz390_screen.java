@@ -30,21 +30,7 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-/*
-The gz390_screen class defines public Graphics2D
-panel for use by gz390 to define GUAM views:
- 1.  tn_screen 
- 2.  graphic_screen
-The method set_screen(rows,cols,font,
-background_color,text_color) is used
-to initialize screen size based on the height
-and width of the font assuming it has been set
-to desired font size and is a monospace font.
-gz390 characer and graphics commands draw
-directly on gz390_screen buffered image object
-which is repainted at fixed intervals whenever
-scn_repaint is set true.
- ****************************************************
+/* ***************************************************
  * Maintenance
  * ***************************************************
  * 05/18/06 RPI 227 replace JTextArea screen in
@@ -54,76 +40,115 @@ scn_repaint is set true.
  * 08/10/06 RPI 408 add 5 pixels to graphic screen size
  * 08/13/07 RPI 630 correct font pixel size (width/height was reversed)
  *          correct clipping, add auto font adjust 
- ********************************************************
- *                                        LAST RPI
+ * 2025-09-14 AFK  Add javadoc comments
+ ********************************************************/
+
+/**
+ * The gz390_screen class defines public Graphics2D
+ * panel for use by gz390 to define GUAM views:
+ * <ol>
+ *  <li>tn_screen </li>
+ *  <li>graphic_screen</li>
+ * </ol>
+ * The method set_screen(rows,cols,font,
+ * background_color,text_color) is used
+ * to initialize screen size based on the height
+ * and width of the font assuming it has been set
+ * to desired font size and is a monospace font.
+ * gz390 characer and graphics commands draw
+ * directly on gz390_screen buffered image object
+ * which is repainted at fixed intervals whenever
+ * scn_repaint is set true.
  */
 public class gz390_screen extends JPanel implements Runnable {
     /*
      * define public Graphics2D scn_panel
      */
-	/*
-	 * global data for gz3270_screen
-	 */
-	    private static final long serialVersionUID = 1L;
-	    tz390 tz390;
-	    /*
-         * input variable from set_screen
-         */
-	    int       scn_rows = 0;
-        int       scn_cols = 0;
-        Font      scn_font  = null;
-        Color     scn_background_color;
-        Color     scn_text_color;
-        /*
-         * create screen image based on
-         * pixel size of character rendering
-         * using specified font_size assuming
-         * font is monospace
-         */
-	    BufferedImage     scn_image;
-    	Graphics2D        scn_grid;
-   	    FontRenderContext scn_context;
-   	    JScrollPane       scn_panel;
-   	    TextLayout        scn_layout;
-   	    int               max_font_size   = 30;
-   	    int               min_font_size   = 10;
-   	    int               scn_font_size   = 0;
-        int               scn_char_height = 0;
-        int               scn_char_base   = 0;  // RPI 630 offset to char baseline
-        int               scn_char_width  = 0;
-        Rectangle2D       scn_char_rect;
-        int               scn_height = 0;
-        int               scn_width  = 0;
-	    Dimension         scn_size = null;
-        /*
-         * screen updated at wait intervals
-         * whenever screen_update is set
-         */
-	    int main_width  = 680; // RPI 630 for better font default
-	    int main_height = 550; 
-	    int main_panel_width  = 0;
-	    int main_panel_height = 0;
-	    boolean scn_ready   = false;
-	    boolean scn_repaint = false;
-	    Thread  scn_update_thread;
-        long    scn_update_wait = 300; 
-	    /*
-         * end of global gn3270_screen data
-         */  
-        public void paint(Graphics g){
-        	/*
-        	 * override default paint to draw 
-        	 * screen image in panel using current
-        	 * scn_background.
-        	 */
+
+    /*
+     * global data for gz3270_screen
+     */
+    /** variable      */ private static final long serialVersionUID = 1L;
+    /** variable      */ tz390 tz390;
+
+    /*
+     * input variable from set_screen
+     */
+    /** variable      */ int       scn_rows = 0;
+    /** variable      */ int       scn_cols = 0;
+    /** variable      */ Font      scn_font  = null;
+    /** variable      */ Color     scn_background_color;
+    /** variable      */ Color     scn_text_color;
+
+    /*
+     * create screen image based on
+     * pixel size of character rendering
+     * using specified font_size assuming
+     * font is monospace
+     */
+    /** variable      */ BufferedImage     scn_image;
+    /** variable      */ Graphics2D        scn_grid;
+    /** variable      */ FontRenderContext scn_context;
+    /** variable      */ JScrollPane       scn_panel;
+    /** variable      */ TextLayout        scn_layout;
+    /** variable      */ int               max_font_size   = 30;
+    /** variable      */ int               min_font_size   = 10;
+    /** variable      */ int               scn_font_size   = 0;
+    /** variable      */ int               scn_char_height = 0;
+    /** variable      */ int               scn_char_base   = 0;  // RPI 630 offset to char baseline
+    /** variable      */ int               scn_char_width  = 0;
+    /** variable      */ Rectangle2D       scn_char_rect;
+    /** variable      */ int               scn_height = 0;
+    /** variable      */ int               scn_width  = 0;
+    /** variable      */ Dimension         scn_size = null;
+
+    /*
+     * screen updated at wait intervals
+     * whenever screen_update is set
+     */
+    /** variable      */ int main_width  = 680; // RPI 630 for better font default
+    /** variable      */ int main_height = 550; 
+    /** variable      */ int main_panel_width  = 0;
+    /** variable      */ int main_panel_height = 0;
+    /** variable      */ boolean scn_ready   = false;
+    /** variable      */ boolean scn_repaint = false;
+    /** variable      */ Thread  scn_update_thread;
+    /** variable      */ long    scn_update_wait = 300; 
+
+    /*
+     * end of global gn3270_screen data
+     */  
+
+
+
+/**
+ * Dummy constructor - no initialization needed
+ */
+public gz390_screen()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
+/**
+ * override default paint to draw 
+ * screen image in panel using current
+ * scn_background.
+ *
+ * @param g Graphics instance
+ */
+public void paint(Graphics g){
         	g.drawImage(scn_image,0,0,scn_width,scn_height,scn_background_color,this);
         }
-        public synchronized void start_scn_updates() {
-        	/*
-        	 * start thread used to repaint image
-        	 * at fixed intervals whenever
-        	 * scn_repaint has been set true
-        	 */
+
+
+
+/**
+ * start thread used to repaint image
+ * at fixed intervals whenever
+ * scn_repaint has been set true
+ */
+public synchronized void start_scn_updates() {
         	if (scn_update_thread == null){
                 scn_update_thread = new Thread(this);
                 scn_update_thread.start();
@@ -131,11 +156,23 @@ public class gz390_screen extends JPanel implements Runnable {
         	scn_ready = true;
         	repaint();
         	scn_repaint = true;
-        }    
-        public synchronized void stop_scn_updates() {
+        }
+
+
+
+/**
+ * set variable to stop scn updates
+ */
+public synchronized void stop_scn_updates() {
             scn_ready = false;
-        }    
-        public void run() {
+        }
+
+
+
+/**
+ * run the thing
+ */
+public void run() {
             while (scn_update_thread == Thread.currentThread()) {              
             	try {  // RPI 423 catch repaint exception too
             		if (scn_ready && scn_repaint){
@@ -147,14 +184,23 @@ public class gz390_screen extends JPanel implements Runnable {
                 	
                 }
             }
-        } 
-        public void set_screen(int new_rows, int new_cols, Font new_font, Color new_background_color, Color new_text_color){
-        	/*
-        	 * initialize screen panel 
-        	 * based on rows, columns,
-        	 * text font and font size,
-        	 * background and text color  
-        	 */
+        }
+
+
+
+/**
+ * initialize screen panel 
+ * based on rows, columns,
+ * text font and font size,
+ * background and text color  
+ *
+ * @param new_rows number
+ * @param new_cols number
+ * @param new_font Font instance
+ * @param new_background_color Color instance
+ * @param new_text_color Color instance
+ */
+public void set_screen(int new_rows, int new_cols, Font new_font, Color new_background_color, Color new_text_color){
         	stop_scn_updates();
         	scn_rows = new_rows;
         	scn_cols = new_cols;
@@ -168,11 +214,14 @@ public class gz390_screen extends JPanel implements Runnable {
             scn_panel    = new JScrollPane(this);
             start_scn_updates();
         }
-        public void resize_screen(){
-        	/*
-        	 * resize screen to fill current window
-        	 * by adjusting to max font size that will fit
-        	 */
+
+
+
+/**
+ * resize screen to fill current window
+ * by adjusting to max font size that will fit
+ */
+public void resize_screen(){
         	stop_scn_updates();
         	scn_font_size = min_font_size+1;
         	while (scn_font_size < max_font_size){
@@ -190,11 +239,14 @@ public class gz390_screen extends JPanel implements Runnable {
         	calc_screen_size();
             start_scn_updates();
         }
-        private void calc_screen_size(){
-        	/*
-        	 * calc scn_width and scn_height for
-        	 * current scn_rows, scn_cols, scn_font
-        	 */
+
+
+
+/**
+ * calc scn_width and scn_height for
+ * current scn_rows, scn_cols, scn_font
+ */
+private void calc_screen_size(){
         	scn_grid.setFont(scn_font);
         	scn_context  = scn_grid.getFontRenderContext();
        	    scn_layout   = new TextLayout("X",scn_font,scn_context);
@@ -214,6 +266,7 @@ public class gz390_screen extends JPanel implements Runnable {
             scn_grid.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
         }
- 
-}
 
+
+
+}
