@@ -10,14 +10,14 @@ project. For how to contribute to the documentation, see
 
 Make sure you have a Java SDK available to compile the application.
 
-The project has moved to the [Eclipse Temurin Java SDK](https://adoptium.net) 
+The project has moved to the [Eclipse Temurin Java SDK](https://adoptium.net)
 (previously AdoptOpenJDK) for distribution builds.
 
 z390 is using java 21 to build the package but code must support Java 1.8.
 
 To ensure alignment with other developers, use of a Java SDK 21 or greater
-is recommended. At a minimum, you will require an SDK of 9 or greater 
-as the build jobs use parameters not available in earlier versions.
+is recommended. At a minimum, you will require an SDK of 1.8 or greater,
+although this is not recommended.
 
 You can check if this is available by running the following command:
 
@@ -41,7 +41,7 @@ Start with a clone of the main repository.
     shell> git clone https://github.com/z390development/z390.git
     shell> cd z390
 
-Once you are ready to submit changes, you will need a fork of the z390 
+Once you are ready to submit changes, you will need a fork of the z390
 repository. See <https://docs.github.com/en/get-started/quickstart/fork-a-repo>
 for more details.
 

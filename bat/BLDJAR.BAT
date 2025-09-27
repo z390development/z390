@@ -32,15 +32,25 @@ shift /1
 goto opt_loop
 :options_ok
 
-rem compile java code and create jar file
+rem prepare to compile java code and create jar file
 if not exist ".\jar\" mkdir jar
 cd jar
 if exist *.* erase *.* /Q
 
+rem -- determine java version
+for /f "usebackq tokens=2 delims= " %%i in (`javac -version 2^>^&1`) do (set z_ver=%%i)
+for /f "tokens=1,2,3 delims=." %%a in ("%z_ver%") do (
+    set z_major=%%a
+    set z_minor=%%b
+    set z_patch=%%c
+)
+if %z_major% LSS 9 (set jvopt=-source 8 -target 8) else (set jvopt=--release 8)
+if /I %z_dbg% EQU Debug (set jvopt=%jvopt% -g -d .) else (set jvopt=%jvopt% -g:none -d .)
+
 rem compile z390 java sources to class vm object code
-if /I %z_dbg% EQU Debug (set jvopt=-g) else (set jvopt=-g:none)
 java -version
-javac.exe %jvopt% -d . --release 8 ..\src\*.java
+echo javac %jvopt% ..\src\*.java
+javac.exe %jvopt% ..\src\*.java
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: Error compiling z390 java sources
                          goto return
