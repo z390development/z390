@@ -17,7 +17,7 @@ if /I %z_file%. == . goto help
 :chkfile
 rem convert Unix path notation to Windows before checking the file
 set z_file=%z_file:/=\%
-call bat\fparts.bat %z_TraceMode% %z_file%
+call %~dps0fparts.bat %z_TraceMode% %z_file%
 set z_file=%z_fdrv%%z_fpath%%z_fname%
 if exist %z_file%%z_fext% goto file_ok
 rem if extension specified: error because no default applies
@@ -34,11 +34,17 @@ if exist %z_file%.BAL erase %z_file%.BAL
 if exist %z_file%.ERR erase %z_file%.ERR
 if exist %z_file%.STA erase %z_file%.STA
 if exist %z_file%.TR* erase %z_file%.TR*
+
+rem get the z390 directory
+set "z_HomeDir=%~dps0..\"
+for %%f in ("%z_HomeDir%") do set "z_HomeDir=%%~ff"
+
 call %~dps0mz390 %z_TraceMode% %z_file%%z_fext% bal noasm sysmac(%z_HomeDir%mac+.) syscpy(%z_HomeDir%mac+.) chksrc(0) chkmac(0) %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 rem any error or warning message has been issued by mz390
-if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (if exist %z_file%.OBJ (erase %z_file%.OBJ)
-                                                  goto return))
+if %z_ReturnCode% EQU 0 goto return
+if %z_ReturnCode% EQU 4 goto return
+if exist %z_file%.OBJ erase %z_file%.OBJ
 
 :return
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
