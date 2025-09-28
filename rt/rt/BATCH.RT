@@ -3,11 +3,11 @@
 *
 * Invocation when running z390 under Windows/DOS:
 * SET myscript=rt\rt\BATCH.RT
-* bat\asmlg demo\hello test(myscript)
+* bat\asmlg demo\HELLO test(myscript)
 *
 * Invocation when running Linux/*ux:
 * export myscript=rt/rt/BATCH.RT
-* bash/asmlg demo/hello test(myscript)
+* bash/asmlg demo/HELLO "test(myscript)"
 *
 * Expected behavior:
 * the psw and t5 commands should be executed normally
