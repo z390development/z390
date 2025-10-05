@@ -81,6 +81,7 @@ The ez390 emulator supports the following interactive test commands when the
 - `addr=sdt` – set memory value  (i.e. `1r?=x'80'` changes mem at (r1) 31 bit
 - `reg=sdt` - set register value (i.e. `15r=8` changes reg 15 to 8)
 - `A addr` – set or reset up to 100 instruction address stops with hex address or relative expression such as `*+4`
+- `A addr label` – same as above, specified label will be shown when breakpoint is triggered
 - `AR nn` – display specified access register else all AR 0-15
 - `B=addr` - set base for rel addr (i.e. `B=15r%` sets base to (r15) 24 bit
 - `D` – display DCB file information from TIOT
