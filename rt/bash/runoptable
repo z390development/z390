@@ -26,10 +26,8 @@ SUFFIX=${3}    # may be null for "optable"; non-null for "machine"
 INFIX="_"
 if [ "${OPTION}" = "optable" ]; then INFIX="#"; fi
 
-# SUFFIX defaults to OPTVAL when OPTION is "optable"
-# jjg    used 3, respectively 2, instead of SUFFIX,
-# jjg    respectively, OPTVAL to make code look like
-# jjg    rt/bat/RUNOPTABLE.BAT.
+# SUFFIX defaults to OPTVAL when OPTION is "optable" - i.e. reference file was created using same optable option value
+#        used 3, respectively 2, instead of SUFFIX, respectively, OPTVAL to make code look like rt/bat/RUNOPTABLE.BAT.
 if [ -z "${3}" ] && [ "${OPTION}" = "optable" ]; then SUFFIX=${2}; fi
 
 # create the asml(g) command
@@ -47,19 +45,19 @@ if [ "${SUFFIX}" = "*None" ]; then HLASMPRN="DUMMY"; fi
 # create the command to invoke: asmcmd plus parameters
 cmd="${asmcmd} rt/mlc/OPTB# @${Z390OPT} sysprn(${Z390PRN}) syserr(${Z390ERR}) stats(${Z390STA})"
 
-echo "debug: \$cmd = >${cmd}<"
-echo "debug: script \$HLASMPRN=${HLASMPRN} \$Z390PRN=${Z390PRN}"
+# echo "debug: \$cmd = >${cmd}<"
+# echo "debug: script \$HLASMPRN=${HLASMPRN} \$Z390PRN=${Z390PRN}"
 
 # "Z390PRN" and "HLASMPRN" are DDNAMEs referenced by
 # by rt/mlc/OPTB#.MLC. The local variables Z390PRN and
-# HLASMPRN are NOT environment variables! They Must be
+# HLASMPRN are NOT environment variables! They must be
 # exported to create the environment variables
 # representing the two DDNAMEs.
 export Z390PRN=${Z390PRN}
 export HLASMPRN=${HLASMPRN}
 # debug: remove the script variables so the following
 # debug: echo shows the environmeent variables
-unset $Z390PRN     # debug
-unset $HLASMPRN    # debug
-echo "debug: environment \$HLASMPRN=${HLASMPRN} \$Z390PRN=${Z390PRN}"
+unset $Z390PRN     # needed for debuggin only
+unset $HLASMPRN    # needed for debuggin only
+# echo "debug: environment \$HLASMPRN=${HLASMPRN} \$Z390PRN=${Z390PRN}"
 (${cmd})
