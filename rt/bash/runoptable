@@ -1,35 +1,65 @@
 #!/bin/bash
-set -x
-# $1 = option   - either "optable" or "machine"
-# $2 = filename - option value: the optable of machine name
-# $3 = suffix   - for reference file with HLASM output
 
-INFIX="_"
-if [ "${1}" = "optable" ]
-  then INFIX="#"
-fi
+# runoptable: regression test one z390 optable
+#
+#             this script is intended to be invoked by rt/bash/runoptables
+#
+# Notes: 1.  rt/bash.runoptable based on rt/bat/RUNOPTABLE.BAT
+#        2.  rt/bash/runoptables based on rt/bat/RUNOPTABLES.BAT
+#        3.  error checking done in RUNOPTABLE.BAT not done here;
+#            same goes for rt/bash/runoptables
 
-SUFFIX=""
-if [ -z "${3}" ]
-  then SUFFIX=${2}
-fi
-
-# runoptable: regression test z390 optables
 set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script - rt/bash
 cd ../..            # up to root
 
-Z390OPT="rt/mlc/OPTB${INFIX}${2}.OPT"
-Z390PRN="rt/mlc/OPTB${INFIX}${2}.PRN"
-Z390ERR="rt/mlc/OPTB${INFIX}${2}.ERR"
-Z390STA="rt/mlc/OPTB${INFIX}${2}.STA"
-HLASMPRN="rt/mlc/OPTB#${3}.TF1"
+# $1 = option       - either "optable" or "machine"; note: case sensitive
+# $2 = option value - option value: the optable or machine name
+# $3 = suffix       - for reference file with HLASM output
 
-cmd="bash/asmlg rt/mlc/OPTB# @${Z390OPT} sysprn(${Z390PRN}) syserr(${Z390ERR} stats(${Z390STA})"
-if [ "${3}" = "*None" ]
-  then HLASMPRN=""
-       cmd="bash/asml rt/mlc/OPTB# @${Z390OPT} sysprn(${Z390PRN}) syserr(${Z390ERR} stats(${Z390STA})"
-fi
-echo "${cmd}"
-echo "HLASMPRN=${HLASMPRN} Z390PRN=${Z390PRN}"
+OPTION=${1}    # must be "optable" or "machine"
+OPTVAL=${2}    # must be non-null
+SUFFIX=${3}    # may be null for "optable"; non-null for "machine"
+               # this is the optable option value specifying the reference file
+
+# set INFIX based on "machine" or "optable"
+INFIX="_"
+if [ "${OPTION}" = "optable" ]; then INFIX="#"; fi
+
+# SUFFIX defaults to OPTVAL when OPTION is "optable"
+# jjg    used 3, respectively 2, instead of SUFFIX,
+# jjg    respectively, OPTVAL to make code look like
+# jjg    rt/bat/RUNOPTABLE.BAT.
+if [ -z "${3}" ] && [ "${OPTION}" = "optable" ]; then SUFFIX=${2}; fi
+
+# create the asml(g) command
+asmcmd="bash/asmlg"
+if [ "${SUFFIX}" = "*None" ]; then asmcmd="bash/asml"; fi
+
+Z390OPT="rt/mlc/OPTB${INFIX}${OPTVAL}.OPT"
+Z390PRN="rt/mlc/OPTB${INFIX}${OPTVAL}.PRN"
+Z390ERR="rt/mlc/OPTB${INFIX}${OPTVAL}.ERR"
+Z390STA="rt/mlc/OPTB${INFIX}${OPTVAL}.STA"
+
+HLASMPRN="rt/mlc/OPTB#${SUFFIX}.TF1"
+if [ "${SUFFIX}" = "*None" ]; then HLASMPRN="DUMMY"; fi
+
+# create the command to invoke: asmcmd plus parameters
+cmd="${asmcmd} rt/mlc/OPTB# @${Z390OPT} sysprn(${Z390PRN}) syserr(${Z390ERR}) stats(${Z390STA})"
+
+echo "debug: \$cmd = >${cmd}<"
+echo "debug: script \$HLASMPRN=${HLASMPRN} \$Z390PRN=${Z390PRN}"
+
+# "Z390PRN" and "HLASMPRN" are DDNAMEs referenced by
+# by rt/mlc/OPTB#.MLC. The local variables Z390PRN and
+# HLASMPRN are NOT environment variables! They Must be
+# exported to create the environment variables
+# representing the two DDNAMEs.
+export Z390PRN=${Z390PRN}
+export HLASMPRN=${HLASMPRN}
+# debug: remove the script variables so the following
+# debug: echo shows the environmeent variables
+unset $Z390PRN     # debug
+unset $HLASMPRN    # debug
+echo "debug: environment \$HLASMPRN=${HLASMPRN} \$Z390PRN=${Z390PRN}"
 (${cmd})
