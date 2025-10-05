@@ -1737,6 +1737,7 @@ contain explicit INCLUDE, ENTRY, ALIAS, and NAME commands.</p>
 <li><code>addr=sdt</code> – set memory value  (i.e. <code>1r?=x'80'</code> changes mem at (r1) 31 bit</li>
 <li><code>reg=sdt</code> - set register value (i.e. <code>15r=8</code> changes reg 15 to 8)</li>
 <li><code>A addr</code> – set or reset up to 100 instruction address stops with hex address or relative expression such as <code>*+4</code></li>
+<li><code>A addr label</code> – same as above, specified label will be shown when breakpoint is triggered</li>
 <li><code>AR nn</code> – display specified access register else all AR 0-15</li>
 <li><code>B=addr</code> - set base for rel addr (i.e. <code>B=15r%</code> sets base to (r15) 24 bit</li>
 <li><code>D</code> – display DCB file information from TIOT</li>
@@ -1846,7 +1847,7 @@ contain explicit INCLUDE, ENTRY, ALIAS, and NAME commands.</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.3-16-g9ddf15d3"}</script>
+      <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.3-17-g138c88c3"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.f55a23d4.min.js"></script>
