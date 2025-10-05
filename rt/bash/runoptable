@@ -45,8 +45,8 @@ if [ "${SUFFIX}" = "*None" ]; then HLASMPRN="DUMMY"; fi
 # create the command to invoke: asmcmd plus parameters
 cmd="${asmcmd} rt/mlc/OPTB# @${Z390OPT} sysprn(${Z390PRN}) syserr(${Z390ERR}) stats(${Z390STA})"
 
-# echo "debug: \$cmd = >${cmd}<"
-# echo "debug: script \$HLASMPRN=${HLASMPRN} \$Z390PRN=${Z390PRN}"
+echo "testing: \$cmd = >${cmd}<"
+echo "compare: \$HLASMPRN=${HLASMPRN} to \$Z390PRN=${Z390PRN}"
 
 # "Z390PRN" and "HLASMPRN" are DDNAMEs referenced by
 # by rt/mlc/OPTB#.MLC. The local variables Z390PRN and
@@ -57,7 +57,7 @@ export Z390PRN=${Z390PRN}
 export HLASMPRN=${HLASMPRN}
 # debug: remove the script variables so the following
 # debug: echo shows the environmeent variables
-unset $Z390PRN     # needed for debuggin only
-unset $HLASMPRN    # needed for debuggin only
+# unset $Z390PRN     # needed for debugging only
+# unset $HLASMPRN    # needed for debugging only
 # echo "debug: environment \$HLASMPRN=${HLASMPRN} \$Z390PRN=${Z390PRN}"
 (${cmd})
