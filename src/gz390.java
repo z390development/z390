@@ -66,12 +66,15 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.Timer;
 
-public  class  gz390  
-    implements MouseListener, KeyListener,
-	           ActionListener, 
-			   ComponentListener,
-			   FocusListener {
-	private static final long serialVersionUID = 1L;
+/**
+ * gz390 is the GUAM/GUI component of z390
+ */
+public  class  gz390
+    implements MouseListener,
+               KeyListener,
+               ActionListener, 
+               ComponentListener,
+               FocusListener {
   	 /****************************************************
 	 * Maintenance
 	 * ***************************************************
@@ -136,429 +139,461 @@ public  class  gz390
 	 * 2019-09-21 dsh remove getContentPane
 	 *                            replace getModifiers() with getModifiersEx()
 	 * 2024-08-12 #545 Extend generated java doco to include private methods
+     * 2025-09-14 AFK  Add javadoc comments
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
      * global variables
      */
-	/*
-	 * global max/min limits
-	 */
-        int max_cmd  = 100;
-        int max_keys = 100;
-        int max_rows = 24;
-        int max_cols = 80;
-        int max_addr = max_rows * max_cols;
-        Color bg_color   = Color.BLACK;
-        Color text_color = Color.YELLOW;
-        Color[] tn_color = {
-           Color.BLACK,   //0
-           Color.BLUE,    //1 
-           Color.RED,     //2
-           Color.PINK,    //3 
-           Color.GREEN,   //4 
-           Color.MAGENTA, //5 ? TURQUOISE 
-           Color.YELLOW,   //6
-           Color.WHITE     //7
-           };
-        int max_fud = 500;
-        int max_buff = 3000;
-        /*
-         * shared z390 library classes
-         */
-        tz390 tz390 = null; // shared tables
-	    gz390_screen tn_scn = null; // RPI 227 Graphics2D TN3270 screen
-	    gz390_screen graph_scn  = null; 
-	    String startup_cmd_file = null;
-	    int first_user_parm = 0;
-        int hex_base = 16;
-	    boolean echo_cmd = true;
-	    boolean console_log = false;
-        int gz390_errors = 0;
-	    boolean cmd_error = false;
-        String  main_title = "GZ390";
-        boolean check_perms = true;          //reset with /NP
-        boolean perm_file_user_dir = false;  //set if user.dir ok
-        boolean perm_file_read     = false;  //set if read  ok
-        boolean perm_file_write    = false;  //set if write ok
-        boolean perm_file_execute  = false;  //set if exec ok
-        boolean perm_runtime_thread = false; //set if popup file chooser ok
-        boolean perm_file_log      = false;  //set if write log ok
-        boolean perm_select        = false;  //set if select dir/file ok
-        boolean main_demo  = false; //set if no permissions
-        boolean main_lic   = false; //set if permissions ok
-        String mode_msg1 = null;
-        String mode_msg2 = null;
-        Date lic_end_date = null;
-        Date cur_date = null;
-   	    SimpleDateFormat mmddyy = new SimpleDateFormat("MM/dd/yy");
-   	    SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
+     /** variable      */ private static final long serialVersionUID = 1L;
+
+    /*
+     * global max/min limits
+     */
+    /** variable      */ int max_cmd  = 100;
+    /** variable      */ int max_keys = 100;
+    /** variable      */ int max_rows = 24;
+    /** variable      */ int max_cols = 80;
+    /** variable      */ int max_addr = max_rows * max_cols;
+    /** variable      */ Color bg_color   = Color.BLACK;
+    /** variable      */ Color text_color = Color.YELLOW;
+    /** variable      */ Color[] tn_color = {
+                             Color.BLACK,   //0
+                             Color.BLUE,    //1 
+                             Color.RED,     //2
+                             Color.PINK,    //3 
+                             Color.GREEN,   //4 
+                             Color.MAGENTA, //5 ? TURQUOISE 
+                             Color.YELLOW,   //6
+                             Color.WHITE     //7
+                             };
+    /** variable      */ int max_fud = 500;
+    /** variable      */ int max_buff = 3000;
+
+    /*
+     * shared z390 library classes
+     */
+    /** variable      */ tz390 tz390 = null; // shared tables
+    /** variable      */ gz390_screen tn_scn = null; // RPI 227 Graphics2D TN3270 screen
+    /** variable      */ gz390_screen graph_scn  = null; 
+    /** variable      */ String startup_cmd_file = null;
+    /** variable      */ int first_user_parm = 0;
+    /** variable      */ int hex_base = 16;
+    /** variable      */ boolean echo_cmd = true;
+    /** variable      */ boolean console_log = false;
+    /** variable      */ int gz390_errors = 0;
+    /** variable      */ boolean cmd_error = false;
+    /** variable      */ String  main_title = "GZ390";
+    /** variable      */ boolean check_perms = true;          //reset with /NP
+    /** variable      */ boolean perm_file_user_dir = false;  //set if user.dir ok
+    /** variable      */ boolean perm_file_read     = false;  //set if read  ok
+    /** variable      */ boolean perm_file_write    = false;  //set if write ok
+    /** variable      */ boolean perm_file_execute  = false;  //set if exec ok
+    /** variable      */ boolean perm_runtime_thread = false; //set if popup file chooser ok
+    /** variable      */ boolean perm_file_log      = false;  //set if write log ok
+    /** variable      */ boolean perm_select        = false;  //set if select dir/file ok
+    /** variable      */ boolean main_demo  = false; //set if no permissions
+    /** variable      */ boolean main_lic   = false; //set if permissions ok
+    /** variable      */ String mode_msg1 = null;
+    /** variable      */ String mode_msg2 = null;
+    /** variable      */ Date lic_end_date = null;
+    /** variable      */ Date cur_date = null;
+    /** variable      */ SimpleDateFormat mmddyy = new SimpleDateFormat("MM/dd/yy");
+    /** variable      */ SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
+
     /*
      * Monitor variables
      */   
-        int     ins_count = 0;  
-        int     io_count  = 0;
-        int     start_cmd_io_count;
-        long    start_cmd_time;
-        Timer   monitor_timer = null;
-        int     monitor_wait = 300; // RPI 224 
-        int     monitor_timeout_limit = 0 * 1000;
-        long    monitor_cmd_time_total = 0;
-	    long    monitor_last_time = 0;
-        long    monitor_next_time = 0;
-        long    monitor_cur_interval = 0;
-        int     monitor_last_ins_count = 0;
-        int     monitor_next_ins_count = 0;
-        int     monitor_last_io_count = 0;
-        int     monitor_next_io_count = 0;
-        long    monitor_cur_ins  = 0;
-        long    monitor_cur_int  = 0;
-        long    monitor_cur_rate = 0;
-        boolean monitor_last_cmd_mode = false;
+    /** variable      */ int     ins_count = 0;  
+    /** variable      */ int     io_count  = 0;
+    /** variable      */ int     start_cmd_io_count;
+    /** variable      */ long    start_cmd_time;
+    /** variable      */ Timer   monitor_timer = null;
+    /** variable      */ int     monitor_wait = 300; // RPI 224 
+    /** variable      */ int     monitor_timeout_limit = 0 * 1000;
+    /** variable      */ long    monitor_cmd_time_total = 0;
+    /** variable      */ long    monitor_last_time = 0;
+    /** variable      */ long    monitor_next_time = 0;
+    /** variable      */ long    monitor_cur_interval = 0;
+    /** variable      */ int     monitor_last_ins_count = 0;
+    /** variable      */ int     monitor_next_ins_count = 0;
+    /** variable      */ int     monitor_last_io_count = 0;
+    /** variable      */ int     monitor_next_io_count = 0;
+    /** variable      */ long    monitor_cur_ins  = 0;
+    /** variable      */ long    monitor_cur_int  = 0;
+    /** variable      */ long    monitor_cur_rate = 0;
+    /** variable      */ boolean monitor_last_cmd_mode = false;
+
     /*
      * GUAM GUI screen view variables
      */
+    /** variable      */ int guam_view_mcs    = 1;
+    /** variable      */ int guam_view_screen = 2;
+    /** variable      */ int guam_view_graph  = 3;
+    /** variable      */ int     guam_view = guam_view_mcs;
+    /** variable      */ int   guam_tot_key  = 0;
+    /** variable      */ int   guam_next_key = 0;
+    /** variable      */ int[] guam_key_code_char = new int[max_keys];
+    /** variable      */ int guam_cur_row = 1;
+    /** variable      */ int guam_cur_col = 1;
 
-        int guam_view_mcs    = 1;
-        int guam_view_screen = 2;
-        int guam_view_graph  = 3;
-        int     guam_view = guam_view_mcs;
-        int   guam_tot_key  = 0;
-        int   guam_next_key = 0;
-        int[] guam_key_code_char = new int[max_keys];
-        int guam_cur_row = 1;
-        int guam_cur_col = 1;
     /*
      *  status interval display variables
      */    
-        boolean status_visible = true;
-        int     status_interval =  0;
-	    long    status_last_time = 0;
-        long    status_next_time = 0;
-        int     status_last_ins_count = 0;
-        int     status_next_ins_count = 0;
-        int     status_next_io_count = 0;
-        int     status_last_io_count = 0;
-        long    status_cur_ins  = 0;
-        long    status_cur_int  = 0;
-        long    status_cur_rate = 0;
-	/*
-	 *  WTOR reply thread variables
-	 */ 	
-    boolean wtor_running = false;
-	Thread wtor_thread = null;
-	String wtor_reply_string = null;
-	int wtor_ecb_addr = -1;
-	String cmd_line = null;
-    boolean shutdown_exit = false;
+    /** variable      */ boolean status_visible = true;
+    /** variable      */ int     status_interval =  0;
+    /** variable      */ long    status_last_time = 0;
+    /** variable      */ long    status_next_time = 0;
+    /** variable      */ int     status_last_ins_count = 0;
+    /** variable      */ int     status_next_ins_count = 0;
+    /** variable      */ int     status_next_io_count = 0;
+    /** variable      */ int     status_last_io_count = 0;
+    /** variable      */ long    status_cur_ins  = 0;
+    /** variable      */ long    status_cur_int  = 0;
+    /** variable      */ long    status_cur_rate = 0;
+
+    /*
+     *  WTOR reply thread variables
+     */
+    /** variable      */ boolean wtor_running = false;
+    /** variable      */ Thread wtor_thread = null;
+    /** variable      */ String wtor_reply_string = null;
+    /** variable      */ int wtor_ecb_addr = -1;
+    /** variable      */ String cmd_line = null;
+    /** variable      */ boolean shutdown_exit = false;
+
     /*
      * global TGET/TPUT TN3290 objects
      */
-    int tpg_rc         = 0;    // return code
-	int tpg_flags      = 0;    // from high byte R1
-	int tpg_op_mask    = 0x80; // 1=TGET, 0=TPUT
-	int tpg_op_tget    = 0x80;
-	int tpg_op_tput    = 0x00;
-	int tpg_wait_mask  = 0x10; // 1=NOWAIT, 0=WAIT
-	int tpg_wait       = 0x00; // 0=WAIT
-	int tpg_nowait     = 0x10;
-	int tpg_type         = 0;
-	int tpg_type_mask    = 0x03; // 00=EDIT 01=ASIS 10=CONTROL 11=FULLSCR
-    int tpg_type_edit    = 0x00;
-    int tpg_type_asis    = 0x01;
-    int tpg_type_control = 0x02;
-    int tpg_type_fullscr = 0x03;
-	byte[] tget_byte = new byte[max_buff];
-    ByteBuffer tget_buff = ByteBuffer.wrap(tget_byte);
-    int tget_index = 0;
-    int tget_len   = 0;
-    byte[] tput_byte = new byte[max_buff];
-    ByteBuffer tput_buff = ByteBuffer.wrap(tput_byte);
-    int tput_index = 0;
-    int tput_len = 0;
-    int tput_buff_byte = 0;
+    /** variable      */ int tpg_rc         = 0;    // return code
+    /** variable      */ int tpg_flags      = 0;    // from high byte R1
+    /** variable      */ int tpg_op_mask    = 0x80; // 1=TGET, 0=TPUT
+    /** variable      */ int tpg_op_tget    = 0x80;
+    /** variable      */ int tpg_op_tput    = 0x00;
+    /** variable      */ int tpg_wait_mask  = 0x10; // 1=NOWAIT, 0=WAIT
+    /** variable      */ int tpg_wait       = 0x00; // 0=WAIT
+    /** variable      */ int tpg_nowait     = 0x10;
+    /** variable      */ int tpg_type         = 0;
+    /** variable      */ int tpg_type_mask    = 0x03; // 00=EDIT 01=ASIS 10=CONTROL 11=FULLSCR
+    /** variable      */ int tpg_type_edit    = 0x00;
+    /** variable      */ int tpg_type_asis    = 0x01;
+    /** variable      */ int tpg_type_control = 0x02;
+    /** variable      */ int tpg_type_fullscr = 0x03;
+    /** variable      */ byte[] tget_byte = new byte[max_buff];
+    /** variable      */ ByteBuffer tget_buff = ByteBuffer.wrap(tget_byte);
+    /** variable      */ int tget_index = 0;
+    /** variable      */ int tget_len   = 0;
+    /** variable      */ byte[] tput_byte = new byte[max_buff];
+    /** variable      */ ByteBuffer tput_buff = ByteBuffer.wrap(tput_byte);
+    /** variable      */ int tput_index = 0;
+    /** variable      */ int tput_len = 0;
+    /** variable      */ int tput_buff_byte = 0;
+
     /*
      * global tn3270 data
      */
-    byte tn_tab_code       = 0x09;
-    byte tn_pa1_code       = 0x6c; // RPI 856
-    byte tn_pa2_code       = 0x6e; // RPI 856
-    byte tn_pa3_code       = 0x6b; // RPI 856
-    byte tn_clear_code     = 0x6d; // RPI 856
-    byte tn_enter_code     = 0x7d;
-    byte tn_sba_cmd = 0x11; // set buffer addr (sba)
-    byte tn_sf_cmd  = 0x1d; // set field (attr byte)
-    byte tn_ic_cmd  = 0x13; // insert cursor
-    byte tn_pt_cmd  = 0x05; // program tab 
-    byte tn_ra_cmd  = 0x3c; // repeat to addr (sba,char)
-    byte tn_eua_cmd = 0x12; // erase unprotected to addr (sba)
-    byte tn_sa_cmd  = 0x28; // eds set attribute
-    byte tn_sfe_cmd = 0x29; // eds start field
-    boolean tn_delete_request = false;  // RPI 630
-    boolean tn_cursor = false;
-    boolean tn_cursor_alt = false;
-    char tn_cursor_sym = '?';      // alternate cursor char ?
-    char tn_cursor_sym_alt = ' ';  // alternate cursor space if ?
-    char ff_char = '@'; // RPI 927
-    int tn_cursor_scn_addr = 0;
-    int tn_cursor_count = 1;
-    int tn_cursor_wait_int = 1;
-    char scn_null  = (byte)0x00; // rpi 856
-    boolean tn_full_screen = false;
-    byte tn_null  = 0;
-    byte tn_field = 1;
-    byte tn_char  = 2;
-    int tn_protect_mask = 0x20; // mask for protected field attribute bit 
-    int tn_numeric_mask = 0x10; // numeric field
-    int tn_mdt_mask     = 0x01; // mask for modified data attribute bit  
-    int tn_mdt_off      = 0xfe; // turn off mdt
-    int tn_noaid = 0x60;       // no aid available
-    int tn_aid = 0x60;         // set from PF key or enter if unlocked
-    int tn_esc = 0x27;         // tput tso escape followed by write cmd and wcc
-    int tn_write_cmd    = 0;   // vtam write command after escape
-    int tn_write = 0xF1;       // tput tso write screen
-    int tn_erase_write = 0xF5; // tput tso erase write
-    int tn_write_alt = 0xF1;   // tput tso write screen
-    int tn_write_eau = 0x6F;   // RPI 628
-    byte tn_attr_prot_text = 0x30; // protected unmodified text 
-    boolean tn_kb_lock = true;  // no TN3270 key input allowed
-    boolean tn_scn_lock = true; // no TN3270 key mapping to screen
-    boolean tn_attn = false;
-    int cur_fld_addr  = 0;
-    int cur_fld_attr  = 0;
-    int fld_attr_hl   = 0x08; // hl high intensity field bit
-    int fld_attr_nd   = 0x0c; // non-display RPI 850
-    int cur_fld_hl    = 0;
-    int cur_fld_color = 0;
+    /** variable      */ byte tn_tab_code       = 0x09;
+    /** variable      */ byte tn_pa1_code       = 0x6c; // RPI 856
+    /** variable      */ byte tn_pa2_code       = 0x6e; // RPI 856
+    /** variable      */ byte tn_pa3_code       = 0x6b; // RPI 856
+    /** variable      */ byte tn_clear_code     = 0x6d; // RPI 856
+    /** variable      */ byte tn_enter_code     = 0x7d;
+    /** variable      */ byte tn_sba_cmd = 0x11; // set buffer addr (sba)
+    /** variable      */ byte tn_sf_cmd  = 0x1d; // set field (attr byte)
+    /** variable      */ byte tn_ic_cmd  = 0x13; // insert cursor
+    /** variable      */ byte tn_pt_cmd  = 0x05; // program tab 
+    /** variable      */ byte tn_ra_cmd  = 0x3c; // repeat to addr (sba,char)
+    /** variable      */ byte tn_eua_cmd = 0x12; // erase unprotected to addr (sba)
+    /** variable      */ byte tn_sa_cmd  = 0x28; // eds set attribute
+    /** variable      */ byte tn_sfe_cmd = 0x29; // eds start field
+    /** variable      */ boolean tn_delete_request = false;  // RPI 630
+    /** variable      */ boolean tn_cursor = false;
+    /** variable      */ boolean tn_cursor_alt = false;
+    /** variable      */ char tn_cursor_sym = '?';      // alternate cursor char ?
+    /** variable      */ char tn_cursor_sym_alt = ' ';  // alternate cursor space if ?
+    /** variable      */ char ff_char = '@'; // RPI 927
+    /** variable      */ int tn_cursor_scn_addr = 0;
+    /** variable      */ int tn_cursor_count = 1;
+    /** variable      */ int tn_cursor_wait_int = 1;
+    /** variable      */ char scn_null  = (byte)0x00; // rpi 856
+    /** variable      */ boolean tn_full_screen = false;
+    /** variable      */ byte tn_null  = 0;
+    /** variable      */ byte tn_field = 1;
+    /** variable      */ byte tn_char  = 2;
+    /** variable      */ int tn_protect_mask = 0x20; // mask for protected field attribute bit 
+    /** variable      */ int tn_numeric_mask = 0x10; // numeric field
+    /** variable      */ int tn_mdt_mask     = 0x01; // mask for modified data attribute bit  
+    /** variable      */ int tn_mdt_off      = 0xfe; // turn off mdt
+    /** variable      */ int tn_noaid = 0x60;       // no aid available
+    /** variable      */ int tn_aid = 0x60;         // set from PF key or enter if unlocked
+    /** variable      */ int tn_esc = 0x27;         // tput tso escape followed by write cmd and wcc
+    /** variable      */ int tn_write_cmd    = 0;   // vtam write command after escape
+    /** variable      */ int tn_write = 0xF1;       // tput tso write screen
+    /** variable      */ int tn_erase_write = 0xF5; // tput tso erase write
+    /** variable      */ int tn_write_alt = 0xF1;   // tput tso write screen
+    /** variable      */ int tn_write_eau = 0x6F;   // RPI 628
+    /** variable      */ byte tn_attr_prot_text = 0x30; // protected unmodified text 
+    /** variable      */ boolean tn_kb_lock = true;  // no TN3270 key input allowed
+    /** variable      */ boolean tn_scn_lock = true; // no TN3270 key mapping to screen
+    /** variable      */ boolean tn_attn = false;
+    /** variable      */ int cur_fld_addr  = 0;
+    /** variable      */ int cur_fld_attr  = 0;
+    /** variable      */ int fld_attr_hl   = 0x08; // hl high intensity field bit
+    /** variable      */ int fld_attr_nd   = 0x0c; // non-display RPI 850
+    /** variable      */ int cur_fld_hl    = 0;
+    /** variable      */ int cur_fld_color = 0;
     // Array with address of all fields ascending
-    int fld_tot;            // protected and unprotected
-    int[]  fld_addr       = new int[max_addr];
+    /** variable      */ int fld_tot;            // protected and unprotected
+    /** variable      */ int[]  fld_addr       = new int[max_addr];
     // Array of all input fields ascending
-    int fld_mdt_tot = 0;  // fields with mdt bit on RPI 1061 include PA_MDT
-    int[]  fld_mdt_addr = new int[max_addr];  // RPI 1061 all fields with mdt on
+    /** variable      */ int fld_mdt_tot = 0;  // fields with mdt bit on RPI 1061 include PA_MDT
+    /** variable      */ int[]  fld_mdt_addr = new int[max_addr];  // RPI 1061 all fields with mdt on
     // TN3270 screen
-    boolean[] scn_fld     = new boolean[max_addr];
-    int[]  scn_attr       = new int[max_addr];
-    int[]  scn_hl         = new int[max_addr];
-    int[]  scn_color      = new int[max_addr];
-    char[] scn_char       = new char[max_addr]; // set to display char else blank   
-    int scn_addr = 0;
-    int[] sba_to_ebc = {
-    	0x40,0xC1,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7, //00
-    	0xC8,0xC9,0x4A,0x4B,0x4C,0x4D,0x4E,0x4F, //08
-        0x50,0xD1,0xD2,0xD3,0xD4,0xD5,0xD6,0xD7, //10
-        0xD8,0xD9,0x5A,0x5B,0x5C,0x5D,0x5E,0x5F, //18
-        0x60,0x61,0xE2,0xE3,0xE4,0xE5,0xE6,0xE7, //20
-        0xE8,0xE9,0x6A,0x6B,0x6C,0x6D,0x6E,0x6F, //28      
-        0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7, //30
-        0xF8,0xF9,0x7A,0x7B,0x7C,0x7D,0x7E,0x7F  //38
-        };
-    int[] ebc_to_sba = {
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //00
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //08
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //10
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //18
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //20
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //28
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //30
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //38
-    	0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //40
-    	0xff,0xff,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f, //48
-    	0x10,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //50
-    	0xff,0xff,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f, //58
-    	0x20,0x21,0xff,0xff,0xff,0xff,0xff,0xff, //60
-    	0xff,0xff,0x2a,0x2b,0x2c,0x2d,0x2e,0x2f, //68
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //70
-    	0xff,0xff,0x3a,0x3b,0x3c,0x3d,0x3e,0x3f, //78
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //80
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //88
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //90
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //98
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //A0
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //A8
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //B0
-    	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //B8
-    	0xff,0x01,0x02,0x03,0x04,0x05,0x06,0x07, //C0
-    	0x08,0x09,0xff,0xff,0xff,0xff,0xff,0xff, //C8
-    	0xff,0x11,0x12,0x13,0x14,0x15,0x16,0x17, //D0
-    	0x18,0x19,0xff,0xff,0xff,0xff,0xff,0xff, //D8
-    	0xff,0xff,0x22,0x23,0x24,0x25,0x26,0x27, //E0
-    	0x28,0x29,0xff,0xff,0xff,0xff,0xff,0xff, //E8
-    	0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37, //F0
-    	0x38,0x39,0xff,0xff,0xff,0xff,0xff,0xff, //F8
-    	};
+    /** variable      */ boolean[] scn_fld     = new boolean[max_addr];
+    /** variable      */ int[]  scn_attr       = new int[max_addr];
+    /** variable      */ int[]  scn_hl         = new int[max_addr];
+    /** variable      */ int[]  scn_color      = new int[max_addr];
+    /** variable      */ char[] scn_char       = new char[max_addr]; // set to display char else blank   
+    /** variable      */ int scn_addr = 0;
+    /** variable      */ int[] sba_to_ebc = {
+                             0x40,0xC1,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7, //00
+                             0xC8,0xC9,0x4A,0x4B,0x4C,0x4D,0x4E,0x4F, //08
+                             0x50,0xD1,0xD2,0xD3,0xD4,0xD5,0xD6,0xD7, //10
+                             0xD8,0xD9,0x5A,0x5B,0x5C,0x5D,0x5E,0x5F, //18
+                             0x60,0x61,0xE2,0xE3,0xE4,0xE5,0xE6,0xE7, //20
+                             0xE8,0xE9,0x6A,0x6B,0x6C,0x6D,0x6E,0x6F, //28      
+                             0xF0,0xF1,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7, //30
+                             0xF8,0xF9,0x7A,0x7B,0x7C,0x7D,0x7E,0x7F  //38
+                             };
+    /** variable      */ int[] ebc_to_sba = {
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //00
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //08
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //10
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //18
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //20
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //28
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //30
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //38
+                             0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //40
+                             0xff,0xff,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f, //48
+                             0x10,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //50
+                             0xff,0xff,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f, //58
+                             0x20,0x21,0xff,0xff,0xff,0xff,0xff,0xff, //60
+                             0xff,0xff,0x2a,0x2b,0x2c,0x2d,0x2e,0x2f, //68
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //70
+                             0xff,0xff,0x3a,0x3b,0x3c,0x3d,0x3e,0x3f, //78
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //80
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //88
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //90
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //98
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //A0
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //A8
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //B0
+                             0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff, //B8
+                             0xff,0x01,0x02,0x03,0x04,0x05,0x06,0x07, //C0
+                             0x08,0x09,0xff,0xff,0xff,0xff,0xff,0xff, //C8
+                             0xff,0x11,0x12,0x13,0x14,0x15,0x16,0x17, //D0
+                             0x18,0x19,0xff,0xff,0xff,0xff,0xff,0xff, //D8
+                             0xff,0xff,0x22,0x23,0x24,0x25,0x26,0x27, //E0
+                             0x28,0x29,0xff,0xff,0xff,0xff,0xff,0xff, //E8
+                             0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37, //F0
+                             0x38,0x39,0xff,0xff,0xff,0xff,0xff,0xff, //F8
+                             };
+
     /*
      *  Global GUAM GUI objects 
      */
-    int ascii_lf = 10;
-    int ascii_cr = 13;
-    int ebcdic_space = 0x40;
-    boolean refresh_wait    = false;
-    boolean refresh_request = false;
- 	boolean main_status  = true;
-    boolean main_view_changed = false;
-    JFrame main_frame    = null; 
-    int main_border = 2;
-    int start_bar_height = 36; //windows start bar
-    int main_loc_x = 20;
-    int main_loc_y = 20;
-    int scrollbar_width = 15;
-    int font_space = 10;
-	int font_size = 14;  //see FONT command RPI 630 was 12
-    Font char_font = null;
-	int title_height = 0;
-	int menu_height = 0;
-    int log_char_height = 0; //see FONT command
-    int tool_height = 0;     //reset to 0 if hidden;
-    int lines_per_page = 0;   //set by update_main_view()
-	int log_height = 0;       //set by update_main_view()
-	int log_width  = 0;      //set by update_main_view()
-	int command_height = 0;
-	int command_columns  = 75;  // RPI 685
-	int status_height  = 0;
-	boolean labels_visible = true;
-	int labels_min_width = 0;  
-	int labels_max_font  = font_size;
-	int label_width    = 0;
-    JPanel main_panel    = null;
-    JTextArea log_text = null;
-    JScrollPane main_view    = null;
-    JLabel cmd_label = null;
-    JTextField  gz390_cmd_line = null;
-    JLabel status_line_label = null;
-    JTextField  status_line = null;
-    String status_line_view = "MCS View";
-    int cur_cmd = 0;
-    int last_cmd = 0;
-    int view_cmd = -1;
-    String[] cmd_history = new String[100];
+    /** variable      */ int ascii_lf = 10;
+    /** variable      */ int ascii_cr = 13;
+    /** variable      */ int ebcdic_space = 0x40;
+    /** variable      */ boolean refresh_wait    = false;
+    /** variable      */ boolean refresh_request = false;
+    /** variable      */ boolean main_status  = true;
+    /** variable      */ boolean main_view_changed = false;
+    /** variable      */ JFrame main_frame    = null; 
+    /** variable      */ int main_border = 2;
+    /** variable      */ int start_bar_height = 36; //windows start bar
+    /** variable      */ int main_loc_x = 20;
+    /** variable      */ int main_loc_y = 20;
+    /** variable      */ int scrollbar_width = 15;
+    /** variable      */ int font_space = 10;
+    /** variable      */ int font_size = 14;  //see FONT command RPI 630 was 12
+    /** variable      */ Font char_font = null;
+    /** variable      */ int title_height = 0;
+    /** variable      */ int menu_height = 0;
+    /** variable      */ int log_char_height = 0; //see FONT command
+    /** variable      */ int tool_height = 0;     //reset to 0 if hidden;
+    /** variable      */ int lines_per_page = 0;   //set by update_main_view()
+    /** variable      */ int log_height = 0;       //set by update_main_view()
+    /** variable      */ int log_width  = 0;      //set by update_main_view()
+    /** variable      */ int command_height = 0;
+    /** variable      */ int command_columns  = 75;  // RPI 685
+    /** variable      */ int status_height  = 0;
+    /** variable      */ boolean labels_visible = true;
+    /** variable      */ int labels_min_width = 0;  
+    /** variable      */ int labels_max_font  = font_size;
+    /** variable      */ int label_width    = 0;
+    /** variable      */ JPanel main_panel    = null;
+    /** variable      */ JTextArea log_text = null;
+    /** variable      */ JScrollPane main_view    = null;
+    /** variable      */ JLabel cmd_label = null;
+    /** variable      */ JTextField  gz390_cmd_line = null;
+    /** variable      */ JLabel status_line_label = null;
+    /** variable      */ JTextField  status_line = null;
+    /** variable      */ String status_line_view = "MCS View";
+    /** variable      */ int cur_cmd = 0;
+    /** variable      */ int last_cmd = 0;
+    /** variable      */ int view_cmd = -1;
+    /** variable      */ String[] cmd_history = new String[100];
+
     /*
      * Graphics 2d GUAM GUI objects
      */
-    JTextArea graph_grid = null;
+    /** variable      */ JTextArea graph_grid = null;
+
     /*
      *  Menu items requiring state changes
      */  
-        boolean opt_tn3270     = false;  // display TN3270 panel
-        boolean opt_graph    = false;  // display graphic panel
-        boolean opt_mcs      = true;   // display mcs panel
-        JMenuBar menuBar = null;  //RPI81       
-        JMenu file_menu = null;            
-        JMenu edit_menu = null;                    
-        JMenu view_menu = null;            
-        JMenu help_menu = null;                    
-        JMenuItem file_menu_exit = null;       
-        JMenuItem edit_menu_cut = null;        
-        JMenuItem edit_menu_copy = null;       
-        JMenuItem edit_menu_paste = null;      
-        JMenuItem edit_menu_select_all = null; 
-        JMenuItem edit_menu_copy_log = null;   
-        JMenuItem edit_menu_notepad = null; 
-        JCheckBoxMenuItem view_menu_mcs    = null;              
-        JCheckBoxMenuItem view_menu_tn3270   = null; 
-        JCheckBoxMenuItem view_menu_graph  = null;     
-        JMenuItem help_menu_help = null;  
-        JMenuItem help_menu_support = null;
-        JMenuItem help_menu_about = null;           
+    /** variable      */ boolean opt_tn3270     = false;  // display TN3270 panel
+    /** variable      */ boolean opt_graph    = false;  // display graphic panel
+    /** variable      */ boolean opt_mcs      = true;   // display mcs panel
+    /** variable      */ JMenuBar menuBar = null;  //RPI81       
+    /** variable      */ JMenu file_menu = null;            
+    /** variable      */ JMenu edit_menu = null;                    
+    /** variable      */ JMenu view_menu = null;            
+    /** variable      */ JMenu help_menu = null;                    
+    /** variable      */ JMenuItem file_menu_exit = null;       
+    /** variable      */ JMenuItem edit_menu_cut = null;        
+    /** variable      */ JMenuItem edit_menu_copy = null;       
+    /** variable      */ JMenuItem edit_menu_paste = null;      
+    /** variable      */ JMenuItem edit_menu_select_all = null; 
+    /** variable      */ JMenuItem edit_menu_copy_log = null;   
+    /** variable      */ JMenuItem edit_menu_notepad = null; 
+    /** variable      */ JCheckBoxMenuItem view_menu_mcs    = null;              
+    /** variable      */ JCheckBoxMenuItem view_menu_tn3270   = null; 
+    /** variable      */ JCheckBoxMenuItem view_menu_graph  = null;     
+    /** variable      */ JMenuItem help_menu_help = null;  
+    /** variable      */ JMenuItem help_menu_support = null;
+    /** variable      */ JMenuItem help_menu_about = null;           
+
     /*
      * Pop-up edit menu variables (right click)
      */    
-        JPopupMenu popup_edit_menu = null; 
-        Component focus_comp = null;
-     /*
-      * APL graphic characters for use via
-      * TN3270 data stream X'08' prefix
-      * defined as 16 bit unicode chars
-      */
-        char[] apl_char = {
-           0X0020,0X0020,0X0020,0X0020, //00
-           0X0020,0X0020,0X0020,0X0020, //04 
-           0X0020,0X0020,0X0020,0X0020, //08
-           0X0020,0X0020,0X0020,0X0020, //0C
-           0X0020,0X0020,0X0020,0X0020, //10
-           0X0020,0X0020,0X0020,0X0020, //14 
-           0X0020,0X0020,0X0020,0X0020, //18
-           0X0020,0X0020,0X0020,0X0020, //1C
-           0X0020,0X0020,0X0020,0X0020, //20
-           0X0020,0X0020,0X0020,0X0020, //24 
-           0X0020,0X0020,0X0020,0X0020, //28
-           0X0020,0X0020,0X0020,0X0020, //2C
-           0X0020,0X0020,0X0020,0X0020, //30
-           0X0020,0X0020,0X0020,0X0020, //34 
-           0X0020,0X0020,0X0020,0X0020, //38
-           0X0020,0X0020,0X0020,0X0020, //3C        
-           0X0020,0x0041,0x0042,0x0043, //40 41-49=A-I
-           0x0044,0x0045,0x0046,0x0047, //44 
-           0x0048,0x0049,0X0020,0X0020, //48
-           0X0020,0X0020,0X0020,0X0020, //4C
-           0X0020,0x004A,0x004B,0x004C, //50 4A-52=J-R
-           0x004D,0x004E,0x004F,0x0050, //54 
-           0x0051,0x0052,0X0020,0X0020, //58
-           0X0020,0X0020,0X0020,0X0020, //5C
-           0X0020,0X0020,0x0053,0x0054, //60 53-5A=S-Z
-           0x0055,0x0056,0x0057,0x0058, //64 
-           0x0059,0x005A,0X0020,0X0020, //68
-           0X0020,0X0020,0X0020,0X0020, //6C
-           0x25CA,0x005E,0x00A8,0x25D8, //70 DIAMOND,UP ARROW, DIAERESIS, INVERSE BULLET
-           0X0020,0X20AC,0X251C,0X251D, //74 ?,EURO,VERT-RIGHT,VERT-LEFT
-           0X0076,0X0020,0X0020,0X0020, //78 v
-           0X0020,0X0020,0X0020,0X0020, //7C 
-           0X007E,0X2551,0X2550,0X2502, //80 TILDE,VERT BARS,HORZ BARS,VERT LEFT BAR
-           0X2502,0X2502,0X0020,0X0020, //84 VERT BAR RIGHT, VERT BAR CENTER
-           0X0020,0X0020,0X2191,0X2193, //88 ,,UP ARROW,DOWN ARROW
-           0X2264,0X250C,0X2514,0X2192, //8C LE, DOWN-RIGHT,UP-RIGHT,RIGHT ARROW
-           0X25A1,0X258C,0X2590,0X2580, //90 WHITE BOX,LEFT BLK,RIGHT BLK, TOP BLK
-           0X2584,0X2588,0X0020,0X0020, //94 BOTTOM BLK, FULL BLK
-           0X0020,0X0020,0X003E,0X003C, //98 ,,GT,LT
-           0X263C,0X25E6,0X00B1,0X2190, //9C SUN RAYS, WHITE BULLET,+/-, LEFT ARROW
-           0X00AF,0X25CB,0X2015,0X25CA, //A0 TOP BAR,WHITE CIRCLE, HORZ BAR,DIAMOND
-           0X006E,0X0020,0X0020,0X0020, //A4 LC N
-           0X0020,0X0020,0X006E,0X0055, //A8 ,,LC N,UC U
-           0X2534,0X005B,0X2265,0X25CB, //AC HORZ+UP,LEFT BRACE, GE, WHITE CIRCLE
-           0X01A1,0X212E,0X006C,0X0070, //B0 O+HORN,e, L, P
-           0X03C9,0X0020,0X0058,0X005C, //B4 OMEGA,,X,REV SLASH
-           0X00F7,0X0020,0X25BC,0X25B2, //B8 DIVIDE,,ARROW DOWN, ARROW UP
-           0X252C,0X005D,0X2260,0X2502, //BC HORZ+DOWN,RIGHT BRACE, NE, VERT BAR
-           0X007B,0X0028,0X002B,0X25A0, //C0 LEFT BRACE,LEFT PAREN,PLUS, BLACK BLK
-           0X2514,0X250C,0X251C,0X2534, //C4 UP RIGHT,DOWN RIGHT,VIRT+RIGHT,HORZ+UP
-           0X00A7,0X0020,0X02C6,0X0076, //C8 SECT SIGN,TILDE+UP ARROW,TILDE+DOWN ARROW
-           0X25A1,0X03A6,0X25A1,0X01FE, //CC WHITE BOX, CAP PHI, WHITE BOX+SLASH,O+SLASH
-           0X007D,0X0029,0X002D,0X002B, //D0 RIGHT BRACE, RIGHT PAREN, MINUS, PLUS
-           0X2518,0X2510,0X2524,0X252C, //D4 RIGHT+UP,RIGHT+DOWN,VERT+RIGHT, HORZ+DOWN
-           0X00B6,0X0020,0X0049,0X0021, //D8 PILCROW,,I,!
-           0X25BC,0X25B2,0X25A1,0X0041, //DC ARROW DOWN, ARROW UP, BLK, A
-           0X2261,0X0031,0X0032,0X0033, //E0 IDENTICAL,1,2,3
-           0X0020,0X0020,0X0020,0X0020, //E4 
-           0X0020,0X0020,0X0078,0X0078, //E8 ,,X?,X?
-           0X003A,0X03B8,0X25A1,0X03A6, //EC COLON?,THETA+TOP BAR, BOX, 
-           0X0030,0X0031,0X0032,0X0033, //F0 0-3
-           0X0034,0X0035,0X0036,0X0037, //F4 4-7
-           0X0038,0X0039,0X25BC,0X25B2, //F8 8,9,TILDE+DOWN ARROW, UP ARROW+UNDERLINE
-           0X0058,0X03B8,0X0020,0X0020, //FC X+BOX,THETA+UNDERLINE
-        };
-       /* 
-        * 
-        * end of global gz390 class data and start of procs
-        */
+    /** variable      */ JPopupMenu popup_edit_menu = null; 
+    /** variable      */ Component focus_comp = null;
 
-  	public static void main(String[] args) {
-  	/*
-  	 * Create instance of gz390 class
-  	 */
+    /*
+     * APL graphic characters for use via
+     * TN3270 data stream X'08' prefix
+     * defined as 16 bit unicode chars
+     */
+    /** variable      */ char[] apl_char = {
+                             0X0020,0X0020,0X0020,0X0020, //00
+                             0X0020,0X0020,0X0020,0X0020, //04 
+                             0X0020,0X0020,0X0020,0X0020, //08
+                             0X0020,0X0020,0X0020,0X0020, //0C
+                             0X0020,0X0020,0X0020,0X0020, //10
+                             0X0020,0X0020,0X0020,0X0020, //14 
+                             0X0020,0X0020,0X0020,0X0020, //18
+                             0X0020,0X0020,0X0020,0X0020, //1C
+                             0X0020,0X0020,0X0020,0X0020, //20
+                             0X0020,0X0020,0X0020,0X0020, //24 
+                             0X0020,0X0020,0X0020,0X0020, //28
+                             0X0020,0X0020,0X0020,0X0020, //2C
+                             0X0020,0X0020,0X0020,0X0020, //30
+                             0X0020,0X0020,0X0020,0X0020, //34 
+                             0X0020,0X0020,0X0020,0X0020, //38
+                             0X0020,0X0020,0X0020,0X0020, //3C        
+                             0X0020,0x0041,0x0042,0x0043, //40 41-49=A-I
+                             0x0044,0x0045,0x0046,0x0047, //44 
+                             0x0048,0x0049,0X0020,0X0020, //48
+                             0X0020,0X0020,0X0020,0X0020, //4C
+                             0X0020,0x004A,0x004B,0x004C, //50 4A-52=J-R
+                             0x004D,0x004E,0x004F,0x0050, //54 
+                             0x0051,0x0052,0X0020,0X0020, //58
+                             0X0020,0X0020,0X0020,0X0020, //5C
+                             0X0020,0X0020,0x0053,0x0054, //60 53-5A=S-Z
+                             0x0055,0x0056,0x0057,0x0058, //64 
+                             0x0059,0x005A,0X0020,0X0020, //68
+                             0X0020,0X0020,0X0020,0X0020, //6C
+                             0x25CA,0x005E,0x00A8,0x25D8, //70 DIAMOND,UP ARROW, DIAERESIS, INVERSE BULLET
+                             0X0020,0X20AC,0X251C,0X251D, //74 ?,EURO,VERT-RIGHT,VERT-LEFT
+                             0X0076,0X0020,0X0020,0X0020, //78 v
+                             0X0020,0X0020,0X0020,0X0020, //7C 
+                             0X007E,0X2551,0X2550,0X2502, //80 TILDE,VERT BARS,HORZ BARS,VERT LEFT BAR
+                             0X2502,0X2502,0X0020,0X0020, //84 VERT BAR RIGHT, VERT BAR CENTER
+                             0X0020,0X0020,0X2191,0X2193, //88 ,,UP ARROW,DOWN ARROW
+                             0X2264,0X250C,0X2514,0X2192, //8C LE, DOWN-RIGHT,UP-RIGHT,RIGHT ARROW
+                             0X25A1,0X258C,0X2590,0X2580, //90 WHITE BOX,LEFT BLK,RIGHT BLK, TOP BLK
+                             0X2584,0X2588,0X0020,0X0020, //94 BOTTOM BLK, FULL BLK
+                             0X0020,0X0020,0X003E,0X003C, //98 ,,GT,LT
+                             0X263C,0X25E6,0X00B1,0X2190, //9C SUN RAYS, WHITE BULLET,+/-, LEFT ARROW
+                             0X00AF,0X25CB,0X2015,0X25CA, //A0 TOP BAR,WHITE CIRCLE, HORZ BAR,DIAMOND
+                             0X006E,0X0020,0X0020,0X0020, //A4 LC N
+                             0X0020,0X0020,0X006E,0X0055, //A8 ,,LC N,UC U
+                             0X2534,0X005B,0X2265,0X25CB, //AC HORZ+UP,LEFT BRACE, GE, WHITE CIRCLE
+                             0X01A1,0X212E,0X006C,0X0070, //B0 O+HORN,e, L, P
+                             0X03C9,0X0020,0X0058,0X005C, //B4 OMEGA,,X,REV SLASH
+                             0X00F7,0X0020,0X25BC,0X25B2, //B8 DIVIDE,,ARROW DOWN, ARROW UP
+                             0X252C,0X005D,0X2260,0X2502, //BC HORZ+DOWN,RIGHT BRACE, NE, VERT BAR
+                             0X007B,0X0028,0X002B,0X25A0, //C0 LEFT BRACE,LEFT PAREN,PLUS, BLACK BLK
+                             0X2514,0X250C,0X251C,0X2534, //C4 UP RIGHT,DOWN RIGHT,VIRT+RIGHT,HORZ+UP
+                             0X00A7,0X0020,0X02C6,0X0076, //C8 SECT SIGN,TILDE+UP ARROW,TILDE+DOWN ARROW
+                             0X25A1,0X03A6,0X25A1,0X01FE, //CC WHITE BOX, CAP PHI, WHITE BOX+SLASH,O+SLASH
+                             0X007D,0X0029,0X002D,0X002B, //D0 RIGHT BRACE, RIGHT PAREN, MINUS, PLUS
+                             0X2518,0X2510,0X2524,0X252C, //D4 RIGHT+UP,RIGHT+DOWN,VERT+RIGHT, HORZ+DOWN
+                             0X00B6,0X0020,0X0049,0X0021, //D8 PILCROW,,I,!
+                             0X25BC,0X25B2,0X25A1,0X0041, //DC ARROW DOWN, ARROW UP, BLK, A
+                             0X2261,0X0031,0X0032,0X0033, //E0 IDENTICAL,1,2,3
+                             0X0020,0X0020,0X0020,0X0020, //E4 
+                             0X0020,0X0020,0X0078,0X0078, //E8 ,,X?,X?
+                             0X003A,0X03B8,0X25A1,0X03A6, //EC COLON?,THETA+TOP BAR, BOX, 
+                             0X0030,0X0031,0X0032,0X0033, //F0 0-3
+                             0X0034,0X0035,0X0036,0X0037, //F4 4-7
+                             0X0038,0X0039,0X25BC,0X25B2, //F8 8,9,TILDE+DOWN ARROW, UP ARROW+UNDERLINE
+                             0X0058,0X03B8,0X0020,0X0020, //FC X+BOX,THETA+UNDERLINE
+                             };
+    /* 
+     * end of global gz390 class data and start of procs
+     */
+
+
+
+/**
+ * Dummy constructor - no initialization needed
+ */
+public gz390()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
+/**
+ * Create instance of gz390 class
+ *
+ * @param args argument string - same as z390
+ */
+public static void main(String[] args) {
     	    gz390 pgm = new gz390();
             pgm.set_main_mode(args);
             pgm.init_gz390(args);
           }
-  	  private int set_main_mode(String[] args){
-  		/*
-  		 * Set main program execution mode
-  		 * Set security permissions
-  		 * 
-  		 * Notes:
-  		 *   1.  called from main or init before
-  		 *       gz390 instance started so only
-  		 *       set class variables.
-  		 */	
+
+
+
+/**
+ * Set main program execution mode and
+ * Set security permissions<br />
+ * 
+ * Notes:
+ * <ol>
+ *  <li>called from main or init before gz390 instance started so only set class variables.</li>
+ * </ol>
+ *
+ * @param args argument string
+ * @return number
+ */
+private int set_main_mode(String[] args){
   		  if (!tz390.check_java_version()){
   				MessageBox box = new MessageBox();
   				box.messageBox("GZ390E error ",
@@ -644,7 +679,16 @@ public  class  gz390
             main_demo = false;
             return 0;
   		}
-		private void log_error(int error,String msg){
+
+
+
+/**
+ * Log error message
+ *
+ * @param error number
+ * @param msg message text`
+ */
+private void log_error(int error,String msg){
 			gz390_errors++;
 			cmd_error = true;
 			msg = "GZ390E error " + error + " " + msg;
@@ -653,7 +697,16 @@ public  class  gz390
 		        abort_error(101,"maximum errors exceeded");
             }
 		}
-		private void abort_error(int error,String msg){
+
+
+
+/**
+ * Abort with error
+ *
+ * @param error error code
+ * @param msg   error message text
+ */
+private void abort_error(int error,String msg){
 			gz390_errors++;
 			tpg_rc = 8;
 			status_line.setText(status_line_view + " " + msg);
@@ -666,11 +719,15 @@ public  class  gz390
  		    	tz390.z390_abort = true; // abort all processes
  		    }
 		}
-		private void shut_down(int return_code){ 
-		/*
-		 * cancel threads and exit with rc
-		 * (turn off runtime shutdown exit
-		 */
+
+
+
+/**
+ * cancel threads and exit with rc (turn off runtime shutdown exit
+ *
+ * @param return_code return code
+ */
+private void shut_down(int return_code){
 			if  (!tz390.z390_abort){
 				abort_error(58,"GUAM GUI window closed");
 				int count = 5;
@@ -693,36 +750,32 @@ public  class  gz390
 			}
 		}
 
-	   private void process_command(String cmd_line) {
-	   	/* 
-	   	 * 1.  parse parms and execute 
-	   	 *     gz390 command if found.
-	   	 *     a.  * in position 1 is a comment
-	   	 *     e.  space or null logged as blank line 
-	   	 *      
-	   	 * 2.  If not a known gz390 command, 
-	   	 *     issue CMD Windows command.
-	   	 * 
-	   	 * Notes:
-	   	 * 
-	   	 * 1.  gz390_cmd_line event handler
-	   	 *     routes input to CMD processor when in
-	   	 *     cmd_mode.
-	   	 * 
-	   	 * 2.  Some commands will issue retry or
-	   	 *     cancel error message if command
-	   	 *     running on separate thread to avoid
-	   	 *     file conflicts or deadlocks.  Other
-	   	 *     non destructivecommands will proceed
-	   	 *     in parallel which may cause log 
-	   	 *     messages to be intermixed.
-	   	 * 
-	   	 * 3.  Status bar shows progress of command
-	   	 *     processes on separate threads.
-	   	 * 
-	   	 * 4.  Use EXIT or BREAK event to abort CMD
-	   	 *     process. CTRL-C works in command mode only.
-	   	 */
+
+
+/**
+ * <ol>
+ *  <li>parse parms and execute gz390 command if found.
+ *   <ul>
+ *    <li>* in position 1 is a comment</li>
+ *    <li>space or null logged as blank line</li>
+ *   </ul>
+ *  </li>
+ *  <li>If not a known gz390 command, issue CMD Windows command.</li>
+ * </ol>
+ * 
+ * Notes:
+ * <ol>
+ *  <li>gz390_cmd_line event handler routes input to CMD processor when in cmd_mode.</li>
+ *  <li>Some commands will issue retry or cancel error message if command running on separate thread to avoid
+ *      file conflicts or deadlocks. Other non destructive commands will proceed in parallel which may cause log
+ *      messages to be intermixed.</li>
+ *  <li>Status bar shows progress of command processes on separate threads.</li>
+ *  <li>Use EXIT or BREAK event to abort CMD process. Ctrl-C works in command mode only.</li>
+ * </ol>
+ *
+ * @param cmd_line command to be processed
+ */
+private void process_command(String cmd_line) {
 		 try {
 	   	    cmd_error = false;
 	   	    if  (cmd_line == null 
@@ -758,7 +811,7 @@ public  class  gz390
          switch (first_char){
          case 'A':  
             break;
-         case 'B':           
+         case 'B':
             break;
          case 'C': 
             break;
@@ -766,23 +819,23 @@ public  class  gz390
         	 break;
          case 'E':
             break;
-         case 'F':            
+         case 'F':
             break;
-         case 'G':             
+         case 'G':
             break;
-         case 'H':          
+         case 'H':
             break;
-         case 'I':            
+         case 'I':
             break;
           case 'J':
               break;
-          case 'L': 
+          case 'L':
             break;
          case 'M': 
               break;
          case 'N': 
             break;
-         case 'O':                      
+         case 'O':
             break;
          case 'P':
             break;
@@ -800,8 +853,8 @@ public  class  gz390
             break;
          case 'X':
             break;
-         case '*':         
-           	cmd_opcode_ok = true;
+         case '*':
+            cmd_opcode_ok = true;
             break;
          }
             /*
@@ -815,10 +868,13 @@ public  class  gz390
 			 log_error(7,"command error on -" + cmd_line);
 		 }
        }
-	   private void add_cmd_hist(){ 
-		   /*
-		    * add command cmd_line to rolling history
-		    */
+
+
+
+/**
+ * add command cmd_line to rolling history
+ */
+private void add_cmd_hist(){
 		   view_cmd = -1;
 		   cur_cmd++;
            if (cur_cmd >= max_cmd){
@@ -831,10 +887,13 @@ public  class  gz390
            }
            cmd_history[cur_cmd] = cmd_line;
 	   }
-	   private void get_prev_cmd(){
-		   /*
-		    * restore prev cmd to gz390_cmd_line
-		    */
+
+
+
+/**
+ * restore prev cmd to gz390_cmd_line
+ */
+private void get_prev_cmd(){
    	   	   if  (view_cmd < 0){
    	   	   	   view_cmd = cur_cmd;
    	   	   } else {
@@ -849,10 +908,13 @@ public  class  gz390
            }
    	   	   gz390_cmd_line.setText(cmd_history[view_cmd]);
 	   }
-	   private void get_next_cmd(){ 
-		   /*
-		    * restore next cmd to gz390_cmd_line
-		    */
+
+
+
+/**
+ * restore next cmd to gz390_cmd_line
+ */
+private void get_next_cmd(){
   	   	   if  (view_cmd < 0){
   	   	   	   view_cmd = cur_cmd;
   	   	   } else {
@@ -867,15 +929,22 @@ public  class  gz390
   	   	   }
   	   	   gz390_cmd_line.setText(cmd_history[view_cmd]);
 	   }
-	   private String get_next_parm(StringTokenizer st,boolean ignore_spaces){
-	   /*
-	    * get string with or without single/double
-	    * quotes.
-	    * 
-	    * ignore leading spaces or commas if 
-	    * ignore_spaces = true, else return null
-	    * if space or comma found next.
-	    */
+
+
+
+/**
+ * get string with or without single/double
+ * quotes.
+ * 
+ * ignore leading spaces or commas if 
+ * ignore_spaces = true, else return null
+ * if space or comma found next.
+ *
+ * @param st StringTokenizer instance
+ * @param ignore_spaces yes/no indicator
+ * @return next token as a string value
+ */
+private String get_next_parm(StringTokenizer st,boolean ignore_spaces){
 	   	String parm_string = st.nextToken();
 	   	String delimiter;
         String next_token;
@@ -897,7 +966,13 @@ public  class  gz390
 	   	}
 	   	return parm_string;
 	   }
-	   private void about_command(){
+
+
+
+/**
+ * Display copyright notice
+ */
+private void about_command(){
 		    guam_put_log("\nz390 GUAM GUI gz390 Graphical User Access Method "
 				  + tz390.version); 
 			guam_put_log("Copyright (c) 2021 z390 Assembler LLC");
@@ -905,10 +980,15 @@ public  class  gz390
 			guam_put_log("This is free software, and you are welcome to redistribute it");
 			guam_put_log("under certain conditions; see included LICENSE file for details.");
 	   }
-	   private void font_command(int new_font_size){
-	   /* 
-	    * reset font size 
-	    */
+
+
+
+/**
+ * reset font size
+ *
+ * @param new_font_size integer between 8 and 72 inclusive
+ */
+private void font_command(int new_font_size){
    	    	if (new_font_size < 8 || new_font_size > 72){
    	    		log_error(8,"font outside fixed width font limits");
    	    	} else {
@@ -919,11 +999,14 @@ public  class  gz390
                 refresh_request = true;
    	    	}	
 	   }
-	   private void set_text_font(){
-		   /*
-		    * reset font size for menu, log, cmd
-		    * and status line
-		    */
+
+
+
+/**
+ * reset font size for menu, log, cmd
+ * and status line
+ */
+private void set_text_font(){
 		      set_char_font();
 	          menuBar.setFont(char_font); //RPI81
    	          file_menu.setFont(char_font);
@@ -949,21 +1032,27 @@ public  class  gz390
    	          status_line_label.setFont(char_font);
    	          status_line.setFont(char_font);
 	   }
-	   private void help_command(){
-	   	/*
-	   	 * log summary list of commands and help reference
-	   	 */
+
+
+
+/**
+ * log summary list of commands and help reference
+ */
+private void help_command(){
 	   	guam_put_log("\nz390 GUAM GUI z390 Graphical User Access Method Help");
 	   	guam_put_log("View menu MCS     - Display WTO and WTOR scrolling window (default)");
 	   	guam_put_log("View menu TN3270  - Display TPUT and TGET TN3270 window");
 	   	guam_put_log("View menu Graph   - Display graph drawn by gz390 GKS commands");
         guam_put_log("Help menu Support - Link to www.z390.org"); 
 	   }
-	   private void monitor_startup(){
-	   /*
-	    * start monitor to terminate cmd 
-	    * command if timeout limit reached
-	    */
+
+
+
+/**
+ * start monitor to terminate cmd 
+ * command if timeout limit reached
+ */
+private void monitor_startup(){
               monitor_last_time = System.currentTimeMillis();
               monitor_last_ins_count = ins_count;
 	   	      status_last_time = monitor_last_time;
@@ -980,14 +1069,17 @@ public  class  gz390
 		       	  log_error(12,"execution startup error " + e.toString());
 		      }
 	   }
-	   private void monitor_update(){
-	   /*
-	    * 1.  At monitor_wait intervals, update the
-	    *     GUAM GUI title date and time and the status
-	    *     line information.
-	    * 2.  Update TN3270 screen from key typed buffer
-	    * 2.  reset focus to gz390_cmd_line after wto
-	    */
+
+
+
+/**
+ * <ol>
+ *  <li>At monitor_wait intervals, update the GUAM GUI title date and time and the status line information.</li>
+ *  <li>Update TN3270 screen from key typed buffer</li>
+ *  <li>reset focus to gz390_cmd_line after wto</li>
+ * </ol>
+ */
+private void monitor_update(){
 		    refresh_wait = false;  // reset main_view wait
 	        monitor_next_time = System.currentTimeMillis();
 	        monitor_next_ins_count = ins_count;
@@ -1004,15 +1096,21 @@ public  class  gz390
 	   	    monitor_last_ins_count  = monitor_next_ins_count;
 	   	    monitor_last_io_count   = monitor_next_io_count;
 	   }
-	   /*
-	    **************************************************
-	    * Command support functions
-	    **************************************************  
-	    */
-   private void init_tn3270_screen(){
-       /*
-        * init first time or if rows spec. RPI 308
-  		*/	   
+
+
+
+                                  /*
+                                   **************************************************
+                                   * Command support functions
+                                   **************************************************  
+                                   */
+
+
+
+/**
+ * init first time or if rows spec.
+ */
+private void init_tn3270_screen(){
 		tn_scn = new gz390_screen();
 		tn_scn.tz390 = tz390; // RPI 671
 		set_char_font();
@@ -1020,10 +1118,14 @@ public  class  gz390
   				char_font,bg_color,text_color);
         tn_clear_screen();
    }
-   private void init_gz390(String[] args){
-       /*
-        * Init graphical user interface
-        */ 
+
+
+
+/**
+ * Init graphical user interface
+ * @param args argument string
+ */ 
+private void init_gz390(String[] args){
         	init_tn3270_screen();
  			main_frame = new JFrame();
             title_update();
@@ -1035,13 +1137,17 @@ public  class  gz390
             monitor_startup();        
             gz390_cmd_line.requestFocus();
         }
-        private void build_main_panel(){ 
-        /*
-   	     *  Build the main panel with:
-   	     *    a.  Scrolling log display
-   	     *    b.  command entry field
-   	     * 
-   	     */
+
+
+
+/**
+ *  Build the main panel with:
+ * <ol>
+ *  <li>Scrolling log display</li>
+ *  <li>command entry field</li>
+ * </ol>
+ */
+private void build_main_panel(){
    	        main_panel = new JPanel();
    	        main_panel.setBorder(BorderFactory.createEmptyBorder(0,main_border,main_border,main_border));
             main_panel.setLayout(new FlowLayout(FlowLayout.LEFT)); 
@@ -1069,22 +1175,36 @@ public  class  gz390
 	  		       }
 	  		      });
 	        refresh_request = true;
-        } 
-        private void exit_main(int rc){
+        }
+
+
+
+/**
+  * terminate
+  *
+  * @param rc returncode
+  */
+private void exit_main(int rc){
 	        shut_down(rc);
         }
-     private void set_char_font(){
-    	 /*
-    	  * initialize tn3270 screen fonts
-    	  * using current font size
-    	  */
+
+
+
+/**
+ * initialize tn3270 screen fonts
+ * using current font size
+ */
+private void set_char_font(){
     	 char_font = new Font(tz390.z390_font,Font.BOLD,font_size);
      }
-     private void set_guam_size(){
-    	 /* 
-    	  * calculate GUAM GUI object sizes based on
-    	  * sreen size and font size
-    	  */
+
+
+
+/**
+ * calculate GUAM GUI object sizes based on
+ * sreen size and font size
+ */
+private void set_guam_size(){
     	title_height = 56;
   	    menu_height = font_size + font_space;
  	    log_char_height = font_size + font_space;
@@ -1098,11 +1218,14 @@ public  class  gz390
    	    status_height  = font_size + font_space
    	                   + main_border;
      }
-     private void build_log_view(){
-    	 /*
-    	  * build scrolling log view based on
-    	  * current screen and font size
-    	  */
+
+
+
+/**
+ * build scrolling log view based on
+ * current screen and font size
+ */
+private void build_log_view(){
         log_text = new JTextArea();
 	    log_text.addMouseListener(this);
         main_view = new JScrollPane(log_text);
@@ -1118,11 +1241,13 @@ public  class  gz390
 	    main_view.setPreferredSize(   	        		
          	new Dimension(log_width, log_height));
      }
- 
-     private void build_gz390_cmd_line(){
-	/*
-     *   Build the command entry field
-     */
+
+
+
+/**
+ *   Build the command entry field
+ */
+private void build_gz390_cmd_line(){
      	cmd_label = new JLabel("Command: ");
         gz390_cmd_line = new JTextField(command_columns);
         gz390_cmd_line.addActionListener(this);
@@ -1130,10 +1255,13 @@ public  class  gz390
         gz390_cmd_line.addKeyListener(this);
         gz390_cmd_line.addFocusListener(this);
      }
-     private void build_status_line(){
-    	/*
-         *   Build the statuts line
-         */
+
+
+
+/**
+ *   Build the statuts line
+ */
+private void build_status_line(){
      	    status_line_label = new JLabel(" Status: ");
             status_line = new JTextField(command_columns);
             status_line.addActionListener(this);
@@ -1141,10 +1269,13 @@ public  class  gz390
             status_line.addKeyListener(this);
             status_line.addFocusListener(this);
          }
-     private void build_menu_items(){
-    /* 
-     *    Build the menu bar
-     */
+
+
+
+/**
+ *    Build the menu bar
+ */
+private void build_menu_items(){
      menuBar = new JMenuBar();
      file_menu = new JMenu("File");
      edit_menu = new JMenu("Edit");
@@ -1228,10 +1359,13 @@ public  class  gz390
      help_menu.add(help_menu_support);
      help_menu.add(help_menu_about);
    }
-   private void set_tooltips(){
-	   /*
-	    * set tooltips after font changes
-	    */
+
+
+/**
+ * set tooltips after font changes
+ */
+
+private void set_tooltips(){
 	     String text_font_pfx = "<html><font size=" + font_size/3 + ">";
 	     String text_font_sfx = "</html>";
 	     file_menu_exit.setToolTipText(text_font_pfx + "Exit gz390 GUAM GUI" + text_font_sfx);
@@ -1248,19 +1382,25 @@ public  class  gz390
 	     help_menu_support.setToolTipText(text_font_pfx + "Link to www.z390.org web site for support information" + text_font_sfx);
 	     help_menu_about.setToolTipText(text_font_pfx + "Display information about this version of gz390" + text_font_sfx);
    }
-   private void title_update(){
-   /*
-    * update main frame title with current
-    * date and time.
-    */	
+
+
+
+/**
+ * update main frame title with current
+ * date and time.
+ */
+private void title_update(){
 		 Date cur_date = new Date();
      	 main_frame.setTitle(main_title + "   " + mmddyy.format(cur_date)
      			     + " " + hhmmss.format(cur_date));
    }
-   	  public void actionPerformed(ActionEvent event){
-   	  /*
-   	   * Perform menu and command line requests 
-   	   */	
+
+
+
+/**
+ * Perform menu and command line requests 
+ */
+public void actionPerformed(ActionEvent event){
    	  	String event_name = event.getActionCommand().toUpperCase();
    	  	if  (gz390_cmd_line.hasFocus()){
  	  	     cmd_line = gz390_cmd_line.getText();
@@ -1397,36 +1537,53 @@ public  class  gz390
   			exec_guam_command();
 	  		reset_gz390_cmd();}	        
    	  	}
-	   private String time_stamp(){
-		   /*
-		    * return date and time if opt_timing
-		    */
+
+
+
+/**
+ * return date and time if opt_timing
+ *
+ * @return formatted timestamp
+ */
+private String time_stamp(){
         Date temp_date = new Date(); 
         return mmddyy.format(temp_date)
        + " " + hhmmss.format(temp_date);
 	   }
-   	  private void exec_guam_command(){
-   	  /*
-   	   * exec command 
-   	   */  	   
+
+
+
+/**
+ * exec command 
+ */
+private void exec_guam_command(){
   		   cmd_line = gz390_cmd_line.getText();
   		   if  (cmd_line == null || cmd_line.length() == 0){
   		   	   cmd_line = " ";
   		   }
            reset_gz390_cmd();
            process_command(cmd_line); 
-   	  } 
-   	  private void reset_gz390_cmd(){
-   	  /*
-   	   * reset gz390_cmd text and set focus
-   	   */
+   	  }
+
+
+
+/**
+ * reset gz390_cmd text and set focus
+ */
+private void reset_gz390_cmd(){
   		   gz390_cmd_line.setText("");
            gz390_cmd_line.requestFocus();
    	  }
-      private boolean exec_cmd(String cmd){
-          /*
-           * exec command as separate task
-           */
+
+
+
+/**
+ * exec command as separate task
+ *
+ * @param cmd command string
+ * @return boolean indicator of success
+ */
+private boolean exec_cmd(String cmd){
           	   if  (perm_file_execute){
     	           try {
     	  	           Runtime.getRuntime().exec(cmd);
@@ -1438,10 +1595,15 @@ public  class  gz390
           	   	   return false;
           	   }
        	  }
-      public static String getClipboard() {
-      /*
-       * Get string text from system clipboard
-       */
+
+
+
+/**
+ * Get string text from system clipboard
+ *
+ * @return string holding text from keyboard
+ */
+public static String getClipboard() {
       	Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
           try {
               if (t != null && t.isDataFlavorSupported(DataFlavor.stringFlavor)) {
@@ -1453,17 +1615,27 @@ public  class  gz390
           }
           return null;
       }
-       public static void setClipboard(String str) {
-       /*
-        * put string to system clipboard
-        */
+
+
+
+/**
+ * put string to system clipboard
+ *
+ * @param str string to be copied to clipboard
+ */
+public static void setClipboard(String str) {
        	StringSelection ss = new StringSelection(str);
           Toolkit.getDefaultToolkit().getSystemClipboard().setContents(ss, null);
       }
-       public void keyPressed(KeyEvent e) {
-       /*
-        * Handle key pressed events
-        */
+
+
+
+/**
+ * Handle key pressed events
+ *
+ * @param e KeyEvent instance
+ */
+public void keyPressed(KeyEvent e) {
            //dsh displayInfo(e, "KEY PRESSED: "); 
            int key_code = e.getKeyCode();
            int key_mods = e.getModifiersEx();
@@ -1481,11 +1653,18 @@ public  class  gz390
          	  }
     	   }
   	   }
-       private void process_action_key_pressed(int key_code,int key_mods, KeyEvent e){
-    	   /*
-    	    * process action key after
-    	    * processing any pending typed keys
-    	    */
+
+
+
+/**
+ * process action key after
+ * processing any pending typed keys
+ *
+ * @param key_code number
+ * @param key_mods number
+ * @param e        keyEvent instance
+ */
+private void process_action_key_pressed(int key_code,int key_mods, KeyEvent e){
     	           	   process_typed_keys();
         	   if (tn_kb_lock){
         		   // MCS mode action keys
@@ -1653,14 +1832,20 @@ public  class  gz390
               	   		  tn_attn = true;
                	   	  }
             	   	  return;
-          	   }          	   
+          	   }
        }
-       private void process_non_action_key_pressed(int key_code, int key_mods, KeyEvent e){
-    	   /*
-    	    *   process enter, cancel
-    	    * , backspace, and delete
-    	    * (the rest are handled by keytyped
-    	    */
+
+
+
+/**
+ * process enter, cancel, backspace, and delete
+ * (the rest are handled by keytyped
+ *
+ * @param key_code number
+ * @param key_mods number
+ * @param e        KeyEvent Instance
+ */
+private void process_non_action_key_pressed(int key_code, int key_mods, KeyEvent e){
     	   switch (key_code){
     	   case KeyEvent.VK_ENTER:
     		   if (!tn_kb_lock){
@@ -1688,11 +1873,13 @@ public  class  gz390
        	   	  break;
        	   }
        }
-       private void process_cancel_key(){
-       /*
-        * cancel cmd, or GUAM GUI cmd in response to
-        * F3 or CTRL-BREAK
-        */	
+
+
+
+/**
+ * cancel cmd, or GUAM GUI cmd in response to F3 or Ctrl-Break
+ */
+private void process_cancel_key(){
     	   abort_error(102,"GUAM GUI terminating due to external shutdown request");
     	   int count = 5;
     	   while (count > 0){  // RPI 460
@@ -1700,28 +1887,37 @@ public  class  gz390
     		   count--;
     	   }
        }
-       public void keyTyped(KeyEvent e) {
-		/*
-		 * Handle key typed events
-		 */
+
+
+
+/**
+ * Handle key typed events
+ *
+ * collect any characters for accept which are placed in gz390_cmd_line
+ * by accept wait loop if not there already.
+ *
+ * @param e KeyEvent
+ */
+public void keyTyped(KeyEvent e) {
+        /*
+         * First accept they are there, but following ones not? Hooky fix!
+         */
 		// dsh displayInfo(e, "KEY TYPED: ");
-		/*
-		 * collect any characters for accept which are placed in gz390_cmd_line
-		 * by accept wait loop if not there already. First accept they are
-		 * there, but following ones not? Hooky fix!
-		 */
 		if (guam_tot_key < max_keys){
 			guam_key_code_char[guam_tot_key] = e.getKeyCode() << 16
 					| (int) e.getKeyChar();
 			guam_tot_key++;
 		}		
 	   }
-       public synchronized void process_typed_keys() { // RPI 861
-    	   /*
-    	    * process pending typed keys
-    	    * on monitor thread in ez390
-    	    * and for all action keys.
-    	    */
+
+
+
+/**
+ * process pending typed keys
+ * on monitor thread in ez390
+ * and for all action keys.
+ */
+public synchronized void process_typed_keys() { // RPI 861
     	   char key_char = ' ';
     	   int index = 0;
     	   while (index < guam_tot_key){
@@ -1774,14 +1970,25 @@ public  class  gz390
     	   }
     	   guam_tot_key = 0;
        }
-       public void keyReleased(KeyEvent e) {
-		/*
-		 * Handle key released events
-		 */
-		// dsh displayInfo(e, "KEY RELEASED: ");
-	}
 
-	protected void displayInfo(KeyEvent e, String s) {
+
+
+/**
+ * Handle key released events
+ */
+public void keyReleased(KeyEvent e) {
+    // dsh displayInfo(e, "KEY RELEASED: ");
+}
+
+
+
+/**
+ * Display key event info
+ *
+ * @param e KeyEvent instance
+ * @param s identifier for the diagnostic output
+ */
+protected void displayInfo(KeyEvent e, String s) {
 		String keyString, modString, tmpString, actionString, locationString;
 
 		// You should only rely on the key char if the event
@@ -1831,10 +2038,15 @@ public  class  gz390
 				+ "    " + locationString + newline);
 
 	}
-    public void mousePressed(MouseEvent e) {
-    /*
-	 * Popup edit menu on right mouse ck
-	 */	
+
+
+
+/**
+ * Popup edit menu on right mouse ck
+ *
+ * @param e MouseEvent instance
+ */
+public void mousePressed(MouseEvent e) {
     	   check_main_view();
              if (e.getButton() == MouseEvent.BUTTON3){	
               if (popup_edit_menu == null){
@@ -1865,31 +2077,67 @@ public  class  gz390
               popup_edit_menu.show(mouse_comp,e.getX(),e.getY());
            }
     }
-    public void mouseReleased(MouseEvent e) {
 
+
+
+/**
+ * Mouse Release handler
+ *
+ * @param e MouseEvent instance
+ */
+public void mouseReleased(MouseEvent e) {
     }
 
-    public void mouseEntered(MouseEvent e) {
 
+
+/**
+ * Mouse Entry handler
+ *
+ * @param e MouseEvent instance
+ */
+public void mouseEntered(MouseEvent e) {
     }
 
-    public void mouseExited(MouseEvent e) {
 
+
+/**
+ * Mouse Exit handler
+ *
+ * @param e MouseEvent instance
+ */
+public void mouseExited(MouseEvent e) {
     }
 
-    public void mouseClicked(MouseEvent e) {
 
+
+/**
+ * Mouse Click handler
+ *
+ * @param e MouseEvent instance
+ */
+public void mouseClicked(MouseEvent e) {
     }
-    public void focusLost(FocusEvent e) {
+
+
+
+/**
+ * last component to lose focus (ignored for now)
+ *
+ * @param e FocusEvent instance
+ */
+public void focusLost(FocusEvent e) {
     /*
-     * last component to lose focus (ignored for now)
-     */	
+     */
     }
 
-    public void focusGained(FocusEvent e) {
-    /*
-     * Save last component to get focus
-     */	
+
+
+/*
+ * Save last component to get focus
+ *
+ * @param e FocusEvent instance
+ */
+public void focusGained(FocusEvent e) {
      	   Component temp_comp = e.getComponent();
 
     	   if (temp_comp == log_text
@@ -1900,14 +2148,27 @@ public  class  gz390
     	   	   focus_comp = temp_comp;
     	   }    	   
     }
-	    private void exit_command(){
-	    /*
-	     * abort command if runnung and turn off cmd_mode
-	     * If no command running and not cmd_mode,
-	     * then exit gz390.
-	     */
+
+
+
+/**
+ * abort command if runnung and turn off cmd_mode
+ * If no command running and not cmd_mode,
+ * then exit gz390.
+ */
+private void exit_command(){
    	  		exit_main(0);
 	    }
+
+
+
+/**
+ * Create Image Icon
+ *
+ * @param path path to use
+ * @param description descriptive text
+ * @return ImageIcon instance
+ */
 	    protected static ImageIcon createImageIcon(String path,
 	                                               String description) {
 	        java.net.URL imgURL = gz390.class.getResource(path);
@@ -1918,13 +2179,18 @@ public  class  gz390
 	            return null;
 	        }
 	    }
-	    private void check_main_view() {
-		/*
-		 * 1. If screen not ready, exit 2. If delete key pending, do it now 3.
-		 * If cursor active, update it now 4. If main window size has changed
-		 * due to user streching without window event handler triggering update,
-		 * do it now.
-		 */
+
+
+
+/**
+ * <ol>
+ *  <li>If screen not ready, exit</li>
+ *  <li>If delete key pending, do it now</li>
+ *  <li>If cursor active, update it now</li>
+ *  <li>If main window size has changed due to user streching without window event handler triggering update, do it now.</li>
+ * </ol>
+ */
+private void check_main_view() {
 		if (!tn_scn.scn_ready) {
 			return;
 		}
@@ -1963,11 +2229,14 @@ public  class  gz390
 			refresh_request = false;
 		}
 	}
-	private synchronized void process_delete_key(){
-		/* 
-		 * shift input field left 1 char to end
-		 * if not at null char.
-		 */
+
+
+
+/**
+ * shift input field left 1 char to end
+ * if not at null char.
+ */
+private synchronized void process_delete_key(){
 		tn_delete_request = false;
 		if (tn_cursor
 			&&	tn_input_field()
@@ -1993,11 +2262,13 @@ public  class  gz390
 					+ " Alarm - null or protected field");
 		}
 	}
-        private void update_main_view(){
-        /*
-		 * update main_view and command line size following change in window
-		 * size
-		 */	
+
+
+
+/**
+ * update main_view and command line size following change in window size
+ */
+private void update_main_view(){
         	if (refresh_wait){
         		refresh_request = true;
         		return; // wait for next monitor interal
@@ -2012,10 +2283,13 @@ public  class  gz390
  	        }
        		main_frame.setVisible(true);
         }
-        private void set_view_mcs(){
-        	/*
-        	 * display mcs scrolling wto/wtor panel
-        	 */
+
+
+
+/**
+ * display mcs scrolling wto/wtor panel
+ */
+private void set_view_mcs(){
             set_main_view(guam_view_mcs);
         	guam_view = guam_view_mcs;
    	    	opt_mcs   = true;
@@ -2031,16 +2305,24 @@ public  class  gz390
    	    	update_main_view();
       		refresh_request = true;
         }
-        private void set_view_screen(int rows,int cols,int color){
-       	 /*
-       	  * build screen view based on
-       	  * current screen and font size
-       	  * Notes:
-       	  *   1.  Purge and redefine main_panel with 
-       	  *       new main_view
-       	  *   2.  Turn off focus subsystem to see tab key
-       	  *   3.  Display "Screen View on status line.
-       	  */
+
+
+
+/**
+ * build screen view based on current screen and font size
+ *
+ * Notes:
+ * <ol>
+ *  <li>Purge and redefine main_panel with  new main_view</li>
+ *  <li>Turn off focus subsystem to see tab key</li>
+ *  <li>Display "Screen View on status line.</li>
+ * </ol>
+ *
+ * @param rows nr of rows
+ * @param cols nr of columns
+ * @param color nr
+ */
+private void set_view_screen(int rows,int cols,int color){
         if (rows > 0){ // user request for new screen size
     		max_cols = cols;
     		max_rows = rows;
@@ -2065,10 +2347,17 @@ public  class  gz390
 		update_main_view();
    	    refresh_request = true;
         }
-        private void set_view_graph(int x,int y,int color){
-        	/*
-        	 * display graph for QUAM GKS commands
-        	 */
+
+
+
+/**
+ * display graph for QUAM GKS commands
+ *
+ * @param x horizontal position
+ * @param y vertical position
+ * @param color nr
+ */
+private void set_view_graph(int x,int y,int color){
            	if (graph_grid == null){ // init first time
            		graph_grid = new JTextArea(
            			"\n  GUAM GUI grahics support not done yet"
@@ -2093,10 +2382,15 @@ public  class  gz390
    			update_main_view();
    			refresh_request = true;
         }
-        private void set_main_view(int view_type){
-        	/*
-        	 * redefine main_view scrolling pane
-        	 */
+
+
+
+/**
+ * redefine main_view scrolling pane
+ *
+ * @param view_type number
+ */
+private void set_main_view(int view_type){
         	guam_view = view_type;
         	main_panel.removeAll();
         	if (guam_view == guam_view_mcs){
@@ -2120,10 +2414,13 @@ public  class  gz390
         	}
             rebuild_main_panel();
         }
-        private void set_main_view_mcs(){
-        	/*
-        	 * set guam dialog window to show mcs log
-        	 */
+
+
+
+/**
+ * set guam dialog window to show mcs log
+ */
+private void set_main_view_mcs(){
 	        	log_height = tn_scn.main_height - title_height - menu_height - command_height - status_height;
  	        	log_width  = tn_scn.main_width - scrollbar_width - 4 * main_border;
  	        	main_panel.setSize(tn_scn.main_width - 4 * main_border,tn_scn.main_height - title_height - menu_height - main_border);
@@ -2132,11 +2429,14 @@ public  class  gz390
  	        			new Dimension(log_width, log_height)
        				);
         }
-        private void set_main_view_screen(){
-        	/*
-        	 * adjust font to show full TN3270 screen
-        	 * in current window space.
-        	 */
+
+
+
+/**
+ * adjust font to show full TN3270 screen
+ * in current window space.
+ */
+private void set_main_view_screen(){
         	// try main panel at max size
         	tn_scn.main_panel_width  = tn_scn.main_width - 4 * main_border - 5;  
 	        tn_scn.main_panel_height = tn_scn.main_height - title_height - menu_height - main_border; 
@@ -2152,23 +2452,29 @@ public  class  gz390
        				);
         	tn_repaint_screen();
         }
-        private void set_main_view_graph(){
-        	/*
-        	 * set guam dialog window to show 
-        	 * TN3270 screen using current
-        	 * main window size (max require
-        	 * scrolling to see entrie screen)
-        	 */
+
+
+
+/**
+ * set guam dialog window to show 
+ * TN3270 screen using current
+ * main window size (max require
+ * scrolling to see entrie screen)
+ */
+private void set_main_view_graph(){
 	        main_frame.setSize(tn_scn.main_width,tn_scn.main_height);
 	        main_panel.setSize(tn_scn.main_width - 4 * main_border,tn_scn.main_height - title_height - menu_height - main_border);
         }
-        private void rebuild_main_panel(){
-        /*
-         * rebuild main_panel with current
-         * main_view, gz390_cmd and status lines
-         * with or without labels to fix current
-         * main_panel size.
-         */
+
+
+
+/**
+ * rebuild main_panel with current
+ * main_view, gz390_cmd and status lines
+ * with or without labels to fix current
+ * main_panel size.
+ */
+private void rebuild_main_panel(){
         	main_panel.removeAll();
         	main_panel.add(main_view);    
         	/* 
@@ -2204,12 +2510,27 @@ public  class  gz390
                 main_panel.add(status_line);
             }
         }
-        public void componentHidden(ComponentEvent e) {
+
+
+
+/**
+ * Component Hidden event handler
+ *
+ * @param e ComponentEvent instance
+ */
+public void componentHidden(ComponentEvent e) {
     //dsh    	System.out.println("componentHidden event from "
     //dsh    		       + e.getComponent().getClass().getName());
             }
 
-            public void componentMoved(ComponentEvent e) {
+
+
+/**
+ * Component Moved event handler
+ *
+ * @param e ComponentEvent instance
+ */
+public void componentMoved(ComponentEvent e) {
      //dsh           Component c = e.getComponent();
      //dsh           System.out.println("componentMoved event from "
      //dsh                          + c.getClass().getName()
@@ -2219,7 +2540,14 @@ public  class  gz390
      //dsh                          + c.getLocation().y);
             }
 
-            public void componentResized(ComponentEvent e) {
+
+
+/**
+ * Component Resized event handler
+ *
+ * @param e ComponentEvent instance
+ */
+public void componentResized(ComponentEvent e) {
      //dsh           Component c = e.getComponent();
      //dsh           System.out.println("componentResized event from "
      //dsh                          + c.getClass().getName()
@@ -2231,19 +2559,35 @@ public  class  gz390
                                update_main_view();
             }
 
-            public void componentShown(ComponentEvent e) {
+
+
+/**
+ * Component Shown event handler
+ *
+ * @param e ComponentEvent instance
+ */
+public void componentShown(ComponentEvent e) {
    //dsh     	System.out.println("componentShown event from "
    //dsh     		       + e.getComponent().getClass().getName());
             }
-     /* **********************************************
-      * Private screen, graph, keybaord, mouse, sound 
-      * functions
-      ********************************************** */
+
+
+
+                                          /* **********************************************
+                                           * Private screen, graph, keybaord, mouse, sound 
+                                           * functions
+                                           ********************************************** */
+
+
+
+/**
+ * update screen from tput ebcdic buffer
+ * using line at a time edit mode
+ *
+ * @param buff buffer text
+ * @param lbuff length of buffer
+ */
 private void tput_edit_buffer(byte[] buff, int lbuff){
-	/*
-	 * update screen from tput ebcdic buffer
-	 * using line at at time edit mode
-	 */
 	String text = get_ascii_string(buff,lbuff);
 	int text_start = 0;
 	int text_end   = 0;
@@ -2274,10 +2618,13 @@ private void tput_edit_buffer(byte[] buff, int lbuff){
 	}
 	update_main_view();
 }
+
+
+
+/**
+ * update screen from tn3270 data stream buffer
+ */
 private void tn_tput_buffer(){
-	/*
-	 * update screen from tn3270 data stream buffer
-	 */
 	tn_scn.stop_scn_updates();
 	tput_index = 0;
 	switch (tpg_type){
@@ -2358,14 +2705,19 @@ private void tn_tput_buffer(){
 	scn_addr = tn_cursor_scn_addr; // RPI 630 reset to last insert cursor
 	tn_scn.start_scn_updates(); 
 }
+
+
+
+/**
+ * execute tn_write_eau as follows:
+ * <ol>
+ *  <li>erase all unprotected fields</li>
+ *  <li>Reset modified data flags</li>
+ *  <li>position cursor to first field</li>
+ *  <li>unlock keyboard</li>
+ * </ol>
+ */
 private void tn_erase_all_unprotected(){
-	/*
-	 * execute tn_write_eau as follows:
-	 *   1.  erase all unprotected fields
-	 *   2.  Reset modified data flags
-	 *   2.  position cursor to first field
-	 *   3.  unlock keyboard
-	 */
 	int first_input_sba = -1;
 	int index = 0;
 	while (index < fld_mdt_tot){
@@ -2388,10 +2740,13 @@ private void tn_erase_all_unprotected(){
     status_line.setText(status_line_view + " Ready for input");
 	refresh_request = true;
 }
+
+
+
+/**
+ * erase to end of current input field
+ */
 private void tn_erase_to_end(){ // RPI 628
-	/*
-	 * erase to end of current input field
-	 */
 	int index = scn_addr;
 	while (!scn_fld[index]){  // RPI 861
 		scn_char[index] = scn_null;
@@ -2405,11 +2760,14 @@ private void tn_erase_to_end(){ // RPI 628
 		}
 	}
 }
+
+
+
+/**
+ * get next tput buffer byte
+ * in tput_buff_byte else abort
+ */
 private void tn_get_tput_byte(){
-	/*
-	 * get next tput buffer byte
-	 * in tput_buff_byte else abort
-	 */
 	if (tput_index < tput_len){
 		tput_buff_byte = tput_byte[tput_index] & 0xff;
 		tput_index++;
@@ -2417,47 +2775,60 @@ private void tn_get_tput_byte(){
 		abort_error(105,"tput read past end of buffer");
 	}
 }
+
+
+
+/**
+ * incr scn_addr and wrap if at end of screen
+ */
 private void tn_next_field_addr(){
-	/*
-	 * incr scn_addr and wrap if at end of screen
-	 */
 	tn_scn_addr_inc();
 }
-private void tn_next_input_addr(){ 
-	/*
-	 * incr scn_addr to next input field addr
-	 */
+
+
+
+/**
+ * incr scn_addr to next input field addr
+ */
+private void tn_next_input_addr(){
     tn_scn_addr_inc();
 	if (scn_fld[scn_addr]){
 		tn_scn_addr_dec(); // RPI 861
 		tn_next_input_field();
 	}
 }
+
+
+
+/**
+ * next screen position with wrap
+ */
 private void tn_scn_addr_inc(){
-	/*
-	 * next screen position with wrap
-	 */
 	scn_addr++;
 	if (scn_addr > max_addr){
 		scn_addr = 0;
 	}
-
 }
+
+
+
+/**
+ * prev screen position with wrap
+ */
 private void tn_scn_addr_dec(){
-	/*
-	 * prev screen position with wrap
-	 */
 	scn_addr--;
 	if (scn_addr < 0){
 		scn_addr = max_addr-1;
 	}
-
 }
+
+
+
+/**
+ * store nulls in unprotected fields
+ * to ending addess
+ */
 private void tn_eua(){
-	/*
-	 * store nulls in unprotected fields
-	 * to ending addess
-	 */
 	int sba_end = tn_get_buff_addr();
 	while (scn_addr != sba_end){
 		if (tn_input_field()){  // RPI 861 
@@ -2468,10 +2839,13 @@ private void tn_eua(){
 		tn_scn_addr_inc();
 	}	
 }
+
+
+
+/**
+ * repeat character to sba address
+ */
 private void tn_ra(){
-	/* 
-	 * repeat character to sba address
-	 */
 	int sba_end = tn_get_buff_addr();
 	if (sba_end >= max_addr){
 		abort_error(103,"tn3270 ra addr error");
@@ -2501,18 +2875,24 @@ private void tn_ra(){
 		scn_addr = sba; // RPI 1091
 	}
 }
-private void tn_tab(){ 
-	/*
-	 * tab to next input field from current field
-	 */
+
+
+
+/**
+ * tab to next input field from current field
+ */
+private void tn_tab(){
      tn_next_input_field();
      tn_update_cursor();
 }
-private void tn_next_input_field(){ 
-	/*
-	 * find next input field starting at scn_addr
-	 * with wrap and set scn_addr and cursor if on.
-	 */
+
+
+
+/**
+ * find next input field starting at scn_addr
+ * with wrap and set scn_addr and cursor if on.
+ */
+private void tn_next_input_field(){
     int sba_first = scn_addr;
     int sba_next = max_addr;
     int index = 0;
@@ -2547,14 +2927,20 @@ private void tn_next_input_field(){
     	cur_fld_addr = save_cur_fld_addr; // RPI 1094 store if no input found
     }
 }
+
+
+
+/**
+ * return true if scn_addr is in unprotected input field and set cur_fld_addr<br />
+ *
+ * Note:
+ * <ol>
+ *  <li>True also returned if no fields and fld_addr set to -1 indicating none</li>
+ * </ol>
+ *
+ * @return boolean indicating field protection status
+ */
 private boolean tn_input_field(){
-	/*
-	 * return true if scn_addr is in unprotected
-	 * input field and set cur_fld_addr
-	 * Note:
-	 *  1. True also returned if no fields
-	 *     and fld_addr set to -1 indicating none
-	 */
 	cur_fld_addr = 0; 
 	if (fld_tot == 0){
 		return true;
@@ -2576,13 +2962,19 @@ private boolean tn_input_field(){
 		return false;
 	}
 }
+
+
+
+/**
+ * update modified field attribute 
+ * bit at fld_addr if any input fields<br />
+ *
+ * Note:
+ * <ol>
+ *  <li>fld_addr must be set by tn_input</li>
+ * </ol>
+ */
 private void tn_modify_field(){
-	/*
-	 * update modified field attribute 
-	 * bit at fld_addr if any input fields
-	 * Note:
-	 *   1.  fld_addr must be set by tn_input
-	 */
 	if (fld_mdt_tot > 0){
 		scn_attr[cur_fld_addr] = scn_attr[cur_fld_addr] 
 		                     | tn_mdt_mask;
@@ -2591,15 +2983,18 @@ private void tn_modify_field(){
 		     		                     | tn_mdt_mask; // RPI 671
 	}
 }
-private void tn_update_cursor(){ 
-	/*
-	 * update cursor for IC command or change
-	 * in focus due to screen input or tab.
-	 * 1.  Update scn_addr to next input field
-	 *     position or turn off cursor if none
-	 *     found.
-	 * 2.  Turn on blinking cursor at position found
-	 */
+
+
+
+/**
+ * update cursor for IC command or change
+ * in focus due to screen input or tab.
+ * <ol>
+ *  <li>Update scn_addr to next input field position or turn off cursor if none found.</li>
+ *  <li>Turn on blinking cursor at position found</li>
+ * </ol>
+ */
+private void tn_update_cursor(){
 	if (tz390.timeout){
 		abort_error(144,"GUAM abort due to timeout");
 	    return;
@@ -2617,11 +3012,16 @@ private void tn_update_cursor(){
 	tn_cursor_scn_addr = scn_addr;
     refresh_request = true;
 }
+
+
+
+/**
+ * update screen character with field
+ * attributes and extended attributes
+ *
+ * @param sba number
+ */
 private synchronized void tn_update_scn(int sba){
-	/*
-	 * update screen character with field
-	 * attributes and extended attributes
-	 */
 	if (sba >= max_addr){
 		return;
 	}
@@ -2654,16 +3054,19 @@ private synchronized void tn_update_scn(int sba){
 	scn_char[sba] = save_char; // RPI 628
    	tn_scn.scn_repaint = true;
 }
+
+
+
+/**
+ * fill tget_byte buffer with the following:
+ * <ol>
+ *  <li>action key  = enter, PF, PA, or clear key)</li>
+ *  <li>sba of cursor (if enter or PF only) RPI 856</li>
+ *  <li>sba code x'11', sba addr, modified data bytes for each mdt field else</li>
+ *  <li>Modified data bytes for unformated screen with no mdt fields </li>
+ * </ol>
+ */
 private void tn_get_screen_input(){
-	/*
-	 * fill tget_byte buffer with the following:
-	 *   1, action key  = enter, PF, PA, or clear key)
-	 *   2, sba of cursor (if enter or PF only) RPI 856
-	 *   3. sba code x'11', sba addr, modified data bytes
-	 *      for each mdt field else
-	 *   4. Modified data bytes for unformated
-	 *      screen with no mdt fields 
-	 */
 	tget_byte[0] = (byte) tn_aid;
 	if (tget_len == 1 
 		|| tn_aid == tn_clear_code  // RPI 856
@@ -2682,11 +3085,14 @@ private void tn_get_screen_input(){
 		tn_formatted_input();
 	}
 }
+
+
+
+/**
+ * return all modified bytes on screen
+ * when no field formatting.
+ */
 private void tn_unformatted_input(){
-	/*
-	 * return all modified bytes on screen
-	 * when no field formatting.  RPI 671
-	 */
 	tget_index = 3;             
 	int sba = 0;
     while (sba < max_addr){
@@ -2709,11 +3115,14 @@ private void tn_unformatted_input(){
 		tget_len = tget_index; // set actual length
 	}
 }
+
+
+
+/**
+ * return modified input fields
+ * preceeded with sba code x'11' and sba addr
+ */
 private void tn_formatted_input(){
-	/*
-	 * return modified input fields
-	 * preceeded with sba code x'11' and sba addr
-	 */
 	tget_index = 3;             
 	int index = 0;
 	while (index < fld_mdt_tot){
@@ -2763,18 +3172,23 @@ private void tn_formatted_input(){
 		tget_len = tget_index; // set actual length
 	}
 }
+
+
+
+/**
+ * execute wcc from next byte in buffer
+ * <pre>
+ * WCC 0xC3 = clear screen, reset KB and MDT's
+ * bit 0   - even bit count 
+ * bit 1   - reset screen
+ * bit 2-3 - printout format
+ * bit 4   - start print
+ * bit 5   - sound alarm
+ * bit 6   - keyboard restore
+ * bit 7   - reset modify data tags (MDT)
+ * </pre>
+ */
 private void tn_write_control_char(){
-	/*
-	 * execute wcc from next byte in buffer
-     * WCC 0xC3 = clear screen, reset KB and MDT's
-     * bit 0   - even bit count 
-     * bit 1   - reset screen
-     * bit 2-3 - printout format
-     * bit 4   - start print
-     * bit 5   - sound alarm
-     * bit 6   - keyboard restore
-     * bit 7   - reset modify data tags (MDT)
-	 */
 	if ((tput_buff_byte & 0x40) != 0){ // reset screen
         // RPI 222 removed tn_clear_screen()
 	}
@@ -2793,26 +3207,30 @@ private void tn_write_control_char(){
 		tn_reset_mdt();
 	}
 }
+
+
+
+/**
+ * sound alarm by sending ascii bell x'07' to System.out<br />
+ *
+ * Notes:
+ * <ol>
+ *  <li>Tried Toolkit.getToolkitDefault().beep(); and it didn't work</li>
+ *  <li>To get bell to work, I had to go to Windows XP Control Panel, select Sounds,
+ *      and assign the Windows default for "Alert" sound to "Windows XP error" sound (it was none)</li>
+ *  <li>Note alarm only sounds if running ez390 from command line, and not when running from z390.</li>
+ * </ol>
+ */
 private void sound_alarm_beep(){
-	/*
-	 * sound alarm by sending ascii bell x'07' 
-	 * to System.out
-	 * Notes:
-	 *   1.  Tried Toolkit.getToolkitDefault().beep();
-	 *       and it didn't work
-	 *   2.  To get bell to work, I had to go to 
-	 *       Windows XP Control Panel, select Sounds,
-	 *       and assign the Windows default for "Alert"
-	 *       sound to "Windows XP error" sound (it was none)
-	 *   3.  Note alarm only sounds if running ez390 from command
-	 *       line, and not when running from z390.
-	 */
 	System.out.println(tz390.alarm_bell); // RPI 220 use ascii bell x'07'
 }
+
+
+
+/**
+ * clear screen and reset fields
+ */
 private synchronized void tn_clear_screen(){ 
-	/*
-	 * clear screen and reset fields
-	 */
 		Arrays.fill(scn_char,0,max_addr,scn_null); // RPI 856
 		Arrays.fill(scn_fld,0,max_addr,false);  // RPI 861
 		Arrays.fill(scn_attr,0,max_addr,0);
@@ -2824,11 +3242,13 @@ private synchronized void tn_clear_screen(){
 	    tn_cursor_alt = false;  
         tn_scn.scn_grid.clearRect(0,0,tn_scn.scn_width,tn_scn.scn_height);
 }
+
+
+
+/**
+ * reset all mdt bits so only changes will be input.
+ */
 private void tn_reset_mdt(){
-	/*
-	 * reset all mdt bits so only changes will 
-	 * be input.
-	 */
 	if (fld_mdt_tot > 0){
 		int index = 0;
 		while (index < fld_mdt_tot){
@@ -2839,12 +3259,20 @@ private void tn_reset_mdt(){
 		Arrays.fill(scn_attr,0,max_addr,0);
 	}
 }
+
+
+
+/**
+ * return buffer address from next 2 bytes
+ *
+ * Notes:
+ * <ol>
+ *  <li>Wrap screen if sba &gt; max_addr</li>
+ * </ol>
+ *
+ * @return address value
+ */
 private int tn_get_buff_addr(){
-	/*
-	 * return buffer address from next 2 bytes
-	 * Notes:
-	 *   1.  Wrap screen if sba > max_addr
-	 */
 	int sba = -1;
 	if (tput_index < tput_len -2){
 		int high_bits = ebc_to_sba[tput_byte[tput_index] & 0xff];
@@ -2860,27 +3288,32 @@ private int tn_get_buff_addr(){
 	}
 	return sba;
 }
+
+
+
+/** 
+ * start field in tn3270 buffer at current sba.
+ * <ol>
+ *  <li>Set current tn_field_attr.</li>
+ *  <li>Set 1 protected blank at start of field.</li>
+ *  <li>Save unique unprotected fields in ascending order until next wcc clears them all.</li>
+ * </ol>
+ *
+ * <pre>
+ * field attribute byte
+ * bit  0-1 - set to form EBCDIC/ASCII graphic symbol rpi 572
+ * bit  2   - protected output
+ * bit  3   - numeric (protected and numeric = skip)
+ * bit  4-5 - display format
+ *              00 - normal intensity, no light pen
+ *              01 - normal intensity, light pen
+ *              10 - high intensity, no light pen
+ *              11 - field not displayed
+ * bit  6   - reserved
+ * bit  7   - modified data tag
+ * </pre>
+ */
 private void tn_start_field(){
-	/* 
-	 * start field in tn3270 buffer at current sba.
-	 *   1.  Set current tn_field_attr.
-	 *   2.  Set 1 protected blank at start of field.
-	 *   3.  Save unique unprotected fields
-	 *       in ascending order until next wcc
-	 *       clears them all.
-	 * 
-	 * field attribute byte
-	 * bit  0-1 - set to form EBCDIC/ASCII graphic symbol rpi 572
-	 * bit  2   - protected output
-	 * bit  3   - numeric (protected & numeric = skip)
-	 * bit  4-5 - display format
-	 *              00 - normal intensity, no light pen
-	 *              01 - normal intensity, light pen
-	 *              10 - high intensity, no light pen
-	 *              11 - field not displayed
-	 * bit  6   - reserved
-	 * bit  7   - modified data tag
-	 */
 	 cur_fld_attr  = tput_byte[tput_index] & 0x3f; // RPI 572
 	 cur_fld_hl    = 0;
 	 cur_fld_color = 0;
@@ -2895,12 +3328,17 @@ private void tn_start_field(){
 	 tn_update_scn(scn_addr);
 	 tn_next_field_addr();
 }
+
+
+
+/**
+ * <ol>
+ *  <li>add scn_addr to fld_addr if new</li>
+ *  <li>sort after new add.</li>
+ *  <li>set scn_fld_addr up to next</li>
+ * </ol>
+ */
 private void tn_add_field_addr(){
-	/*
-	 * 1. add scn_addr to fld_addr if new
-	 * 2. sort after new add.
-	 * 3. set scn_fld_addr up to next
-	 */
 	 scn_fld[scn_addr] = true; // RPI 861
 	 int index = 0;
 	 while (index < fld_tot){
@@ -2916,11 +3354,14 @@ private void tn_add_field_addr(){
 		    Arrays.sort(fld_addr,0,fld_tot);
 	 }
 }
+
+
+
+
+/**
+ * add scn_addr to fld_mdt_addr array if new and sort after new add.
+ */
 private void tn_add_input_field_addr(){
-	/*
-	 * add scn_addr to fld_mdt_addr array
-	 * if new and sort after new add.
-	 */
 	 int index = 0;
 	 while (index < fld_mdt_tot){
 		 if (scn_addr == fld_mdt_addr[index]){
@@ -2935,10 +3376,15 @@ private void tn_add_input_field_addr(){
 	    Arrays.sort(fld_mdt_addr,0,fld_mdt_tot);
 	 }
 }
+
+
+
+/**
+ * remove field definition at sba
+ *
+ * @param sba number
+ */
 private void tn_drop_field(int sba){
-	/*
-	 * remove field definition at sba
-	 */
 	int index = 0;
 	while (index < fld_tot){
 		if (fld_addr[index] == sba){
@@ -2957,10 +3403,15 @@ private void tn_drop_field(int sba){
 		index++;
 	}
 }
+
+
+
+/**
+ * remove input field
+ *
+ * @param sba number
+ */
 private void tn_drop_input_field(int sba){
-	/*
-	 * remove input field
-	 */
 	int index = 0;
 	while (index < fld_mdt_tot){
 		if (fld_mdt_addr[index] == sba){
@@ -2975,51 +3426,57 @@ private void tn_drop_input_field(int sba){
 		index++;
 	}
 }
+
+
+
+/**
+ * entended data stream start field.
+ *
+ * <pre>
+ * first byte is count of attribute pairs
+ *   type attribute
+ *   C0   basic field attribute
+ *   41   extended highlighting
+ *   42   color
+ *   
+ *   1.  Set current tn_field_attr
+ *                   tn_field_highlight
+ *                   tn_color.
+ *   2.  Set 1 protected blank at start of field.
+ *   3.  Save unique unprotected fields
+ *       in ascending order until next wcc
+ *       clears them all.
+ * 
+ * basic field attribute byte following x'C0'
+ * bit  0-1 - set based on remaining bits
+ * bit  2   - protected output
+ * bit  3   - numeric (protected and numeric = skip)
+ * bit  4-5 - display format
+ *              00 - normal intensity, no light pen
+ *              01 - normal intensity, light pen
+ *              10 - high intensity, no light pen
+ *              11 - field not displayed
+ * bit  6   - reserved
+ * bit  7   - modified data tag
+ * 
+ * highlight attribute byte following x'41'
+ * 00 - normal
+ * F1 - blink
+ * F2 - reverse video
+ * F4 - underscore
+ * 
+ * color attribute byte following x'42' color attr byte
+ * 00 Default 
+ * F1 Blue 
+ * F2 Red 
+ * F3 Pink 
+ * F4 Green 
+ * F5 Turquoise 
+ * F6 Yellow 
+ * F7 White 
+ * </pre>
+ */
 private void tn_eds_start_field(){
-	/* 
-	 * entended data stream start field
-	 * first byte is count of attribute pairs
-	 *   type attribute
-	 *   C0   basic field attribute
-	 *   41   extended highlighting
-	 *   42   color
-	 *   
-	 *   1.  Set current tn_field_attr
-	 *                   tn_field_highlight
-	 *                   tn_color.
-	 *   2.  Set 1 protected blank at start of field.
-	 *   3.  Save unique unprotected fields
-	 *       in ascending order until next wcc
-	 *       clears them all.
-	 * 
-	 * basic field attribute byte following x'C0'
-	 * bit  0-1 - set based on remaining bits
-	 * bit  2   - protected output
-	 * bit  3   - numeric (protected & numeric = skip)
-	 * bit  4-5 - display format
-	 *              00 - normal intensity, no light pen
-	 *              01 - normal intensity, light pen
-	 *              10 - high intensity, no light pen
-	 *              11 - field not displayed
-	 * bit  6   - reserved
-	 * bit  7   - modified data tag
-	 * 
-	 * highlight attribute byte following x'41'
-	 * 00 - normal
-	 * F1 - blink
-	 * F2 - reverse video
-	 * F4 - underscore
-	 * 
-	 * color attribute byte following x'42' color attr byte
-	 * 00 Default 
-     * F1 Blue 
-     * F2 Red 
-     * F3 Pink 
-     * F4 Green 
-     * F5 Turquoise 
-     * F6 Yellow 
-     * F7 White 
-	 */
 	 cur_fld_hl    = 0;
 	 cur_fld_color = 0;
 	 int count = tput_byte[tput_index] & 0xff;
@@ -3034,11 +3491,14 @@ private void tn_eds_start_field(){
 	 }	
 	 tn_update_scn(scn_addr);
 }
+
+
+
+/**
+ * set single field attribute from next 2 bytes
+ * see sa and sfe commands
+ */
 private void tn_eds_set_field_attribute(){
-	/*
-	 * set single field attribute from next 2 bytes
-	 * see sa and sfe commands
-	 */
 	 int type = tput_byte[tput_index] & 0xff;
 	 tput_index++;
 	 switch (type){
@@ -3060,12 +3520,16 @@ private void tn_eds_set_field_attribute(){
          return;
 	 }
 }
+
+
+
+/**
+ * <ol>
+ *  <li>Read keyboard text into tget_buff until return or field full and translate to EBCDIC</li>
+ *  <li>Echo characters to screen at row,col.</li>
+ * </ol>
+ */
 private void keyboard_readline(){
-	/*
-	 * 1.  Read keyboard text into tget_buff until
-	 * return or field full and translate to EBCDIC
-	 * 2.  Echo characters to screen at row,col.
-	 */
 	int key = 0;
 	int keychar = 0;
 	int index = 0;
@@ -3097,10 +3561,15 @@ private void keyboard_readline(){
 	    }
 	}
 }
+
+
+
+/**
+ * write 1 character at current screen location
+ *
+ * @param key character to write
+ */
 private void scn_write_char(char key){
-	/*
-	 * write 1 character at current screen location
-	 */
     scn_addr = (guam_cur_row-1)*max_cols + (guam_cur_col-1);
     scn_char[scn_addr] = key;
 	tn_update_scn(scn_addr);
@@ -3109,12 +3578,15 @@ private void scn_write_char(char key){
 		scn_next_line();
 	}
 }
+
+
+
+/**
+ * position to next screen line with
+ * status line prompt before wrapping screen
+ * to position back to line 1
+ */
 private void scn_next_line(){
-	/*
-	 * position to next screen line with
-	 * status line prompt before wrapping screen
-	 * to position back to line 1
-	 */
 	guam_cur_col = 1;
 	guam_cur_row++;
 	if (guam_cur_row > max_rows){
@@ -3126,11 +3598,17 @@ private void scn_next_line(){
 		guam_cur_row = 1;
 	}
 }
+
+
+
+/**
+ * return string of ascii characters from tget_buff up to lbuff long
+ *
+ * @param text_byte text buffer
+ * @param lbuff length of buffer
+ * @return text string
+ */
 private String get_ascii_string(byte[] text_byte,int lbuff){
-	/*
-	 * return string of ascii characters from
-	 * tget_buff up to lbuff long
-	 */
 	int index = 0;
 	String text = "";
 	while (index < lbuff){
@@ -3149,16 +3627,19 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 	}
 	return text;
 }
-     /** *********************************************
-      * Public GUAM GUI application interfaces for
-      *   WTO/WTOR   - MCS view
-      *   TPUT/TGET  - Screen view
-      *   GUAM MACRO - graphic view and window commands
-      *
-      * @param ecb_addr - int - address of ECB
-      * @return boolean to indicate success (true) of failure (false)
-      ***********************************************/
-	 public boolean wtor_request_reply(int ecb_addr){
+
+
+
+/** *********************************************
+ * Public GUAM GUI application interfaces for
+ *   WTO/WTOR   - MCS view
+ *   TPUT/TGET  - Screen view
+ *   GUAM MACRO - graphic view and window commands
+ *
+ * @param ecb_addr - int - address of ECB
+ * @return boolean to indicate success (true) of failure (false)
+ ***********************************************/
+public boolean wtor_request_reply(int ecb_addr){
 		 /*
 		  * return quam_cmd_line and reset
 		  */
@@ -3173,10 +3654,16 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 			 return false;
 		 }
 	 }
-	 public String get_wtor_reply_string(int ecb_addr){
-		 /*
-		  * return wtor reply string if ready else null
-		  */
+
+
+
+/**
+ * return wtor reply string if ready else null
+ *
+ * @param ecb_addr address of ecb
+ * @return string value
+ */
+public String get_wtor_reply_string(int ecb_addr){
 		 if (!wtor_running){
 			 if (wtor_ecb_addr != -1
 				 && wtor_ecb_addr == ecb_addr
@@ -3189,11 +3676,16 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 		 }
 		 return null;
 	 }
-	 public void start_guam(String title,tz390 shared_tz390){
-		 /*
-		  * startup gz390 GUAM GUI window with title
-		  * in default mcs mode for wto/wtor
-		  */
+
+
+
+/**
+ * startup gz390 GUAM GUI window with title in default mcs mode for wto/wtor
+ *
+ * @param title screen title
+ * @param shared_tz390 tz390 instance
+ */
+public void start_guam(String title,tz390 shared_tz390){
 	     tz390 = shared_tz390;
 	     main_title = "GZ390 " + tz390.version;
 		 String[] dummy_args = new String[0];
@@ -3202,32 +3694,49 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 		 guam_window_title(title);
 		 refresh_request = true;
 	 }
-	 public void guam_window_title(String title){
-		 /*
-		  * set gz390 GUAM GUI window title 
-		  * 
-		  * Notes:
-		  *   1.  Called from ez390 with ez390_pgm
-		  *       at initization time if option GUAM .
-		  */
+
+
+
+/**
+ * set gz390 GUAM GUI window title<br />
+ * 
+ * Notes:
+ * <ol>
+ *  <li>Called from ez390 with ez390_pgm at initization time if option GUAM.</li>
+ * </ol>
+ *
+ * @param title text
+ */
+ public void guam_window_title(String title){
 		 main_title = title;
 	   }
-	   public synchronized void guam_put_log(String msg) {
-		   	/*
-		   	 * Write message to log file and to console
-		   	 * if console mode or console option on.
-		   	 * 
-		   	 * Append any output from CMD still in buffers
-		   	 * to front of msg with \n
-		   	 */
+
+
+
+/**
+ * Write message to log file and to console
+ * if console mode or console option on.
+ * 
+ * Append any output from CMD still in buffers
+ * to front of msg with newline
+ *
+ * @param msg message to be logged
+ */
+public synchronized void guam_put_log(String msg) {
 		   	    io_count++;
   	        	log_text.append(msg + "\n");
    	        	main_view_changed = true;
 		   }
-       public void guam_window_loc(int x,int y){
-           /*
-            * set location of main window x, y
-            */
+
+
+
+/**
+ * set location of main window x, y
+ *
+ * @param x horizontal position
+ * @param y vertical position
+ */
+public void guam_window_loc(int x,int y){
            		if  (x < 0){
            			x = 0;
            		} else {
@@ -3258,10 +3767,16 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
           		main_frame.setSize(tn_scn.main_width,tn_scn.main_height);
               	refresh_request = true;
            }
-   	    public void guam_window_size(int x,int y){
-   	    /*
-   	     * resize main window
-   	     */	
+
+
+
+/**
+ * resize main window
+ *
+ * @param x horizontal
+ * @param y vertical
+ */
+public void guam_window_size(int x,int y){
    		    	main_loc_x = (int) main_frame.getLocation().getX();
    		    	main_loc_y = (int) main_frame.getLocation().getY();
    	    		if  (x < tz390.min_main_width){
@@ -3283,19 +3798,34 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
    	    		main_frame.setSize(tn_scn.main_width,tn_scn.main_height);
    	    		refresh_request = true;
     	    }
-        public void guam_window_font(int font){
-        	/*
-        	 * set font size 
-        	 */
+
+
+
+/**
+ * set font size
+ *
+ * @param font number
+ */
+public void guam_window_font(int font){
         	font_command(font);
         }
-        public void guam_window_view(int view,int x,int y,int color){
-        	/*
-        	 * set window view  
-        	 *   1 = MCS console view
-        	 *   2 = TN3270 screen view
-        	 *   3 = graphics view
-        	 */
+
+
+
+/**
+ * set window view
+ * <pre>
+ *  1 = MCS console view
+ *  2 = TN3270 screen view
+ *  3 = graphics view
+ * </pre>
+ *
+ * @param view number
+ * @param x horizontal
+ * @param y vertical
+ * @param color number
+ */
+public void guam_window_view(int view,int x,int y,int color){
         	switch (view){
         	case 1: // MCS console view
         		set_view_mcs();
@@ -3308,28 +3838,50 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
         		break;
         	}
         }
-        public int guam_window_getview(){
-        	/*
-        	 * return current window view
-        	 *   1 = MCS console view
-        	 *   2 = TN3270 screen view
-        	 *   3 = graphics view
-        	 */
+
+
+
+/**
+ * return current window view
+ * <pre>
+ *  1 = MCS console view
+ *  2 = TN3270 screen view
+ *  3 = graphics view
+ * </pre>
+ *
+ * @return code as above
+ */
+public int guam_window_getview(){
         	return guam_view;
         }
-        public void guam_screen_write(int row, int col, ByteBuffer buff,int lbuff, int color){
-        	/*
-        	 * write text at row,col from buff for lbuff
-        	 * using color
-        	 */
+
+
+
+/**
+ * write text at row,col from buff for lbuff using color
+ *
+ * @param row number
+ * @param col number
+ * @param buff text buffer
+ * @param lbuff length of buffer
+ * @param color number
+ */
+public void guam_screen_write(int row, int col, ByteBuffer buff,int lbuff, int color){
         }
-        public ByteBuffer guam_screen_read(int lbuff,boolean wait){
-        	/*
-        	 * return ByteBuffer of lenght lbuff
-        	 * from TN3270 screen.  If wait = 1 
-        	 * wait for input else return r15=4 
-        	 * if none ready.
-        	 */
+
+
+
+/**
+ * return ByteBuffer of lenght lbuff
+ * from TN3270 screen.  If wait = 1 
+ * wait for input else return r15=4 
+ * if none ready.
+ *
+ * @param lbuff length of buffer
+ * @param wait indicator
+ * @return ByteBuffer instance
+ */
+public ByteBuffer guam_screen_read(int lbuff,boolean wait){
         	byte[] temp_byte = new byte[lbuff];
         	ByteBuffer temp_buff = ByteBuffer.wrap(temp_byte,0,lbuff);
         	while (guam_tot_key == 0 && wait){
@@ -3337,52 +3889,111 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
         	}
         	return temp_buff;
         }
-        public void guam_screen_field(int row, int col, int lfield){
-        	/*
-        	 * define field for input from screen
-        	 */
+
+
+
+/**
+ * define field for input from screen
+ *
+ * @param row number
+ * @param col number
+ * @param lfield number
+ */
+public void guam_screen_field(int row, int col, int lfield){
         }
-        public void guam_screen_cursor(int row, int col, int type){
-        	/*
-        	 * set cursor type at row, col
-        	 */
+
+
+
+/**
+ * set cursor type at row, col
+ *
+ * @param row number
+ * @param col number
+ * @param type number
+ */
+public void guam_screen_cursor(int row, int col, int type){
         }
-        public void guam_screen_color(int bg_color, int text_color){
-        	/*
-        	 * set screen background and text colors
-        	 */
+
+
+
+/**
+ * set screen background and text colors
+ *
+ * @param bg_color number
+ * @param text_color number
+ */
+public void guam_screen_color(int bg_color, int text_color){
         	tn_scn.scn_background_color = new Color(bg_color);
         	tn_scn.scn_text_color = new Color(text_color);	
         	tn_scn.scn_grid.setBackground(tn_scn.scn_background_color);
         	tn_scn.scn_grid.setColor(tn_scn.scn_text_color);
         }
-        public void guam_graph_point(int x, int y, int color){
-        	/*
-        	 * draw point at x,y 
-        	 */
+
+
+
+/**
+ * draw point at x,y 
+ *
+ * @param x horizontal position
+ * @param y vertical position
+ * @param color number
+ */
+public void guam_graph_point(int x, int y, int color){
         }
-        public void guam_graph_line(int x1, int y1, int x2, int y2, int color){
-        	/*
-        	 * draw point at x,y 
-        	 */
+
+
+
+/**
+ * draw line from at x1,y1 to x2,y2
+ *
+ * @param x1 horizontal position
+ * @param y1 vertical position
+ * @param x2 horizontal position
+ * @param y2 vertical position
+ * @param color number
+ */
+public void guam_graph_line(int x1, int y1, int x2, int y2, int color){
         }
-        public void guam_graph_fill(int x1, int y1, int x2, int y2, int color){
-        	/*
-        	 * fill area at x1,y1 to x2,y2 
-        	 */
+
+
+
+/**
+ * fill area at x1,y1 to x2,y2 
+ *
+ * @param x1 horizontal position
+ * @param y1 vertical position
+ * @param x2 horizontal position
+ * @param y2 vertical position
+ * @param color number
+ */
+public void guam_graph_fill(int x1, int y1, int x2, int y2, int color){
         }
-        public void guam_graph_text(int x1, int y1, String text, int color){
-        	/*
-        	 * draw characters at x,y 
-        	 */
+
+
+
+/**
+ * draw characters at x,y 
+ *
+ * @param x1 horizontal position
+ * @param y1 vertical position
+ * @param text to be displayed
+ * @param color number
+ */
+public void guam_graph_text(int x1, int y1, String text, int color){
         }
-        public int guam_keyboard_read(boolean wait){
-        	/*
-        	 * read next keyboard keycode and keychar
-        	 * and return as int (code high 16, char low 16).
-        	 * If none ready and no wait return -1
-        	 * else wait for next input key
-        	 */
+
+
+
+/**
+ * read next keyboard keycode and keychar
+ * and return as int (code high 16, char low 16).
+ * If none ready and no wait return -1
+ * else wait for next input key
+ *
+ * @param wait indicator
+ * @return number
+ */
+public int guam_keyboard_read(boolean wait){
         	while (guam_tot_key == 0 && wait){
         		try {
         			Thread.sleep(monitor_wait);
@@ -3404,33 +4015,41 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
         		return -1;
         	}
         }
-        public int[] guam_mouse_read(){
-        	/*
-        	 * return int[4] with x,y,left,right
-        	 */
+
+
+
+/**
+ * return int[4] with x,y,left,right
+ *
+ * @return array of integers
+ */
+public int[] guam_mouse_read(){
         	int[] mouse = new int[4];
         	return mouse;
         }
-        public void guam_sound_play(String wav_file){
-        	/*
-        	 * play wav_file
-        	 */
 
+
+
+/**
+ * play wav_file
+ *
+ * @param wav_file location of wav file
+ */
+public void guam_sound_play(String wav_file){
         }
-    public void guam_tget(){  
-    	/*
-    	 * 1.  Return last tn3270 data stream input
-    	 *     if available following keyboard enter
-    	 *     or PF key.  If option edit, remove
-    	 *     control characters and translate to
-    	 *     EBCDIC unless ASCII mode.
-    	 * 2.  If none, and option wait then wait
-    	 *     else return R15=4 indicating not avail.
-    	 * 3.  Set tget_len to actual bytes returns if
-    	 *     less than requested length.
-    	 * 4.  Set R1=length of data buffer returned
-    	 *     and R15=0 or 4 if none and NOWAIT
-    	 */
+
+
+
+/**
+ * <ol>
+ *  <li>Return last tn3270 data stream input if available following keyboard enter or PF key.
+ *      If option edit, remove control characters and translate to EBCDIC unless ASCII mode.</li>
+ *  <li>If none, and option wait then wait else return R15=4 indicating not avail.</li>
+ *  <li>Set tget_len to actual bytes returns if less than requested length.</li>
+ *  <li>Set R1=length of data buffer returned and R15=0 or 4 if none and NOWAIT</li>
+ * </ol>
+ */
+public void guam_tget(){
     	tpg_rc = 0; // assume rc = 0
     	if (guam_view != guam_view_screen){
     		set_view_screen(0,0,0);
@@ -3460,11 +4079,13 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
             keyboard_readline();
     	}
     }
-    public void guam_tput(){ 
-    	/*
-    	 * 1.  Display TN3290 data stream buffer on
-    	 *     GUAM GUI 3270 screen and return true of ok.
-    	 */
+
+
+
+/**
+ * Display TN3290 data stream buffer on GUAM GUI 3270 screen and return true of ok.
+ */
+public void guam_tput(){
     	tpg_rc = 0; // RPI 221 assume ok
     	if (guam_view != guam_view_screen){
     		set_view_screen(0,0,0);
@@ -3479,10 +4100,13 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
     	}
         gz390_cmd_line.requestFocus();
 	}
-    private void tn_repaint_screen(){
-    	/*
-    	 * repaint scn_char for new font size screen
-    	 */
+
+
+
+/**
+ * repaint scn_char for new font size screen
+ */
+private void tn_repaint_screen(){
     	tn_scn.stop_scn_updates();
     	int sba = 0;
     	while (sba < max_addr){
@@ -3491,4 +4115,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
     	}
     	tn_scn.start_scn_updates();
     }
+
+
+
 }
