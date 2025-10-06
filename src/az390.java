@@ -443,6 +443,8 @@ public  class  az390 implements Runnable {
     * 2025-05-30 AFK #631 Improve opcode table definitions
     * 2025-07-27 AFK      Add javadoc comments
     * 2025-08-08 AFK #661 Add z17 instructions to opcode tables
+    * 3025-09-17 jjg #659 CCW/CCW0/CCW1 with location counter reference in
+    *                     address field generates incorrect object code
   	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -6017,8 +6019,10 @@ private void reduce_exp_rld(){
  *      for use in PRN display (i.e. show addresses
  *      relative to module versus CSECT).</li>
  * </ol>
+ *
+ * @param loc_ctr_offset offset from location counter for (relocatable) expression position  // #659
  */
-private void gen_exp_rld(){
+private void gen_exp_rld(int loc_ctr_offset){  // #659
 	if (cur_esd == 0 || sym_type[esd_sid[esd_base[cur_esd]]] != sym_cst){ // RPI 1208
 		return;
 	}        
@@ -6028,7 +6032,7 @@ private void gen_exp_rld(){
 	while (index < tot_exp_rld_add){
 		if (tot_rld < tz390.opt_maxrld){
 			rld_fld_esd[tot_rld] = esd_base[cur_esd]; // RPI 301
-			rld_fld_loc[tot_rld] = loc_ctr - sym_loc[esd_sid[esd_base[cur_esd]]]; // RPI 564 use base 
+			rld_fld_loc[tot_rld] = loc_ctr_offset + loc_ctr - sym_loc[esd_sid[esd_base[cur_esd]]]; // RPI 564 use base  // #659 
 			rld_fld_len[tot_rld] = exp_rld_len;
 			rld_fld_sgn[tot_rld] = rld_add;
 			rld_xrf_esd[tot_rld] = exp_rld_add_esd[index];
@@ -6051,7 +6055,7 @@ private void gen_exp_rld(){
 	while (index < tot_exp_rld_sub){
 		if (tot_rld < tz390.opt_maxrld){
 			rld_fld_esd[tot_rld] = cur_esd;
-			rld_fld_loc[tot_rld] = loc_ctr - sym_loc[esd_sid[cur_esd]]; 
+			rld_fld_loc[tot_rld] = loc_ctr_offset + loc_ctr - sym_loc[esd_sid[cur_esd]];  // #659 
 			rld_fld_len[tot_rld] = exp_rld_len;
 			rld_fld_sgn[tot_rld] = rld_sub;
 			rld_xrf_esd[tot_rld] = exp_rld_sub_esd[index];
@@ -7241,9 +7245,29 @@ private boolean calc_dca_exp(){
  *  <li>exp_index = index to terminator which can be end of string, or ()</li>
  * </ol>
  *
+ * Note: this version applies a default location counter offset of 0
+ *
  * @return true if valid absolute or relative expression, false otherwise
  */
-private boolean calc_exp(){
+private boolean calc_exp() { return calc_exp(0); }  // #659
+
+
+
+/**
+ * parse abs/rel expression starting at
+ * exp_text.charAt(exp_index)<br />
+ * return true if ok and set:
+ * <ol>
+ *  <li>exp_val = abs or rel offset</li>
+ *  <li>exp_esd = abs 0 or cst/dst esd</li>
+ *  <li>exp_index = index to terminator which can be end of string, or ()</li>
+ * </ol>
+ *
+ * @param loc_ctr_offset offset from location counter for (relocatable) expression position  // #659
+ *
+ * @return true if valid absolute or relative expression, false otherwise
+ */
+private boolean calc_exp(int loc_ctr_offset){       // #659
 	   if (exp_text == null || exp_index > exp_text.length()){
 	   	   exp_text = ""; // RPI 356
 		   return false;
@@ -7273,7 +7297,7 @@ private boolean calc_exp(){
 	   	   	  exp_token = "" + exp_term_op;
 	   	   	  exp_eot = true;
 	   	   }
-		   proc_exp_token();
+		   proc_exp_token(loc_ctr_offset); // #659
 	   }
 	   if (!bal_abort){
 		   if (!exp_eot){
@@ -7294,8 +7318,10 @@ private boolean calc_exp(){
  *  <li>exec or push operations + - * /</li>
  *  <li>terminate on end of string or ()</li>
  * </ol>
+ *
+ * @param loc_ctr_offset offset from location counter for (relocatable) expression position  // #659
  */
-private void proc_exp_token(){
+private void proc_exp_token(int loc_ctr_offset){ // #659
 	check_prev_op = true;
 	while (check_prev_op && !bal_abort){
 	    exp_op = exp_token.toUpperCase();
@@ -7305,24 +7331,24 @@ private void proc_exp_token(){
 	        		exp_token = "U+";
 	        		exp_op = exp_token;
 	        	}
-	        	proc_exp_op();
+	        	proc_exp_op(loc_ctr_offset); // #659
 	            break;
 	        case '-':
 	        	if (!exp_sym_pushed){
 	        		exp_token = "U-";
 	        		exp_op = exp_token;
 	        	}
-	        	proc_exp_op();
+	        	proc_exp_op(loc_ctr_offset); // #659
 	            break;
 	        case '*':
 	        	if  (exp_sym_last){
-	        	    proc_exp_op();
+	        	    proc_exp_op(loc_ctr_offset); // #659
 	        	} else {
 	        		proc_loc_ctr();
 	        	}
 	            break;
 	        case '/':
-	        	proc_exp_op();
+	        	proc_exp_op(loc_ctr_offset); // #659
 	            break;
 	        case '(':
 	        	if (exp_level == 0
@@ -7330,25 +7356,25 @@ private void proc_exp_token(){
 	        		&& tot_exp_stk_sym > 0){
 	        		exp_op = exp_term_op;
 	        	}
-	        	proc_exp_op();
+	        	proc_exp_op(loc_ctr_offset); // #659
 	            break;
 	        case ')':
-	        	proc_exp_op();
+	        	proc_exp_op(loc_ctr_offset); // #659
 	            break;
 	        case '\t': //tab  RPI181
 	        case '\r': //cr
 	        case '\n': //lf
 	        case ' ':  //space
 	        	exp_op = exp_term_op;
-	        	proc_exp_op();
+	        	proc_exp_op(loc_ctr_offset); // #659
 	            break;
 	        case ',':
 	        case '\'': // terminator for DCF, DCH, expressions
 	        	exp_op = exp_term_op;
-	        	proc_exp_op();
+	        	proc_exp_op(loc_ctr_offset); // #659
 	            break;
 	        case '~':  // terminator
-	        	proc_exp_op();
+	        	proc_exp_op(loc_ctr_offset); // #659
 	            break;
 	        case 'B':
 	        	if (exp_token.length() > 2 && exp_token.charAt(exp_token.length()-1) == '\''){ // RPI 270
@@ -7369,21 +7395,21 @@ private void proc_exp_token(){
 	            break;
 	        case 'I':  // RPI 790 I' operator
 	        	if (exp_token.length() > 1 && exp_token.charAt(1) == '\''){
-	        	   proc_exp_op();
+	        	   proc_exp_op(loc_ctr_offset); // #659
 	        	} else {
 	        	   proc_exp_sym();
 	        	}
 	            break;
 	        case 'L':
 	        	if (exp_token.length() > 1 && exp_token.charAt(1) == '\''){
-	        	   proc_exp_op();
+	        	   proc_exp_op(loc_ctr_offset); // #659
 	        	} else {
 	        	   proc_exp_sym();
 	        	}
 	            break;
 	        case 'S':  // RPI 790 S' operator
 	        	if (exp_token.length() > 1 && exp_token.charAt(1) == '\''){
-	        	   proc_exp_op();
+	        	   proc_exp_op(loc_ctr_offset); // #659
 	        	} else {
 	        	   proc_exp_sym();
 	        	}
@@ -7392,7 +7418,7 @@ private void proc_exp_token(){
 	        	if (exp_token.length() == 2
 	        		&& (exp_token.charAt(1) == '-'
 	        			|| exp_token.charAt(1) == '+')){
-		        	   proc_exp_op();
+		        	   proc_exp_op(loc_ctr_offset); // #659
 		        	} else {
 		        	   proc_exp_sym();
 		        	}
@@ -7473,8 +7499,10 @@ private void proc_exp_sdt(){
 
 /**
  * description missing
+ *
+ * @param loc_ctr_offset offset from location counter for (relocatable) expression position  // #659
  */
-private void proc_exp_op(){
+private void proc_exp_op(int loc_ctr_offset) { // #659
 	if  (tot_exp_stk_op > 0){
 	    exp_prev_op = exp_stk_op[tot_exp_stk_op -1];
 	} else {
@@ -7524,7 +7552,7 @@ private void proc_exp_op(){
   	   exp_level--;
   	   if (exp_level == 0 && bal_op.equals("AIF")){
   	   	  exp_op = exp_term_op;
-  	   	  exp_term();
+  	   	  exp_term(loc_ctr_offset); // #659
   	   }
   	   check_prev_op = false;
        break;
@@ -7561,12 +7589,12 @@ private void proc_exp_op(){
     	 }
          break;
     case 6: // terminator space, comma, unmatched )
-  	   exp_term();
+  	   exp_term(loc_ctr_offset); // #659
   	   check_prev_op = false;
   	   break;
   	case 7: // check if ( is terminator after value
   	   if (exp_sym_last){
-   	       exp_term();
+   	       exp_term(loc_ctr_offset); // #659
   	   } else {
    	       exp_push_op();
            exp_level++;
@@ -7843,8 +7871,10 @@ private void exp_pop_op(){
 /**
  * terminate expression returning
  * value on stack if no errors
+ *
+ * @param loc_ctr_offset offset from location counter for (relocatable) expression position  // #659
  */
-private void exp_term(){
+private void exp_term(int loc_ctr_offset){  // #659
 	if (tot_exp_stk_sym == 1 && tot_exp_stk_op == 0){
 		exp_term = true;
     	exp_val = exp_stk_sym_val[0];
@@ -7857,7 +7887,7 @@ private void exp_term(){
         } else if (exp_esd == esd_cpx_rld){
         	if (exp_rld_len > 0){ // RPI 893
         		if (gen_obj_code){
-        			gen_exp_rld();
+        			gen_exp_rld(loc_ctr_offset);  // #659
         		}    
             } else {
             	log_error(61,"invalid complex rld expression: " + exp_text.substring(0,exp_index)); // RPI 1034
@@ -7867,7 +7897,7 @@ private void exp_term(){
         		if (exp_rld_len > 0){ // RPI 894
         			exp_rld_add_esd[0] = exp_esd;
         			tot_exp_rld_add = 1;
-        			gen_exp_rld();
+        			gen_exp_rld(loc_ctr_offset);  // #659
         		}
         	}
             exp_type = sym_rel;
@@ -8707,8 +8737,26 @@ private String bytes_to_hex(byte[] bytes,int byte_start,int byte_length,int chun
  *  <li>Called from END processing with BAL_EOF to flush buffer.</li>
  *  <li>Reset obj_code for use by DC routines</li>
  * </ol>
+ *
+ * Note: this version applies a default location counter offset of 0
+ *
  */
-private void put_obj_text(){
+private void put_obj_text() { put_obj_text(0); }      // #659
+
+
+
+/**
+ * <ol>
+ *  <li>Append obj_code to list_obj_code for print line (reguired by mult DC calls).</li>
+ *  <li>Exit if gen_obj_code not on or not CSECT</li>
+ *  <li>Buffer output of ojbect text code for contiguous data in same ESD.</li>
+ *  <li>Called from END processing with BAL_EOF to flush buffer.</li>
+ *  <li>Reset obj_code for use by DC routines</li>
+ * </ol>
+ *
+ * @param loc_ctr_offset offset from location counter for (relocatable) expression position  // #659
+ */
+private void put_obj_text( int loc_ctr_offset ){      // #659
 	 if (tz390.z390_abort || mz390_abort){
 		 return;
 	 }
@@ -8732,7 +8780,7 @@ private void put_obj_text(){
 	 if (cur_text_len > 0
 	 	&& (bal_eof 
 	 		|| cur_text_esd != esd_base[cur_esd] // RPI 301
-		 	|| cur_text_loc != loc_ctr)){
+		 	|| cur_text_loc != loc_ctr_offset + loc_ctr)){  // #659
 		cur_text_loc = cur_text_loc - cur_text_len;
 		temp_obj_line = ".TXT ESD=" + tz390.get_hex(cur_text_esd,4) + " LOC=" + tz390.get_hex(cur_text_loc - sym_loc[esd_sid[cur_text_esd]],8) + " LEN=" + tz390.get_hex(cur_text_len,2) + " " + cur_text_buff;
 		put_obj_line(temp_obj_line);
@@ -8741,7 +8789,7 @@ private void put_obj_text(){
 	if (bal_eof || bal_abort)return;  // rpi 851
 	if (cur_text_len == 0){
 		cur_text_esd = esd_base[sym_esd[esd_sid[cur_esd]]]; // RPI 301
-		cur_text_loc = loc_ctr;
+		cur_text_loc = loc_ctr_offset + loc_ctr;  // #659
 		cur_text_buff = "";
 	} 
 	cur_text_buff = cur_text_buff.concat(obj_code);
@@ -12202,14 +12250,20 @@ private void gen_ccw0(){  // RPI 567
 		obj_code = obj_code + tz390.get_hex(exp_val,2);
 		loc_len  = 1;
 		put_obj_text();
-		loc_ctr++;
 		if (exp_text.charAt(exp_index) == ','){
 			 exp_index++;
 			 exp_rld_len = 3;
-			 if (calc_exp()){  // RPI 771
+			 // calc_exp() uses loc_ctr and loc_ctr offset for rld  // #659
+			 if (calc_exp(1)){  // RPI 771  #659
 				 obj_code = obj_code + tz390.get_hex(exp_val,6);
-				 put_obj_text();        // RPI 632 
-				 loc_ctr = loc_ctr + 3; // RPI 632
+				 // put object text at loc_ctr + 1  // #659
+				 put_obj_text(1);       // RPI 632  #659
+				 // Set loc_ctr past the command code and data address.  // #659
+				 // Per HLASM LR, the location counter does not change   // #659
+				 // for the entire generation of the CCW; however, it    // #659
+				 // is not referenced for the remaining fields, so       // #659
+				 // a problem does not arise here.                       // #659 
+				 loc_ctr = loc_ctr + 4; // RPI 632  #659
 				 if (exp_text.charAt(exp_index) == ','){
 					 exp_index++;
 					 exp_rld_len = 0;
@@ -12255,15 +12309,15 @@ private void gen_ccw1(){  // RPI 567
 		&& exp_val >= 0 
 		&& exp_val <  256){ 
 		ccw_op = tz390.get_hex(exp_val,2);
-		loc_ctr = loc_ctr + 4;
 		if (exp_text.charAt(exp_index) == ','){
 			 exp_index++;
 			 exp_rld_len = 4;
-			 if (calc_exp()){  // RPI 771
+			 // calc_exp() uses loc_ctr and loc_ctr offset for rld  // #659
+			 if (calc_exp(4)){  // RPI 771  #659
 				 obj_code = obj_code + tz390.get_hex(exp_val,8);
-				 put_obj_text();
+				 // put object text for the data address at loc_ctr + 4  // #659
+				 put_obj_text(4); // #659
 				 exp_rld_len = 0;
-				 loc_ctr = loc_ctr - 4;
 				 if (exp_text.charAt(exp_index) == ','){
 					 exp_index++;
 					 put_obj_text();
