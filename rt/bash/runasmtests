@@ -22,6 +22,7 @@ bash/asmlg tests/TEDIT    trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTAMPS trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/IS215 trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/IS659 trace noloadhigh $sysmac $optable
+bash/asmlg rt/mlc/IS660 trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTDC1  trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTASC1 ASCII trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTDC2  trace noloadhigh $sysmac $optable
