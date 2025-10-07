@@ -1,28 +1,47 @@
 #!/bin/bash
 
-# assist: assemble, link, and exec ASSIST program $1.MLC 
+# assist: assemble, link, and exec ASSIST program $1.MLC
+
+# debug flag; 0=no debug, 1=debug
+debug=0
 
 if [ $# -eq 0 ] || [ -z "$1" ]; then echo "assist ERROR: missing file name"; exit 12; fi
-
-# remove trailing ".MLC", if any
-zFile="${1%.MLC}"
-
-# error if missing name to left of ".MLC"
-if [ -z "$zFile" ]; then echo "assist ERROR: invalid file name $1"; exit 16; fi
-# error if input file with MLC extension does not exist
-if [ ! -f "$zFile".MLC ]; then echo "assist ERROR: file $zFile.MLC not found"; exit 16; fi
 
 # extract longest substring that ends with "/"
 dir=${0%/*}
 
-export XREAD=$1.XRD
-export XPRNT=$1.XPR
-export XPNCH=$1.XPH
-export XGET=$1.XGT
-export XPUT=$1.XPT
+# include the file containing the parsefilepath function
+source ${dir}/parsefilepath
 
-${dir}/asmlg $zFile ASSIST $2 $3 $4 $5 $6 $7 $8 $9
+# input file path must not end with a period
+if [[ $1 == *. ]]; then echo "assist ERROR: file path ends with '.' - $1"; exit 16; fi
+
+# parse file path to get path, name, and extension; sets global variables z_fpath, z_fname, z_fext
+# Examples: if $1="assist/demo/DEMOAST1", returned values: z_fpath="assist/demo/", z_fname="DEMOAST1" z_fext=""
+#           if $1="assist/demo/DEMOAST1.MLC", returned values: z_fpath="assist/demo/", z_fname="DEMOAST1" z_fext="MLC"
+parsefilepath "$1"
+if [ $debug -eq 1 ]; then echo "after parsefilepath; \$z_fpath: >$z_fpath<  \$z_fname: >$z_fname<  \$z_fext: >$z_fext<"; fi
+
+# must have z_fname
+if [ -z "$z_fname" ]; then echo "assist ERROR: invalid/missing file name in file path- $1"; exit 16; fi
+# must not have a period in z_fname
+if [[ $z_fname == *.* ]]; then echo "assist ERROR: invalid character '.' in file name \"$z_fname\"; file path - $1"; exit 16; fi
+# if no z_fext, use default "MLC"
+if [ -z "$z_fext" ]; then z_fext="MLC"; fi
+zFile=${z_fpath}${z_fname}  # path, if any, followed by file name without extension
+# make sure file, with extension, exists
+if [ ! -f ${zFile}.${z_fext} ]; then echo "assist ERROR: file $zFile.$z_fext not found"; exit 16; fi
+if [ $debug -eq 1 ]; then echo "full file name with path and extension: >${zFile}.${z_fext}<"; fi
+
+export XREAD=$zFile.XRD
+export XPRNT=$zFile.XPR
+export XPNCH=$zFile.XPH
+export XGET=$zFile.XGT
+export XPUT=$zFile.XPT
+
+# assemble, link, and go with ASSIST option
+${dir}/asmlg $zFile.$z_fext ASSIST $2 $3 $4 $5 $6 $7 $8 $9
 rc=$?
-# error or warning messages issued by asmlg
+# error or warning messages may be issued by asmlg
 
 exit $rc

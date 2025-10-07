@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# parsefilepath: a function to extract filepath, filename, fileextension from input string
+#     input: string containing file path in format [<path-to-file>]<file-name>[.<file-extension>]
+#     output: sets global variables z_fpath, z_fname, z_fext
+#
+#     usage: The bash script that invokes the function must source this file prior to
+#            invoking the parsefilepath function with argument:
+#                "[<path-to-file>]<file-name>[.<file-extension]".
+#            For example, in the invoking bash script
+#                # include the parsefilepath function
+#                source <path-to-parsefilepath>/parsefilepath
+#                ...
+#                set filename to string [<path-to-file>]<file-name>[.<file-extension>]"
+#                # See examples below
+#                parsefilepath "$filename"
+#                # The function sets the following global variables:
+#                #    z_fpath contains path to the file (empty string if omitted)
+#                #    z_fname contains the file name (empty string if omitted)
+#                #    z_fext contains the file extension (empty string if omitted)
+#
+#            Note that a non-empty z_fpath ends with "/" and z_fext does not include
+#            the "." separating name and extension.
+#
+#            Examples.
+#
+#                Input         Output      Output     Output
+#                file path     z_fpath     z_fname    z_fext
+#                ----------    --------    -------    ------
+#                /a/b.c/d.e    /a/b.c/     d          e
+#                /a/b.c/d      /a/b.c/     d          ""
+#             *  /a/b.c/d.     /a/b.c/     d          ""
+#             *  /a/b.c/.e     /a/b.c/     ""         e
+#             *  /a/b.c/       /a/b.c/     ""         ""
+#                a/b.c/d.e     a/b.c/      d          e
+#                d.e           ""          d          e
+#                d             ""          d          ""
+#             *  d.            ""          d          ""
+#             *  .e            ""          ""         e
+#             *  ""            ""          ""         ""
+#
+# Notes: 1. The input string is only parsed. The returned values are not validated
+#           for a valid file name.
+#        2. The examples above with "*" on the left are actually invalid/improper z390
+#           file names and must be handled accordingly by the invoking bash script.
+#           See z390 bash/asm for sample code.
+#
+
+function parsefilepath() {
+
+    local str
+    local end
+
+    str=$1  # copy file path
+    
+    # extract what follows the last "/" in str; equals "filename[.fileextension]"; may be empty
+    end=${str##*/}
+
+    # set z_fpath; from beginning of string through ending "/"; may be empty
+    z_fpath="${str:0:$((${#str} - ${#end}))}"
+
+    # get file name = "filename[.fileextension]"
+    str=$end
+
+    # extract what follows the last "." in str; equals "fileextension"; may be empty
+    end=${str##*.}
+
+    # set z_fname and z_fext
+    if [ "$str" = "$end" ]; then                      # no "." in str (file name) so no extension
+        z_fname=$str
+        z_fext=""
+    else
+        z_fname="${str:0:$((${#str} - ${#end} - 1))}" # 0 up to but not including the "."
+        z_fext=$end
+    fi
+}
