@@ -93,6 +93,7 @@ The ez390 emulator supports the following interactive test commands when the
    One instruction is always executed before next opcode break even if it's the same instruction such as a `BCT 1,*`.
    Addresses are distinguished from count by hex . or relative expression term such as `*`, `+`, or `-`.
 - `H`  -  list help command summary
+- `Interactive - Make script execution end by going interactive instead of Quitting`
 - `J addr` -  jump to new addr and trace instruction
 - `L`  - list all regs and trace current instruction
 - `L reg` - list contents of register (ie `l 1r` dumps register 1
