@@ -445,6 +445,10 @@ public  class  az390 implements Runnable {
     * 2025-08-08 AFK #661 Add z17 instructions to opcode tables
     * 3025-09-17 jjg #659 CCW/CCW0/CCW1 with location counter reference in
     *                     address field generates incorrect object code
+    * 2025-10-03 jjg #660 "Label1 DC A(complex relocatable expression)"
+    *                     followed by another field results in an invalid
+    *                     displacement value being generated for an
+    *                     RX-instruction that accesses that following field.
   	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -7885,12 +7889,12 @@ private void exp_term(int loc_ctr_offset){  // #659
         if (exp_esd == esd_sdt){
            	exp_type = sym_sdt;
         } else if (exp_esd == esd_cpx_rld){
-        	if (exp_rld_len > 0){ // RPI 893
-        		if (gen_obj_code){
+        	if (gen_obj_code){  // #660
+        	    if (exp_rld_len > 0){ // RPI 893     #660
         			gen_exp_rld(loc_ctr_offset);  // #659
-        		}    
-            } else {
-            	log_error(61,"invalid complex rld expression: " + exp_text.substring(0,exp_index)); // RPI 1034
+                } else {
+            	    log_error(61,"invalid complex rld expression: " + exp_text.substring(0,exp_index)); // RPI 1034
+                }
             }
         } else {  
         	if (gen_obj_code){

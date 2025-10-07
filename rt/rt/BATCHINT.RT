@@ -1,0 +1,18 @@
+*
+* This script tests the interactive aspect of the test scripting facility.
+*
+* Invocation when running z390 under Windows/DOS:
+* SET myscript=rt\rt\BATCHINT.RT
+* bat\asmlg demo\hello test(myscript)
+*
+* Invocation when running Linux/*ux:
+* export myscript=rt/rt/BATCHINT.RT
+* bash/asmlg demo/hello test(myscript)
+*
+* Expected behavior:
+* the psw and t5 commands should be executed normally
+* then, upon reaching end-of-file z390 should switch to
+* interactive mode. Enter Z to run the program to completion
+psw
+t5
+interactive
