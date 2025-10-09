@@ -1,6 +1,5 @@
 *
 * Directing z390 to use non-default extensions
-* These options are for use with AZ390, MZ390, LZ390
 
   syscpy(demo\*.zCopy)         * works okay
   sysdat(demo\*.zData)         * works okay
