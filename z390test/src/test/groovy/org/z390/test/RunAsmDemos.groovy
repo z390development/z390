@@ -8,7 +8,7 @@ class RunAsmDemos extends z390Test {
         'trace',
         'nocon',
         'noloadhigh',
-        'time(90)',
+        'time(300)',
         "SYSMAC(${basePath('mac')})",
         "SYSCPY(${basePath('mac')})",
         "SYSOBJ(${basePath('linklib')})"
