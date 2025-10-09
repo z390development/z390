@@ -1,0 +1,20 @@
+DEMOEXT  TITLE 'Dummy program'
+***********************************************************************
+* Start create : 18-07-2025
+* 1st delivery :
+* Programmer   : AF Kornelis
+* Purpose      : For testing non-default file extension handling
+***********************************************************************
+DEMOEXT  DEMOEXTM 31                   * Program setup for amode 31
+         COPY  DEMOEXTC                * Copy register equates
+
+         XR    R15,R15                 * Set RC=0
+         BR    R14                     * Return
+
+&MYTEXT  AREAD DSNAME='DEMOEXT'
+         MNOTE *,'&MYTEXT'
+         PUNCH '&MYTEXT',DSNAME='DEMOEXT'
+
+         AINSERT '    LA R1,1',BACK
+
+         END

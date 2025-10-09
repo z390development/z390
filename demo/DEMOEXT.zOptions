@@ -1,0 +1,10 @@
+*
+* Directing z390 to use non-default extensions
+
+  syscpy(demo\*.zCopy)         * works okay
+  sysdat(demo\*.zData)         * works okay
+  sysmac(demo\*.zMacro)        * works okay
+  sysopt(demo\*.zOptions)      * works okay
+
+* All other options
+@DEMOEXT2
