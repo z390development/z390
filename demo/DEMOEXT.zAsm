@@ -2,7 +2,6 @@ DEMOEXT  TITLE 'Dummy program'
 ***********************************************************************
 * Start create : 18-07-2025
 * 1st delivery :
-* Designer     : AF Kornelis
 * Programmer   : AF Kornelis
 * Purpose      : For testing non-default file extension handling
 ***********************************************************************
