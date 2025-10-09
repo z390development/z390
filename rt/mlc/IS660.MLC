@@ -1,0 +1,233 @@
+***********************************************************************
+* 
+* Test generated displacements in "L" instructions. Issue #660
+* reported invalid displacements in the following code beginning
+* with the "L  3,ADDR3" instruction. Problem due to error in
+* az390.java pass 1 processing of the "ADDR2 DC A(ABC+ABC)"
+* statement that did not advance the location counter, resulting
+* in the "L  3,ADDR3" instruction having the same displacement
+* as the "L  2,ADDR2" instruction. Other instructions also had
+* invalid displacements.
+*
+* Note: All the generated A-con values are valid. However, because
+*       the issue pertains to complex relocatable expressions, each
+*       A-con value is also manually computed and verified
+*       to match the corresponding register value.
+*
+* All ten instruction displacements should now be valid.
+*
+* Return code: 0 all instruction displacements are valid
+*                and each loaded register value matches the
+*                corresponding computed A-con value
+*              8 either (1) one or more instruction displacements
+*                are not valid; WTOs are issued showing the
+*                    register number x (hex)
+*                    instruction displacement (hex)
+*                    expected displacement (hex)
+*                for each invalid instruction displacement
+*                or (2) one or more loaded registers do not match
+*                the corresponding computed A-con values; WTOs
+*                are issued showing the
+*                    register number x (hex)
+*                    register contents (hex)
+*                    computed A-con value (hex)
+*                for each invalid (register, computed A-con value) pair
+*
+***********************************************************************
+IS660    CSECT
+         STM   14,12,12(13)        Save caller's registers
+         LR    12,15               R12 = base register
+         USING IS660,12            Establish addressability
+         LA    14,SA               Usable save area
+         ST    14,8(,13)           Chain
+         ST    13,4(,14)                 save areas
+         LR    13,14               Current save area
+*
+*        Load instructions
+*
+LoadA    DS    0H                  First load instruction
+         L     1,ADDR1             Note displacement for ADDR1
+         L     2,ADDR2             Note displacement for ADDR2
+         L     3,ADDR3             Note displacement for ADDR3
+         L     4,ADDR4             Note displacement for ADDR4
+         L     5,ADDR5             Note displacement for ADDR5
+         L     6,ADDR6             Note displacement for ADDR6
+         L     7,ADDR7             Note displacement for ADDR7
+         L     8,ADDR8             Note displacement for ADDR8
+         L     9,ADDR9             Note displacement for ADDR9
+         L     10,ADDR10           Note displacement for ADDR10
+LoadB    EQU   *-4                 Last load instruction
+*
+***      BR    14                  Return
+         B     Verify              Verify instruction displacements
+*
+         ORG   IS660+X'100'            Area for test A-cons
+ABC      DS    D                       Offset X'100'
+ADDR1    DC    A(ABC)                  Offset X'108'
+ADDR2    DC    A(ABC+ABC)              Offset X'10C'
+ADDR3    DC    A(ABC+1)                Offset X'110'
+ADDR4    DC    A(ABC+ABC+1)            Offset X'114'
+ADDR5    DC    A(ABC+15)               Offset X'118'
+ADDR6    DC    A(ABC+63)               Offset X'11C'
+ADDR7    DC    A(ABC+127)              Offset X'120'
+ADDR8    DC    A(ABC+ABC+ABC+ABC+127)  Offset X'124'
+ADDR9    DC    A(ABC)                  Offset X'128'
+ADDR10   DC    A(ABC+256)              Offset X'12C'
+*
+DDD      EQU   X'108'              Expected displacement for ADDR1
+*
+*        Verify the generated displacements in the load instructions
+*        and the generated "ADDRx DC" statements
+*
+Verify   DS    0H
+         STM   1,10,Rvals          Save register values for comparison
+*
+         SR    10,10               Assume no errors
+*
+         LA    3,LoadA             R3 points to "L  1,ADDR1"
+         LA    4,4                 Increment (length of instruction)
+         LA    5,LoadB             R5 points to "L  10,ADDR10"
+         LA    6,1                 First register number
+         LA    7,DDD               First expected displacement value
+VLoop1   DS    0H
+         L     8,0(,3)             "L  x,ADDRx" instruction
+         SLL   8,20                Isolate
+         SRL   8,20                        DDD in the instruction
+         CR    7,8                 Expected DDD = instruction DDD?
+         BE    VNext1              Yes; next instruction
+         ST    6,FW                No; convert register number
+         UNPK  DW(9),FW(5)         ... to printable hex
+         TR    DW+7(1),H2P         Finish conversion
+         MVC   W1Reg,DW+7          Copy to WTO
+         ST    7,FW                Convert expected displacement
+         UNPK  DW(9),FW(5)         ... to printable hex
+         TR    DW+5(3),H2P         Finish conversion
+         MVC   W1EOfst,DW+5        Copy to WTO
+         ST    8,FW                Convert instruction displacement
+         UNPK  DW(9),FW(5)         ... to printable hex
+         TR    DW+5(3),H2P         Finish conversion
+         MVC   W1IOfst,DW+5        Copy to WTO
+         WTO   MF=(E,WTO1)         Issue WTO
+         LA    10,8                Error return code
+VNext1   DS    0H
+         AHI   6,1                 Next register number
+         AHI   7,4                 Next expected displacement value
+         BXLE  3,4,VLoop1          Process all load instructions
+*
+*        Validate the "ADDRx DC" A-con values
+*
+*        First manually compute the A-con values
+*
+         LA    1,ABC               Value of A(ABC)
+         LA    2,0(1,1)            Value of A(ABC+ABC)
+         LA    3,0(2,2)            Value of A(ABC+ABC+ABC+ABC)
+*
+         LA    4,Avals             Area for computed A-con values
+         LA    5,ADDR1             ADDR1..ADDR10 area
+*
+         ST    1,0(,4)             Computed ADDR1 DC value
+         AHI   4,4                 Next Avals word
+*
+         ST    2,0(,4)             Computed ADDR2 DC value
+         AHI   4,4                 Next Avals word
+*
+         LA    0,1(,1)             Computed ADDR3 DC value
+         ST    0,0(,4)             Save in Avals word
+         AHI   4,4                 Next Avals word
+*
+         LA    0,1(,2)             Computed ADDR4 DC value
+         ST    0,0(,4)             Save in Avals word
+         AHI   4,4                 Next Avals word
+*
+         LA    0,15(,1)            Computed ADDR5 DC value
+         ST    0,0(,4)             Save in Avals word
+         AHI   4,4                 Next Avals word
+*
+         LA    0,63(,1)            Computed ADDR6 DC value
+         ST    0,0(,4)             Save in Avals word
+         AHI   4,4                 Next Avals word
+*
+         LA    0,127(,1)           Computed ADDR7 DC value
+         ST    0,0(,4)             Save in Avals word
+         AHI   4,4                 Next Avals word
+*
+         LA    0,127(,3)           Computed ADDR8 DC value
+         ST    0,0(,4)             Save in Avals word
+         AHI   4,4                 Next Avals word
+*
+         ST    1,0(,4)             Computed ADDR9 DC value
+         AHI   4,4                 Next Avals word
+*
+         LA    0,256(,1)           Computed ADDR10 DC value
+         ST    0,0(,4)             Save in Avals word
+         AHI   4,4                 Next Avals word
+*
+*        Compare register values to computed A-con values
+*
+         CLC   Rvals(RvalsLen),Avals  Do all values match?
+         BE    RVMatch                Yes
+         LA    10,8                   No; set error return code
+*
+*        Display error (register, computed A-con) values 
+*
+         LA    6,1                 First register number
+         LA    3,Rvals             A(First register value)
+         LA    4,4                 Increment (length of fullword)
+         LA    5,Rvals+RvalsLen-4  A(Last register value)
+         LA    7,Avals             A(First computed A-con value)
+VLoop2   DS    0H
+         L     0,0(,3)             Register value
+         L     1,0(,7)             Computed A-con value
+         CR    0,1                 Values match?
+         BE    VNext2              Yes; check next
+         ST    6,FW                No; convert register number
+         UNPK  DW(9),FW(5)         ... to printable hex
+         TR    DW+7(1),H2P         Finish conversion
+         MVC   W2Reg,DW+7          Copy to WTO
+         ST    0,FW                Convert register value
+         UNPK  DW(9),FW(5)         ... to printable hex
+         TR    DW,H2P              Finish conversion
+         MVC   W2Rval,DW           Copy to WTO
+         ST    1,FW                Convert computed A-con value
+         UNPK  DW(9),FW(5)         ... to printable hex
+         TR    DW,H2P              Finish conversion
+         MVC   W2Aval,DW           Copy to WTO
+         WTO   MF=(E,WTO2)         Issue WTO
+VNext2   DS    0H
+         AHI   6,1                 Next register number
+         LA    7,4(,7)             Next computed A-con address
+         BXLE  3,4,VLoop2          Process all reg : A-con compares
+*
+RVMatch  DS    0H
+         LR    15,10               Get return code
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except for R15
+         BR    14                  Return to caller
+*
+         LTORG ,
+*
+SA       DC    18F'-1'             Usable save area
+*
+         DS    0D
+Rvals    DS    10F                 Set to R1..R10 values after loads
+RvalsLen EQU   *-Rvals             Length of Rvals (and Avals)
+Avals    DS    10F                 Set to computed A-con values
+*
+WTO1     WTO   'Error: reg x instr disp xxx not expected disp xxx',MF=L
+W1Reg    EQU   WTO1+4+11,1,C'C'
+W1IOfst  EQU   WTO1+4+24,3,C'C'
+W1EOfst  EQU   WTO1+4+46,3,C'C'
+*
+WTO2     WTO   'Error: reg x val xxxxxxxx not A-con computed val xxxxxxX
+               xx',MF=L
+W2Reg    EQU   WTO2+4+11,1,C'C'
+W2Rval   EQU   WTO2+4+17,8,C'C'
+W2Aval   EQU   WTO2+4+49,8,C'C'
+*
+FW       DS    F,X                 Fullword work plus pad
+DW       DS    D,X                 Doubleword work plus pad
+H2P      EQU   *-240               Hex to printable hex
+         DC    C'0123456789ABCDEF'
+*
+         END
