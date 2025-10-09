@@ -30,13 +30,32 @@ if [ $trace -eq 1 ]; then set -x; fi
 
 if [ $# -eq 0 ] || [ -z "$1" ]; then echo "mac ERROR: missing file name"; exit 16; fi
 
-# remove trailing ".MLC", if any
-zFile="${1%.MLC}"
+# extract longest substring that ends with "/"
+dir=${0%/*}
 
-# error if missing name to left of ".MLC"
-if [ -z "$zFile" ]; then echo "mac ERROR: invalid file name $1"; exit 16; fi
-# error if input file with MLC extension does not exist
-if [ ! -f "$zFile".MLC ]; then echo "mac ERROR: file $zFile.MLC not found"; exit 16; fi
+# include the file containing the parsefilepath function
+source ${dir}/parsefilepath
+
+# input file path must not end with a period
+if [[ $1 == *. ]]; then echo "mac ERROR: file path ends with '.' - $1"; exit 16; fi
+
+# parse file path to get path, name, and extension; sets global variables z_fpath, z_fname, z_fext
+# Examples: if $1="demo/HELLO", returned values: z_fpath="demo/", z_fname="HELLO" z_fext=""
+#           if $1="demo/HELLO.MLC", returned values: z_fpath="demo/", z_fname="HELLO" z_fext="MLC"
+#           if $1="HELLO", returned values: z_fpath="", z_fname="HELLO" z_fext=""
+parsefilepath "$1"
+if [ $debug -eq 1 ]; then echo "after parsefilepath; \$z_fpath: >$z_fpath<  \$z_fname: >$z_fname<  \$z_fext: >$z_fext<"; fi
+
+# must have z_fname
+if [ -z "$z_fname" ]; then echo "mac ERROR: invalid/missing file name in file path - $1"; exit 16; fi
+# must not have a period in z_fname
+if [[ $z_fname == *.* ]]; then echo "mac ERROR: invalid character '.' in file name \"$z_fname\"; file path - $1"; exit 16; fi
+# if no z_fext, use default "MLC"
+if [ -z "$z_fext" ]; then z_fext="MLC"; fi
+zFile=${z_fpath}${z_fname}  # path, if any, followed by file name without extension
+# make sure file, with extension, exists
+if [ ! -f ${zFile}.${z_fext} ]; then echo "mac ERROR: file $zFile.$z_fext not found"; exit 16; fi
+if [ $debug -eq 1 ]; then echo "full file name with path and extension: >${zFile}.${z_fext}<"; fi
 
 # remove previously created files, if any
 if [ -f "$zFile.BAL" ]; then rm $zFile.BAL; fi
@@ -45,20 +64,10 @@ if [ -f "$zFile.STA" ]; then rm $zFile.STA; fi
 #if [ -f $zFile.TR* ]; then rm $zFile.TR*; fi
 if ls $zFile.TR* 1>/dev/null 2>&1; then rm -f $zFile.TR*; fi
 
-# extract longest substring that ends with "/"
-dir=${0%/*}
-
 # get the z390 directory
 zdir=$(dirname $0)
 zdir=$(cd $zdir && pwd)
 zdir=$(dirname $zdir)
-
-if [ $debug -eq 1 ]; then
-    echo "mac 1=$1"
-    echo "mac 2=$2"
-    echo "mac 3=$3"
-    echo "mac 4=$4"
-fi
 
 sysmac='sysmac('$zdir'/mac+.)'
 syscpy='syscpy('$zdir'/mac+.)'
@@ -68,11 +77,10 @@ chkmac='chkmac(0)'
 if [ $debug -eq 1 ]; then
     echo "mac sysmac=$sysmac"
     echo "mac syscpy=$syscpy"
-    echo "mac chksrc=$chksrc"
-    echo "mac chkmac=$chkmac"
 fi
 
-${dir}/mz390 $zFile bal noasm $sysmac $syscpy $chksrc $chkmac $2 $3 $4 $5 $6 $7 $8 $9
+# invoke macro processor
+${dir}/mz390 $zFile.$z_fext bal noasm $sysmac $syscpy $chksrc $chkmac $2 $3 $4 $5 $6 $7 $8 $9
 rc=$?
 if [ $debug -eq 1 ]; then echo "mac: mz390 rc=$rc"; fi
 if [ $rc -ne 0 ]; then
