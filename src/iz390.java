@@ -22,16 +22,35 @@ import java.io.File;
 import java.io.FileReader;
 
 
+/**
+ * iz390 is the IVP component of z390
+ */
 public class iz390{
-	
-	public static void main(String argv[]) {
-		/*
-	    iz390 is a standalone  installation verification
-	    program which displays current version of the 
-	    following components:
-	      1. z390.jar - version from tz390
-	      2. OS from  - os.name  J2SE property 
 
+
+
+/**
+ * Dummy constructor - no initialization needed
+ */
+public iz390()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
+/**
+ * iz390 is a standalone  installation verification
+ * program which displays current version of the 
+ * following components:
+ * <ol>
+ *  <li>z390.jar - version from tz390</li>
+ *  <li>OS from  - os.name  J2SE property</li>
+ * </ol>
+ *
+ * @param argv argument string - same as z390
+ */
+	public static void main(String argv[]) {
+       /*
 	    ****************************************************
 	    * Maintenance
 	    ****************************************************
@@ -39,6 +58,7 @@ public class iz390{
 	    * 07/12/07 RPI  656 change RT to MVS if MVS not installed
 	    * 10/20/07 RPI  713 change file name case for Linux
 	    * 09/25/09 RPI 1080 replace init_tables with init_tz390
+        * 2025-09-14 AFK  Add/fix javadoc comments
 	    ****************************************************
 	    *                                       last RPI
 	    *                                        
@@ -156,4 +176,3 @@ public class iz390{
         System.exit(ivp_rc);
 	}
 }
-
