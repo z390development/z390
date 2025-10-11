@@ -105,6 +105,7 @@ public class zc390{
     * 2021-04-19 jjg Change way init_zc390 obtains program name to allow paths that begin with ".."
     * 2023-10-07 #518 jjg Setting program name fails when '.' in directory name in file path
     * 2025-06-09 #645 afk ZC390 issues error when input file has explicit extension
+    * 2025-07-08 #655 afk zCobol fails on number in INSTALLATION paragraph of Identification division
     ****************************************************
     *                                         last RPI *
 	****************************************************
@@ -226,17 +227,262 @@ public class zc390{
 	int ws_lvl_index = 0;
 	int[] ws_lvl = new int[50];
 	String[] ws_indent = new String[50];
-	/*
-	 * end of global data
-	 */
-	public static void main(String argv[]) {		
+    /*                                                                  // #655
+     * Additional data for division/section sequence checking           // #655
+     */                                                                 // #655
+    String  sc_current_token = null;                                    // #655
+    char    sc_current_area = ' ';                                      // #655
+    String  sc_previous_token = null;                                   // #655
+    char    sc_previous_area = ' ';                                     // #655
+    section_definition sc_section_definition;                           // #655
+    String  sc_current_division  = null;                                // #655
+    String  sc_current_section   = null;                                // #655
+    String  sc_current_paragraph = null;                                // #655
+    boolean sc_change_flag = false;                                     // #655
+    String  sc_current_combination = "";                                // #655
+    String  sc_new_combination     = null;                              // #655
+    int     sc_current_index       = -1;        // -1 = none            // #655
+    int     sc_new_index           = -1;        // -1 = none            // #655
+    /* Following table lists valid combinations of division name,       // #655
+     * section name, and paragraph name. Procedure division accepts     // #655
+     * any section/paragraph, as indicated by an asterisk.              // #655
+     * Names are validated AFTER translating all dashes to underscores! // #655
+     * The list is based ion the Cobol 2023 standard                    // #655
+     * and has no relation with what z390 supports (or not)             // #655
+     */                                                                 // #655
+    static final String[] PROGRAM_SECTIONS =                            // #655
+            {"01=IDENTIFICATION..",                                     // #655
+             "02=IDENTIFICATION..PROGRAM_ID",                           // #655
+             // Sequence 3 paragraphs can appear in any order           // #655
+             "03=IDENTIFICATION..AUTHOR(comment)",                      // #655
+             "03=IDENTIFICATION..INSTALLATION(comment)",                // #655
+             "03=IDENTIFICATION..DATE_WRITTEN(comment)",                // #655
+             "03=IDENTIFICATION..DATE_COMPILED(comment)",               // #655
+             "03=IDENTIFICATION..SECURITY(comment)",                    // #655
+             "04=ENVIRONMENT..",                                        // #655
+             "05=ENVIRONMENT.CONFIGURATION.",                           // #655
+             "06=ENVIRONMENT.CONFIGURATION.SOURCE_COMPUTER(comment)",   // #655
+             "07=ENVIRONMENT.CONFIGURATION.OBJECT_COMPUTER(comment)",   // #655
+             "08=ENVIRONMENT.CONFIGURATION.SPECIAL_NAMES",              // #655
+             "09=ENVIRONMENT.CONFIGURATION.REPOSITORY(comment)",        // #655
+             "10=ENVIRONMENT.INPUT_OUTPUT.",                            // #655
+             "11=ENVIRONMENT.INPUT_OUTPUT.FILE_CONTROL",                // #655
+             "12=ENVIRONMENT.INPUT_OUTPUT.I_O_CONTROL",                 // #655
+             "13=DATA..",                                               // #655
+             "14=DATA.FILE.*",                                          // #655
+             "15=DATA.WORKING_STORAGE.*",                               // #655
+             "16=DATA.LOCAL_STORAGE.*",                                 // #655
+             "17=DATA.LINKAGE.*",                                       // #655
+             "18=DATA.REPORT.*",                                        // #655
+             "19=DATA.COMMUNICATION.*",                                 // #655
+             "20=PROCEDURE.*.*"                                         // #655
+             };                                                         // #655
+    static section_definition[] program_sections = null;                // #655
+    /*
+     * end of global data
+     */
+
+
+
+/**                                                                                                                        // #655
+ * Custome exception                                                                                                       // #655
+ */                                                                                                                        // #655
+class zCobolException extends Exception                                                                                    // #655
+   {public zCobolException(String msg)                                                                                     // #655
+       {super(msg);                                                                                                        // #655
+        }
+    }
+
+
+
+/**                                                                                                                        // #655
+ * Define the divisions, sections, and paragraphs with their properties                                                    // #655
+ */                                                                                                                        // #655
+private class section_definition                                                                                           // #655
+   {String        division_name;                                                                                           // #655
+    String        section_name;                                                                                            // #655
+    String        paragraph_name;                                                                                          // #655
+    String        full_name;                                                                                               // #655
+    int           sequence_id;                                                                                             // #655
+    boolean       is_comment;                                                                                              // #655
+    boolean       is_free_format;                                                                                          // #655
+    boolean       is_defined;                                                                                              // #655
+                                                                                                                           // #655
+    /**                                                                                                                    // #655
+     * Constructor                                                                                                         // #655
+     *                                                                                                                     // #655
+     * This constructor takes a definition string and decomposes it to construct the data for a new instance               // #655
+     */                                                                                                                    // #655
+    section_definition(String section_specification) throws zCobolException                                                // #655
+       {int    my_sequence_id     = 0;                                                                                     // #655
+        String my_division_name   = "";                                                                                    // #655
+        String my_section_name    = "";                                                                                    // #655
+        String my_paragraph_name  = "";                                                                                    // #655
+        String my_full_name       = "";                                                                                    // #655
+        String my_options         = "";                                                                                    // #655
+        String my_remainder       = "";                                                                                    // #655
+        boolean my_is_comment     = false;                                                                                 // #655
+        boolean my_is_free_format = false;                                                                                 // #655
+        int i, j;                                // index into string value                                                // #655
+                                                                                                                           // #655
+        // Extract the sequence ID                                                                                         // #655
+        i = section_specification.indexOf("=");  // find marker                                                            // #655
+        if (i == -1)                                                                                                       // #655
+           {throw new zCobolException("Missing equal sign in paragraph definition: " + section_specification);             // #655
+            }                                                                                                              // #655
+        try{my_sequence_id=Integer.parseInt(section_specification.substring(0,i));  // extract seq nr                      // #655
+            }                                                                                                              // #655
+        catch (Exception e)                                                                                                // #655
+           {throw new zCobolException("Invalid sequence ID in paragraph definition: " + section_specification);            // #655
+            }                                                                                                              // #655
+        my_remainder = section_specification.substring(i+1);  // get remainder                                             // #655
+                                                                                                                           // #655
+        // Extract the options string                                                                                      // #655
+        i = my_remainder.indexOf("(");           // find marker                                                            // #655
+        j = my_remainder.indexOf(")");           // find marker                                                            // #655
+        if (i == -1 && j != -1)                                                                                            // #655
+           {throw new zCobolException("Missing open parenthesis in paragraph definition: " + section_specification);       // #655
+            }                                                                                                              // #655
+        else if (i != -1 && j == -1)                                                                                       // #655
+           {throw new zCobolException("Missing close parenthesis in paragraph definition: " + section_specification);      // #655
+            }                                                                                                              // #655
+        else if (i > j)                                                                                                    // #655
+           {throw new zCobolException("Inverted parentheses in paragraph definition: " + section_specification);           // #655
+            }                                                                                                              // #655
+        else if (i > -1) // valid pair of parentheses is present                                                           // #655
+           {my_full_name = my_remainder.substring(0,i);      // get div.sect.par names                                     // #655
+            my_options   = my_remainder.substring(i+1,j);    // get options without parentheses                            // #655
+            if (my_remainder.length() > j+1)                 // trailing data ??                                           // #655
+               {throw new zCobolException("Trailing data in paragraph definition: " + section_specification);              // #655
+                }                                                                                                          // #655
+            }                                                                                                              // #655
+        else                                                                                                               // #655
+           {my_options   = "";                                                                                             // #655
+            my_full_name = my_remainder;                                                                                   // #655
+            }                                                                                                              // #655
+                                                                                                                           // #655
+        // Split full name into division / section / paragraph                                                             // #655
+        my_remainder = my_full_name;             // pick up full name                                                      // #655
+        i = my_remainder.indexOf(".");           // find marker                                                            // #655
+        if (i == -1)                                                                                                       // #655
+           {throw new zCobolException("Missing period after Division name: " + section_specification);                     // #655
+            }                                                                                                              // #655
+        my_division_name = my_remainder.substring(0,i);      // get division name                                          // #655
+        my_remainder     = my_remainder.substring(i+1);      // get section and paragraph names                            // #655
+        i = my_remainder.indexOf(".");           // find marker                                                            // #655
+        if (i == -1)                                                                                                       // #655
+           {throw new zCobolException("Missing period after Section name: " + section_specification);                      // #655
+            }                                                                                                              // #655
+        my_section_name  = my_remainder.substring(0,i);      // get section name                                           // #655
+        my_paragraph_name= my_remainder.substring(i+1);      // get paragraph name                                         // #655
+        i = my_paragraph_name.indexOf(".");      // find marker                                                            // #655
+        if (i != -1)                                                                                                       // #655
+           {throw new zCobolException("Spurious period after Paragraph name: " + section_specification);                   // #655
+            }                                                                                                              // #655
+        if (my_division_name.equals("*"))                                                                                  // #655
+           {throw new zCobolException("Wildcard not allowed for Division name in: " + section_specification);              // #655
+            }                                                                                                              // #655
+        if (my_section_name.equals("*") && !my_paragraph_name.equals("*"))                                                 // #655
+           {throw new zCobolException("Wildcard not required for Paragraph name in: " + section_specification);            // #655
+            }                                                                                                              // #655
+        if (my_section_name.equals("*") && my_paragraph_name.equals("*"))                                                  // #655
+           {my_is_free_format = true;                                                                                      // #655
+            }                                                                                                              // #655
+                                                                                                                           // #655
+        // Process options string                                                                                          // #655
+        if (my_options.equals("comment"))                                                                                  // #655
+           {my_is_comment = true;                                                                                          // #655
+            }                                                                                                              // #655
+        else if (!my_options.equals(""))                                                                                   // #655
+           {throw new zCobolException("Unsupported option in Paragraph definition: " + section_specification);             // #655
+            }                                                                                                              // #655
+                                                                                                                           // #655
+        // Set class properties                                                                                            // #655
+        this.division_name  = my_division_name;                                                                            // #655
+        this.section_name   = my_section_name;                                                                             // #655
+        this.paragraph_name = my_paragraph_name;                                                                           // #655
+        this.full_name      = my_full_name;                                                                                // #655
+        this.sequence_id    = my_sequence_id;                                                                              // #655
+        this.is_comment     = my_is_comment;                                                                               // #655
+        this.is_free_format = my_is_free_format;                                                                           // #655
+        this.is_defined     = false;             // Will be set when this paragraph is encountered                         // #655
+        }                                                                                                                  // #655
+
+
+
+    /**                                                                                                                    // #655
+     * Constructor                                                                                                         // #655
+     *                                                                                                                     // #655
+     * This constructor takes an explicit division, section, and paragraph to create a default instance.                   // #655
+     * The caller is to invoke the find_index method to validate the instance against the defined combinations.            // #655
+     */                                                                                                                    // #655
+    section_definition(String my_division_name, String my_section_name, String my_paragraph_name)                          // #655
+       {// Set class properties                                                                                            // #655
+        this.division_name  = my_division_name;                                                                            // #655
+        this.section_name   = my_section_name;                                                                             // #655
+        this.paragraph_name = my_paragraph_name;                                                                           // #655
+        this.full_name      = my_division_name + "." + my_section_name + "." + my_paragraph_name;                          // #655
+        this.sequence_id    = -1;                                                                                          // #655
+        this.is_comment     = false;                                                                                       // #655
+        this.is_free_format = false;                                                                                       // #655
+        this.is_defined     = false;                                                                                       // #655
+        }                                                                                                                  // #655
+
+
+
+    /**                                                                                                                    // #655
+     * find_index                                                                                                          // #655
+     * Input:   section_definition with:                                                                                   // #655
+     *              Division  name                                                                                         // #655
+     *              Section   name                                                                                         // #655
+     *              Paragraph name                                                                                         // #655
+     *          program_sections (implicit)                                                                                // #655
+     * Output:  index nr if section_definition entry was found. -1 if not found.                                           // #655
+     */                                                                                                                    // #655
+    int find_index()                                                                                                       // #655
+       {boolean flag_div, flag_sec, flag_par;              // partial result flags                                         // #655
+        int     result   = -1;                             // mark search incomplete                                       // #655
+        int     my_index = 0;                                                                                              // #655
+        while (my_index < PROGRAM_SECTIONS.length)         // for each definition                                          // #655
+           {// does the division name match this entry?                                                                    // #655
+            flag_div = program_sections[my_index].division_name.equals(division_name); // match on division  name?         // #655
+            flag_sec = program_sections[my_index].section_name.equals(section_name)    // match on section   name?         // #655
+                    || program_sections[my_index].section_name.equals("*");                                                // #655
+            flag_par = program_sections[my_index].paragraph_name.equals(paragraph_name) // match on paragraph name?        // #655
+                    || program_sections[my_index].paragraph_name.equals("*");                                              // #655
+            if (flag_div && flag_sec && flag_par)                                 // complete match?                       // #655
+               {result   = my_index;                                                                                       // #655
+                my_index = PROGRAM_SECTIONS.length;                               // terminate loop                        // #655
+                }                                                                                                          // #655
+            my_index++;                                                                                                    // #655
+            }                                                                                                              // #655
+        return result;                                                                                                     // #655
+        }                                                                                                                  // #655
+
+
+
+    /**                                                                                                                    // #655
+     * is_comment                                                                                                          // #655
+     * Input:   --                                                                                                         // #655
+     * Output:  boolean is_comment property of the class instance                                                          // #655
+     */                                                                                                                    // #655
+    boolean is_comment()                                                                                                   // #655
+       {return is_comment;                                                                                                 // #655
+        }                                                                                                                  // #655
+    }                                                                                                                      // #655
+
+
+
+
+
+	public static void main(String argv[]) {
 	      /*
 	       * start instance of zcobol class
 	       */
 		  zc390 pgm = new zc390();
 	      pgm.translate_cbl_to_mlc(argv,null);
 	}
-	private void translate_cbl_to_mlc(String[] args,JTextArea log_text){
+	private void translate_cbl_to_mlc(String[] args,JTextArea log_text) {
 	    /*
 		 * translate cobol (CBL) to 
 		 * z390 macro assembler (.MLC)
@@ -268,11 +514,12 @@ public class zc390{
 		}
 		term_zc();
 	}
-	private void init_zc390(String[] args){
+	private void init_zc390(String[] args) {
 		/*
 		 * 1.  Display zcobol version
 		 * 2.  Compile regular expression pattern
 		 * 3.  Open CBL and MLC files
+         * 4.  Create section/paragraph definitions                                  // #655
 		 */
 		tz390 = new tz390();
 		tz390.init_tz390();   // RPI 1080
@@ -410,7 +657,19 @@ public class zc390{
 			ws_indent[index] = ws_indent[index-1] + "  ";
 		    index++;
 		}
-	}	
+    // Process section/paragraph definitions to convert them to an array of proper objects    // #655
+    try                                                                                       // #655
+       {program_sections = new section_definition[PROGRAM_SECTIONS.length];                   // #655
+        int my_index=0;                                                                       // #655
+        while (my_index < PROGRAM_SECTIONS.length) // for each definition                     // #655
+           {program_sections[my_index] = new section_definition(PROGRAM_SECTIONS[my_index]);  // #655
+            my_index++;                                                                       // #655
+            }                                                                                 // #655
+        }                                                                                     // #655
+    catch (Exception e)                                                                       // #655
+       {abort_error("zcobol section definition errror - " + e.toString());                    // #655
+        }                                                                                     // #655
+	}
 	private void term_zc(){
 		/*
 		 * 1.  Add PROCEDURE END and END
@@ -1041,6 +1300,9 @@ public class zc390{
 		 *       d.  If () wrap in single quotes. 
 		 *       e.  comma or semicolon ignored         
 		 */
+
+         boolean skip_period_flag = false;                                    // #655
+
 		if (zc_token.length() > 1){
 			if (zc_token.charAt(0) != '\''
 				&& zc_token.charAt(0) != '"'){
@@ -1091,11 +1353,11 @@ public class zc390{
 				}
 				skip_period = false;
 				// ignore period
-				return;
+                skip_period_flag = true;                                                       // #655
 			} else if (zc_token.charAt(0) == ','
 				       || zc_token.charAt(0) == ';'){
 				// ignore commas and semicolons
-				return;
+              skip_period_flag = true;                                                         // #655
 			} else if (zc_token.charAt(0) == '\''){
 				zc_token = "'" + zc_token + "'";
 			} else if (zc_token.charAt(0) == '"'){
@@ -1111,6 +1373,59 @@ public class zc390{
 		} else {
 			abort_error("zero length token parsing error");
 		}
+
+        // Pick up current token and previous one to validate division/section/paragraph sequence // #655
+        section_definition sc_current_section_definition;                                         // #655
+        sc_previous_token = sc_current_token;                                                     // #655
+        sc_previous_area  = sc_current_area;                                                      // #655
+        sc_current_token = zc_token;                                                              // #655
+        sc_current_area  = zc_token_area;                                                         // #655
+        sc_change_flag = false;                                                                   // #655
+        if (sc_current_token.equals("DIVISION"))                                                  // #655
+           {sc_current_division  = sc_previous_token;                                             // $655
+            sc_current_section   = "";                                                            // #655
+            sc_current_paragraph = "";                                                            // #655
+            sc_change_flag = true;                                                                // #655
+            }                                                                                     // #655
+        if (sc_current_token.equals("SECTION"))                                                   // #655
+           {sc_current_section   = sc_previous_token;                                             // #655
+            sc_current_paragraph = "";                                                            // #655
+            sc_change_flag = true;                                                                // #655
+            }                                                                                     // #655
+        if (sc_current_token.equals(".") & sc_previous_area == 'A')                               // #655
+           {sc_current_paragraph = sc_previous_token;                                             // #655
+            sc_change_flag = true;                                                                // #655
+            }                                                                                     // #655
+        // if change of division/section/paragraph validate the new combination                   // #655
+        if (sc_change_flag == true)                                                               // #655
+           {sc_current_section_definition = new section_definition(sc_current_division,           // #655
+                                                                   sc_current_section,            // #655
+                                                                   sc_current_paragraph);         // #655
+            sc_new_index = sc_current_section_definition.find_index();                            // #655
+            if (sc_new_index == -1)                                                               // #655
+               {log_error("division("    + sc_current_division                                    // #655
+                        + ") section("   + sc_current_section                                     // #655
+                        + ") paragraph(" + sc_current_paragraph                                   // #655
+                        + ") invalid combination");                                               // #655
+                }                                                                                 // #655
+            else if (sc_new_index < sc_current_index)                                             // #655
+               {log_error("division("    + sc_current_division                                    // #655
+                        + ") section("   + sc_current_section                                     // #655
+                        + ") paragraph(" + sc_current_paragraph                                   // #655
+                        + ") out of sequence");                                                   // #655
+                }                                                                                 // #655
+            else                                                                                  // #655
+               {sc_current_index = sc_new_index;                                                  // #655
+                }                                                                                 // #655
+            }                                                                                     // #655
+                                                                                                  // #655
+        // ignore current token if it is in a pseudo-comment section or paragraph                 // #655
+        if (sc_current_index >= 0)                                                                // #655
+           {if (program_sections[sc_current_index].is_comment()) return;                          // #655
+            }                                                                                     // #655
+        // ignore current token if it is a skippable period                                       // #655
+        if (skip_period_flag == true) return;                                                     // #655
+
 		if (zc_token_area == 'A'){
 			// non procedure division section operation
 			// or procedure division label
