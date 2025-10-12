@@ -3,6 +3,19 @@
 000300     CM101M.                                                      CM1014.2
 000400 AUTHOR.                                                          CM1014.2
 000500     FEDERAL COMPILER TESTING CENTER.                             CM1014.2
+      ******************************************************************
+      *
+      * Testcase for Issue #655:
+      * The INSTALLATION paragraph is supposed to contain comments only,
+      * until the next paragraph or division is encountered.
+      * Yet the line with the zip code (5203) is interpreted as
+      * a working storage definition. Which causes an error:
+      * ZC390E zcobol invalid ws level 5203 on line 11
+      *
+      * The code in zc390 was fixed. This test is to guard against
+      * regression - program should compile okay with RC=0.
+      *
+      ******************************************************************
 000600 INSTALLATION.                                                    CM1014.2
 000700     GENERAL SERVICES ADMINISTRATION
 000800     AUTOMATED DATA AND TELECOMMUNICATION SERVICE.
