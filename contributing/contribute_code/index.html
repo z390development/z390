@@ -1886,12 +1886,12 @@ project. For how to contribute to the documentation, see
 <h2 id="setup-and-build">Setup and build</h2>
 <h3 id="install-java-sdk">Install Java SDK</h3>
 <p>Make sure you have a Java SDK available to compile the application.</p>
-<p>The project has moved to the <a href="https://adoptium.net">Eclipse Temurin Java SDK</a> 
+<p>The project has moved to the <a href="https://adoptium.net">Eclipse Temurin Java SDK</a>
 (previously AdoptOpenJDK) for distribution builds.</p>
 <p>z390 is using java 21 to build the package but code must support Java 1.8.</p>
 <p>To ensure alignment with other developers, use of a Java SDK 21 or greater
-is recommended. At a minimum, you will require an SDK of 9 or greater 
-as the build jobs use parameters not available in earlier versions.</p>
+is recommended. At a minimum, you will require an SDK of 1.8 or greater,
+although this is not recommended.</p>
 <p>You can check if this is available by running the following command:</p>
 <div class="highlight"><pre><span></span><code>shell&gt; javac -version
 javac 21.0.0   # you should receive a message like this
@@ -1907,7 +1907,7 @@ the bottom of this document.</p>
 <div class="highlight"><pre><span></span><code>shell&gt; git clone https://github.com/z390development/z390.git
 shell&gt; cd z390
 </code></pre></div>
-<p>Once you are ready to submit changes, you will need a fork of the z390 
+<p>Once you are ready to submit changes, you will need a fork of the z390
 repository. See <a href="https://docs.github.com/en/get-started/quickstart/fork-a-repo">https://docs.github.com/en/get-started/quickstart/fork-a-repo</a>
 for more details.</p>
 <h3 id="build-the-code">Build the code</h3>
@@ -2375,7 +2375,7 @@ git documentation:https://git-scm.com/doc</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4-3-gc452f3ac"}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4-4-g8382b5c4"}</script>
     
     
       <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
