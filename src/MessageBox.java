@@ -49,7 +49,7 @@ public class MessageBox implements
 /**
  * Dummy constructor - no initialization needed
  */
-public void messageBox()
+public MessageBox()
        {// dummy constructor - no initialization needed.
         }
 
