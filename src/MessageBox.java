@@ -30,14 +30,39 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 
+/**
+  * Class MessageBox is used in the interactive window for z390
+  */
 public class MessageBox implements 
   ActionListener, WindowListener, KeyListener {
-	Frame frame = null;
+   /*****************************************************
+    * Maintenance
+    * ***************************************************
+    * 2025-10-14 AFK      Add javadoc comments
+    *****************************************************
+    * Global variables                                   
+    *****************************************************/
+    /** variable      */ Frame frame = null;
+
+
+
+/**
+ * Dummy constructor - no initialization needed
+ */
+public MessageBox()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
+/**
+ * Popup message box with title and message
+ * and exit when ok button clicked
+ *
+ * @param title title for the popup
+ * @param message message content
+ */
 	public void messageBox(String title,String message) {
-  /*
-   * Popup message box with title and message
-   * and exit when ok button clicked
-   */
 		frame  = new Frame();
         Dialog dialog = new Dialog(frame, true); // Modal
         dialog.addWindowListener(this);
@@ -57,35 +82,129 @@ public class MessageBox implements
         dialog.toFront();
         dialog.setVisible(true);
   }
+
+
+
+/**
+ * Cancel the message
+ */
   private void cancel_message(){
   	  frame.dispose();
   }
+
+
+
+/**
+ * Handle window activation
+ *
+ * @param e event
+ */
   public void windowActivated(WindowEvent e) {
   }
+
+
+
+/**
+ * Handle window deactivation
+ *
+ * @param e event
+ */
   public void windowDeactivated(WindowEvent e) {
   	cancel_message();
   }
+
+
+
+/**
+ * Handle window closed
+ *
+ * @param e event
+ */
   public void windowClosed(WindowEvent e) {
   	cancel_message();
   }
+
+
+
+/**
+ * Handle window closing
+ *
+ * @param e event
+ */
   public void windowClosing(WindowEvent e) {
   	cancel_message();
   }
+
+
+
+/**
+ * Handle window iconification
+ *
+ * @param e event
+ */
   public void windowIconified(WindowEvent e) {
   }
+
+
+
+/**
+ * Handle window de-iconification
+ *
+ * @param e event
+ */
   public void windowDeiconified(WindowEvent e) {
   }
+
+
+
+/**
+ * Handle window opened
+ *
+ * @param e event
+ */
   public void windowOpened(WindowEvent e) {
   }
+
+
+
+/**
+ * Handle action performed event
+ *
+ * @param event action event data
+ */
   public void actionPerformed(ActionEvent event){
   	cancel_message();
   }
+
+
+
+/**
+ * Handle key pressed event
+ *
+ * @param event keypress data
+ */
   public void keyPressed(KeyEvent event){
   	cancel_message();
   }
+
+
+
+/**
+ * Handle key typed event
+ *
+ * @param event key typed data
+ */
   public void keyTyped(KeyEvent event){
   	cancel_message();
   }
+
+
+
+/**
+ * Handle key released event
+ *
+ * @param event key released data
+ */
   public void keyReleased(KeyEvent event){
   }
 }
