@@ -266,6 +266,7 @@ class z390Test {
             cobFilenameNoExt = filenameWithoutExtension(cobFilename)
         }
         rc = this.callZ390(cobFilenameNoExt, 'mz390', *(cobOptions + args.toList()))
+        this.getOutput(cobFilenameNoExt)
         return rc
     }
 
@@ -297,6 +298,7 @@ class z390Test {
                 rc = this.callZ390(cobFilenameNoExt, 'ez390', *runOptions)
             }
         }
+        this.getOutput(cobFilenameNoExt)
         return rc
     }
 }
