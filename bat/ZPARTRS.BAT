@@ -21,8 +21,8 @@ erase %1.TRS
 call %~dps0MAC %z_TraceMode% zpar\ZPARTRS SYSPARM(%1+%2+%3+%4+%5+%6+%7+%8+%9) @ZPAR\ZPARTRS
 set z_ReturnCode=%ERRORLEVEL%
 rem any error or warning message has been issued by mac
-if %z_ReturnCode% NEQ 0 (if %z_ReturnCode% NEQ 4 (goto return))
-
+if %z_ReturnCode% EQU 0 goto return
+if %z_ReturnCode% EQU 4 goto return
 dir %1.*
 
 :return
