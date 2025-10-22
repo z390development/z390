@@ -2209,8 +2209,8 @@ public mz390()
 /**
  * parse space delimited parms for exec
  * sql cics or dli and replace with comma
- * delimited parms for EXEC macro processing.
- *
+ * delimited parms for EXEC macro processing.<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>Use the proto_pattern to handle all valid macro assembler parm expressions including quoted strings with spaces.</li>
@@ -3434,7 +3434,7 @@ public mz390()
 
 
 /**
-/* insert &amp;(acall_name)(parm#) SETC 'parm' for each parm in acall name(p1,p2,,pn)
+ * insert &amp;(acall_name)(parm#) SETC 'parm' for each parm in acall name(p1,p2,,pn)
  */
 	private void insert_acall_parms(){  // #335
 		 if (acall_parm.length() < 3)return; // #335 last fix for v1.8.1
@@ -4738,8 +4738,8 @@ public mz390()
 
 
 /**
- * allocate set scalar,array, or created set variables on first occurence.
- *
+ * allocate set scalar,array, or created set variables on first occurence.<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>Duplicates ignored and expand used to handle any subscript beyond first alloc.</li>
@@ -4888,8 +4888,8 @@ public mz390()
 
 
 /**
- * set set store info form bal_label
- *
+ * set set store info form bal_label<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>Sets store_pc_op to storv, storvs,
@@ -6036,8 +6036,8 @@ public mz390()
 /**
  * perform next exp action based
  * on precedence of exp_next_op and
- * exp_prev_op
- *
+ * exp_prev_op<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>If substring set prev_substring else reset after operation. Used by exp_substring.</li>
@@ -6673,7 +6673,8 @@ public mz390()
 /**
  * compare setc_value1 and setc_value2
  * in EBCDIC and return -1, 0, or 1
- * for low, equal, high
+ * for low, equal, high<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>If length not equal, the shorter length operand is treated as lower</li>
@@ -6862,8 +6863,8 @@ public mz390()
 
 /**
  * start or end string or substring
- * defining setc value for exp_stack
- *
+ * defining setc value for exp_stack<br />
+ * <br />
  * Note:
  * <ol>
  *  <li>if exp_prev_substring_op set then don't put null string on stack</li>
@@ -7539,8 +7540,8 @@ public mz390()
 
 
 /**
- * terminate expression returning value on stack if no errors
- *
+ * terminate expression returning value on stack if no errors<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>Don't return value if parse_mode</li>
@@ -7776,11 +7777,11 @@ public mz390()
  * 
  * if &amp;var followed by ( then
  *    put var pointer on value stack
- *    and put ) subscript op on op stack
+ *    and put ) subscript op on op stack<br />
  * else
  *    push unscripted var value on value stack
- *    and skip trailing . if any
- *
+ *    and skip trailing . if any<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>If exp_parse_set_mode, set exp_parse_set_name and exit.</li>
@@ -7879,8 +7880,8 @@ public mz390()
 
 /**
  * convert sdt in setc_value to seta_value and
- * push on stack
- * 
+ * push on stack<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>Ordinary symbols are pushed as strings for use by prefix operators T', L'</li>
@@ -8046,8 +8047,8 @@ public mz390()
 
 
 /**
- * find ordinary symbol and return index else -1
- *
+ * find ordinary symbol and return index else -1<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>return -1 if not opt_asm</li>
@@ -8382,8 +8383,8 @@ public mz390()
  *  <li>exp_parse_set_created - true/false</li>
  *  <li>exp_parse_set_subscript - true/false </li>
  * </ol>
- * and return true if it exists or false if not.
- *
+ * and return true if it exists or false if not.<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>If var found but exp_parse_set_name is null, then issue error for parms</li>
@@ -9144,8 +9145,8 @@ public mz390()
 
 
 /**
- * allocate pseudo code arrays
- *
+ * allocate pseudo code arrays<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>pc_start used to opt ago, gbl?, etc.</li>
@@ -9703,8 +9704,8 @@ public mz390()
 
 /**
  * set positional and key word parm values
- * from macro call statement
- * 
+ * from macro call statement<br />
+ *  <br />
  * Note mult commas force null pos parms
  */
 	private void set_call_parm_values(){
@@ -10300,8 +10301,8 @@ public mz390()
 
 /**
  * issue error msg to log with prefix and
- * inc error total
- *
+ * inc error total<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>If exp_replacement mode error
@@ -11916,8 +11917,8 @@ public mz390()
 
 
 /**
- * push var(set_sub) value on stack
- *
+ * push var(set_sub) value on stack<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>Shared by exp and pc</li>
@@ -12056,8 +12057,8 @@ public mz390()
 
 /**
  * replace setc value and sublist index
- * on stack with caculated sublist.
- *
+ * on stack with caculated sublist.<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>Shared by exp and pc</li>
@@ -12182,8 +12183,8 @@ public mz390()
  *  <li>var_loc</li>
  *  <li>var_name_index (update for new mac)</li>
  * </ol>
- * Return true if ok else false if not found
- *
+ * Return true if ok else false if not found<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>Update via find_set if new macro and local var</li>
@@ -12431,8 +12432,8 @@ public mz390()
 
 /**
  * gen pushc or pusha if pending
- * gen concat after pushc if pending
- *
+ * gen concat after pushc if pending<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>push emply setc if pending</li>
@@ -12558,8 +12559,8 @@ public mz390()
 
 
 /**
- * set store_sub and store_subscript based on op.
- *
+ * set store_sub and store_subscript based on op.<br />
+ * <br />
  * Note:
  * <ol>
  *  <li>If pc_op_storvs, then get 
@@ -12612,8 +12613,8 @@ public mz390()
 
 
 /**
- * free pc list starting at head and ending at tail
- *
+ * free pc list starting at head and ending at tail<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>User must reset any other 
@@ -13814,19 +13815,21 @@ public mz390()
 
 
 	/**
-	 * Implement HLASM LangRef SLA built-in function                 // #509
+	 * Implement HLASM LangRef SLA built-in function<br />
+	 * <br />
+	 * Notes:
+	 * <ol>
+	 *  <li>Only the low 6 bits of n are used. For example,
+	 *       n = -1 = X'FFFFFFFF' is changed to X'0000003F' = 63
+	 *       and n = X'80000000' (Integer.MIN_VALUE) is changed
+	 *       to 0.</li>
+	 *  <li>Arithmetic overflow error logged if a bit that is not
+	 *       the original sign bit is shifted into the sign position.</li>
+	 * </ol>
 	 * 
 	 * @param x the number to shift
 	 * @param n the number of bits to shift
 	 * @return x shifted left n bits if no error; else 0
-	 * 
-	 * Note: Only the low 6 bits of n are used. For example,
-	 *       n = -1 = X'FFFFFFFF' is changed to X'0000003F' = 63
-	 *       and n = X'80000000' (Integer.MIN_VALUE) is changed
-	 *       to 0.
-	 *
-	 * Arithmetic overflow error logged if a bit that is not
-	 * the original sign bit is shifted into the sign position.
 	 */
 	private int shiftLeftArithmetic(int x, int n)                    // #509
 	{
@@ -14191,8 +14194,8 @@ public mz390()
 
 /**
  * write text to buffered file with
- * continuations if > 71 characters.
- *
+ * continuations if > 71 characters.<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>Used by put_bal_line and</li>
