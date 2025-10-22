@@ -1,0 +1,330 @@
+***********************************************************************
+*
+* Verify issue 658 changes that change CDE field CDUSE usage from
+* byte to halfword.
+*
+***********************************************************************
+*
+* Pseudocode:
+*
+*     Load a module 32767+2 (X'8001') times
+*     Verify that CDUSE = 32767 (X'7FFF')
+*     Dump CDEs on CVTCDE chain; SNAP CDEs (sz390 parallel arrays)
+*     Delete the loaded module 32767-1 = 32766 (X'7FFE') times
+*     Verify that CDUSE = X'0001'
+*     Dump CDEs on CVTCDE chain; SNAP CDEs (sz390 parallel arrays)
+*
+* Return code:
+*     0  all tests passed
+*     8  a test failed; WTOs issued describing error
+*
+***********************************************************************
+*
+* General comments:
+*
+* Prior to the fix, CDUSE usage in sz390.java was as a byte. Code
+* also only allows a maximum value of 255 (X'FF'). A LOAD done after
+* that leaves the CDUSE value unchanged. No errors occur.
+*
+* Note that this is different behavior than what is done on z/OS.
+*
+* The fix changes CDUSE usage to a halfword. This at least agrees
+* with is definition in the IHACDE DSECT (z390 and z/OS). The z390
+* changes behave similarly to the above description, but use
+* 32767 (X'7FFF') as the maximum CDUSE value, resulting in any
+* LOADs done after that leaving the CDUSE value unchanged. No
+* errors occur.
+*
+* On z/OS, the maximum value for CDUSE is 32767 (X'7FFF'), the
+* maximum positive halfword value. Any LOAD attempts after CDUSE
+* reaches that value, the LOAD is ABENDed with S906. If the LOAD
+* was issued with an ERRET value, the ABEND is bypassed and the
+* LOAD request returns to the ERRET routine with R15 non-zero and
+* R1 = X'00000906'. 
+*
+***********************************************************************
+*
+* Notes:
+* 1. CDEs in z390 have an extension that contains the load point and
+*    length of the module. In z/OS the CDE points to an XTLST
+*    which contains load point(s) and length(s). (z/OS supports
+*    more than one extent.)
+* 2. The CDE values displayed by SNAP come from sz390 parallel arrays
+*        cde_name[], cde_ent[], cde_loc{},cde_len[], cde_use[]
+*    not from the CDEs on the CVTCDE chain, although the values
+*    should be the same.
+* 3. The loaded module is not deleted from storage in this test due
+*    to an error in DELETE processing. A subsequent Github issue
+*    should be created to fix this problem. Brief description:
+*      a. CVTCDE CDE CDUSE set to 0
+*      b. module storage is FREEMAINed
+*      c. sz390 parallel arrays updated to "delete" its CDE
+*      d. CVTCDE CDE is NOT updated, is NOT removed from the
+*         CVTCDE chain, is NOT FREEMAINed
+*      e. If the load module is subsequently LOADed again, the
+*         sz390 parallel arrays are updated but the CVTCDE CDE
+*         is NOT udated
+*
+***********************************************************************
+*
+IS658    CSECT
+         STM   14,12,12(13)        Save caller's registers
+         LR    12,15               R12 = base register
+         USING IS658,12            Establish addressability
+         LA    14,SA               Usable save area
+         ST    13,4(,14)           Chain
+         ST    14,8(,13)                 save areas
+         LR    13,14               Current save area
+*
+***********************************************************************
+*        Part 1: Verify CDUSE after LOADs
+***********************************************************************
+*
+*        LOAD module IS658LD 32767+2 (X'7FFF' + 2 = X'8001') times
+*
+IS100    DS    0H
+         SR    2,2                 Count attempted LOADs
+         SR    3,3                 Count successful LOADs
+         LA    4,1                 Increment
+         L     5,=A(32768)         32768 = X'8000' = max use + 1
+*                                  (1 less than X'8001' for final BXLE)
+IS110    DS    0H
+         AHI   2,1                 Count attempted LOAD
+         LOAD  EP=IS658LD,ERRET=IS120
+         BXLE  3,4,IS110           Repeat LOAD until error or end
+         B     IS200               Done with LOADs
+IS120    DS    0H
+         ST    15,LE15             R15 = return code (z390 only)
+*                                  R15 = reason code (z/OS only)
+         ST    1,LE1               R1 = completion code (z/OS only)
+IS200    DS    0H
+*
+*        Check the following:
+*        1. IS658LD CDE is on CVTCDE chain
+*        2. CDUSE = X'7FFF' = maximum positive halfword value
+*        3. LOAD attempt count = LOAD success count = X'8001'
+*
+*        R2 = number of LOAD attempts
+*        R3 = number of successful LOADs
+*        R15 = last LOAD return code (not used here)
+*
+IS300    DS    0H
+*
+*        Check 1: CDE for IS658LD is first on CVTCDE chain
+*
+         LA    1,=CL8'IS658LD.390' Note: 8-byte name = 'IS658LD.'
+         L     6,16                R6 --> CVT
+         USING IHACVT,6            Overlay CVT
+         L     6,CVTCDE            R6 --> First CDE
+         USING IHACDE,6            Overlay CDE
+         CLC   CDNAME,0(1)         CDE for IS658LD?
+         BE    IS310               Yes
+         WTO   'Error: IS658LD CDE not first on CVTCDE chain'
+         DROP  6                   End CDE overlay
+         B     IS_EExit            Error exit
+IS310    DS    0H
+         ST    6,@CDE              Save for DELETE tests
+*
+*        Check 2. CDUSE is maximum postive halfword value
+*
+         USING IHACDE,6            Overlay CDE for IS658LD
+         LH    4,CDUSE             Get use count; should be X'7FFF'
+         CFI   4,X'7FFF'           Use count = expected value?
+         BE    IS320               Yes; next check
+         ST    4,FW                Convert to
+         UNPK  DW(9),FW(5)                     printable hex
+         TR    DW,H2P              Finish conversion
+         MVC   W2CDUSE,DW+4        Copy to WTO
+         WTO   MF=(E,WTO2)         Show CDUSE actual : expected
+         B     IS_EExit            Error exit
+*
+*        Check 3: LOAD attempt, success counts = X'8001'
+*
+IS320    DS    0H
+         ST    2,FW                Convert to
+         UNPK  DW(9),FW(5)                     printable hex
+         TR    DW,H2P              Finish conversion
+         MVC   W1#Att,DW+4         Copy to WTO
+         ST    3,FW                Convert to
+         UNPK  DW(9),FW(5)                     printable hex
+         TR    DW,H2P              Finish conversion
+         MVC   W1#Suc,DW+4         Copy to WTO
+         WTO   MF=(E,WTO1)         Show counts: #attempts, #successes
+*
+         CR    2,3                 LOAD attempts : LOAD successes
+         BE    IS330               Must match
+     WTO   'Error: Num LOAD attempts not equal to num successful LOADs'
+         B     IS_EExit            Error exit
+IS330    DS    0H
+         CFI   2,X'8001'           LOAD counts equal to CDUSE max + 2?
+         BE    IS340               Yes; as expected
+         WTO   'Error: LOAD counts not equal to max CDUSE value + 2'
+         B     IS_EExit            Error exit
+IS340    DS    0H
+*
+*        Show all CDEs; note CDUSE for IS658LD CDE is X'7FFF'
+*
+         WTO   'CVTCDE chain after all LOADs done'
+*
+         BAS   14,SNAPCDES         Show all CDEs on CVTCDE chain
+*
+         WTO   'Registers and CDEs in sz390.java parallel arrays'
+         WTO   'R6 --> IS658LD CDE on CVTCDE chain; CDUSE = X''7FFF'''
+*
+         SNAP  PDATA=(GPR,CDE),ID=1,TEXT='R2,R3 = # LOAD try,okay'
+*
+***********************************************************************
+*        Part 2: Verify CDUSE after DELETEs
+***********************************************************************
+*
+*        DELETE module IS658LD 32766 = 32767-1 (X'7FFE') times
+*
+IS400    DS    0H
+         SR    4,4                 Count attempted DELETEs
+         SR    5,5                 Count successful DELETEs
+         LA    6,1                 Increment
+         L     7,=A(32766-1)       One less for final BXLE
+*
+IS410    DS    0H
+         AHI   4,1                 Count attempted DELETE
+         DELETE EP=IS658LD         No ERRET for DELETE
+         BXLE  5,6,IS410           Repeat DELETE until error or end
+*NSI     B     IS500               Done with DELETEs
+IS500    DS    0H
+***         ST    4,ADL               Count of DELETE attempts
+***         ST    5,SDL               Count of DELETE successes
+*
+*        Check the following:
+*        1. CDUSE = X'0001'
+*        3. DELETE attempt count = DELETE success count = X'7FFE'
+*
+*        R4 = number of DELETE attempts
+*        R5 = number of successful DELETEs
+*
+IS600    DS    0H
+*
+*        Check 1: Verify IS658LD CDE CDUSE is 1
+*
+         L     6,@CDE              R6 --> IS658LD CDE
+         USING IHACDE,6            Overlay CDE for IS658LD
+         LH    8,CDUSE             Get use count
+         CHI   8,1                 Should be 1
+         BE    IS610               Yes; next check
+         WTO   'Error: R8 = CDUSE not expected value X''0001'''
+         DROP  6                   End CDE overlay
+         B     IS_EExit            Error exit
+*
+*        Check 2: DELETE attempt, success counts equal X'7FFE'
+*
+IS610    DS    0H
+         CR    4,5                 DELETE attempts : DELETE successes
+         BE    IS620               Must be the same
+ WTO   'Error: DELETE attempt count not equal to DELETE success count'
+         B     IS_EExit            Error exit
+IS620    DS    0H
+         CFI   4,X'7FFE'           DELETE counts equal to max-1?
+         BE    IS630               Yes; as expected
+         WTO   'Error: DELETE counts not equal to max CDUSE value - 1'
+         B     IS_EExit            Error exit
+IS630    DS    0H
+*
+*        Show all CDEs; note CDUSE for IS658LD is X'0001'
+*
+         WTO   'CVTCDE chain after all DELETEs done'
+*
+         BAS   14,SNAPCDES
+*
+         WTO   'Registers and CDEs in sz390.java parallel arrays'
+         WTO   'R6 --> IS658LD CDE on CVTCDE chain; CDUSE = X''0001'''
+*
+         SNAP  PDATA=(GPR,CDE),ID=2,TEXT='R4,R5 = # DELETE try,okay'
+*
+***********************************************************************
+*        End testing
+***********************************************************************
+         SR    15,15               Test successful
+         B     IS_Exit             Exit
+IS_EExit DS    0H
+         WTO   'Error occurred; show CDEs on CDE chain and sz390'
+         BAS   14,SNAPCDES         Show CDEs on CVTCDE chain
+         SNAP PDATA=(GPR,CDE),ID=2 Show Regs and sz390 CDE || arrays
+         LA    15,8                Error return code
+*NSI     B     IS_Exit             Exit
+IS_Exit  DS    0H
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except r15
+         BR    14                  Return to caller
+*
+*        Internal subroutines
+*
+***********************************************************************
+* SNAPCDES: Show all CDEs on CVTCDE chain
+*
+* Registers at entry:
+*     R12  =  base register
+*     R13 --> usable save area
+*     R14  =  return address
+*
+* Registers at exit:
+*     R0-R15: as at entry
+**********************************************************************
+*
+SNAPCDES DS    0H
+         STM   14,12,12(13)        Save caller's registers
+         L     6,16                R6 --> CVT
+         USING IHACVT,6            Overlay CVT
+         LT    6,CVTCDE            R6 --> First CDE (if any)
+         BZ    SC200               No CDEs
+         USING IHACDE,6            Overlay CDE
+SC100    DS    0H
+         LA    7,CDELEN(,6)        Past end of CDE
+         SNAP  STORAGE=((6),(7)),PDATA=,TEXT='CVTCDE chain CDE'
+         LT    6,CDCHAIN           Next CDE, if any
+         BNZ   SC100               Process all CDEs
+SC200    DS    0H
+         DROP  6                   End CDE overlay
+*
+         LM    14,12,12(13)        Restore caller's registers
+         BR    14                  Return to caller
+*
+         LTORG
+*
+         DS    0D
+SA       DC    18F'0'              Usable save area
+*
+WTO1     WTO   'LOAD counts: attempts X''xxxx''  successes X''xxxx''', x
+               MF=L
+W1#Att   EQU   WTO1+4+24,4,C'C'
+W1#Suc   EQU   WTO1+4+43,4,C'C'
+*
+WTO2   WTO   'Error: CDUSE X''xxxx'' not expected value X''7FFF''',MF=L
+W2CDUSE  EQU   WTO2+4+15,4,C'C'
+*
+A        DS    0D                  In case SNAP storage
+         DC    CL4' R15'
+LE15     DC    F'-1'               R15 at LOAD error
+         DC    CL4'  R1'
+LE1      DC    F'-1'               R1 at LOAD error
+         DC    CL4'ACDE'
+@CDE     DC    F'-1'               A(CDE for LOADed module)
+B        DS    0D
+*
+DW       DS    D,XL1               Doubleword work and pad
+FW       DS    F,XL1               Fullword work and pad
+H2P      EQU   *-240
+         DC    C'0123456789ABCDEF'
+*
+***********************************************************************
+*        DSECTs
+***********************************************************************
+*
+         CVTD  ,
+*
+***********************************************************************
+*
+         CDED  ,
+*
+***********************************************************************
+*
+         END
