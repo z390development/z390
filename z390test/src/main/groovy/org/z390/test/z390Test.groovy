@@ -258,7 +258,7 @@ class z390Test {
         var cobfiledir = new File(cobFilename).getParent()
         var cobOptions = ['BAL', 'NOLISTCALL', 'MAXGBL(1500000)',
                           "SYSMAC(${basePath('zcobol', 'mac')}+${basePath('mac')})".toString(),
-                          "SYSCPY(${cobfiledir}+${basePath('zcobol', 'cpy')})".toString()
+                          "SYSCPY(${cobfiledir}+${basePath('zcobol', 'cpy')}+${basePath('zcobol', 'mac')})".toString()
         ]
         // Strip extension for subsequent calls if present
         var cobFilenameNoExt = cobFilename

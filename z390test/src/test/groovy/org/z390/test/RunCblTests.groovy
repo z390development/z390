@@ -2,6 +2,7 @@ package org.z390.test
 
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.Test
 
 import static org.junit.jupiter.api.DynamicTest.dynamicTest
 
@@ -24,6 +25,14 @@ class RunCblTests extends z390Test{
                     dynamicTest("test COBOL ${module}", () -> test_cobol_module(module)))
         }
         return tests
+    }
+
+    @Test
+    void testCM101M02() {
+        int rc = this.cblc(basePath("zcobol", "tests", "CM101M02"))
+        this.printOutput()
+        assert rc == 8   // Check return code
+        assert this.fileData['ERR'] { it.contains("MNOTE 8,'CD NOT SUPPORTED YET'") }  // check error present
     }
 
 }
