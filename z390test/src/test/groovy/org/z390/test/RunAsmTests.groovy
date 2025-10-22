@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test
 class RunAsmTests extends z390Test {
 
     var options = ['trace', 'noloadhigh', "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
+    var optionsNoinit = ['trace', 'noinit', "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
+    var optionsNoinitNoloadhigh = ['trace', 'noinit', 'noloadhigh', "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
 
     @Test
     void test_TESTINS1() {
@@ -93,6 +95,18 @@ class RunAsmTests extends z390Test {
     @Test
     void test_IS215() {
         int rc = this.asmlg(basePath("rt", "mlc", "IS215"), *options, 'optable(z390)')
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_IS658() {
+        int rc = this.asml(basePath("rt", "mlc", "IS658LD"), *options, 'optable(z390)')
+        this.printOutput()
+        assert rc == 0
+        rc = this.asmlg(basePath("rt", "mlc", "IS658"), *optionsNoinitNoloadhigh, 'optable(z390)')
+        this.printOutput()
+        assert rc == 0
+        rc = this.asmlg(basePath("rt", "mlc", "IS658"), *optionsNoinit, 'optable(z390)')
         this.printOutput()
         assert rc == 0
     }

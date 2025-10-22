@@ -233,6 +233,7 @@ public  class  sz390 implements Runnable {
 	*            not set R14 as a return address for GET or CHECK (READ/CHECK).
     * 2025-09-07 Issue #678 document optional label for test command A
     * 2025-09-28 Issue #681 Allow test script to revert to interactive mode
+    * 2025-10-07 Issue #658 Change CDE CDUSE field usage from byte to halfword
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -537,7 +538,7 @@ public  class  sz390 implements Runnable {
     int cur_cde = 0;
     String[] cde_name  = new String[max_cde_pgms];
     String[] cde_file  = new String[max_cde_pgms];
-    byte[]    cde_use   = (byte[])Array.newInstance(byte.class,max_cde_pgms);
+    short[]  cde_use   = (short[])Array.newInstance(short.class,max_cde_pgms);  // #658
     int[]    cde_loc   = (int[])Array.newInstance(int.class,max_cde_pgms);
     int[]    cde_len   = (int[])Array.newInstance(int.class,max_cde_pgms);
     int[]    cde_ent   = (int[])Array.newInstance(int.class,max_cde_pgms);
@@ -1743,11 +1744,8 @@ public void svc_load(){
 	}
 	cur_cde = tz390.find_key_index('P',load_pgm_name.toUpperCase() + load_pgm_type); // RPI 499
 	if (cur_cde != -1 && cde_loc[cur_cde] != 0){
-		cde_use[cur_cde]++;
-		if (cde_use[cur_cde] == 0){
-			cde_use[cur_cde] = (byte)0xff; // RPI 1063 no overflow
-		}
-		pz390.mem_byte[cde_addr[cur_cde]+pz390.cde_cduse] = cde_use[cur_cde]; // RPI 1063 update count
+		if ( cde_use[cur_cde] < 0x7FFF ){ cde_use[cur_cde]++; }  // RPI 1063 no overflow #658
+		pz390.mem.putShort(cde_addr[cur_cde]+pz390.cde_cduse,cde_use[cur_cde]); // RPI 1063 update count  #658
         svc_load_set_regs();
 		return;
 	}
@@ -2175,8 +2173,8 @@ private boolean delete_cur_cde(){
 	 *    return false
 	 */
 	if (cur_cde != -1 && cde_loc[cur_cde] != 0){
-		cde_use[cur_cde]--;
-		pz390.mem_byte[cde_addr[cur_cde]+pz390.cde_cduse] = cde_use[cur_cde]; // RPI 1063 update CDE use count in mem
+		if ( cde_use[cur_cde] > 0 ) cde_use[cur_cde]--;  // #658
+		pz390.mem.putShort(cde_addr[cur_cde]+pz390.cde_cduse,cde_use[cur_cde]); // RPI 1063 update CDE use count in mem  #658
         if  (cde_use[cur_cde] < 1){
         	pz390.reg.putInt(pz390.r1,cde_loc[cur_cde]); // RPI 244
         	pz390.reg.putInt(pz390.r0,cde_len[cur_cde]); // RPI 244
@@ -2232,7 +2230,7 @@ private void add_cde(){
 	    pz390.mem.putInt(pz390.cvt_cde,cde_addr[cur_cde]);
 	    pz390.mem.putInt(cde_addr[cur_cde]+pz390.cde_cdentpt,load_code_ent);
 	    put_ascii_string(cde_name[cur_cde],cde_addr[cur_cde]+pz390.cde_cdname,8,' ');
-	    pz390.mem.put(cde_addr[cur_cde]+pz390.cde_cduse,cde_use[cur_cde]);
+	    pz390.mem.putShort(cde_addr[cur_cde]+pz390.cde_cduse,cde_use[cur_cde]);  // #658
 	    pz390.mem.putInt(cde_addr[cur_cde]+pz390.cde_cdloadpt,load_code_load);
 	    pz390.mem.putInt(cde_addr[cur_cde]+pz390.cde_cdmodlen,load_code_len);
 	}
@@ -5116,13 +5114,13 @@ private void dump_cde_pgms(){
 				      + " ENT=" + tz390.get_hex(cde_ent[index],8)
 				      + " LOC=" + tz390.get_hex(cde_loc[index],8)
 		              + " LEN=" + tz390.get_hex(cde_len[index],8)
-		              + " USE=" + tz390.get_hex(cde_use[index],2) // RPI 1063 1 byte use count
+		              + " USE=" + tz390.get_hex(cde_use[index],4) // RPI 1063 #658 2 byte use count
 		              + tz390.newline); // RPI 500
 			} else {
 				put_dump(" CDE  DSN=" + cde_name[index] 
 				      + " LOC=" + tz390.get_hex(cde_loc[index],8)
 				      + " LEN=" + tz390.get_hex(cde_len[index],8)
-				      + " USE=" + tz390.get_hex(cde_use[index],2) // RPI 1063 1 bute use count
+				      + " USE=" + tz390.get_hex(cde_use[index],4) // RPI 1063 #658 2 byte use count
 				      + tz390.newline); // RPI 500
 			}
 		}
@@ -5141,13 +5139,13 @@ private void dump_cde(){
 				      + " ENT=" + tz390.get_hex(cde_ent[index],8)
 		              + " LOC=" + tz390.get_hex(cde_loc[index],8)
 		              + " LEN=" + tz390.get_hex(cde_len[index],8)
-		              + " USE=" + tz390.get_hex(cde_use[index],2) // RPI 1063
+		              + " USE=" + tz390.get_hex(cde_use[index],4)  // RPI 1063  #658
 		              );
 			} else {
 				put_dump(" CDE  DSN=" + cde_name[index]
             		  + " LOC=" + tz390.get_hex(cde_loc[index],8)
 				      + " LEN=" + tz390.get_hex(cde_len[index],8)
-				      + " USE=" + tz390.get_hex(cde_use[index],2)  // RPI 1063
+				      + " USE=" + tz390.get_hex(cde_use[index],4)  // RPI 1063  #658
 				     );
 			}
 		}
