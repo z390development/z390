@@ -20,17 +20,17 @@ bash/asmlg tests/TESTDFP2 trace noloadhigh $sysmac $optable
 bash/asmlg tests/TESTLITS trace noloadhigh $sysmac
 bash/asmlg tests/TEDIT    trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTAMPS trace noloadhigh $sysmac $optable
-bash/asmlg rt/mlc/IS215 trace noloadhigh $sysmac $optable
-bash/asml  rt/mlc/IS658LD                $sysmac $optable
-bash/asmlg rt/mlc/IS658 trace noinit noloadhigh $sysmac $optable
+bash/asmlg rt/mlc/IS215 trace noloadhigh $sysmac
+bash/asml  rt/mlc/IS658LD                $sysmac
+bash/asmlg rt/mlc/IS658 trace noinit noloadhigh $sysmac
 bash/exec  rt/mlc/IS658 trace noinit
-bash/asmlg rt/mlc/IS659 trace noloadhigh $sysmac $optable
-bash/asmlg rt/mlc/IS660 trace noloadhigh $sysmac $optable
+bash/asmlg rt/mlc/IS659 trace noloadhigh $sysmac
+bash/asmlg rt/mlc/IS660 trace noloadhigh $sysmac
 bash/asmlg rt/mlc/TESTDC1  trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTASC1 ASCII trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTDC2  trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTDC3  trace noloadhigh $sysmac $optable
-bash/asmlg rt/mlc/TB2CX2C  trace noloadhigh $sysmac $optable
+bash/asmlg rt/mlc/TB2CX2C  trace noloadhigh $sysmac
 bash/asm   rt/mlc/ATTRIB\$O trace noloadhigh $sysmac
 rt/bash/zopcheck
 
