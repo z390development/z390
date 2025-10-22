@@ -2384,8 +2384,8 @@ public mz390()
 
 /**
  * if ASM, set symbol type and length during
- * MLC macro loading in lookahead mode
- * 
+ * MLC macro loading in lookahead mode<br />
+ * <br />
  * Notes:
  * <ol>
  *  <li>Called during macro load to define all
