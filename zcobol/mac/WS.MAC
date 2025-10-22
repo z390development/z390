@@ -58,6 +58,7 @@
 .* 11/26/10 RPI 1138 CORRECT SYM_PIC_DEC FOR DISPLAY PICTURE Z.99 ETC.
 .* 04/05/11 RPI 1139 FIX SETA STRING FOR HLASM COMP
 .* 02/16/12 RPI 1181 FIX TO HANDLE PIC X(8). WITH PERIOD FOLLOWING.
+.* 25-10-22 AFK #578 zCobol compiles get "actr limit exceeded" errors
 .*********************************************************************
 .* 
 .* WS level,name,clauses in any order (PIC,VALUE,USAGE supported)

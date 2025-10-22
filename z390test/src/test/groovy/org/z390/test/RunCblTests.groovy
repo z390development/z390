@@ -2,6 +2,7 @@ package org.z390.test
 
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.Test
 
 import static org.junit.jupiter.api.DynamicTest.dynamicTest
 
@@ -24,6 +25,13 @@ class RunCblTests extends z390Test{
                     dynamicTest("test COBOL ${module}", () -> test_cobol_module(module)))
         }
         return tests
+    }
+
+    @Test
+    void testCM101M03() {
+        int rc = this.cblc(basePath("zcobol", "tests", "CM101M03"))
+        this.printOutput()
+        assert rc == 0   // Check return code
     }
 
 }
