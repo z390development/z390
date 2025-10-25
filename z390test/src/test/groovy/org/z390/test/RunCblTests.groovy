@@ -32,6 +32,14 @@ class RunCblTests extends z390Test{
         int rc = this.cblc(basePath("zcobol", "tests", "CM101M03"))
         this.printOutput()
         assert rc == 0   // Check return code
+        }
+    @Test
+    void testCM101M02() {
+        int rc = this.cblc(basePath("zcobol", "tests", "CM101M02"))
+        this.printOutput()
+        assert rc == 8   // Check return code
+        assert this.fileData['ERR'].contains("MNOTE 8,'CD NOT SUPPORTED YET'"), "CM101M02.ERR does not contain expected error"
+        assert !this.fileData['ERR'].contains("missing copy"), "CM101M02.ERR reports error that should have been fixed"
     }
 
 }
