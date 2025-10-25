@@ -34,13 +34,13 @@ import java.util.regex.PatternSyntaxException;  // #509
 
 import javax.swing.JTextArea;
 
+/**
+ * mz390 is the macro processor component of z390 which can be called from
+ * z390 GUI interface or from command line to read mlc macro source and
+ * any referenced macros and copybooks to generate expanded BAL source file.
+ */
 public  class  mz390 {
-	/*
-	 mz390 is the macro processor component of z390 which can be called from
-	 z390 GUI interface or from command line to read mlc macro source and
-	 any referenced macros and copybooks to generate expanded BAL source file.
-	 
-	 ****************************************************
+	/****************************************************
 	 * Maintenance
 	 ****************************************************
 	 * 03/09/05 copied from z390.java and modified
@@ -448,558 +448,559 @@ public  class  mz390 {
      * 2023-06-21 #485 fix O attribute value for extended mnemonics
      * 2024-06-02 #527 set &SYSOPT_OPTABLE to correct value
      * 2024-07-03 #509 fixes for HLASM built-in functions
+     * 2025-10-20 AFK      Add javadoc comments
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
 	/*
 	 * static limits
 	 */
-	int max_exp_stk = 500;
-	int max_substring_len = 100000;
-	int max_ap_files = 10;     // max concurrent AREAD and PUNCH files
-	int max_lcl_key_root = 47; // hash index for each macro instance
+    /** variable      */ int max_exp_stk = 500;
+    /** variable      */ int max_substring_len = 100000;
+    /** variable      */ int max_ap_files = 10;     // max concurrent AREAD and PUNCH files
+    /** variable      */ int max_lcl_key_root = 47; // hash index for each macro instance
 	/*
 	 * constants                                                       // #509
 	 */
-	int max_mac_dec_digits = 10;                                       // #509
-	int max_mac_bin_digits = 32;                                       // #509
-	int max_mac_hex_digits = 8;                                        // #509
-	String max_pos_int_plus_one = "2147483648";                        // #509
+    /** variable      */ int max_mac_dec_digits = 10;                                       // #509
+    /** variable      */ int max_mac_bin_digits = 32;                                       // #509
+    /** variable      */ int max_mac_hex_digits = 8;                                        // #509
+    /** variable      */ String max_pos_int_plus_one = "2147483648";                        // #509
 	/*
 	 * subordinate 
 	 */
-	tz390 tz390 = null;
-	az390 az390 = null;  // RPI 415
-	String msg_id   = "MZ390I ";
-	String trace_id = "MZ390I ";
-	boolean mac_branch = false; // RPI 899
-	int mz390_rc = 0;
-	int mz390_errors = 0;
-	boolean mz390_recursive_abort = false; // RPI 935
-	boolean mac_abort = false;
-	boolean batch_asm_error = false; // RPI 736
-	Date cur_date = null;
-	GregorianCalendar cur_date_cal = null;
-	long tod_start = 0;
-	long tod_end   = 0;
-	long tot_msec = 0;
-	long ins_rate    = 0;
-	boolean log_to_bal = false;
-	int tot_bal_line = 0;
-	boolean bal_eof = false;
-	int tot_mnote_errors  = 0;
-	int tot_mnote_warning = 0;
-	int hwm_mnote_level   = 0;
-	String bal_text = null;     // curr bal_line text
-	int    bal_text_index0 = 0; // end of prev. parm
-	int    bal_text_index1 = 0; // start of cur parm
-	int    bal_text_index2 = 0; // end   of cur parm
-	int tot_macros   = 0; // rpi 2220 0 for main, incr for each macro loaded
-	int tot_mac_ins  = 0;
-	int tot_mac_load = 0;
-	int tot_mac_call = 0;
-	int tot_mac_copy = 0;
-	int mlc_line_end = 0;
-	File bal_file = null;
-	File temp_file = null;
-	BufferedWriter bal_file_buff = null;
-	boolean aread_op = false;
-	int tot_aread_io = 0;
-	int tot_punch_io = 0;
-	int ap_file_index = 0;
-	String ap_file_name = null;
-	boolean ap_format = false;  // format PCH extension
-	boolean ap_noprint = false; // RPI 745 ignore AREAD option
-	boolean ap_nostmt  = false; // RPI 745 ignore AREAD option
-	boolean ap_clockb  = false; // RPI 745 return 8 char TOD in 0.01 sec in AREAD string
-	boolean ap_clockd  = false; // RPI 745 return 8 char TOD as HHMMSSTH in AREAD string
-	boolean ap_file_io = false; // RPI 745 set if DDNAME, DSNAME, DSN, or ID on AREAD
-	int dat_file_index = 0;
-	int pch_file_index = 0;
-	File[] dat_file = new File[max_ap_files];
-	BufferedReader[] dat_file_buff = new BufferedReader[max_ap_files];
-	File[]   pch_file = new File[max_ap_files];
-	BufferedWriter[] pch_file_buff = new BufferedWriter[max_ap_files];
-	String bal_line = null;
-	String bal_label = null;
-	String bal_op = null;
-	String bal_comments = null; // RPI 1166
-	String   save_bal_op = null; // original bal_op
-	int      save_opsyn_index = -1; // opsyn index of orig. bal_op
-	int ago_index      = 0; // current ago index value 1-n      
-	int ago_line_index = 0; // current ago branch line index;
-	int ago_lab_index  = 0; // current ago parms index to label
-	int ago_gbla_index = 0; // ago index array ptr
-	int ago_gblc_index = 0; // ago trace label array ptr
-	boolean aif_op = false;
-	boolean bal_op_ok = false;
-	String bal_parms = null;
-	boolean mlc_eof = false;
-	boolean end_found = false;
-	int actr_limit = 4096;
-	int     actr_count = actr_limit;
-	SimpleDateFormat sdf_sysclock = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS000");
-	SimpleDateFormat sdf_sysdatc  = new SimpleDateFormat("yyyyMMdd");
-	SimpleDateFormat sdf_sysdate  = new SimpleDateFormat("MM/dd/yy");
-	SimpleDateFormat sdf_sysdate_bs2000 = new SimpleDateFormat("MMddyyDDD");
-	SimpleDateFormat sdf_systime = new SimpleDateFormat("HH.mm");
-	SimpleDateFormat sdf_systime_bs2000 = new SimpleDateFormat("HHmmss");
-	SimpleDateFormat sdf_systime_clockd = new SimpleDateFormat("HHmmssSSS");
-	boolean log_tod = true; 
-	JTextArea z390_log_text = null;
+    /** variable      */ tz390 tz390 = null;
+    /** variable      */ az390 az390 = null;  // RPI 415
+    /** variable      */ String msg_id   = "MZ390I ";
+    /** variable      */ String trace_id = "MZ390I ";
+    /** variable      */ boolean mac_branch = false; // RPI 899
+    /** variable      */ int mz390_rc = 0;
+    /** variable      */ int mz390_errors = 0;
+    /** variable      */ boolean mz390_recursive_abort = false; // RPI 935
+    /** variable      */ boolean mac_abort = false;
+    /** variable      */ boolean batch_asm_error = false; // RPI 736
+    /** variable      */ Date cur_date = null;
+    /** variable      */ GregorianCalendar cur_date_cal = null;
+    /** variable      */ long tod_start = 0;
+    /** variable      */ long tod_end   = 0;
+    /** variable      */ long tot_msec = 0;
+    /** variable      */ long ins_rate    = 0;
+    /** variable      */ boolean log_to_bal = false;
+    /** variable      */ int tot_bal_line = 0;
+    /** variable      */ boolean bal_eof = false;
+    /** variable      */ int tot_mnote_errors  = 0;
+    /** variable      */ int tot_mnote_warning = 0;
+    /** variable      */ int hwm_mnote_level   = 0;
+    /** variable      */ String bal_text = null;     // curr bal_line text
+    /** variable      */ int    bal_text_index0 = 0; // end of prev. parm
+    /** variable      */ int    bal_text_index1 = 0; // start of cur parm
+    /** variable      */ int    bal_text_index2 = 0; // end   of cur parm
+    /** variable      */ int tot_macros   = 0; // rpi 2220 0 for main, incr for each macro loaded
+    /** variable      */ int tot_mac_ins  = 0;
+    /** variable      */ int tot_mac_load = 0;
+    /** variable      */ int tot_mac_call = 0;
+    /** variable      */ int tot_mac_copy = 0;
+    /** variable      */ int mlc_line_end = 0;
+    /** variable      */ File bal_file = null;
+    /** variable      */ File temp_file = null;
+    /** variable      */ BufferedWriter bal_file_buff = null;
+    /** variable      */ boolean aread_op = false;
+    /** variable      */ int tot_aread_io = 0;
+    /** variable      */ int tot_punch_io = 0;
+    /** variable      */ int ap_file_index = 0;
+    /** variable      */ String ap_file_name = null;
+    /** variable      */ boolean ap_format = false;  // format PCH extension
+    /** variable      */ boolean ap_noprint = false; // RPI 745 ignore AREAD option
+    /** variable      */ boolean ap_nostmt  = false; // RPI 745 ignore AREAD option
+    /** variable      */ boolean ap_clockb  = false; // RPI 745 return 8 char TOD in 0.01 sec in AREAD string
+    /** variable      */ boolean ap_clockd  = false; // RPI 745 return 8 char TOD as HHMMSSTH in AREAD string
+    /** variable      */ boolean ap_file_io = false; // RPI 745 set if DDNAME, DSNAME, DSN, or ID on AREAD
+    /** variable      */ int dat_file_index = 0;
+    /** variable      */ int pch_file_index = 0;
+    /** variable      */ File[] dat_file = new File[max_ap_files];
+    /** variable      */ BufferedReader[] dat_file_buff = new BufferedReader[max_ap_files];
+    /** variable      */ File[]   pch_file = new File[max_ap_files];
+    /** variable      */ BufferedWriter[] pch_file_buff = new BufferedWriter[max_ap_files];
+    /** variable      */ String bal_line = null;
+    /** variable      */ String bal_label = null;
+    /** variable      */ String bal_op = null;
+    /** variable      */ String bal_comments = null; // RPI 1166
+    /** variable      */ String   save_bal_op = null; // original bal_op
+    /** variable      */ int      save_opsyn_index = -1; // opsyn index of orig. bal_op
+    /** variable      */ int ago_index      = 0; // current ago index value 1-n      
+    /** variable      */ int ago_line_index = 0; // current ago branch line index;
+    /** variable      */ int ago_lab_index  = 0; // current ago parms index to label
+    /** variable      */ int ago_gbla_index = 0; // ago index array ptr
+    /** variable      */ int ago_gblc_index = 0; // ago trace label array ptr
+    /** variable      */ boolean aif_op = false;
+    /** variable      */ boolean bal_op_ok = false;
+    /** variable      */ String bal_parms = null;
+    /** variable      */ boolean mlc_eof = false;
+    /** variable      */ boolean end_found = false;
+    /** variable      */ int actr_limit = 4096;
+    /** variable      */ int     actr_count = actr_limit;
+    /** variable      */ SimpleDateFormat sdf_sysclock = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS000");
+    /** variable      */ SimpleDateFormat sdf_sysdatc  = new SimpleDateFormat("yyyyMMdd");
+    /** variable      */ SimpleDateFormat sdf_sysdate  = new SimpleDateFormat("MM/dd/yy");
+    /** variable      */ SimpleDateFormat sdf_sysdate_bs2000 = new SimpleDateFormat("MMddyyDDD");
+    /** variable      */ SimpleDateFormat sdf_systime = new SimpleDateFormat("HH.mm");
+    /** variable      */ SimpleDateFormat sdf_systime_bs2000 = new SimpleDateFormat("HHmmss");
+    /** variable      */ SimpleDateFormat sdf_systime_clockd = new SimpleDateFormat("HHmmssSSS");
+    /** variable      */ boolean log_tod = true; 
+    /** variable      */ JTextArea z390_log_text = null;
 	/*
 	 * AINSERT linked list
 	 */
-	int cur_ainsert = 0;  // RPI 956 current AINSERT records in queue
-	int tot_ainsert = 0;  // RPI 956 total AINSERT records
-	int last_ainsert = 0; // RPI 956 alloc AINSERT source records top down
-	LinkedList<String> ainsert_queue  = new LinkedList<String>(); // RPI 956
-	String last_seq = null; // RPI 957
-	String cur_seq  = null; // RPI 957
+    /** variable      */ int cur_ainsert = 0;  // RPI 956 current AINSERT records in queue
+    /** variable      */ int tot_ainsert = 0;  // RPI 956 total AINSERT records
+    /** variable      */ int last_ainsert = 0; // RPI 956 alloc AINSERT source records top down
+    /** variable      */ LinkedList<String> ainsert_queue  = new LinkedList<String>(); // RPI 956
+    /** variable      */ String last_seq = null; // RPI 957
+    /** variable      */ String cur_seq  = null; // RPI 957
 	/*
 	 * macro execution global data
 	 */
-	long    tod_time_limit = 0;
-	int     next_time_ins   = 0x1000;
-	int     next_time_check = next_time_ins;
-	String cur_mac_file_path = null;
-	int cur_mac_file = 0;
-	int dynamic_mac_file  = -1;    // RPI 1019
-	int dynamic_copy_file = -1;    // RPI 1019 
-	boolean ainsert_copy = false;  // RPI 1019 RPI 1083 currently expanding AINSERT copy to front of queue
-	boolean ainsert_source = false; // RPI 1083 cur mac_line is from AINSERT queue
-	int     ainsert_copy_level = 0; // RPI 1135
-	int     ainsert_copy_index = 0; // RPI 1053 
-	boolean ainsert_back = true;  // RPI 1019
-	File[] mac_file                = null;
-	BufferedReader[] mac_file_buff = null;
-	int[]        mac_file_cur_file_num = null; 
-	int[]        mac_file_cur_line_num = null;
-	int[]        mac_file_errors = null;
-	int[]        mac_ictl_start = null; // RPI 728
-	int[]        mac_ictl_end   = null; // RPI 728
-	int[]        mac_ictl_cont  = null; // RPI 728
-	int cur_mac_line_num = 0;
-	int cur_mac_file_num = 0;
-	int tot_get_mac = 0; // #343 count bal lines generated and chk opt_maxline
-	boolean mac_mend_eof = false;  // RPI 740
-	String mac_line = null;
-	String mac_label = null;
-	String mac_op = null;
-	int    mac_opcode_index = 0;
-	String mac_parms = null;
-	String proto_label = null;
-	int    proto_pos_parm_tot = 0; 
-	int    proto_kwd_parm_tot = 0; 
-	String proto_op = null;
-	String proto_parms = null;
-	String parm_name = null;
-	String parm_value = null;
-	boolean cics_first_dsa_dsect = false; // cics prolog change to DFHEISTG macro 
-	boolean cics_first_csect     = false; // cics prolog change to DFHEIENT macro
-	boolean cics_first_end       = false; // cics epilog change to DFHEIEND macro
+    /** variable      */ long    tod_time_limit = 0;
+    /** variable      */ int     next_time_ins   = 0x1000;
+    /** variable      */ int     next_time_check = next_time_ins;
+    /** variable      */ String cur_mac_file_path = null;
+    /** variable      */ int cur_mac_file = 0;
+    /** variable      */ int dynamic_mac_file  = -1;    // RPI 1019
+    /** variable      */ int dynamic_copy_file = -1;    // RPI 1019 
+    /** variable      */ boolean ainsert_copy = false;  // RPI 1019 RPI 1083 currently expanding AINSERT copy to front of queue
+    /** variable      */ boolean ainsert_source = false; // RPI 1083 cur mac_line is from AINSERT queue
+    /** variable      */ int     ainsert_copy_level = 0; // RPI 1135
+    /** variable      */ int     ainsert_copy_index = 0; // RPI 1053 
+    /** variable      */ boolean ainsert_back = true;  // RPI 1019
+    /** variable      */ File[] mac_file                = null;
+    /** variable      */ BufferedReader[] mac_file_buff = null;
+    /** variable      */ int[]        mac_file_cur_file_num = null; 
+    /** variable      */ int[]        mac_file_cur_line_num = null;
+    /** variable      */ int[]        mac_file_errors = null;
+    /** variable      */ int[]        mac_ictl_start = null; // RPI 728
+    /** variable      */ int[]        mac_ictl_end   = null; // RPI 728
+    /** variable      */ int[]        mac_ictl_cont  = null; // RPI 728
+    /** variable      */ int cur_mac_line_num = 0;
+    /** variable      */ int cur_mac_file_num = 0;
+    /** variable      */ int tot_get_mac = 0; // #343 count bal lines generated and chk opt_maxline
+    /** variable      */ boolean mac_mend_eof = false;  // RPI 740
+    /** variable      */ String mac_line = null;
+    /** variable      */ String mac_label = null;
+    /** variable      */ String mac_op = null;
+    /** variable      */ int    mac_opcode_index = 0;
+    /** variable      */ String mac_parms = null;
+    /** variable      */ String proto_label = null;
+    /** variable      */ int    proto_pos_parm_tot = 0; 
+    /** variable      */ int    proto_kwd_parm_tot = 0; 
+    /** variable      */ String proto_op = null;
+    /** variable      */ String proto_parms = null;
+    /** variable      */ String parm_name = null;
+    /** variable      */ String parm_value = null;
+    /** variable      */ boolean cics_first_dsa_dsect = false; // cics prolog change to DFHEISTG macro 
+    /** variable      */ boolean cics_first_csect     = false; // cics prolog change to DFHEIENT macro
+    /** variable      */ boolean cics_first_end       = false; // cics epilog change to DFHEIEND macro
 	/*
 	 * ZSTRMAC macro extension global data // RPI 902
 	 */
-	int     zsm_line_index = 0;  // next genereated line to return
-	int     zsm_line_tot   = 0;  // tot generated lines
-	int     max_zsm_lines  = 256;
-	String  zsm_gen_line[] = new String[max_zsm_lines]; 
-	int     zsm_lvl        = 0;  // current nested structure level
-    int     max_zsm_lvl    = 50;
-	byte    zsm_lvl_type[] = new byte[max_zsm_lvl]; 
-	byte    zsm_type_aelse   = 1;
-	byte    zsm_type_aelseif = 2;
-	byte    zsm_type_aend    = 3;
-	byte    zsm_type_aentry  = 4;
-	byte    zsm_type_aexit   = 5;
-	byte    zsm_type_aif     = 6;
-	byte    zsm_type_acall     = 7;
-	byte    zsm_type_acase = 8;
-	byte    zsm_type_awhen   = 9;
-	byte    zsm_type_auntil  = 10;
-	byte    zsm_type_awhile  = 11;
-	byte    zsm_type_acallprm  = 12; // rpi 2220
-	String[] zsm_type_pfx = {"???",   // 0
-			                 "AIF",   // 1 AELSE
-			                 "AIF",   // 2 AELSEIF
-			                 "???",   // 3 AEND
-			                 "ACL",   // 4 AENTRY
-			                 "???",   // 5 AEXIT
-			                 "AIF",   // 6 AIF
-			                 "ACL",   // 7 ACALL
-			                 "ACS",   // 8 ACASE
-			                 "ACS",   // 9 AWHEN
-			                 "AUN",   //10 AUNTIL
-                             "AWH"};  //11 AWHILE
-	int     zsm_lvl_tcnt[] = new int[max_zsm_lvl]; // type instance counter
-	boolean zsm_lvl_aelse[] = new boolean[max_zsm_lvl];
-	int     zsm_aif_tot         = 0;
-	int     zsm_acall_tot         = 0;
-	int     zsm_aentry_tot      = 0;
-	int     zsm_acase_tot     = 0;
-	int     zsm_awhile_tot      = 0;
-	int     zsm_auntil_tot      = 0;
-	int     zsm_acallprm_tot      = 0; // RPI 2220
-	int     zsm_lvl_bcnt[] = new int[max_zsm_lvl]; // type block counter for AIF, ACASE
-    boolean zsm_lvl_tend[] = new boolean[max_zsm_lvl]; // req END label for type
-    String  zsm_lvl_ase_ago[]   = new String[max_zsm_lvl]; // ACASE computed AGO with expression
-	int     zsm_lvl_ase_fst[]   = new int[max_zsm_lvl]; // first index value assigend to awhen block
-	int     zsm_lvl_ase_lst[]   = new int[max_zsm_lvl]; // last index value assigned to awhen block
-	short   zsm_lvl_ase_blk[]   = new short[256*max_zsm_lvl];
-	String  zsm_aif_exp         = null;
-    int     zsm_acall_index       = 0;
-	int     zsm_aentry_name_tot    = 1; // total acall blocks defined + 1 
-	int     max_zsm_aentry_name    =1000; // maximum acall blocks
-	String  zsm_acall_name[]      = new String[max_zsm_aentry_name];
-	String  zsm_acall_parm[]     = new String[max_zsm_aentry_name]; // parms from ACALL by level NAME(p1,p2,...)
-	String acall_name = null;
-	String acall_parm = null;
-    int     zsm_acall_cnt[]       = new int[max_zsm_aentry_name]; // unique acall return counter
-    boolean zsm_aentry_def[]       = new boolean[max_zsm_aentry_name]; // aentry block defined  RPI 1078
+    /** variable      */ int     zsm_line_index = 0;  // next genereated line to return
+    /** variable      */ int     zsm_line_tot   = 0;  // tot generated lines
+    /** variable      */ int     max_zsm_lines  = 256;
+    /** variable      */ String  zsm_gen_line[] = new String[max_zsm_lines]; 
+    /** variable      */ int     zsm_lvl        = 0;  // current nested structure level
+    /** variable      */ int     max_zsm_lvl    = 50;
+    /** variable      */ byte    zsm_lvl_type[] = new byte[max_zsm_lvl]; 
+    /** variable      */ byte    zsm_type_aelse   = 1;
+    /** variable      */ byte    zsm_type_aelseif = 2;
+    /** variable      */ byte    zsm_type_aend    = 3;
+    /** variable      */ byte    zsm_type_aentry  = 4;
+    /** variable      */ byte    zsm_type_aexit   = 5;
+    /** variable      */ byte    zsm_type_aif     = 6;
+    /** variable      */ byte    zsm_type_acall     = 7;
+    /** variable      */ byte    zsm_type_acase = 8;
+    /** variable      */ byte    zsm_type_awhen   = 9;
+    /** variable      */ byte    zsm_type_auntil  = 10;
+    /** variable      */ byte    zsm_type_awhile  = 11;
+    /** variable      */ byte    zsm_type_acallprm  = 12; // rpi 2220
+    /** variable      */ String[] zsm_type_pfx = {"???",   // 0
+                                                  "AIF",   // 1 AELSE
+                                                  "AIF",   // 2 AELSEIF
+                                                  "???",   // 3 AEND
+                                                  "ACL",   // 4 AENTRY
+                                                  "???",   // 5 AEXIT
+                                                  "AIF",   // 6 AIF
+                                                  "ACL",   // 7 ACALL
+                                                  "ACS",   // 8 ACASE
+                                                  "ACS",   // 9 AWHEN
+                                                  "AUN",   //10 AUNTIL
+                                                  "AWH"};  //11 AWHILE
+    /** variable      */ int     zsm_lvl_tcnt[] = new int[max_zsm_lvl]; // type instance counter
+    /** variable      */ boolean zsm_lvl_aelse[] = new boolean[max_zsm_lvl];
+    /** variable      */ int     zsm_aif_tot         = 0;
+    /** variable      */ int     zsm_acall_tot         = 0;
+    /** variable      */ int     zsm_aentry_tot      = 0;
+    /** variable      */ int     zsm_acase_tot     = 0;
+    /** variable      */ int     zsm_awhile_tot      = 0;
+    /** variable      */ int     zsm_auntil_tot      = 0;
+    /** variable      */ int     zsm_acallprm_tot      = 0; // RPI 2220
+    /** variable      */ int     zsm_lvl_bcnt[] = new int[max_zsm_lvl]; // type block counter for AIF, ACASE
+    /** variable      */ boolean zsm_lvl_tend[] = new boolean[max_zsm_lvl]; // req END label for type
+    /** variable      */ String  zsm_lvl_ase_ago[]   = new String[max_zsm_lvl]; // ACASE computed AGO with expression
+    /** variable      */ int     zsm_lvl_ase_fst[]   = new int[max_zsm_lvl]; // first index value assigend to awhen block
+    /** variable      */ int     zsm_lvl_ase_lst[]   = new int[max_zsm_lvl]; // last index value assigned to awhen block
+    /** variable      */ short   zsm_lvl_ase_blk[]   = new short[256*max_zsm_lvl];
+    /** variable      */ String  zsm_aif_exp         = null;
+    /** variable      */ int     zsm_acall_index       = 0;
+    /** variable      */ int     zsm_aentry_name_tot    = 1; // total acall blocks defined + 1 
+    /** variable      */ int     max_zsm_aentry_name    =1000; // maximum acall blocks
+    /** variable      */ String  zsm_acall_name[]      = new String[max_zsm_aentry_name];
+    /** variable      */ String  zsm_acall_parm[]     = new String[max_zsm_aentry_name]; // parms from ACALL by level NAME(p1,p2,...)
+    /** variable      */ String acall_name = null;
+    /** variable      */ String acall_parm = null;
+    /** variable      */ int     zsm_acall_cnt[]       = new int[max_zsm_aentry_name]; // unique acall return counter
+    /** variable      */ boolean zsm_aentry_def[]       = new boolean[max_zsm_aentry_name]; // aentry block defined  RPI 1078
 	/*
 	 * macro name table
 	 */
-	String cur_mac_name = null;
-	int mac_name_index = 0; //current mlc or macro
-	int mac_last_find_index = -1;
-	int tot_ins = 0; // count instr/cntl for MFC option
-	int tot_mac_name = 0;      // next avail name
-	int load_macro_mend_level = 0;
-	boolean macro_op_found = false; // RPI 935
-	boolean loading_mac = false;
-	boolean load_proto_type = false;
-	int load_mac_inline_end = 0;
-	int find_mac_name_index = 0;
-	int load_mac_name_index = 0;
-	byte     load_type       = 0;
-	byte     load_mlc_file   = 0; // no MACRO, no prototype, stop on END
-	byte     load_mac_file   = 1; // MACRO, prototype, MEND, read file and verify name = prototype
-	byte     load_mac_inline = 2; // MACRO, prototype, MEND, read in memory source
-	byte     load_mac_exec   = 3; // executing mlc/mac code
-	int      load_proto_index = 0; // line index of proto_type statement
-	String   load_macro_name = null;
-	String   load_file_name = null;
-	String[] mac_name            = null;
-	int[]    mac_name_line_start = null;
-	int[]    mac_name_line_end   = null;
-	int[]    mac_name_lab_start  = null;
-	int[]    mac_name_lab_end    = null;
+    /** variable      */ String cur_mac_name = null;
+    /** variable      */ int mac_name_index = 0; //current mlc or macro
+    /** variable      */ int mac_last_find_index = -1;
+    /** variable      */ int tot_ins = 0; // count instr/cntl for MFC option
+    /** variable      */ int tot_mac_name = 0;      // next avail name
+    /** variable      */ int load_macro_mend_level = 0;
+    /** variable      */ boolean macro_op_found = false; // RPI 935
+    /** variable      */ boolean loading_mac = false;
+    /** variable      */ boolean load_proto_type = false;
+    /** variable      */ int load_mac_inline_end = 0;
+    /** variable      */ int find_mac_name_index = 0;
+    /** variable      */ int load_mac_name_index = 0;
+    /** variable      */ byte     load_type       = 0;
+    /** variable      */ byte     load_mlc_file   = 0; // no MACRO, no prototype, stop on END
+    /** variable      */ byte     load_mac_file   = 1; // MACRO, prototype, MEND, read file and verify name = prototype
+    /** variable      */ byte     load_mac_inline = 2; // MACRO, prototype, MEND, read in memory source
+    /** variable      */ byte     load_mac_exec   = 3; // executing mlc/mac code
+    /** variable      */ int      load_proto_index = 0; // line index of proto_type statement
+    /** variable      */ String   load_macro_name = null;
+    /** variable      */ String   load_file_name = null;
+    /** variable      */ String[] mac_name            = null;
+    /** variable      */ int[]    mac_name_line_start = null;
+    /** variable      */ int[]    mac_name_line_end   = null;
+    /** variable      */ int[]    mac_name_lab_start  = null;
+    /** variable      */ int[]    mac_name_lab_end    = null;
 	/*
 	 * macro bal line tables
 	 */
-	int old_mac_line_index = 0; //prev    mac_line_index
-	int new_mac_line_index = 0; //target  mac_line_index
-	int mac_line_index = 1;     //current mac line index
-	int bal_xref_index = 0;     // last mac line ref to pass to az390
-	int tot_mac_line = 1;       // next avail line RPI 899 was 0 
-	String[] mac_file_line     = null;  // mlc, mac, and cpy source line including continued text
-	int[]    mac_file_line_num = null;  // starting line number in file
-	int[]    mac_file_num = null;  // mac file index
-	int[]    mac_file_next_line = null; // RPI 956
-	int[]    mac_file_prev_line = null; // RPI 956
-	int tot_mac_file_name = 0;
-	String[] mac_file_path = null;
-	char[]   mac_file_type = null; // ' ' - mlc, '+' - mac, '=' - copy RPI 549
-	boolean  skip_store = false;
+    /** variable      */ int old_mac_line_index = 0; //prev    mac_line_index
+    /** variable      */ int new_mac_line_index = 0; //target  mac_line_index
+    /** variable      */ int mac_line_index = 1;     //current mac line index
+    /** variable      */ int bal_xref_index = 0;     // last mac line ref to pass to az390
+    /** variable      */ int tot_mac_line = 1;       // next avail line RPI 899 was 0 
+    /** variable      */ String[] mac_file_line     = null;  // mlc, mac, and cpy source line including continued text
+    /** variable      */ int[]    mac_file_line_num = null;  // starting line number in file
+    /** variable      */ int[]    mac_file_num = null;  // mac file index
+    /** variable      */ int[]    mac_file_next_line = null; // RPI 956
+    /** variable      */ int[]    mac_file_prev_line = null; // RPI 956
+    /** variable      */ int tot_mac_file_name = 0;
+    /** variable      */ String[] mac_file_path = null;
+    /** variable      */ char[]   mac_file_type = null; // ' ' - mlc, '+' - mac, '=' - copy RPI 549
+    /** variable      */ boolean  skip_store = false;
 	/*
 	 * macro labels for loaded mlc and macros
 	 */
-	int tot_mac_lab = 0;
-	String[] mac_lab_name  = null; 
-	int[]    mac_lab_index = null;
-	int[]    mac_lab_num   = null; // RPI 266
+    /** variable      */ int tot_mac_lab = 0;
+    /** variable      */ String[] mac_lab_name  = null; 
+    /** variable      */ int[]    mac_lab_index = null;
+    /** variable      */ int[]    mac_lab_num   = null; // RPI 266
 	/*
 	 * macro call stack variables
 	 */
-	int tot_expand = 0;
-	int expand_inc = 100;         //macro array expansion RPI 401
-	int mac_call_level = 0;      //level of macro nesting during loading
-	int[]    mac_call_name_index = null;
-	int[]    mac_call_return     = null;
-	int[]    mac_call_sysm_sev   = null; // RPI 898
-	int[]    mac_call_actr       = null;
-	int[]    mac_call_sysndx     = null;
-	int[]    mac_call_pos_start  = null;
-	int[]    mac_call_pos_tot    = null;
-	int[]    mac_call_kwd_start  = null;
-	int[]    mac_call_lcl_name_start = null;
-	int[]    mac_call_lcl_seta_start = null;
-	int[]    mac_call_lcl_setb_start = null;
-	int[]    mac_call_lcl_setc_start = null;
-	int[]    mac_call_lcl_key_start  = null;
-	int[]    mac_call_lcl_key_root   = null;
+    /** variable      */ int tot_expand = 0;
+    /** variable      */ int expand_inc = 100;         //macro array expansion RPI 401
+    /** variable      */ int mac_call_level = 0;      //level of macro nesting during loading
+    /** variable      */ int[]    mac_call_name_index = null;
+    /** variable      */ int[]    mac_call_return     = null;
+    /** variable      */ int[]    mac_call_sysm_sev   = null; // RPI 898
+    /** variable      */ int[]    mac_call_actr       = null;
+    /** variable      */ int[]    mac_call_sysndx     = null;
+    /** variable      */ int[]    mac_call_pos_start  = null;
+    /** variable      */ int[]    mac_call_pos_tot    = null;
+    /** variable      */ int[]    mac_call_kwd_start  = null;
+    /** variable      */ int[]    mac_call_lcl_name_start = null;
+    /** variable      */ int[]    mac_call_lcl_seta_start = null;
+    /** variable      */ int[]    mac_call_lcl_setb_start = null;
+    /** variable      */ int[]    mac_call_lcl_setc_start = null;
+    /** variable      */ int[]    mac_call_lcl_key_start  = null;
+    /** variable      */ int[]    mac_call_lcl_key_root   = null;
 	/*
 	 * macro positional and key word global variables
 	 */
-	Pattern var_pattern = null;
-	Matcher var_match   = null;
-	Pattern proto_pattern = null;
-	Matcher proto_match   = null;
-	Pattern exp_pattern = null;
-	Matcher exp_match   = null;
-	Pattern pch_pattern = null;
-	Matcher pch_match   = null;
-	Pattern label_pattern = null;
-	Matcher label_match   = null;
-	String  label_name;
-	Pattern symbol_pattern = null; // RPI 404
-	Matcher symbol_match = null;
-	Pattern exec_pattern = null;
-	Matcher exec_match   = null;
-	Pattern signedDecimalPattern = null;  // #509
-	Pattern binDigitsPattern = null;      // #509
-	Pattern decDigitsPattern = null;      // #509
-	Pattern hexDigitsPattern = null;      // #509
-	int label_comma_index = 0; // parm into to comma after macro label else -1
-	int sublist_count = 0;
-	int tot_pos_parm = 0; // cur pos parms on stack
-	int cur_pos_parm = 0; // cur pos parm during init (may exceed prototype pos)
-	int tot_kwd_parm = 0; // cur kwd parms on stack
-	int hwm_pos_parm = 0;      // tot pos parms defined
-	int hwm_kwd_parm = 0;      // tot kwd parms defined
-	String[]  mac_call_pos_name = null; 
-	String[]  mac_call_pos_parm = null; 
-	String[]  mac_call_kwd_name = null; 
-	String[]  mac_call_kwd_parm = null; 
-	boolean[] mac_call_kwd_set  = null; // RPI 600
+    /** variable      */ Pattern var_pattern = null;
+    /** variable      */ Matcher var_match   = null;
+    /** variable      */ Pattern proto_pattern = null;
+    /** variable      */ Matcher proto_match   = null;
+    /** variable      */ Pattern exp_pattern = null;
+    /** variable      */ Matcher exp_match   = null;
+    /** variable      */ Pattern pch_pattern = null;
+    /** variable      */ Matcher pch_match   = null;
+    /** variable      */ Pattern label_pattern = null;
+    /** variable      */ Matcher label_match   = null;
+    /** variable      */ String  label_name;
+    /** variable      */ Pattern symbol_pattern = null; // RPI 404
+    /** variable      */ Matcher symbol_match = null;
+    /** variable      */ Pattern exec_pattern = null;
+    /** variable      */ Matcher exec_match   = null;
+    /** variable      */ Pattern signedDecimalPattern = null;  // #509
+    /** variable      */ Pattern binDigitsPattern = null;      // #509
+    /** variable      */ Pattern decDigitsPattern = null;      // #509
+    /** variable      */ Pattern hexDigitsPattern = null;      // #509
+    /** variable      */ int label_comma_index = 0; // parm into to comma after macro label else -1
+    /** variable      */ int sublist_count = 0;
+    /** variable      */ int tot_pos_parm = 0; // cur pos parms on stack
+    /** variable      */ int cur_pos_parm = 0; // cur pos parm during init (may exceed prototype pos)
+    /** variable      */ int tot_kwd_parm = 0; // cur kwd parms on stack
+    /** variable      */ int hwm_pos_parm = 0;      // tot pos parms defined
+    /** variable      */ int hwm_kwd_parm = 0;      // tot kwd parms defined
+    /** variable      */ String[]  mac_call_pos_name = null; 
+    /** variable      */ String[]  mac_call_pos_parm = null; 
+    /** variable      */ String[]  mac_call_kwd_name = null; 
+    /** variable      */ String[]  mac_call_kwd_parm = null; 
+    /** variable      */ boolean[] mac_call_kwd_set  = null; // RPI 600
 	/*
 	 * global and local macro variables
 	 */
-	byte val_seta_type      = 1;      // int    RPI 447
-	byte val_setb_type      = 2;      // byte   RPI 447
-	byte val_setc_type      = 3;      // String RPI 447
-	byte var_lcl_loc        = 11;     // lcl_seta, lcl_setb, lcl_setc
-	byte var_gbl_loc        = 12;     // gbl_seta, gbl_setb, gbl_setc
-	byte var_pos_loc        = 13;     // named positional parm
-	byte var_kw_loc         = 14;     // named keyword parm
-	byte var_syslist_loc    = 15; // syslist pos parm ref
-    byte var_sysalist_loc   = 16; // sysalist acall name ref  rpi 2220 
-	byte var_seta_type      = 21; // lcla or gbla
-	byte var_setb_type      = 22; // lclb or gblb
-	byte var_setc_type      = 23; // lclc or gblc
-	byte var_parm_type      = 24; // setc parm (pos, kw, or syslist) 
-	byte var_subscript_type = 25; // loc= lcl,gbl,pos,kw,sylist
-	byte var_sublist_type   = 26; // index=-1 for &syslist else use setc value
-	byte var_pc_seta_stack_type = 31; // pc opr1=stack-2, opr2=stack-1 (type unknown for comp??)
-	byte var_pc_seta_sdt_type   = 32; // pc opr1=stack-1, opr2=seta sdt     = 
-	byte var_pc_setb_stack_type = 33; // pc opr1=stack-2, opr2=stack-1
-	byte var_pc_setb_sdt_type   = 34; // pc opr1=stack-1, opr2=setb sdt (in pc_seta)
-	byte var_pc_setc_stack_type = 35; // pc opr1=stack-2, opr2=stack-1
-	byte var_pc_setc_sdt_type   = 36; // pc opr1=stack-1, opr2=setc sdt
-	int tot_lcl_name = 0; // cur lcl sets on stack
-	int tot_lcl_seta = 0;
-	int tot_lcl_setb = 0;
-	int tot_lcl_setc = 0;
-	int hwm_lcl_name = 0; // high water mark lcl names
-	int hwm_lcl_seta = 0;
-	int hwm_lcl_setb = 0;
-	int hwm_lcl_setc = 0;
-	boolean sysinit_done = false;
-	int lcl_sysndx = -1;  // macro call counter
-	String lcl_sysect = ""; // RPI 1213 
-	String lcl_sysloc = lcl_sysect;
-	String lcl_sysstyp = "";
-	int lcl_sysect_setc_index  = -1; // RPI 1213
-	int lcl_sysloc_setc_index  = -1; // RPI 1213
-	int lcl_sysstyp_setc_index = -1; // RPI 1213
-	String[] lcl_set_name  = null; 
-	byte[]   lcl_set_type  = null;
-	int[]    lcl_set_start = null;
-	int[]    lcl_set_high  = null;
-	int[]    lcl_set_end   = null;
-	int[]    lcl_seta      = null;
-	byte[]   lcl_setb      = null;
-	String[] lcl_setc      = null; 
+    /** variable      */ byte val_seta_type      = 1;      // int    RPI 447
+    /** variable      */ byte val_setb_type      = 2;      // byte   RPI 447
+    /** variable      */ byte val_setc_type      = 3;      // String RPI 447
+    /** variable      */ byte var_lcl_loc        = 11;     // lcl_seta, lcl_setb, lcl_setc
+    /** variable      */ byte var_gbl_loc        = 12;     // gbl_seta, gbl_setb, gbl_setc
+    /** variable      */ byte var_pos_loc        = 13;     // named positional parm
+    /** variable      */ byte var_kw_loc         = 14;     // named keyword parm
+    /** variable      */ byte var_syslist_loc    = 15; // syslist pos parm ref
+    /** variable      */ byte var_sysalist_loc   = 16; // sysalist acall name ref  rpi 2220 
+    /** variable      */ byte var_seta_type      = 21; // lcla or gbla
+    /** variable      */ byte var_setb_type      = 22; // lclb or gblb
+    /** variable      */ byte var_setc_type      = 23; // lclc or gblc
+    /** variable      */ byte var_parm_type      = 24; // setc parm (pos, kw, or syslist) 
+    /** variable      */ byte var_subscript_type = 25; // loc= lcl,gbl,pos,kw,sylist
+    /** variable      */ byte var_sublist_type   = 26; // index=-1 for &syslist else use setc value
+    /** variable      */ byte var_pc_seta_stack_type = 31; // pc opr1=stack-2, opr2=stack-1 (type unknown for comp??)
+    /** variable      */ byte var_pc_seta_sdt_type   = 32; // pc opr1=stack-1, opr2=seta sdt     = 
+    /** variable      */ byte var_pc_setb_stack_type = 33; // pc opr1=stack-2, opr2=stack-1
+    /** variable      */ byte var_pc_setb_sdt_type   = 34; // pc opr1=stack-1, opr2=setb sdt (in pc_seta)
+    /** variable      */ byte var_pc_setc_stack_type = 35; // pc opr1=stack-2, opr2=stack-1
+    /** variable      */ byte var_pc_setc_sdt_type   = 36; // pc opr1=stack-1, opr2=setc sdt
+    /** variable      */ int tot_lcl_name = 0; // cur lcl sets on stack
+    /** variable      */ int tot_lcl_seta = 0;
+    /** variable      */ int tot_lcl_setb = 0;
+    /** variable      */ int tot_lcl_setc = 0;
+    /** variable      */ int hwm_lcl_name = 0; // high water mark lcl names
+    /** variable      */ int hwm_lcl_seta = 0;
+    /** variable      */ int hwm_lcl_setb = 0;
+    /** variable      */ int hwm_lcl_setc = 0;
+    /** variable      */ boolean sysinit_done = false;
+    /** variable      */ int lcl_sysndx = -1;  // macro call counter
+    /** variable      */ String lcl_sysect = ""; // RPI 1213 
+    /** variable      */ String lcl_sysloc = lcl_sysect;
+    /** variable      */ String lcl_sysstyp = "";
+    /** variable      */ int lcl_sysect_setc_index  = -1; // RPI 1213
+    /** variable      */ int lcl_sysloc_setc_index  = -1; // RPI 1213
+    /** variable      */ int lcl_sysstyp_setc_index = -1; // RPI 1213
+    /** variable      */ String[] lcl_set_name  = null; 
+    /** variable      */ byte[]   lcl_set_type  = null;
+    /** variable      */ int[]    lcl_set_start = null;
+    /** variable      */ int[]    lcl_set_high  = null;
+    /** variable      */ int[]    lcl_set_end   = null;
+    /** variable      */ int[]    lcl_seta      = null;
+    /** variable      */ byte[]   lcl_setb      = null;
+    /** variable      */ String[] lcl_setc      = null; 
 	/*
 	 * global set variables set by find_set
 	 * and add_lcl_set, add_gbl_set
 	 */
-	boolean var_subscript_calc = false;
-	boolean var_set_array; // rpi 836 set subscript required for set array
-	String var_name  = null;
-	int    var_name_index = 0;
-	byte   var_loc   = var_lcl_loc;
-	byte   var_type  = var_seta_type;
-	int    set_size  = 0;
-	int    seta_index = 0;
-	int    setb_index = 0;
-	int    setc_index = 0;
-	String store_name = null;
-	int    store_name_index = 0;
-	int    store_inc   = 0;  // RPI 839
-	byte   store_loc   = var_lcl_loc;
-	byte   store_type = val_seta_type;
-	int    store_seta_value = 0;
-	byte   store_setb_value = 0;
-	String store_setc_value = null;
-	byte   store_pc_op = 0;
-	boolean exec_pc_op      = false; // RPI 1139 
-	boolean tracem_pc_op    = false; // RPI 930 include on tracem TRM listing
-	boolean store_subscript = false;
-	boolean store_created   = false;
-	int    store_sub        = 0;
-	int    store_seta_index = 0;
-	int    store_setb_index = 0;
-	int    store_setc_index = 0;
-	int    store_pc_start = 0;
-	int    store_pc_last  = 0;
-	String set_name = "";
-	int    set_sub  = 0;
-	boolean set_subscript = false; // RPI 1162
-	int    seta_value = 0;
-	byte   setb_value = 0;
-	String setc_value = "";
-	String save_setc_value = null;
-	String save_setc_value1 = null;
-	String save_setc_value2 = null;
-	byte   save_pc_parm_type = 0;
-	int    save_seta_value = 0;
-	int    setc_len   = 0;
+    /** variable      */ boolean var_subscript_calc = false;
+    /** variable      */ boolean var_set_array; // rpi 836 set subscript required for set array
+    /** variable      */ String var_name  = null;
+    /** variable      */ int    var_name_index = 0;
+    /** variable      */ byte   var_loc   = var_lcl_loc;
+    /** variable      */ byte   var_type  = var_seta_type;
+    /** variable      */ int    set_size  = 0;
+    /** variable      */ int    seta_index = 0;
+    /** variable      */ int    setb_index = 0;
+    /** variable      */ int    setc_index = 0;
+    /** variable      */ String store_name = null;
+    /** variable      */ int    store_name_index = 0;
+    /** variable      */ int    store_inc   = 0;  // RPI 839
+    /** variable      */ byte   store_loc   = var_lcl_loc;
+    /** variable      */ byte   store_type = val_seta_type;
+    /** variable      */ int    store_seta_value = 0;
+    /** variable      */ byte   store_setb_value = 0;
+    /** variable      */ String store_setc_value = null;
+    /** variable      */ byte   store_pc_op = 0;
+    /** variable      */ boolean exec_pc_op      = false; // RPI 1139 
+    /** variable      */ boolean tracem_pc_op    = false; // RPI 930 include on tracem TRM listing
+    /** variable      */ boolean store_subscript = false;
+    /** variable      */ boolean store_created   = false;
+    /** variable      */ int    store_sub        = 0;
+    /** variable      */ int    store_seta_index = 0;
+    /** variable      */ int    store_setb_index = 0;
+    /** variable      */ int    store_setc_index = 0;
+    /** variable      */ int    store_pc_start = 0;
+    /** variable      */ int    store_pc_last  = 0;
+    /** variable      */ String set_name = "";
+    /** variable      */ int    set_sub  = 0;
+    /** variable      */ boolean set_subscript = false; // RPI 1162
+    /** variable      */ int    seta_value = 0;
+    /** variable      */ byte   setb_value = 0;
+    /** variable      */ String setc_value = "";
+    /** variable      */ String save_setc_value = null;
+    /** variable      */ String save_setc_value1 = null;
+    /** variable      */ String save_setc_value2 = null;
+    /** variable      */ byte   save_pc_parm_type = 0;
+    /** variable      */ int    save_seta_value = 0;
+    /** variable      */ int    setc_len   = 0;
 	/*
 	 * define global gbla, gblb, gblc, and system
 	 * predefined globals
 	 */
-	int    gbl_sysclock_index = 0; // YYYY-MM-DD HH:MM:SS.mmmmmm
-	int    gbl_sysmac_index = 0;   // macro name at specified level
-	String gbl_sysmac  = "";
-	int    gbl_syslib_index = 0;  // syslib current macro dsn, mem=+1, vol=+2
-	int    gbl_sysm_hsev_index = 0;  // highest mnote severity code      
-	int    cur_sysm_hsev       = 0;  // RPI 898
-	int    gbl_sysm_sev_index = 0;   // highest mnote severity in last macro     
-	int    gbl_sysstmt_index = 0;    // next BAL statement number as 8 digit SETC
-	int    gbl_systrace_index = 0;   // set trace options on/off RPI 930
-	File sys_file = null; // RPI 259
-	String sys_job = null; // set to MLC filename without suffix
-	String sys_dsn = null; // full path, file name, and suffix
-	String sys_mem = null; // file name and suffix
-	String sys_vol = null; // drive letter
-	int gbl_syszvsam = 1; // rpi 1628 2020-10-25 zvsam option 1=default/1=vsam1/2=vsan2 rpi 2226
-	int tot_gbl_name = 0;
-	int tot_gbl_seta = 0;
-	int tot_gbl_setb = 0;
-	int tot_gbl_setc = 0;
-	String[] gbl_set_name  = null; 
-	byte[]   gbl_set_type  = null;
-	int[]    gbl_set_start = null;
-	int[]    gbl_set_high  = null; // RPI 342 highest subscript 
-	int[]    gbl_set_end   = null;
-	int[]    gbl_seta      = null;
-	byte[]   gbl_setb      = null;
-	String[] gbl_setc      = null;
+    /** variable      */ int    gbl_sysclock_index = 0; // YYYY-MM-DD HH:MM:SS.mmmmmm
+    /** variable      */ int    gbl_sysmac_index = 0;   // macro name at specified level
+    /** variable      */ String gbl_sysmac  = "";
+    /** variable      */ int    gbl_syslib_index = 0;  // syslib current macro dsn, mem=+1, vol=+2
+    /** variable      */ int    gbl_sysm_hsev_index = 0;  // highest mnote severity code      
+    /** variable      */ int    cur_sysm_hsev       = 0;  // RPI 898
+    /** variable      */ int    gbl_sysm_sev_index = 0;   // highest mnote severity in last macro     
+    /** variable      */ int    gbl_sysstmt_index = 0;    // next BAL statement number as 8 digit SETC
+    /** variable      */ int    gbl_systrace_index = 0;   // set trace options on/off RPI 930
+    /** variable      */ File sys_file = null; // RPI 259
+    /** variable      */ String sys_job = null; // set to MLC filename without suffix
+    /** variable      */ String sys_dsn = null; // full path, file name, and suffix
+    /** variable      */ String sys_mem = null; // file name and suffix
+    /** variable      */ String sys_vol = null; // drive letter
+    /** variable      */ int gbl_syszvsam = 1; // rpi 1628 2020-10-25 zvsam option 1=default/1=vsam1/2=vsan2 rpi 2226
+    /** variable      */ int tot_gbl_name = 0;
+    /** variable      */ int tot_gbl_seta = 0;
+    /** variable      */ int tot_gbl_setb = 0;
+    /** variable      */ int tot_gbl_setc = 0;
+    /** variable      */ String[] gbl_set_name  = null; 
+    /** variable      */ byte[]   gbl_set_type  = null;
+    /** variable      */ int[]    gbl_set_start = null;
+    /** variable      */ int[]    gbl_set_high  = null; // RPI 342 highest subscript 
+    /** variable      */ int[]    gbl_set_end   = null;
+    /** variable      */ int[]    gbl_seta      = null;
+    /** variable      */ byte[]   gbl_setb      = null;
+    /** variable      */ String[] gbl_setc      = null;
 	/*
 	 * macro operation global variables
 	 */
-	int mac_op_type = 0;
-	int max_lcl_key_tab = 0;
-	int tot_lcl_key_tab  = max_lcl_key_root+1;
-	int cur_lcl_key_root = 1;
-	String lcl_key_text = null;
-	int lcl_key_index = 0;
-	int lcl_key_index_last = 0;
-	int lcl_key_hash = 0;
-	String[]  lcl_key_tab_key   = null;
-	int[]     lcl_key_tab_hash  = null;
-	int[]     lcl_key_tab_index = null;
-	int[]     lcl_key_tab_low   = null;
-	int[]     lcl_key_tab_high  = null;
+    /** variable      */ int mac_op_type = 0;
+    /** variable      */ int max_lcl_key_tab = 0;
+    /** variable      */ int tot_lcl_key_tab  = max_lcl_key_root+1;
+    /** variable      */ int cur_lcl_key_root = 1;
+    /** variable      */ String lcl_key_text = null;
+    /** variable      */ int lcl_key_index = 0;
+    /** variable      */ int lcl_key_index_last = 0;
+    /** variable      */ int lcl_key_hash = 0;
+    /** variable      */ String[]  lcl_key_tab_key   = null;
+    /** variable      */ int[]     lcl_key_tab_hash  = null;
+    /** variable      */ int[]     lcl_key_tab_index = null;
+    /** variable      */ int[]     lcl_key_tab_low   = null;
+    /** variable      */ int[]     lcl_key_tab_high  = null;
 	
 	/*
 	 * set expression global variables
 	 * including polish notation var and op stacks
 	 */
-	char    asc_space_char = ' '; // white space <= asc_space_char
-	String  exp_text  = null;
-	int     exp_text_len = 0;
-	int     exp_level = 0;
-	boolean[] exp_created_var = new boolean[max_exp_stk];
-	boolean exp_end = false;
-	boolean exp_ok  = false;
-	char    exp_term_op = '~';      // terminate exp    
-	char    exp_start_op = '~';     // start exp
-	char    exp_string_op = '\'';   // start/end setc string
-	int     exp_string_var = 0; // RPI 1139 
-	char    exp_create_set_op = '&'; // created set &(...) oper
-	boolean exp_var_replacement_mode = false; // for repace_vars()
-	boolean exp_var_replacement_change = false; // set if replacements made
-	boolean exp_alloc_set_mode = false;  // for lcl/gbl alloc
-	boolean exp_parse_set_mode = false;  // for set target and lcl/gbl alloc
-	boolean exp_alloc_set_created  = false;  // set true if alloc_set finds created
-	int     alloc_size     = 0;
-	int     min_alloc_size = 10; // RPI 435 minimum default alloc for array
-	byte    exp_parse_set_type = 0;
-	byte    exp_parse_set_loc  = 0;
-	String  exp_parse_set_name = null;
-	boolean exp_parse_set_subscript = false;
-	boolean exp_parse_set_created   = false;
-	int     exp_parse_set_sub  = 0;
-	int     exp_parse_set_name_index = 0;
-	byte    exp_sublst_op = 0;
-	char    exp_substring_op = ','; // calc substring '...'(e1,e2)
-	char    exp_subscript_op = ')'; // calc var subscript value &var(subscript)
-	int     exp_start_index = 0; // index to start of exp text
-	int     exp_next_index = 0; // index to next op
-	byte    exp_type = 0;       // requested type
-	int     exp_seta = 0;       // result of calc_seta_exp
-	byte    exp_setb = 0;       // result of calc_setb_exp
-	String  exp_setc = "";      // result of calc_setc_exp
-	byte    exp_set_compare = 0; // aif compare result
-	int    seta_value1 = 0;
-	int    seta_value2 = 0;
-	byte   setb_value1 = 0;
-	byte   setb_value2 = 0;
-	String setc_value1 = "";
-	String setc_value2 = "";
-	byte   val_type  = 0;
-	byte   val_type1 = 0;
-	byte   val_type2 = 0;
-	String  exp_token = null;
-	String  exp_prev_op = "" + exp_start_op;
-	boolean exp_prev_substring = false;
-	char    exp_prev_first = exp_start_op;
-	byte    exp_prev_class = 0;
-	char    exp_next_first = asc_space_char;
-	byte    exp_next_class = 0;
-	int     exp_var_index = -1;  // lcl set index
-	boolean exp_var_pushed = false;  // var pushed since last reset
-	boolean exp_var_last = false;
-	int tot_exp_stk_var = 0;
-	int tot_exp_stk_op  = 0;
+    /** variable      */ char    asc_space_char = ' '; // white space <= asc_space_char
+    /** variable      */ String  exp_text  = null;
+    /** variable      */ int     exp_text_len = 0;
+    /** variable      */ int     exp_level = 0;
+    /** variable      */ boolean[] exp_created_var = new boolean[max_exp_stk];
+    /** variable      */ boolean exp_end = false;
+    /** variable      */ boolean exp_ok  = false;
+    /** variable      */ char    exp_term_op = '~';      // terminate exp    
+    /** variable      */ char    exp_start_op = '~';     // start exp
+    /** variable      */ char    exp_string_op = '\'';   // start/end setc string
+    /** variable      */ int     exp_string_var = 0; // RPI 1139 
+    /** variable      */ char    exp_create_set_op = '&'; // created set &(...) oper
+    /** variable      */ boolean exp_var_replacement_mode = false; // for repace_vars()
+    /** variable      */ boolean exp_var_replacement_change = false; // set if replacements made
+    /** variable      */ boolean exp_alloc_set_mode = false;  // for lcl/gbl alloc
+    /** variable      */ boolean exp_parse_set_mode = false;  // for set target and lcl/gbl alloc
+    /** variable      */ boolean exp_alloc_set_created  = false;  // set true if alloc_set finds created
+    /** variable      */ int     alloc_size     = 0;
+    /** variable      */ int     min_alloc_size = 10; // RPI 435 minimum default alloc for array
+    /** variable      */ byte    exp_parse_set_type = 0;
+    /** variable      */ byte    exp_parse_set_loc  = 0;
+    /** variable      */ String  exp_parse_set_name = null;
+    /** variable      */ boolean exp_parse_set_subscript = false;
+    /** variable      */ boolean exp_parse_set_created   = false;
+    /** variable      */ int     exp_parse_set_sub  = 0;
+    /** variable      */ int     exp_parse_set_name_index = 0;
+    /** variable      */ byte    exp_sublst_op = 0;
+    /** variable      */ char    exp_substring_op = ','; // calc substring '...'(e1,e2)
+    /** variable      */ char    exp_subscript_op = ')'; // calc var subscript value &var(subscript)
+    /** variable      */ int     exp_start_index = 0; // index to start of exp text
+    /** variable      */ int     exp_next_index = 0; // index to next op
+    /** variable      */ byte    exp_type = 0;       // requested type
+    /** variable      */ int     exp_seta = 0;       // result of calc_seta_exp
+    /** variable      */ byte    exp_setb = 0;       // result of calc_setb_exp
+    /** variable      */ String  exp_setc = "";      // result of calc_setc_exp
+    /** variable      */ byte    exp_set_compare = 0; // aif compare result
+    /** variable      */ int    seta_value1 = 0;
+    /** variable      */ int    seta_value2 = 0;
+    /** variable      */ byte   setb_value1 = 0;
+    /** variable      */ byte   setb_value2 = 0;
+    /** variable      */ String setc_value1 = "";
+    /** variable      */ String setc_value2 = "";
+    /** variable      */ byte   val_type  = 0;
+    /** variable      */ byte   val_type1 = 0;
+    /** variable      */ byte   val_type2 = 0;
+    /** variable      */ String  exp_token = null;
+    /** variable      */ String  exp_prev_op = "" + exp_start_op;
+    /** variable      */ boolean exp_prev_substring = false;
+    /** variable      */ char    exp_prev_first = exp_start_op;
+    /** variable      */ byte    exp_prev_class = 0;
+    /** variable      */ char    exp_next_first = asc_space_char;
+    /** variable      */ byte    exp_next_class = 0;
+    /** variable      */ int     exp_var_index = -1;  // lcl set index
+    /** variable      */ boolean exp_var_pushed = false;  // var pushed since last reset
+    /** variable      */ boolean exp_var_last = false;
+    /** variable      */ int tot_exp_stk_var = 0;
+    /** variable      */ int tot_exp_stk_op  = 0;
 	/*
 	 * set or sdt variable stack
 	 */
-	byte[]    exp_stk_val_type = (byte[])Array.newInstance(byte.class,max_exp_stk);
-	int[]     exp_stk_seta = (int[])Array.newInstance(int.class,max_exp_stk);
-	byte[]    exp_stk_setb = (byte[])Array.newInstance(byte.class,max_exp_stk);
-	String[]  exp_stk_setc = new String[max_exp_stk];
-	byte[]    exp_stk_var_type = (byte[])Array.newInstance(byte.class,max_exp_stk);     // RPI 447
-	byte[]    exp_stk_var_loc  = (byte[])Array.newInstance(byte.class,max_exp_stk);     // RPI 447
-	int[]     exp_stk_var_name_index = (int[])Array.newInstance(int.class,max_exp_stk); // RPI 447
+    /** variable      */ byte[]    exp_stk_val_type = (byte[])Array.newInstance(byte.class,max_exp_stk);
+    /** variable      */ int[]     exp_stk_seta = (int[])Array.newInstance(int.class,max_exp_stk);
+    /** variable      */ byte[]    exp_stk_setb = (byte[])Array.newInstance(byte.class,max_exp_stk);
+    /** variable      */ String[]  exp_stk_setc = new String[max_exp_stk];
+    /** variable      */ byte[]    exp_stk_var_type = (byte[])Array.newInstance(byte.class,max_exp_stk);     // RPI 447
+    /** variable      */ byte[]    exp_stk_var_loc  = (byte[])Array.newInstance(byte.class,max_exp_stk);     // RPI 447
+    /** variable      */ int[]     exp_stk_var_name_index = (int[])Array.newInstance(int.class,max_exp_stk); // RPI 447
 	/*
 	 * operator stack
 	 */
-	String    exp_next_op = null;
-	boolean exp_check_prev_op = false;
-	String[]  exp_stk_op   = new String[max_exp_stk];
-	byte[]    exp_stk_op_class = (byte[])Array.newInstance(byte.class,max_exp_stk);
-	/*
-	 * operator classes
-	 */
-	byte exp_class_add_sub = 1;
-	byte exp_class_mpy_div = 2;
-	byte exp_class_open    = 3;
-	byte exp_class_cls_sub = 4;
-	byte exp_class_str_op  = 5; // 2 operand string ops (".", FIND, INDEX etc.)
-	byte exp_class_term    = 6;
-	byte exp_class_comp    = 7;
-	byte exp_class_str_sub1= 8;
-	byte exp_class_str_sub2= 9;
-	byte exp_class_oper    = 10; // prefix operators (?',?2?, DOUBLE, LOWER, UPPER, etc.)
-	byte exp_class_not     = 11;
-	byte exp_class_and     = 12;
-	byte exp_class_or      = 13;
-	byte exp_class_xor     = 14;
-	byte exp_class_create_set = 15;
+    /** variable      */ String    exp_next_op = null;
+    /** variable      */ boolean exp_check_prev_op = false;
+    /** variable      */ String[]  exp_stk_op   = new String[max_exp_stk];
+    /** variable      */ byte[]    exp_stk_op_class = (byte[])Array.newInstance(byte.class,max_exp_stk);
+    /*
+     * operator classes
+     */
+    /** variable      */ byte exp_class_add_sub = 1;
+    /** variable      */ byte exp_class_mpy_div = 2;
+    /** variable      */ byte exp_class_open    = 3;
+    /** variable      */ byte exp_class_cls_sub = 4;
+    /** variable      */ byte exp_class_str_op  = 5; // 2 operand string ops (".", FIND, INDEX etc.)
+    /** variable      */ byte exp_class_term    = 6;
+    /** variable      */ byte exp_class_comp    = 7;
+    /** variable      */ byte exp_class_str_sub1= 8;
+    /** variable      */ byte exp_class_str_sub2= 9;
+    /** variable      */ byte exp_class_oper    = 10; // prefix operators (?',?2?, DOUBLE, LOWER, UPPER, etc.)
+    /** variable      */ byte exp_class_not     = 11;
+    /** variable      */ byte exp_class_and     = 12;
+    /** variable      */ byte exp_class_or      = 13;
+    /** variable      */ byte exp_class_xor     = 14;
+    /** variable      */ byte exp_class_create_set = 15;
 	/*
 	 * define exp actions based on last and
 	 * next operator class
@@ -1007,8 +1008,8 @@ public  class  mz390 {
 	 *      10 11 12 13 14 15
 	 *     +-  *  /  (  )  .  ~ EQ  '  , ?'NOT AND OR XOR &( col = next_op                                                  row = prev_op
 	 */ 
-	int tot_classes = 15;
-	int[] exp_action = {  
+    /** variable      */ int tot_classes = 15;
+    /** variable      */ int[] exp_action = {  
 			1, 3, 3, 1, 0, 1, 1, 8, 1, 3, 1, 1, 1, 1, 3, // 1 +-  prev add/sub
 			2, 2, 3, 2, 0, 2, 2, 8, 2, 3, 2, 2, 2, 2, 3, // 2 * / prev mpy/div  RPI 214
 			3, 3, 3, 4, 3, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 3 (   prev open (...) RPI 274, RPI 647
@@ -1054,140 +1055,140 @@ public  class  mz390 {
 	/*
 	 * Least recently used list of allocated pc_op entries
 	 */
-	int       pcl_mru      = 0;     // ptr to most recently used mac line
-	int[]     pcl_mru_next = null;  // next most recently used mac line
-	int[]     pcl_mru_prev = null;  // prev most recentry used mac_line
-	int       pcl_lru      = 0;     // ptr to last entry in mru list = least recently used
+    /** variable      */ int       pcl_mru      = 0;     // ptr to most recently used mac line
+    /** variable      */ int[]     pcl_mru_next = null;  // next most recently used mac line
+    /** variable      */ int[]     pcl_mru_prev = null;  // prev most recentry used mac_line
+    /** variable      */ int       pcl_lru      = 0;     // ptr to last entry in mru list = least recently used
 	/*
 	 * allocated pc entry lists for mac lines
 	 */
-	int[]     pcl_start    = null;  // first pc for bal line pc else 0
-	int[]     pcl_end      = null;  // last  pc for bal line
+    /** variable      */ int[]     pcl_start    = null;  // first pc for bal line pc else 0
+    /** variable      */ int[]     pcl_end      = null;  // last  pc for bal line
 	/*
 	 * pseudo code operation entries on free or allocated list
 	 * with pointer from pcl_start[mac_line_index]
 	 * Notes:
 	 *   1.  pc_next = 0 indicates end of list
 	 */
-	int       tot_pc_gen      = 0;    // total pc entries allocated
-	int       tot_pc_exec     = 0;    // total pc entries execute
-	int       tot_pc_gen_opt  = 0;    // total pc gen optimizations
-	int       tot_pc_exec_opt = 0;    // total pc exec optimizations
-	int       tot_pcl_exec    = 0;    // total pc lists executed
-	int       tot_pcl_gen     = 0;    // total pc lists allocated (1 per line)
-	int       tot_pcl_reuse   = 0;    // total pc lists reused due to cache overflow
-	int       pc_loc          = 0;     // current pc entry to execute
-	int       pc_loc_prev     = 0;     // prev pc_loc in list else 0 set by get_pc, exec_pc
-	int       pc_loc_next     = 0;     // next pc_loc in list else 0 set by opt_lst
-	int       pc_free         = 0;     // ptr to free pc enty and next list
-	byte      pc_parm_type    = 0;
-	byte[]    pc_op           = null;  // pseudo code operation
-	byte[]    pc_var_type     = null;  // pseudo code var type
-    byte[]    pc_var_loc      = null;  // pseudo code var loc
-    int[]     pc_sysndx       = null;  // pseudo code macro instance id
-    int[]     pc_seta         = null;  // pseudo code seta/setb sdt value or var name index
-    String[]  pc_setc         = null;  // pseudo code setc      sdt value
-	int[]     pc_next         = null;  // next pc entry in free or alloc list
-	boolean[] pc_req_opt      = null;  // pc optimizatopm reguest
-	boolean pc_aborted = false;    // prevent abort_pc recusion in trace
-	boolean pc_gen_exp = false;    // calc_exp flag to generate pseudo code
-	boolean pc_pushc_pending = false;
-	boolean pc_concat_pending = false; 
-	byte    pc_push_var_op = 0;
-	String  pc_push_var_setc_value = null;
-	String  pc_sublst_value1 = null;
-	String  pc_concat_setc_value1 = null;
-	String  pc_concat_setc_value = null;
-	String  pc_pushc_setc_value = null;
-	boolean pc_pusha_pending = false;
-	int     pc_pusha_seta_value = 0;
-	String  pc_pusha_setc_value = null;
-	byte pc_op_ago    =  1; // branch based on stack index value
-	byte pc_op_aif    =  2; // branch if stack value not 0
-	byte pc_op_pushv  =  3; // push var on stac
-	byte pc_op_pushvs =  4; // push var(sub) ons tack replacing subcript
-	byte pc_op_pusha  =  5; // push seta self defining term
-	byte pc_op_pushc  =  6; // push setc string constant
-	byte pc_op_concat =  7; // concatentate setc constant or 2 stack values
-	byte pc_op_storv  =  8; // store scalar set var
-	byte pc_op_storvs =  9; // store subscripted set var
-	byte pc_op_storvn = 10; // store next multiple value in var
-	byte pc_op_add    = 11; // add 2 entries on stack leaving 1
-	byte pc_op_sub    = 12; // sub 2 entries on stack leaving 1
-	byte pc_op_mpy    = 13; // mpy 2 entries on stack leaving 1
-	byte pc_op_div    = 14; // div 2 entries on stack leaving 1
-	byte pc_op_compeq = 15; // compare equal
-	byte pc_op_compge = 16; // compare greater than or equal
-	byte pc_op_compgt = 17; // compare greater than
-	byte pc_op_comple = 18; // compare greater less than or equal
-	byte pc_op_complt = 19; // compare equal
-	byte pc_op_compne = 20; // compare greater than or equal
-    byte pc_op_ucomp  = 21; // unary compliment value on stack
-	byte pc_op_dup    = 22; // duplicate string
-    byte pc_op_sublst = 23; // calculate setc sublist
-	byte pc_op_substr = 24; // calculate setc substring
-	byte pc_op_inc    = 25; // inc var/varsub
-	byte pc_op_dec    = 26; // dec var/varsub
-	byte pc_op_pushd  = 27; // push scalar dynamic var using name on stack
-	byte pc_op_pushds = 28; // push subscripted dynamic var using name and subscript on stack
-	byte pc_op_stord  = 29; // store scalar dynamic var using name on stack
-	byte pc_op_stords = 30; // store subscripted dynamic var using name and subscript on stack
-	byte pc_op_pfx_a  = 31; // A' lookahead defined symbol 
-    byte pc_op_pfx_d  = 32; // D' ordinary defined symbol
-    byte pc_op_pfx_i  = 33; // I' integer count
-    byte pc_op_pfx_k  = 34; // K' character count
-    byte pc_op_pfx_l  = 35; // L' ordinary symbol length
-    byte pc_op_pfx_n  = 36; // N' number of sublist operands
-    byte pc_op_pfx_o  = 37; // O' operator
-    byte pc_op_pfx_s  = 38; // S' scale factor  
-    byte pc_op_pfx_t  = 39; // T' symbol type
-    byte pc_op_pushs  = 40; // push symbol value abs value if found else 0
-    byte pc_op_stori  = 41; // inc store index by seta
-    byte pc_op_a2b    = 45; // convert value to binary string (3 = '11')
-    byte pc_op_a2c    = 46; // convert value to character string (240 = '1')
-    byte pc_op_a2d    = 47; //  convert value to decimal string (1 = '1')
-    byte pc_op_a2x    = 48; // convert value to hex string (240 = 'F0')
-    byte pc_op_and    = 49; // logical and (NC)
-    byte pc_op_b2a    = 50; // convert binary string to value (B2A('100') = 4)
-    byte pc_op_b2c    = 51; // convert binary string to character string ('11110000' = '1')
-    byte pc_op_b2d    = 52; //  convert binary string to decimal string ('100'  = '4')
-    byte pc_op_b2x    = 53; // convert binary string to hex string ('11110000' = 'F0')
-    byte pc_op_c2a    = 54; // convert characters to value (C2A('0') = 240)
-    byte pc_op_c2b    = 55; // convert character string to binary string ('1' = '11110000')
-    byte pc_op_c2d    = 56; //  convert character string to decimal string ('1'  = '240')
-    byte pc_op_c2x    = 57; // convert character string to hex string ('1' = 'F0')
-    byte pc_op_d2a    =  58; // convert decimal string to value (D2A('= 45; //2') = = 45; //2
-    byte pc_op_d2b    =  59; // convert decimal string to binary string ('4' = '100')
-    byte pc_op_d2c    = 60; //  convert decimal string to character string('240'  = '1')
-    byte pc_op_d2x    = 61; // convert decimal string to hex string ('240' = 'F0')
-    byte pc_op_dclen  = 62; // length of string after reducing double ' and &
-    byte pc_op_dcval  = 63; // return string with double ' and & reduced
-    byte pc_op_dequote = 64; // return string without first and last ' if any // RPI 886
-    byte pc_op_double = 65; // double quotes and & in string (NC)
-    byte pc_op_find   = 66; // return index of any char in string2 found in string1 (NC)
-    byte pc_op_index  = 67; // return index of string2 found in string1 else 0 (NC)
-    byte pc_op_isbin  = 68; // return 1 if valid binary string else 0
-    byte pc_op_isdec  = 69; // return 1 if valid decimal string else 0 
-    byte pc_op_ishex  = 70; // return 1 if valid hex string else 0
-    byte pc_op_issym  = 71; // return 1 if valid character string for symbol else 0
-    byte pc_op_lower  = 72; // return lower case string (NC)
-    byte pc_op_not    = 73; // logical or arithmetic not (NC)
-    byte pc_op_or     = 74; // logical or (NC)
-    byte pc_op_upper  = 75; // return upper case string (NC)
-    byte pc_op_signed = 76; // return decimal string with minus sign if negative
-    byte pc_op_sla    = 77; // shift left arithmetic (2 SLA 1 = 4)
-    byte pc_op_sll    = 78; // shift left logical (2 SLL 1 = 4)
-    byte pc_op_sra    = 79; // shift right arithmetic (4 SRA 1 = 2)
-    byte pc_op_srl    = 80; // shift right logical (4 SRL 1 = 2)
-    byte pc_op_sattra = 81; // return assembler attribute for symbol (EQU 4th)
-    byte pc_op_sattrp = 82; // return program attribute for symbol (EQU 5th)
-    byte pc_op_x2a    = 83; // convert hex string to value (X2A('F0') = 240)  
-    byte pc_op_x2b    = 84; // convert hex string to binary string ('F0' = '11110000')
-    byte pc_op_x2c    = 85; //  convert hex string to character string('F0'  = '1')
-    byte pc_op_x2d    = 86; // convert hex string to decimal string ('F0' = '240')
-    byte pc_op_xor    = 87; // logical exclusive or (NC) 
-	byte pc_op_gbl    = 88; // gbla,gblb,gblc declaration
-    String[] pc_op_desc = {
+    /** variable      */ int       tot_pc_gen      = 0;    // total pc entries allocated
+    /** variable      */ int       tot_pc_exec     = 0;    // total pc entries execute
+    /** variable      */ int       tot_pc_gen_opt  = 0;    // total pc gen optimizations
+    /** variable      */ int       tot_pc_exec_opt = 0;    // total pc exec optimizations
+    /** variable      */ int       tot_pcl_exec    = 0;    // total pc lists executed
+    /** variable      */ int       tot_pcl_gen     = 0;    // total pc lists allocated (1 per line)
+    /** variable      */ int       tot_pcl_reuse   = 0;    // total pc lists reused due to cache overflow
+    /** variable      */ int       pc_loc          = 0;     // current pc entry to execute
+    /** variable      */ int       pc_loc_prev     = 0;     // prev pc_loc in list else 0 set by get_pc, exec_pc
+    /** variable      */ int       pc_loc_next     = 0;     // next pc_loc in list else 0 set by opt_lst
+    /** variable      */ int       pc_free         = 0;     // ptr to free pc enty and next list
+    /** variable      */ byte      pc_parm_type    = 0;
+    /** variable      */ byte[]    pc_op           = null;  // pseudo code operation
+    /** variable      */ byte[]    pc_var_type     = null;  // pseudo code var type
+    /** variable      */ byte[]    pc_var_loc      = null;  // pseudo code var loc
+    /** variable      */ int[]     pc_sysndx       = null;  // pseudo code macro instance id
+    /** variable      */ int[]     pc_seta         = null;  // pseudo code seta/setb sdt value or var name index
+    /** variable      */ String[]  pc_setc         = null;  // pseudo code setc      sdt value
+    /** variable      */ int[]     pc_next         = null;  // next pc entry in free or alloc list
+    /** variable      */ boolean[] pc_req_opt      = null;  // pc optimizatopm reguest
+    /** variable      */ boolean pc_aborted = false;    // prevent abort_pc recusion in trace
+    /** variable      */ boolean pc_gen_exp = false;    // calc_exp flag to generate pseudo code
+    /** variable      */ boolean pc_pushc_pending = false;
+    /** variable      */ boolean pc_concat_pending = false; 
+    /** variable      */ byte    pc_push_var_op = 0;
+    /** variable      */ String  pc_push_var_setc_value = null;
+    /** variable      */ String  pc_sublst_value1 = null;
+    /** variable      */ String  pc_concat_setc_value1 = null;
+    /** variable      */ String  pc_concat_setc_value = null;
+    /** variable      */ String  pc_pushc_setc_value = null;
+    /** variable      */ boolean pc_pusha_pending = false;
+    /** variable      */ int     pc_pusha_seta_value = 0;
+    /** variable      */ String  pc_pusha_setc_value = null;
+    /** variable      */ byte pc_op_ago    =  1; // branch based on stack index value
+    /** variable      */ byte pc_op_aif    =  2; // branch if stack value not 0
+    /** variable      */ byte pc_op_pushv  =  3; // push var on stac
+    /** variable      */ byte pc_op_pushvs =  4; // push var(sub) ons tack replacing subcript
+    /** variable      */ byte pc_op_pusha  =  5; // push seta self defining term
+    /** variable      */ byte pc_op_pushc  =  6; // push setc string constant
+    /** variable      */ byte pc_op_concat =  7; // concatentate setc constant or 2 stack values
+    /** variable      */ byte pc_op_storv  =  8; // store scalar set var
+    /** variable      */ byte pc_op_storvs =  9; // store subscripted set var
+    /** variable      */ byte pc_op_storvn = 10; // store next multiple value in var
+    /** variable      */ byte pc_op_add    = 11; // add 2 entries on stack leaving 1
+    /** variable      */ byte pc_op_sub    = 12; // sub 2 entries on stack leaving 1
+    /** variable      */ byte pc_op_mpy    = 13; // mpy 2 entries on stack leaving 1
+    /** variable      */ byte pc_op_div    = 14; // div 2 entries on stack leaving 1
+    /** variable      */ byte pc_op_compeq = 15; // compare equal
+    /** variable      */ byte pc_op_compge = 16; // compare greater than or equal
+    /** variable      */ byte pc_op_compgt = 17; // compare greater than
+    /** variable      */ byte pc_op_comple = 18; // compare greater less than or equal
+    /** variable      */ byte pc_op_complt = 19; // compare equal
+    /** variable      */ byte pc_op_compne = 20; // compare greater than or equal
+    /** variable      */ byte pc_op_ucomp  = 21; // unary compliment value on stack
+    /** variable      */ byte pc_op_dup    = 22; // duplicate string
+    /** variable      */ byte pc_op_sublst = 23; // calculate setc sublist
+    /** variable      */ byte pc_op_substr = 24; // calculate setc substring
+    /** variable      */ byte pc_op_inc    = 25; // inc var/varsub
+    /** variable      */ byte pc_op_dec    = 26; // dec var/varsub
+    /** variable      */ byte pc_op_pushd  = 27; // push scalar dynamic var using name on stack
+    /** variable      */ byte pc_op_pushds = 28; // push subscripted dynamic var using name and subscript on stack
+    /** variable      */ byte pc_op_stord  = 29; // store scalar dynamic var using name on stack
+    /** variable      */ byte pc_op_stords = 30; // store subscripted dynamic var using name and subscript on stack
+    /** variable      */ byte pc_op_pfx_a  = 31; // A' lookahead defined symbol 
+    /** variable      */ byte pc_op_pfx_d  = 32; // D' ordinary defined symbol
+    /** variable      */ byte pc_op_pfx_i  = 33; // I' integer count
+    /** variable      */ byte pc_op_pfx_k  = 34; // K' character count
+    /** variable      */ byte pc_op_pfx_l  = 35; // L' ordinary symbol length
+    /** variable      */ byte pc_op_pfx_n  = 36; // N' number of sublist operands
+    /** variable      */ byte pc_op_pfx_o  = 37; // O' operator
+    /** variable      */ byte pc_op_pfx_s  = 38; // S' scale factor  
+    /** variable      */ byte pc_op_pfx_t  = 39; // T' symbol type
+    /** variable      */ byte pc_op_pushs  = 40; // push symbol value abs value if found else 0
+    /** variable      */ byte pc_op_stori  = 41; // inc store index by seta
+    /** variable      */ byte pc_op_a2b    = 45; // convert value to binary string (3 = '11')
+    /** variable      */ byte pc_op_a2c    = 46; // convert value to character string (240 = '1')
+    /** variable      */ byte pc_op_a2d    = 47; //  convert value to decimal string (1 = '1')
+    /** variable      */ byte pc_op_a2x    = 48; // convert value to hex string (240 = 'F0')
+    /** variable      */ byte pc_op_and    = 49; // logical and (NC)
+    /** variable      */ byte pc_op_b2a    = 50; // convert binary string to value (B2A('100') = 4)
+    /** variable      */ byte pc_op_b2c    = 51; // convert binary string to character string ('11110000' = '1')
+    /** variable      */ byte pc_op_b2d    = 52; //  convert binary string to decimal string ('100'  = '4')
+    /** variable      */ byte pc_op_b2x    = 53; // convert binary string to hex string ('11110000' = 'F0')
+    /** variable      */ byte pc_op_c2a    = 54; // convert characters to value (C2A('0') = 240)
+    /** variable      */ byte pc_op_c2b    = 55; // convert character string to binary string ('1' = '11110000')
+    /** variable      */ byte pc_op_c2d    = 56; //  convert character string to decimal string ('1'  = '240')
+    /** variable      */ byte pc_op_c2x    = 57; // convert character string to hex string ('1' = 'F0')
+    /** variable      */ byte pc_op_d2a    =  58; // convert decimal string to value (D2A('= 45; //2') = = 45; //2
+    /** variable      */ byte pc_op_d2b    =  59; // convert decimal string to binary string ('4' = '100')
+    /** variable      */ byte pc_op_d2c    = 60; //  convert decimal string to character string('240'  = '1')
+    /** variable      */ byte pc_op_d2x    = 61; // convert decimal string to hex string ('240' = 'F0')
+    /** variable      */ byte pc_op_dclen  = 62; // length of string after reducing double ' and &
+    /** variable      */ byte pc_op_dcval  = 63; // return string with double ' and & reduced
+    /** variable      */ byte pc_op_dequote = 64; // return string without first and last ' if any // RPI 886
+    /** variable      */ byte pc_op_double = 65; // double quotes and & in string (NC)
+    /** variable      */ byte pc_op_find   = 66; // return index of any char in string2 found in string1 (NC)
+    /** variable      */ byte pc_op_index  = 67; // return index of string2 found in string1 else 0 (NC)
+    /** variable      */ byte pc_op_isbin  = 68; // return 1 if valid binary string else 0
+    /** variable      */ byte pc_op_isdec  = 69; // return 1 if valid decimal string else 0 
+    /** variable      */ byte pc_op_ishex  = 70; // return 1 if valid hex string else 0
+    /** variable      */ byte pc_op_issym  = 71; // return 1 if valid character string for symbol else 0
+    /** variable      */ byte pc_op_lower  = 72; // return lower case string (NC)
+    /** variable      */ byte pc_op_not    = 73; // logical or arithmetic not (NC)
+    /** variable      */ byte pc_op_or     = 74; // logical or (NC)
+    /** variable      */ byte pc_op_upper  = 75; // return upper case string (NC)
+    /** variable      */ byte pc_op_signed = 76; // return decimal string with minus sign if negative
+    /** variable      */ byte pc_op_sla    = 77; // shift left arithmetic (2 SLA 1 = 4)
+    /** variable      */ byte pc_op_sll    = 78; // shift left logical (2 SLL 1 = 4)
+    /** variable      */ byte pc_op_sra    = 79; // shift right arithmetic (4 SRA 1 = 2)
+    /** variable      */ byte pc_op_srl    = 80; // shift right logical (4 SRL 1 = 2)
+    /** variable      */ byte pc_op_sattra = 81; // return assembler attribute for symbol (EQU 4th)
+    /** variable      */ byte pc_op_sattrp = 82; // return program attribute for symbol (EQU 5th)
+    /** variable      */ byte pc_op_x2a    = 83; // convert hex string to value (X2A('F0') = 240)  
+    /** variable      */ byte pc_op_x2b    = 84; // convert hex string to binary string ('F0' = '11110000')
+    /** variable      */ byte pc_op_x2c    = 85; //  convert hex string to character string('F0'  = '1')
+    /** variable      */ byte pc_op_x2d    = 86; // convert hex string to decimal string ('F0' = '240')
+    /** variable      */ byte pc_op_xor    = 87; // logical exclusive or (NC) 
+    /** variable      */ byte pc_op_gbl    = 88; // gbla,gblb,gblc declaration
+    /** variable      */ String[] pc_op_desc = {
 			"?",       // 0 not used 
 			"AGO",     // 1 pc_op_ago
 			"AIF",     // 2 pc_op_aif
@@ -1277,39 +1278,59 @@ public  class  mz390 {
 			"X2D",     //86 pc_op_x2d  
 			"XOR",     //87 pc_op_xor   
 	};
-	int[] pc_loc_list = new int[10];
-	byte[]  pcl_inc_list = {
-			pc_op_pushv,
-			pc_op_add,
-			pc_op_storv};
-	byte[]  pcl_dec_list = {
-			pc_op_pushv,
-			pc_op_sub,
-			pc_op_storv};
-	boolean pc_trace_gen = false;
-	String  pc_trace_sub  = null;
+    /** variable      */ int[] pc_loc_list = new int[10];
+    /** variable      */ byte[]  pcl_inc_list = {
+                                     pc_op_pushv,
+                                     pc_op_add,
+                                     pc_op_storv};
+    /** variable      */ byte[]  pcl_dec_list = {
+                                     pc_op_pushv,
+                                     pc_op_sub,
+                                     pc_op_storv};
+    /** variable      */ boolean pc_trace_gen = false;
+    /** variable      */ String  pc_trace_sub  = null;
 	/* 
 	 * end of global mz390 class data and start of procs
 	 */
+
+
+
+/**
+ * Dummy constructor - no initialization needed
+ */
+public mz390()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
+/**
+ * main is entry when executed from command line
+ * Create instance of mz390 class and pass
+ * parms to mz390 like z390 does.
+ *
+ * @param args argument string - same as z390
+ */
 	public static void main(String[] args) {
-		/*
-		 * main is entry when executed from command line
-		 * Create instance of mz390 class and pass
-		 * parms to mz390 like z390 does.
-		 */
 		mz390 pgm = new mz390();
 		pgm.process_mz390(args,null);
 	}
+
+
+
+/**
+ *  expand macro MLC source file to BAL source file
+ *
+ *  Note this may be called directly from z390 GUI or
+ *  from main when mz370 run from windows command line.
+ *  if called from main, the log_text object will be null
+ *  and local put_log function will route to console instead
+ *  of the z390 log window.
+ *
+ * @param args argument string
+ * @param log_text GUI-related object where log messages are sent
+ */
 	public void process_mz390(String[] args,JTextArea log_text){
-		/*
-		 *  expand macro MLC source file to BAL source file
-		 *
-		 *  Note this may be called directly from z390 GUI or
-		 *  from main when mz370 run from windows command line.
-		 *  if called from main, the log_text object will be null
-		 *  and local put_log function will route to console instead
-		 *  of the z390 log window.
-		 */
 		z390_log_text = log_text;
 		init_mz390(args,log_text);
 		if (tz390.opt_trap){ // RPI 1058 move mlc loading under trap handler
@@ -1323,12 +1344,20 @@ public  class  mz390 {
 		}
 		exit_mz390();
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>initialize log routing</li>
+ *  <li>set options</li>
+ *  <li>open MLC and BAL buffered I/O files</li>
+ * </ol>
+ *
+ * @param args argument string
+ * @param log_text GUI-related object where log messages are sent
+ */
 	private void init_mz390(String[] args, JTextArea log_text){
-		/*
-		 * 1.  initialize log routing
-		 * 2.  set options
-		 * 3.  open MLC and BAL buffered I/O files
-		 */
 		tz390 = new tz390();
 		tz390.init_tz390();  // RPI 1080
     	if (!tz390.check_java_version()){ // RPI 1175
@@ -1375,22 +1404,30 @@ public  class  mz390 {
 			add_zstrmac_key("AWHILE",zsm_type_awhile);
 		}
 	}
+
+
+
+/**
+ * add hash indexed keys for ZSTRMAC opcodes
+ *
+ * @param opcode ZSTRMAC opcode
+ * @param index associated index value
+ */
 	private void add_zstrmac_key(String opcode, byte index){
-		/*
-		 * add hash indexed keys for ZSTRMAC opcodes
-		 */
 		if (tz390.find_key_index('Z',opcode) == -1){
 			if(!tz390.add_key_index(index)){ 
 				abort_error(239,"ZSTRMAC error adding opcode key " + opcode);
 			}
 		}
 	}
+
+
+
+/**
+ * init regular expression patterns
+ * and issue error if failure
+ */
 	private void compile_patterns(){
-		/*
-		 * init regular expression patterns
-		 * and issue error if failure
-		 * 
-		 */
 		/*
 		 * var_pattern used for finding and replacing       
 		 * scalar, subscripted, and crated &variables
@@ -1560,11 +1597,16 @@ public  class  mz390 {
 			abort_error(8,"hexadecimal digits pattern error - " + e.toString()); // #509
 		}                                                                        // #509
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>Set trace_file_name</li>
+ *  <li>Open BAL file if option BAL</li>
+ * </ol>
+ */
 	private void open_files(){
-		/*
-		 * 1. Set trace_file_name
-		 * 2. Open BAL file if option BAL
-		 */
 	    if (tz390.trace_file_name == null){  // RPI 719
 	    	tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.trm_type;
 	    } else {
@@ -1581,15 +1623,16 @@ public  class  mz390 {
 			abort_error(8,"I/O error on BAL open - " + e.toString());
 		}
 	}
-	
+
+
+
+/**
+ * execute mlc as open code macro expanding
+ * any macros found and outputing all model
+ * statements to BAL file after substitution
+ * of any parms and macro variables.
+ */
 	private void process_mac(){
-		/* 
-		 * execute mlc as open code macro expanding
-		 * any macros found and outputing all model
-		 * statements to BAL file after substitution
-		 * of any parms and macro variables.
-		 *  
-		 */
 		load_type = load_mlc_file;
 		load_file_name = tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type;
 		load_mac();
@@ -1747,11 +1790,14 @@ public  class  mz390 {
 			create_mnote(4,"missing END statement"); // RPI 1169
 		}
 	}
+
+
+
+/**
+ * set mlc_eof and notify az390 
+ * to wrapup if running
+ */
 	private void set_mlc_eof(){
-		/*
-		 * set mlc_eof and notify az390 
-		 * to wrapup if running
-		 */
 		mlc_eof = true;
 		if (tz390.opt_asm){ // RPI 415
 			az390.tz390.systerm_prefix = tz390.systerm_prefix;  // RPI 755
@@ -1762,11 +1808,16 @@ public  class  mz390 {
             call_az390_pass_bal_line(bal_line);    
 		}
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>load it if found</li>
+ *  <li>add macro entry or dummy entry</li>
+ * </ol>
+ */
 	private void load_mac_file(){
-		/*
-		 * 1.  load it if found
-		 * 2.  add macro entry or dummy entry
-		 */
 		if (cur_mac_file_path != null){
 			load_type = load_mac_file;
 			load_file_name = cur_mac_file_path;
@@ -1781,46 +1832,59 @@ public  class  mz390 {
 			find_mac_name_index = -2;
 		}
 	}
+
+
+
+/**
+ * load macro from file or inline and
+ * set load_mac_name_index else
+ * abort with error
+ *
+ * <ul>
+ *  <li>load type 0 = MLC file
+ *   <ul>
+ *    <li>no MACRO, no proto-type, end on END</li>
+ *    <li>parse EXEC statement with space delimited</li>
+ *    <li>parms and create exec macro parms</li>
+ *   </ul>
+ *  </li>
+ *  <li>load type 1 = MAC file
+ *   <ul>
+ *    <li>MACRO, MEND, and verify proto-type name = file name</li>
+ *   </ul>
+ *  </li>
+ *  <li>load type 2 = inline macro
+ *   <ul>
+ *    <li>MACRO, MEND, and proto-type defines macro name</li>
+ *   </ul>
+ *  </li>
+ * </ul>
+ * <ol>
+ *  <li>Return -2 if file not found</li>
+ *  <li>Concatentate any continuations indicated by non-blank in position 72. Each continuation must start at position 16.</li>
+ *  <li>Ignore .* macro comments</li>
+ *  <li>Define any macro labels .xxx and check references.</li>
+ *  <li>if continue char in 72, delimit at first ", " after 16.</li>
+ *  <li>initial program MLC loads as 0 mac name entry</li>
+ *  <li>Load inline macros without processing labels etc. and includes are not expanded until inline load</li>
+ *  <li>Insert MLC copy profile copybook if option PROFILE(copybook) specified.</li>
+ *  <li>Expand the following structured macro code extensions if ZSTRMAC:
+ *   <ol>
+ *    <li>AIF, AELSE, AELSEIF, AEND</li>
+ *    <li>ACALL, ACALLPRM, AENTRY, AEXIT. AEND</li>
+ *    <li>AWHILE, AUNTIL, AEXIT, AEND</li>
+ *    <li>ACASE, AWHEN, AELSE, AEXIT, AEND</li>
+ *    <li>Note ACALL generates ACALLPRM call to reset parms for AENTRY</li>
+ *   </ol>
+ *  </li>
+ * </ol>
+ *
+ * Notes:
+ * <ol>
+ *  <li>At end of MLC load, turn off lookahead mode for ordinary symbols.</li>
+ * </ol>
+ */
 	private void load_mac(){
-		/*
-		 * load macro from file or inline and 
-		 * set load_mac_name_index else 
-		 * abort with error
-		 * 
-		 * load type 0 = MLC file
-		 *   no MACRO, no proto-type, end on END
-		 *   parse EXEC statement with space delimited
-		 *   parms and create exec macro parms
-		 * load type 1 = MAC file
-		 *   MACRO, MEND, and verify proto-type name = file name
-		 * load type 2 = inline macro
-		 *   MACRO, MEND, and proto-type defines macro name
-		 *   
-		 * 1.  Return -2 if file not found
-		 * 2.  Concatentate any continuations indicated
-		 *     by non-blank in position 72.  Each 
-		 *     continuation must start at position 16.
-		 * 3.  Ignore .* macro comments
-		 * 4.  Define any macro labels .xxx and check
-		 *     references.
-		 * 5.  if continue char in 72, delimit at first
-		 *     ", " after 16.
-		 * 6.  initial program MLC loads as 0 mac name entry
-		 * 7.  Load inline macros without processing labels etc.
-		 *     and includes are not expanded until inline load
-		 * 8.  Insert MLC copy profile copybook if option 
-		 *     PROFILE(copybook) specified.
-		 * 9.  Expand the following structured macro code extensions if ZSTRMAC:
-		 *     a.  AIF, AELSE, AELSEIF, AEND
-		 *     b.  ACALL, ACALLPRM, AENTRY, AEXIT. AEND // RPI 2220 add ACALLPRM
-		 *     c.  AWHILE, AUNTIL, AEXIT, AEND
-		 *     d.  ACASE, AWHEN, AELSE, AEXIT, AEND
-		 *     e.  Note ACALL generates ACALLPRM call to reset parms for AENTRY  RPI 2220
-		 *
-		 * Notes:
-		 *   1.  At end of MLC load, turn off
-		 *       lookahead mode for ordinary symbols.
-		 */
 		loading_mac = true;
 		tot_mac_load++;
 		zsm_lvl = 0;  // RPI 930 reset
@@ -1978,11 +2042,14 @@ public  class  mz390 {
 		mac_name_index = save_mac_name_index;
 		loading_mac = false;
 	}
+
+
+
+/**
+ * issue error for any ACALL to undefined
+ * AENTRY routine.
+ */
 	private void check_undefined_aentry(){
-		/*
-		 * issue error for any ACALL to undefined
-		 * AENTRY routine.
-		 */
 		int index = 1;
 		while (index < zsm_aentry_name_tot){
 			if (!zsm_aentry_def[index]){
@@ -1991,11 +2058,14 @@ public  class  mz390 {
 			index++;
 		}
 	}
+
+
+
+/**
+ * scan for macro statement following
+ * final MEND ignoring comments 
+ */
 	private void check_past_mend(){
-		/* 
-		 * scan for macro statement following
-		 * final MEND ignoring comments 
-		 */
 		mac_line_index = mac_file_next_line[mac_line_index]; // RPI 956
 		load_get_mac_line();
 		while (mac_line != null && mac_line_index < tz390.opt_maxline){
@@ -2014,10 +2084,13 @@ public  class  mz390 {
 		}
 		mac_line_index--;  // backup to MEND/END
 	}
+
+
+
+/**
+ * set ICTL start, end, cont columns
+ */
 	private void set_ictl(){  // RPI 728
-		/*
-		 * set ICTL start, end, cont columns
-		 */
 		mac_ictl_start[cur_mac_file] = calc_seta_exp(mac_parms,0);
 		if (!mac_abort 
 			&& mac_parms.length() > exp_next_index
@@ -2045,11 +2118,14 @@ public  class  mz390 {
 					mac_ictl_end[cur_mac_file] = 16;
 		}
 	}
+
+
+
+/**
+ * open file for MLC or macro file
+ * else abort with error
+ */
 	private void load_open_macro_file(){
-		/*
-		 * open file for MLC or macro file
-		 * else abort with error
-		 */	
 		mac_file[cur_mac_file] = new File(load_file_name);
 		if (!mac_file[cur_mac_file].isFile()){
 			tz390.opt_asm = false; // RPI 720
@@ -2080,19 +2156,25 @@ public  class  mz390 {
 		}
 		set_default_ictl();
 	}
+
+
+
+/**
+ * set default ICTL for macro/copy
+ */
 	private void set_default_ictl(){
-		/*
-		 * set default ICTL for macro/copy
-		 */
 		mac_ictl_start[cur_mac_file] =  1; // RPI 728
 		mac_ictl_end[cur_mac_file]   = 71; // RPI 728
 		mac_ictl_cont[cur_mac_file]  = 16; // RPI 728
 	}
+
+
+
+/**
+ * process proto-type
+ * during loading of MLC or macro
+ */
 	private void load_proto_type(){
-		/* 
-		 * process proto-type
-		 * during loading of MLC or macro
-		 */
 		load_proto_type = true;
 		load_proto_index = mac_line_index;
 		mac_op = replace_vars(mac_op,false,false); // RPI 673
@@ -2121,16 +2203,20 @@ public  class  mz390 {
 			mac_name_lab_start[mac_name_index] = tot_mac_lab;
 		}
 	}
+
+
+
+/**
+ * parse space delimited parms for exec
+ * sql cics or dli and replace with comma
+ * delimited parms for EXEC macro processing.<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>Use the proto_pattern to handle all valid macro assembler parm expressions including quoted strings with spaces.</li>
+ * </ol>
+ */
 	private void load_macro_exec(){
-		/*
-		 * parse space delimited parms for exec
-		 * sql cics or dli and replace with comma
-		 * delimited parms for EXEC macro processing.
-		 * Notes:
-		 *   1.  Use the proto_pattern to handle all
-		 *       valid macro assembler parm expressions
-		 *       including quoted strings with spaces. RPI 640
-		 */		
 		exec_match = exec_pattern.matcher(mac_parms);
 		String exec_parms = "";
 		String exec_parm;
@@ -2185,10 +2271,13 @@ public  class  mz390 {
 		}
 		mac_file_line[mac_line_index] = mac_label + " EXEC " + exec_parms; // RPI 905 add label if any
 	}
+
+
+
+/**
+ * check ago and aif references during loading
+ */
 	private void load_macro_ago_aif_refs(){
-		/*
-		 * check ago and aif references during loading
-		 */
 		int lab_index = 0;
 		if (load_macro_mend_level == 1 
 				&& (mac_op.equals("AGO") 
@@ -2246,16 +2335,21 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * During MLC or macro loading:
+ * <ol>
+ *  <li>Define macro labels .xxx</li>
+ *  <li>If MLC lookahead, define ordinary symbol attribute
+ *       and length if available using az390 DS, DC, and
+ *       EQU processing services.  Note call_az390 surpresses
+ *       sending any BAL trace comments during lookahead.</li>
+ *  <li>remove .* macro comments</li>
+ * </ol>
+ */
 	private void load_macro_label_sym(){
-		/*
-		 * During MLC or macro loading:
-		 *   1.  Define macro labels .xxx
-		 *   2.  If MLC lookahead, define ordinary symbol attribute
-		 *       and length if available using az390 DS, DC, and
-		 *       EQU processing services.  Note call_az390 surpresses
-		 *       sending any BAL trace comments during lookahead.
-		 *   3.  remove .* macro comments
-		 */
 		if (mac_label.length() >= 1){            // RPI 466
 			if (mac_label.charAt(0) == '.'
 				&& mac_label.length() > 1        // RPI 466
@@ -2285,37 +2379,40 @@ public  class  mz390 {
 			az390.process_dc(1);  // RPI 466
 		}
 	}
+
+
+
+/**
+ * if ASM, set symbol type and length during
+ * MLC macro loading in lookahead mode<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>Called during macro load to define all
+ *      ordinary symbols in open code allowing forward
+ *      reference to type and length if available 
+ *      during macro execution.  The sym_attr and
+ *      sym_len are stored in AZ390 symbol table with
+ *      sym_def = -1 indicating lookahead mode definition.
+ *      Duplicates are ignored as there may be altermate
+ *      macro paths.</li>
+ *  <li>During macro execution, AZ390 recalcs
+ *      all symbols for use during remained for 
+ *      macro expansion.</li>
+ *  <li> sym_attr = 'U' and sym_len = 1 default
+ *      at first create.</li>
+ *  <li> sym_def = -1 for lookahead and 0 for forward
+ *      ref during macro expansion.  AZ390 source line
+ *      references start at 1 as of RPI 415.</li>
+ *  <li> Note during macro execution,
+ *      macro call label field symbol 
+ *      will be changed to sym_attr 'M'
+ *      if undefined or type 'U' and
+ *      will remain with sym_def = -1 to allow
+ *      redefine as ordinary symbol via BAL expansion.</li>
+ * </ol>
+ */
 	private void set_lookahead_sym_attr_len(){
-		/*
-		 * if ASM, set symbol type and length during
-		 * MLC macro loading in lookahead mode
-		 * 
-		 * Notes:
-		 *   1.  Called during macro load to define all
-		 *       ordinary symbols in open code allowing forward
-		 *       reference to type and length if available 
-		 *       during macro execution.  The sym_attr and
-		 *       sym_len are stored in AZ390 symbol table with
-		 *       sym_def = -1 indicating lookahead mode definition.
-		 *       Duplicates are ignored as there may be altermate
-		 *       macro paths.
-         *   2.  During macro execution, AZ390 recalcs
-         *       all symbols for use during remained for 
-         *       macro expansion.
-		 * 
-		 * Notes:
-		 *   1.  sym_attr = 'U' and sym_len = 1 default
-		 *       at first create.
-		 *   2.  sym_def = -1 for lookahead and 0 for forward
-		 *       ref during macro expansion.  AZ390 source line
-		 *       references start at 1 as of RPI 415.
-		 *   3.  Note during macro execution,
-		 *       macro call label field symbol 
-		 *       will be changed to sym_attr 'M'
-		 *       if undefined or type 'U' and
-		 *       will remain with sym_def = -1 to allow
-		 *       redefine as ordinary symbol via BAL expansion.
-		 */
 		if (!az390.az390_waiting){
 			abort_error(204,"az390 not in lookahead wait state");
 		}
@@ -2353,22 +2450,30 @@ public  class  mz390 {
 			}
 		}	
 	}
+
+
+
+/**
+ * init for mz390 calls to EQU/DS/DC
+ * processing routines during lookahead
+ */
 	private void init_lookahead_az390(){
-		/*
-		 * init for mz390 calls to EQU/DS/DC
-		 * processing routines during lookahead
-		 */
 		az390.bal_abort = false;
 		az390.bal_line  = mac_line;  // RPI 466
 		az390.bal_label = mac_label;
 		az390.bal_op    = mac_op;
 		az390.bal_parms = mac_parms;
 	}
+
+
+
+/**
+ * add macro file entry and 
+ * set mac_name_index else abort
+ *
+ * @param macro_name macro name
+ */
 	private void add_mac(String macro_name){
-		/*
-		 * add macro file entry and 
-		 * set mac_name_index else abort
-		 */
 		if (tot_mac_name < tz390.opt_maxfile){ // RPI 284
 			mac_name_index = tot_mac_name;
 			if (tot_mac_name > 0){  // RPI127 skip main pgm to allow macro later
@@ -2384,11 +2489,16 @@ public  class  mz390 {
 			abort_error(27,"max macros exceeded");
 		}
 	}
+
+
+
+/**
+ * add or update macro key index
+ *
+ * @param index macro index
+ * @param name macro name
+ */
 	private void update_mac_key_index(int index,String name){
-		/*
-		 * add or update macro key index
-		 * 
-		 */
 		if (tz390.find_key_index('M',name) != -1){ // RPI 351
 			tz390.update_key_index(index);
 		} else {
@@ -2397,10 +2507,13 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * find/add file name and set cur_mac_file_num
+ */
 	private void set_mac_file_num(){
-		/*
-		 * find/add file name and set cur_mac_file_num
-		 */
 		String mac_file_key = mac_file[cur_mac_file].getAbsolutePath(); 
 		cur_mac_file_num = tz390.find_key_index(
 				'F',mac_file_key);		
@@ -2425,12 +2538,19 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * add macro label and check for duplicates
+ * during macro loading
+ *
+ * @param mac_index index of macro
+ * @param mac_label label
+ * @param lab_line line number
+ */
 	private void add_mac_label(int mac_index
 			,String mac_label, int lab_line){
-		/*
-		 * add macro label and check for duplicates
-		 * during macro loading
-		 */
 		int index = mac_name_lab_start[mac_index];
 		while (index < tot_mac_lab){
 			if (mac_label.equals(mac_lab_name[index])){
@@ -2458,11 +2578,15 @@ public  class  mz390 {
 			abort_error(110,mac_name[mac_index] + " maximum macro labels exceeded");
 		}
 	}
+
+
+
+/**
+ * issue errors for any undefined macro labels.
+ *
+ * @param mac_index iundex of macro
+ */
 	private void check_undefined_labs(int mac_index){
-		/*
-		 * issue errors for any undefined macro
-		 * labels.
-		 */
 		int index = mac_name_lab_start[mac_index];
 		while (index < mac_name_lab_end[mac_index]){
 			if (mac_lab_index[index] <= 0
@@ -2482,14 +2606,18 @@ public  class  mz390 {
 			index++;
 		}
 	}
+
+
+
+/**
+ * get next mac line from ainsert, file, or inline
+ * <ol>
+ *  <li>oncatenating continuation lines and parse mac line</li>
+ *  <li>runcate continued lines at first ", "</li>
+ *  <li>ead nested copy files</li>
+ * </ol>
+ */
 	private void load_get_mac_line(){
-		/*
-		 * get next mac line from ainsert, file, or inline
-		 *   1.  Concatenating continuation lines
-		 *       and parse mac line
-		 *   2.  Truncate continued lines at first ", "
-		 *   2.  Read nested copy files
-		 */
 		if (load_type == load_mac_inline){
 			if (load_macro_mend_level > 0 
 					&& mac_line_index != load_mac_inline_end){ // RPI 956
@@ -2504,11 +2632,14 @@ public  class  mz390 {
 		}
 		load_get_zstrmac_file_line();
 	}
+
+
+
+/**
+ * get next source line to load or insert
+ * from nexted copy files
+ */
 	private void load_get_zstrmac_file_line(){
-		/*
-		 * get next source line to load or insert
-		 * from nexted copy files
-		 */
 		if (tz390.opt_zstrmac){
 			if (zsm_line_index < zsm_line_tot){
 				mac_line = zsm_gen_line[zsm_line_index];
@@ -2527,11 +2658,14 @@ public  class  mz390 {
 			load_get_mac_file_line();
 		}
 	}
+
+
+
+/**
+ * get next mac_line from file
+ * else set mac_line null
+ */
 	private void load_get_mac_file_line(){
-		/*
-		 * get next mac_line from file
-		 * else set mac_line null
-		 */
 		String temp_line = null;
 		try {
 			boolean retry = true;
@@ -2659,12 +2793,16 @@ public  class  mz390 {
 			abort_error(29,"I/O error on file read " + e.toString());
 		}
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>save mac_line during input for use by log_error</li>
+ *  <li>update &amp;SYSSTMT</li>
+ * </ol>
+ */
 	private void store_mac_line(){   // RPI 274
-		/* 
-		 * 1.  save mac_line during input
-		 *     for use by log_error
-		 * 2.  update &SYSSTMT
-		 */  
 		if (skip_store || ainsert_copy){ // RPI 1019 
 			skip_store = false;
 			return;
@@ -2674,13 +2812,16 @@ public  class  mz390 {
 		mac_file_line_num[mac_line_index] = cur_mac_line_num;
 		bal_xref_index = mac_line_index;
 	}
+
+
+
+/**
+ * Generate ZSTRMAC structured 
+ * macro code lines with same line
+ * number as original statement in
+ * zsm_lines and set zsm_line_tot
+ */
 	private void zsm_gen_lines(){
-		/*
-		 * Generate ZSTRMAC structured 
-		 * macro code lines with same line
-		 * number as original statement in
-		 * zsm_lines and set zsm_line_tot
-		 */
 		zsm_line_tot   = 0;
 		zsm_line_index = 0;
 		tz390.split_line(mac_line);
@@ -3110,14 +3251,19 @@ public  class  mz390 {
 		    break;
 		}
 	}
+
+
+
+/**
+ * process AWHEN index value parms
+ * and set current block # in value
+ * block array.  The valid values
+ * are 0-255, C'?', X'??', or range
+ * (v1,v2) separated by commas
+ *
+ * @return boolean value
+ */
 	private boolean zsm_acs_set_blk(){
-		/*
-		 * process AWHEN index value parms
-		 * and set current block # in value
-		 * block array.  The valid values
-		 * are 0-255, C'?', X'??', or range
-		 * (v1,v2) separated by commas 
-		 */
 		if  (tz390.split_parms == null){
 			return false;
 		}
@@ -3173,12 +3319,18 @@ public  class  mz390 {
 		}
 		return true;
 	}
+
+
+
+/**
+ * limit check AWHEN value and 
+ * return false if not 0-255.
+ * Also set low and high value
+ *
+ * @param val value to check
+ * @return true if value in range 0-255; false otherwise
+ */
 	private boolean zsm_acs_chk_val(int val){
-		/*
-		 * limit check AWHEN value and 
-		 * return false if not 0-255.
-		 * Also set low and high value
-		 */
 		if (val < 0 || val > 255){
 			return false;
 		}
@@ -3190,11 +3342,15 @@ public  class  mz390 {
 		}
 		return true;
 	}
+
+
+
+/**
+ * set zsm_aif_exp to (...) else return false
+ *
+ * @return true or false
+ */
 	private boolean zsm_find_aif_exp(){
-		/*
-		 * set zsm_aif_exp to (...) else
-		 * return false
-		 */
 		if (tz390.split_parms == null){
 			return false;
 		}
@@ -3224,12 +3380,17 @@ public  class  mz390 {
 		}	
 		return false;
 	}
+
+
+
+/**
+ * find ACALL name or add new name with ACALL_ prefix
+ * and set zsm_acall_index else false
+ * and set &amp;name parms else null
+ *
+ * @return boolean indicating success
+ */
 	private boolean zsm_find_acall_name(){
-		/*
-		 * find ACALL name or add new name with ACALL_ prefix #335
-		 * and set zsm_acall_index else false
-		 * and set &name parms else null // rpi 2220
-		 */
 		zsm_acall_index = -1;
 		if (tz390.split_parms == null){
 			return false;
@@ -3269,10 +3430,13 @@ public  class  mz390 {
 			return false;
 		}
 	}
+
+
+
+/**
+ * insert &amp;(acall_name)(parm#) SETC 'parm' for each parm in acall name(p1,p2,,pn)
+ */
 	private void insert_acall_parms(){  // #335
-		/*
-		/* insert &(acall_name)(parm#) SETC 'parm' for each parm in acall name(p1,p2,,pn)	
-		 */
 		 if (acall_parm.length() < 3)return; // #335 last fix for v1.8.1
 		 String acall_arg = acall_parm.substring(1,acall_parm.length()-1);
 		 String acall_arg_insert = "";
@@ -3299,6 +3463,14 @@ public  class  mz390 {
         	 insert_acall_set(acall_arg_insert);
 		 }		 
 	} 
+
+
+
+/**
+ * insert acall parm created setc variables into MLC
+ *
+ * @param line - ???
+ */
 	private void insert_acall_set(String line){  // #335 insert acall parm created setc variables into MLC	 
 		zsm_line_tot++;
 		zsm_gen_line[zsm_line_tot-1] = line;
@@ -3306,12 +3478,17 @@ public  class  mz390 {
 			tz390.put_trace("insert setc acall parms = " + line);
 		}
     }	
+
+
+
+/**
+ * <ol>
+ *  <li>parse mac line into label, op, parms</li>
+ *  <li>open copybook file if found</li>
+ *  <li>if cics insert prolog and epilog</li>
+ * </ol>
+ */
 	private void parse_mac_line(){  // #335
-		/*
-		 * 1.  parse mac line into label, op, parms
-		 * 2.  open copybook file if found
-		 * 3.  if cics insert prolog and epilog
-		 */
 		mac_label = null;
 		mac_op    = null;
 		mac_parms = null;
@@ -3378,16 +3555,20 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * open copy file specified in mac_parms
+ *
+ * Notes:
+ * <ol>
+ *  <li>Expand during MLC and macro loads</li>
+ *  <li>Insert using AINSERT during execution after var substitution on name</li>
+ *  <li>Issue error on copy file not found if not loading MLC/MAC</li>
+ * </ol>
+ */
 	private void open_mac_copy_file(){
-		/*
-		 * open copy file specified in mac_parms
-		 * Notes:
-		 *   1.  Expand during MLC and macro loads
-		 *   2.  Insert using AINSERT during 
-		 *       execution after var substitution on name
-		 *   2.  Issue error on copy file not found
-		 *       if not loading MLC/MAC
-		 */
 		String new_mac_name = null;
 		tz390.split_line(mac_parms); //RPI84
 		if (tz390.split_label == null){
@@ -3482,10 +3663,15 @@ public  class  mz390 {
 			break;	
 		}
 	}
+
+
+
+/**
+ * open file for loading mac/copy file
+ *
+ * @param new_mac_name name of the macro or copy file to be loaded
+ */
 	private void open_load_file(String new_mac_name){
-		/*
-		 * open file for loading mac/copy file
-		 */
 		mac_file[cur_mac_file] = new File(new_mac_name);
 		try {
 			mac_file_buff[cur_mac_file] =
@@ -3510,14 +3696,21 @@ public  class  mz390 {
 			abort_error(26,"I/O error opening file - " + e.toString());
 		}
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>strip .mac labels if ASM and not inline macro code</li>
+ *  <li>set symbol attr if mfc</li>
+ *  <li>optional reformatting</li>
+ *  <li>optional pass to az390</li>
+ *  <li>optional write to BAL </li>
+ * </ol>
+ *
+ * @param text_line input source line
+ */
 	private void put_bal_line(String text_line){
-		/*
-		 * 1.  strip .mac labels if ASM and not inline macro code
-		 * 2.  set symbol attr if mfc
-		 * 3.  optional reformatting
-		 * 4.  optional pass to az390
-		 * 5.  optional write to BAL 
-		 */
 	    if (text_line != null && !bal_eof){
 	    	tot_bal_line++;	// excludes stats after END
 	       	String next_bal_line = "" + (tot_bal_line + 1); // RPI 892
@@ -3578,11 +3771,16 @@ public  class  mz390 {
 			abort_error(13,"I/O error on BAL write - " + e.toString());
 		}
 	}
+
+
+
+/**
+ * pass text_line to az390 and update
+ * the az390 copy of mz390_errors
+ *
+ * @param text_line surce line to be handed over to az390 for assembly
+ */
 	private void call_az390_pass_bal_line(String text_line){
-		/*
-		 * pass text_line to az390 and update
-		 * the az390 copy of mz390_errors
-		 */
 		if (az390 != null){ 
 			if (az390.lookahead_mode){
 				if (text_line == null || text_line.length() == 0 || text_line.charAt(0) != '*'){
@@ -3614,11 +3812,16 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * reformat text_line from tz390.split
+ * at 10 and operands at 16 if possible
+ *
+ * @return reformatted source text
+ */
 	private String reformat_bal(){
-		/*
-		 * reformat text_line from tz390.split
-		 * at 10 and operands at 16 if possible
-		 */
 		String pad_label = "";
 		String pad_op = "";
 		if  (tz390.split_op.length() > 0
@@ -3638,11 +3841,16 @@ public  class  mz390 {
 		         + tz390.split_op + pad_op + " " 
 		         + tz390.split_parms;
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>Substitute any macro variables found</li>
+ *  <li>Set bal_label, bal_op, bal_parms</li>
+ * </ol>
+ */
 	private void parse_bal_line(){
-		/*
-		 * 1.  Substitute any macro variables found
-		 * 2.  Set bal_label, bal_op, bal_parms
-		 */
 		bal_label = null;
 		bal_op    = null;
 		bal_parms = null;
@@ -3715,11 +3923,14 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * split bal_line into bal_label, bal_op,
+ * and bal_parms
+ */
 	private void split_bal_line(){
-		/*
-		 * split bal_line into bal_label, bal_op,
-		 * and bal_parms
-		 */
 		tz390.split_line(bal_line);
 		if (tz390.split_label != null){
 			bal_label = tz390.split_label;
@@ -3737,22 +3948,28 @@ public  class  mz390 {
 			bal_parms = "";
 		}		
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>Replace all variables in text and set var_replacement if changed</li>
+ *  <li>if reduce then replace &amp;&amp; with &amp; and '' with '</li>
+ *  <li>If check_label then verify label field valid</li>
+ * </ol>
+ * Notes:
+ * <ol>
+ *  <li>Per RPI 241 ignore undefined &amp;vars and let az390 report error if not in comment</li>
+ *  <li>Per RPI 502 remove undefined var which may cause null parm error in az390</li>
+ *  <li>Replace null single parm with comma if comments follow</li>
+ * </ol>
+ *
+ * @param text source text
+ * @param reduce indicates whether or not to reduce double ampersands and quotes
+ * @param check_label indicates whether or not to validate the label field
+ * @return result after substitution and - optional - reduction
+ */
 	private String replace_vars(String text,boolean reduce,boolean check_label){
-		/* 
-		 * 1.  Replace all variables in text
-		 *     and set var_replacement if changed
-		 * 2.  if reduce then
-		 *     replace && with & and '' with '.
-		 * 3.  If check_lable then
-		 *     verify label field valid.    
-		 * Notes:
-		 *   1.  Per RPI 241 ignore undefined &vars
-		 *       and let az390 report error if not in comment
-		 *   2.  Per RPI 502 remove undefined var which may cause null
-		 *       parm error in az390.
-		 *   3.  Replace null single parm with comma
-		 *       if comments follow RPI 695       
-		 */
 		exp_var_replacement_mode = false;
 		exp_var_replacement_change = false;
 		bal_text = text;
@@ -3827,22 +4044,31 @@ public  class  mz390 {
 		exp_var_replacement_mode = false;
 		return text;
 	}
+
+
+
+/**
+ * find parm or set variable and return true if found.
+ * Also set the following:
+ * <ol>
+ *  <li>var_type = seta|setb|setc|parm (1-4)</li>
+ *  <li>var_loc  = lcl|gbl|pos|kw|syslist</li>
+ *  <li>setc_value = parm value if not syslist</li>
+ *  <li>var_name_index = index to name found else -1 </li>
+ *  <li>var_name = variable name</li>
+ * </ol>
+ *
+ * Notes:
+ * <ol>
+ *  <li>caller must handle subscript or sublist in exp or bal parm processing</li>
+ *  <li>First search parms and then set variables</li>
+ *  <li>Convert to upper case</li>
+ * </ol>
+ *
+ * @param name variable name
+ * @return true if found, false otherwise
+ */
 	private boolean find_var(String name){
-		/*
-		 * find parm or set variable and return true if found
-		 * also set the following:
-		 * 1.  var_type = seta|setb|setc|parm (1-4)
-		 * 2.  var_loc  = lcl|gbl|pos|kw|syslist
-		 * 3.  setc_value = parm value if not syslist
-		 * 4.  var_name_index = index to name found else -1 
-		 * 5.  var_name = variable name
-		 *
-		 * Note caller must handle subscript or 
-		 * sublist in exp or bal parm processing
-		 * Notes:
-		 *   1.  First search parms and then set variables
-		 *   2.  Convert to upper case
-		 */
 		var_set_array = false; // rpi 836
 		var_name = name.toUpperCase(); 
 		if  (var_name.equals("&SYSLIST")) {
@@ -3877,10 +4103,16 @@ public  class  mz390 {
 		}
 		return false;
 	}
+
+
+
+/**
+ * return number of parms in sublist
+ *
+ * @param list sublist to inspect
+ * @return nr of parameters counted
+ */
 	private int get_sublist_count(String list){
-		/* 
-		 * return number of parms in sublist
-		 */
 		if (list.length() == 0){
 			return 0;
 		} else if (list.charAt(0) != '('){
@@ -3891,12 +4123,20 @@ public  class  mz390 {
 			return sublist_count;
 		}
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>parse list and return sublist requested or empty list</li>
+ *  <li>incr sublist_count for each , at level 1</li>
+ * </ol>
+ *
+ * @param list list to extract from
+ * @param sublist_index starting point (?)
+ * @return string value of extracted sublist
+ */
 	private String get_sublist(String list,int sublist_index){
-		/*
-		 * 1.  parse list and return sublist requested 
-		 * or empty list
-		 * 2.  incr sublist_count for each , at level 1
-		 */
 		if (sublist_index < 1){
 			log_error(85,"invalid sublist index - " + sublist_index);
 		}
@@ -3949,21 +4189,29 @@ public  class  mz390 {
 			return "";
 		}
 	}
+
+
+
+/**
+ * set mac_opcode_index and return opcode type:
+ * <ul>
+ *  <li>-1 - not found in opcode table</li>
+ *  <li>0 - comment (no opcode)</li>
+ *  <li>1-100 - machine type</li>
+ *  <li>100-200 - assembler type</li>
+ *  <li>200+ - macro operation </li>
+ * </ul>
+ *
+ * Notes:
+ * <ol>
+ *  <li>tz390 opcode table used to find opcode type.</li>
+ *  <li>Return 0 for comment </li>
+ * </ol>
+ *
+ * @param opcode opcode string value (i.e. mnemonic)
+ * @return index value of the mnemonic definition in tz390 tables.
+ */
 	private int find_opcode_type(String opcode){
-		/*
-		 * set mac_opcode_index and return
-		 * return opcode type:
-		 *                    -1                              - not found in opcode table
-		 *                     0                              - comment (no opcode)
-		 *      1-100 - machine type
-		 *    100-200 - assembler type
-		 *    200+    - macro operation 
-		 * 
-		 * Notes:
-		 *   1.  tz390 opcode table used to find
-		 *       opcode type.
-		 *   2.  Return 0 for comment 
-		 */
 		if (opcode == null || opcode.length() == 0){
 			return -1;
 		}
@@ -3974,27 +4222,33 @@ public  class  mz390 {
 			return -1;
 		}
 	}
+
+
+
+/**
+ * branch to specified macro label or branch on index using list of labels
+ *
+ * Notes:
+ * <ol>
+ *  <li>For simple branch, pc_start
+ *      is set to negative index of
+ *      new line and no pc code required.</li>
+ *  <li>For indexed branch, pc_op_ago opcode
+ *      is generated with pc_seta pointing to
+ *      GBLA array with the following:
+ *   <ol>
+ *    <li>First entry is start of GBLC macro label array if TRACEP on else -1 if NOTRACEP.
+ *        Note value of zero indicates error during construction.</li>
+ *    <li>Maximum index value from 1 to n</li>
+ *    <li>mac_line_index for each label.</li>
+ *   </ol>
+ *  </li>
+ *  <li>Key index to AGO GBLA array is stored
+ *      using "A:mac_line_index to retrieve
+ *      array if AGO is reused.</li>
+ * </ol>
+ */
 	private void exp_ago(){
-		/*
-		 * branch to specified macro label or
-		 * branch on index using list of labels
-		 * Notes:
-		 *   1.  For simple branch, pc_start
-		 *       is set to negative index of
-		 *       new line and no pc code required.
-		 *   2.  For indexed branch, pc_op_ago opcode
-		 *       is generated with pc_seta pointing to
-		 *       GBLA array with the following:
-		 *       a.  First entry is start of GBLC
-		 *           macro label array if TRACEP on
-		 *           else -1 if NOTRACEP.  Note value
-		 *           of zero indicates error during construction.
-		 *       b.  Maximum index value from 1 to n
-		 *       c.  mac_line_index for each label.
-		 *   3.  Key index to AGO GBLA array is stored
-		 *       using "A:mac_line_index to retrieve
-		 *       array if AGO is reused.      
-		 */
 		old_mac_line_index = mac_line_index;
 		if (bal_parms != null && bal_parms.length() > 1){
 			if (bal_parms.charAt(0) != '('){
@@ -4108,22 +4362,31 @@ public  class  mz390 {
 			log_error(149,"AGO missing macro label operand");
 		}
 	}
+
+
+
+/**
+ * skip line in trace if not in 
+ * suppressed copy code
+ */
 	private void trace_break(){
-		/*
-		 * skip line in trace if not in 
-		 * suppressed copy code
-		 */
 		if (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
         	|| mac_file_type[mac_file_num[mac_line_index]] != '='){ // RPI 855
            		tz390.put_trace(" ");
        	}
 	}
+
+
+
+/**
+ * return new_mac_line_index
+ * and set label_name
+ * for next ago target label.
+ *
+ * @param lab_index ???
+ * @return index value of label
+ */
 	private int exp_ago_branch(int lab_index){
-		/*
-		 * return new_mac_line_index
-		 * and set label_name
-		 * for next ago target label.
-		 */
 		actr_count--;
 		int index = get_label_index(bal_parms.substring(lab_index));
 		if (index < mac_name_line_start[mac_name_index]){ // RPI 956 
@@ -4131,11 +4394,14 @@ public  class  mz390 {
 		}
 		return index;
 	}
+
+
+
+/**
+ * execute 1 or more AIF/AIFB tests
+ * and branch if true.
+ */
 	private void exec_aif(){
-		/*
-		 * execute 1 or more AIF/AIFB tests
-		 * and branch if true.
-		 */
 		int aif_test_index   = 0; // start of next aif test (...).lab
 		int aif_branch_index = -1; // true branch index else -1 RPI 899 was 0
 		while (aif_test_index >= 0){
@@ -4174,13 +4440,16 @@ public  class  mz390 {
 			mac_line_index = aif_branch_index;
 		}
 	}
+
+
+
+/**
+ * execute macro operation (set,aif, ago, etc.)
+ * 
+ * Note case index values must match
+ * mac_op_name array values.
+ */
 	private void exec_mac_op(){
-		/*
-		 * execute macro operation (set,aif, ago, etc.)
-		 * 
-		 * Note case index values must match
-		 * mac_op_name array values.
-		 */
 		bal_op_ok = false;
 		switch (mac_op_type){
 		case 201:  // ACTR  
@@ -4465,21 +4734,21 @@ public  class  mz390 {
 			log_error(47,"macro operation not supported - " + bal_op);
 		}
 	}
+
+
+
+/**
+ * allocate set scalar,array, or created set variables on first occurence.<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>Duplicates ignored and expand used to handle any subscript beyond first alloc.</li>
+ * </ol>
+ *
+ * @param alloc_set_type var_seta_type | var_setb_type | var_setc_type
+ * @param alloc_set_loc lcl_set | gbl_set
+ */
 	private void alloc_set(byte alloc_set_type,int alloc_set_loc){
-		/*
-		 * allocate set scalar,array, or created set
-		 * variables on first occurance.
-		 * 
-		 * alloc_set_loc = lcl_set | gbl_set
-		 * alloc_set_type = var_seta_type| var_setb_type | var_setc_type
-		 *
-		 * Set alloc_set_created if any created var found
-		 *
-		 * Notes:
-		 *   1.  Duplicates ignored and expand used to 
-		 *       handle any subscript beyond first alloc.
-		 *   2.  Set created_va
-		 */
 		exp_alloc_set_created = false;
 		exp_alloc_set_mode = true; //RPI126
 		String text = bal_parms;
@@ -4536,10 +4805,17 @@ public  class  mz390 {
 		}
 		exp_alloc_set_mode = false; // RPI126
 	}
+
+
+
+/**
+ * evaluate seta expression
+ *
+ * @param text textual value of expression from source code
+ * @param text_index ???
+ * @return integer value from evaluating the seta expression
+ */
 	private int calc_seta_exp(String text,int text_index){
-		/*
-		 * evaluate seta expression 
-		 */
 		exp_type = val_seta_type;
 		calc_exp(text,text_index);
 		switch (exp_type){
@@ -4558,11 +4834,17 @@ public  class  mz390 {
 		}
 		return -1;
 	}
+
+
+
+/**
+ * evaluate setb expression
+ *
+ * @param text textual value of expression from source code
+ * @param text_index ???
+ * @return boolean value from evaluating the setb expression
+ */
 	private byte calc_setb_exp(String text,int text_index){
-		/*
-		 * evaluate setb expression 
-		 * 
-		 */
 		exp_type = val_setb_type;
 		calc_exp(text,text_index);
 		switch (exp_type){
@@ -4585,25 +4867,39 @@ public  class  mz390 {
 		}
 		return 0;
 	}
+
+
+
+/**
+ * evaluate setc expression
+ *
+ * @param text textual value of expression from source code
+ * @param text_index ???
+ * @return string value from evaluating the setc expression
+ */
 	private String calc_setc_exp(String text,int text_index){
-		/*
-		 * evaluate setc expression 
-		 */
 		exp_type = val_setc_type;
 		if (!calc_exp(text,text_index)){ // RPI 1139 
 			exp_setc = null;
 		}		
 		return exp_setc;
 	}
+
+
+
+/**
+ * set set store info form bal_label<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>Sets store_pc_op to storv, storvs,
+ *      stord, or stords.  Then seta, setb, setc
+ *      changes it to storvn for multiple values.</li>
+ * </ol>
+ *
+ * @param alloc_set_type type indicator (?)
+ */
 	private void get_set_target(byte alloc_set_type){
-		/*
-		 * set set store info form bal_label
-		 * and return true if ok else false
-		 * Notes:
-		 *   1,  Sets store_pc_op to storv, storvs,
-		 *       stord, or stords.  Then seta, setb, setc
-		 *       changes it to storvn for multiple values.
-		 */
 		store_type = alloc_set_type;
 		if (tz390.opt_pc && !aread_op){
 			pc_gen_exp = true;
@@ -4672,12 +4968,17 @@ public  class  mz390 {
             }
 		}
 	}
+
+
+
+/**
+ * store seta_value or inc/dec
+ * at store loc
+ * (shared by exp and pc)
+ *
+ * @param op internal operation code
+ */
 	private void store_seta_value(byte op){
-		/*
-		 * store seta_value or inc/dec
-		 * at store loc
-		 * (shared by exp and pc)
-		 */
 		if  (store_loc == var_lcl_loc){
 			store_seta_index = lcl_set_start[store_name_index] + store_sub -1;
 			if (store_seta_index < lcl_set_start[store_name_index]){
@@ -4740,11 +5041,14 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * store setb_value at store loc
+ * (shared by exp and pc)
+ */
 	private void store_setb_value(){
-		/*
-		 * store setb_value at store loc
-		 * (shared by exp and pc)
-		 */
 		if  (store_loc == var_lcl_loc){
 			store_setb_index = lcl_set_start[store_name_index] + store_sub -1;
 			if (store_setb_index < lcl_set_start[store_name_index]){
@@ -4785,11 +5089,14 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * store setc string at store loc
+ * (shared by exp and pc)
+ */
 	private void store_setc_value(){
-		/*
-		 * store setc string at store loc
-		 * (shared by exp and pc)
-		 */
 		if  (setc_value == null){ // RPI 565
 			setc_value = "";
 			log_error(209,"invalid SYSLIST substitution reference");
@@ -4838,22 +5145,28 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * read next mlc source line or next record
+ * from file specified in DDNAME=, DSNAME=, or pgmname.dat
+ * <ol>
+ *  <li>DDNAME= is extention to HLL assembler where external variable defines file to read for AREAD.</li>
+ *  <li>DSNAME= is extention to HLL assembler where macro variable defines file to read for AREAD.</li>
+ * </ol>
+ *
+ * Notes:
+ * <ol>
+ *  <li>Only DDNAME or DSNAME can be coded</li>
+ *  <li>empty lines (CR,LF) returned as single space " "</li>
+ *  <li>end of file returns 0 length string ""</li>
+ *  <li>Options NOPRINT and NOSTMT ignored</li>
+ * </ol>
+ *
+ * @return string read by AREAD operation
+ */
 	private String get_aread_string(){
-		/*
-		 * read next mlc source line or next record 
-		 * from file specified in DDNAME=, DSNAME=, or pgmname.dat 
-		 * 1.  DDNAME= is extention to HLL assembler
-		 *     where external variable defines file to
-		 *     read for AREAD.
-		 * 2.  DSNAME= is extention to HLL assembler
-		 *     where macro variable defines file
-		 *     to read for AREAD.
-		 * Notes:
-		 *   1.  Only DDNAME or DSNAME can be coded
-		 *   2.  empty lines (CR,LF) returned as single space " "
-		 *   3.  end of file returns 0 length string "".
-		 *   4.  Options NOPRINT and NOSTMT ignored
-		 */
 		String aread_text = ""; // RPI 1140
 		dat_file_index = 0;
         set_aread_punch_options(bal_parms,tz390.dir_dat,tz390.dat_type);
@@ -4953,12 +5266,17 @@ public  class  mz390 {
 			return aread_text;
 		}
 	}
+
+
+
+/**
+ * return next source line from
+ * mac_file or AINSERT queue
+ * for use by AREAD
+ *
+ * @return string with next source line
+ */
 	private String get_next_source_line(){
-		/*
-		 * return next source line from
-		 * mac_file or AINSERT queue
-		 * for use by AREAD
-		 */
 		if (cur_ainsert > 0){
 			cur_ainsert--;
 			ainsert_source = true;
@@ -4981,30 +5299,45 @@ public  class  mz390 {
 		    return "";
 		}
 	}
+
+
+
+/**
+ * set AREAD and PUNCH text lengths to
+ * 80 for HLASM compatibility if ASM and NOALLOW
+ *
+ * @param text record data to be padded
+ * @return string with data padded to 80 characters
+ */
 	private String set_length_80(String text){
-		/*
-		 * set AREAD and PUNCH text lengths to
-		 * 80 for HLASM compatibility if ASM and NOALLOW
-		 */
 		if (text.length() < 80){ // RPI 968
 			return text + tz390.pad_spaces(80-text.length());
 		} else {
 			return text.substring(0,80);
 		}
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>set ap_file_index and ap_file_name from the following AREAD or PUNCH parms:
+ *   <ol>
+ *    <li>DDNAME= environment variable to get file name</li>
+ *    <li>DSNAME= explicit file name string</li>
+ *    <li>DSN=    epxlicit file name string (alias)</li>
+ *    <li>ID=n    file index 0-9 (0 is default) and set ap_file_io if file I/O requested</li>
+ *   </ol>
+ *  </li>
+ *  <li>Set AREAD option flags for NOPRINT, NOSTMT, CLOCKB, CLOCKD</li>
+ *  <li>Set PUNCH option FORMAT</li>
+ * </ol>
+ *
+ * @param parms parameter string
+ * @param file_dir directory or path
+ * @param file_type file type (extension)
+ */
 	private void set_aread_punch_options(String parms,String file_dir,String file_type){
-		/*
-		 * 1. set ap_file_index and ap_file_name
-		 *    from the following AREAD or PUNCH parss:
-		 *    1.  DDNAME= environment variable to get file name
-		 *    2.  DSNAME= explicit file name string
-		 *    3.  DSN=    epxlicit file name string (alias)
-		 *    4.  ID=n    file index 0-9 (0 is default)
-		 *    and set ap_file_io if file I/O requested.
-		 * 2. Set AREAD option flags for NOPRINT, NOSTMT,
-		 *    CLOCKB, CLOCKD.  RPI 745
-		 * 3. Set PUNCH option FORMAT.
-		 */
 		ap_noprint = false;
 		ap_nostmt  = false;
 		ap_clockb  = false;
@@ -5070,12 +5403,18 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * verify ddname is defined as environment
+ * variable pointing to valid file and 
+ * return full path else abort
+ *
+ * @param ddname ddname
+ * @return file location (path, name, extension)
+ */
 	private String get_ddname_file_name(String ddname){
-		/*
-		 * verify ddname is defined as environment
-		 * variable pointing to valid file and 
-		 * return full path else abort
-		 */
 		String temp_file_name = System.getenv(ddname);
 		if (temp_file_name != null && temp_file_name.length() > 0){
 			temp_file = new File(temp_file_name);
@@ -5085,18 +5424,20 @@ public  class  mz390 {
 		}
 		return "";
 	}
+
+
+
+/** 
+ * write PUNCH 'text' to pch file
+ * <ol>
+ *  <li>If ,DDNAME= follows 'text' write to specified file instead of default filename.pch</li>
+ *  <li>If ,DSNAME= follows 'text' write to specified file instead of default filename.pch</li>
+ *  <li>If FORMAT specified as extended option on PUNCH, the output will format continuations like MLC</li>
+ * </ol>
+ *
+ * @param pch_parms applicable parameters
+ */
 	private void put_pch_line(String pch_parms){
-		/* 
-		 * write PUNCH 'text' to pch file
-		 * 1.  If ,DDNAME= follows 'text' write to
-		 *     specified file instead of default
-		 *     filename.pch
-		 * 2.  If ,DSNAME= follows 'text' write to
-		 *     specified file instead of default 
-		 *     filename.pch
-		 * 3. If FORMAT specified as extended option on PUNCH,
-		 *    the output will format continuations like MLC.    
-		 */
 		String pch_text = "";
 		String token = null;
 		pch_match = pch_pattern.matcher(pch_parms.substring(1));
@@ -5177,22 +5518,29 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * parse set/aif/variable expression and 
+ * return true if ok and set
+ * set exp_var_index to result
+ *
+ * Notes:
+ * <ol>
+ *  <li>If parse_set_mode then exit without error true/false indicating
+ *      if set variable exists or not</li>
+ *  <li>If var_replacement_mode, exit after retrieving first variable
+ *      and before proceeding to next operator, and ignore var not found</li>
+ *  <li>Always turn off parse_set_mode at exit</li>
+ *  <li>Generate pseudo code for repeat executions</li>
+ * </ol>
+ *
+ * @param text source string for expression to evaluate
+ * @param text_index ???
+ * @return true if success, false otherwise
+ */
 	private boolean calc_exp(String text,int text_index){
-		/*
-		 * parse set/aif/variable expression and 
-		 * return true if ok and set
-		 * set exp_var_index to result
-		 * Note:
-		 *   1.  If parse_set_mode then exit without
-		 *       error true/false indicating if
-		 *       set variable exists or not.
-		 *   2.  If var_replacement_mode, exit after
-		 *       retrieving first variable and before
-		 *       proceeding to next operator, And ignore
-		 *       var not found.
-		 *   3.  Always turn off parse_set_mode at exit
-		 *   4.  Generate pseudo code for repeat executions
-		 */	
 		setc_value = null;  // RPI 565
 		exp_text = text;
 		exp_start_index = text_index;
@@ -5227,12 +5575,15 @@ public  class  mz390 {
 		pc_gen_exp = false; // RPI 467
 		return exp_ok;
 	}
+
+
+
+/**
+ * set exp_prev_op from stack or 
+ * set to exp_start_op (same as exp_term_op)
+ * also set exp_prev_class and exp_prev_first
+ */
 	private void exp_set_prev_op(){
-		/*
-		 * set exp_prev_op from stack or 
-		 * set to exp_start_op (same as exp_term_op)
-		 * also set exp_prev_class and exp_prev_first
-		 */
 		if  (tot_exp_stk_op > 0){
 			exp_prev_op = exp_stk_op[tot_exp_stk_op - 1];
 			exp_prev_class = exp_stk_op_class[tot_exp_stk_op - 1];
@@ -5255,21 +5606,26 @@ public  class  mz390 {
 		}
 		exp_prev_first = exp_prev_op.charAt(0);
 	}
+
+
+
+/**
+ * get next expression operator and push preceding variables on stack.
+ * Also set the following:
+ * <ol>
+ *  <li>exp_token</li>
+ *  <li>exp_next_first</li>
+ *  <li>exp_next_op (uppercase)</li>
+ *  <li>exp_next_class</li>
+ * </ol>
+ *
+ * Notes:
+ * <ol>
+ *  <li>push zero for unary +- based on previous setting of exp_var_last</li>
+ *  <li>push ordinary symbols starting with A-Z$@#_ as SDT string assuming there preceding T' type oper</li>
+ * </ol>
+ */
 	private void exp_set_next_op(){
-		/*
-		 * get next expression operator
-		 * and push preceding variables on stack
-		 * Also set the following:
-		 * 1.  exp_token
-		 * 2.  exp_next_first
-		 * 3.  exp_next_op (uppercase)
-		 * 4.  exp_next_class
-		 * Notes:
-		 * 1.  push zero for unary +- based on
-		 *     previous setting of exp_var_last.
-		 * 2.  push ordinary symbols starting with A-Z$@#_
-		 *     as SDT string assuming there preceding T' type oper
-		 */
 		exp_var_last  = true; // force first try
 		while (!exp_end && exp_var_last){
 			exp_var_last = false; // assume no more
@@ -5369,18 +5725,24 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * set next token and op to exp_term_op
+ */
 	private void exp_set_term_op(){
-		/*
-		 * set next token and op to exp_term_op
-		 */
 		exp_token = "" + exp_term_op;
 		exp_next_first = exp_term_op;
 		exp_next_class = exp_class_term;
 	}
+
+
+
+/**
+ * set op from exp_next_op
+ */
 	private void exp_set_next_token(){
-		/*
-		 * set op from exp_next_op
-		 */
 		exp_next_op = exp_next_op.toUpperCase();
 		switch (exp_next_op.charAt(0)){
 		case '0':
@@ -5668,15 +6030,20 @@ public  class  mz390 {
 		    break;
 		}
 	}
+
+
+
+/**
+ * perform next exp action based
+ * on precedence of exp_next_op and
+ * exp_prev_op<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>If substring set prev_substring else reset after operation. Used by exp_substring.</li>
+ * </ol>
+ */
 	private void exp_perform_op(){
-		/*
-		 * perform next exp action based
-		 * on precedence of exp_next_op and
-		 * exp_prev_op
-		 * Notes:
-		 *   1.  If substring set prev_substring else
-		 *       reset after operation.  Used by exp_substring. RPI 214
-		 */
 		int action = 0;
 		if (tz390.opt_traceall){
 			tz390.put_trace("EXP OPS=" + tot_exp_stk_op + " VARS=" + tot_exp_stk_var + " PREV OP = " + exp_prev_op +  " NEXT OP = " + exp_token);
@@ -5861,11 +6228,14 @@ public  class  mz390 {
 			exp_prev_substring = false;
 		}
 	}
+
+
+
+/**
+ * perform prefix operator replacing
+ * value on stack with result value
+ */
 	private void exp_perform_prefix_op(){
-		/*
-		 * perform prefix operator replacing
-		 * value on stack with result value
-		 */
 		exp_pop_op();
 		if (tz390.opt_traceall){
 			tz390.put_trace(" PREFIX OP=" + exp_prev_op + " VARS=" +tot_exp_stk_var);  // #509
@@ -6068,10 +6438,13 @@ public  class  mz390 {
             break;
 		}	
 	}
+
+
+
+/**
+ * execute unary operator U+ or U-
+ */
 	private void exp_unary_op(){
-		/*
-		 * execute unary operator U+ or U-
-		 */
 		if (exp_stk_op[tot_exp_stk_op].charAt(1) == '-'){
 			if (exp_var_pushed){
                 exec_pc_ucomp();
@@ -6094,10 +6467,14 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * add top of stack value to prev. value
+ * and pop the top stack value off
+ */
 	private void exec_pc_add(){
-		/* add top of stack value to prev. value
-		 * and pop the top stack value off
-		 */
 		get_pc_parms();
 		seta_value = seta_value1 + seta_value2;
 		if (tz390.opt_tracem){ // RPI 1212
@@ -6105,10 +6482,14 @@ public  class  mz390 {
 		}
 		put_seta_stack_var();
 	}
+
+
+
+/**
+ * sub top of stack value from prev. value
+ * and pop the top stack value off
+ */
 	private void exec_pc_sub(){
-		/* sub top of stack value from prev. value
-		 * and pop the top stack value off
-		 */
 		get_pc_parms();
 		seta_value = seta_value1 - seta_value2;
 		if (tz390.opt_tracem){ // RPI 1212
@@ -6116,10 +6497,14 @@ public  class  mz390 {
 		}
 		put_seta_stack_var();
 	}
+
+
+
+/**
+ * multiply top of stack value to prev. value
+ * and pop the top stack value off
+ */
 	private void exec_pc_mpy(){
-		/* mpy top of stack value to prev. value
-		 * and pop the top stack value off
-		 */
 		get_pc_parms();
 		seta_value = seta_value1 * seta_value2;
 		if (tz390.opt_tracem){ // RPI 1212
@@ -6127,10 +6512,14 @@ public  class  mz390 {
 		}
 		put_seta_stack_var();
 	}
+
+
+
+/**
+ * divide top of stack value into prev. value
+ * and pop the top stack value off
+ */
 	private void exec_pc_div(){
-		/* div top of stack value into prev. value
-		 * and pop the top stack value off
-		 */
 		get_pc_parms();
 		if (seta_value2 != 0){
 			seta_value = seta_value1 / seta_value2;
@@ -6142,10 +6531,13 @@ public  class  mz390 {
 		}
 		put_seta_stack_var();
 	}
+
+
+
+/**
+ * concatenate two variables on stack
+ */
 	private void exec_pc_concat(){
-		/*
-		 * concatenate two variables on stack
-		 */
 		get_setc_stack_values();
 		setc_value = setc_value1.concat(setc_value2);
 		if (tz390.opt_tracem){ // RPI 1212
@@ -6156,11 +6548,14 @@ public  class  mz390 {
 			exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
 		}
 	}
+
+
+
+/**
+ * duplicate string on top of stack
+ * by value of top-1 count
+ */
 	private void exec_pc_dup(){ // RPI 421
-		/*
-		 * duplicate string on top of stack
-		 * by value of top-1 count
-		 */
 		if (tot_exp_stk_var > 1){
 			setc_value1 = get_setc_stack_value();
 			seta_value1 = get_seta_stack_value(-1);
@@ -6174,12 +6569,15 @@ public  class  mz390 {
 			log_error(152,"missing variable for D' operator");
 		}
 	}
+
+
+
+/**
+ * put index of first occurance of 
+ * second string within the first string
+ * on top of stack
+ */
 	private void exec_pc_index(){
-		/*
-		 * put index of first occurance of 
-		 * second string within the first string
-		 * on top of stack
-		 */
 		check_setc_quotes(2); // RPI 1139
 		get_setc_stack_values();
 		int str1_len = setc_value1.length();
@@ -6204,11 +6602,14 @@ public  class  mz390 {
 		}
         put_seta_stack_var(); 
 	}
+
+
+
+/**
+ * return seta index of first character
+ * in str2 found in str1 on top of stack
+ */
 	private void exec_pc_find(){
-		/*
-		 * return seta index of first character
-		 * in str2 found in str1 on top of stack
-		 */
 		check_setc_quotes(2); // RPI 1139
 		get_setc_stack_values();
 		int str1_len = setc_value1.length();
@@ -6238,10 +6639,13 @@ public  class  mz390 {
 		}
         put_seta_stack_var();		
 	}
+
+
+
+/**
+ * perform compare EQ,GE,GT,LE,LT, or NE
+ */
 	private void exp_compare(){
-		/*
-		 * perform compare EQ,GE,GT,LE,LT, or NE
-		 */
 		pc_parm_type = var_pc_seta_stack_type;
         if (exp_prev_op.equals("EQ")){
         	exec_pc_compeq();
@@ -6263,16 +6667,22 @@ public  class  mz390 {
 			opt_gen_pc_comp(pc_op_compne);
 		}
 	}
+
+
+
+/**
+ * compare setc_value1 and setc_value2
+ * in EBCDIC and return -1, 0, or 1
+ * for low, equal, high<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>If length not equal, the shorter length operand is treated as lower</li>
+ * </ol>
+ *
+ * @return -1, 0, or 1 for low, equal, high
+ */
 	private int setc_compare(){
-		/*
-		 * compare setc_value1 and setc_value2
-		 * in EBCDIC and return -1, 0, or 1
-		 * for low, equal, high
-		 * Notes:
-		 *   1.  If length not equal, the shorter
-		 *       length operand is treated
-		 *       as lower. RPI 462
-		 */
 		int len1 = setc_value1.length();
 		int len2 = setc_value2.length();
         if (len1 < len2){ // RPI 462
@@ -6307,10 +6717,13 @@ public  class  mz390 {
 			return 0; // RPI 462
 		}
 	}
+
+
+
+/**
+ * perform logical not operation on stk var
+ */
 	private void exec_pc_not(){
-		/*
-		 * perform logical not operation on stk var
-		 */
 		if (tot_exp_stk_var > 0){
 			seta_value1 =  get_seta_stack_value(-1);
 			seta_value  = ~ seta_value1;
@@ -6345,10 +6758,13 @@ public  class  mz390 {
 			tz390.put_trace("NOT " + seta_value + " = NOT " + seta_value1);  
 		}
 	}
+
+
+
+/**
+ * perform logical and operation on stk vars
+ */
 	private void exec_pc_and(){
-		/*
-		 * perform logical and operation on stk vars
-		 */
 		if (tot_exp_stk_var > 1){
 			seta_value1 = get_seta_stack_value(-2);
 			seta_value2 = get_seta_stack_value(-1);
@@ -6376,10 +6792,13 @@ public  class  mz390 {
 		}
 		
 	}
+
+
+
+/**
+ * perform logical or operation on stk vars
+ */
 	private void exec_pc_or(){
-		/*
-		 * perform logical or operation on stk vars
-		 */
 		if (tot_exp_stk_var > 1){
 			seta_value1 = get_seta_stack_value(-2);
 			seta_value2 = get_seta_stack_value(-1);
@@ -6406,10 +6825,13 @@ public  class  mz390 {
 			tz390.put_trace("OR " + seta_value + " = " + seta_value1  + " OR " + seta_value2);  
 		}
 	}
+
+
+
+/**
+ * perform logical xor operation on stk vars
+ */
 	private void exec_pc_xor(){
-		/*
-		 * perform logical xor operation on stk vars
-		 */
 		if (tot_exp_stk_var > 1){
 			seta_value1 = get_seta_stack_value(-2);
 			seta_value2 = get_seta_stack_value(-1);
@@ -6436,14 +6858,19 @@ public  class  mz390 {
 			tz390.put_trace("XOR " + seta_value + " = " + seta_value1  + " XOR " + seta_value2);  
 		}
 	}
+
+
+
+/**
+ * start or end string or substring
+ * defining setc value for exp_stack<br />
+ * <br />
+ * Note:
+ * <ol>
+ *  <li>if exp_prev_substring_op set then don't put null string on stack</li>
+ * </ol>
+ */
 	private void exp_string_quote(){
-		/*
-		 * start or end string or substring
-		 * defining setc value for exp_stack
-		 * Note:
-		 *   1. if exp_prev_substring_op set then 
-		 *      don't put null string on stack
-		 */
 		if (exp_prev_first != exp_string_op){
             exp_string_var++; // RPI 1139 
 			exp_level++;         // add substring extra level to handel spaces
@@ -6480,10 +6907,13 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * replace string, e1, e2 values with substring
+ */
 	private void exp_substring(){
-		/*
-		 * replace string, e1, e2 values with substring
-		 */
 		if (tot_exp_stk_var >= 3 
 			&& tot_exp_stk_op >= 1
 			&& (tz390.opt_allow // RPI 1139 
@@ -6498,18 +6928,18 @@ public  class  mz390 {
 			log_error(51,"invalid substring subscripts");
 		}	
 	}
+
+
+
+/**
+ * called with var ptr and subscript on stack
+ * <ol>
+ *  <li>if subscripted set var replace stack var set ptr with subscripted set value</li>
+ *  <li>if subscripted parm var update or replace stack var parm ptr with sublist parm value</li>
+ *  <li>skip trailing . if any</li>
+ * </ol>
+ */
 	private void exp_calc_var_sub(){
-		/*
-		 * called with var ptr and subscript on stack
-		 * 
-		 * 1. if subscripted set var
-		 *       replace stack var set ptr
-		 *       with subscripted set value
-		 * 2. if subscripted parm var
-		 *       update or replace stack var parm ptr
-		 *       with sublist parm value
-		 * 3.  skip trailing . if any
-		 */
 		var_subscript_calc = true;
 		if (tot_exp_stk_var >= 2){
 			setc_value = exp_stk_setc[tot_exp_stk_var - 2];
@@ -6650,10 +7080,13 @@ public  class  mz390 {
 		}
 		var_subscript_calc = false;
 	}
+
+
+
+/**
+ * append var on top of stack to string var
+ */
 	private void exp_append_string(){
-		/*
-		 * append var on top of stack to string var
-		 */
 		setc_value1 = exp_stk_setc[tot_exp_stk_var - 2]; 
 		switch (exp_stk_val_type[tot_exp_stk_var - 1]){
 		case 1: 
@@ -6672,31 +7105,42 @@ public  class  mz390 {
 		exp_stk_setc[tot_exp_stk_var - 2] = setc_value;
 		tot_exp_stk_var--;
 	}
+
+
+
+/**
+ * return next char in expression else terminator
+ *
+ * @return next character - tilde (~) serves as terminator
+ */
 	private char exp_next_char(){
-		/* 
-		 * return next char in expression 
-		 * else terminator
-		 * 
-		 */
 		if (exp_next_index < exp_text_len){
 			return exp_text.charAt(exp_next_index);
 		} else {
 			return '~';
 		}
 	}
+
+
+
+/**
+ * skip next token
+ */
 	private void skip_next_token(){
-		/*
-		 * skip next token
-		 */
 		if (exp_match.find()){
 			exp_token = exp_match.group();
 			exp_next_index = exp_start_index + exp_match.end();
 		}
 	}
+
+
+
+/**
+ * add true or false (setb value) to stack
+ *
+ * @param compare_result value to be stacked
+ */
 	private void set_compare(boolean compare_result){
-		/*
-		 * add true or false setb to stack
-		 */
 		if (inc_tot_exp_stk_var()){
 			exp_stk_val_type[tot_exp_stk_var - 1] = val_setb_type;
 			if (compare_result){
@@ -6723,14 +7167,16 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * if not over max inc tot_exp_stk_var and init stk name index -1
+ * else abort and return false
+ *
+ * @return true if successful, false otherwise
+ */
 	private boolean inc_tot_exp_stk_var(){
-		/*
-		 * if not over max
-		 *    inc tot_exp_stk_var
-		 *    and init stk name index -1
-		 * else
-		 *    abort and return false
-		 */
 		if (tot_exp_stk_var < max_exp_stk){
 			exp_var_pushed = true;
 			tot_exp_stk_var++;
@@ -6741,16 +7187,21 @@ public  class  mz390 {
 			return false;
 		}
 	}
+
+
+
+/**
+ * get set values from stack and
+ * pc_seta or pc_setc
+ * based on pc_parm_type.
+ * Set val_type1 as follows:
+ * <ol>
+ *  <li>If either is setb, make setb</li>
+ *  <li>If either is seta, make seta</li>
+ *  <li>else setc</li>
+ * </ol>
+ */
 	private void get_compare_values(){
-		/*
-		 * get set values from stack and
-		 * pc_seta or pc_setc
-		 * based on pc_parm_type.
-		 * Set val_type1 as follows:
-		 * 1.  If either is setb, make setb
-		 * 2.  If either is seta, make seta
-		 * 3.  else setc
-		 */
 		if  (tot_exp_stk_var >=1){			
 			switch (pc_parm_type){
 			case 32: // var_pc_seta_sdt_type){
@@ -6822,11 +7273,14 @@ public  class  mz390 {
 			log_error(63,"expression compare error");
 		}
 	}
+
+
+
+/**
+ * get seta_value1 and 2 from top of stack
+ * and remove from stack
+ */
 	private void get_seta_stack_values(){
-		/*
-		 * get seta_value1 & 2 from top of stack
-		 * and remove from stack
-		 */
 		val_type1 = val_seta_type;
 		val_type2 = val_seta_type;
 		if (tot_exp_stk_var >= 2){
@@ -6838,11 +7292,17 @@ public  class  mz390 {
 		}
 		tot_exp_stk_var = tot_exp_stk_var - 2;
 	}
+
+
+
+/**
+ * return seta value of stk + offset
+ * without removing
+ *
+ * @param offset offset value
+ * @return increment top of stack
+ */
 	private int get_seta_stack_value(int offset){
-		/*
-		 * return seta value of stk + offset
-		 * without removing
-		 */
 		if (tot_exp_stk_var + offset < 0){ // RPI 952
 			log_error(264,"stack missing seta value");
 			return -1;
@@ -6859,12 +7319,18 @@ public  class  mz390 {
 		}
 		return 0;
 	}
+
+
+
+/**
+ * return int value of string using
+ * symbol table value if found else
+ * numberic value else 0.
+ *
+ * @param text input text value
+ * @return numeric value of input text
+ */
 	private int get_seta_string_value(String text){
-		/*
-		 * return int value of string using
-		 * symbol table value if found else
-		 * numberic value else 0.
-		 */
 		if (text.length() > 0 
 			&& ((text.charAt(0) >= '0' 
 			     && text.charAt(0) <= '9'
@@ -6883,11 +7349,17 @@ public  class  mz390 {
             } 
 		}
 	}
+
+
+
+/**
+ * return setb value of stk + offset
+ * without removing
+ *
+ * @param offset offset value
+ * @return byte value of 0 or 1
+ */
 	private byte get_setb_stack_value(int offset){
-		/*
-		 * return setb value of stk + offset
-		 * without removing
-		 */
 		if (tot_exp_stk_var + offset < 0){ // RPI 952
 			log_error(265,"stack missing setb value");
 			return 0;
@@ -6909,38 +7381,49 @@ public  class  mz390 {
 		}
 		return 0;
 	}
+
+
+
+/**
+ * add seta_value to stack 
+ */
 	private void put_seta_stack_var(){ 
-		/*
-		 * add seta_value to stack 
-		 */
 		if (inc_tot_exp_stk_var()){
 			exp_stk_val_type[tot_exp_stk_var - 1] = val_seta_type;
 			exp_stk_seta[tot_exp_stk_var - 1] = seta_value;
 		}
 	}
+
+
+
+/**
+ * add setb_value to stack 
+ */
 	private void put_setb_stack_var(){
-		/*
-		 * add setb_value to stack 
-		 */
 		if (inc_tot_exp_stk_var()){ 
 			exp_stk_val_type[tot_exp_stk_var - 1] = val_setb_type;
 			exp_stk_setb[tot_exp_stk_var - 1] = setb_value;
 		}
 	}
+
+
+
+/**
+ * add setc_value to stack 
+ */
 	private void put_setc_stack_var(){
-		/*
-		 * add setc_value to stack 
-		 */
 		if (inc_tot_exp_stk_var()){
 			exp_stk_val_type[tot_exp_stk_var - 1] = val_setc_type; 
 			exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
 		}
 	}
-	
+
+
+
+/**
+ * set setb_value1 and 2 from top of stack
+ */
 	private void get_setb_stack_values(){
-		/*
-		 * set setb_value1 & 2 from top of stack
-		 */
 		val_type1 = val_setb_type;
 		val_type2 = val_setb_type;
 		if (tot_exp_stk_var >= 2){
@@ -6977,21 +7460,29 @@ public  class  mz390 {
 			log_error(18,"expression error");
 		}
 	}
+
+
+
+/**
+ * set setc_value1 and 2 from top of stack
+ * without removing
+ */
 	private void get_setc_stack_values(){
-		/*
-		 * set setc_value1 & 2 from top of stack
-		 * without removing
-		 */
 		val_type2 = val_setc_type;
 		setc_value2 = get_setc_stack_value();
 		val_type1 = val_setc_type;
 		setc_value1 = get_setc_stack_value();
 	}
+
+
+
+/**
+ * return setc string from top of stack
+ * and remove it
+ *
+ * @return string from top of stack
+ */
 	private String get_setc_stack_value(){
-		/*
-		 * return setc string from top of stack
-		 * and remove it
-		 */
 		if (tot_exp_stk_var >= 1){
 			tot_exp_stk_var--;
 			switch (exp_stk_val_type[tot_exp_stk_var]){
@@ -7008,11 +7499,13 @@ public  class  mz390 {
 		log_error(20,"stack missing setc value"); // RPI 952 
 		return "";
 	}
+
+
+
+/**
+ * put op on stack
+ */
 	private void exp_push_op(){
-		/*
-		 * put op on stack
-		 * 
-		 */
 		exp_var_pushed = false;  //RPI171
 		if (tot_exp_stk_op >= max_exp_stk){
 			abort_error(44,"maximum stack operations exceeded");
@@ -7026,10 +7519,13 @@ public  class  mz390 {
 		tot_exp_stk_op++;
 		exp_set_prev_op();
 	}
+
+
+
+/**
+ * pop current op on stack
+ */
 	private void exp_pop_op(){
-		/*
-		 * pop current op on stack
-		 */
 		tot_exp_stk_op--;
 		if (tz390.opt_traceall){
 			tz390.put_trace("POP OP=" + exp_stk_op[tot_exp_stk_op]);
@@ -7040,14 +7536,19 @@ public  class  mz390 {
 			exp_check_prev_op = true;
 		}
 	}
+
+
+
+/**
+ * terminate expression returning value on stack if no errors<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>Don't return value if parse_mode</li>
+ *  <li>Turn off pc_gen_exp</li>
+ * </ol>
+ */
 	private void exp_term(){
-		/*
-		 * terminate expression returning
-		 * value on stack if no errors
-		 * Note:
-		 *   1.  Don't return value if parse_mode
-		 *   2.  Turn off pc_gen_exp
-		 */
 		flush_pc_pending(); 
 		if (exp_parse_set_mode){
 			exp_parse_set_mode = false;
@@ -7111,6 +7612,9 @@ public  class  mz390 {
 			log_error(35,"expression parsing error - total stack values=" + tot_exp_stk_var + "  total ops=" + tot_exp_stk_op); // RPI 260
 		}
 	}
+
+
+
 	// Begin #509 ////////////////////////////////////////////////////////////////////////
 	/**
 	 * Check if a string is of the form "B'1-32 binary digits'"
@@ -7128,6 +7632,9 @@ public  class  mz390 {
 		if (s.charAt(0) != 'B' || s.charAt(1) != '\'' || s.charAt(s.length()-1) != '\'') return false;
 		return is32BitBinaryInteger(s.substring(2, s.length()-1), 2);
 	}
+
+
+
 	/**
 	 * Check if a string is of the form "X'1-8 hexadecimal digits'"
 	 * 
@@ -7144,12 +7651,15 @@ public  class  mz390 {
 		if (s.charAt(0) != 'X' || s.charAt(1) != '\'' || s.charAt(s.length()-1) != '\'') return false;
 		return is32BitBinaryInteger(s.substring(2, s.length()-1), 16);
 	}
-	/**
-	 Validate that a string represents a valid 32-bit binary integer
 
-	 @param s string to validate
-	 @param base number base of the digits in the string; 10, 16 or 2
-	 @return true if valid 32-bit binary integer, false otherwise
+
+
+	/**
+	 *Validate that a string represents a valid 32-bit binary integer
+     *
+	 * @param s string to validate
+	 * @param base number base of the digits in the string; 10, 16 or 2
+	 * @return true if valid 32-bit binary integer, false otherwise
 	 */
 	private boolean is32BitBinaryInteger(String s, int base) {             // #509
 		if (s == null || s.length() != s.trim().length()) return false;
@@ -7169,6 +7679,9 @@ public  class  mz390 {
 		}
 		return true;
 	}
+
+
+
 	/**
 	 * Determine whether string is equal to the decimal digits
 	 * representing one more than Integer.MAX_VALUE (2147483647+1)
@@ -7179,6 +7692,9 @@ public  class  mz390 {
 	private boolean isMaxPosIntPlusOne(String s) {                         // #509
 		return s != null && s.equals(max_pos_int_plus_one) ? true : false;
 	}
+
+
+
 	/**
 	 * Determine whether exp_stk_op entry at top
 	 * (most recently added) + offset is unary minus
@@ -7193,14 +7709,23 @@ public  class  mz390 {
 		return (exp_stk_op[i].equals("U-") && exp_stk_op_class[i] == exp_class_oper) ? true :false;
 	}
 	// End #509 //////////////////////////////////////////////////////////////////////////
+
+
+
+/**
+ * return integer from string using specified base
+ *
+ * Notes:
+ * <ol>
+ *  <li>return numeric value of string base 2, 10 or 16</li>
+ *  <li>If base 10, ignore trailing non digits</li>
+ * </ol>
+ *
+ * @param setc_text text input string
+ * @param base base number for conversion (radix)
+ * @return integer result value
+ */
 	private int get_int_from_string(String setc_text,int base){
-		/*
-		 * return integer from string using specified base
-		 * Notes:
-		 *   1.  return numeric value of string base 2, 10 or 16  // #509
-		 *   2.  If base 10, ignore trailing non digits
-		 *  
-		 */
 		if (!tz390.opt_allow && base == 10 
 			&& setc_text != null && setc_text.length() > 0){ // rpi 1204
 			char first = setc_text.trim().charAt(0);
@@ -7244,20 +7769,26 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * push var variable on stack
+ * 
+ * if &amp;var followed by ( then
+ *    put var pointer on value stack
+ *    and put ) subscript op on op stack<br />
+ * else
+ *    push unscripted var value on value stack
+ *    and skip trailing . if any<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>If exp_parse_set_mode, set exp_parse_set_name and exit.</li>
+ *  <li>If var value is setc, check for symbol value</li>
+ * </ol>
+ */
 	private void exp_push_var(){
-		/*
-		 * push var variable on stack
-		 * 
-		 * if &var followed by ( then
-		 *    put var pointer on value stack
-		 *    and put ) subscript op on op stack
-		 * else
-		 *    push unscripted var value on value stack
-		 *    and skip trailing . if any 
-		 * 	Notes:
-		 *    1.  If exp_parse_set_mode, set exp_parse_set_name and exit.
-		 *    2.  If var value is setc, check for symbol value
-		 */
 		int index = 0;
 		if (tz390.opt_traceall){
 			index = exp_next_index-exp_token.length();
@@ -7344,16 +7875,20 @@ public  class  mz390 {
 		 	log_error(24,"undefined macro variable - " + exp_token);
 		}
 	}
+
+
+
+/**
+ * convert sdt in setc_value to seta_value and
+ * push on stack<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>Ordinary symbols are pushed as strings for use by prefix operators T', L'</li>
+ *  <li>"*" pushes max_substring_len</li>
+ * </ol>
+ */
 	private void exp_push_sdt(){
-		/*
-		 * convert sdt in setc_value to seta_value and
-		 * push on stack
-		 * 
-		 * Note:
-		 *   1.  Ordinary symbols are pushed as strings
-		 *       for use by prefix operators T', L'.
-		 *   2.  "*" pushes max_substring_len
-		 */
 		if (tz390.opt_traceall){
 			tz390.put_trace("PUSHING SDT - " + setc_value);
 		}
@@ -7482,13 +8017,15 @@ public  class  mz390 {
 		}
 		exp_var_last = true; 
 	}
+
+
+
+/**
+ * push current exp_token symbol on stack
+ * as setc for use by prefix operators T', L'
+ * else get sym_val else 0.
+ */
 	private void push_sym(){
-		/*
-		 * push current exp_token symbol on stack
-		 * as setc for use by prefix operators T', L'
-		 * else get sym_val else 0.
-		 * 
-		 */
         flush_pc_pending(); 
 		if (exp_prev_class == exp_class_oper
 			|| (exp_prev_class == exp_class_open
@@ -7506,16 +8043,22 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * find ordinary symbol and return index else -1<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>return -1 if not opt_asm</li>
+ *  <li>Force az390 to finish last bal and lock az390 until next bal while mz390 accesses symbol table</li>
+ * </ol>
+ *
+ * @param symbol name of symbol to search
+ * @return index value or -1 if not found
+ */
 	private int mz390_find_sym(String symbol){
-		/*
-		 * find ordinary symbol and 
-		 * return index else -1
-		 * Notes:
-		 *  1.  return -1 if not opt_asm
-		 *  2.  Force az390 to finish last bal
-		 *      and lock az390 until next bal
-		 *      while mz390 accesses symbol table.
-		 */
 		if (symbol == null
 			|| symbol.length() == 0
 			){
@@ -7546,11 +8089,16 @@ public  class  mz390 {
        	az390.reset_sym_lock();
         return index;
 	}
+
+
+
+/**
+ * set macro call label ordinary symbol type
+ * to 'M' if currently undefined
+ *
+ * @param sym_lab symbol to add
+ */
 	private void set_sym_macro_attr(String sym_lab){
-		/*
-		 * set macro call label ordinary symbol type
-		 * to 'M' if currently undefined
-		 */
 		if (!tz390.opt_asm)return;
 		if (tz390.opt_traceall){
 			tz390.put_trace("define type M macro label for " + sym_lab);
@@ -7576,11 +8124,17 @@ public  class  mz390 {
 			abort_error(188,"symbol table overflow adding " + sym_lab);
 		}
 	}
+
+
+
+/**
+ * return length for ordinary symbol if found
+ * else return 1
+ *
+ * @param symbol symbol to locate
+ * @return length of symbol
+ */
 	private int get_sym_len(String symbol){
-		/*
-		 * return length for ordinary symbol if found
-		 * else return 1
-		 */
 		if (!tz390.opt_asm){
 			return 1;
 		}
@@ -7595,10 +8149,15 @@ public  class  mz390 {
 			return 1;
 		}
 	}
+
+
+
+/**
+ * push string on stack as setc
+ *
+ * @param value value to push
+ */
 	private void exp_push_string(String value){
-		/*
-		 * push string on stack as setc
-		 */
 		if (inc_tot_exp_stk_var()){
 			exp_stk_val_type[tot_exp_stk_var-1] = val_setc_type;
 			setc_value = value;
@@ -7606,11 +8165,19 @@ public  class  mz390 {
             opt_gen_pc_pushc();     
 		}
 	}
+
+
+
+/**
+ * add lcl set variable not found by find_set
+ *
+ * @param new_name name of SETx variable
+ * @param new_type variable type
+ * @param new_size size
+ * @param set_array ???
+ * @return index of the variable, or -1 on error
+ */
 	private int add_lcl_set(String new_name,byte new_type,int new_size,boolean set_array){ //RPI 1162
-		/*
-		 * add lcl set variable not found by find_set
-		 * 
-		 */
 		if (tot_lcl_name >= tz390.opt_maxlcl){ // RPI 434
 			abort_error(43,"maximum local variables exceeded");
 			return -1;
@@ -7705,10 +8272,18 @@ public  class  mz390 {
 		}
 		return var_name_index;
 	}
+
+
+
+/**
+ * add gbl set variable
+ *
+ * @param new_name name of SETx variable
+ * @param new_type variable type
+ * @param new_size size
+ * @param set_array ???
+ */
 	private void add_gbl_set(String new_name,byte new_type,int new_size,boolean set_array){
-		/*
-		 * add gbl set variable 
-		 */
 		if (tot_gbl_name >= tz390.opt_maxsym){
 			abort_error(55,"maximum global variables exceeded");
 			return;
@@ -7791,29 +8366,37 @@ public  class  mz390 {
 			tz390.abort_case();
 		}
 	}
+
+
+
+/**
+ * parse scalar, subscripted, or created set
+ * variable with or without subscript using
+ * expression parser in parse_set_var_mode
+ * to set:
+ * <ol>
+ *  <li>exp_parse_set_name</li>
+ *  <li>exp_parse_set_name_index</li>
+ *  <li>exp_parse_set_type (seta/setb/setc)</li>
+ *  <li>exp_parse_set_loc  (lcl/gbl)</li>
+ *  <li>exp_parse_set_sub</li>
+ *  <li>exp_parse_set_created - true/false</li>
+ *  <li>exp_parse_set_subscript - true/false </li>
+ * </ol>
+ * and return true if it exists or false if not.<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>If var found but exp_parse_set_name is null, then issue error for parms</li>
+ *  <li>Used by alloc set with alloc_set_mode to get name and sub for allocation</li>
+ *  <li>Used by store to dynamically alloc undefined name as lcl</li>
+ * </ol>
+ *
+ * @param text source to parse
+ * @param text_index ???
+ * @return true if successfil, false otherwise
+ */
 	private boolean parse_set_var(String text,int text_index){
-		/*
-		 * parse scalar, subscripted, or created set
-		 * variable with or without subscript using
-		 * expression parser in parse_set_var_mode
-		 * to set:
-		 *  1.  exp_parse_set_name
-		 *  2.  exp_parse_set_name_index
-		 *  3.  exp_parse_set_type (seta/setb/setc)
-		 *  4.  exp_parse_set_loc  (lcl/gbl)
-		 *  5.  exp_parse_set_sub
-		 *  6.  exp_parse_set_created - true/false &(
-		 *  7.  exp_parse_set_subscript - true/false 
-		 * and return true if it exists or false if not.
-		 * Notes:
-		 *  1. If var found but exp_parse_set_name
-		 *     is null, then issue error for parms
-		 *  2. Used by alloc set with alloc_set_mode
-		 *     to get name and sub for allocation.
-		 *  3. Used by store to dynamically alloc
-		 *     undefined name as lcl.    
-		 * 
-		 */
 		exp_parse_set_mode = true;
 		exp_parse_set_name = null;
 		exp_parse_set_name_index = -1;
@@ -7850,26 +8433,35 @@ public  class  mz390 {
 		}
 		return false;
 	}
+
+
+
+/**
+ * find lcl or gbl set variable else false
+ * and set var_name_index = -1 if not found.
+ * set following globals if found
+ * <ol>
+ *  <li>var_loc   = var_lcl_loc or var_gbl_loc</li>
+ *  <li>var_type  = var_seta_type|var_setb_type|var_setc_type</li>
+ *  <li>var_name_index = for lcl/gbl seta, setb, setc array </li>
+ *  <li>set_sub  = set variable subscript</li>
+ *  <li>seta_value|setb_value|setc_value</li>
+ *  <li>seta_index|setb_index|setc_index </li>
+ *  <li>var_set_array set true if subscripted RPI 836</li>
+ * </ol>
+ *
+ * Notes:
+ * <ol>
+ *  <li>Saves create set name for possible scalar allocation for set</li>
+ *  <li>Global set only found if declared locally or &amp;SYS</li>
+ *  <li>Both lcl and gbl key index finds ready for add if not found returned</li>
+ * </ol>
+ *
+ * @param var_name variable name
+ * @param var_sub variable subscript (?)
+ * @return true if found - false otherwise
+ */
 	private boolean find_set(String var_name,int var_sub){
-		/*
-		 * find lcl or gbl set variable else false
-		 * and set var_name_index = -1 if not found.
-		 * set following globals if found
-		 * 1.  var_loc   = var_lcl_loc or var_gbl_loc
-		 * 2.  var_type  = var_seta_type|var_setb_type|var_setc_type
-		 * 3.  var_name_index = for lcl/gbl seta, setb, setc array 
-		 * 4.  set_sub  = set variable subscript
-		 * 5.  seta_value|setb_value|setc_value
-		 * 6.  seta_index|setb_index|setc_index 
-		 * 7.  var_set_array set true if subscripted RPI 836
-		 *
-		 * Notes:
-		 *  1.  Saves create set name for possible
-		 *      scalar allocation for set.
-		 *  2.  Global set only found if declared locally or &SYS.
-		 *  3.  Both lcl and gbl key index finds ready for
-		 *      add if not found returned.
-		 */
 		var_set_array = false; 
 		if (exp_parse_set_mode 
 				&& exp_level == 0){
@@ -7908,19 +8500,27 @@ public  class  mz390 {
 		var_name_index = -1;
 		return false;
 	}
+
+
+
+/**
+ * find lcl variable or label else false also set var_name_index = -1 if not found
+ *
+ * set following globals if found:
+ * <ol>
+ *  <li>var_loc   = var_lcl_loc or var_gbl_loc</li>
+ *  <li>var_type  = var_seta_type|var_setb_type|var_setc_type</li>
+ *  <li>var_name_index = for lcl/gbl seta, setb, setc array </li>
+ *  <li>set_sub = subscript</li>
+ *  <li>seta_value|setb_value|setc_value</li>
+ *  <li>seta_index|setb_index|setc_index</li>
+ * </ol>
+ *
+ * @param var_name variable name
+ * @param var_sub variable subscript (?)
+ * @return true if found - false otherwise
+ */
 	private boolean find_lcl_set(String var_name,int var_sub){
-		/*
-		 * find lcl variable or label else false
-		 * also set var_name_index = -1 if not found
-		 * set following globals if found
-		 * 1.  var_loc   = var_lcl_loc or var_gbl_loc
-		 * 2.  var_type  = var_seta_type|var_setb_type|var_setc_type
-		 * 3.  var_name_index = for lcl/gbl seta, setb, setc array 
-		 * 4.  set_sub = subscript
-		 * 5.  seta_value|setb_value|setc_value
-		 * 6.  seta_index|setb_index|setc_index
-		 * 
-		 */
 		set_sub = var_sub;
 		var_name_index = find_lcl_key_index("L:" + var_name);
 		if (var_name_index != -1){
@@ -7932,18 +8532,28 @@ public  class  mz390 {
 		var_name_index = -1;
 		return false;
 	}
+
+
+
+/**
+ * find gbl set variable else false
+ * also set var_name_index = -1 if not found
+ *
+ * set following globals if found:
+ * <ol>
+ *  <li>var_loc   = var_lcl_loc or var_gbl_loc</li>
+ *  <li>var_type  = var_seta_type|var_setb_type|var_setc_type</li>
+ *  <li>var_name_index = for lcl/gbl seta, setb, setc array </li>
+ *  <li>set_sub = subscript</li>
+ *  <li>seta_value|setb_value|setc_value</li>
+ *  <li>seta_index|setb_index|setc_index </li>
+ * </ol>
+ *
+ * @param var_name variable name
+ * @param var_sub variable subscript (?)
+ * @return true if found - false otherwise
+ */
 	private boolean find_gbl_set(String var_name,int var_sub){
-		/*
-		 * find gbl set variable else false
-		 * also set var_name_index = -1 if not found
-		 * set following globals if found
-		 * 1.  var_loc   = var_lcl_loc or var_gbl_loc
-		 * 2.  var_type  = var_seta_type|var_setb_type|var_setc_type
-		 * 3.  var_name_index = for lcl/gbl seta, setb, setc array 
-		 * 4.  set_sub = subscript
-		 * 5.  seta_value|setb_value|setc_value
-		 * 6.  seta_index|setb_index|setc_index 
-		 */
 		var_name_index = tz390.find_key_index('G',var_name);
 		if (var_name_index != -1){
 			var_loc = var_gbl_loc;  
@@ -7954,22 +8564,30 @@ public  class  mz390 {
 		var_name_index = -1;
 		return false;
 	}
+
+
+
+/**
+ * Set seta/setb/setc_value from lcl set value using:
+ * <ul>
+ *  <li>var_type</li>
+ *  <li>var_name_index</li>
+ *  <li>set_sub</li>
+ * </ul>
+ * and set val_type = val_seta/setb/setc_type
+ *   
+ * <ol>
+ *  <li>Calc seta_index|setb_index|setc_index. If subscript out of range and alloc mode
+ *      use previous ending subscript (i.e. first allocation sets size)</li>
+ *  <li>Calc seta_value|setb_value|setc_value</li>
+ * </ol>
+ *
+ * Notes:
+ * <ol>
+ *  <li>Requires var_name_index and set_sub</li>
+ * </ol>
+ */
 	private void get_lcl_set_value(){
-		/* 
-		 * Set seta/setb/setc_value from lcl set value using:
-		 *   var_type
-		 *   var_name_index
-		 *   set_sub
-		 * and set val_type = val_seta/setb/setc_type
-		 *   
-		 * 1.  Calc seta_index|setb_index|setc_index
-		 *     If subscript out of range and alloc mode
-		 *     use previous ending subscript (i.e. first
-		 *     allocation sets size per RPI 126).
-		 * 2.  Calc seta_value|setb_value|setc_value
-		 * Notes:
-		 *   1.  Requires var_name_index and set_sub
-		 */
 		switch (var_type){
 		case 21:
 			val_type = val_seta_type;
@@ -8008,10 +8626,19 @@ public  class  mz390 {
 			tz390.abort_case();
 		}
 	}
+
+
+
+/**
+ * expand set array
+ *
+ * @param expand_name_index index of set variabel array
+ * @param expand_type variable type
+ * @param expand_loc ???
+ * @param expand_sub ???
+ * @return -1 on error; otherwise ???
+ */
 	private int expand_set(int expand_name_index,byte expand_type,byte expand_loc,int expand_sub){
-		/*
-		 * expand set array
-		 */
 		int index = 0;
 		int len = 0;
 		tot_expand++;
@@ -8202,12 +8829,17 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * increase expansion increment to reduce
+ * overhead of repeated expansions.  This
+ * is a trade-off with running out of memory
+ *
+ * @param var_loc ???
+ */
 	private void adjust_expand_inc(int var_loc){
-		/*
-		 * increase expansion increment to reduce
-		 * overhead of repeated expansions.  This
-		 * is a trade-off with running out of memory
-		 */
 		expand_inc = 100;  // RPI 435 
 		if (tz390.opt_traceall){
 			if (var_loc == var_lcl_loc){
@@ -8217,13 +8849,16 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>Set seta/setb/setc_value from gbl set based on var_type, var_loc, var_name_index, and set_sub</li>
+ *  <li>Set val_type = var_seta/setb/setc_type</li>
+ * </ol>
+ */
 	private void get_gbl_set_value(){
-		/* 
-		 * 1.  Set seta/setb/setc_value from gbl set
-		 *     based on var_type, var_loc,
-		 *     var_name_index, and set_sub
-		 * 2.  Set val_type = var_seta/setb/setc_type
-		 */
 		switch (var_type){
 		case 21: 
 			val_type = val_seta_type;
@@ -8281,11 +8916,17 @@ public  class  mz390 {
 			tz390.abort_case();
 		}
 	}
+
+
+
+/**
+ * find macro label and return line index-1
+ * else abort
+ *
+ * @param label_source source from which to extract label
+ * @return if found index value-1; otherwise -1
+ */
 	private int get_label_index(String label_source){
-		/*
-		 * find macro label and return line index-1
-		 * else abort
-		 */
 		label_match = label_pattern.matcher(label_source); 
 		label_name = label_source;
 		if (label_source.charAt(0) == '.'  // RPI 1192 
@@ -8316,11 +8957,17 @@ public  class  mz390 {
 		log_error(25,"macro label not found - " + label_name);
 		return -1;
 	}
+
+
+
+/**
+ * find and return index to comma after
+ * macro label else return -1
+ *
+ * @param label_source source to scan
+ * @return index of first comma after label; otherwise -1
+ */
 	private int get_label_comma_index(String label_source){
-		/*
-		 * find and return index to comma after
-		 * macro label else return -1
-		 */
 		label_match = label_pattern.matcher(label_source); 
 		if (label_match.find()){
 			int index = label_match.end();
@@ -8331,20 +8978,28 @@ public  class  mz390 {
 		}
 		return -1;
 	}
+
+
+
+/**
+ * return mac_name index if found else -1 
+ *
+ * <ol>
+ *  <li>Note load_mac adds entry with -2 
+ *      index to prevent mult search for 
+ *      macros not found.</li>
+ *  <li>If MFC option on, then instructions and
+ *      assembler control statements will not be
+ *      expanded as macros.</li>
+ *  <li>Any non-conditional macro operator can be
+ *      expanded via an inline macro that can be
+ *      defined via COPY statement.</li>
+ * </ol>
+ *
+ * @param macro_name name of macro
+ * @return if found macro index, otherwise -1
+ */
 	private int find_mac_entry(String macro_name){
-		/*
-		 * return mac_name index if found else -1 
-		 * 
-		 * 1. Note load_mac adds entry with -2 
-		 *    index to prevent mult search for 
-		 *    macros not found.
-		 * 2.  If MFC option on, then instructions and
-		 *     assembler control statements will not be
-		 *     expanded as macros.
-		 * 3.  Any non-conditional macro operator can be
-		 *     expanded via an inline macro that can be
-		 *     defined via COPY statement.
-		 */
 		int index = tz390.find_key_index('M',macro_name.toUpperCase());
 		if (index != -1){
 			if (index == -2){
@@ -8370,15 +9025,19 @@ public  class  mz390 {
 		}
 		return -1;
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>add macro to call stack</li>
+ *  <li>If listcall option, add comment to bal</li>
+ *  <li>process proto-type and set parms</li>
+ *  <li>init mac_line_index to first macro statement</li>
+ *  <li>Set macro label ordinary symbol type to 'M' if 'U'</li>
+ * </ol>
+ */
 	private void call_mac(){
-		/*
-		 * 1. add macro to call stack
-		 * 2. If listcall option, add comment to bal
-		 * 2. process proto-type and set parms
-		 * 3. init mac_line_index to first macro statement
-		 * 4. Set macro label ordinary symbol type
-		 *    to 'M' if 'U'.
-		 */
 		tot_mac_call++;
 		mac_name_index = find_mac_name_index;
 		mac_call_return[mac_call_level] = mac_file_next_line[mac_line_index]; // RPI 956 
@@ -8426,14 +9085,22 @@ public  class  mz390 {
 			abort_error(30,"max level of nested macros exceeded");
 		}
 	}
+
+
+
+/**
+ * if LISTCALL
+ * <ul>
+ *  <li>gen listcall comment on BAL</li>
+ *  <li>before load or call  RPI 746</li>
+ * </ul>
+ *
+ * Notes:
+ * <ol>
+ *  <li>If LISTCALL and MCALL, all calls are listed on PRN</li>
+ * </ol>
+ */
 	private void put_listcall(){
-		/*
-		 * if LISTCALL
-		 *   gen listcall comment on BAL
-		 *   before load or call  RPI 746
-		 * Notes:
-		 *   1.  If LISTCALL and MCALL, all calls are listed on PRN
-		 */
 		    if (!tz390.opt_listcall)return; // RPI 922
 			String call_label = bal_label;
 			String call_parms = bal_parms;
@@ -8474,13 +9141,19 @@ public  class  mz390 {
 			}
 			put_bal_line(mcall_line);
 	}
+
+
+
+/**
+ * allocate pseudo code arrays<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>pc_start used to opt ago, gbl?, etc.</li>
+ *  <li>Others not alloc if nopc option.</li>
+ * </ol>
+ */
 	private void init_pc_arrays(){
-		/*
-		 * allocate pseudo code arrays
-		 * Notes:
-		 *   1.  pc_start used to opt ago, gbl?, etc.
-		 *   2.  Others not alloc if nopc option.
-		 */
 		pcl_start    = (int[])Array.newInstance(int.class,tz390.opt_maxline);
 		if (!tz390.opt_pc){
 			return;
@@ -8509,13 +9182,15 @@ public  class  mz390 {
 			index++;
 		}
 		pc_free = 1; // next free pc entry in free list 
-
 	}
+
+
+
+/**
+ * init large arrays with optional
+ * overides for size
+ */
 	private void init_arrays(){
-		/*
-		 * init large arrays with optional
-		 * overides for size
-		 */
 		/* 
 		 * opt_maxcall - maximum nested call stack
 		 */
@@ -8614,10 +9289,13 @@ public  class  mz390 {
 		mac_lab_index = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
 		mac_lab_num   = (int[])Array.newInstance(int.class,tz390.opt_maxsym); // RPI 266
 	}
+
+
+
+/**
+ * add global system variables
+ */
 	private void init_gbl_sys(){
-		/*
-		 * add global system variables
-		 */
 		add_gbl_sys("&SYSADATA_DSN",var_setc_type); // full path and file name if any RPI 259
 		set_sys_dsn_mem_vol(tz390.dir_mlc + tz390.pgm_name + tz390.ada_type);
 		gbl_setc[tot_gbl_setc-1] = sys_dsn;
@@ -8761,11 +9439,16 @@ public  class  mz390 {
 	    	gbl_setc[tot_gbl_setc-1] = "VER   ";
 	    }
 	}
+
+
+
+/**
+ * set sys_dsn, sys__mem, and sys_vol
+ * from file name
+ *
+ * @param file_name full file name
+ */
 	private void set_sys_dsn_mem_vol(String file_name){
-		/*
-		 * set sys_dsn, sys__mem, and sys_vol
-		 * from file name
-		 */
 		sys_dsn = "";
 		sys_mem = "";
 		sys_vol = "";
@@ -8780,20 +9463,29 @@ public  class  mz390 {
 			sys_vol = sys_dsn.substring(0,1);
 		} catch (Exception e){}
 	}
+
+
+
+/**
+ * add global system variables
+ *
+ * @param sys_name variable name
+ * @param sys_type variable type
+ */
 	private void add_gbl_sys(String sys_name,byte sys_type){
-		/*
-		 * add global system variables
-		 */
 		if (tz390.find_key_index('G',sys_name) == -1){
 			add_gbl_set(sys_name,sys_type,1,false); // RPI 1162
 		} else {
 			abort_error(160,"add global var failed - " + sys_name);
 		}
 	}
+
+
+
+/**
+ * init local system macro variables
+ */
 	private void init_lcl_sys(){
-		/*
-		 * init local system macro variables
-		 */
 		add_lcl_sys("&SYSNDX",var_setc_type); // RPI 593 was SETA
 		lcl_sysndx++;
 		String sysndx;
@@ -8821,20 +9513,29 @@ public  class  mz390 {
 			lcl_setc[tot_lcl_setc-1] = lcl_sysstyp;
 		}
 	}
+
+
+
+/**
+ * add local set variable
+ *
+ * @param sys_name variable name
+ * @param sys_type variable type
+ */
 	private void add_lcl_sys(String sys_name,byte sys_type){
-		/*
-		 * add local set variable
-		 */
 		if (find_lcl_key_index("L:" + sys_name) == -1){
 			add_lcl_set(sys_name,sys_type,1,false); // RPI 1162
 		} else {
 			abort_error(122,"duplicate lcl system variable - " + sys_name);
 		}
 	}
+
+
+
+/**
+ * check for opcodes that update system variables
+ */
 	private void check_sysops(){
-		/*
-		 * check for opcodes that update system variables
-		 */
 		if (bal_op == null || bal_op.length() == 0){
 			return;
 		}
@@ -8890,11 +9591,14 @@ public  class  mz390 {
 			break;
 		}		
 	}
+
+
+
+/**
+ * parse proto-type to set pos and key
+ * parm initial values
+ */
 	private void init_call_parms(){
-		/*
-		 * parse proto-type to set pos and key
-		 * parm initial values
-		 */
 		cur_pos_parm = mac_call_pos_start[mac_call_level];  // rpi 313
 		String proto_type_line = mac_file_line[mac_name_line_start[mac_name_index]];
 		proto_label = null;
@@ -8995,13 +9699,16 @@ public  class  mz390 {
 		proto_pos_parm_tot = tot_pos_parm - first_pos_parm; 
 	    proto_kwd_parm_tot = tot_kwd_parm - mac_call_kwd_start[mac_call_level]; 
 	}
+
+
+
+/**
+ * set positional and key word parm values
+ * from macro call statement<br />
+ *  <br />
+ * Note mult commas force null pos parms
+ */
 	private void set_call_parm_values(){
-		/*
-		 * set positional and key word parm values
-		 * from macro call statement
-		 * 
-		 * Note mult commas force null pos parms
-		 */
 		cur_pos_parm = mac_call_pos_start[mac_call_level]; // rpi 313
 		if  (bal_label.length() > 0 && bal_label.charAt(0) != '.'){
 			symbol_match = symbol_pattern.matcher(bal_label);
@@ -9101,10 +9808,15 @@ public  class  mz390 {
 			mac_call_pos_tot[mac_call_level] = 0;
 		}
 	}
+
+
+
+/**
+ * init positional parm
+ *
+ * @param pos_parm_name name for positional parameter
+ */
 	private void init_pos_parm(String pos_parm_name){
-		/*
-		 * init positional parm
-		 */
 		pos_parm_name = pos_parm_name.toUpperCase(); // RPI 366
 		if (tot_pos_parm +1 > tz390.opt_maxparm){
 			abort_error(144,"maximum positional parms exceeded");
@@ -9123,10 +9835,16 @@ public  class  mz390 {
 			hwm_pos_parm = tot_pos_parm;
 		}
 	}
+
+
+
+/**
+ * add key work parm name and default value
+ *
+ * @param kwd_parm_name keyword parameter name
+ * @param kwd_parm_value keyword parameter value
+ */
 	private void init_key_parm(String kwd_parm_name,String kwd_parm_value){
-		/*
-		 * add key work parm name and default value
-		 */
 		if (tot_kwd_parm +1 > tz390.opt_maxparm){
 			abort_error(145,"maximum key word parms exceeded");
 		}
@@ -9145,21 +9863,33 @@ public  class  mz390 {
 			hwm_kwd_parm = tot_kwd_parm;
 		}
 	}
+
+
+
+/**
+ * init positional parm and increment 
+ * cur_pos_parm set by
+ *
+ * @param pos_parm positional parameter
+ */
 	private void set_pos_parm(String pos_parm){
-		/*
-		 * init positional parm and increment 
-		 * cur_pos_parm set by 
-		 */
 		mac_call_pos_parm[cur_pos_parm] = pos_parm;
 		if (cur_pos_parm >= tot_pos_parm){
 			mac_call_pos_name[cur_pos_parm] = "";
 		}
 		cur_pos_parm++;
 	}
+
+
+
+/**
+ * set keyword parm
+ *
+ * @param key ???
+ * @param key_parm ???
+ * @return true if successful; false otherwise
+ */
 	private boolean set_key_parm(String key, String key_parm){
-		/*
-		 * set keyword parm
-		 */
 		int key_index = find_kwd_parm(key);
 		if  (key_index != -1){
 			if (!mac_call_kwd_set[key_index]){
@@ -9173,10 +9903,16 @@ public  class  mz390 {
 			return false;
 		}
 	}
+
+
+
+/**
+ * find keywork parm and return index else -1
+ *
+ * @param kwd_name name of keyword parameter
+ * @return index of keyword parameter, or -1 if not found
+ */
 	private int find_kwd_parm(String kwd_name){
-		/*
-		 * find keywork parm and return index else -1
-		 */
 		int kwd_index = mac_call_kwd_start[mac_call_level];
 		while (kwd_index < tot_kwd_parm){
 			if (mac_call_kwd_name[kwd_index].equals(kwd_name)){
@@ -9186,12 +9922,15 @@ public  class  mz390 {
 		}
 		return -1;
 	}
+
+
+
+/**
+ * wait for az390 to end and
+ * display total errors for both
+ * close files and exit to system or caller
+ */
 	private void exit_mz390(){
-		/*
-		 * wait for az390 to end and
-		 * display total errors for both
-		 * close files and exit to system or caller
-		 */
 		if (tz390.opt_asm && az390 != null){  // RPI 433 finish az390 even if mz390 abort
 			if (az390.az390_running){
 				if (tz390.z390_abort){
@@ -9222,20 +9961,22 @@ public  class  mz390 {
 		close_files(); // RPI 1089 move after rc setting
 		System.exit(mz390_rc);
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>Display mz390 statistics on STA file if option STATS</li>
+ *  <li>If asm pass file names and merge file errors from mz390 and lookahead phase of az390 for use in file xref at end of PRN</li>
+ *  <li>put_stats called from mz390 to sync with mz390 put_stats on STA and to include total mz and az errors on TRM</li>
+ * </ol>
+ *
+ * Notes:
+ * <ol>
+ *  <li>Use tz390.put_stat_line to route line to end of BAL or stat(file) option</li>
+ * </ol>
+ */
 	private void put_stats(){
-		/*
-		 * 1.  Display mz390 statistics
-		 *     on STA file if option STATS.
-		 * 2.  If asm pass file names and merge file errors
-		 *     from mz390 and lookahead phase of az390
-		 *     for use in file xref at end of PRN.
-		 * 3.  put_stats called from mz390 to sync 
-		 *     with mz390 put_stats on STA and to include total
-		 *     mz and az errors on TRM.  rpi 846    .
-		 * Notes:
-		 *   1.  Use tz390.put_stat_line to route
-		 *       line to end of BAL or stat(file) option
-		 */
 		log_to_bal = false;
 		if  (tz390.opt_stats){ // RPI 453
 			tz390.put_stat_final_options(); // rpi 755
@@ -9339,20 +10080,28 @@ public  class  mz390 {
 		}
 		log_to_bal = false;
 	}
+
+
+
+/**
+ * routine statistics line to BAL or STATS(file)
+ *
+ * @param msg statistics line of text
+ */
 	private void put_stat_line(String msg){
-		/*
-		 * routine statistics line to BAL or STATS(file)
-		 */
 		if (tz390.stats_file != null){
 			tz390.put_stat_line(msg);
 		} else {
 			put_log(msg_id + msg);
 		}
 	}
+
+
+
+/**
+ * close bal, pch, err, trm
+ */
 	private void close_files(){
-		/*
-		 * close bal, pch, err, trm
-		 */
 		if (tz390.opt_bal && bal_file_buff != null){
 			try {
 				bal_file_buff.close();
@@ -9375,10 +10124,15 @@ public  class  mz390 {
 		}
 		tz390.close_trace_file();
 	}
+
+
+
+/**
+ * close specific dat file
+ *
+ * @param index index of file to be closed
+ */
 	private void close_dat_file(int index){
-		/*
-		 * close specific dat file
-		 */
 		try {
 			dat_file_buff[index].close();
 			dat_file[index] = null;
@@ -9386,10 +10140,15 @@ public  class  mz390 {
 			abort_error(69,"I/O error on AREAD file ID=" + index + " close - " + e.toString());
 		}
 	}
+
+
+
+/**
+ * close specific pch file
+ *
+ * @param index index of file to be closed
+ */
 	private void close_pch_file(int index){
-		/*
-		 * close specific pch file
-		 */
 		try {
 			pch_file_buff[index].close();
 			pch_file[index] = null;
@@ -9397,16 +10156,28 @@ public  class  mz390 {
 			abort_error(77,"I/O error on PUNCH file ID=" + index + " close - " + e.toString());
 		}
 	}
+
+
+
+/**
+ * create mnote on BAL and ERR
+ *
+ * @param level mnote level
+ * @param text text of mnote
+ */
 	private void create_mnote(int level,String text){
-		/*
-		 * create mnote on BAL and ERR
-		 */
 		process_mnote(level,"'" + text + "'");
 	}
+
+
+
+/**
+ * put mnote message on BAL and ERR files
+ *
+ * @param level mnote level
+ * @param msg mnote text
+ */
 	private void process_mnote(int level,String msg){
-		/*
-		 * put mnote message on BAL and ERR files
-		 */
 		msg = tz390.ascii_printable_string(msg); // RPI 938
 		if (level >= 0 // RPI 415 let az390 report mnote in seq on ERR
 			&& (!tz390.opt_asm || tz390.opt_mnote == 2)
@@ -9446,11 +10217,14 @@ public  class  mz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * punch record on PCH and list on PRN.
+ * If ASM and NOALLOW pad to 80 bytes.
+ */
 	private void process_punch(){
-		/*
-		 * punch record on PCH and list on PRN.
-		 * If ASM and NOALLOW pad to 80 bytes.
-		 */	
 		if (bal_parms.length() > 2
 			&& bal_parms.charAt(0) == '\''){
 			String text = bal_parms;
@@ -9481,11 +10255,18 @@ public  class  mz390 {
 		put_bal_line("         PUNCH " + bal_parms);  // RPI 410 RPI 965 RPI 1018
 		log_error(269,"PUNCH syntax error - " + bal_parms);
 	}
+
+
+
+/**
+ * replace variables in MNOTE or PUNCH
+ * 'text' after verifying single quote text ok
+ *
+ * @param text text to handle
+ * @param reduce indicator whether or not to reduce double ampersands and apostrophes
+ * @return result string
+ */
 	private String replace_quoted_text_vars(String text,boolean reduce){ // RPI 965
-		/*
-		 * replace variables in MNOTE or PUNCH
-		 * 'text' after verifying single quote text ok
-		 */
 		if (text.length() >= 2
 			&& text.charAt(0) == '\''){
 			if (text.charAt(1) == '\'' 
@@ -9515,15 +10296,24 @@ public  class  mz390 {
 		}
 		return text;
 	}
+
+
+
+/**
+ * issue error msg to log with prefix and
+ * inc error total<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>If exp_replacement mode error
+ *      ignore and return setc_value = null
+ *      except for 208 SYSLIST substitution error</li>
+ * </ol>
+ *
+ * @param error error number
+ * @param msg error message text
+ */
 	private void log_error(int error,String msg){
-		/*
-		 * issue error msg to log with prefix and
-		 * inc error total
-		 * Notes:
-		 *   1.  If exp_replacement mode error
-		 *       ignore and return setc_value = null
-		 *       except for 208 SYSLIST substitution error
-		 */
 		if (mac_abort)return;
 		mac_abort = true;
 		exp_end = true;
@@ -9564,11 +10354,17 @@ public  class  mz390 {
 			abort_error(83,"maximum errors exceeded");
 		}
 	}
+
+
+
+/**
+ * issue error msg to log with prefix and
+ * inc error total
+ *
+ * @param error error number
+ * @param msg error message text
+ */
 	private synchronized void abort_error(int error,String msg){
-		/*
-		 * issue error msg to log with prefix and
-		 * inc error total
-		 */
 		mz390_errors++;
 		mz390_rc = 16;  // RPI 1062
 		if (tz390.z390_abort){
@@ -9602,11 +10398,14 @@ public  class  mz390 {
 		tz390.put_systerm(msg);
 		exit_mz390();
 	}
+
+
+
+/**
+ * display mz390 version, timestamp,
+ * and copyright if running standalone
+ */
 	private void put_copyright(){
-		/*
-		 * display mz390 version, timestamp,
-		 * and copyright if running standalone
-		 */
 		tz390.force_nocon = true; // RPI 755
 		if  (tz390.opt_timing){
 			cur_date = new Date();
@@ -9629,12 +10428,16 @@ public  class  mz390 {
 		}
 		tz390.force_nocon = false; // RPI 755 RPI 935
 	}
+
+
+
+/**
+ * Write message to z390_log_text or console
+ * if running standalone
+ *
+ * @param msg message text
+ */
 	private synchronized void put_log(String msg) {
-		/*
-		 * Write message to z390_log_text or console
-		 * if running standalone
-		 * 
-		 */
 		if  (log_to_bal){
 			put_bal_line("* " + msg);
 		}
@@ -9648,23 +10451,32 @@ public  class  mz390 {
 			System.out.println(msg);
 		}
 	}
+
+
+
+/**
+ * return user_key_index for lcl user_key else -1
+ * and set following for possible add_key_index:
+ * <ol>
+ *  <li>lcl_key_text = user_key</li>
+ *  <li>lcl_key_hash = hash code for key</li>
+ *  <li>lcl_key_index_last = last search entry</li>
+ * </ol>
+ *
+ * lcl key types are:
+ * <ul>
+ *  <li>K: - key word macro parm</li>
+ *  <li>B: - local macro label</li>
+ *  <li>P: - postional macro parm</li>
+ *  <li>L: - local set variable</li>
+ * </ul>
+ *
+ * See tz390 with global find_key_index types FGMORSX
+ *
+ * @param user_key key to find
+ * @return user key index or -1 if not found
+ */
 	private int find_lcl_key_index(String user_key){
-		/*
-		 * return user_key_index for lcl user_key else -1
-		 * and set following for possible add_key_index:
-		 *    1.  lcl_key_text = user_key
-		 *    2.  lcl_key_hash = hash code for key
-		 *    3.  lcl_key_index_last = last search entry
-		 *
-		 *  lcl key types are:
-		 *     K: - key word macro parm
-		 *     B: - local macro label
-		 *     P: - postional macro parm
-		 *     L: = local set variable
-		 *
-		 *     See tz390 with global find_key_index
-		 *     types FGMORSX
-		 */
 		tz390.tot_key_search++;
 		lcl_key_text = user_key;
 		lcl_key_hash  = lcl_key_text.hashCode(); // RPI 434 
@@ -9694,13 +10506,17 @@ public  class  mz390 {
 		}
 		return -1;
 	}
+
+
+
+/**
+ * add lcl user_index entry based on
+ * lcl_key_text, lcl_key_hash, and lcl_key_index_last
+ * set by prior find_lcl_key_index
+ *
+ * @param user_index ???
+ */
 	private void add_lcl_key_index(int user_index){
-		/*
-		 * add lcl user_index entry based on
-		 * lcl_key_text, lcl_key_hash, and lcl_key_index_last
-		 * set by prior find_lcl_key_index
-		 * 
-		 */
 		if (lcl_key_index_last < 0 || lcl_key_index_last > lcl_key_tab_key.length){
 			abort_error(191,"invalid key index add sequence");
 		}
@@ -9726,13 +10542,21 @@ public  class  mz390 {
 		lcl_key_tab_low[lcl_key_index] = 0;
 		lcl_key_tab_high[lcl_key_index] = 0;
 	}
+
+
+
 	//****************************************
 	//* Pseudo Code Support Routines
 	//****************************************
+
+
+
+/**
+ * gen pc code for exp if pc_gen_exp
+ *
+ * @param op internal opcode (?)
+ */
     private void gen_exp_pc(byte op){
-    	/*
-    	 * gen pc code for exp if pc_gen_exp
-    	 */
     	if (pc_gen_exp){
             if (op < pc_op_add || op > pc_op_div){
             	flush_pc_pending(); 
@@ -9740,10 +10564,15 @@ public  class  mz390 {
     		gen_pc(op);
     	}
     }
+
+
+
+/**
+ * gen pushv or pushvs
+ *
+ * @param op internal opcode (?)
+ */
 	private void gen_pc(byte op){
-    	/*
-    	 * gen pushv or pushvs
-    	 */
     	if (!tz390.opt_pc){
     		return;
     	}
@@ -9946,13 +10775,16 @@ public  class  mz390 {
 			trace_pc();
 		}
     }
+
+
+
+/**
+ * move this mac line to most recently
+ * used entry and then
+ * execute pseudo code starting at
+ * pc_loc until pc_end entry found
+ */
 	private void exec_pc(){
-		/*
-		 * move this mac line to most recently
-		 * used entry and then
-		 * execute pseudo code starting at
-		 * pc_loc until pc_end entry found
-		 */
         update_mru();
 	    // exec pc code
 		pc_trace_gen = false;
@@ -10366,21 +11198,26 @@ public  class  mz390 {
 			abort_pc("invalid pc stack total = " + tot_exp_stk_var);
 		}
 	}
+
+
+
+/**
+ * add new pc_op to list of
+ * pseudo codes for current mac_bal_line
+ * <ol>
+ *  <li>Set pc_loc to new pc_op entry</li>
+ *  <li>Set pc_loc_prev to prev pc_loc else 0</li>
+ *  <li>Set pcl_start[mac_bal_line] to first</li>
+ *  <li>Set pc_end[mac_bal_line]  to last</li>
+ *  <li>Set pc_next[pc_loc-1] to chain start to end</li>
+ *  <li>First try to get next entry from pc_free list</li>
+ *  <li>If none on free list, remove least recently used entry from pc_lru and add to
+ *       pc_free list while and return first free entry</li>
+ * </ol>
+ *
+ * @param op pseudo code operation to add
+ */
     private void get_pc(byte op){
-    	/*
-    	 * add new pc_op to list of 
-    	 * pseudo codes for current mac_bal_line
-    	 *   1.  Set pc_loc to new pc_op entry
-    	 *   2.  Set pc_loc_prev to prev pc_loc else 0
-    	 *   3.  Set pcl_start[mac_bal_line] to first
-    	 *   4.  Set pc_end[mac_bal_line]  to last
-    	 *   5.  Set pc_next[pc_loc-1] to chain start to end
-    	 *   6.  First try to get next entry from pc_free list
-    	 *   7.  If none on free list, remove least recently
-    	 *       used entry from pc_lru and add to
-    	 *       pc_free list while and return first free 
-    	 *       entry.
-    	 */
     	tot_pc_gen++;
     	pc_loc_prev = pc_loc;
     	pc_loc = pc_free;
@@ -10418,10 +11255,13 @@ public  class  mz390 {
         pc_req_opt[pc_loc] = false; // default is no exec opt
     	pc_next[pc_loc] = 0; // end of alloc list for mac line
     }
+
+
+
+/**
+ * update mru with current mac_line_index
+ */
     private void update_mru(){
-    	/*
-    	 * update mru with current mac_line_index
-    	 */
 		// remove current mac_line_index from
     	// mru list to allow moving it to top
 		int prev = pcl_mru_prev[mac_line_index];
@@ -10444,10 +11284,15 @@ public  class  mz390 {
 	    }
 	    pcl_mru = mac_line_index;
     }
+
+
+
+/**
+ * reuse pseudo code list at mac line index
+ *
+ * @param index mac line index
+ */
     private void reuse_pc(int index){
-    	/*
-    	 * reuse pc list at mac line index
-    	 */
 		tot_pcl_reuse++;
 		pc_free = pcl_start[index];
 		if (tz390.opt_traceall){
@@ -10462,10 +11307,13 @@ public  class  mz390 {
 			pcl_lru = pcl_mru_prev[pcl_lru];
 		}
     }
+
+
+
+/**
+ * trace pseudo code entry gen or exec
+ */
     private void trace_pc(){
-    	/*
-    	 * trace pc entry gen or exec
-    	 */
     	if (!tz390.opt_pc || tz390.z390_abort)return; // RPI 899
     	if (!tz390.opt_tracec 
     		&& mac_file_type[mac_file_num[mac_line_index]] == '='){
@@ -10709,11 +11557,16 @@ public  class  mz390 {
     		tz390.put_trace("  EXEC PC LOC=" + tz390.right_justify("" + pc_loc,5) + " OP= " + pc_op_desc[pc_op[pc_loc]] + text);
     	}
     }
+
+
+
+/**
+ * issue log_error and abort pseudo code mode
+ * due to pc error
+ *
+ * @param msg error message text
+ */
     private void abort_pc(String msg){
-    	/*
-    	 * issue log_error and abort pc mode
-    	 * due to pc error
-    	 */
     	if (pc_aborted)return;
     	pc_aborted = true;
     	if (tz390.opt_tracep){
@@ -10726,10 +11579,13 @@ public  class  mz390 {
     	pcl_start[mac_line_index] = 0;
     	log_error(194,"pc aborted due to " + msg);
     }
+
+
+
+/**
+ * concatenate var to string on stack
+ */
     private void exp_concat_var(){
-    	/*
-    	 * concatenate var to string on stack
-    	 */
 		switch (var_type){
 		case 21: // seta
 			setc_value1 = exp_stk_setc[tot_exp_stk_var - 1];
@@ -10759,11 +11615,14 @@ public  class  mz390 {
 			tz390.abort_case();
 		}
     }
+
+
+
+/**
+ * push scalar var on stack
+ * (shared by exp and pseudo code)
+ */
     private void push_pc_var(){
-    	/*
-    	 * push scalar var on stack
-    	 * (shared by exp and pc)
-    	 */
 		switch (var_type){
 		case 21:
 			exp_stk_val_type[tot_exp_stk_var -1] = val_seta_type; // RPI 447
@@ -10810,13 +11669,16 @@ public  class  mz390 {
 		exp_stk_var_loc[tot_exp_stk_var -1]   = var_loc;  // RPI 447
 		exp_stk_var_name_index[tot_exp_stk_var-1] = var_name_index; // RPI 447
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>Get var value in seta/setb/setc_value using var_type, var_loc, var_name_index and set_sub</li>
+ *  <li>Set val_type = var_seta/setb/setc_type</li>
+ * </ol>
+ */
     private void get_pc_var_value(){
-    	/*
-    	 * 1.  Get var value in seta/setb/setc_value
-    	 *     using var_type, var_loc, var_name_index
-    	 *     and set_sub
-    	 * 2.  Set val_type = var_seta/setb/setc_type
-    	 */
     	set_sub = 1;
     	switch (var_loc){
     	case 11: // lcl set
@@ -10847,10 +11709,13 @@ public  class  mz390 {
     		abort_pc("invalid get var loc - " + var_loc);
     	}
     }
+
+
+
+/**
+ * compare equal (shared exp and pseudo code)
+ */
     private void exec_pc_compeq(){
-    	/*
-    	 * compare equal (shared exp and pc)
-    	 */
         get_compare_values();
 		switch (val_type1){
 		case 1:
@@ -10878,10 +11743,13 @@ public  class  mz390 {
 			tz390.abort_case();
 		}
     }
+
+
+
+/**
+ * compare greater than or equal (shared exp and pseudo code)
+ */
     private void exec_pc_compge(){
-    	/*
-    	 * compare greater than or equal (shared exp and pc)
-    	 */
   		get_compare_values();
   		switch (val_type1){
 			case 1:
@@ -10909,10 +11777,13 @@ public  class  mz390 {
 				tz390.abort_case();
 			}
     }
+
+
+
+/**
+ * compare greater than (shared exp and pseudo code)
+ */
     private void exec_pc_compgt(){
-    	/*
-    	 * compare greater than (shared exp and pc)
-    	 */
   		get_compare_values();
   		switch (val_type1){
 			case 1:
@@ -10940,10 +11811,13 @@ public  class  mz390 {
 				tz390.abort_case();
 			}
     }
+
+
+
+/**
+ * compare less than or equal (shared exp and pseudo code)
+ */
     private void exec_pc_comple(){
-    	/*
-    	 * compare less than or equal (shared exp and pc)
-    	 */
   		get_compare_values();
   		switch (val_type1){
 			case 1:
@@ -10971,10 +11845,13 @@ public  class  mz390 {
 				tz390.abort_case();
 			}
     }
+
+
+
+/**
+ * compare less than (shared exp and pseudo code)
+ */
     private void exec_pc_complt(){
-    	/*
-    	 * compare less than (shared exp and pc)
-    	 */
   		get_compare_values();
   		switch (val_type1){
 			case 1:
@@ -11002,10 +11879,13 @@ public  class  mz390 {
 				tz390.abort_case();
 			}
     }
+
+
+
+/**
+ * compare not equal (shared exp and pseudo code)
+ */
     private void exec_pc_compne(){
-    	/*
-    	 * compare not equal (shared exp and pc)
-    	 */
   		get_compare_values();
   		switch (val_type1){
 			case 1:
@@ -11033,12 +11913,18 @@ public  class  mz390 {
 				tz390.abort_case();
 			}
     }
+
+
+
+/**
+ * push var(set_sub) value on stack<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>Shared by exp and pc</li>
+ * </ol>
+ */
     private void exec_pc_pushvs(){
-    	/*
-    	 * push var(set_sub) value on stack
-    	 * Notes:
-    	 *  1. Shared by exp and pc
-    	 */
     	if (inc_tot_exp_stk_var()){
     		    exp_stk_var_type[tot_exp_stk_var - 1] = var_type; 
 				switch (var_loc){
@@ -11166,13 +12052,19 @@ public  class  mz390 {
 				}
     	}
     }
+
+
+
+/**
+ * replace setc value and sublist index
+ * on stack with caculated sublist.<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>Shared by exp and pc</li>
+ * </ol>
+ */
     private void exec_pc_sublst(){
-    	/*
-    	 * replace setc value and sublist index
-    	 * on stack with caculated sublist.
-    	 * Notes:
-    	 *   1.  Shared by exp and pc
-    	 */
 		set_sub = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
 		pc_sublst_value1 = exp_stk_setc[tot_exp_stk_var - 1]; // get parm value set by find_var
@@ -11184,11 +12076,14 @@ public  class  mz390 {
 			tz390.put_trace("SUBLIST PARM=" + setc_value);
 		}
     }
+
+
+
+/**
+ * replace setc,arg1,arg2 on stack
+ * with subsubstring setc
+ */
     private void exec_pc_substr(){
-    	/*
-    	 * replace setc,arg1,arg2 on stack
-    	 * with subsubstring setc
-    	 */
     	if (tot_exp_stk_var >= 3){
             switch (exp_stk_val_type[tot_exp_stk_var - 3]){
             case 1: // val_seta_type
@@ -11231,12 +12126,18 @@ public  class  mz390 {
 			log_error(52,"invalid substring expression");
 		}	
     }
+
+
+
+/**
+ * return set &amp;type_value &amp;PARM
+ * ? = 1, 2 or 3 for value
+ *
+ * @param type type code: 1=SETA, 2=SETB, 3=SETC
+ * @param parm type code: 1=SETA, 2=SETB, 3=SETC
+ * @return result value as a string
+ */
     private String get_pc_trace_val(byte type,int parm){
-    	/*
-    	 * return set&type_value&PARM
-    	 * ? = 1,2 or 3 for value
-    	 * 
-    	 */
     	switch (type){
 		case 1: // val_seta_type
 			switch (parm){
@@ -11270,18 +12171,28 @@ public  class  mz390 {
 		    return "";
 		}
     }
+
+
+
+/**
+ * Set var variables from pseudo code entry 
+ * and update if required for new macro instance
+ * <ol>
+ *  <li>var_type</li>
+ *  <li>val_type</li>
+ *  <li>var_loc</li>
+ *  <li>var_name_index (update for new mac)</li>
+ * </ol>
+ * Return true if ok else false if not found<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>Update via find_set if new macro and local var</li>
+ * </ol>
+ *
+ * @return true if successful, false ottherwise
+ */
     private boolean get_pc_var(){
-    	/*
-    	 * Set var variables from pc entry 
-    	 * and update if reguired for new macro instance
-    	 *   1.  var_type
-    	 *   2.  val_type
-    	 *   3.  var_loc
-    	 *   4.  var_name_index (update for new mac)
-    	 * Return true if ok else false if not found
-         * Notes:
-         *   1.  Update via find_set if new macro and local var
-    	 */
     	var_type = pc_var_type[pc_loc]; 
     	var_loc  = pc_var_loc[pc_loc];  
     	var_name_index = pc_seta[pc_loc]; 
@@ -11362,22 +12273,32 @@ public  class  mz390 {
     	}
         return true;
     }
+
+
+
+/** 
+ * convert pusha or pushc with self defining term
+ * into op with sdt else flush and gen op with 2 stack values
+ *
+ * @param op pseudo code opcode
+ */
     private void opt_gen_pc_comp(byte op){
-    	/* convert pusha or pushc with sdt
-    	 * into op with sdt else flush and
-    	 * gen op with 2 stack values
-    	 */
     	if (pc_pusha_pending){
     		opt_gen_pc_seta(op);
     	} else {
     		opt_gen_pc_setc(op);
     	}
     }
+
+
+
+/**
+ * convert pusha to op with seta sdt arg.
+ * else flush and gen op with 2 stack values
+ *
+ * @param op pseudo code opcode
+ */
     private void opt_gen_pc_seta(byte op){
-    	/*
-    	 * convert pusha to op with seta sdt arg.
-    	 * else flush and gen op with 2 stack values
-    	 */
     	if (!pc_gen_exp){
     		return;
     	}
@@ -11392,11 +12313,16 @@ public  class  mz390 {
         	gen_exp_pc(op);
         }
     }
+
+
+
+/**
+ * convert pushc to op with setc sdt arg.
+ * else flush and gen op with 2 stack values
+ *
+ * @param op pseudo code opcode
+ */
     private void opt_gen_pc_setc(byte op){
-    	/*
-    	 * convert pushc to op with setc sdt arg.
-    	 * else flush and gen op with 2 stack values
-    	 */
     	if (!pc_gen_exp){
     		return;
     	}
@@ -11411,11 +12337,14 @@ public  class  mz390 {
         	gen_exp_pc(op);
         }
     }
+
+
+
+/**
+ * set pending pushc after flushing
+ * any pending pc opcodes
+ */
     private void opt_gen_pc_pushc(){
-    	/*
-    	 * set pending pushc after flushing
-    	 * any pending pc opcodes
-    	 */
     	if (!pc_gen_exp){
     		return;
     	}
@@ -11423,11 +12352,14 @@ public  class  mz390 {
     	pc_pushc_pending = true;
     	pc_pushc_setc_value = setc_value;
     }
+
+
+
+/**
+ * set pending pusha after flushing
+ * any pending pc opcodes
+ */
     private void opt_gen_pc_pusha(){
-    	/*
-    	 * set pending pusha after flushing
-    	 * any pending pc opcodes
-    	 */
     	if (!pc_gen_exp){
     		return;
     	}
@@ -11436,13 +12368,18 @@ public  class  mz390 {
     	pc_pusha_seta_value = seta_value;
     	pc_pusha_setc_value = setc_value; 
     }
+
+
+
+/**
+ * optimize concatenation of push?
+ * by checking if prev op was pushc
+ * and combining to single push?
+ * where possible.
+ *
+ * @param op pseudo code opcode
+ */
     private void opt_gen_pc_concat(byte op){
-    	/*
-    	 * optimize concatenation of push?
-    	 * by checking if prev op was pushc
-    	 * and combining to single push?
-    	 * where possible.  
-    	 */
          if (pc_gen_exp){
         	 if (pc_pushc_pending){
                	 if (op == pc_op_pushc){
@@ -11490,13 +12427,19 @@ public  class  mz390 {
         	 }
          }
     }
+
+
+
+/**
+ * gen pushc or pusha if pending
+ * gen concat after pushc if pending<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>push emply setc if pending</li>
+ * </ol>
+ */
     private void flush_pc_pending(){
-    	/*
-    	 * gen pushc or pusha if pending
-    	 * gen concat after pushc if pending
-    	 * Notes:
-    	 *   1.  push emply setc if pending
-    	 */
 		if (pc_pushc_pending){
 	    	save_setc_value1 = setc_value1; 
 	    	save_setc_value2 = setc_value2;
@@ -11531,13 +12474,18 @@ public  class  mz390 {
 			setc_value = save_setc_value;
 		}
     }
+
+
+
+/**
+ * optimize pc code list prior to first
+ * execution and reset pc_req_opt:
+ * <ol>
+ *  <li>PUSHV,ADD 1,STORV = INC </li>
+ *  <li>PUSHV,SUB 1,STORV = DEC</li>
+ * </ol>
+ */
     private void opt_pcl(){
-    	/*
-    	 * optimize pc code list prior to first
-    	 * execution and reset pc_req_opt:
-    	 *   1.  PUSHV,ADD 1,STORV = INC 
-    	 *   2.  PUSHV,SUB 1,STORV = DEC
-    	 */
     	pc_req_opt[pc_loc] = false;
     	switch (pc_op[pc_loc]){
     	case  3: // opt pc_op_pushv                //  0    1     2    3  
@@ -11565,11 +12513,16 @@ public  class  mz390 {
     		break;
     	}
     }
+
+
+
+/**
+ * exec store for storv, storvs,
+ * storvn, inc, and dec
+ *
+ * @param op pseudo code opcode
+ */
     private void exec_pc_store(byte op){
-    	/* 
-    	 * exec store for storv, storvs,
-    	 * storvn, inc, and dec
-    	 */
         if (!get_pc_var()){        	
         	return;  // RPI 950
         }
@@ -11602,15 +12555,22 @@ public  class  mz390 {
     		abort_pc("invalid pc store var type=" + store_type);
     	}
     }
+
+
+
+/**
+ * set store_sub and store_subscript based on op.<br />
+ * <br />
+ * Note:
+ * <ol>
+ *  <li>If pc_op_storvs, then get 
+ *      store_sub from top of stack
+ *      after store value has been removed</li>
+ * </ol>
+ *
+ * @param op pseudo code opcode
+ */
     private void get_pc_store_sub(byte op){
-    	/*
-    	 * set store_sub and store_subscript
-    	 * based on op.
-    	 * Note:
-    	 *   1.  If pc_op_storvs, then get 
-    	 *       store_sub from top of stack
-    	 *       after store value has been removed.
-    	 */
 		if (op == pc_op_storvs || op == pc_op_stords){
 			store_subscript = true;
 			store_sub = get_seta_stack_value(-1);
@@ -11623,10 +12583,16 @@ public  class  mz390 {
 			store_sub = 1;
 		}
     }
+
+
+
+/**
+ * load pc_loc_list
+ *
+ * @param pc_op_list array pseudo code opcodes
+ * @return true if successful, false otherwise
+ */
     private boolean get_pc_loc_list(byte[] pc_op_list){
-    	/*
-    	 * load pc_loc_list
-    	 */
     	int list_len = pc_op_list.length;
     	pc_loc_list[0] = pc_loc;
     	int index = 1;
@@ -11643,24 +12609,35 @@ public  class  mz390 {
 		if (next != 0)return false; // rpi 2211 don't return partial list
     	return true;
     }
+
+
+
+/**
+ * free pc list starting at head and ending at tail<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>User must reset any other 
+ *      pointers to this list from
+ *      pc_next or pc_start</li>
+ * </ol>
+ *
+ * @param head head pointer
+ * @param tail tail tail pointer
+ */
     private void free_pc_list(int head, int tail){
-    	/*
-    	 * free pc list starting at head and
-    	 * ending at tail
-    	 * Notes:
-    	 *   1.  User must reset any other 
-    	 *       pointers to this list from
-    	 *       pc_next or pc_start.
-    	 */
 		pc_next[tail] = pc_free;
 		pc_free = head;
     }
+
+
+
+/**
+ * replace top of stack with A'stack
+ * indicating if symbol defined in lookahead
+ * (shared by exp and pseudo code)
+ */
     private void exec_pc_pfx_a(){
-    	/*
-    	 * replace top of stack with A'stack
-    	 * indicating if symbol defined in lookahead
-    	 * (shared by exp and pc)
-    	 */
     	if (tot_exp_stk_var > 0){
 			setc_value1 = get_setc_stack_value();
 			if (mz390_find_sym(setc_value1) != -1){
@@ -11677,11 +12654,14 @@ public  class  mz390 {
 			tz390.put_trace("A' " + seta_value + " = A'" + setc_value1);  
 		}
    }
+
+
+
+/**
+ * repalce top of stack with D'sym = 1/0
+ * indicating if defined as ordinary symbol yet
+ */
     private void exec_pc_pfx_d(){
-    	/*
-    	 * repalce top of stack with D'sym = 1/0
-    	 * indicating if defined as ordinary symbol yet
-    	 */
     	if (tot_exp_stk_var > 0){
 			setc_value1 = get_setc_stack_value();
 			if (!tz390.opt_asm){
@@ -11700,11 +12680,15 @@ public  class  mz390 {
 		}
 		if (tz390.opt_tracem){ // RPI 1212
 			tz390.put_trace("D' " + setb_value + " = D'" + setc_value1);  
-		}   }
+		}
+    }
+
+
+
+/**
+ * return I'sym integer value
+ */
     private void exec_pc_pfx_i(){
-    	/*
-    	 * return I'sym integer value
-    	 */
     	if (tot_exp_stk_var > 0){
 			setc_value1 = get_setc_stack_value();
 			if (!tz390.opt_asm){
@@ -11724,11 +12708,14 @@ public  class  mz390 {
 		if (tz390.opt_tracem){ // RPI 1212
 			tz390.put_trace("I' " + seta_value + " = I'" + setc_value1);  
 		} 
-		}
+    }
+
+
+
+/**
+ * K'sym returns string length
+ */
     private void exec_pc_pfx_k(){
-    	/*
-    	 * K'sym returns string length
-    	 */
     	if (tot_exp_stk_var > 0){
 			setc_value1 = get_setc_stack_value();
 			seta_value = setc_value1.length();
@@ -11738,11 +12725,15 @@ public  class  mz390 {
 		}
 		if (tz390.opt_tracem){ // RPI 1212
 			tz390.put_trace("K' " + seta_value + " = K'" + setc_value1);  
-		}}
+		}
+    }
+
+
+
+/**
+ * L'sym returns symbol length
+ */
     private void exec_pc_pfx_l(){
-    	/*
-    	 * L'sym returns symbol length
-    	 */
     	if (tot_exp_stk_var > 0){
 			setc_value1 = get_setc_stack_value();
 			seta_value = get_sym_len(setc_value1);
@@ -11752,12 +12743,16 @@ public  class  mz390 {
 		}
 		if (tz390.opt_tracem){ // RPI 1212
 			tz390.put_trace("L' " + seta_value + " = L'" + setc_value1);  
-		}   }
+		}
+    }
+
+
+
+/**
+ * replace top of stack with N'stack
+ * (shared by exp and pc)
+ */
     private void exec_pc_pfx_n(){
-    	/*
-    	 * replace top of stack with N'stack
-    	 * (shared by exp and pc)
-    	 */
     	if (tot_exp_stk_var > 0){
 			var_type = exp_stk_var_type[tot_exp_stk_var -1];
 			val_type = get_val_type();
@@ -11835,24 +12830,26 @@ public  class  mz390 {
 			log_error(199,"N' missing variable");
 		}
     }
+
+
+
+/**
+ * return type of operator for O'sum
+ * <ul>
+ *  <li>A = assembler control operator (CSECT, EQU ETC)</li>
+ *  <li>E = extended mnemonic (BH, BL, BER, ETC.)</li>
+ *  <li>O = machine opcode</li>
+ *  <li>M = macro defined</li>
+ *  <li>S = macro found in sysmac dir</li>
+ *  <li>U = unknown</li>
+ * </ul>
+ */
     private void exec_pc_pfx_o(){
-    	/*
-    	 * return type of operator for O'sum
-    	 *   A = assembler control operator (CSECT, EQU ETC)
-    	 *   E = extended mnemonic (BH, BL, BER, ETC.)
-    	 *   O = machine opcode
-    	 *   M = macro defined
-    	 *   S = macro found in sysmac dir
-    	 *   U = unknown
-    	 */
-        //System.out.println("afk mz390.exec_pc_pfx_o tot_exp_stk_var=" + tot_exp_stk_var);         // #485 **!!
     	if (tot_exp_stk_var > 0){
 			setc_value1 = get_setc_stack_value().toUpperCase();
-            //System.out.println("afk mz390.exec_pc_pfx_o setc_value1=" + setc_value1);             // #485 **!!
             int index = 0;                                                                          // #485
             String key = setc_value1;                                                               // #485
             index = tz390.find_key_index('R',key);                                                  // #485
-            //System.out.println("afk mz390.exec_pc_pfx_o OPSYN index=" + index);                   // #485 **!!
             if (index >= 0) // OPSYN defined:                                                       // #485
                {if (tz390.opsyn_old_name[index] == null) // OPSYN deletes mnemonic                  // #485
                    {key = "  Undefined Mnemonic  ";                                                 // #485
@@ -11860,21 +12857,16 @@ public  class  mz390 {
                 else // OPSYN defines alternate mnemonic                                            // #485
                    {key = tz390.opsyn_old_name[index];                                              // #485
                     }                                                                               // #485
-                //System.out.println("afk mz390.exec_pc_pfx_o Base mnemonic=" + key);               // #485 **!!
                 }                                                                                   // #485
             int opcode_type = find_opcode_type(key);                                                // #485
-            //System.out.println("afk mz390.exec_pc_pfx_o opcode_type=" + opcode_type);             // #485 **!!
 			if (opcode_type >= 0){
 				if (opcode_type <= tz390.max_ins_type){
                     index = tz390.find_key_index('O',key);                                          // #485
-                    //System.out.println("afk mz390.exec_pc_pfx_o OPCODE index=" + index);          // #485 **!!
                     if (index >= 0)                                                                 // #485
-                       {//System.out.println("afk mz390.exec_pc_pfx_o op_name=" + tz390.op_name[index] + " --> " + tz390.op_type_oattribute[index]); // #485 **!!
-                        setc_value = tz390.op_type_oattribute[index];                               // #485
+                       {setc_value = tz390.op_type_oattribute[index];                               // #485
                         }                                                                           // #485
                     else // not defined                                                             // #485
-                       {//System.out.println("afk mz390.exec_pc_pfx_o returning value U");          // #485 **!!
-                        setc_value = "U";                                                           // #485
+                       {setc_value = "U";                                                           // #485
                         }                                                                           // #485
 				} else {
 					setc_value = "A"; // assembler opcode
@@ -11899,11 +12891,14 @@ public  class  mz390 {
 		if (tz390.opt_tracem){ // RPI 1212
 			tz390.put_trace("O' " + setc_value + " = O'" + setc_value1);  
 		}
-		}
+    }
+
+
+
+/**
+ * return exponent attrivute of ordinary symbol
+ */
     private void exec_pc_pfx_s(){
-    	/*
-    	 * return exponent attrivute of ordinary symbol
-    	 */
     	if (tot_exp_stk_var > 0){
 			setc_value1 = get_setc_stack_value();
 			if (!tz390.opt_asm){
@@ -11923,10 +12918,13 @@ public  class  mz390 {
 			tz390.put_trace("S' " + seta_value + " = S'" + setc_value1);  
 		}
 		}
+
+
+
+/**
+ * T'var/sym returns symbol type
+ */
     private void exec_pc_pfx_t(){
-    	/*
-    	 * T'var/sym returns symbol type
-    	 */
 		if (tot_exp_stk_var > 0){  // RPI 835
 			setc_value1 = get_setc_stack_value();
 			if (!tz390.opt_asm){
@@ -11962,12 +12960,17 @@ public  class  mz390 {
 		if (tz390.opt_tracem){ // RPI 1212
 			tz390.put_trace("T' " + setc_value + " = T'" + setc_value1);  
 		}
-		}
+    }
+
+
+
+/**
+ * return true if string or (string) numeric
+ *
+ * @param text string to check
+ * @return true if input evaluates as a number, false otherwise
+ */
     private boolean string_numeric(String text){
-    	/*
-    	 * return true if string or (string)
-    	 * numberic  RPI 468
-    	 */
     	if (text.length() > 0){
     		if (text.length() >= 3
     			&& text.charAt(0) == '('
@@ -11986,11 +12989,14 @@ public  class  mz390 {
     	}
         return false;
     }
+
+
+
+/**
+ * replace string on stack with upper case
+ * 
+ */
     private void exec_pc_upper(){
-    	/*
-    	 * replace string on stack with upper case
-    	 * 
-    	 */
     	check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();
 		setc_value = setc_value1.toUpperCase();
@@ -11999,10 +13005,13 @@ public  class  mz390 {
 		}		
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * replace string on stack with lower case
+ */
     private void exec_pc_lower(){
-    	/*
-    	 * replace string on stack with lower case
-    	 */
     	check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();
 		setc_value = setc_value1.toLowerCase();
@@ -12011,15 +13020,23 @@ public  class  mz390 {
 		}		
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * exec computed ago branch using
+ * <ol>
+ *  <li>ago_seta_index ptr to gbla ago array:
+ *   <ul>
+ *    <li>+0 = ptr to gblc label array if TRACEP else 0</li>
+ *    <li>+1 = maximum limit of ago index</li>
+ *    <li>+2 = ago line index array for macro labels</li>
+ *   </ul>
+ *  </li>
+ *  <li>ago_index = current index</li>
+ * </ol>
+ */
     private void exec_pc_ago(){
-    	/*
-    	 * exec computed ago branch using
-    	 *   1. ago_seta_index ptr to gbla ago array:
-    	 *      +0 = ptr to gblc label array if TRACEP else 0
-    	 *      +1 = maximum limit of ago index
-    	 *      +2 = ago line index array for macro labels
-    	 *   2. ago_index = current index
-    	 */
 		if (ago_index >= 1
 			&& ago_index <= gbl_seta[ago_gbla_index + 1]){
 	    	actr_count--;  // RPI 754
@@ -12036,10 +13053,13 @@ public  class  mz390 {
 			mac_branch = true; // RPI 900
 		}
     }
+
+
+
+/**
+ * perform unary compliment on stack value
+ */
     private void exec_pc_ucomp(){
-    	/*
-    	 * perform unary compliment on stack value
-    	 */
 		switch (exp_stk_val_type[tot_exp_stk_var-1]){
 		case 1:
 			seta_value = - exp_stk_seta[tot_exp_stk_var -1];
@@ -12057,21 +13077,27 @@ public  class  mz390 {
 			break;
 		}
     }
+
+
+
+/**
+ * convert int to binary string with
+ * leading zeros to make length 32
+ */
     private void exec_pc_a2b(){
-    	/*
-    	 * convert int to binary string with
-    	 * leading zeros to make length 32     #509
-    	 */
 		seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
     	setc_value = Long.toString(((long)(seta_value1) << 32) >>> 32,2);  // RPI 1105 
 		setc_value = "00000000000000000000000000000000".substring(setc_value.length()) + setc_value;
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * convert int to character string of length 4    #509
+ */
     private void exec_pc_a2c(){
-    	/*
-    	 * convert int to character string of length 4    #509
-    	 */
     	seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
 		setc_value = ""
@@ -12082,10 +13108,13 @@ public  class  mz390 {
 			       ;
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * convert int to decimal string preceded by a plus or minus sign    #509
+ */
     private void exec_pc_a2d(){
-    	/*
-    	 * convert int to decimal string preceded by a plus or minus sign    #509
-    	 */
     	seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
 		if (seta_value1 >= 0){
@@ -12095,20 +13124,26 @@ public  class  mz390 {
 		}
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * convert int to hex string of length 8    #509
+ */
     private void exec_pc_a2x(){
-    	/*
-    	 * convert int to hex string of length 8    #509
-    	 */
     	seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
 		setc_value = Integer.toHexString(seta_value1).toUpperCase(); // RPI 1101 
 		setc_value = ("00000000" + setc_value).substring(setc_value.length());
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * convert binary string to int
+ */
     private void exec_pc_b2a(){
-    	/*
-    	 * convert binary string to int
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
     	if (setc_value1.length() > 0) {                                      // #509
@@ -12123,10 +13158,13 @@ public  class  mz390 {
 		}                                                                    // #509
 		put_seta_stack_var();                                                // #509
     }
+
+
+
+/**
+ * convert binary string to char string
+ */
     private void exec_pc_b2c(){
-    	/*
-    	 * convert binary string to char string
-    	 */
     	check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();
 		int j = setc_value1.length();
@@ -12151,10 +13189,13 @@ public  class  mz390 {
 		}                                                                    // #509
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * convert binary string to decimal string preceded by plus or minus character    #509
+ */
     private void exec_pc_b2d(){
-    	/*
-    	 * convert binary string to decimal string preceded by plus or minus character    #509
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
 		if (setc_value1.length() == 0) setc_value1 = "0";                // #509
@@ -12168,10 +13209,13 @@ public  class  mz390 {
 		}                                                                // #509
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * convert binary string to hex string
+ */
     private void exec_pc_b2x(){
-    	/*
-    	 * convert binary string to hex string
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
 		int len = setc_value1.length();                                      // #509
@@ -12198,18 +13242,24 @@ public  class  mz390 {
 		}                                                                    // #509
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * convert 0-4 character string to int
+ */
     private void exec_pc_c2a(){
-    	/*
-    	 * convert 0-4 character string to int    #509
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value = "C'" + get_setc_stack_value() + "'";
 		exp_push_sdt();
     }
+
+
+
+/**
+ * convert char string to binary string
+ */
     private void exec_pc_c2b(){
-    	/*
-    	 * convert char string to binary string
-    	 */
     	check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();                          // #509
 		if (setc_value1.length() == 0) {                               // #509
@@ -12228,6 +13278,9 @@ public  class  mz390 {
 		}                                                              // #509
 		put_setc_stack_var();
     }
+
+
+
     /**
      * Convert binary byte to length 8 binary string                   // #509
      *
@@ -12241,10 +13294,13 @@ public  class  mz390 {
 		if (j != 0) s = "0000000".substring(0,8-j)+s;                  // #509
 		return s;                                                      // #509
 	}                                                                  // #509
+
+
+
+/**
+ * convert char string to decimal string prefixed by plus or minus sign    #509
+ */
     private void exec_pc_c2d(){
-    	/*
-    	 * convert char string to decimal string prefixed by plus or minus sign    #509
-    	 */
     	check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();                                                     // #509
 		setc_value = "";                                                                          // #509
@@ -12267,10 +13323,13 @@ public  class  mz390 {
         }                                                                                         // #509
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * convert char string to hex string
+ */
     private void exec_pc_c2x(){
-    	/*
-    	 * convert char string to hex string
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	String hex = ""; // RPI 1101
     	String text = get_setc_stack_value();
@@ -12287,10 +13346,15 @@ public  class  mz390 {
     	setc_value = hex;
     	put_setc_stack_var();
     }
+
+
+
+/**
+ * return up to 2-8 hex chars for 1-4 char
+ *
+ * @param text input text string
+ */
     private void get_text_hex(String text){
-    	/*
-    	 * return up to 2-8 hex chars for 1-4 char
-    	 */
     	setc_value = "C'" + text + "'";
 		setc_value1 = setc_value;
     	if (!tz390.get_sdt_char_int(setc_value)){
@@ -12299,10 +13363,13 @@ public  class  mz390 {
 		seta_value = tz390.sdt_char_int; 
 		setc_value = tz390.get_hex(seta_value,2*text.length()); // RPI 1101
     }
+
+
+
+/**
+ * convert decimal string to int
+ */
     private void exec_pc_d2a(){
-    	/*
-    	 * convert decimal string to int
-    	 */
     	check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();
 		if (setc_value1.length() == 0) {                                     // #509
@@ -12323,10 +13390,13 @@ public  class  mz390 {
 		}                                                                    // #509
 		put_seta_stack_var();
     }
+
+
+
+/**
+ * convert decimal string to binary string of length 32
+ */
     private void exec_pc_d2b(){
-    	/*
-    	 * convert decimal string to binary string of length 32    #509
-    	 */
     	check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();
 		if (setc_value1.length() == 0) {                                                                 // #509
@@ -12348,10 +13418,13 @@ public  class  mz390 {
 		}                                                                                                // #509
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * convert decimal string to char string
+ */
     private void exec_pc_d2c(){
-    	/*
-    	 * convert decimal string to char string
-    	 */
     	check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();
 		if (setc_value1.length() == 0) {                                             // #509
@@ -12378,10 +13451,13 @@ public  class  mz390 {
 		}                                                                            // #509
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * convert decimal string to hex string
+ */
     private void exec_pc_d2x(){
-    	/*
-    	 * convert decimal string to hex string
-    	 */
     	check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();                                            // #509
 		if (setc_value1.length() == 0) {                                                 // #509
@@ -12404,11 +13480,14 @@ public  class  mz390 {
 		}                                                                                // #509
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * return dc length of string after
+ * reducing double quotes and ampersands
+ */
     private void exec_pc_dclen(){
-    	/*
-    	 * return dc length of string after
-    	 * reducing double quotes and ampersands
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
     	setc_value = tz390.find_dsquote.matcher(setc_value1).replaceAll("'"); // RPI 1080
@@ -12417,20 +13496,26 @@ public  class  mz390 {
 		val_type = val_seta_type; 
 		put_seta_stack_var();
     }
+
+
+
+/**
+ * return string with reduced quotes and ampersands
+ */
     private void exec_pc_dcval(){
-    	/*
-    	 * return string with reduced quotes and ampersands
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
     	setc_value = tz390.find_dsquote.matcher(setc_value1).replaceAll("'"); // RPI 1080
     	setc_value = tz390.find_damp.matcher(setc_value).replaceAll("&"); // RPI 1080
     	put_setc_stack_var();
     }
+
+
+
+/**
+ * remove start and ending quote if any
+ */
     private void exec_pc_dequote(){ // RPI 886
-    	/*
-    	 * remove start and ending quote if any
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
     	if (setc_value1.length() > 1
@@ -12450,20 +13535,26 @@ public  class  mz390 {
 		}
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * double quotes within string
+ */
     private void exec_pc_double(){
-    	/*
-    	 * double quotes within string
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
     	setc_value = tz390.find_squote.matcher(setc_value1).replaceAll("''"); // RPI 1080
     	setc_value = tz390.find_amp.matcher(setc_value).replaceAll("&&"); // RPI 1080
     	put_setc_stack_var();
     }
+
+
+
+/**
+ * return 1 if 1-32 binary digits string else 0; error if 0 digits
+ */
     private void exec_pc_isbin(){
-    	/*
-    	 * return 1 if 1-32 binary digits string else 0; error if 0 digits   // #509
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
 		setb_value = 0;                                                      // #509
@@ -12474,6 +13565,9 @@ public  class  mz390 {
 		}                                                                    // #509
 		put_setb_stack_var();
     }
+
+
+
     // Begin #509 ////////////////////////////////////////////////////////////////////////
 	/**
 	 * Check if string is all binary digits
@@ -12486,6 +13580,9 @@ public  class  mz390 {
 	{
 		return (binDigitsPattern.matcher(s).matches()) ? true : false;
 	}
+
+
+
 	/**
 	 * Check if string is 1-32 binary digits
 	 * 
@@ -12497,6 +13594,9 @@ public  class  mz390 {
 	{
 		return (s != null && s.length() <= 32 && isBinDigits(s)) ? true : false;
 	}
+
+
+
 	/**
 	 * Check if string is 1-10 decimal digits having
 	 * maximum value 2147483647 (Integer.MAX_VALUE)
@@ -12511,6 +13611,9 @@ public  class  mz390 {
 		try { Integer.parseInt(s); return true;	}
 		catch (NumberFormatException e)	{ return false;	}
 	}
+
+
+
 	/**
 	 * Check if string 1-10 decimal digits, with possible
 	 * leading sign, having value in range
@@ -12538,6 +13641,9 @@ public  class  mz390 {
 		}
 		return false;
 	}
+
+
+
 	/**
 	 * Check if string is all decimal digits
 	 * 
@@ -12549,6 +13655,9 @@ public  class  mz390 {
 	{
 		return (decDigitsPattern.matcher(s).matches()) ? true : false;
 	}
+
+
+
 	/**
 	 * Check if string is all hexadecimal digits
 	 * 
@@ -12560,6 +13669,9 @@ public  class  mz390 {
 	{
 		return (hexDigitsPattern.matcher(s).matches()) ? true : false;
 	}
+
+
+
 	/**
 	 * Check if string is 1-8 hexadecimal digits
 	 * 
@@ -12571,6 +13683,9 @@ public  class  mz390 {
 	{
 		return (isHexDigits(s) && s.length() <= 8) ? true : false;
 	}
+
+
+
 	/**
 	 * Check if character is a hexadecimal digit
 	 * 
@@ -12609,10 +13724,13 @@ public  class  mz390 {
 		}
 	}
     // End #509 //////////////////////////////////////////////////////////////////////////
+
+
+
+/**
+ * if string 1-10 decimal digits &lt;= 2147483647  return 1 else 0; error if 0 digits
+ */
     private void exec_pc_isdec(){
-    	/*
-    	 * if string 1-10 decimal digits <= 2147483647  return 1 else 0; error if 0 digits  // #509
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
 		setb_value = 0;                                                      // #509
@@ -12623,10 +13741,13 @@ public  class  mz390 {
 		}                                                                    // #509
 		put_setb_stack_var();
     }
+
+
+
+/**
+ * return 1 if string 1-8 hex digits else 0; error if 0 digits
+ */
     private void exec_pc_ishex(){
-    	/*
-    	 * return 1 if string 1-8 hex digits else 0; error if 0 digits       // #509
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
 		setb_value = 0;                                                      // #509
@@ -12637,10 +13758,13 @@ public  class  mz390 {
 		}                                                                    // #509
 		put_setb_stack_var();
     }
+
+
+
+/**
+ * return 1 if symbol defined else 0
+ */
     private void exec_pc_issym(){
-    	/*
-    	 * return 1 if symbol defined else 0
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
 		if (setc_value1.length() > 0 && setc_value1.length() <= 63){
@@ -12659,19 +13783,25 @@ public  class  mz390 {
 		}
 		put_setb_stack_var();
     }
+
+
+
+/**
+ * convert int to signed decimal string
+ */
     private void exec_pc_signed(){
-    	/*
-    	 * convert int to signed decimal string
-    	 */
     	seta_value = get_seta_stack_value(-1);
     	tot_exp_stk_var--;
     	setc_value = Integer.toString(seta_value);
     	put_setc_stack_var();
     }
+
+
+
+/**
+ * shift left arithmetic
+ */
     private void exec_pc_sla(){
-    	/*
-    	 * shift left arithmetic
-    	 */
     	seta_value1 = get_seta_stack_value(-2);
     	seta_value2 = get_seta_stack_value(-1);
     	tot_exp_stk_var = tot_exp_stk_var - 2;
@@ -12681,20 +13811,25 @@ public  class  mz390 {
 		}		
 		put_seta_stack_var();                                        // #509
     }
+
+
+
 	/**
-	 * Implement HLASM LangRef SLA built-in function                 // #509
+	 * Implement HLASM LangRef SLA built-in function<br />
+	 * <br />
+	 * Notes:
+	 * <ol>
+	 *  <li>Only the low 6 bits of n are used. For example,
+	 *       n = -1 = X'FFFFFFFF' is changed to X'0000003F' = 63
+	 *       and n = X'80000000' (Integer.MIN_VALUE) is changed
+	 *       to 0.</li>
+	 *  <li>Arithmetic overflow error logged if a bit that is not
+	 *       the original sign bit is shifted into the sign position.</li>
+	 * </ol>
 	 * 
 	 * @param x the number to shift
 	 * @param n the number of bits to shift
 	 * @return x shifted left n bits if no error; else 0
-	 * 
-	 * Note: Only the low 6 bits of n are used. For example,
-	 *       n = -1 = X'FFFFFFFF' is changed to X'0000003F' = 63
-	 *       and n = X'80000000' (Integer.MIN_VALUE) is changed
-	 *       to 0.
-	 *
-	 * Arithmetic overflow error logged if a bit that is not
-	 * the original sign bit is shifted into the sign position.
 	 */
 	private int shiftLeftArithmetic(int x, int n)                    // #509
 	{
@@ -12722,6 +13857,9 @@ public  class  mz390 {
 		}
 		return x << n;
 	}
+
+
+
 	/**
 	 * Create mask containing n+1 one bits in the leftmost position      // #509
 	 *
@@ -12732,11 +13870,14 @@ public  class  mz390 {
 	private int shiftLeftArithmeticSignMask(int n)                       // #509
 	{
 		return Integer.MIN_VALUE >> n;
-	}   	
+	}
+
+
+
+/**
+ * shift left logical
+ */
     private void exec_pc_sll(){
-    	/*
-    	 * shift left logical
-    	 */
     	seta_value1 = get_seta_stack_value(-2);
     	seta_value2 = get_seta_stack_value(-1);
     	tot_exp_stk_var = tot_exp_stk_var - 2;
@@ -12747,10 +13888,13 @@ public  class  mz390 {
 		}		
     	put_seta_stack_var(); 
     }
+
+
+
+/**
+ * shift right arithmetic
+ */
     private void exec_pc_sra(){
-    	/*
-    	 * shift right arithmetic
-    	 */
     	seta_value1 = get_seta_stack_value(-2);
     	seta_value2 = get_seta_stack_value(-1);
     	tot_exp_stk_var = tot_exp_stk_var - 2;
@@ -12761,10 +13905,13 @@ public  class  mz390 {
 		}		
 		put_seta_stack_var();                            // #509
     }
+
+
+
+/**
+ * shift right logical
+ */
     private void exec_pc_srl(){
-    	/*
-    	 * shift right logical
-    	 */
     	seta_value1 = get_seta_stack_value(-2);
     	seta_value2 = get_seta_stack_value(-1);
     	tot_exp_stk_var = tot_exp_stk_var - 2;
@@ -12775,11 +13922,14 @@ public  class  mz390 {
 		}		
 		put_seta_stack_var();                            // #509
     }
+
+
+
+/**
+ * return int value of assembler attribute
+ * for symbol defined via EQU 4th parm
+ */
     private void exec_pc_sattra(){
-    	/*
-    	 * return int value of assembler attribute
-    	 * for symbol defined via EQU 4th parm
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
 		int cur_sym = mz390_find_sym(setc_value1);
@@ -12794,11 +13944,14 @@ public  class  mz390 {
 		}		
     	put_setc_stack_var();
     }
+
+
+
+/**
+ * return int value of symbol program
+ * attribute defined via EQU 5th parm
+ */
     private void exec_pc_sattrp(){
-    	/*
-    	 * return int value of symbol program
-    	 * attribute defined via EQU 5th parm
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
     	int cur_sym = mz390_find_sym(setc_value1);
@@ -12818,10 +13971,13 @@ public  class  mz390 {
 		}		
   	    put_setc_stack_var();
     }
+
+
+
+/**
+ * convert hex string to int
+ */
     private void exec_pc_x2a(){
-    	/*
-    	 * convert hex string to int
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
     	if (setc_value1.length() > 0) {                                      // #509
@@ -12836,10 +13992,13 @@ public  class  mz390 {
 		}                                                                    // #509
 		put_seta_stack_var();
     }
+
+
+
+/**
+ * convert hex string to binary string
+ */
     private void exec_pc_x2b(){
-    	/*
-    	 * convert hex string to binary string
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
 		if (setc_value1.length() == 0) {                                             // #509
@@ -12863,10 +14022,13 @@ public  class  mz390 {
 		}                                                                            // #509
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * convert hex string to char string
+ */
 	private void exec_pc_x2c(){
-		/*
-		 * convert hex string to char string
-		 */
 		check_setc_quotes(1); // RPI 1139
 		setc_value1 = get_setc_stack_value();
 		int j = setc_value1.length();
@@ -12885,10 +14047,13 @@ public  class  mz390 {
 		setc_value = stb.toString();
 		put_setc_stack_var();
 	}
+
+
+
+/**
+ * convert hex string to decimal string preceded by plus or minus sign
+ */
     private void exec_pc_x2d(){
-    	/*
-    	 * convert hex string to decimal string preceded by plus or minus sign    // #509
-    	 */
     	check_setc_quotes(1); // RPI 1139
     	setc_value1 = get_setc_stack_value();
 		if (setc_value1.length() == 0) setc_value1 = "0";                // #509
@@ -12903,11 +14068,16 @@ public  class  mz390 {
 		}                                                                // #509
 		put_setc_stack_var();
     }
+
+
+
+/**
+ * get created var name from stack and
+ * update var fields in pseudo code
+ *
+ * @param offset ???
+ */
     private void get_pc_created_var(int offset){
-    	/*
-    	 * get created var name from stack and
-    	 * update var fields in pc
-    	 */
     	pc_sysndx[pc_loc] = mac_call_sysndx[mac_call_level];
     	var_name = "&" + exp_stk_setc[tot_exp_stk_var + offset].toUpperCase(); // RPI 499 fix careted vars
 		symbol_match = symbol_pattern.matcher(var_name);  
@@ -12925,11 +14095,14 @@ public  class  mz390 {
         pc_var_loc[pc_loc]  = var_loc;
         pc_seta[pc_loc] = var_name_index;
     }
+
+
+
+/**
+ * set pc seta or setc parms based on 
+ * pc_var_type() and abort if error
+ */
     private void get_pc_parms(){
-    	/*
-    	 * set pc seta or setc parms based on 
-    	 * pc_var_type() and abort if error
-    	 */
     	switch (pc_parm_type){
     	case 31: // var_pc_seta_stack_values
     		val_type = val_seta_type;
@@ -12970,11 +14143,14 @@ public  class  mz390 {
     		abort_pc("invalid get_pc_parms type = " + var_type);
     	}
     }
+
+
+
+/**
+ * push ordinary symbol abs value
+ * on stack else issue error
+ */
     private void exec_pc_pushs(){
-    	/*
-    	 * push ordinary symbol abs value
-    	 * on stack else issue error
-    	 */
 		int index = mz390_find_sym(setc_value);
 		if (index >= 0){
 			seta_value = az390.sym_loc[index];
@@ -12988,10 +14164,15 @@ public  class  mz390 {
 			log_error(228,"undefined symbol - " + setc_value); 
 		}
     }
+
+
+
+/**
+ * return val_type based on var_type
+ *
+ * @return value type code
+ */
     private byte get_val_type(){
-    	/*
-    	 * return val_type based on var_type
-    	 */
     	switch (var_type){
     	case 21: // var_seta_type
     		return val_seta_type;
@@ -13008,15 +14189,23 @@ public  class  mz390 {
     	    return -1;
     	}
     }
+
+
+
+/**
+ * write text to buffered file with
+ * continuations if > 71 characters.<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>Used by put_bal_line and</li>
+ *  <li>Used by put_pch_line if extended FORMAT option specified.</li>
+ * </ol>
+ *
+ * @param file_buff buffered writer object
+ * @param text text to add to buffer
+ */
     private void put_continued_text(BufferedWriter file_buff,String text){
-    	/*
-    	 * write text to buffered file with
-    	 * continuations if > 71 characters.
-    	 * Notes:
-    	 *   1. Used by put_bal_line and
-    	 *   2. Used by put_pch_line if 
-    	 *      extended FORMAT option specified.
-    	 */
     	try {
     	    String text_work;  // replace non-printable with '.'
 			if (tz390.opt_writenonprintable) {
@@ -13053,10 +14242,13 @@ public  class  mz390 {
 			abort_error(206,"file I/O error " + e.toString());
 		}		
     }
+
+
+
+/**
+ * insert record in in queue
+ */
     private void process_ainsert(){
-		/*
-		 * insert record in in queue
-		 */		
 		if (bal_parms.length() > 2
 			&& bal_parms.charAt(0) == '\''){
 			String text = bal_parms;
@@ -13088,11 +14280,16 @@ public  class  mz390 {
 		}
 		log_error(268,"AINSERT syntax error - " + bal_parms);
 	}
+
+
+
+/**
+ * add record to front or back of ainsert queue
+ * for copy insert at front in seq.
+ *
+ * @param rec source record to add
+ */
     private void add_ainsert_queue_rec(String rec){
-    	/*
-    	 * add record to front or back of ainsert queue
-    	 * for copy insert at front in seq.
-    	 */
     	if (tz390.opt_tracem      // RPI 1135
             || tz390.opt_tracei){ // RPI 1159
     		if (!tz390.opt_tracem){
@@ -13114,12 +14311,15 @@ public  class  mz390 {
 		}
 		cur_ainsert++;
     }
+
+
+
+/**
+ * insert AINSERT logical record
+ * in front of current source line
+ * at mac_line index
+ */
     private void insert_source_line(){
-    	/*
-    	 * insert AINSERT logical record 
-    	 * in front of current source line
-    	 * at mac_line index
-    	 */
     	get_ainsert_source_line(); // RPI 1136
     	if (tz390.opt_tracem){ // RPI 1053
    	       tz390.put_trace("AINSERT POP =" + mac_line); // RPI 1135
@@ -13139,11 +14339,14 @@ public  class  mz390 {
         set_insert_mac_line_index();  // RPI 1019
 	    mac_file_line[mac_line_index] = mac_line;
     }
+
+
+
+/**
+ * return mac_line with source line from AINSERT queue
+ * which may have continuations
+ */
     private void get_ainsert_source_line(){
-    	/*
-    	 * return mac_line with source line from AINSERT queue
-    	 * which may have continuations
-    	 */
     	String temp_line = ainsert_queue.pop();
     	cur_ainsert--;
     	tot_ainsert++;
@@ -13180,12 +14383,15 @@ public  class  mz390 {
     		} 
     	}
     }
+
+
+
+/**
+ * set mac_line_index to next insert
+ * for AINSERT or dynamic COPY
+ * else abort
+ */
     private void set_insert_mac_line_index(){
-    	/*
-    	 * set mac_line_index to next insert
-    	 * for AINSERT or dynamic COPY
-    	 * else abort
-    	 */
     	last_ainsert--;
     	if (tot_mac_line >= last_ainsert){
     		abort_error(270,"maximum ainsert source lines MAXLINE exceeded");
@@ -13197,11 +14403,16 @@ public  class  mz390 {
     	mac_file_next_line[last_ainsert] = mac_line_index;
     	mac_line_index = last_ainsert;
     }
+
+
+
+/**
+ * if NOALLOW verify function has quoted string
+ * as first argument.
+ *
+ * @param tot_setc_args arguments
+ */
     private void check_setc_quotes(int tot_setc_args){
-    	/*
-    	 * if NOALLOW verify function has quoted string
-    	 * as first argument.
-    	 */
     	if (exec_pc_op || tz390.opt_allow){ // RPI 1139 
     		return;
     	}
@@ -13214,11 +14425,18 @@ public  class  mz390 {
     		tot_setc_args--;
     	}
     }
+
+
+
+/**
+ * return numeric array dimension > 0 else
+ * issue error and return 1
+ *
+ * @param text input string
+ * @param start start offset within string
+ * @return numeric value of successive digits interpreted as a single decimal number
+ */
     private int calc_dimension(String text,int start){
-    	/*
-    	 * return numberic array dimension > 0 else
-    	 * issue error and return 1
-    	 */
     	int dim = 0;
     	int index = start;
     	while (text.charAt(index) >= '0'
@@ -13227,7 +14445,7 @@ public  class  mz390 {
     		index++;
     	}    		   
     	if (dim <= 0 || text.charAt(index) != ')'){
-    		log_error(285,"invalud dimension " + text.substring(start));
+    		log_error(285,"invalid dimension " + text.substring(start));
     		dim = 1;
     	}
     	exp_next_index = index+1; // RPI 1139 skip ) 
