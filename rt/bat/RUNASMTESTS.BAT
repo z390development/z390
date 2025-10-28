@@ -23,17 +23,17 @@ call bat\asmlg %z_TraceMode% tests\testdfp2  trace sysmac(mac) noloadhigh optabl
 call bat\asmlg %z_TraceMode% tests\testlits  trace sysmac(mac) noloadhigh optable(z390)       || goto error
 call bat\asmlg %z_TraceMode% tests\TEDIT     trace sysmac(mac) noloadhigh optable(z390)       || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTAMPS trace sysmac(mac) noloadhigh optable(z390)       || goto error
-call bat\asmlg %z_TraceMode% rt\mlc\IS215    trace sysmac(mac) noloadhigh optable(z390)       || goto error
-call bat\asml  %z_TraceMode% rt\mlc\IS658LD  trace sysmac(mac) noloadhigh optable(z390)       || goto error
-call bat\asmlg %z_TraceMode% rt\mlc\IS658    trace sysmac(mac) noloadhigh optable(z390)       || goto error
-call bat\asmlg %z_TraceMode% rt\mlc\IS658    trace sysmac(mac)            optable(z390)       || goto error
-call bat\asmlg %z_TraceMode% rt\mlc\IS659    trace sysmac(mac) noloadhigh optable(z390)       || goto error
-call bat\asmlg %z_TraceMode% rt\mlc\IS660    trace sysmac(mac) noloadhigh optable(z390)       || goto error
+call bat\asmlg %z_TraceMode% rt\mlc\IS215    trace sysmac(mac) noloadhigh                     || goto error
+call bat\asml  %z_TraceMode% rt\mlc\IS658LD  trace sysmac(mac) noloadhigh                     || goto error
+call bat\asmlg %z_TraceMode% rt\mlc\IS658    trace sysmac(mac) noloadhigh                     || goto error
+call bat\asmlg %z_TraceMode% rt\mlc\IS658    trace sysmac(mac)                                || goto error
+call bat\asmlg %z_TraceMode% rt\mlc\IS659    trace sysmac(mac) noloadhigh                     || goto error
+call bat\asmlg %z_TraceMode% rt\mlc\IS660    trace sysmac(mac) noloadhigh                     || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC1  trace sysmac(mac) noloadhigh optable(z390)       || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTASC1 trace sysmac(mac) noloadhigh optable(z390) ASCII || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC2  trace sysmac(mac) noloadhigh optable(z390)       || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC3  trace sysmac(mac) noloadhigh optable(z390)       || goto error
-call bat\asmlg %z_TraceMode% rt\mlc\TB2CX2C  trace sysmac(mac) noloadhigh optable(z390)       || goto error
+call bat\asmlg %z_TraceMode% rt\mlc\TB2CX2C  trace sysmac(mac) noloadhigh                     || goto error
 call bat\asm   %z_TraceMode% rt\mlc\ATTRIB$O trace sysmac(mac)                                || goto error
 call rt\bat\ZOPCHECK %z_TraceMode%                                                            || goto error
 
