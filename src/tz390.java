@@ -413,7 +413,7 @@ public  class  tz390 {
     String  opt_optable  = "*DFLT"; // default optable depends on z390/HLASM mode as indicated by allow option RPI 1209A
     String  opt_optable_list = "NOLIST"; // do not to list instructions RPI 1209A
     String  opt_optable_optable = ""; // effective optable associated with specified optable option #503
-    int     opt_optable_optb_nr = OpcodeArchLevel.ARCH_DFLT.getValue() ; // nr associated with effective optable #554 #631 #656
+    int     opt_optable_optb_nr = ArchLevel.ARCH_DFLT.getValue() ; // nr associated with effective optable #554 #631 #656
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
     boolean opt_pc       = true;  // generate macro pseudo code
     boolean opt_pcopt    = true;  // optimize pc code for speed
@@ -1129,69 +1129,37 @@ public  class  tz390 {
     String[] optable_option_id = null;                    // #503
     String[] optables_optable = null; // optable's optable// #503
 
-    public enum OpcodeArchLevel {                         // #656
-        ARCH_360_20 (0),                                  // #656
-        ARCH_DOS    (1),                                  // #656
-        ARCH_370    (2),                                  // #656
-        ARCH_XA     (3),                                  // #656
-        ARCH_ESA    (4),                                  // #656
-        ARCH_ZOP    (5),                                  // #656
-        ARCH_YOP    (6),                                  // #656
-        // "07:reserved" 07 skipped to assign 09 to z9    // #631 #656
-        // "08:reserved" 08 skipped to assign 09 to z9    // #631 #656
-        ARCH_Z9     (9),                                  // #656
-        ARCH_Z10    (10),                                 // #656
-        ARCH_Z11    (11),                                 // #656
-        ARCH_Z12    (12),                                 // #656
-        ARCH_Z13    (13),                                 // #656
-        ARCH_Z14    (14),                                 // #656
-        ARCH_Z15    (15),                                 // #656
-        ARCH_Z16    (16),                                 // #656
-        ARCH_Z17    (17),                                 // #656
-        ARCH_UNI    (80),                                 // #656
-        ARCH_Z390   (90),                                 // #656
-        ARCH_DFLT   (91);                                 // #656
-                                                          // #656
-        private final int value;                          // #656
-        OpcodeArchLevel(int value) {                      // #656
-            this.value = value;                           // #656
-        }                                                 // #656
-        public int getValue() {                           // #656
-            return value;                                 // #656
-        }                                                 // #656
-    }                                                     // #656
-
     static final String[] optable_optable_equivalence =   // #503 #631
-       {""+Integer.toString(OpcodeArchLevel.ARCH_360_20.getValue())+":360-20=360-20", // #543 #554 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_DOS.getValue())   +":DOS=DOS",       // #503 #554 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_370.getValue())   +":370=370",       // #503 #554 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_XA.getValue())    +":XA=XA",         // #503 #554 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_ESA.getValue())   +":ESA=ESA",       // #503 #554 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_ZOP.getValue())   +":ZOP=ZOP",       // #503 #554 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_ZOP.getValue())   +":ZS1=ZOP",       // #503 #554 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_YOP.getValue())   +":YOP=YOP",       // #503 #554 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_YOP.getValue())   +":ZS2=YOP",       // #503 #554 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z9 .getValue())   +":Z9=Z9",         // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z9 .getValue())   +":ZS3=Z9",        // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z10.getValue())   +":Z10=Z10",       // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z10.getValue())   +":ZS4=Z10",       // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z11.getValue())   +":Z11=Z11",       // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z11.getValue())   +":ZS5=Z11",       // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z12.getValue())   +":Z12=Z12",       // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z12.getValue())   +":ZS6=Z12",       // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z13.getValue())   +":Z13=Z13",       // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z13.getValue())   +":ZS7=Z13",       // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z14.getValue())   +":Z14=Z14",       // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z14.getValue())   +":ZS8=Z14",       // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z15.getValue())   +":Z15=Z15",       // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z15.getValue())   +":ZS9=Z15",       // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z16.getValue())   +":Z16=Z16",       // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z16.getValue())   +":ZSA=Z16",       // #503 #554 #631 #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z17.getValue())   +":Z17=Z17",       // #661           #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z17.getValue())   +":ZSB=Z17",       // #661           #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_UNI.getValue())   +":UNI=UNI",       // #503 #554      #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_Z390.getValue())  +":z390=z390",     // #503 #554      #656
-        ""+Integer.toString(OpcodeArchLevel.ARCH_DFLT.getValue())  +":DFLT=DFLT",     // #503 #554 #631 #656
+       {""+Integer.toString(ArchLevel.ARCH_360_20.getValue())+":360-20=360-20", // #543 #554 #656
+        ""+Integer.toString(ArchLevel.ARCH_DOS.getValue())   +":DOS=DOS",       // #503 #554 #656
+        ""+Integer.toString(ArchLevel.ARCH_370.getValue())   +":370=370",       // #503 #554 #656
+        ""+Integer.toString(ArchLevel.ARCH_XA.getValue())    +":XA=XA",         // #503 #554 #656
+        ""+Integer.toString(ArchLevel.ARCH_ESA.getValue())   +":ESA=ESA",       // #503 #554 #656
+        ""+Integer.toString(ArchLevel.ARCH_ZOP.getValue())   +":ZOP=ZOP",       // #503 #554 #656
+        ""+Integer.toString(ArchLevel.ARCH_ZOP.getValue())   +":ZS1=ZOP",       // #503 #554 #656
+        ""+Integer.toString(ArchLevel.ARCH_YOP.getValue())   +":YOP=YOP",       // #503 #554 #656
+        ""+Integer.toString(ArchLevel.ARCH_YOP.getValue())   +":ZS2=YOP",       // #503 #554 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z9 .getValue())   +":Z9=Z9",         // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z9 .getValue())   +":ZS3=Z9",        // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z10.getValue())   +":Z10=Z10",       // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z10.getValue())   +":ZS4=Z10",       // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z11.getValue())   +":Z11=Z11",       // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z11.getValue())   +":ZS5=Z11",       // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z12.getValue())   +":Z12=Z12",       // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z12.getValue())   +":ZS6=Z12",       // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z13.getValue())   +":Z13=Z13",       // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z13.getValue())   +":ZS7=Z13",       // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z14.getValue())   +":Z14=Z14",       // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z14.getValue())   +":ZS8=Z14",       // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z15.getValue())   +":Z15=Z15",       // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z15.getValue())   +":ZS9=Z15",       // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z16.getValue())   +":Z16=Z16",       // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z16.getValue())   +":ZSA=Z16",       // #503 #554 #631 #656
+        ""+Integer.toString(ArchLevel.ARCH_Z17.getValue())   +":Z17=Z17",       // #661           #656
+        ""+Integer.toString(ArchLevel.ARCH_Z17.getValue())   +":ZSB=Z17",       // #661           #656
+        ""+Integer.toString(ArchLevel.ARCH_UNI.getValue())   +":UNI=UNI",       // #503 #554      #656
+        ""+Integer.toString(ArchLevel.ARCH_Z390.getValue())  +":z390=z390",     // #503 #554      #656
+        ""+Integer.toString(ArchLevel.ARCH_DFLT.getValue())  +":DFLT=DFLT",     // #503 #554 #631 #656
         };                                                // #503
     int[]    machine_option_nr = null;                    // #568
     String[] machine_option_id = null;                    // #503
@@ -3837,121 +3805,121 @@ public void create_opcodes()  // Routine added for RPI 1209
         // Always required                                                    // #631
         process_opcodes(op_table_start);                                      // #631
         // Instructions defined for S360/20 only                              // #631
-        if (opt_optable_optb_nr == OpcodeArchLevel.ARCH_360_20.getValue())    // #631 #656
+        if (opt_optable_optb_nr == ArchLevel.ARCH_360_20.getValue())          // #631 #656
            {process_opcodes(op_table_360_20_only);                            // #631
             }                                                                 // #631
         // Instructions shared with optable(DOS) ff.                          // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_360_20.getValue())    // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_360_20.getValue())          // #631 #656
            {process_opcodes(op_table_360_20);                                 // #631
             }                                                                 // #631
         // Instructions not shared with S360/20                               // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_DOS.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_DOS.getValue())             // #631 #656
            {process_opcodes(op_table_DOS);                                    // #631
             }                                                                 // #631
         // Instructions valid from S360 through S370                          // #631
-        if (  (   opt_optable_optb_nr >= OpcodeArchLevel.ARCH_DOS.getValue()  // #631 #656
-               && opt_optable_optb_nr <= OpcodeArchLevel.ARCH_370.getValue()  // #631 #656
+        if (  (   opt_optable_optb_nr >= ArchLevel.ARCH_DOS.getValue()        // #631 #656
+               && opt_optable_optb_nr <= ArchLevel.ARCH_370.getValue()        // #631 #656
                )                                                              // #631
-            || opt_optable_optb_nr >= OpcodeArchLevel.ARCH_UNI.getValue()     // #631
+            || opt_optable_optb_nr >= ArchLevel.ARCH_UNI.getValue()           // #631 #656
             )                                                                 // #631
            {process_opcodes(op_table_DOS_370);                                // #631
             }                                                                 // #631
         // Instructions for optable 370 only                                  // #631
-        if (opt_optable_optb_nr == OpcodeArchLevel.ARCH_370.getValue()        // #631 #656
-        ||  opt_optable_optb_nr >= OpcodeArchLevel.ARCH_UNI.getValue())       // #631 #656
+        if (opt_optable_optb_nr == ArchLevel.ARCH_370.getValue()              // #631 #656
+        ||  opt_optable_optb_nr >= ArchLevel.ARCH_UNI.getValue())             // #631 #656
            {process_opcodes(op_table_370_only);                               // #631
             }                                                                 // #631
         // Instructions valid from S370                                       // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_370.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_370.getValue())             // #631 #656
            {process_opcodes(op_table_370);                                    // #631
             }                                                                 // #631
         // Old vector facility is required for S370-ESA                       // #631
         // (and optional for z390 until new vector in z14)                    // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_370.getValue()        // #631 #656
-        &&  opt_optable_optb_nr <= OpcodeArchLevel.ARCH_ESA.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_370.getValue()              // #631 #656
+        &&  opt_optable_optb_nr <= ArchLevel.ARCH_ESA.getValue())             // #631 #656
            {opt_vector = true;                                                // #631
             }                                                                 // #631
         // Instructions valid from S370-XA                                    // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_XA.getValue())        // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_XA.getValue())              // #631 #656
            {process_opcodes(op_table_XA);                                     // #631
             }                                                                 // #631
         // Instructions valid for S390 only                                   // #631
-        if (opt_optable_optb_nr == OpcodeArchLevel.ARCH_ESA.getValue())       // #631 #656
+        if (opt_optable_optb_nr == ArchLevel.ARCH_ESA.getValue())             // #631 #656
            {process_opcodes(op_table_ESA_only);                               // #631
             }                                                                 // #631
         // Instructions valid from S390                                       // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_ESA.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_ESA.getValue())             // #631 #656
            {process_opcodes(op_table_ESA);                                    // #631
             }                                                                 // #631
         // Instructions valid from ESA but never supported by HLASM           // #631
-        if (   (   opt_optable_optb_nr >= OpcodeArchLevel.ARCH_ESA.getValue() // #631
+        if (   (   opt_optable_optb_nr >= ArchLevel.ARCH_ESA.getValue()       // #631 #656
                 && opt_allow                                                  // #631
                 )                                                             // #631
-            || opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z390.getValue()    // #631 #656
+            || opt_optable_optb_nr >= ArchLevel.ARCH_Z390.getValue()          // #631 #656
             )                                                                 // #631
            {process_opcodes(op_table_ESA_allow);                              // #631
             }                                                                 // #631
         // Instructions valid from z Architecture z800/z900                   // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_ZOP.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_ZOP.getValue())             // #631 #656
            {process_opcodes(op_table_ZOP);                                    // #631
             }                                                                 // #631
         // Instructions valid from z Architecture z890/z990                   // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_YOP.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_YOP.getValue())             // #631 #656
            {process_opcodes(op_table_YOP);                                    // #631
             }                                                                 // #631
         // Instructions valid from z Arch z890/z990 thru z16 only             // #661
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_YOP.getValue()        // #661 #656
-        &&  opt_optable_optb_nr <= OpcodeArchLevel.ARCH_Z16.getValue())       // #661 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_YOP.getValue()              // #661 #656
+        &&  opt_optable_optb_nr <= ArchLevel.ARCH_Z16.getValue())             // #661 #656
            {process_opcodes(op_table_YOP_Z16);                                // #661
             }                                                                 // #661
         // Instructions valid from z Architecture z9                          // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z9.getValue())        // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_Z9.getValue())              // #631 #656
            {process_opcodes(op_table_Z9);                                     // #631
             }                                                                 // #631
         // Instructions valid from z Architecture z10                         // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z10.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_Z10.getValue())             // #631 #656
            {process_opcodes(op_table_Z10);                                    // #631
             }                                                                 // #631
         // Instructions valid from z Architecture z11                         // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z11.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_Z11.getValue())             // #631 #656
            {process_opcodes(op_table_Z11);                                    // #631
             }                                                                 // #631
         // Instructions valid for z Architecture z11 and z12 only             // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z11.getValue()        // #631 #656
-        &&  opt_optable_optb_nr <= OpcodeArchLevel.ARCH_Z12.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_Z11.getValue()              // #631 #656
+        &&  opt_optable_optb_nr <= ArchLevel.ARCH_Z12.getValue())             // #631 #656
            {process_opcodes(op_table_Z11_Z12);                                // #631
             }                                                                 // #631
         // Instructions valid from z Architecture z12                         // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z12.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_Z12.getValue())             // #631 #656
            {process_opcodes(op_table_Z12);                                    // #631
             }                                                                 // #631
         // Instructions valid from z Architecture z13                         // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z13.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_Z13.getValue())             // #631 #656
            {process_opcodes(op_table_Z13);                                    // #631
             }                                                                 // #631
         // Instructions valid for z Architecture z14 only                     // #631
-        if (opt_optable_optb_nr == OpcodeArchLevel.ARCH_Z14.getValue())       // #631 #656
+        if (opt_optable_optb_nr == ArchLevel.ARCH_Z14.getValue())             // #631 #656
            {process_opcodes(op_table_Z14_only);                               // #631
             }                                                                 // #631
         // Instructions valid from z Architecture z14                         // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z14.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_Z14.getValue())             // #631 #656
            {process_opcodes(op_table_Z14);                                    // #631
             }                                                                 // #631
         // Instructions valid from z Arch z14 thru z16 only                   // #661
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z14.getValue()        // #661 #656
-        &&  opt_optable_optb_nr <= OpcodeArchLevel.ARCH_Z16.getValue())       // #661 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_Z14.getValue()              // #661 #656
+        &&  opt_optable_optb_nr <= ArchLevel.ARCH_Z16.getValue())             // #661 #656
            {process_opcodes(op_table_Z14_Z16);                                // #661
             }                                                                 // #661
         // Instructions valid from z Architecture z15                         // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z15.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_Z15.getValue())             // #631 #656
            {process_opcodes(op_table_Z15);                                    // #631
             }                                                                 // #631
         // Instructions valid from z Architecture z16                         // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z16.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_Z16.getValue())             // #631 #656
            {process_opcodes(op_table_Z16);                                    // #631
             }                                                                 // #631
         // Instructions valid from z Architecture z17                         // #661
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z17.getValue())       // #661 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_Z17.getValue())             // #661 #656
            {process_opcodes(op_table_Z17);                                    // #661
             }                                                                 // #661
         // Old vector facility is required for S370-ESA                       // #631
@@ -3964,34 +3932,34 @@ public void create_opcodes()  // Routine added for RPI 1209
            {process_opcodes(op_table_ASSIST);                                 // #631
             }                                                                 // #631
         // Instructions valid for z390 extensions                             // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z390.getValue()       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_Z390.getValue()             // #631 #656
         ||  opt_allow)                                                        // #631
            {process_opcodes(op_table_z390);                                   // #631
             }                                                                 // #631
         // ------------- DIRECTIVES ------------------                        // #631
         // Directives defined for S360/20 only                                // #631
-        if (opt_optable_optb_nr == OpcodeArchLevel.ARCH_360_20.getValue())    // #631
+        if (opt_optable_optb_nr == ArchLevel.ARCH_360_20.getValue())          // #631
            {process_opcodes(op_table_360_20_only_directives);                 // #631
             }                                                                 // #631
         // Directives shared with optable(DOS)                                // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_360_20.getValue())    // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_360_20.getValue())          // #631 #656
            {process_opcodes(op_table_360_20_directives);                      // #631
             }                                                                 // #631
         // Directives not shared with S360/20                                 // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_DOS.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_DOS.getValue())             // #631 #656
            {process_opcodes(op_table_DOS_directives);                         // #631
             }                                                                 // #631
         // Directives valid from S370                                         // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_370.getValue())       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_370.getValue())             // #631 #656
            {process_opcodes(op_table_370_directives);                         // #631
             }                                                                 // #631
         // Directives valid for z390 extensions                               // #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z390.getValue()       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_Z390.getValue()             // #631 #656
         ||  opt_allow)                                                        // #631
            {process_opcodes(op_table_z390_directives);                        // #631
             }                                                                 // #631
         // Directives that are valid only with the default (unspecified) optable #631
-        if (opt_optable_optb_nr >= OpcodeArchLevel.ARCH_Z390.getValue()       // #631 #656
+        if (opt_optable_optb_nr >= ArchLevel.ARCH_Z390.getValue()             // #631 #656
         ||  opt_allow)                                                        // #631
            {process_opcodes(op_table_DFLT_directives);                        // #631
             }                                                                 // #631
@@ -4752,11 +4720,11 @@ private void check_options(){
     if (opt_optable.equals("*DFLT"))
        {if (opt_allow)
            {opt_optable="Z390";
-            opt_optable_optb_nr=OpcodeArchLevel.ARCH_Z390.getValue();                               // #631 #656
+            opt_optable_optb_nr=ArchLevel.ARCH_Z390.getValue();                               // #631 #656
             }
         else
            {opt_optable="DFLT";                                                                     // #533
-            opt_optable_optb_nr=OpcodeArchLevel.ARCH_DFLT.getValue();                               // #631 #656
+            opt_optable_optb_nr=ArchLevel.ARCH_DFLT.getValue();                               // #631 #656
             }
         }
     // Check vector support parameters RPI VF01
