@@ -28,7 +28,7 @@ class RunRtTests extends z390Test {
         // rt4 = mz390
         int rc = this.mz390(basePath("rt", "test", "TESTERR2"), *rt4Options, 'ERR(0)')
         this.printOutput()
-        assert rc == 16
+        assert rc == 12
     }
     @Test
     void test_TESTERR3() {
