@@ -449,6 +449,7 @@ public  class  az390 implements Runnable {
     *                     followed by another field results in an invalid
     *                     displacement value being generated for an
     *                     RX-instruction that accesses that following field.
+    * 2025-10-11 AFK #656 Change architecture level constants to an enum
   	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -2021,7 +2022,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                            {my_operands="";                                            // #554
                             }                                                          // #554
                         else if (tz390.op_name[index].equals("IPTE"))
-                           {if (tz390.opt_optable_optb_nr >= tz390.OPCODE_FOR_Z12) // ZS6=Z12 and above // #613 #631
+                           {if (tz390.opt_optable_optb_nr >= ArchLevel.ARCH_Z12.getValue()) // ZS6=Z12 and above // #613 #631 #656
                                {my_format="RRF";                                       // #613
                                 my_operands="R1,R2<,R3<,M4>>";                         // #613
                                 }                                                      // #613
@@ -2033,7 +2034,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                              ||  tz390.op_name[index].equals("SSKE")                   // #573
                              ||  tz390.op_name[index].equals("KIMD")  // from z17      // #661
                              ||  tz390.op_name[index].equals("KLMD")) // from z17      // #661
-                           {if (tz390.opt_optable_optb_nr >= tz390.OPCODE_FOR_Z9) // Z9 and above // #573 #631
+                           {if (tz390.opt_optable_optb_nr >= ArchLevel.ARCH_Z9.getValue()) // Z9 and above // #573 #631 #656
                                {my_format="RRF";                                       // #573
                                 my_operands="R1,R2<,M3>";                              // #573
                                 }                                                      // #573
@@ -2056,7 +2057,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                         ||  tz390.op_name[index].equals("TRTO")                        // #573
                         ||  tz390.op_name[index].equals("TRTT")                        // #573
                             )                                                          // #573
-                           {if (tz390.opt_optable_optb_nr >= tz390.OPCODE_FOR_Z9) // Z9 and above // #573 #631
+                           {if (tz390.opt_optable_optb_nr >= ArchLevel.ARCH_Z9.getValue()) // Z9 and above // #573 #631 #656
                                {my_format="RRF";                                       // #573
                                 my_operands="R1,R2<,M3>";                              // #573
                                 }                                                      // #573
@@ -2081,7 +2082,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                             }                                                          // #500
                         else if (tz390.op_name[index].equals("CU14")                   // #573
                              ||  tz390.op_name[index].equals("CU24"))                  // #573
-                           {if (tz390.opt_optable_optb_nr >= tz390.OPCODE_FOR_Z9) // Z9 and above // #573 #631
+                           {if (tz390.opt_optable_optb_nr >= ArchLevel.ARCH_Z9.getValue()) // Z9 and above // #573 #631 #656
                                {my_format="RRF";                                       // #573
                                 my_operands="R1,R2<,M3>";                              // #573
                                 }                                                      // #573
@@ -2119,7 +2120,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                        {my_operands="R1,RI2";                                          // #554
                         }                                                              // #554
                     else                                                               // #554
-                       if(tz390.opt_optable_optb_nr >= tz390.OPCODE_FOR_ESA) // ESA and above// #554 #631
+                       if(tz390.opt_optable_optb_nr >= ArchLevel.ARCH_ESA.getValue()) // ESA and above// #554 #631 #656
                           my_operands="R1,RI2";                                        // #554
                        else                                                            // #554
                           my_operands="R1,I2";                                         // #500
@@ -2140,8 +2141,8 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     break;
                 case 18:
                     my_format="RXY";                                                   // #500
-                    if(   tz390.opt_optable_optb_nr == tz390.OPCODE_FOR_ESA  // ESA or ZOP use RXE, but   //      #568 #631
-                       || tz390.opt_optable_optb_nr == tz390.OPCODE_FOR_ZOP) // YOP ff. revert to RXY     // #554 #568 #631
+                    if(   tz390.opt_optable_optb_nr == ArchLevel.ARCH_ESA.getValue()  // ESA or ZOP use RXE, but   //      #568 #631 #656
+                       || tz390.opt_optable_optb_nr == ArchLevel.ARCH_ZOP.getValue()) // YOP ff. revert to RXY     // #554 #568 #631 #656
                        {my_format="RXE";                                               // #554
                         }                                                              // #554
                     if (tz390.op_trace_type[index]==189)
@@ -2181,7 +2182,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                 case 20:
                     my_format="RSE";                                                   // #500 #554
                     my_operands="D1(B1),D2(B2)";                                       // #500
-                    if(tz390.opt_optable_optb_nr >= tz390.OPCODE_FOR_YOP) // YOP ff. change to RSY // #568 #631
+                    if(tz390.opt_optable_optb_nr >= ArchLevel.ARCH_YOP.getValue()) // YOP ff. change to RSY // #568 #631 #656
                        {my_format="RSY";                                               // #568
                         }                                                              // #568
                     if (tz390.op_trace_type[index]==201)                               //      #613
@@ -2388,7 +2389,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     else if (tz390.op_trace_type[index]==151)                          // #612
                        {if (tz390.op_name[index].equals("POPCNT"))                     // #612
                            {// Introduced with ZS5=Z11; changed in ZS9=Z15             // #616
-                            if (tz390.opt_optable_optb_nr < tz390.OPCODE_FOR_Z15) // 15=ZS9/Z15   // #616 #631
+                            if (tz390.opt_optable_optb_nr < ArchLevel.ARCH_Z15.getValue()) // 15=ZS9/Z15   // #616 #631 #656
                                {my_format="RRE";          // z11 thru z14              // #612 #616
                                 my_operands="R1,R2";                                   // #612
                                 }                                                      // #612
@@ -2529,7 +2530,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                         }
                     if (tz390.op_trace_type[index]==340)                               // #568
                        {if (my_mnemonic.equals("IDTE"))                                // #568
-                           {if (tz390.opt_optable_optb_nr >= tz390.OPCODE_FOR_Z12) // ZS6=Z12 and above // #613 #631
+                           {if (tz390.opt_optable_optb_nr >= ArchLevel.ARCH_Z12.getValue()) // ZS6=Z12 and above // #613 #631 #656
                                {my_operands="R1,R3,R2<,M4>";                           // #613
                                 }                                                      // #613
                             else                                                       // #613
@@ -2672,7 +2673,7 @@ private void gen_list_mnemonics() // Routine added for RPI 1209A
                     break;
                 case 73:
                     my_format="RI";                                                    // #500
-                    if(tz390.opt_optable_optb_nr >= tz390.OPCODE_FOR_ESA)  // ESA and above  // #554 #631
+                    if(tz390.opt_optable_optb_nr >= ArchLevel.ARCH_ESA.getValue()) // ESA and above  // #554 #631 #656
                        {my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2,3);  // #554
                         }                                                              // #554
                     my_operands="R1,I2";                                               // #500
