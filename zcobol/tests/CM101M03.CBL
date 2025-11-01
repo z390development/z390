@@ -14,7 +14,22 @@
 020500     "ON-SITE VALIDATION, NATIONAL INSTITUTE OF STD & TECH.     ".CM1014.2
 020600     02  FILLER PICTURE X(13) VALUE SPACE.                        CM1014.2
 020700     02 FILLER PIC X(15) VALUE " COPYRIGHT 1974".                 CM1014.2
+020800 01  AMPERSAND-TESTS.                                             CM1914.2
+020900     02  FILLER PICTURE X(30) VALUE "abc & def & ghi".            CM1914.2
+021000     02  FILLER PICTURE X(30) VALUE "& abc & def & ghi".          CM1914.2
+021100     02  FILLER PICTURE X(30) VALUE "abc & def & ghi &".          CM1914.2
+021200     02  FILLER PICTURE X(30) VALUE "& abc & def & ghi &".        CM1914.2
+021300     02  FILLER PICTURE X(30) VALUE "&& abc && def &&".           CM1914.2
+021400     02  FILLER PICTURE X(30) VALUE "&&&&&&&&&&".                 CM1914.2
+021500 01  APOSTROPHE-TESTS.                                            CM1914.2
+021600     02  FILLER PICTURE X(30) VALUE "abc ' def ' ghi".            CM1914.2
+021700     02  FILLER PICTURE X(30) VALUE "' abc ' def ' ghi".          CM1914.2
+021800     02  FILLER PICTURE X(30) VALUE "abc ' def ' ghi &".          CM1914.2
+021900     02  FILLER PICTURE X(30) VALUE "' abc ' def ' ghi '".        CM1914.2
+022000     02  FILLER PICTURE X(30) VALUE "'' abc '' def ''".           CM1914.2
+022100     02  FILLER PICTURE X(30) VALUE "''''''''''".                 CM1914.2
 024200 PROCEDURE    DIVISION.                                           CM1014.2
 024300 SECT-CM101M-0001 SECTION.                                        CM1014.2
 024400 GOODBYE.                                                         CM1014.2
 027400         STOP RUN.                                                CM1014.2
+
