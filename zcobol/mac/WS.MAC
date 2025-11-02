@@ -906,18 +906,18 @@
                AND '&PIC_VAL' NE '')
                :&AMP SETC '&&'(1,1)    Constant: one ampersand
                :&PVW SETC '&PIC_VAL'   Copy string
-               :&PIC_VAL SETC ''       Field now output; init null
-               :&AMPI SETA ('&PVW' FIND '&&')  First ampersand
-               AWHILE (&AMPI GT 0)
-                  :&PIC_VAL SETC '&PIC_VAL'.'&PVW'(1,&AMPI).'&AMP'
-                  AIF (&AMPI LT K'&PVW)            & not at end?
-                      :&PVW SETC '&PVW'(&AMPI+1,*) &+1 to end
-                  AELSE
-                      :&PVW SETC ''                Nothing left
-                  AEND
-                  :&AMPI SETA ('&PVW' FIND '&&')   Next &, if any
-               AEND
-               :&PIC_VAL SETC '&PIC_VAL'.'&PVW'    If no & in last blk
+.*             :&PIC_VAL SETC ''       Field now output; init null
+.*             :&AMPI SETA ('&PVW' FIND '&&')  First ampersand
+.*             AWHILE (&AMPI GT 0)
+.*                :&PIC_VAL SETC '&PIC_VAL'.'&PVW'(1,&AMPI).'&AMP'
+.*                AIF (&AMPI LT K'&PVW)            & not at end?
+.*                    :&PVW SETC '&PVW'(&AMPI+1,*) &+1 to end
+.*                AELSE
+.*                    :&PVW SETC ''                Nothing left
+.*                AEND
+.*                :&AMPI SETA ('&PVW' FIND '&&')   Next &, if any
+.*             AEND
+.*             :&PIC_VAL SETC '&PIC_VAL'.'&PVW'    If no & in last blk
          AELSEIF (K'&PIC_VAL GT 2)  REMOVE '..' FROM NUMERIC VALUES               
                AIF ('&PIC_VAL'(1,1) EQ '''')   RPI 1065
                    :&PIC_VAL SETC '&PIC_VAL'(2,K'&PIC_VAL-2)
