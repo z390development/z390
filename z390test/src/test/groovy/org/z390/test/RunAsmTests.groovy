@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test
 class RunAsmTests extends z390Test {
 
     var options = ['trace', 'noloadhigh', "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
+    var optionsNoinit = ['trace', 'noinit', "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
+    var optionsNoinitNoloadhigh = ['trace', 'noinit', 'noloadhigh', "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
 
     @Test
     void test_TESTINS1() {
@@ -92,19 +94,31 @@ class RunAsmTests extends z390Test {
     }
     @Test
     void test_IS215() {
-        int rc = this.asmlg(basePath("rt", "mlc", "IS215"), *options, 'optable(z390)')
+        int rc = this.asmlg(basePath("rt", "mlc", "IS215"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_IS658() {
+        int rc = this.asml(basePath("rt", "mlc", "IS658LD"), *options)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asmlg(basePath("rt", "mlc", "IS658"), *optionsNoinitNoloadhigh)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asmlg(basePath("rt", "mlc", "IS658"), *optionsNoinit)
         this.printOutput()
         assert rc == 0
     }
     @Test
     void test_IS659() {
-        int rc = this.asmlg(basePath("rt", "mlc", "IS659"), *options, 'optable(z390)')
+        int rc = this.asmlg(basePath("rt", "mlc", "IS659"), *options)
         this.printOutput()
         assert rc == 0
     }
     @Test
     void test_IS660() {
-        int rc = this.asmlg(basePath("rt", "mlc", "IS660"), *options, 'optable(z390)')
+        int rc = this.asmlg(basePath("rt", "mlc", "IS660"), *options)
         this.printOutput()
         assert rc == 0
     }
@@ -134,7 +148,7 @@ class RunAsmTests extends z390Test {
     }
     @Test
     void test_TB2CX2C() {
-        int rc = this.asmlg(basePath("rt", "mlc", "TB2CX2C"), *options, 'optable(z390)')
+        int rc = this.asmlg(basePath("rt", "mlc", "TB2CX2C"), *options)
         this.printOutput()
         assert rc == 0
     }

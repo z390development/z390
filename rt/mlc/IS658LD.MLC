@@ -1,0 +1,70 @@
+IS658LD  CSECT
+         STM   14,12,12(13)        Save caller's registers
+         LR    12,15               R12 = base register
+         USING IS658LD,12          Establish addressability
+         LA    14,SA               Usable save area
+         ST    13,4(,14)           Chain
+         ST    14,8(,13)                 save areas
+         LR    13,14               Current save area
+*
+*        Show CDEs on CVTCDE chain
+*
+         WTO   'Show CDEs on CVTCDE chain'
+         SR    9,9                 Count number of CDEs
+         L     6,16                R6 --> CVT
+         USING IHACVT,6            Overlay CVT
+         LT    6,CVTCDE            R6 --> first CDE
+         BZ    LP1E                No CDEs
+         USING IHACDE,6            Overlay CDE
+LP1      DS    0H
+         AHI   9,1                 Count CDE
+         LA    7,CDELEN(,6)        Past end of CDE
+         SNAP  STORAGE=((6),(7)),PDATA=
+         LT    6,CDCHAIN           Next CDE
+         BNZ   LP1                 Show next CDE, if any
+LP1E     DS    0H
+         CVD   9,DW                Convert number CDEs to packed dec
+         MVC   EDWk1,Pat1          Copy EDIT pattern
+         LA    3,EDWk1+L'EDWk1-1   Last digit
+         LR    1,3                 Will be first digit
+         EDMK  EDWk1,DW+6          Convert to printable
+         SR    3,1                 Length code of printable decimal
+         MVC   W1#CDE,Spaces       Initialize destination to spaces
+         LA    14,W1#CDE           Destination
+         LR    15,1                Source
+         EX    3,CopyVal           Copy prt dec # CDEs to WTO
+         WTO   MF=(E,WTO1)         Show number of CDEs
+Exit     DS    0H
+         SR    15,15               Return code always zero
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except r15
+         BR    14                  Return to caller
+*
+         LTORG
+*
+SA       DC    18F'-1'             Usable save area
+*
+CopyVal  MVC   0(*-*,14),0(1)      Copy value
+*
+Spaces   DC    CL3'   '            
+*
+Pat1     DC    X'40202120'         Edit pattern 3 digits
+EDWk1    DS    CL4                 Edit work area
+*
+WTO1     WTO   'Number of CDEs on CVTCDE chain = xxx',MF=L
+W1#CDE   EQU    WTO1+4+33,3
+*
+DW       DS    D                   Doubleword work
+*
+***********************************************************************
+*        DSECTs
+***********************************************************************
+*
+         CVTD  ,
+***********************************************************************
+*
+         CDED  ,
+***********************************************************************
+*
+         END
