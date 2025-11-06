@@ -73,7 +73,7 @@ if %z_ReturnCode% EQU 4 goto ez390
 if exist %z_file%.390 erase %z_file%.390
 goto return
 
-:ez390
+:ex390
 call %~dps0EZ390 %z_TraceMode% %z_file% sys390(+%z_HomeDir%zcobol\lib) %2 %3 %4 %5 %6 %7 %8 %9
 set z_ReturnCode=%ERRORLEVEL%
 rem any error or warning message has been issued by ez390
