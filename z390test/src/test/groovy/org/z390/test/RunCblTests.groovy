@@ -28,6 +28,27 @@ class RunCblTests extends z390Test{
     }
 
     @Test
+    void test_TESTCALL() {
+        var asm_options = ["SYSMAC(${basePath("mac")})"]
+
+        // rem TESTCAL3 statically calls TESTASM4 - link them together
+        int rc1 = this.asm(basePath("zcobol", "tests", "TESTASM4"), *asm_options)
+        this.printOutput()
+        assert rc1 == 0   // Check return code
+        int rc2 = this.cblcl(basePath("zcobol", "tests", "TESTCAL3"))
+        this.printOutput()
+        assert rc2 == 0   // Check return code
+
+        // TESTCAL1 statically calls TESTCAL2 and dynamically calls TESTCAL3
+        int rc3 = this.cblc(basePath("zcobol", "tests", "TESTCAL2"))
+        this.printOutput()
+        assert rc3 == 0   // Check return code
+        int rc4 = this.cblclg(basePath("zcobol", "tests", "TESTCAL1"))
+        this.printOutput()
+        assert rc4 == 0   // Check return code
+    }
+
+    @Test
     void testCM101M02() {
         int rc = this.cblc(basePath("zcobol", "tests", "CM101M02"))
         this.printOutput()
