@@ -58,6 +58,7 @@
 .* 11/26/10 RPI 1138 CORRECT SYM_PIC_DEC FOR DISPLAY PICTURE Z.99 ETC.
 .* 04/05/11 RPI 1139 FIX SETA STRING FOR HLASM COMP
 .* 02/16/12 RPI 1181 FIX TO HANDLE PIC X(8). WITH PERIOD FOLLOWING.
+.* 25-10-22 AFK #578 zCobol compiles get "actr limit exceeded" errors
 .*********************************************************************
 .* 
 .* WS level,name,clauses in any order (PIC,VALUE,USAGE supported)
@@ -903,18 +904,8 @@
          AEND
          AIF  ('&PIC_TYPE' EQ 'X'                                      X
                AND '&PIC_VAL' NE '')
-               :&AMP SETA ('&PIC_VAL' FIND '&&')
-               AWHILE (&AMP GT 0)
-                  :&PIC_VAL SETC '&PIC_VAL'(1,&AMP).'&&'.'&PIC_VAL'(&AMX
-               P+1,*)
-                  :&NEXT_AMP SETA ('&PIC_VAL'(&AMP+2,*) FIND '&&')
-                  AIF (&NEXT_AMP GT 0)
-                      :&AMP SETA &AMP+&NEXT_AMP+1
-                  AELSE
-                      :&AMP SETA 0
-                  AEND
-               AEND
-         AELSEIF (K'&PIC_VAL GT 2)  REMOVE '..' FROM NUMERIC VALUES               
+               ANOP ,                           * no  action needed
+         AELSEIF (K'&PIC_VAL GT 2)  REMOVE '..' FROM NUMERIC VALUES
                AIF ('&PIC_VAL'(1,1) EQ '''')   RPI 1065
                    :&PIC_VAL SETC '&PIC_VAL'(2,K'&PIC_VAL-2)
                AEND
