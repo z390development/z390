@@ -14,6 +14,7 @@ rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 pushd %~dps0..\..
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testadd1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testadd2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\testbfp1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testif1  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testif2  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testif3  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
