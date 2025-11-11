@@ -28,6 +28,12 @@ class RunCblTests extends z390Test{
     }
 
     @Test
+    void testCM101M03() {
+        int rc = this.cblc(basePath("zcobol", "tests", "CM101M03"))
+        this.printOutput()
+        assert rc == 0   // Check return code
+        }
+    @Test
     void testCM101M02() {
         int rc = this.cblc(basePath("zcobol", "tests", "CM101M02"))
         this.printOutput()
