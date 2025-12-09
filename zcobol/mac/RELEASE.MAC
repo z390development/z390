@@ -21,8 +21,46 @@
 .* Date   - 04/16/08                                                 *
 .*********************************************************************
 .* 11/17/08 stub for pending support              
+.* 2025/12 ZH: Implement RELEASE statement for COBOL SORT INPUT PROCEDURE
+.*         Implementation follows FIPS PUB 21-2 (ANSI X3.23-1985)
+.*         COBOL 85 standard, Section XI (Sort-Merge).
 .*********************************************************************
-         RELEASE
-         MNOTE 8,'RELEASE NOT SUPPORTED YET'
-         MEXIT
+.* RELEASE Statement Format (COBOL 85):
+.*
+.*   RELEASE record-name-1 [FROM identifier-1]
+.*
+.* The RELEASE statement transfers records to the initial phase of a
+.* sort operation from an input procedure. It is used within an INPUT
+.* PROCEDURE specified in a SORT statement.
+.*
+.* record-name-1 must be the name of a record defined in the SD entry
+.* for the sort file referenced in the SORT statement.
+.*
+.* If FROM is specified, the data in identifier-1 is moved to
+.* record-name-1 before the record is released to the sort.
+.*********************************************************************
+         RELEASE &RECORD,&FROM_KW,&FROM_ID
+         COPY  ZC_WS
+         COPY  ZC_SD
+.*
+.* FIND THE RECORD IN SYMBOL TABLE
+.*
+         ZC_SYM_FIND &RECORD
+         AIF   (&SYM_IX EQ 0)
+               MNOTE 8,'RELEASE RECORD NOT FOUND - &RECORD'
+               MEXIT
+         AEND
+.*
+.* HANDLE FROM CLAUSE IF PRESENT
+.*
+         AIF   ('&FROM_KW' EQ 'FROM' AND '&FROM_ID' NE '')
+.*             MOVE SOURCE TO RECORD BEFORE RELEASE
+         MOVE  &FROM_ID,TO,&RECORD
+         AEND
+.*
+.* GENERATE ZSORT PUT TO RELEASE RECORD TO SORT
+.*
+         GEN_BASE &SYM_IX
+         LAY   ZC_R1,&RECORD
+         ZSORT PUT,REC=(ZC_R1)
          MEND

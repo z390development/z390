@@ -1,0 +1,85 @@
+         MACRO
+.*********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
+.*********************************************************************
+.* Author - Zane Hambly                                              *
+.* Date   - 2025/12                                                  *
+.*********************************************************************
+.* Generate HLASM code for COBOL SORT statement.
+.* Implementation follows FIPS PUB 21-2 (ANSI X3.23-1985).
+.* Uses existing ZSORT macro infrastructure (SVC X'A1').
+.*********************************************************************
+         GEN_SORT &SF,&LRECL,&KOFF,&KLEN,&KTYPE,&KORD,&UF,&GF,&UIX,&GIX,X
+               &SLAB
+         COPY  ZC_WS
+.*
+.* GENERATE ZSORT ISORT - INITIALIZE SORT
+.* Note: ZSORT expects offset+1 for DFSORT compatibility
+.*
+         ZSORT ISORT,LRECL=&LRECL,MEMORY=0,FIELDS=(&KOFF+1,&KLEN,&KTYPE,X
+               &KORD)
+.*
+.* SET EODAD FOR INPUT FILE
+.*
+         LARL  ZC_R0,ZC_SORT_EOF&SLAB
+         ST    ZC_R0,&UF+DCBEODAD-IHADCB
+.*
+.* OPEN INPUT FILE
+.*
+         :&FILE_IX SETA &UIX
+         GEN_OPEN INPUT
+.*
+.* READ LOOP - READ RECORDS AND PUT TO SORT
+.*
+ZC_SORT_RD&SLAB DS 0H
+         LAY   ZC_R2,&UF
+         LAY   ZC_R3,&FILE_RECORD(&UIX)
+         GET   (ZC_R2),(ZC_R3)
+         LAY   ZC_R1,&FILE_RECORD(&UIX)
+         ZSORT PUT,REC=(ZC_R1)
+         J     ZC_SORT_RD&SLAB
+.*
+.* EOF - CLOSE INPUT FILE
+.*
+ZC_SORT_EOF&SLAB DS 0H
+         :&FILE_IX SETA &UIX
+         GEN_CLOSE
+.*
+.* OPEN OUTPUT FILE
+.*
+         :&FILE_IX SETA &GIX
+         GEN_OPEN OUTPUT
+.*
+.* GET/WRITE LOOP - GET SORTED RECORDS AND WRITE
+.*
+ZC_SORT_GT&SLAB DS 0H
+         LAY   ZC_R1,&FILE_RECORD(&GIX)
+         ZSORT GET,REC=(ZC_R1)
+         CHI   ZC_R15,4
+         JE    ZC_SORT_DN&SLAB
+         LAY   ZC_R2,&GF
+         LAY   ZC_R3,&FILE_RECORD(&GIX)
+         PUT   (ZC_R2),(ZC_R3)
+         J     ZC_SORT_GT&SLAB
+.*
+.* DONE - CLOSE OUTPUT FILE
+.*
+ZC_SORT_DN&SLAB DS 0H
+         :&FILE_IX SETA &GIX
+         GEN_CLOSE
+         MEND

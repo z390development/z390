@@ -21,8 +21,205 @@
 .* Date   - 04/16/08                                                 *
 .*********************************************************************
 .* 11/17/08 stub for pending support              
+.* 2025/12 ZH: Implement COBOL SORT statement using existing ZSORT
+.*         Implementation follows FIPS PUB 21-2 (ANSI X3.23-1985)
+.*         COBOL 85 standard, Section XI (Sort-Merge).
 .*********************************************************************
-         SORT
-         MNOTE 8,'SORT NOT SUPPORTED YET'
+.* SORT file-name ON ASCENDING/DESCENDING KEY key-name
+.*      USING input-file GIVING output-file
+.*********************************************************************
+         SORT  &SORTFILE
+         COPY  ZC_WS
+         COPY  ZC_SD
+.*
+.* LOCAL VARIABLES
+.*
+         LCLA  &KEY_OFF
+         LCLA  &KEY_LEN
+         LCLA  &KEY_LOC
+         LCLA  &PAR_IX
+         LCLC  &KEY_ORD
+         LCLC  &USING_FILE
+         LCLC  &GIVING_FILE
+         LCLA  &LRECL
+         LCLA  &USING_IX
+         LCLA  &GIVING_IX
+         LCLC  &USING_REC
+         LCLC  &GIVING_REC
+.*
+.* FIND SORT FILE
+.*
+         ZC_SD_FIND &SORTFILE
+         AIF   (&SD_IX EQ 0)
+               MNOTE 8,'SORT FILE NOT FOUND IN SD - &SORTFILE'
+               MEXIT
+         AEND
+         :&LRECL SETA &SD_LRECL(&SD_IX)
+.*
+.* PARSE CLAUSES
+.*
+         :&PARM_IX SETA 2
+         :&KEY_ORD SETC 'A'
+         AWHILE ('&SYSLIST(&PARM_IX)' NE '')
+               AIF ('&SYSLIST(&PARM_IX)' EQ 'ON')
+                   :&PARM_IX SETA &PARM_IX+1
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'ASCENDING')
+                   :&KEY_ORD SETC 'A'
+                   :&PARM_IX SETA &PARM_IX+1
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'DESCENDING')
+                   :&KEY_ORD SETC 'D'
+                   :&PARM_IX SETA &PARM_IX+1
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'KEY')
+                   :&PARM_IX SETA &PARM_IX+1
+                   ZC_SYM_FIND &SYSLIST(&PARM_IX)
+                   AIF (&SYM_IX GT 0)
+                       :&KEY_LEN SETA &SYM_LEN(&SYM_IX)
+                       ACALL CALC_KEY_OFF
+                   AEND
+                   :&PARM_IX SETA &PARM_IX+1
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'USING')
+                   :&PARM_IX SETA &PARM_IX+1
+                   :&USING_FILE SETC '&SYSLIST(&PARM_IX)'
+                   :&PARM_IX SETA &PARM_IX+1
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'GIVING')
+                   :&PARM_IX SETA &PARM_IX+1
+                   :&GIVING_FILE SETC '&SYSLIST(&PARM_IX)'
+                   :&PARM_IX SETA &PARM_IX+1
+               AELSE
+                   :&PARM_IX SETA &PARM_IX+1
+               AEND 
+         AEND
+.*
+.* VALIDATE
+.*
+         AIF   (&KEY_LEN EQ 0)
+               MNOTE 8,'SORT KEY NOT FOUND'
+               MEXIT
+         AEND
+         AIF   ('&USING_FILE' EQ '')
+               MNOTE 8,'SORT USING FILE NOT SPECIFIED'
+               MEXIT
+         AEND
+         AIF   ('&GIVING_FILE' EQ '')
+               MNOTE 8,'SORT GIVING FILE NOT SPECIFIED'
+               MEXIT
+         AEND
+.*
+.* FIND INPUT FILE AND GET RECORD INFO
+.*
+         ZC_FILE_FIND &USING_FILE
+         AIF   (&FILE_IX EQ 0)
+               MNOTE 8,'SORT USING FILE NOT FOUND - &USING_FILE'
+               MEXIT
+         AEND
+         :&USING_IX SETA &FILE_IX
+         :&USING_REC SETC '&FILE_RECORD(&FILE_IX)'
+         AIF (&LRECL EQ 0)
+             ZC_SYM_FIND &USING_REC
+             AIF (&SYM_IX GT 0)
+                 :&LRECL SETA &SYM_LEN(&SYM_IX)
+             AEND
+         AEND
+.*
+.* FIND OUTPUT FILE AND GET RECORD INFO
+.*
+         ZC_FILE_FIND &GIVING_FILE
+         AIF   (&FILE_IX EQ 0)
+               MNOTE 8,'SORT GIVING FILE NOT FOUND - &GIVING_FILE'
+               MEXIT
+         AEND
+         :&GIVING_IX SETA &FILE_IX
+         :&GIVING_REC SETC '&FILE_RECORD(&FILE_IX)'
+.*
+         AIF   (&LRECL EQ 0)
+               MNOTE 8,'SORT CANNOT DETERMINE RECORD LENGTH'
+               MEXIT
+         AEND
+.*
+.* GET UNIQUE LABEL
+.*
+         :&SORT_LAB SETA &SORT_LAB+1
+.*
+.* GENERATE SORT CODE - ZSORT ISORT (SVC X'A1')
+.* Note: SVC X'A1' expects 0-based key offset (unlike ZSORT macro)
+.*
+         CNOP  0,4
+         LA    0,1                    ISORT FUNCTION CODE
+         BAS   1,*+4+8+12             SKIP OVER PARM LIST
+         DC    A(&LRECL)              RECORD LENGTH
+         DC    A(0)                   MEMORY (0=USE ALL AVAILABLE)
+         DC    A(&KEY_OFF)            KEY OFFSET
+         DC    A(&KEY_LEN)            KEY LENGTH
+         AIF   ('&KEY_ORD' EQ 'A')
+         DC    X'8003',AL2(1)         VL+TYPE=CH(3), ASCENDING
+         AELSE
+         DC    X'8003',AL2(0)         VL+TYPE=CH(3), DESCENDING
+         AEND
+         SVC   X'A1'                  ZSORT
+.*
+.* SET EODAD AND OPEN INPUT FILE
+.*
+         LARL  ZC_R0,ZC_SORT_EOF&SORT_LAB
+         ST    ZC_R0,&USING_FILE+DCBEODAD-IHADCB
+         :&FILE_IX SETA &USING_IX
+         GEN_OPEN INPUT
+.*
+.* READ LOOP
+.*
+ZC_SORT_RD&SORT_LAB DS 0H
+         LAY   ZC_R2,&USING_FILE
+         LAY   ZC_R3,&USING_REC
+         GET   (ZC_R2),(ZC_R3)
+         LAY   ZC_R1,&USING_REC
+         LA    0,2                    PUT FUNCTION CODE
+         SVC   X'A1'                  ZSORT PUT
+         J     ZC_SORT_RD&SORT_LAB
+.*
+.* EOF - CLOSE INPUT
+.*
+ZC_SORT_EOF&SORT_LAB DS 0H
+         :&FILE_IX SETA &USING_IX
+         GEN_CLOSE
+.*
+.* OPEN OUTPUT FILE
+.*
+         :&FILE_IX SETA &GIVING_IX
+         GEN_OPEN OUTPUT
+.*
+.* GET/WRITE LOOP
+.*
+ZC_SORT_GT&SORT_LAB DS 0H
+         LAY   ZC_R1,&GIVING_REC
+         LA    0,3                    GET FUNCTION CODE
+         SVC   X'A1'                  ZSORT GET
+         CHI   ZC_R15,4
+         JE    ZC_SORT_DN&SORT_LAB
+         LAY   ZC_R2,&GIVING_FILE
+         LAY   ZC_R3,&GIVING_REC
+         PUT   (ZC_R2),(ZC_R3)
+         J     ZC_SORT_GT&SORT_LAB
+.*
+.* DONE - CLOSE OUTPUT
+.*
+ZC_SORT_DN&SORT_LAB DS 0H
+         :&FILE_IX SETA &GIVING_IX
+         GEN_CLOSE
          MEXIT
+.*
+.* CALC_KEY_OFF - Calculate key offset within record
+.*
+         AENTRY CALC_KEY_OFF
+         :&KEY_LOC SETA &SYM_LOC(&SYM_IX)
+         :&PAR_IX SETA &SYM_QIX(&SYM_IX)
+         :&KEY_OFF SETA 0
+         AWHILE (&PAR_IX GT 0)
+               AIF (&SYM_LVL(&PAR_IX) EQ 1)
+                   :&KEY_OFF SETA &KEY_LOC-&SYM_LOC(&PAR_IX)
+                   :&PAR_IX SETA 0
+               AEND
+               AIF (&PAR_IX GT 0)
+                   :&PAR_IX SETA &SYM_QIX(&PAR_IX)
+               AEND
+         AEND
+         AEND
          MEND
