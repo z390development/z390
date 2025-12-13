@@ -42,4 +42,18 @@ class RunCblTests extends z390Test{
         assert !this.fileData['ERR'].contains("missing copy"), "CM101M02.ERR reports error that should have been fixed"
     }
 
+    @Test
+    void testTESTSRT1() {
+        int rc = this.cblclg(basePath("zcobol", "test", "TESTSRT1"), 'TIME(30)')
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void testTESTSRT2() {
+        int rc = this.cblclg(basePath("zcobol", "test", "TESTSRT2"), 'TIME(30)')
+        this.printOutput()
+        assert rc == 0
+    }
+
 }
