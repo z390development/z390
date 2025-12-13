@@ -88,4 +88,18 @@ class RunCblTests extends z390Test{
         assert rc == 0   // Check return code
     }
 
+    @Test
+    void testTESTSRT1() {
+        int rc = this.cblclg(basePath("zcobol", "test", "TESTSRT1"), 'TIME(30)')
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void testTESTSRT2() {
+        int rc = this.cblclg(basePath("zcobol", "test", "TESTSRT2"), 'TIME(30)')
+        this.printOutput()
+        assert rc == 0
+    }
+
 }
