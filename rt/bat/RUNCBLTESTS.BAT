@@ -14,6 +14,13 @@ rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 pushd %~dps0..\..
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testadd1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testadd2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+rem TESTCAL3 statically calls TESTASM4 - link them together
+call bat\ASM    %z_TraceMode% zcobol\tests\TESTASM4 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCL  %z_TraceMode% zcobol\tests\TESTCAL3 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+rem TESTCAL1 statically calls TESTCAL2 and dynamically calls TESTCAL3
+call bat\CBLC   %z_TraceMode% zcobol\tests\TESTCAL2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTCAL1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testbfp1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testif1  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testif2  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
