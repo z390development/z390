@@ -270,6 +270,34 @@ class z390Test {
         return rc
     }
 
+    def cblcl(Map kwargs=[:], String cobFilename, String... args) {
+        /**
+         * cobol compile and link only
+         */
+        this.clean(cobFilename)
+        int rc
+        rc = this.callZ390(cobFilename, 'zc390', *args)
+        if (![0, 4].contains(rc)) return rc  // exit if issue
+
+        var cobfiledir = new File(cobFilename).getParent()
+        var cobOptions = ['BAL', 'NOLISTCALL', 'MAXGBL(1500000)',
+                      "SYSMAC(${basePath('zcobol', 'mac')}+${basePath('mac')})".toString(),
+                      "SYSCPY(${cobfiledir}+${basePath('zcobol', 'cpy')})".toString()
+        ]
+
+        // Strip extension for subsequent calls if present
+        var cobFilenameNoExt = cobFilename
+        if (cobFilename.lastIndexOf('.') > cobFilename.lastIndexOf(File.separator)) {
+            cobFilenameNoExt = filenameWithoutExtension(cobFilename)
+        }
+        rc = this.callZ390(cobFilenameNoExt, 'mz390', *(cobOptions + args.toList()))
+        if (rc == 0) {
+            rc = this.callZ390(cobFilenameNoExt, 'lz390', *args)
+        }
+        this.getOutput(cobFilenameNoExt)
+        return rc
+    }
+
     def cblclg(Map kwargs=[:], String cobFilename, String... args) {
         /**
          * cobol compile link and go
