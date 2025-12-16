@@ -285,7 +285,7 @@ public class zc390{
 
 
 /**                                                                                                                        // #655
- * Custome exception                                                                                                       // #655
+ * Custom exception                                                                                                        // #655
  */                                                                                                                        // #655
 class zCobolException extends Exception                                                                                    // #655
    {public zCobolException(String msg)                                                                                     // #655
