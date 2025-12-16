@@ -20,9 +20,67 @@
 .* Author - Don Higgins                                              *
 .* Date   - 04/16/08                                                 *
 .*********************************************************************
-.* 07/19/09 RPI 1065 stub for pending support ZCSD REPLACING SD             
+.* 07/19/09 RPI 1065 stub for pending support ZCSD REPLACING SD
+.* 2025/12 ZH: Implement SD (Sort Description) parsing for COBOL SORT
+.*         Implementation follows FIPS PUB 21-2 (ANSI X3.23-1985)
 .*********************************************************************
-         ZCSD
-         MNOTE 8,'SD SORT DEFINITION NOT SUPPORTED YET'
-         MEXIT
+.* SD sort-file-name
+.*    [RECORD CONTAINS integer CHARACTERS]
+.*    [DATA RECORD IS record-name]
+.*********************************************************************
+         ZCSD  &SORTFILE
+         COPY  ZC_WS
+         COPY  ZC_SD
+.*
+.* VALIDATE SORT FILE NAME
+.*
+         AIF   ('&SORTFILE' EQ '')
+               MNOTE 8,'SD REQUIRES SORT FILE NAME'
+               MEXIT
+         AEND
+.*
+.* ADD NEW SORT FILE TO TABLE
+.*
+         :&SD_TOT SETA &SD_TOT+1
+         :&SD_IX  SETA &SD_TOT
+         :&SD_NAME(&SD_IX) SETC '&SORTFILE'
+.*
+.* PARSE OPTIONAL CLAUSES
+.*
+         :&PARM_IX SETA 2
+         AWHILE ('&SYSLIST(&PARM_IX)' NE '')
+               AIF ('&SYSLIST(&PARM_IX)' EQ 'RECORD')
+                   :&PARM_IX SETA &PARM_IX+1
+                   AIF ('&SYSLIST(&PARM_IX)' EQ 'CONTAINS')
+                       :&PARM_IX SETA &PARM_IX+1
+                   AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'IS')
+                       :&PARM_IX SETA &PARM_IX+1
+                   AEND
+                   :&SD_LRECL(&SD_IX) SETA &SYSLIST(&PARM_IX)
+                   :&PARM_IX SETA &PARM_IX+1
+                   AIF ('&SYSLIST(&PARM_IX)' EQ 'CHARACTERS')
+                       :&PARM_IX SETA &PARM_IX+1
+                   AEND
+               AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'DATA')
+                   :&PARM_IX SETA &PARM_IX+1
+                   AIF ('&SYSLIST(&PARM_IX)' EQ 'RECORD')
+                       :&PARM_IX SETA &PARM_IX+1
+                   AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'RECORDS')
+                       :&PARM_IX SETA &PARM_IX+1
+                   AEND
+                   AIF ('&SYSLIST(&PARM_IX)' EQ 'IS')
+                       :&PARM_IX SETA &PARM_IX+1
+                   AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'ARE')
+                       :&PARM_IX SETA &PARM_IX+1
+                   AEND
+                   :&SD_RECORD(&SD_IX) SETC '&SYSLIST(&PARM_IX)'
+                   :&PARM_IX SETA &PARM_IX+1
+               AELSE
+                   :&PARM_IX SETA &PARM_IX+1
+               AEND
+         AEND
+.*
+.* Note: Sort files (SD) don't generate DCBs - they are internal
+.* to the sort process. The sort record is defined following the SD.
+.*
          MEND
