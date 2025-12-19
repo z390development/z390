@@ -120,7 +120,7 @@ class z390Test {
         var cmd = ["java", "-classpath", basePath('z390.jar'),
                    '-Xrs', '-Xms150000K', '-Xmx150000K', command, asmFileExcludingExtension, *args].join(" ")
         println(cmd)
-        var proc = cmd.execute(this.getEnvList(), null)   // , workDir);
+        var proc = cmd.execute(this.getEnvList(), new File(this.project_root.toString()))
         var sout = new StringBuilder()
         var serr = new StringBuilder()
         proc.consumeProcessOutput(sout, serr)
