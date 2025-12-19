@@ -12,6 +12,28 @@ if /I "%1" == "tron" (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
+rem -- *************************************************************
+rem -- 
+rem -- This script runs the z390/zCobol version of the NIST cobol test suite
+rem -- which can be found in github repository z390development/nistcobol85
+rem -- 
+rem -- This bat script reflects the current status of the adoption
+rem -- process of the NIST test suite in z390 / zCobol.
+rem -- We have found 5 sets of the NIST test suite. None of them seem
+rem -- to be ultimately authoritative as the NIST itself has abandoned
+rem -- the entire test suite.
+rem -- 
+rem -- We are moving forward one program at a time, comparing the program
+rem -- versions available and fixing any breakages in zCobol as we go.
+rem -- That is, most compiles end with RC=8 - there are tons of issues
+rem -- to be resolved. What we fix is where the compile process ends
+rem -- abnormally, e.g. with a java exception and a stack trace.
+rem -- 
+rem -- Long story short: we reconcile source versions, and fix compiler breakage.
+rem -- All other issues are left for future maintenance.
+rem -- 
+rem -- *************************************************************
+
 pushd %~dps0..\..
 if %1. == . goto no_repo
 
