@@ -18,7 +18,8 @@ class RunCblTests extends z390Test{
     Collection<DynamicTest> test_COBOL() {
         var tests = []
         var modules = [
-                'TESTADD1', 'TESTADD2', 'TESTBFP1', 'TESTIF1', 'TESTIF2', 'TESTIF3', 'TESTMOV1', 'TESTMOV2', 'TESTMOV3', 'CM101M01'
+                'TESTADD1', 'TESTADD2', 'TESTBFP1', 'TESTIF1', 'TESTIF2', 'TESTIF3', 'TESTMOV1', 'TESTMOV2', 'TESTMOV3', 'CM101M01',
+                'TESTCMP1', 'TESTCMP2', 'TESTCMP3', 'TESTCMP4', 'TESTCMP5', 'TESTCMP6'
         ]
         modules.each {
             module -> tests.add(
