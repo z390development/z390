@@ -49,11 +49,6 @@ class RunCblTests extends z390Test{
         assert rc4 == 0   // Check return code
     }
 
-    void testCM101M03() {
-        int rc = this.cblc(basePath("zcobol", "tests", "CM101M03"))
-        this.printOutput()
-        assert rc == 0   // Check return code
-        }
     @Test
     void testCM101M02() {
         int rc = this.cblc(basePath("zcobol", "tests", "CM101M02"))
@@ -61,6 +56,20 @@ class RunCblTests extends z390Test{
         assert rc == 8   // Check return code
         assert this.fileData['ERR'].contains("MNOTE 8,'CD NOT SUPPORTED YET'"), "CM101M02.ERR does not contain expected error"
         assert !this.fileData['ERR'].contains("missing copy"), "CM101M02.ERR reports error that should have been fixed"
+    }
+    @Test
+    void testCM101M03() {
+        int rc = this.cblc(basePath("zcobol", "tests", "CM101M03"))
+        this.printOutput()
+        assert rc == 0   // Check return code
+        }
+    @Test
+    void testCM401M01() {
+        int rc = this.cblc(basePath("zcobol", "tests", "CM401M01"))
+        this.printOutput()
+        assert rc == 8   // Check return code
+        assert this.fileData['ERR'].contains("MNOTE 8,'PURGE NOT SUPPORTED YET'"), "CM401M01.ERR does not contain expected error"
+        assert !this.fileData['ERR'].contains("missing macro"), "CM401M01.ERR reports error that should have been fixed"
     }
 
 }
