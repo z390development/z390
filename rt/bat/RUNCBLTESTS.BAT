@@ -57,7 +57,11 @@ call bat\CBLC   %z_TraceMode% zcobol\tests\CM401M01 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call bat\CBLCLG %z_TraceMode% zcobol\tests\DB101A01 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\NC106A01 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\test\youzpi1   %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+set INFILE=zcobol\tests\TESTSRT1.TF1
+set OUTFILE=zcobol\tests\TESTSRT1.OUT
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTSRT1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+set INFILE=zcobol\tests\TESTSRT2.TF1
+set OUTFILE=zcobol\tests\TESTSRT2.OUT
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTSRT2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 set z_ReturnCode=0
 goto return

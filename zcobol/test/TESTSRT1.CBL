@@ -13,10 +13,10 @@
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT UNSORTED-FILE
-               ASSIGN TO 'zcobol/tests/TESTSRT1.TF1'
+               ASSIGN TO INFILE
                ORGANIZATION IS LINE SEQUENTIAL.
            SELECT SORTED-FILE
-               ASSIGN TO 'zcobol/tests/TESTSRT1.OUT'
+               ASSIGN TO OUTFILE
                ORGANIZATION IS LINE SEQUENTIAL.
        DATA DIVISION.
        FILE SECTION.

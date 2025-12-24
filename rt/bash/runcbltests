@@ -47,7 +47,11 @@ bash/cblc   zcobol/tests/CM101M03 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblc   zcobol/tests/DB101A01 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/NC106A01 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/test/YOUZPI1 $1 $2 $3 $4 $5 $6 $7 $8 $9
+export INFILE=zcobol/tests/TESTSRT1.TF1
+export OUTFILE=zcobol/tests/TESTSRT1.OUT
 bash/cblclg zcobol/tests/TESTSRT1 $1 $2 $3 $4 $5 $6 $7 $8 $9
+export INFILE=zcobol/tests/TESTSRT2.TF1
+export OUTFILE=zcobol/tests/TESTSRT2.OUT
 bash/cblclg zcobol/tests/TESTSRT2 $1 $2 $3 $4 $5 $6 $7 $8 $9
 
 # if we get here, there were no errors
