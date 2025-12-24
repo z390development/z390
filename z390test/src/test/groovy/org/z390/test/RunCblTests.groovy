@@ -64,6 +64,8 @@ class RunCblTests extends z390Test{
 
     @Test
     void testTESTSRT1() {
+        this.env.put('INFILE', basePath('zcobol', 'tests', 'TESTSRT1.TF1'))
+        this.env.put('OUTFILE', basePath('zcobol', 'tests', 'TESTSRT1.OUT'))
         int rc = this.cblclg(basePath("zcobol", "tests", "TESTSRT1"), 'TIME(30)')
         this.printOutput()
         assert rc == 0
@@ -71,6 +73,8 @@ class RunCblTests extends z390Test{
 
     @Test
     void testTESTSRT2() {
+        this.env.put('INFILE', basePath('zcobol', 'tests', 'TESTSRT2.TF1'))
+        this.env.put('OUTFILE', basePath('zcobol', 'tests', 'TESTSRT2.OUT'))
         int rc = this.cblclg(basePath("zcobol", "tests", "TESTSRT2"), 'TIME(30)')
         this.printOutput()
         assert rc == 0

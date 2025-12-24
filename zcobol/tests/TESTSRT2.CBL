@@ -10,9 +10,9 @@
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT UNSORTED-FILE
-               ASSIGN TO 'zcobol/tests/TESTSRT2.TF1'.
+               ASSIGN TO INFILE.
            SELECT SORTED-FILE
-               ASSIGN TO 'zcobol/tests/TESTSRT2.OUT'.
+               ASSIGN TO OUTFILE.
        DATA DIVISION.
        FILE SECTION.
        FD  UNSORTED-FILE
