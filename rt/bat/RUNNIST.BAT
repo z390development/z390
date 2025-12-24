@@ -37,6 +37,13 @@ rem -- *************************************************************
 pushd %~dps0..\..
 if %1. == . goto no_repo
 
+rem --
+rem -- Copy members and purpose:
+rem ALTL1.CPY - intended for use by EXEC85
+rem ALTLB.CPY - intended for use by EXEC85
+
+rem --
+rem -- Communications Module
 call bat\CBLCLG %z_TraceMode% %1\src\CM101M %2 %3 %4 %5 %6 %7 %8 %9
 call bat\CBLCLG %z_TraceMode% %1\src\CM102M %2 %3 %4 %5 %6 %7 %8 %9
 call bat\CBLCLG %z_TraceMode% %1\src\CM103M %2 %3 %4 %5 %6 %7 %8 %9
@@ -47,6 +54,37 @@ call bat\CBLCLG %z_TraceMode% %1\src\CM202M %2 %3 %4 %5 %6 %7 %8 %9
 call bat\CBLCLG %z_TraceMode% %1\src\CM303M %2 %3 %4 %5 %6 %7 %8 %9
 rem -- CM401M tests error conditions
 call bat\CBLC   %z_TraceMode% %1\src\CM401M %2 %3 %4 %5 %6 %7 %8 %9
+
+rem --
+rem -- Debug module
+call bat\CBLCLG %z_TraceMode% %1\src\DB101A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\DB102A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\DB103M %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\DB104A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\DB105A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\DB201A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\DB202A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\DB203A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\DB204A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\DB205A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\DB301M %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\DB302M %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\DB303M %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\DB304M %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\DB305M %2 %3 %4 %5 %6 %7 %8 %9
+
+rem --
+rem -- Executive module
+call bat\CBLCLG %z_TraceMode% %1\src\EXEC85 %2 %3 %4 %5 %6 %7 %8 %9
+
+rem --
+rem -- sort all error messages from all compiles
+type %1\*.err >%1\$all.err
+sort /+26 %1\$all.err /O %1\$allsort.err
+echo .
+echo All compiles completed
+echo See %1\$allsort.err for complete list of all messages
+
 set z_ReturnCode=0
 goto return
 
