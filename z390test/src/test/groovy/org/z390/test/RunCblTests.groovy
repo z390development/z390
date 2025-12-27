@@ -64,6 +64,9 @@ class RunCblTests extends z390Test{
 
     @Test
     void testTESTSRT1() {
+        // Set DD names for file assignment (like JCL would do on mainframe)
+        this.env.put('INFILE', basePath("zcobol", "test", "TESTSRT1.TF1"))
+        this.env.put('OUTFILE', basePath("zcobol", "test", "TESTSRT1.OUT"))
         int rc = this.cblclg(basePath("zcobol", "tests", "TESTSRT1"), 'TIME(30)')
         this.printOutput()
         assert rc == 0
@@ -71,6 +74,9 @@ class RunCblTests extends z390Test{
 
     @Test
     void testTESTSRT2() {
+        // Set DD names for file assignment (like JCL would do on mainframe)
+        this.env.put('INFILE2', basePath("zcobol", "test", "TESTSRT2.TF1"))
+        this.env.put('OUTFILE2', basePath("zcobol", "test", "TESTSRT2.OUT"))
         int rc = this.cblclg(basePath("zcobol", "tests", "TESTSRT2"), 'TIME(30)')
         this.printOutput()
         assert rc == 0

@@ -10,11 +10,13 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
+      *    Use DD names for file assignment (set via environment variables)
+      *    This follows standard mainframe practice where JCL provides paths
            SELECT UNSORTED-FILE
-               ASSIGN TO 'zcobol/test/TESTSRT1.TF1'
+               ASSIGN TO INFILE
                ORGANIZATION IS LINE SEQUENTIAL.
            SELECT SORTED-FILE
-               ASSIGN TO 'zcobol/test/TESTSRT1.OUT'
+               ASSIGN TO OUTFILE
                ORGANIZATION IS LINE SEQUENTIAL.
        DATA DIVISION.
        FILE SECTION.

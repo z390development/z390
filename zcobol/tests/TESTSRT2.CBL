@@ -6,10 +6,11 @@
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
+      *    Use DD names for file assignment (set via environment variables)
            SELECT UNSORTED-FILE
-               ASSIGN TO 'zcobol/test/TESTSRT2.TF1'.
+               ASSIGN TO INFILE2.
            SELECT SORTED-FILE
-               ASSIGN TO 'zcobol/test/TESTSRT2.OUT'.
+               ASSIGN TO OUTFILE2.
        DATA DIVISION.
        FILE SECTION.
        FD  UNSORTED-FILE
