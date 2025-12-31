@@ -78,12 +78,77 @@ rem -- Executive module
 call bat\CBLCLG %z_TraceMode% %1\src\EXEC85 %2 %3 %4 %5 %6 %7 %8 %9
 
 rem --
+rem -- Inter-Program Communication - subprograms must be compiled before the main program!
+del %1\src\IC*.OBJ >NUL                                             || rem clear out leftovers of prior run
+set XXXXX055=%1\src\IC101A_XXXXX055.OUT
+call bat\CBLC   %z_TraceMode% %1\src\IC102A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IC101A %2 %3 %4 %5 %6 %7 %8 %9
+set XXXXX055=%1\src\IC103A_XXXXX055.OUT
+call bat\CBLC   %z_TraceMode% %1\src\IC104A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLC   %z_TraceMode% %1\src\IC105A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IC103A %2 %3 %4 %5 %6 %7 %8 %9
+set XXXXX055=%1\src\IC106A_XXXXX055.OUT
+call bat\CBLC   %z_TraceMode% %1\src\IC107A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCL  %z_TraceMode% %1\src\IC106A %2 %3 %4 %5 %6 %7 %8 %9 || rem execution ends S0C7
+set XXXXX055=%1\src\IC108A_XXXXX055.OUT
+call bat\CBLC   %z_TraceMode% %1\src\IC109A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLC   %z_TraceMode% %1\src\IC110A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLC   %z_TraceMode% %1\src\IC111A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IC108A %2 %3 %4 %5 %6 %7 %8 %9
+set XXXXX055=%1\src\IC112A_XXXXX055.OUT
+call bat\CBLC   %z_TraceMode% %1\src\IC113A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IC112A %2 %3 %4 %5 %6 %7 %8 %9 || rem fails to generate the call to IC113A
+set XXXXX055=%1\src\IC114A_XXXXX055.OUT
+call bat\CBLC   %z_TraceMode% %1\src\IC115A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLC   %z_TraceMode% %1\src\IC114A %2 %3 %4 %5 %6 %7 %8 %9 || rem fails to link because of errors in IC115A
+set XXXXX055=%1\src\IC116A_XXXXX055.OUT
+call bat\CBLC   %z_TraceMode% %1\src\IC117M %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLC   %z_TraceMode% %1\src\IC118M %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IC116M %2 %3 %4 %5 %6 %7 %8 %9
+set XXXXX055=%1\src\IC201A_XXXXX055.OUT
+call bat\CBLC   %z_TraceMode% %1\src\IC202A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IC201A %2 %3 %4 %5 %6 %7 %8 %9
+set XXXXX055=%1\src\IC203A_XXXXX055.OUT
+call bat\CBLC   %z_TraceMode% %1\src\IC204A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLC   %z_TraceMode% %1\src\IC205A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLC   %z_TraceMode% %1\src\IC206A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IC203A %2 %3 %4 %5 %6 %7 %8 %9
+set XXXXX055=%1\src\IC207A_XXXXX055.OUT
+call bat\CBLC   %z_TraceMode% %1\src\IC208A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IC207A %2 %3 %4 %5 %6 %7 %8 %9
+set XXXXX055=%1\src\IC209A_XXXXX055.OUT
+call bat\CBLC   %z_TraceMode% %1\src\IC210A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLC   %z_TraceMode% %1\src\IC211A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLC   %z_TraceMode% %1\src\IC212A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLC   %z_TraceMode% %1\src\IC209A %2 %3 %4 %5 %6 %7 %8 %9 || rem fails to link because of errors in IC209A
+set XXXXX055=%1\src\IC213A_XXXXX055.OUT
+call bat\CBLC   %z_TraceMode% %1\src\IC214A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLC   %z_TraceMode% %1\src\IC215A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLC   %z_TraceMode% %1\src\IC213A %2 %3 %4 %5 %6 %7 %8 %9 || rem fails to link because of errors in IC215A
+set XXXXX055=%1\src\IC216A_XXXXX055.OUT
+call bat\CBLC   %z_TraceMode% %1\src\IC217A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IC216A %2 %3 %4 %5 %6 %7 %8 %9
+set XXXXX055=
+rem  bat\CBLCLG %z_TraceMode% %1\src\IC222A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
+rem  bat\CBLCLG %z_TraceMode% %1\src\IC223A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
+rem  bat\CBLCLG %z_TraceMode% %1\src\IC224A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
+rem  bat\CBLCLG %z_TraceMode% %1\src\IC225A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
+rem  bat\CBLCLG %z_TraceMode% %1\src\IC226A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
+rem  bat\CBLCLG %z_TraceMode% %1\src\IC227A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
+rem  bat\CBLCLG %z_TraceMode% %1\src\IC228A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
+rem  bat\CBLCLG %z_TraceMode% %1\src\IC233A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
+rem  bat\CBLCLG %z_TraceMode% %1\src\IC234A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
+rem  bat\CBLCLG %z_TraceMode% %1\src\IC235A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
+rem  bat\CBLCLG %z_TraceMode% %1\src\IC237A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
+rem  bat\CBLCLG %z_TraceMode% %1\src\IC401A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
+
+rem --
 rem -- sort all error messages from all compiles
-type %1\*.err >%1\$all.err
-sort /+26 %1\$all.err /O %1\$allsort.err
+type %1\src\*.err >%1\src\$all.err 2>nul
+sort /+26 %1\src\$all.err /O %1\src\$allsort.err
 echo .
 echo All compiles completed
-echo See %1\$allsort.err for complete list of all messages
+echo See %1\src\$allsort.err for complete list of all messages
 
 set z_ReturnCode=0
 goto return
