@@ -20,7 +20,6 @@ bash\cblclg zcobol\tests\TESTCMP3 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash\cblclg zcobol\tests\TESTCMP4 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash\cblclg zcobol\tests\TESTCMP5 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash\cblclg zcobol\tests\TESTCMP6 $1 $2 $3 $4 $5 $6 $7 $8 $9
-
 bash/cblclg zcobol/tests/TESTBFP1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTIF1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTIF2 $1 $2 $3 $4 $5 $6 $7 $8 $9
