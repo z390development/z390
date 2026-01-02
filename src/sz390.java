@@ -49,13 +49,15 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.Timer;
 ;@SuppressWarnings("unchecked")
-public  class  sz390 implements Runnable {
-   /*
-    ez390 is the emulator component of z390 which can be called from
-    z390 GUI interface or from command line to execute 390 load
-    module files.  
 
-    ****************************************************
+/**
+ * sz390 is the SVC component of z390 which handles SVC calls and associated functions
+ *
+ * Note: javadoc does not recognize this comment as a valid javadoc comment.
+ *       the problem disappears when removing the SuppressWarnings directive above.
+ */
+public class sz390 implements Runnable {
+   /****************************************************
     * Maintenance
     ****************************************************
     * 01/26/06 copied from ez390.java and modified
@@ -234,276 +236,277 @@ public  class  sz390 implements Runnable {
     * 2025-09-07 Issue #678 document optional label for test command A
     * 2025-09-28 Issue #681 Allow test script to revert to interactive mode
     * 2025-10-07 Issue #658 Change CDE CDUSE field usage from byte to halfword
+    * 2025-10-20 AFK        Add javadoc comments
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
     /*
      * static limits
      */
-	int    max_tiot_files    = 100;        // max open files
-    int    max_cde_pgms      = 500;        // max loaded 390 pgms
-    int    max_link_stk      = 50;         // max nested links
-    int max_cmd_out        = 10000;        // cmd output character buffer 
-    int max_cmd_proc       = 10;           // max cmd processes ID=0-9
-   int max_lsn_spec       = 265;
-   int max_dir_list       = 512;
-   int max_guam_buff       = 3000;
-   int max_ecb_count = 16; // RPI 393
-   int max_env_name_len = 256;   // RPI 413
-   int max_env_value_len = 4096; // RPI 413 could be move?
+    /** variable      */ int max_tiot_files    = 100;        // max open files
+    /** variable      */ int max_cde_pgms      = 500;        // max loaded 390 pgms
+    /** variable      */ int max_link_stk      = 50;         // max nested links
+    /** variable      */ int max_cmd_out        = 10000;        // cmd output character buffer 
+    /** variable      */ int max_cmd_proc       = 10;           // max cmd processes ID=0-9
+    /** variable      */ int max_lsn_spec       = 265;
+    /** variable      */ int max_dir_list       = 512;
+    /** variable      */ int max_guam_buff       = 3000;
+    /** variable      */ int max_ecb_count = 16; // RPI 393
+    /** variable      */ int max_env_name_len = 256;   // RPI 413
+    /** variable      */ int max_env_value_len = 4096; // RPI 413 could be move?
    /*
     * environment variables
     */
-   int env_name_addr  = 0;
-   int env_value_addr = 0;
-   String env_name = "";
-   String env_value = "";
+    /** variable      */ int env_name_addr  = 0;
+    /** variable      */ int env_value_addr = 0;
+    /** variable      */ String env_name = "";
+    /** variable      */ String env_value = "";
    /* 
     * shared global variables
     */
-    tz390 tz390 = null;
-    pz390 pz390 = null;
-    vz390 vz390 = null; // RPI 644
-	String msg_id = "EZ390I ";
-    boolean pz390_running = false;
-    boolean put_stats_running = false; // RPI 646
-    String ez390_pgm = null; // saved by link for gz390 title
-    int ez390_rc = 0;
-    int ez390_errors = 0;
-    boolean ez390_recursive_abort = false; // RPI 935
-    String load_file_name = null;
-    RandomAccessFile z390_file = null;
-    File log_file = null;
-    BufferedWriter log_file_buff = null;
-    String  opt_parms = " ";
-    boolean opt_ok = false;
-    boolean exit_request = false;
-    boolean system_abend = true;
-    boolean user_abend   = false;
-    boolean svc_abend_type   = system_abend;
-    boolean svc_req_dump     = false; // request dump
-    boolean dump_taken = false;
-    long long_psw_amode31_bit = ((long) (1) << 31); // RPI 819
-    long stimer_exit_time = 0;  // set by STIMER for update+monitor to check
-    int  stimer_exit_addr = 0;  // exit when STIMER tod reached
-    boolean stimer_exit_request = false; // set when time expired
-    boolean stimer_exit_running = false; // set while in stimer exit
-    int  stimer_save_r13 = 0; // save r13 during exit
-    int  stimer_save_r14 = 0; // save r14 during exit
-    int  stimer_save_r15 = 0; // save r15 during exit
-    int  stimer_save_psw = 0; // save psw at time of exit
+    /** variable      */ tz390 tz390 = null;
+    /** variable      */ pz390 pz390 = null;
+    /** variable      */ vz390 vz390 = null; // RPI 644
+    /** variable      */ String msg_id = "EZ390I ";
+    /** variable      */ boolean pz390_running = false;
+    /** variable      */ boolean put_stats_running = false; // RPI 646
+    /** variable      */ String ez390_pgm = null; // saved by link for gz390 title
+    /** variable      */ int ez390_rc = 0;
+    /** variable      */ int ez390_errors = 0;
+    /** variable      */ boolean ez390_recursive_abort = false; // RPI 935
+    /** variable      */ String load_file_name = null;
+    /** variable      */ RandomAccessFile z390_file = null;
+    /** variable      */ File log_file = null;
+    /** variable      */ BufferedWriter log_file_buff = null;
+    /** variable      */ String  opt_parms = " ";
+    /** variable      */ boolean opt_ok = false;
+    /** variable      */ boolean exit_request = false;
+    /** variable      */ boolean system_abend = true;
+    /** variable      */ boolean user_abend   = false;
+    /** variable      */ boolean svc_abend_type   = system_abend;
+    /** variable      */ boolean svc_req_dump     = false; // request dump
+    /** variable      */ boolean dump_taken = false;
+    /** variable      */ long long_psw_amode31_bit = ((long) (1) << 31); // RPI 819
+    /** variable      */ long stimer_exit_time = 0;  // set by STIMER for update+monitor to check
+    /** variable      */ int  stimer_exit_addr = 0;  // exit when STIMER tod reached
+    /** variable      */ boolean stimer_exit_request = false; // set when time expired
+    /** variable      */ boolean stimer_exit_running = false; // set while in stimer exit
+    /** variable      */ int  stimer_save_r13 = 0; // save r13 during exit
+    /** variable      */ int  stimer_save_r14 = 0; // save r14 during exit
+    /** variable      */ int  stimer_save_r15 = 0; // save r15 during exit
+    /** variable      */ int  stimer_save_psw = 0; // save psw at time of exit
     /*
      * gz390 graphical user access method variables
      */
-    gz390 gz390 = null;
-    int guam_major = 0;  // major function from r0+2
-    int guam_minor = 0;  // minor function from r0+3
-    int guam_args  = 0;  // arg list addr from r1
-    int guam_view_mcs    = 1;
-    int guam_view_tn3270 = 2;
-    int guam_view_graph  = 3;
-    int guam_view  = 0;  // 1=MCS, 2=TN3270, 3=graphics
-    int guam_x     = 0;  // x pixels (rows for set screen view)
-    int guam_y     = 0;  // y pixels (cols for set screen view)
-    int guam_x2    = 0;
-    int guam_y2    = 0;
-    int guam_color = 0;
-    int guam_width = 0;
-    int guam_height= 0;
-    int guam_row = 0;
-    int guam_col = 0;
-    int guam_bg_rgb = 0;
-    int guam_text_rgb = 0;
-    int guam_lfield = 0;
-    int guam_cursor_type = 0;
-    int guam_font      = 0;
-    int guam_abuff     = 0; // addr buff
-    int guam_lbuff     = 0; // length buff
-    int guam_key_amod  = 0; // addr key mod
-    int guam_key_achar = 0; // addr key char
-    int guam_key       = 0; // mod and char from keyboard
-    int[] guam_mouse   = null; // guam_mouse_read returns x,y,left,right
-    int guam_left      = 0;    // GUAM mouse left button addr (1=pressed)
-    int guam_right     = 0;    // GUAM_mouse right button addr (1 = pressed)
-    boolean guam_wait  = true; // wait for input
+    /** variable      */ gz390 gz390 = null;
+    /** variable      */ int guam_major = 0;  // major function from r0+2
+    /** variable      */ int guam_minor = 0;  // minor function from r0+3
+    /** variable      */ int guam_args  = 0;  // arg list addr from r1
+    /** variable      */ int guam_view_mcs    = 1;
+    /** variable      */ int guam_view_tn3270 = 2;
+    /** variable      */ int guam_view_graph  = 3;
+    /** variable      */ int guam_view  = 0;  // 1=MCS, 2=TN3270, 3=graphics
+    /** variable      */ int guam_x     = 0;  // x pixels (rows for set screen view)
+    /** variable      */ int guam_y     = 0;  // y pixels (cols for set screen view)
+    /** variable      */ int guam_x2    = 0;
+    /** variable      */ int guam_y2    = 0;
+    /** variable      */ int guam_color = 0;
+    /** variable      */ int guam_width = 0;
+    /** variable      */ int guam_height= 0;
+    /** variable      */ int guam_row = 0;
+    /** variable      */ int guam_col = 0;
+    /** variable      */ int guam_bg_rgb = 0;
+    /** variable      */ int guam_text_rgb = 0;
+    /** variable      */ int guam_lfield = 0;
+    /** variable      */ int guam_cursor_type = 0;
+    /** variable      */ int guam_font      = 0;
+    /** variable      */ int guam_abuff     = 0; // addr buff
+    /** variable      */ int guam_lbuff     = 0; // length buff
+    /** variable      */ int guam_key_amod  = 0; // addr key mod
+    /** variable      */ int guam_key_achar = 0; // addr key char
+    /** variable      */ int guam_key       = 0; // mod and char from keyboard
+    /** variable      */ int[] guam_mouse   = null; // guam_mouse_read returns x,y,left,right
+    /** variable      */ int guam_left      = 0;    // GUAM mouse left button addr (1=pressed)
+    /** variable      */ int guam_right     = 0;    // GUAM_mouse right button addr (1 = pressed)
+    /** variable      */ boolean guam_wait  = true; // wait for input
     /*
      * global tget and tput data
      */
-	int tpg_flags      = 0;    // TGET/TPUT options from high byte R1
-	int tpg_op_mask    = 0x80; // 1=TGET, 0=TPUT
-	int tpg_op_tget    = 0x80;
-	int tpg_op_tput    = 0x00;
-	int tpg_wait_mask  = 0x10; // 1=NOWAIT, 0=WAIT
-	int tpg_wait       = 0x00;
-	int tpg_nowait     = 0x10;
-	int tpg_type_mask  = 0x03; // 00=EDIT 01=ASIS 10=CONTROL 11=FULLSCR
-    int tpg_type_edit  = 0x00;
-    int tpg_type_asis  = 0x01;
-    int tpg_type_control = 0x02;
-    int tpg_type_fullscr = 0x03;
-    byte[] tget_byte = null;
-    ByteBuffer tget_buff = null;
-    byte[] tput_byte = new byte[max_guam_buff];
-    ByteBuffer tput_buff = ByteBuffer.wrap(tput_byte,0,max_guam_buff);
-    String guam_text = null;
+    /** variable      */ int tpg_flags      = 0;    // TGET/TPUT options from high byte R1
+    /** variable      */ int tpg_op_mask    = 0x80; // 1=TGET, 0=TPUT
+    /** variable      */ int tpg_op_tget    = 0x80;
+    /** variable      */ int tpg_op_tput    = 0x00;
+    /** variable      */ int tpg_wait_mask  = 0x10; // 1=NOWAIT, 0=WAIT
+    /** variable      */ int tpg_wait       = 0x00;
+    /** variable      */ int tpg_nowait     = 0x10;
+    /** variable      */ int tpg_type_mask  = 0x03; // 00=EDIT 01=ASIS 10=CONTROL 11=FULLSCR
+    /** variable      */ int tpg_type_edit  = 0x00;
+    /** variable      */ int tpg_type_asis  = 0x01;
+    /** variable      */ int tpg_type_control = 0x02;
+    /** variable      */ int tpg_type_fullscr = 0x03;
+    /** variable      */ byte[] tget_byte = null;
+    /** variable      */ ByteBuffer tget_buff = null;
+    /** variable      */ byte[] tput_byte = new byte[max_guam_buff];
+    /** variable      */ ByteBuffer tput_buff = ByteBuffer.wrap(tput_byte,0,max_guam_buff);
+    /** variable      */ String guam_text = null;
     /*
      * Monitor variables
      */   
-        int     ins_count = 0;  
-        int     io_count  = 0;
-        Timer   monitor_timer = null;
-        long    monitor_cmd_time_total = 0;
-	    long    monitor_last_time = 0;
-        long    monitor_next_time = 0;
-        long    monitor_cur_interval = 0;
-        int     monitor_last_ins_count = 0;
-        int     monitor_next_ins_count = 0;
-        int     monitor_last_io_count = 0;
-        int     monitor_next_io_count = 0;
-        long    monitor_cur_ins  = 0;
-        long    monitor_cur_int  = 0;
-        long    monitor_cur_rate = 0;
-        int wto_fld = 0;
-        int wto_len = 0;
-        /*
-         * wtor console data
-         */
-        BufferedReader wtor_reply_buff = null; // RPI 595, RPI 722
-        boolean wtor_reply_pending = false;
-        String  wtor_reply_string = null;
-        int wtor_reply_addr = 0;
-        int wtor_reply_len  = 0;
-        int wtor_ecb_addr   = -1;
-        int ecb_waiting = 0x80000000;
-        int ecb_posted  = 0x40000000;
+    /** variable      */ int     ins_count = 0;  
+    /** variable      */ int     io_count  = 0;
+    /** variable      */ Timer   monitor_timer = null;
+    /** variable      */ long    monitor_cmd_time_total = 0;
+    /** variable      */ long    monitor_last_time = 0;
+    /** variable      */ long    monitor_next_time = 0;
+    /** variable      */ long    monitor_cur_interval = 0;
+    /** variable      */ int     monitor_last_ins_count = 0;
+    /** variable      */ int     monitor_next_ins_count = 0;
+    /** variable      */ int     monitor_last_io_count = 0;
+    /** variable      */ int     monitor_next_io_count = 0;
+    /** variable      */ long    monitor_cur_ins  = 0;
+    /** variable      */ long    monitor_cur_int  = 0;
+    /** variable      */ long    monitor_cur_rate = 0;
+    /** variable      */ int wto_fld = 0;
+    /** variable      */ int wto_len = 0;
+    /*
+     * wtor console data
+     */
+    /** variable      */ BufferedReader wtor_reply_buff = null; // RPI 595, RPI 722
+    /** variable      */ boolean wtor_reply_pending = false;
+    /** variable      */ String  wtor_reply_string = null;
+    /** variable      */ int wtor_reply_addr = 0;
+    /** variable      */ int wtor_reply_len  = 0;
+    /** variable      */ int wtor_ecb_addr   = -1;
+    /** variable      */ int ecb_waiting = 0x80000000;
+    /** variable      */ int ecb_posted  = 0x40000000;
     /*
      *  svc wait variables 
      */
-        int wait_count = 0;  // 0 for ECB= else ECBLIST wait count
-        int wait_addr  = 0;  // ECB= or ECBLIST= addr
-        boolean wait_retry = false; // do not refretch on retry after stimer exit
+    /** variable      */ int wait_count = 0;  // 0 for ECB= else ECBLIST wait count
+    /** variable      */ int wait_addr  = 0;  // ECB= or ECBLIST= addr
+    /** variable      */ boolean wait_retry = false; // do not refretch on retry after stimer exit
     /*
      * cmd processor variables
      */
-    Process[]           cmd_proc          = (Process[])Array.newInstance(Process.class,max_cmd_proc);
-    Thread[]            cmd_proc_thread   = (Thread[])Array.newInstance(Thread.class,max_cmd_proc);
-    Thread[]            cmd_error_thread  = (Thread[])Array.newInstance(Thread.class,max_cmd_proc);
-    Thread[]            cmd_output_thread = (Thread[])Array.newInstance(Thread.class,max_cmd_proc);
-    BufferedReader[] cmd_error_reader  = new BufferedReader[max_cmd_proc]; // RPI 731
-    BufferedReader[] cmd_output_reader = new BufferedReader[max_cmd_proc]; // RPI 731
-    PrintStream[]      cmd_input_writer  = new PrintStream[max_cmd_proc];  // RPI 731
-    LinkedList<String>[] cmd_output_queue  = (LinkedList<String>[])Array.newInstance(LinkedList.class,max_cmd_proc);
-    boolean[]           cmd_proc_running  = (boolean[])Array.newInstance(boolean.class,max_cmd_proc);
-    boolean[]           cmd_proc_cmdlog   = new boolean[max_cmd_proc];  // RPI 731
-    int[]               cmd_proc_rc       = (int[])Array.newInstance(int.class,max_cmd_proc);
-    int[]               cmd_proc_io       = (int[])Array.newInstance(int.class,max_cmd_proc);
-    long[]              cmd_proc_start_time = (long[])Array.newInstance(long.class,max_cmd_proc); // RPI 545
-    String[]            cmd_error_msg     = new String[max_cmd_proc];
-	String[]            cmd_output_msg    = new String[max_cmd_proc];
-	String[]            cmd_read_line     = new String[max_cmd_proc]; // RPI 731
-	int tot_cmd = 0; //max cmd processes started;
-	int cmd_io_total = 0;
-    int tot_log_queue = 0;  // RPI 781
+    /** variable      */ Process[]           cmd_proc          = (Process[])Array.newInstance(Process.class,max_cmd_proc);
+    /** variable      */ Thread[]            cmd_proc_thread   = (Thread[])Array.newInstance(Thread.class,max_cmd_proc);
+    /** variable      */ Thread[]            cmd_error_thread  = (Thread[])Array.newInstance(Thread.class,max_cmd_proc);
+    /** variable      */ Thread[]            cmd_output_thread = (Thread[])Array.newInstance(Thread.class,max_cmd_proc);
+    /** variable      */ BufferedReader[] cmd_error_reader  = new BufferedReader[max_cmd_proc]; // RPI 731
+    /** variable      */ BufferedReader[] cmd_output_reader = new BufferedReader[max_cmd_proc]; // RPI 731
+    /** variable      */ PrintStream[]      cmd_input_writer  = new PrintStream[max_cmd_proc];  // RPI 731
+    /** variable      */ LinkedList<String>[] cmd_output_queue  = (LinkedList<String>[])Array.newInstance(LinkedList.class,max_cmd_proc);
+    /** variable      */ boolean[]           cmd_proc_running  = (boolean[])Array.newInstance(boolean.class,max_cmd_proc);
+    /** variable      */ boolean[]           cmd_proc_cmdlog   = new boolean[max_cmd_proc];  // RPI 731
+    /** variable      */ int[]               cmd_proc_rc       = (int[])Array.newInstance(int.class,max_cmd_proc);
+    /** variable      */ int[]               cmd_proc_io       = (int[])Array.newInstance(int.class,max_cmd_proc);
+    /** variable      */ long[]              cmd_proc_start_time = (long[])Array.newInstance(long.class,max_cmd_proc); // RPI 545
+    /** variable      */ String[]            cmd_error_msg     = new String[max_cmd_proc];
+    /** variable      */ String[]            cmd_output_msg    = new String[max_cmd_proc];
+    /** variable      */ String[]            cmd_read_line     = new String[max_cmd_proc]; // RPI 731
+    /** variable      */ int tot_cmd = 0; //max cmd processes started;
+    /** variable      */ int cmd_io_total = 0;
+    /** variable      */ int tot_log_queue = 0;  // RPI 781
 	/*
      * test option interactive debug variables
      */
-    boolean test_first_cmd = true; // RPI 854
-    String  test_file_name = null;
-    boolean test_cmd_abort = false;
-    int     test_loop_count = 0;
-    BufferedReader test_cmd_file = null;
-    String  test_cmd = null;
-    Pattern test_pattern = null;
-    Matcher test_match   = null;
-    String  test_token = null;
-    char    test_bias = ' ';
-    int     test_token_len = 0;
-    char    test_opcode = 0;
-    int test_addr = 0;
-    int test_next_addr = 0;
-    String test_sdt = null;
-    byte test_addr_type = 0;
-    byte test_addr_mem = 0;
-    byte test_addr_reg = 1;
-    byte test_addr_sdt = 2; // RPI 1526
-    byte test_addr_psw = 3; // RPI 1526
-    byte test_compare = 0;
-    int test_base_addr = -1;
-    int test_mem_loc = 0;
-    int test_mem_len = 0;
-    int test_reg_loc = 0;
-    long test_reg_sdt = 0;
-    byte[]  test_mem_sdt  = null;
-    int test_v_retcode = -1; // -1 - not used, 0, 4, 8 when relevant; // RPI 1526
-    boolean test_script_mode_batch;   // #681
+    /** variable      */ boolean test_first_cmd = true; // RPI 854
+    /** variable      */ String  test_file_name = null;
+    /** variable      */ boolean test_cmd_abort = false;
+    /** variable      */ int     test_loop_count = 0;
+    /** variable      */ BufferedReader test_cmd_file = null;
+    /** variable      */ String  test_cmd = null;
+    /** variable      */ Pattern test_pattern = null;
+    /** variable      */ Matcher test_match   = null;
+    /** variable      */ String  test_token = null;
+    /** variable      */ char    test_bias = ' ';
+    /** variable      */ int     test_token_len = 0;
+    /** variable      */ char    test_opcode = 0;
+    /** variable      */ int test_addr = 0;
+    /** variable      */ int test_next_addr = 0;
+    /** variable      */ String test_sdt = null;
+    /** variable      */ byte test_addr_type = 0;
+    /** variable      */ byte test_addr_mem = 0;
+    /** variable      */ byte test_addr_reg = 1;
+    /** variable      */ byte test_addr_sdt = 2; // RPI 1526
+    /** variable      */ byte test_addr_psw = 3; // RPI 1526
+    /** variable      */ byte test_compare = 0;
+    /** variable      */ int test_base_addr = -1;
+    /** variable      */ int test_mem_loc = 0;
+    /** variable      */ int test_mem_len = 0;
+    /** variable      */ int test_reg_loc = 0;
+    /** variable      */ long test_reg_sdt = 0;
+    /** variable      */ byte[]  test_mem_sdt  = null;
+    /** variable      */ int test_v_retcode = -1; // -1 - not used, 0, 4, 8 when relevant; // RPI 1526
+    /** variable      */ boolean test_script_mode_batch;   // #681
     /*
      * test reg and mem break on change variables
      */
-    boolean test_break_addr_mode = false;
-    boolean test_break_reg_mode  = false;
-    boolean test_break_mem_mode  = false;
-    boolean test_break_op_mode   = false;
-    int     tot_test_break_addr  = 0;
-    int     max_break_addr = 100;
-    int[]   test_break_addr      = new int[max_break_addr];
-    long    test_break_op_ins    = 0; // RPI 825
-    String[]  test_break_addr_cmd  = new String[max_break_addr];
-    String  test_break_reg_cmd   = null;
-    String  test_break_mem_cmd   = null;
-    String  test_break_op_cmd    = null;
-    boolean test_break_reg       = false;
-    boolean test_break_mem       = false;
-    int     test_break_reg_loc   = 0;
-    int     test_break_reg_compare = 0;
-    long    test_break_reg_val   = 0;
-    long    test_break_reg_sdt   = 0;
-    int     test_break_mem_loc   = 0;
-    byte    test_break_mem_byte  = 0;
-    int     test_break_mem_compare = 0;
-    int     test_break_mem_equal = 0;
-    byte[]  test_break_mem_sdt   = null;
-    int     test_break_op1       = 0;
-    int     test_break_op2       = 0;
-    int     test_break_op2_index = 0;
-    int     test_break_op2_mask  = 0;
+    /** variable      */ boolean test_break_addr_mode = false;
+    /** variable      */ boolean test_break_reg_mode  = false;
+    /** variable      */ boolean test_break_mem_mode  = false;
+    /** variable      */ boolean test_break_op_mode   = false;
+    /** variable      */ int     tot_test_break_addr  = 0;
+    /** variable      */ int     max_break_addr = 100;
+    /** variable      */ int[]   test_break_addr      = new int[max_break_addr];
+    /** variable      */ long    test_break_op_ins    = 0; // RPI 825
+    /** variable      */ String[]  test_break_addr_cmd  = new String[max_break_addr];
+    /** variable      */ String  test_break_reg_cmd   = null;
+    /** variable      */ String  test_break_mem_cmd   = null;
+    /** variable      */ String  test_break_op_cmd    = null;
+    /** variable      */ boolean test_break_reg       = false;
+    /** variable      */ boolean test_break_mem       = false;
+    /** variable      */ int     test_break_reg_loc   = 0;
+    /** variable      */ int     test_break_reg_compare = 0;
+    /** variable      */ long    test_break_reg_val   = 0;
+    /** variable      */ long    test_break_reg_sdt   = 0;
+    /** variable      */ int     test_break_mem_loc   = 0;
+    /** variable      */ byte    test_break_mem_byte  = 0;
+    /** variable      */ int     test_break_mem_compare = 0;
+    /** variable      */ int     test_break_mem_equal = 0;
+    /** variable      */ byte[]  test_break_mem_sdt   = null;
+    /** variable      */ int     test_break_op1       = 0;
+    /** variable      */ int     test_break_op2       = 0;
+    /** variable      */ int     test_break_op2_index = 0;
+    /** variable      */ int     test_break_op2_mask  = 0;
     /*
      * time and date variables
      */
-    SimpleDateFormat cur_date_MMddyy = new SimpleDateFormat("MM/dd/yy");
-    SimpleDateFormat cur_tod_hhmmss = new SimpleDateFormat("HH:mm:ss");
-    SimpleDateFormat cur_tod_hhmmss00 = new SimpleDateFormat("HHmmss00");
-    SimpleDateFormat cur_date_yyyy     = new SimpleDateFormat("yyyy");
-    SimpleDateFormat cur_date_MM       = new SimpleDateFormat("MM");
-    SimpleDateFormat cur_date_dd       = new SimpleDateFormat("dd");
-    SimpleDateFormat cur_date_HH       = new SimpleDateFormat("HH");
-    SimpleDateFormat cur_date_mm       = new SimpleDateFormat("mm");
-    SimpleDateFormat cur_date_ss       = new SimpleDateFormat("ss");
-    SimpleDateFormat cur_date_ms       = new SimpleDateFormat("SSS");
-    SimpleDateFormat cur_date_yyddd    = new SimpleDateFormat("yyDDD");
-    SimpleDateFormat cur_date_yyyyddd  = new SimpleDateFormat("yyyyDDD");
-    SimpleDateFormat cur_date_MMddyyyy = new SimpleDateFormat("MMddyyyy");
-    SimpleDateFormat cur_date_ddMMyyyy = new SimpleDateFormat("ddMMyyyy");
-    SimpleDateFormat cur_date_yyyyMMdd = new SimpleDateFormat("yyyyMMdd");
-    int  cur_date_year  = 0;
-    int  cur_date_month = 0;
-    int  cur_date_day   = 0;
-    int  tod_hour  = 0;
-    int  tod_min   = 0;
-    int  tod_sec   = 0;
-    int  tod_msec  = 0;  // 0-999 fraction of sec
-    long time_mil   = 0;  // milli-seconds 
-    Calendar cur_date_cal = null;
-    long tod_start_day = 0;
-    long tod_start_pgm = 0;
-    long tod_end_pgm   = 0;
-    long tot_sec = 0;
-    long tod_time_limit = 0;
-    int  next_time_ins   = 0x1000;
-    int  next_time_check = next_time_ins;
-    boolean log_tod = true; 
-    JTextArea z390_log_text = null;
-    JTextField  z390_command_text = null;
-    boolean ez390_startup = true;
+    /** variable      */ SimpleDateFormat cur_date_MMddyy = new SimpleDateFormat("MM/dd/yy");
+    /** variable      */ SimpleDateFormat cur_tod_hhmmss = new SimpleDateFormat("HH:mm:ss");
+    /** variable      */ SimpleDateFormat cur_tod_hhmmss00 = new SimpleDateFormat("HHmmss00");
+    /** variable      */ SimpleDateFormat cur_date_yyyy     = new SimpleDateFormat("yyyy");
+    /** variable      */ SimpleDateFormat cur_date_MM       = new SimpleDateFormat("MM");
+    /** variable      */ SimpleDateFormat cur_date_dd       = new SimpleDateFormat("dd");
+    /** variable      */ SimpleDateFormat cur_date_HH       = new SimpleDateFormat("HH");
+    /** variable      */ SimpleDateFormat cur_date_mm       = new SimpleDateFormat("mm");
+    /** variable      */ SimpleDateFormat cur_date_ss       = new SimpleDateFormat("ss");
+    /** variable      */ SimpleDateFormat cur_date_ms       = new SimpleDateFormat("SSS");
+    /** variable      */ SimpleDateFormat cur_date_yyddd    = new SimpleDateFormat("yyDDD");
+    /** variable      */ SimpleDateFormat cur_date_yyyyddd  = new SimpleDateFormat("yyyyDDD");
+    /** variable      */ SimpleDateFormat cur_date_MMddyyyy = new SimpleDateFormat("MMddyyyy");
+    /** variable      */ SimpleDateFormat cur_date_ddMMyyyy = new SimpleDateFormat("ddMMyyyy");
+    /** variable      */ SimpleDateFormat cur_date_yyyyMMdd = new SimpleDateFormat("yyyyMMdd");
+    /** variable      */ int  cur_date_year  = 0;
+    /** variable      */ int  cur_date_month = 0;
+    /** variable      */ int  cur_date_day   = 0;
+    /** variable      */ int  tod_hour  = 0;
+    /** variable      */ int  tod_min   = 0;
+    /** variable      */ int  tod_sec   = 0;
+    /** variable      */ int  tod_msec  = 0;  // 0-999 fraction of sec
+    /** variable      */ long time_mil   = 0;  // milli-seconds 
+    /** variable      */ Calendar cur_date_cal = null;
+    /** variable      */ long tod_start_day = 0;
+    /** variable      */ long tod_start_pgm = 0;
+    /** variable      */ long tod_end_pgm   = 0;
+    /** variable      */ long tot_sec = 0;
+    /** variable      */ long tod_time_limit = 0;
+    /** variable      */ int  next_time_ins   = 0x1000;
+    /** variable      */ int  next_time_check = next_time_ins;
+    /** variable      */ boolean log_tod = true; 
+    /** variable      */ JTextArea z390_log_text = null;
+    /** variable      */ JTextField  z390_command_text = null;
+    /** variable      */ boolean ez390_startup = true;
    /*
     * 390 load module loader variables
     *
@@ -513,43 +516,43 @@ public  class  sz390 implements Runnable {
     * offset 4 - full word entry offset
     * offset 4 - full word count of rlds 
     */ 
-    char[] load_code_ver  = new char[4];
-    char[] z390_flags     = new char[4];
-    int z390_flags_amode31 = 0;
-    int z390_flags_rmode31 = 1;
-    String load_dsn       = null;
-    int    load_dsn_addr  = 0;
-    String load_pgm_dir   = null;
-    String load_pgm_name  = null;
-    byte[] alias_name_byte = new byte[8];
-    String load_pgm_type  = null;
-    String load_vcdt_entry = null;
-    boolean load_vcdt_mode = false;
-    int    load_code_load = 0;
-    int    load_code_len  = 0;
-    int    load_code_ent  = 0;
-    int    load_code_rlds = 0;
+    /** variable      */ char[] load_code_ver  = new char[4];
+    /** variable      */ char[] z390_flags     = new char[4];
+    /** variable      */ int z390_flags_amode31 = 0;
+    /** variable      */ int z390_flags_rmode31 = 1;
+    /** variable      */ String load_dsn       = null;
+    /** variable      */ int    load_dsn_addr  = 0;
+    /** variable      */ String load_pgm_dir   = null;
+    /** variable      */ String load_pgm_name  = null;
+    /** variable      */ byte[] alias_name_byte = new byte[8];
+    /** variable      */ String load_pgm_type  = null;
+    /** variable      */ String load_vcdt_entry = null;
+    /** variable      */ boolean load_vcdt_mode = false;
+    /** variable      */ int    load_code_load = 0;
+    /** variable      */ int    load_code_len  = 0;
+    /** variable      */ int    load_code_ent  = 0;
+    /** variable      */ int    load_code_rlds = 0;
     /*
      * CDE content directory entry variables used
      * by LOAD, LINK, and DELETE to manage 390
      * load modules in memory
      */
-    int tot_cde = 0;
-    int cur_cde = 0;
-    String[] cde_name  = new String[max_cde_pgms];
-    String[] cde_file  = new String[max_cde_pgms];
-    short[]  cde_use   = (short[])Array.newInstance(short.class,max_cde_pgms);  // #658
-    int[]    cde_loc   = (int[])Array.newInstance(int.class,max_cde_pgms);
-    int[]    cde_len   = (int[])Array.newInstance(int.class,max_cde_pgms);
-    int[]    cde_ent   = (int[])Array.newInstance(int.class,max_cde_pgms);
-    int[]    cde_addr  = (int[])Array.newInstance(int.class,max_cde_pgms); // RPI 1063 addr CDE in mem
-    int      cded_len   = 40; // RPI 1063 see mac\CDED.MAC
+    /** variable      */ int tot_cde = 0;
+    /** variable      */ int cur_cde = 0;
+    /** variable      */ String[] cde_name  = new String[max_cde_pgms];
+    /** variable      */ String[] cde_file  = new String[max_cde_pgms];
+    /** variable      */ short[]  cde_use   = (short[])Array.newInstance(short.class,max_cde_pgms);  // #658
+    /** variable      */ int[]    cde_loc   = (int[])Array.newInstance(int.class,max_cde_pgms);
+    /** variable      */ int[]    cde_len   = (int[])Array.newInstance(int.class,max_cde_pgms);
+    /** variable      */ int[]    cde_ent   = (int[])Array.newInstance(int.class,max_cde_pgms);
+    /** variable      */ int[]    cde_addr  = (int[])Array.newInstance(int.class,max_cde_pgms); // RPI 1063 addr CDE in mem
+    /** variable      */ int      cded_len   = 40; // RPI 1063 see mac\CDED.MAC
     /*
      * nested link variables
      */
-    int tot_link_stk = 0;
-    int[]    link_stk_cde = (int[])Array.newInstance(int.class,max_link_stk);
-    int[]    link_stk_ret = (int[])Array.newInstance(int.class,max_link_stk);
+    /** variable      */ int tot_link_stk = 0;
+    /** variable      */ int[]    link_stk_cde = (int[])Array.newInstance(int.class,max_link_stk);
+    /** variable      */ int[]    link_stk_ret = (int[])Array.newInstance(int.class,max_link_stk);
     /*
      * rld entries in following format
      *   offset 0 full workd rld field offset
@@ -557,24 +560,24 @@ public  class  sz390 implements Runnable {
      * (negative len means subtract the base address
      * versus adding it to rld field.)
      */
-     int  rld_loc = 0;
-     byte rld_len = 0;
+    /** variable      */ int  rld_loc = 0;
+    /** variable      */ byte rld_len = 0;
     /*
      * convert to display variables
      */
-    int        ctd_display_len = 45; // CTD and CFD display field
-    float      ctd_e;
-    double     ctd_d;
- 	byte[]     ctd_byte = new byte[16];
-	BigInteger ctd_bi;
-	BigDecimal ctd_bd;
-	String     ctd_text;
-    float      cfd_e;
-    double     cfd_d;
- 	byte[]     cfd_byte;
-	BigInteger cfd_bi;
-	BigDecimal cfd_bd;
-	String     cfd_text;
+    /** variable      */ int        ctd_display_len = 45; // CTD and CFD display field
+    /** variable      */ float      ctd_e;
+    /** variable      */ double     ctd_d;
+    /** variable      */ byte[]     ctd_byte = new byte[16];
+    /** variable      */ BigInteger ctd_bi;
+    /** variable      */ BigDecimal ctd_bd;
+    /** variable      */ String     ctd_text;
+    /** variable      */ float      cfd_e;
+    /** variable      */ double     cfd_d;
+    /** variable      */ byte[]     cfd_byte;
+    /** variable      */ BigInteger cfd_bi;
+    /** variable      */ BigDecimal cfd_bd;
+    /** variable      */ String     cfd_text;
     /*
      * tcpio server port global data
      * 
@@ -585,19 +588,19 @@ public  class  sz390 implements Runnable {
      *   3.  Return to wait for next connection
      * 
      */
-    final Lock      lock            = new ReentrantLock();
-    final Condition lock_condition  = lock.newCondition();
-	boolean tcpio_server_running = false;  // true if any tcpio server ports open (required for server threads to run)
-	int     tcpio_conn_ready_count   = 0;        // count of conn msgs ready
-	int max_tcp_server_port   = 10; // max server ports open
-	int cur_tcp_server_index   = 0;  // current port
-	int[]          tcp_server_port   = new int[max_tcp_server_port];
-	boolean[]      tcp_server_open   = new boolean[max_tcp_server_port]; // RPI 622
-	Thread[]       tcp_server_thread = new Thread[max_tcp_server_port];  // RPI 554
-	int[]          tcp_server_conn_index = new int[max_tcp_server_port];     // RPI 554 index to allocated conn for next connection
-	ServerSocket[] tcp_server_socket = new ServerSocket[max_tcp_server_port];
-	String[]       tcp_server_host_text = new String[max_tcp_server_port];
-    InetAddress[]  tcp_server_host_ip   = new InetAddress[max_tcp_server_port];
+    /** variable      */ final Lock      lock            = new ReentrantLock();
+    /** variable      */ final Condition lock_condition  = lock.newCondition();
+    /** variable      */ boolean tcpio_server_running = false;  // true if any tcpio server ports open (required for server threads to run)
+    /** variable      */ int     tcpio_conn_ready_count   = 0;        // count of conn msgs ready
+    /** variable      */ int max_tcp_server_port   = 10; // max server ports open
+    /** variable      */ int cur_tcp_server_index   = 0;  // current port
+    /** variable      */ int[]          tcp_server_port   = new int[max_tcp_server_port];
+    /** variable      */ boolean[]      tcp_server_open   = new boolean[max_tcp_server_port]; // RPI 622
+    /** variable      */ Thread[]       tcp_server_thread = new Thread[max_tcp_server_port];  // RPI 554
+    /** variable      */ int[]          tcp_server_conn_index = new int[max_tcp_server_port];     // RPI 554 index to allocated conn for next connection
+    /** variable      */ ServerSocket[] tcp_server_socket = new ServerSocket[max_tcp_server_port];
+    /** variable      */ String[]       tcp_server_host_text = new String[max_tcp_server_port];
+    /** variable      */ InetAddress[]  tcp_server_host_ip   = new InetAddress[max_tcp_server_port];
 	/*
      * tcp server socket connection data
      * 
@@ -605,257 +608,257 @@ public  class  sz390 implements Runnable {
      * started by server port thread processes
      * receive messages and send messages to client.
      */
-	int               max_tcp_conn = 10; // max connections to server ports
-	int               cur_tcp_conn = 0;  // current thread
-	Thread[]          tcp_conn_thread         = new Thread[max_tcp_conn];  // RPI 554
-    Socket[]          tcp_conn_socket = new Socket[max_tcp_conn];
-    int[]             tcp_conn_server_port  = new int[max_tcp_conn];
-    int[]             tcp_conn_server_index = new int[max_tcp_conn];
-    boolean[]         tcp_conn_msg_ready    = new boolean[max_tcp_conn]; // 1 or more bytes ready for receiving
-    boolean[]         tcp_conn_read         = new boolean[max_tcp_conn];
-    byte[]            tcp_conn_byte         = new byte[max_tcp_conn];
-    DataInputStream[] tcp_conn_input        = new DataInputStream[max_tcp_conn];
-    PrintStream[]     tcp_conn_output       = new PrintStream[max_tcp_conn];
+    /** variable      */ int               max_tcp_conn = 10; // max connections to server ports
+    /** variable      */ int               cur_tcp_conn = 0;  // current thread
+    /** variable      */ Thread[]          tcp_conn_thread         = new Thread[max_tcp_conn];  // RPI 554
+    /** variable      */ Socket[]          tcp_conn_socket = new Socket[max_tcp_conn];
+    /** variable      */ int[]             tcp_conn_server_port  = new int[max_tcp_conn];
+    /** variable      */ int[]             tcp_conn_server_index = new int[max_tcp_conn];
+    /** variable      */ boolean[]         tcp_conn_msg_ready    = new boolean[max_tcp_conn]; // 1 or more bytes ready for receiving
+    /** variable      */ boolean[]         tcp_conn_read         = new boolean[max_tcp_conn];
+    /** variable      */ byte[]            tcp_conn_byte         = new byte[max_tcp_conn];
+    /** variable      */ DataInputStream[] tcp_conn_input        = new DataInputStream[max_tcp_conn];
+    /** variable      */ PrintStream[]     tcp_conn_output       = new PrintStream[max_tcp_conn];
     /*
      * tcpio client global data
      */
-    int           max_tcp_client_port   = 10; // max client ports open
-    int           cur_tcp_client_index   = 0;
-    int[]         tcp_client_port       = new int[max_tcp_client_port];
-	Socket[]      tcp_client_socket     = new Socket[max_tcp_client_port];
-    String[]      tcp_client_host_text  = new String[max_tcp_client_port];
-    InetAddress[] tcp_client_host_ip    = new InetAddress[max_tcp_client_port];
-    DataInputStream[] tcp_client_input  = new DataInputStream[max_tcp_client_port];
-    PrintStream[]     tcp_client_output = new PrintStream[max_tcp_client_port];
-    int    tcpio_op   = 0;       // r0 low = opcode 1-5
-    int    tcpio_flags= 0;       // r0 high= bit 15 = NOWAIT for receive
-	boolean tcpio_wait = false;
-	int    tcpio_conn = 0;       // r2 connection id for send/receive (-1 = any)
-	int    tcpio_amsg = 0;       // r14 msg start address
-	int    tcpio_lmsg = 0;       // r15 message length (max for receive)
-	int    tcpio_lmax = 1000000; // max lmsg set by send/recv
-	int    tcpio_lmin = 1;       // min lmsg
-	int    tcpio_host_ip_addr   = 0;
-	String tcpio_host_ip_text   = null; 
-	String tcpio_host_name = null; // RPI 854
-	InetAddress tcpio_host_ip = null;
-	int    tcpio_port        = 0;
-	int    tot_tcpio_oper    = 0;
-    int    tot_tcpio_openc   = 0;
-    int    tot_tcpio_opens   = 0;
-    int    tot_tcpio_closec  = 0;
-    int    tot_tcpio_closes  = 0;
-    int    tot_tcpio_send    = 0;
-    int    tot_tcpio_recv    = 0;
+    /** variable      */ int           max_tcp_client_port   = 10; // max client ports open
+    /** variable      */ int           cur_tcp_client_index   = 0;
+    /** variable      */ int[]         tcp_client_port       = new int[max_tcp_client_port];
+    /** variable      */ Socket[]      tcp_client_socket     = new Socket[max_tcp_client_port];
+    /** variable      */ String[]      tcp_client_host_text  = new String[max_tcp_client_port];
+    /** variable      */ InetAddress[] tcp_client_host_ip    = new InetAddress[max_tcp_client_port];
+    /** variable      */ DataInputStream[] tcp_client_input  = new DataInputStream[max_tcp_client_port];
+    /** variable      */ PrintStream[]     tcp_client_output = new PrintStream[max_tcp_client_port];
+    /** variable      */ int    tcpio_op   = 0;       // r0 low = opcode 1-5
+    /** variable      */ int    tcpio_flags= 0;       // r0 high= bit 15 = NOWAIT for receive
+    /** variable      */ boolean tcpio_wait = false;
+    /** variable      */ int    tcpio_conn = 0;       // r2 connection id for send/receive (-1 = any)
+    /** variable      */ int    tcpio_amsg = 0;       // r14 msg start address
+    /** variable      */ int    tcpio_lmsg = 0;       // r15 message length (max for receive)
+    /** variable      */ int    tcpio_lmax = 1000000; // max lmsg set by send/recv
+    /** variable      */ int    tcpio_lmin = 1;       // min lmsg
+    /** variable      */ int    tcpio_host_ip_addr   = 0;
+    /** variable      */ String tcpio_host_ip_text   = null; 
+    /** variable      */ String tcpio_host_name = null; // RPI 854
+    /** variable      */ InetAddress tcpio_host_ip = null;
+    /** variable      */ int    tcpio_port        = 0;
+    /** variable      */ int    tot_tcpio_oper    = 0;
+    /** variable      */ int    tot_tcpio_openc   = 0;
+    /** variable      */ int    tot_tcpio_opens   = 0;
+    /** variable      */ int    tot_tcpio_closec  = 0;
+    /** variable      */ int    tot_tcpio_closes  = 0;
+    /** variable      */ int    tot_tcpio_send    = 0;
+    /** variable      */ int    tot_tcpio_recv    = 0;
 	/*
      * DCB sequential and random file I/O tables
      */
-     int    tot_tiot_files = 0;
-     int    cur_tiot_index = 0;
-     int    tot_dcb_oper   = 0;
-     int    tot_dcb_open   = 0;
-     int    tot_dcb_close  = 0;
-     int    tot_dcb_get    = 0;
-     int    tot_dcb_put    = 0;
-     int    tot_dcb_read   = 0;
-     int    tot_dcb_write  = 0;
-     int    cur_decb_addr  = 0;
-     int    cur_ecb        = 0;
-     int decb_ecb   = 0;
-     int decb_type  = 4;
-     int decb_dcb   = 8;
-     int decb_area  = 12;
-     long   cur_rba        = 0;
-     int    cur_dcb_addr   = 0;     // mem offset to dcb from r1
-     int    cur_open_opt   = 0;     // open options (GET=x'40, PUT=x'20')
-     int    cur_dcbe_addr  = 0;     // dcb extension
+    /** variable      */ int    tot_tiot_files = 0;
+    /** variable      */ int    cur_tiot_index = 0;
+    /** variable      */ int    tot_dcb_oper   = 0;
+    /** variable      */ int    tot_dcb_open   = 0;
+    /** variable      */ int    tot_dcb_close  = 0;
+    /** variable      */ int    tot_dcb_get    = 0;
+    /** variable      */ int    tot_dcb_put    = 0;
+    /** variable      */ int    tot_dcb_read   = 0;
+    /** variable      */ int    tot_dcb_write  = 0;
+    /** variable      */ int    cur_decb_addr  = 0;
+    /** variable      */ int    cur_ecb        = 0;
+    /** variable      */ int decb_ecb   = 0;
+    /** variable      */ int decb_type  = 4;
+    /** variable      */ int decb_dcb   = 8;
+    /** variable      */ int decb_area  = 12;
+    /** variable      */ long   cur_rba        = 0;
+    /** variable      */ int    cur_dcb_addr   = 0;     // mem offset to dcb from r1
+    /** variable      */ int    cur_open_opt   = 0;     // open options (GET=x'40, PUT=x'20')
+    /** variable      */ int    cur_dcbe_addr  = 0;     // dcb extension
 	
-     String cur_dcb_ddnam = null;  // ascii ddname from dcb ebcdic
-     String cur_dcb_file_name = null;
-     int    cur_dcb_oflgs  = 0;
-     int    cur_dcb_synad  = 0;
-     int    cur_dcb_eodad  = 0;
-     int    cur_dcb_macrf  = 0;
-     int    cur_dcb_recfm  = 0;
-     int    cur_dcb_area   = 0;
-     int    cur_dcb_lrecl_f  = 0;
-     int    cur_dcb_blksi_f  = 0;
-     int    cur_vrec_lrecl  = 0;
-     String cur_rec_text  = null;
-     int    cur_rec_len   = 0;
-     int dcb_dsorg  = 0x1a;
-     int dcb_dsorg_ps = 0x40; // physical sequential (GM or PM) 
-     int dcb_dsorg_da = 0x20; // direct access(R/W)
-     int dcb_iobad  = 0x1c;      // has tiot_index +1 while open else 0
-     int dcb_eodad  = 0x20;      // end of data exit
-     int dcb_recfm  = 0x24;      // record format
-     int dcb_recfm_f = 0x80;     // fixed
-     int dcb_recfm_v = 0x40;     // variable
-     int dcb_recfm_fb = 0x90;    // fixed blocked
-     int dcb_recfm_vb = 0x50;    // variable blocked
-     int dcb_recfm_ft = 0xa0;    // fixed to/from ascii text
-     int dcb_recfm_vt = 0x60;    // variable to/from ascii text
-     int dcb_ddnam  = 0x28;      // ddname
-     int dcb_id     = 0x00;      // id = EBCDIC or ASCII C'DCB1' RPI88
-     int dcb_oflgs  = 0x30;      // open flags
-     int dcb_oflgs_open = 0x10;  // file open  RPI 906 was x'80'
-     int dcb_oflgs_r      = 0x40;  // read allowed
-     int dcb_oflgs_w      = 0x20;  // write allowed
-     int dcb_oflgs_rw     = 0x60;  // read and write allowed
-     int dcb_macrf  = 0x32;      // macro access type
-     int dcb_macrf_gm = 0x5000;  // get move
-     int dcb_macrf_pm = 0x0050;  // put move
-     int dcb_macrf_gl = 0x4800;  // get locate RPI 764
-     int dcb_macrf_pl = 0x0048;  // put locate RPI 764
-     int dcb_macrf_r  = 0x2000;  // read only  RPI 668
-     int dcb_macrf_w  = 0x0020;  // write only RPI 668
-     int dcb_macrf_rw = 0x2020;  // read/write random
-     int dcb_synad = 0x38;       // synchronous error exit
-     int dcb_blksi_f = 0x3c;       // blocksize RPI 587 32 bits
-     int dcb_lrecl_f = 0x50;       // record length RPI 587 32 bits
-     int dcb_rec   = 0x58;       // record area
-     int dcb_dsnam = 0x5c;       // ascii file spec override ddname
-     int dcb_dcbe  = 0x60; // dcbe extention for eodad and synad
-     int dcb_io    = 0x64; // dcb total io req since open // RPI 764
-     int dcb_len   = 0x68; // length of DCB
-	 int dcbe_flg1  = 0x17; // rpi 2229 new dcbeflg1 field with ULBI flag
-	 int   dcbeulbi = 0x04; // rpi 2229 flag in flg1 for BDW large blocks
-     int dcbe_eodad = 0x40; // rpi 2229 moved to correct dcbe offset
-     int dcbe_synad = 0x44; // rpi 2229 moved to correct dcbe offset
-     boolean dcb_synad_recur = false; // RPI 377
-     boolean[]          tiot_dcb_open   = (boolean[])Array.newInstance(boolean.class,max_tiot_files);
-     String[]           tiot_ddnam      = new String[max_tiot_files];
-     String[]           tiot_dsn        = new String[max_tiot_files];
-     int[]              tiot_dcb_addr   = (int[])Array.newInstance(int.class,max_tiot_files);
-     int[]              tiot_vrec_blksi = (int[])Array.newInstance(int.class,max_tiot_files);
-     long[]             tiot_cur_rba    = (long[])Array.newInstance(long.class,max_tiot_files);
-     long[]             tiot_eof_rba    = (long[])Array.newInstance(long.class,max_tiot_files);
-     RandomAccessFile[] tiot_file       = (RandomAccessFile[])Array.newInstance(RandomAccessFile.class,max_tiot_files);
+    /** variable      */ String cur_dcb_ddnam = null;  // ascii ddname from dcb ebcdic
+    /** variable      */ String cur_dcb_file_name = null;
+    /** variable      */ int    cur_dcb_oflgs  = 0;
+    /** variable      */ int    cur_dcb_synad  = 0;
+    /** variable      */ int    cur_dcb_eodad  = 0;
+    /** variable      */ int    cur_dcb_macrf  = 0;
+    /** variable      */ int    cur_dcb_recfm  = 0;
+    /** variable      */ int    cur_dcb_area   = 0;
+    /** variable      */ int    cur_dcb_lrecl_f  = 0;
+    /** variable      */ int    cur_dcb_blksi_f  = 0;
+    /** variable      */ int    cur_vrec_lrecl  = 0;
+    /** variable      */ String cur_rec_text  = null;
+    /** variable      */ int    cur_rec_len   = 0;
+    /** variable      */ int dcb_dsorg  = 0x1a;
+    /** variable      */ int dcb_dsorg_ps = 0x40; // physical sequential (GM or PM) 
+    /** variable      */ int dcb_dsorg_da = 0x20; // direct access(R/W)
+    /** variable      */ int dcb_iobad  = 0x1c;      // has tiot_index +1 while open else 0
+    /** variable      */ int dcb_eodad  = 0x20;      // end of data exit
+    /** variable      */ int dcb_recfm  = 0x24;      // record format
+    /** variable      */ int dcb_recfm_f = 0x80;     // fixed
+    /** variable      */ int dcb_recfm_v = 0x40;     // variable
+    /** variable      */ int dcb_recfm_fb = 0x90;    // fixed blocked
+    /** variable      */ int dcb_recfm_vb = 0x50;    // variable blocked
+    /** variable      */ int dcb_recfm_ft = 0xa0;    // fixed to/from ascii text
+    /** variable      */ int dcb_recfm_vt = 0x60;    // variable to/from ascii text
+    /** variable      */ int dcb_ddnam  = 0x28;      // ddname
+    /** variable      */ int dcb_id     = 0x00;      // id = EBCDIC or ASCII C'DCB1' RPI88
+    /** variable      */ int dcb_oflgs  = 0x30;      // open flags
+    /** variable      */ int dcb_oflgs_open = 0x10;  // file open  RPI 906 was x'80'
+    /** variable      */ int dcb_oflgs_r      = 0x40;  // read allowed
+    /** variable      */ int dcb_oflgs_w      = 0x20;  // write allowed
+    /** variable      */ int dcb_oflgs_rw     = 0x60;  // read and write allowed
+    /** variable      */ int dcb_macrf  = 0x32;      // macro access type
+    /** variable      */ int dcb_macrf_gm = 0x5000;  // get move
+    /** variable      */ int dcb_macrf_pm = 0x0050;  // put move
+    /** variable      */ int dcb_macrf_gl = 0x4800;  // get locate RPI 764
+    /** variable      */ int dcb_macrf_pl = 0x0048;  // put locate RPI 764
+    /** variable      */ int dcb_macrf_r  = 0x2000;  // read only  RPI 668
+    /** variable      */ int dcb_macrf_w  = 0x0020;  // write only RPI 668
+    /** variable      */ int dcb_macrf_rw = 0x2020;  // read/write random
+    /** variable      */ int dcb_synad = 0x38;       // synchronous error exit
+    /** variable      */ int dcb_blksi_f = 0x3c;       // blocksize RPI 587 32 bits
+    /** variable      */ int dcb_lrecl_f = 0x50;       // record length RPI 587 32 bits
+    /** variable      */ int dcb_rec   = 0x58;       // record area
+    /** variable      */ int dcb_dsnam = 0x5c;       // ascii file spec override ddname
+    /** variable      */ int dcb_dcbe  = 0x60; // dcbe extention for eodad and synad
+    /** variable      */ int dcb_io    = 0x64; // dcb total io req since open // RPI 764
+    /** variable      */ int dcb_len   = 0x68; // length of DCB
+    /** variable      */ int dcbe_flg1  = 0x17; // rpi 2229 new dcbeflg1 field with ULBI flag
+    /** variable      */ int   dcbeulbi = 0x04; // rpi 2229 flag in flg1 for BDW large blocks
+    /** variable      */ int dcbe_eodad = 0x40; // rpi 2229 moved to correct dcbe offset
+    /** variable      */ int dcbe_synad = 0x44; // rpi 2229 moved to correct dcbe offset
+    /** variable      */ boolean dcb_synad_recur = false; // RPI 377
+    /** variable      */ boolean[]          tiot_dcb_open   = (boolean[])Array.newInstance(boolean.class,max_tiot_files);
+    /** variable      */ String[]           tiot_ddnam      = new String[max_tiot_files];
+    /** variable      */ String[]           tiot_dsn        = new String[max_tiot_files];
+    /** variable      */ int[]              tiot_dcb_addr   = (int[])Array.newInstance(int.class,max_tiot_files);
+    /** variable      */ int[]              tiot_vrec_blksi = (int[])Array.newInstance(int.class,max_tiot_files);
+    /** variable      */ long[]             tiot_cur_rba    = (long[])Array.newInstance(long.class,max_tiot_files);
+    /** variable      */ long[]             tiot_eof_rba    = (long[])Array.newInstance(long.class,max_tiot_files);
+    /** variable      */ RandomAccessFile[] tiot_file       = (RandomAccessFile[])Array.newInstance(RandomAccessFile.class,max_tiot_files);
 
-        int ascii_lf = 10;
-        int ascii_cr = 13;
-        int ascii_period =  (int)'.';
-        int ascii_space = (int) ' ';
-        int ebcdic_period = 75;
-        int ebcdic_space = 64;
+    /** variable      */ int ascii_lf = 10;
+    /** variable      */ int ascii_cr = 13;
+    /** variable      */ int ascii_period =  (int)'.';
+    /** variable      */ int ascii_space = (int) ' ';
+    /** variable      */ int ebcdic_period = 75;
+    /** variable      */ int ebcdic_space = 64;
   /*
    * getmain and freemain work areas used by trace
    */
-    int req_addr = 0;
-    int req_len  = 0;
-    int req_opt  = 0;
-   int cur_fqe  = 0;
-  int cur_fqe_len = 0;
-  int prev_fqe = 0;
-  int next_fqe = 0;
-  int next_fqe_len = 0;
-  int best_cur_fqe = 0;  // RPI 1153 smallest >= req_len
-  int best_prev_fqe = 0; // RPI 1153
-  int best_fqe_len = 0;  // RPI 1153
-  int max_mem_blk = 0; // largest contiguous memory blk for sort RPI 1092
-  int opt_getmain_amode31 = 0x02;
-  int opt_getmain_cond    = 0x01;
-  /*
-   * VSAM svc 97 interface variables
-   */
-  int cur_vsam_op   = 0;
-  int vsam_op_open  = 19;
-  int vsam_op_clsoe = 20;
-  /*
-   * zsort global variables
-   */
+    /** variable      */ int req_addr = 0;
+    /** variable      */ int req_len  = 0;
+    /** variable      */ int req_opt  = 0;
+    /** variable      */ int cur_fqe  = 0;
+    /** variable      */ int cur_fqe_len = 0;
+    /** variable      */ int prev_fqe = 0;
+    /** variable      */ int next_fqe = 0;
+    /** variable      */ int next_fqe_len = 0;
+    /** variable      */ int best_cur_fqe = 0;  // RPI 1153 smallest >= req_len
+    /** variable      */ int best_prev_fqe = 0; // RPI 1153
+    /** variable      */ int best_fqe_len = 0;  // RPI 1153
+    /** variable      */ int max_mem_blk = 0; // largest contiguous memory blk for sort RPI 1092
+    /** variable      */ int opt_getmain_amode31 = 0x02;
+    /** variable      */ int opt_getmain_cond    = 0x01;
+    /*
+     * VSAM svc 97 interface variables
+     */
+    /** variable      */ int cur_vsam_op   = 0;
+    /** variable      */ int vsam_op_open  = 19;
+    /** variable      */ int vsam_op_clsoe = 20;
+    /*
+     * zsort global variables
+     */
         /*
          * zsort statistics
          */
-  		String zsort_pfx;
-  		String zsort_start = "";;
-  		String zsort_ended = "";
-  		String zsort_elapsed = "";
-  		int    zsort_id = 0;
+    /** variable      */ String zsort_pfx;
+    /** variable      */ String zsort_start = "";;
+    /** variable      */ String zsort_ended = "";
+    /** variable      */ String zsort_elapsed = "";
+    /** variable      */ int    zsort_id = 0;
 		/*
 		 * mode mode flags - ISORT/FSORT resets them all
 		 */
-        boolean zsort_abort     = false;
-        boolean zsort_put       = false; // zsort put ok
-		boolean zsort_get       = false; // zsort get ok
+    /** variable      */ boolean zsort_abort     = false;
+    /** variable      */ boolean zsort_put       = false; // zsort put ok
+    /** variable      */ boolean zsort_get       = false; // zsort get ok
 		/*
 		 * ISORT/FSORT input parms
 		 */
-        int zsort_parm_addr = 0; // zsort parm addr in r1 > lrecl,mem,key info
-        int zsort_lrecl = 0;     // +0 4 = fixed record length or max var record
-		int zsort_mem = 0;       // +4 4 = max memory used by sort or max avail from MEM option if 0
-		int zsort_min_blk_rec = 2; // min records in a sort block
-		int zsort_max_keys = 10; // max keys allowed
-		int zsort_tot_keys = 0;  // up to zsort_max_keys loaded from parm list with VL bit in last word
-		int[]  zsort_key_off    = new int[zsort_max_keys];         // +08 4 key offset in record
-		int[]  zsort_key_len    = new int[zsort_max_keys];         // +12 4 key length
-		byte[] zsort_key_type  = new byte[zsort_max_keys];       // +16 2 key type (also vl bit if last
-		byte[] zsort_key_order = new byte[zsort_max_keys];       // +18 2 key ascending 1 or 0 for descending 
-		int zsort_psw_cc = 0;
-		int zsort_tot_sorts  = 0;
-		int zsort_tot_passes = 0;
+    /** variable      */ int zsort_parm_addr = 0; // zsort parm addr in r1 > lrecl,mem,key info
+    /** variable      */ int zsort_lrecl = 0;     // +0 4 = fixed record length or max var record
+    /** variable      */ int zsort_mem = 0;       // +4 4 = max memory used by sort or max avail from MEM option if 0
+    /** variable      */ int zsort_min_blk_rec = 2; // min records in a sort block
+    /** variable      */ int zsort_max_keys = 10; // max keys allowed
+    /** variable      */ int zsort_tot_keys = 0;  // up to zsort_max_keys loaded from parm list with VL bit in last word
+    /** variable      */ int[]  zsort_key_off    = new int[zsort_max_keys];         // +08 4 key offset in record
+    /** variable      */ int[]  zsort_key_len    = new int[zsort_max_keys];         // +12 4 key length
+    /** variable      */ byte[] zsort_key_type  = new byte[zsort_max_keys];       // +16 2 key type (also vl bit if last
+    /** variable      */ byte[] zsort_key_order = new byte[zsort_max_keys];       // +18 2 key ascending 1 or 0 for descending 
+    /** variable      */ int zsort_psw_cc = 0;
+    /** variable      */ int zsort_tot_sorts  = 0;
+    /** variable      */ int zsort_tot_passes = 0;
 		/*
 		 * zsort work file variables
 		 */
-		String zsort_sortwk01_dsn = null;
-		String zsort_sortwk02_dsn = null;
-		RandomAccessFile zsort_sortwk01_file = null;
-		RandomAccessFile zsort_sortwk02_file = null;
-		long zsort_sortwk_len = 0;
-		int  zsort_tot_read  = 0; // block reads from work files
-		int  zsort_tot_write = 0; // block write to work files
-		int  zsort_tot_svc_put = 0;   // total records to sort
-		int  zsort_tot_svc_get = 0;   // total sorted records returnsd
-		int  zsort_tot_comp = 0;
-		int  zsort_tot_move = 0; // swaps, merges, isort get/put
+    /** variable      */ String zsort_sortwk01_dsn = null;
+    /** variable      */ String zsort_sortwk02_dsn = null;
+    /** variable      */ RandomAccessFile zsort_sortwk01_file = null;
+    /** variable      */ RandomAccessFile zsort_sortwk02_file = null;
+    /** variable      */ long zsort_sortwk_len = 0;
+    /** variable      */ int  zsort_tot_read  = 0; // block reads from work files
+    /** variable      */ int  zsort_tot_write = 0; // block write to work files
+    /** variable      */ int  zsort_tot_svc_put = 0;   // total records to sort
+    /** variable      */ int  zsort_tot_svc_get = 0;   // total sorted records returnsd
+    /** variable      */ int  zsort_tot_comp = 0;
+    /** variable      */ int  zsort_tot_move = 0; // swaps, merges, isort get/put
 		/*
 		 * zsort memory blk variables
 		 */
-		int zsort_fm_len   = 0; // mem alloc before rounding
-		int zsort_blk_len  = 0; // length of memory blk rounded down to even mult of lrecl
-		int zsort_blk_addr = 0; // addr of memory block in pz390.mem
-		int zsort_blk_end  = 0;
-		int zsort_blk_ptr = 0;
-		int zsort_blk1_addr = 0;  // merge input blk 1
-		int zsort_blk1_ptr = 0;
-		int zsort_blk1_ptr_end = 0;
-		int zsort_blk2_addr = 0; // merge input blk 2
-		int zsort_blk2_ptr = 0;
-		int zsort_blk2_ptr_end = 0;
-		int zsort_blk3_addr = 0; // merge output blk 3
-		int zsort_blk3_ptr = 0;
-		int zsort_blk3_ptr_end = 0;
-		long zsort_blk1_xrba = 0;
-		long zsort_blk2_xrba = 0;
-		long zsort_blk1_xrba_end = 0;
-		long zsort_blk2_xrba_end = 0;
-		int  zsort_read_len;
-		int  zsort_write_len;
+    /** variable      */ int zsort_fm_len   = 0; // mem alloc before rounding
+    /** variable      */ int zsort_blk_len  = 0; // length of memory blk rounded down to even mult of lrecl
+    /** variable      */ int zsort_blk_addr = 0; // addr of memory block in pz390.mem
+    /** variable      */ int zsort_blk_end  = 0;
+    /** variable      */ int zsort_blk_ptr = 0;
+    /** variable      */ int zsort_blk1_addr = 0;  // merge input blk 1
+    /** variable      */ int zsort_blk1_ptr = 0;
+    /** variable      */ int zsort_blk1_ptr_end = 0;
+    /** variable      */ int zsort_blk2_addr = 0; // merge input blk 2
+    /** variable      */ int zsort_blk2_ptr = 0;
+    /** variable      */ int zsort_blk2_ptr_end = 0;
+    /** variable      */ int zsort_blk3_addr = 0; // merge output blk 3
+    /** variable      */ int zsort_blk3_ptr = 0;
+    /** variable      */ int zsort_blk3_ptr_end = 0;
+    /** variable      */ long zsort_blk1_xrba = 0;
+    /** variable      */ long zsort_blk2_xrba = 0;
+    /** variable      */ long zsort_blk1_xrba_end = 0;
+    /** variable      */ long zsort_blk2_xrba_end = 0;
+    /** variable      */ int  zsort_read_len;
+    /** variable      */ int  zsort_write_len;
 		
 		/*
 		 * zsort merge variables used if records exceed memory
 		 */
-		boolean zsort_merge_wk01 = true; // merge from wk01 to wk02 or wk02 to wk01 on alternating passes
-        String zsort_wk_name;
-		int  zsort_merge_mem_blk_len = 0; // fixed blk size for 2 input and 1 output blk
-		long zsort_merge_wk_blk_len = 0;  // double zsort_blk_len on each merge pass
-		int  zsort_merge_pass    = 0;     // count merge passes for stats
+    /** variable      */ boolean zsort_merge_wk01 = true; // merge from wk01 to wk02 or wk02 to wk01 on alternating passes
+    /** variable      */ String zsort_wk_name;
+    /** variable      */ int  zsort_merge_mem_blk_len = 0; // fixed blk size for 2 input and 1 output blk
+    /** variable      */ long zsort_merge_wk_blk_len = 0;  // double zsort_blk_len on each merge pass
+    /** variable      */ int  zsort_merge_pass    = 0;     // count merge passes for stats
      /* Condition Code descriptions */                   // RPI 1507
-     String[]   cc_descriptions = {      // Table added for RPI 1507
+    /** variable      */ String[]   cc_descriptions = {      // Table added for RPI 1507
                "B'00'=Equal/Zero/Even",                  // RPI 1507
                "B'01'=Low/Minus/Mixed",                  // RPI 1507
                "B'10'=High/Positive",                    // RPI 1507
                "B'11'=Odd/Ones"                          // RPI 1507
                };                                        // RPI 1507
      /* Program Mask bit descriptions */                 // RPI 1507
-     String[]   maskbit_descriptions = { // Table added for RPI 1507
+    /** variable      */ String[]   maskbit_descriptions = { // Table added for RPI 1507
                "Fixed Point Overflow",                   // RPI 1507
                "Decimal Overflow",                       // RPI 1507
                "HFP Exponent Underflow",                 // RPI 1507
                "HFP Significance"                        // RPI 1507
                };                                        // RPI 1507
      /* On/Off descriptions */                           // RPI 1507
-     String[]   on_off = {               // Table added for RPI 1507
+    /** variable      */ String[]   on_off = {               // Table added for RPI 1507
                "Off",                                    // RPI 1507
                "On",                                     // RPI 1507
                };                                        // RPI 1507
@@ -863,7 +866,7 @@ public  class  sz390 implements Runnable {
 	 * Constants used by test command FPC+                                   // #515
 	 */                                                                      // #515
 	// bit masks for byte                                                    // #515
-	final byte[] byte_mask_bit =                                             // #515
+    /** variable      */ final byte[] byte_mask_bit =                        // #515
 		{                                                                    // #515
 			(byte)0x80,                                                      // #515
 			0x40,                                                            // #515
@@ -876,7 +879,7 @@ public  class  sz390 implements Runnable {
 		};                                                                   // #515
 	// mask names for FPC byte 0 bits 0-5;                                   // #515
 	// from PofOp-13 p9-9 Figure 9-6                                         // #515
-	final String[] mask_name =                                               // #515
+    /** variable      */ final String[] mask_name =                          // #515
 		{                                                                    // #515
 			"IEEE-invalid-operation mask",                                   // #515
 			"IEEE-division-by-zero mask",                                    // #515
@@ -887,7 +890,7 @@ public  class  sz390 implements Runnable {
 		};                                                                   // #515
 	// flag names for FPC byte 1 bits 0-5;                                   // #515
 	// from PofOp-13 p9-9 Figure 9-6                                         // #515
-	final String[] flag_name =                                               // #515
+    /** variable      */ final String[] flag_name =                          // #515
 		{                                                                    // #515
 			"IEEE-invalid-operation flag",                                   // #515
 			"IEEE-division-by-zero flag",                                    // #515
@@ -898,7 +901,7 @@ public  class  sz390 implements Runnable {
 		};                                                                   // #515
 	// DFP rounding method names for FPC byte 3 bits 1-3;                    // #515
 	// from PofOp-13 p9-10 Figure 9-7                                        // #515
-	final String[] DFPRoundingMode_name =                                    // #515
+    /** variable      */ final String[] DFPRoundingMode_name =               // #515
 		{                                                                    // #515
 			"Round to nearest with ties to even",                            // #515
 			"Round toward 0",                                                // #515
@@ -911,7 +914,7 @@ public  class  sz390 implements Runnable {
 		};                                                                   // #515
 	// BFP rounding method names for FPC byte 3 bits 5-7;                    // #515
 	// from PofOp-13 p9-10 Figure 9-8                                        // #515
-	final String[] BFPRoundingMode_name =                                    // #515
+    /** variable      */ final String[] BFPRoundingMode_name =               // #515
 		{                                                                    // #515
 			"Round to nearest with ties to even",                            // #515
 			"Round toward 0",                                                // #515
@@ -928,21 +931,32 @@ public  class  sz390 implements Runnable {
   /* ********************************************** */   // RPI 1598
   /* Anchor points for globals supporting new zVSAM */   // RPI 1598
   /* ********************************************** */   // RPI 1598
-  LinkedList<zACB> zACB_list;                            // RPI 1598
+    /** variable      */ LinkedList<zACB> zACB_list;     // RPI 1598
   /*
    * end of global ez390 class data and start of procs
    */
+
 
 
   /* ************************************************************* */
 
 
 
-    /**
-     * execute supervisor call using
-     * mem and regs for data transfer
-     * @param svc_id - SVC number, can be different from MVS assignment
-     */
+/**
+ * Dummy constructor - no initialization needed
+ */
+public sz390()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
+/**
+ * execute supervisor call using
+ * mem and regs for data transfer
+ *
+ * @param svc_id - SVC number, can be different from MVS assignment
+ */
 public void svc(int svc_id){
 
 	switch (svc_id){
@@ -1083,11 +1097,12 @@ public void svc(int svc_id){
 
 
 
-   	/**
-   	 * Write message to z390_log_text and/or con
-   	 * if running standalone
-   	 * @param msg - text of message to be logged
-   	 */
+/**
+ * Write message to z390_log_text and/or con
+ * if running standalone
+ *
+ * @param msg - text of message to be logged
+ */
 public synchronized void put_log(String msg) {
 
 	put_log_line(msg);
@@ -1115,11 +1130,11 @@ public synchronized void put_log(String msg) {
 
 
 
-   /**
-    * put line to listing file
-    *
-    * @param msg - text of message to be written
-    */
+/**
+ * put line to listing file
+ *
+ * @param msg - text of message to be written
+ */
     private void put_log_line(String msg){
 
 	   	   if (tz390.opt_list){
@@ -1141,12 +1156,12 @@ public synchronized void put_log(String msg) {
 
 
 
-    /**
-     * put msg to console or cmd process output
-     * and yield to let parent process m
-     *
-     * @param msg - text of message to be written
-     */
+/**
+ * put msg to console or cmd process output
+ * and yield to let parent process m
+ *
+ * @param msg - text of message to be written
+ */
 private void put_con(String msg){
 	if (!tz390.force_nocon){ // RPI 1050 for future use
 		System.out.println(msg);
@@ -1156,14 +1171,13 @@ private void put_con(String msg){
 
 
 
-    /**
-     * issue error msg to log with prefix and
-     * inc error total
-     * 1.  supress if not gen_obj and not trace
-     * @param error - error code
-     * @param msg - text of error message
-     */
-
+/**
+ * issue error msg to log with prefix and increment error total
+ * Yet suppress if not gen_obj and not trace
+ *
+ * @param error - error code
+ * @param msg - text of error message
+ */
 public void log_error(int error,String msg){
 	  String error_msg = "EZ390E error " + tz390.right_justify("" + error,3) + " " + msg;
       put_log(error_msg);
@@ -1176,12 +1190,12 @@ public void log_error(int error,String msg){
 
 
 
-    /**
-     * issue error msg to log with prefix and
-     * inc error total
-     * @param error - error number
-     * @param msg - error message
-     */
+/**
+ * issue error msg to log with prefix and increment error total
+ *
+ * @param error - error number
+ * @param msg - error message
+ */
 public synchronized void abort_error(int error,String msg){  // RPI 646
 
 	if (ez390_recursive_abort){ // RPI 935
@@ -1221,10 +1235,10 @@ public synchronized void abort_error(int error,String msg){  // RPI 646
 
 
 
-    /**
-     * display total errors
-     * close files and exit
-     */
+/**
+ * display total errors
+ * close files and exit
+ */
 public void exit_ez390(){
 
 	  int r15_rc = pz390.reg.getInt(pz390.r15); //RPI39
@@ -1260,10 +1274,10 @@ public void exit_ez390(){
 
 
 
-    /**
-     * if exit request, send shutdown request
-     * to z390 GUI via the sysout queue
-     */
+/**
+ * if exit request, send shutdown request
+ * to z390 GUI via the sysout queue
+ */
 private synchronized void close_z390_guam(){  // RPI 397
 
     if (exit_request){
@@ -1276,9 +1290,9 @@ private synchronized void close_z390_guam(){  // RPI 397
 
 
 
-    /**
-     * display statistics as comments at end of bal
-     */
+/**
+ * display statistics as comments at end of bal
+ */
 private void put_stats(){
 
 	if (tz390.opt_stats){
@@ -1355,10 +1369,11 @@ private void put_stats(){
 
 
 
-    /**
-     * routine statistics line to LOG or STATS(file)
-     * @param msg - message text
-     */
+/**
+ * routine statistics line to LOG or STATS(file)
+ *
+ * @param msg - message text
+ */
 public void put_stat_line(String msg){
 
 	if (tz390.stats_file != null){
@@ -1370,10 +1385,10 @@ public void put_stat_line(String msg){
 
 
 
-    /**
-     * close log, err, tre, 
-     * xrd, xpr, xph, xgt, and xpt Assist files RPI 812
-     */
+/**
+ * close log, err, tre, 
+ * xrd, xpr, xph, xgt, and xpt Assist files RPI 812
+ */
 private synchronized void close_files(){  // RPI 661
 
 	  tz390.force_nocon = true;
@@ -1401,9 +1416,9 @@ private synchronized void close_files(){  // RPI 661
 
 
 
-    /**
-     * cancel all active cmd processes
-     */
+/**
+ * cancel all active cmd processes
+ */
 private void close_cmd(){
 
 	int cmd_id = 0;
@@ -1417,15 +1432,18 @@ private void close_cmd(){
 
 
 
-    /**
-     * init pz390.cur_date and calendar with
-     * current time and date or force
-     * fixed time if NOTIMING option set.
-     * Notes:
-     *   1.  This NOTTIMING option is used in
-     *       regression testing timing functions
-     *       for repeatable results.
-     */
+/**
+ * init pz390.cur_date and calendar with
+ * current time and date or force
+ * fixed time if NOTIMING option set.<br />
+ * Notes:
+ * <ol>
+ *  <li>This NOTTIMING option is used in
+ *      regression testing timing functions
+ *      for repeatable results.
+ *  </li>
+ * </ol>
+ */
 public void init_time(){
 
     cur_date_cal = new GregorianCalendar(1900,0,1);
@@ -1463,47 +1481,51 @@ public void init_time(){
 
 
 
-   /**
-     * <ol>
-     * <li> init test regular expression parser </li>
-     * <li> init optional test=ddname file for batch input
-     *    else init test_cmd_file which is also used
-     *    for wtor replies when not in GUAM GUI mode </li>
-     * </ol>
-     *
-     * expression pattern
-     * <ol>
-     * <li> self defining terms 
-     *     <ol>
-     *     <li> B'01' </li>
-     *     <li> C'ABC' </li>
-     *     <li> F'nnn' </li>
-     *     <li> H'nnn' </li>
-     *     <li> X'0F'  </li>
-     *     </ol> </li>
-     * <li> register
-     *     <ol>
-     *     <li>nr or nR
-     *     </ol> </li>
-     * <li> memory address
-     *     <ol>
-     *     <li> hex. for absolute memory address </li>
-     *     <li> dec  for decimal addr (for list len) </li>
-     *     <li> +hex or -hex for rel base address </li>
-     *     <li> *+hex or *-hex for rel instr. addr </li>
-     *     <li> nnr% for 24 bit indirect reg addr </li>
-     *     <li> nnR&amp; for 31 bit indirect reg addr </li>
-     *     </ol> </li>
-     * <li> break compare operators
-     *     <ol>
-     *     <li> =, &lt;, &gt;, !=, &gt;=, &lt;= </li>
-     *     </ol> </li>
-     * <li> test commands (b,g,h,l,m,q,t) </li>
-     * <li> test break opcode names </li>
-     * <li> set operator = </li>
-     * </ol>
-     *
-     */
+/**
+ * <ol>
+ *  <li> init test regular expression parser </li>
+ *  <li> init optional test=ddname file for batch input
+ *       else init test_cmd_file which is also used
+ *       for wtor replies when not in GUAM GUI mode</li>
+ * </ol>
+ *
+ * expression pattern:
+ * <ol>
+ *  <li> self defining terms
+ *   <ol>
+ *    <li>B'01'</li>
+ *    <li>C'ABC'</li>
+ *    <li>F'nnn'</li>
+ *    <li>H'nnn'</li>
+ *    <li>X'0F'</li>
+ *   </ol>
+ *  </li>
+ *  <li>register
+ *   <ol>
+ *    <li>nr or nR</li>
+ *   </ol>
+ *  </li>
+ *  <li>memory address
+ *   <ol>
+ *    <li>hex. for absolute memory address</li>
+ *    <li>dec  for decimal addr (for list len)</li>
+ *    <li>+hex or -hex for rel base address</li>
+ *    <li>*+hex or *-hex for rel instr. addr</li>
+ *    <li>nnr% for 24 bit indirect reg addr</li>
+ *    <li>nnR&amp; for 31 bit indirect reg addr</li>
+ *   </ol>
+ *  </li>
+ *  <li> break compare operators
+ *   <ol>
+ *    <li>=, &lt;, &gt;, !=, &gt;=, &lt;=</li>
+ *   </ol>
+ *  </li>
+ *  <li>test commands (b,g,h,l,m,q,t)</li>
+ *  <li>test break opcode names</li>
+ *  <li>set operator =</li>
+ * </ol>
+ *
+ */
 public void init_test(){
 
    	try {
@@ -1542,10 +1564,12 @@ public void init_test(){
 
 
 
-    /**
-     * 1.  Set trace file for TRACE and TRACEALL
-     * 2.  Open 390 and lst files
-     */
+/**
+ * <ol>
+ *  <li>Set trace file for TRACE and TRACEALL</li>
+ *  <li>Open 390 and lst files</li>
+ * </ol>
+ */
 public void open_files(){
 
     	if (tz390.log_file_name.length() == 0){ // RPI 719  RPI 755    		
@@ -1570,18 +1594,14 @@ public void open_files(){
 
 
 
-    /**
-     * <pre>
-     * 1.  If stimer_exit_running then restore
-     *     r13-r15 and exit to saved psw
-     * 2.  If stae exit running, restore
-     *     psw and regs from zcvt_stae.
-     * 3.  If spie exit running, restore
-     *     psw and regs from zcvt_epie    
-     * 4.  exit to prev link return address
-     *     or exit ez390 if none.
-     * </pre>
-     */
+/**
+ * <ol>
+ *  <li>If stimer_exit_running then restore r13-r15 and exit to saved psw</li>
+ *  <li>If stae exit running, restore psw and regs from zcvt_stae.</li>
+ *  <li>If spie exit running, restore psw and regs from zcvt_epie</li>
+ *  <li>exit to prev link return address or exit ez390 if none.</li>
+ * </ol>
+ */
 private void svc_exit(){
 
 	if (stimer_exit_running){
@@ -1652,13 +1672,18 @@ private void svc_exit(){
 
 
 
-    /**
-     * extract svc supports the following functions
-     *   r0 function
-     *    1 - GETENV get environment variable
-     *            input  r1=name with null terminator
-     *            output r2=getmain'd area value and null terminator
-     */
+/**
+ * extract svc supports the following functions requires function code in R0.
+ * Supported function code values:
+ * <ol>
+ *  <li>1 - GETENV get environment variable
+ *   <ul>
+ *    <li>input r1=name with null terminator</li>
+ *    <li>output r2=getmain'd area value and null terminator</li>
+ *   </ul>
+ *  </li>
+ * </ol>
+ */
 private void svc_extract(){ // RPI 413
 
 	int op = pz390.reg.getInt(pz390.r0);
