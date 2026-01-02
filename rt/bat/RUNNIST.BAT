@@ -35,7 +35,28 @@ rem --
 rem -- *************************************************************
 
 pushd %~dps0..\..
+set z_cleanup=N
+if /I %1. EQU cleanup. (set z_cleanup=Y
+                        shift /1)
+if /I %2. EQU cleanup. (set z_cleanup=Y
+                        shift /2)
 if %1. == . goto no_repo
+
+rem --
+rem -- clear leftovers from prior runs
+echo Cleaning up...
+if exist %1\src\*.390 del %1\src\*.390
+if exist %1\src\*.BAL del %1\src\*.BAL
+if exist %1\src\*.ERR del %1\src\*.ERR
+if exist %1\src\*.LOG del %1\src\*.LOG
+if exist %1\src\*.LST del %1\src\*.LST
+if exist %1\src\*.MLC del %1\src\*.MLC
+if exist %1\src\*.OBJ del %1\src\*.OBJ
+if exist %1\src\*.OUT del %1\src\*.OUT
+if exist %1\src\*.PRN del %1\src\*.PRN
+if exist %1\src\*.CBL_ZC_LABELS.CPY del %1\src\*.CBL_ZC_LABELS.CPY
+echo Cleanup complete
+if /I %z_cleanup%. EQU Y. goto return
 
 rem --
 rem -- Copy members and purpose:
@@ -141,6 +162,57 @@ rem  bat\CBLCLG %z_TraceMode% %1\src\IC234A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses 
 rem  bat\CBLCLG %z_TraceMode% %1\src\IC235A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
 rem  bat\CBLCLG %z_TraceMode% %1\src\IC237A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
 rem  bat\CBLCLG %z_TraceMode% %1\src\IC401A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
+
+rem --
+rem -- Inter-Program Communication
+call bat\CBLCLG %z_TraceMode% %1\src\IF101A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF102A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF103A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF104A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF105A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF106A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF107A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF108A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF109A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF110A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF111A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF112A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF113A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF114A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF115A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF116A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF117A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF118A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF119A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF120A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF121A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF122A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF123A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF124A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF125A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF126A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF127A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF128A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF129A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF130A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF131A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF132A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF133A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF134A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF135A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF136A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF137A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF138A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF139A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF140A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF141A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF142A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF401M %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF402M %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IF403M %2 %3 %4 %5 %6 %7 %8 %9
+
+rem --
+rem -- Indexed I/O
 
 rem --
 rem -- sort all error messages from all compiles
