@@ -64,7 +64,7 @@ rem ALTL1.CPY - intended for use by EXEC85
 rem ALTLB.CPY - intended for use by EXEC85
 
 rem --
-rem -- Communications Module
+rem -- CM = Communications Module
 call bat\CBLCLG %z_TraceMode% %1\src\CM101M %2 %3 %4 %5 %6 %7 %8 %9
 call bat\CBLCLG %z_TraceMode% %1\src\CM102M %2 %3 %4 %5 %6 %7 %8 %9
 call bat\CBLCLG %z_TraceMode% %1\src\CM103M %2 %3 %4 %5 %6 %7 %8 %9
@@ -77,7 +77,7 @@ rem -- CM401M tests error conditions
 call bat\CBLC   %z_TraceMode% %1\src\CM401M %2 %3 %4 %5 %6 %7 %8 %9
 
 rem --
-rem -- Debug module
+rem -- DB = Debug module
 call bat\CBLCLG %z_TraceMode% %1\src\DB101A %2 %3 %4 %5 %6 %7 %8 %9
 call bat\CBLCLG %z_TraceMode% %1\src\DB102A %2 %3 %4 %5 %6 %7 %8 %9
 call bat\CBLCLG %z_TraceMode% %1\src\DB103M %2 %3 %4 %5 %6 %7 %8 %9
@@ -95,11 +95,11 @@ call bat\CBLCLG %z_TraceMode% %1\src\DB304M %2 %3 %4 %5 %6 %7 %8 %9
 call bat\CBLCLG %z_TraceMode% %1\src\DB305M %2 %3 %4 %5 %6 %7 %8 %9
 
 rem --
-rem -- Executive module
+rem -- EX = Executive module
 call bat\CBLCLG %z_TraceMode% %1\src\EXEC85 %2 %3 %4 %5 %6 %7 %8 %9
 
 rem --
-rem -- Inter-Program Communication - subprograms must be compiled before the main program!
+rem -- IC = Inter-Program Communication - subprograms must be compiled before each main program!
 del %1\src\IC*.OBJ >NUL                                             || rem clear out leftovers of prior run
 set XXXXX055=%1\src\IC101A_XXXXX055.OUT
 call bat\CBLC   %z_TraceMode% %1\src\IC102A %2 %3 %4 %5 %6 %7 %8 %9
@@ -164,7 +164,7 @@ rem  bat\CBLCLG %z_TraceMode% %1\src\IC237A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses 
 rem  bat\CBLCLG %z_TraceMode% %1\src\IC401A %2 %3 %4 %5 %6 %7 %8 %9 || rem uses multiple programs in 1 source file
 
 rem --
-rem -- Inter-Program Communication
+rem -- IF = Intrinsic Functions
 call bat\CBLCLG %z_TraceMode% %1\src\IF101A %2 %3 %4 %5 %6 %7 %8 %9
 call bat\CBLCLG %z_TraceMode% %1\src\IF102A %2 %3 %4 %5 %6 %7 %8 %9
 call bat\CBLCLG %z_TraceMode% %1\src\IF103A %2 %3 %4 %5 %6 %7 %8 %9
@@ -212,7 +212,104 @@ call bat\CBLCLG %z_TraceMode% %1\src\IF402M %2 %3 %4 %5 %6 %7 %8 %9
 call bat\CBLCLG %z_TraceMode% %1\src\IF403M %2 %3 %4 %5 %6 %7 %8 %9
 
 rem --
-rem -- Indexed I/O
+rem -- IX = Indexed I/O
+call bat\CBLCLG %z_TraceMode% %1\src\IX101A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX102A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX103A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX104A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX105A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX106A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX107A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX108A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX109A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX110A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX111A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX112A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX113A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX114A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX115A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX116A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX117A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX118A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX119A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX120A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX121A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX201A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX202A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX203A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX204A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX205A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX206A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX207A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX208A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX209A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX210A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX211A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX212A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX213A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX214A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX215A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX216A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX217A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX218A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX301M %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX302M %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\IX401M %2 %3 %4 %5 %6 %7 %8 %9
+
+rem --
+rem -- Copy members and purpose:
+rem K101A.CPY intended usage unknown
+rem K1DAA.CPY intended usage unknown
+rem K1FDA.CPY intended usage unknown
+rem K1P01.CPY intended usage unknown
+rem K1PRA.CPY intended usage unknown
+rem K1PRB.CPY intended usage unknown
+rem K1PRC.CPY intended usage unknown
+rem K1SEA.CPY intended usage unknown
+rem K1W01.CPY intended usage unknown
+rem K1W02.CPY intended usage unknown
+rem K1W03.CPY intended usage unknown
+rem K1W04.CPY intended usage unknown
+rem K1WKA.CPY intended usage unknown
+rem K1WKB.CPY intended usage unknown
+rem K1WKC.CPY intended usage unknown
+rem K1WKY.CPY intended usage unknown
+rem K1WKZ.CPY intended usage unknown
+rem K2PRA.CPY intended usage unknown
+rem K2SEA.CPY intended usage unknown
+rem K3FCA.CPY intended usage unknown
+rem K3FCB.CPY intended usage unknown
+rem K3IOA.CPY intended usage unknown
+rem K3IOB.CPY intended usage unknown
+rem K3LGE.CPY intended usage unknown
+rem K3OCA.CPY intended usage unknown
+rem K3SCA.CPY intended usage unknown
+rem K3SML.CPY intended usage unknown
+rem K3SNA.CPY intended usage unknown
+rem K3SNB.CPY intended usage unknown
+rem K4NTA.CPY intended usage unknown
+rem K501A.CPY intended usage unknown
+rem K501B.CPY intended usage unknown
+rem K5SDA.CPY intended usage unknown
+rem K5SDB.CPY intended usage unknown
+rem K6SCA.CPY intended usage unknown
+rem K7SEA.CPY intended usage unknown
+rem KK208A.CPY intended usage unknown
+rem KP001.CPY intended usage unknown
+rem KP002.CPY intended usage unknown
+rem KP003.CPY intended usage unknown
+rem KP004.CPY intended usage unknown
+rem KP005.CPY intended usage unknown
+rem KP006.CPY intended usage unknown
+rem KP007.CPY intended usage unknown
+rem KP008.CPY intended usage unknown
+rem KP009.CPY intended usage unknown
+rem KP010.CPY intended usage unknown
+rem KSM31.CPY intended usage unknown
+rem KSM41.CPY intended usage unknown
+
+rem --
+rem -- NC = Nucleus
 
 rem --
 rem -- sort all error messages from all compiles
