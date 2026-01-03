@@ -310,6 +310,15 @@ rem KSM41.CPY intended usage unknown
 
 rem --
 rem -- NC = Nucleus
+call bat\CBLCLG %z_TraceMode% %1\src\NC101A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\NC102A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\NC103A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\NC104A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\NC105A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\NC106A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\NC107A %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\NC108M %2 %3 %4 %5 %6 %7 %8 %9
+call bat\CBLCLG %z_TraceMode% %1\src\NC109M %2 %3 %4 %5 %6 %7 %8 %9
 
 rem --
 rem -- sort all error messages from all compiles
