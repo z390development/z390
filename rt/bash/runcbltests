@@ -25,6 +25,7 @@ bash/cblclg zcobol/tests/TESTMOV3 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/CM101M01 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblc   zcobol/tests/CM101M03 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblc   zcobol/tests/DB101A01 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/NC106A01 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/test/YOUZPI1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 
 # if we get here, there were no errors
