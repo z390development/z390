@@ -1,0 +1,847 @@
+***********************************************************************
+* Test issue 714 fix.
+* 1. DELETE EP=xxx when CDE use count is 1 results in module xxx
+*    storage released, CVTCDE chain CDE for xxx is removed from
+*    the chain and its storage is released; return code is 0.
+* 2. Return code 4 when DELETE EP=xxx for a module not LOADed.
+*
+* The tests done here load three modules, then delete them to test
+*     1. deleting a CDE in the middle of the CVTCDE chain
+*     2. deleting a CDE at the front of the CVTCDE chain
+*     3. deleting a CDE at the end of the CVTCDE chain.
+*
+* Module T714A has a twin, T714B, which T714A invokes via XCTL.
+*
+* Sample executions.
+*     z390/bash/asmlg T714A noinit noloadhigh
+*     z390/bash/asmlg T714A noinit
+*     z390/bash/asmlg T714A noinit noloadhigh 'mem(32)'
+*     z390/bash/asmlg T714A noinit 'mem(32)'
+*
+* The first two examples use the default storage allocation of 1MiB,
+* resulting in all modules loaded into 24-bit storage. The last
+* two examples allocate 32MiB bytes of storage. One of the three
+* modules, T714M2, is loaded above the 16MiB line if above the line
+* storage is available. All CDEs reside below the 16MiB line.
+*
+* Executing T174B vs T714A produces the exact same result except
+* T714B XCTLs to T714A.
+*
+* Each of T714A/B is entered either "normally" or "via XCTL".
+* 1. When T714A/B is entered "normally" -- that is, via
+*    "exec T714A/B"; register 1 contains the address of a word that
+*    points to the stanard parameter area passed to a program.
+* 2. When T714A/B is entered "via XCTL", register 1 contains
+*    X'80000000' || the size of the 24-bit user region.
+*
+* Remaining comments assume T714A entered normally and T714B
+* entered via XCTL.
+*
+* Module T714A specific assumptions and actions
+*       1. Register 1 --> word --> standard parms
+*       2. CVTCDE --> T714A CDE --> 0
+*       3. ZCVTFQ24 --> FQE --> 0
+*       4. The only storage allocated is for T714A and its CDE
+*       5. Load and delete the three modules (T714M1,2,3)
+*          Note that T714M1 is deleted twice; the second delete
+*          does nothing; DELETE return code is 4;
+*          - if any of the LOADs fail, an error WTO is issued and
+*            T714A exits with return code 28;
+*          - if any of the DELETE return codes is not 0 (or 4 for
+*            the T714M1 second delete), an error WTO is issued and
+*            T714A exits with return code 32
+*       6. Verify that the only allocated 24-bit storage is for
+*          T714A and its CDE:
+*              only one CDE (T714A CDE)
+*                RC = 8 if none
+*                RC = 12 if more than one 1
+*                RC = 16 if module not in 24-bit storage
+*              at least 1 FQE for 24-bit storage
+*                RC = 20 if none
+*              moduleLen + sum FQE sizes : 24-bit user region size
+*                RC = 24 if not equal
+*                RC = 0 if equal
+*          Note: Each RC not 0 also has a corresponding error WTO
+*       7. If RC not 0, WTO error message and exit with RC
+*       8. If RC = 0, T714A sets register 1 to the size of the 24-bit
+*          user region (high order bit is set to 1), reloads the first
+*          module, T714M1, and XCTLs to T714B
+*
+* Module T714B specific assumptions and actions
+*       1. Register 1 = X'80000000' || the size of 24-bit user region
+*       2. CVTCDE --> T714B CDE --> T714M1 CDE --> 0
+*       3. ZCVTFQ24 --> FQE --> FQE --> 0
+*       4. The only storage allocated is for
+*              T714B and its CDE
+*              T714M1 and its CDE
+*       5. T714B loads and deletes the three modules (T714M1,2,3)
+*          Note that T714M1 is deleted twice; the CDE use count is 2
+*          so the first delete just decrements the use count; the
+*          second delete deletes the module; all LOAD and DELETE
+*          return codes should be 0; see T714A step 5 comments
+*       6. T714B same as T714A step 6 with T714B in place of T714A
+*       7. T714B same as TI714A step 7
+*       8. Exit with return code
+*
+* Summary.
+*     T714A/B may exit with non-zero return code from its steps 5 or 6
+*     If T714A got zero return code from its step 6, it XCTLs to T714B
+*     T714B exits with return code from its step 5 (if error) or 6.
+*
+*     Execution ends with
+*         T714A return code from step 5 or 6 if return code not 0
+*         T714B return code from step 5 or 6
+* 
+***********************************************************************
+*
+T714A    CSECT
+T714A    AMODE 31
+T714A    RMODE 24
+         STM   14,12,12(13)        Save caller's registers
+         LR    12,15               R12 = base register
+         USING T714A,12            Establish addressability
+         LA    14,SAS              Usable save area set (3 save areas)
+         ST    13,4(,14)           Chain
+         ST    14,8(,13)                 save areas
+         LR    13,14               Current save area in save area set
+*
+         LR    2,1                 Save R1
+         WTO   ' '                 Blank line
+         LTR   2,2                 Parms or neg; neg = XCTL to here
+         BP    T100                Normal entry
+         WTO   'T714A entered via XCTL'
+         ST    2,Sz24              Save size of 24-bit user region
+         NI    Sz24,X'01'          Zero high bits (byte might be X'81')
+         B     T200                Continue
+T100     DS    0H
+         WTO   'T714A entered normally'
+         BAS   14,SzUR24           Get size of 24-bit user region
+         ST    0,Sz24              Save the size
+T200     DS    0H
+*
+*        Assume that T714A is entered normally: (register 1 --> parms)
+*        and that T714A XCTLs to T714B with register 1 set to
+*            X'80000000' || size of 24-bit user region
+*        See T714B comments for entry via XCTL.
+*
+*        At this point in T714A only one CDE and one FQE
+*            CVTCDE --> T714A CDE --> 0
+*            ZCVTFQ24 --> FQE --> 0
+*
+*        If option "noloadhigh" was used, then T714A storage starts
+*        at the lowest address of the 24-bit user region and its
+*        CDE immediately follows the T714A storage. The one and only
+*        FQE immediately follows the CDE and represents the remaining
+*        24-bit storage.
+*
+*        If option "noloadhigh" was not used, then T714A storage
+*        ends at the highest 24-bit storage address and its CDE
+*        ends just below the T714A storage. The one and only FQE
+*        is located at the beginning of the 24-bit user region and
+*        represents the storage up to the CDE.
+*
+*        The remaining comments assume option "noloadhigh" was used
+*        to execute T714A.
+*
+*        The following SNAP, DumpCDEs, DumpFQEs verify the above
+*        comments about CVTCDE and ZCVTFQ24.
+*
+         WTO   '********** before LOADs **********'
+         SNAP  PDATA=(CDE),ID=0,TEXT='sz390 internal CDEs'
+         BAS   14,DumpCDEs         Dump all CDEs on CVTCDE chain
+         BAS   14,DumpFQEs         Dump all FQEs
+*
+*        Load the three modules
+*
+         LA    1,M1Name            Module to load; below 16MiB
+         BAS   14,Load_Chk         Load module; check return code
+         LTR   15,15               Loaded okay?
+         BNZ   Exit                No; stop test
+*
+         LA    1,M2Name            Module to load; might be above 16MiB
+         BAS   14,Load_Chk         Load module; check return code
+         LTR   15,15               Loaded okay?
+         BNZ   Exit                No; stop test
+*
+         LA    1,M3Name            Module to load; below 16MiB
+         BAS   14,Load_Chk         Load module; check return code
+         LTR   15,15               Loaded okay?
+         BNZ   Exit                No; stop test
+*
+*        At this point
+*            1. CVTCDE --> T714M3 CDE use 1
+*                      --> T714M2 CDE use 1
+*                      --> T714M1 CDE use 1
+*                      --> T714A  CDE use 1
+*                      --> 0
+*            2. T714M1 and its CDE immediately follow T714A CDE
+*            3. if no storage above 16MiB or T714M2 not linked rmode31
+*                   T714M2 and its CDE immediately follow T714M1 CDE
+*                   T714M3 and its CDE immediately follow T714M2 CDE
+*               else
+*                   T714M2 loaded at address X'01000000' (16MiB)
+*                   T714M2 CDE immediately follows T714M1 CDE
+*                   T714M3 and its CDE immediately follow T714M2 CDE
+*               endif
+*            4. ZCVTFQ24 --> FQE immediately follows T714M3 CDE
+*                            represents rest of 24-bit storage
+*                        --> 0
+*
+*        Following SNAP, DumpCDEs, DumpFQEs verify the above comments.
+*
+         WTO   '********** after  LOADs **********'
+         SNAP  PDATA=(CDE),ID=10,TEXT='sz390 internal CDEs'
+         BAS   14,DumpCDEs         Dump all CDEs on CVTCDE chain
+         BAS   14,DumpFQEs         Dump all FQEs
+*
+         SR    0,0                 First 3 DELETEs should get RC 0
+         ST    0,DelExpRC          Set expected return code for check
+*
+*        Delete CDE in middle of CVTCDE chain (second module loaded).
+*        Show CDEs. Don't show FQEs.
+*
+         MVC   DelModNm,M2Name     Name to delete
+         LA    1,DelChkPL          Dele_Chk parm list
+         BAS   14,Dele_Chk         Issue DELETE and check RC
+         LTR   15,15               DELETE and check okay?
+         BNZ   Exit                No; exit
+*
+         WTO   '********** after DELETE T714M2 **********'
+         SNAP  PDATA=(CDE),ID=12,TEXT='sz390 internal CDEs'
+         BAS   14,DumpCDEs         Dump all CDEs on CVTCDE chain
+*
+*        Delete first CDE on CVTCDE chain (last module loaded).
+*        Show CDEs. Don't show FQEs.
+*
+         MVC   DelModNm,M3Name     Name to delete
+         LA    1,DelChkPL          Dele_Chk parm list
+         BAS   14,Dele_Chk         Issue DELETE and check RC
+         LTR   15,15               DELETE and check okay?
+         BNZ   Exit                No; exit
+*
+         WTO   '********** after DELETE T714M3 **********'
+         SNAP  PDATA=(CDE),ID=13,TEXT='sz390 internal CDEs'
+         BAS   14,DumpCDEs         Dump all CDEs on CVTCDE chain
+*
+*        Delete the first module loaded.
+*        For T714A, T714M1 CDE is first on chain and has use count 1.
+*        For T714B, T714M1 CDE is last on chain and has use count 2.
+*        Show CDEs. Don't show FQEs.
+*
+         MVC   DelModNm,M1Name     Name to delete
+         LA    1,DelChkPL          Dele_Chk parm list
+*                                  "normal": module is deleted
+*                                  "XCTL": CDE use count decremented
+         BAS   14,Dele_Chk         Issue DELETE and check RC
+         LTR   15,15               DELETE and check okay?
+         BNZ   Exit                No; exit
+*
+         LTR   2,2                 Entered via XCTL?
+         BNP   T300                Y; Next DELETE RC should still be 0
+         LA    0,4                 N; Next DELETE RC
+         ST    0,DelExpRC                            should be 4
+T300     DS    0H
+         LA    1,DelChkPL          Dele_Chk parm list
+*                                  "normal": fails with RC 4; expected
+*                                  "XCTL": module is deleted
+         BAS   14,Dele_Chk         Issue DELETE and check RC
+         LTR   15,15               DELETE and check okay?
+         BNZ   Exit                No; exit
+*
+         WTO   '********** after DELETE T714M1 **********'
+         SNAP  PDATA=(CDE),ID=11,TEXT='sz390 internal CDEs'
+         BAS   14,DumpCDEs         Dump all CDEs on CVTCDE chain
+*
+         WTO   '********** FQEs at end **********'
+         BAS   14,DumpFQEs         Dump all FQEs
+*
+*        At this point, all the LOADs checked out okay and
+*        all the DELETEs checked out okay; final check verifies
+*        that the CDEs for the deleted modules were removed from
+*        the CVTCDE chain and their storage was released.
+*
+*        Verify
+*          1. only one CDE on CVTCDE chain
+*          2. modLen + cdeLen + sum FQE len = 24-bit user region size
+*
+         BAS   14,CkCDEFQE         Check only 1 CDE & FQE size(s)
+         LTR   3,15                Checks okay?
+         BZ    T400                Yes
+         WTO   'T714A error; storage checks failed'
+         LR    15,3                Restore return code
+         B     Exit                Don't continue
+T400     DS    0H
+*                                  Note: R15 = 0
+*
+*        The "entered via XCTL" case tests removing the last CDE on
+*        the CVTCDE chain, so testing is complete.
+*
+         LTR   2,2                 Entered via XCTL?
+         BNP   Exit                Yes; just exit
+*
+*        The "normal entry" case did not test deleting the last CDE
+*        on the CVTCDE chain. In order to do so, T714M1 is re-loaded
+*        here so that it will be last on the CVTCDE chain when the
+*        module invoked via XCTL is entered.
+*
+         LOAD  EP=T714M1           Load T714M1 again
+         L     13,4(,13)           Caller's save area
+         L     1,Sz24              Size of 24-bit user region
+         OILH  1,X'8000'           Set high bit on
+         XCTL  (2,12),EP=T714B     XCTL to my twin
+         DC    H'0'                Should never get here
+Exit     DS    0H
+***      SR    15,15               Test successful
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except r15
+         BR    14                  Return to caller
+*
+***********************************************************************
+* Load_Chk: Load module and verify loaded
+*
+* Registers at entry:
+*     R1  --> 8 byte name of module to load
+*     R12  =  base register
+*     R13 --> caller's save area in save area set
+*     R14  =  return address
+*
+* Registers at exit:
+*     R15 = return code
+*           0   module loaded
+*           28  module not loaded
+*     R0-R14: as at entry
+*
+* Error message via WTO
+**********************************************************************
+*
+Load_Chk DS    0H
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area
+*
+         LR    2,1                 R2 -> 8 byte name of module to load
+         LOAD  EPLOC=(2),ERRET=LCE Attempt to load the module
+         B     LCExit              Load successful; R15 = 0
+LCE      DS    0H                  Load unsuccessful
+         ST    15,FW               No; show return code
+         UNPK  DW(9),FW(5)         Convert to printable hex
+         TR    DW,H2P              Finish conversion
+         MVC   WLERC,DW            Copy to WTO
+         MVC   WLEName,0(2)        Copy name of module to WTO
+         WTO   MF=(E,WTOLErr)      Show error message
+         LA    15,28               Set return code
+*NSI     B     LCExit              Return
+LCExit   DS    0H
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except R15
+         BR    14                  Return to caller
+*
+***********************************************************************
+* Dele_Chk: Delete module and verify loaded
+*
+* Registers at entry:
+*     R1  --> parameter list
+*             +0  A(8 byte name of module to delete)
+*             +4  A(word containing expected DELETE return code)
+*     R12  =  base register
+*     R13 --> caller's save area in save area set
+*     R14  =  return address
+*
+* Registers at exit:
+*     R15 = return code
+*           0   DELETE return code equal to expected return code
+*           32  DELETE return code not the expected return code
+*     R0-R14: as at entry
+*
+* Error message via WTO
+**********************************************************************
+*
+Dele_Chk DS    0H
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area
+*
+         LM    2,3,0(1)            R2->8 byte name of module to delete
+*                                  R3->word containing expected del rc
+         L     3,0(,3)             Expected DELETE return code
+         DELETE EPLOC=(2)          Attempt to delete the module
+         CR    3,15                Expected RC = actual RC?
+         BE    DCExit0             Yes; set return code zero and exit
+         ST    15,FW               No; show DELETE return code
+         UNPK  DW(9),FW(5)         Convert to printable hex
+         TR    DW,H2P              Finish conversion
+         MVC   WDERC,DW            Copy to WTO
+         ST    3,FW                Show expected DELETE return code
+         UNPK  DW(9),FW(5)         Convert to printable hex
+         TR    DW,H2P              Finish conversion
+         MVC   WDERCExp,DW         Copy to WTO
+         MVC   WDEName,0(2)        Copy name of module to WTO
+         WTO   MF=(E,WTODErr)      Show error message
+         LA    15,32               Set return code
+         B     DCExit              Return
+DCExit0  DS    0H
+         SR    15,15               Set return code
+DCExit   DS    0H
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except R15
+         BR    14                  Return to caller
+*
+***********************************************************************
+* DumpFQEs: Dump all FQEs
+*
+* Registers at entry:
+*     R12  =  base register
+*     R13 --> caller's save area in save area set
+*     R14  =  return address
+*
+* Registers at exit:
+*     R0-R15: as at entry
+*
+* Messages and the FQEs are dumped using WTO
+**********************************************************************
+*
+DumpFQEs DS    0H
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area
+*
+         L     2,16(0,0)           R2 --> CVT and ZCVT
+         USING IHAZCVT,2           Overlay ZCVT
+         L     3,ZCVTFQ31          First 31-bit storage FQE
+         LT    2,ZCVTFQ24          First 24-bit storage FQE
+         BNZ   DF24                Continue if there is an FQE
+         WTO   '*** No 24-bit FQEs'
+         B     DF31Ck              Dump 31-bit FQEs
+DF24     DS    0H
+         WTO   '*** 24-bit FQEs ***'
+         USING FQE,2               Overlay FQE
+DF24Lp   DS    0H
+         LR    1,2                 Address of FQE
+         BAS   14,DumpFQE          Dump FQE
+         LT    2,FQENEXT           Next FQE
+         BNZ   DF24Lp              Dump next FQE
+         WTO   '*** End 24-bit FQEs ***'
+DF31Ck   DS    0H
+         LTR   2,3                 First 31-bit FQE
+         BNZ   DF31                Continue if there is an FQE
+         WTO   '*** No 31-bit FQEs ***'
+         B     DFExit              Done
+DF31     DS    0H
+         WTO   '*** 31-bit FQEs ***'
+DF31Lp   DS    0H
+         LR    1,2                 Address of FQE
+         BAS   14,DumpFQE          Dump FQE
+         LT    2,FQENEXT           Next FQE
+         BNZ   DF31Lp              Dump next FQE
+         WTO   '*** End 31-bit FQEs ***'
+DFExit   DS    0H
+         L     13,4(,13)           Caller's save area
+         LM    14,12,12(13)        Restore caller's registers
+         BR    14                  Return to caller
+*
+         DROP  2                   End FQE overlay
+*
+***********************************************************************
+* DumpFQE: Dump one FQE
+*
+* Registers at entry:
+*     R1  --> FQE
+*     R12  =  base register
+*     R13 --> caller's save area in save area set
+*     R14  =  return address
+*
+* Registers at exit:
+*     R0-R15: as at entry
+*
+* The FQE is dumped using WTO
+**********************************************************************
+*
+DumpFQE  DS    0H
+         STM   14,12,12(13)        Save caller's registers
+***         L     13,8(,13)           Next save area
+*
+         USING FQE,1               Overlay FQE
+         ST    1,FW                Convert FQE address
+         UNPK  DW(9),FW(5)                             to prt hex
+         TR    DW,H2P              Finish conversion
+         MVC   WF1Addr,DW          Copy to WTO
+         L     0,FQENEXT           Next FQE address
+         ST    0,FW                Convert
+         UNPK  DW(9),FW(5)                 to prt hex
+         TR    DW,H2P              Finish conversion
+         MVC   WF1Next,DW          Copy to WTO
+         L     0,FQESIZE           Size of free area
+         ST    0,FW                Convert
+         UNPK  DW(9),FW(5)                 to prt hex
+         TR    DW,H2P              Finish conversion
+         MVC   WF1Size,DW          Copy to WTO
+         WTO   MF=(E,WTOF1)        Show FQE values
+*
+***         L     13,4(,13)           Caller's save area
+         LM    14,12,12(13)        Restore caller's registers
+         BR    14                  Return to caller
+*
+         DROP  1                   End FQE overlay
+*
+***********************************************************************
+* DumpCDEs: Dump all CDEs on CVTCDE chain
+*
+* Registers at entry:
+*     R12  =  base register
+*     R13 --> caller's save area in save area set
+*     R14  =  return address
+*
+* Registers at exit:
+*     R0-R15: as at entry
+**********************************************************************
+*
+DumpCDEs DS    0H
+         STM   14,12,12(13)        Save caller's registers
+         L     13,8(,13)           Next save area
+         WTO   '********** CVTCDE CDEs **********'
+         L     1,16                R1 --> CVT
+         USING IHACVT,1            Overlay CVT
+         LT    1,CVTCDE            R1 --> First CDE (if any)
+         BZ    DC200               No CDEs
+         USING IHACDE,1            Overlay CDE
+DC100    DS    0H
+         BAS   14,DumpCDE          Dump one CDE
+         LT    1,CDCHAIN           Next CDE, if any
+         BNZ   DC100               Dump all CDEs
+         DROP  1                   End CDE overlay
+DC200    DS    0H
+         L     13,4(,13)           Caller's save area
+         LM    14,12,12(13)        Restore caller's registers
+         BR    14                  Return to caller
+*
+***********************************************************************
+* DumpCDE: Dump one CDE
+*
+* Registers at entry:
+*     R1  --> CDE
+*     R12  =  base register
+*     R13 --> caller's save area in save area set
+*     R14  =  return address
+*
+* Registers at exit:
+*     R0-R15: as at entry
+*
+* The CDE is dumped using WTO
+**********************************************************************
+*
+DumpCDE  DS    0H
+         STM   14,12,12(13)        Save caller's registers
+***         L     13,8(,13)           Next save area
+*
+         LR    2,1                 CDE address
+         USING IHACDE,2            Overlay CDE
+         ST    2,FW                Convert
+         UNPK  DW(9),FW(5)                 to prt hex
+         TR    DW,H2P              Finish conversion
+         MVC   WC1Addr,DW          Copy to WTO
+         L     0,CDCHAIN           Next CDE address
+         ST    0,FW                Convert
+         UNPK  DW(9),FW(5)                 to prt hex
+         TR    DW,H2P              Finish conversion
+         MVC   WC1Chain,DW         Copy to WTO
+         MVC   WC1Name,CDNAME      Copy name
+         WTO   MF=(E,WTOC1)        Show first part of CDE
+*
+         L     0,CDENTPT           Entry point
+         ST    0,FW                Convert
+         UNPK  DW(9),FW(5)                 to prt hex
+         TR    DW,H2P              Finish conversion
+         MVC   WC2EntPt,DW         Copy to WTO
+         LH    0,CDUSE             Use count
+         ST    0,FW                Convert
+         UNPK  DW(9),FW(5)                 to prt hex
+         TR    DW,H2P              Finish conversion
+         MVC   WC2Use,DW+4         Copy to WTO
+         L     0,CDLOADPT          Load point
+         ST    0,FW                Convert
+         UNPK  DW(9),FW(5)                 to prt hex
+         TR    DW,H2P              Finish conversion
+         MVC   WC2LoadPt,DW        Copy to WTO
+         L     0,CDMODLEN          Module length
+         ST    0,FW                Convert
+         UNPK  DW(9),FW(5)                 to prt hex
+         TR    DW,H2P              Finish conversion
+         MVC   WC2ModLen,DW        Copy to WTO
+         WTO   MF=(E,WTOC2)        Show second part of CDE
+*
+***         L     13,4(,13)           Caller's save area
+         LM    14,12,12(13)        Restore caller's registers
+         BR    14                  Return to caller
+*
+         DROP  2                   End CDE overlay
+*
+***********************************************************************
+* CkCDEFQE: Verify: 1. only one CDE
+*                   2. module represnted by CDE in 24-bit storage
+*                   3. module size + CDE size + sum of FQE sizes
+*                      = 24-bit user region size
+*
+* Registers at entry:
+*     R12  =  base register
+*     R13 --> caller's save area in save area set
+*     R14  =  return address
+*
+* Registers at exit:
+*     R15 = return code
+*            0  Verification successful
+*            8  CVTCDE chain is empty
+*           12  More than one CDE on CVTCDE chain
+*           16  Module represented by CDE not in 24-bit storage
+*           20  No 24-bit FQEs
+*           24  Calculated 24-bit user region size does not match
+*               input 24-bit user region size
+*
+*     R0-R14: as at entry
+**********************************************************************
+*
+CkCDEFQE DS    0H
+         STM   14,12,12(13)        Save caller's registers
+         L     15,16(0,0)          R15 --> CVT
+         USING IHACVT,15           Overlay CVT
+         LT    15,CVTCDE           R15 --> first CDE
+         BZ    CCF100              No CDEs; not found
+         USING IHACDE,15           Overlay CDE
+         LT    3,CDCHAIN           More than one CDE?
+         BNZ   CCF200              Yes; error
+         L     1,CDLOADPT          Module lowest address
+         NILH  1,X'7FFF'           Zero high bit
+         CFI   1,X'00FFFFF8'       Module below the line?
+         BH    CCF300              No
+*
+*        Calculate size of 24-bit user region
+*
+         L     3,CDMODLEN          Get module length
+         AHI   3,CDELEN            Add CDE size
+         DROP  15                  End CDE overlay
+*
+         L     2,16(0,0)           R2 --> CVT and ZCVT
+         USING IHAZCVT,2           Overlay ZCVT
+         LT    2,ZCVTFQ24          First 24-bit storage FQE
+         BZ    CCF400              Error: no 24-bit FQEs
+         USING FQE,2               Overlay FQE
+CCFLp    DS    0H
+         A     3,FQESIZE           Accumulate free size
+         LT    2,FQENEXT           Next FQE
+         BNZ   CCFLp               Accumulate all free sizes
+         DROP  2                   End FQE overlay
+         L     2,Sz24              Get size of 24-bit user region
+         CR    3,2                 Calculated size : expected size
+         BNZ   CCF500              Values differ; error
+         SR    15,15               All checks okay
+         B     CCFExit             All done
+CCF100   DS    0H
+         WTO   'CkCDEFQE error; no CDEs'
+         LA    15,8                Return code
+         B     CCFExit             Exit
+CCF200   DS    9H
+         WTO   'CkCDEFQE error; more than one CDE'
+         LA    15,12               Return code
+         B     CCFExit             Exit
+CCF300   DS    9H
+         WTO   'CkCDEFQE error; CDE module not in 24-bit storage'
+         LA    15,16               Return code
+         B     CCFExit             Exit
+CCF400   DS    0H
+         WTO   'CkCDEFQE error; no 24-bit FQEs'
+         LA    15,20               Return code
+         B     CCFExit             Exit
+CCF500   DS    0H
+         ST    3,FW                Calculated UR24 size
+         UNPK  DW(9),FW(5)         Convert to prt hex
+         TR    DW,H2P              Finish conversion
+         MVC   WCCFCU24,DW         Copy to WTO
+         ST    2,FW                Expected UR24 size
+         UNPK  DW(9),FW(5)         Convert to prt hex
+         TR    DW,H2P              Finish conversion
+         MVC   WCCFEU24,DW         Copy to WTO
+         WTO   MF=(E,WTOCCFEr)     Show error values
+*         WTO   'CkCDEFQE error; alloc+free error'
+         LA    15,24               Return code
+         B     CCFExit             Exit
+CCFExit  DS    0H
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except 15
+         BR    14                  Return to caller
+*
+***********************************************************************
+* SzUR24: Get size of 24-bit user region
+*
+* The 24-bit user region begins just above the PSA and additional
+* system storage, ending either at the 16MiB line or at the end
+* of 24-bit storage. See pz390.java constant mem24_start for the
+* actual start address (currently X'8000').
+*
+* Storage layout (24-bit) after z390 exec with option mem(n)
+*
+*     k = min(n,16)
+*
+*    k*1024*1024 +-----------+
+*                |           |
+*                |  24-bit   |
+*                |  User     |
+*                |  Region   |
+*                |           |
+*          32768 +-----------+ X'8000'
+*                |  System   |
+*           8192 +-----------+ X'2000'
+*                |    PSA    |
+*              0 +-----------+
+*
+* Registers at entry:
+*     R12  =  base register
+*     R13 --> usable save area in save area set
+*     R14  =  return address
+*
+* Registers at exit:
+*     R0  = size of 24-bit user region
+*
+*     R1-R15: as at entry
+**********************************************************************
+*
+SzUR24   DS    0H
+         STM   14,12,12(13)        Save caller's registers
+*        First calculate size of CDEs (all below the line)
+*        and size of modules below the line
+*        Assumption: no GETMAINs have been done!!!
+*
+         SR    0,0                 Will be the sum of these sizes
+*
+         L     2,16(0,0)           R2 --> CVT
+         USING IHACVT,2            Overlay CVT
+         LT    2,CVTCDE            R2 --> first CDE
+         BZ    UR24CLpE            No CDEs; not possible???
+UR24CLp  DS    0H
+         USING IHACDE,2            Overlay CDE
+         AHI   0,CDELEN            Count CDE size
+         L     1,CDLOADPT          Module lowest address
+         NILH  1,X'7FFF'           Zero high bit
+         CFI   1,X'00FFFFF8'       Below the line?
+         BH    UR24CNxt            No
+*        Assumes module does not cross the line!!!
+         A     0,CDMODLEN          Yes; accumulate length
+UR24CNxt DS    0H
+         LT    3,CDCHAIN           Next CDE
+         BNZ   UR24CLp             Check all CDEs
+         DROP  2                   End CDE overlay
+UR24CLpE DS    0H
+*
+         L     2,16(0,0)           R2 --> CVT and ZCVT
+         USING IHAZCVT,2           Overlay ZCVT
+         LT    2,ZCVTFQ24          First 24-bit storage FQE
+         BZ    UR24FLpE            No 24-bit FQEs???
+         USING FQE,2               Overlay FQE
+UR24FLp  DS    0H
+         A     0,FQESIZE           Accumulate free size
+         LT    2,FQENEXT           Next FQE
+         BNZ   UR24FLp             Continu accumulating sizes
+         DROP  2                   End FQE overlay
+UR24FLpE DS    0H
+         LM    14,15,12(13)        Restore caller's registers
+         LM    1,12,24(13)         ... except 0
+         BR    14                  Return to caller
+*
+         LTORG
+*
+SAS      DS    0D                  Usable save area set
+SA1      DC    A(0,0,*-8+72,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+SA2      DC    A(0,*-4-72,*-8+72,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+SA3      DC    A(0,*-4-72,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+*
+Sz24     DC    F'-1'               Set to size of 24-bit storage
+*
+M1Name   DC    CL8'T714M1'         First module to load; RMODE 24
+M2Name   DC    CL8'T714M2'         Second module to load; RMODE 31
+M3Name   DC    CL8'T714M3'         Third module to load; RMODE 24
+*
+DelChkPL DS    0D                  Check DELETE parameter list
+         DC    A(DelModNm)         Name of module to delete
+         DC    A(DelExpRC)         Expected return code
+*
+DelModNm DS    CL8                 Name of module
+DelExpRC DS    F                   Expected return code
+*
+***********************************************************************
+*        LOAD check error message
+***********************************************************************
+*
+WTOLErr  WTO   'LOAD error: module xxxxxxxx RC = xxxxxxxx',MF=L
+WLEName  EQU   WTOLErr+4+19,8,C'C'
+WLERC    EQU   WTOLERR+4+33,8,C'C'
+*
+***********************************************************************
+*        DELETE check error message
+***********************************************************************
+*
+WTODErr  WTO   'DELETE error: module xxxxxxxx RC = xxxxxxxx ExpRC = xxxx
+               xxxxx',MF=L
+*
+WDEName  EQU   WTODErr+4+21,8,C'C'
+WDERC    EQU   WTODErr+4+35,8,C'C'
+WDERCExp EQU   WTODErr+4+52,8,C'C'
+*
+***********************************************************************
+*        CkCDEFQE alloc+free check error message
+***********************************************************************
+*
+WTOCCFEr WTO   'CkCDEFQE error: CalcUR24 = xxxxxxxx  ExpUR24 = xxxxxxxx'
+               ',MF=L
+WCCFCU24 EQU   WTOCCFEr+4+27,8,C'C'
+WCCFEU24 EQU   WTOCCFEr+4+47,8,C'C'
+*
+***********************************************************************
+*        Dump CDE messages
+***********************************************************************
+*
+WTOC1    WTO   'CDE  ADDR xxxxxxxx  CHAIN xxxxxxxx  NAME xxxxxxxx',MF=L
+WC1Addr  EQU   WTOC1+4+10,8,C'C'
+WC1Chain EQU   WTOC1+4+26,8,C'C'
+WC1Name  EQU   WTOC1+4+41,8,C'C'
+*
+WTOC2    WTO   '    ENTPT xxxxxxxx    USE xxxx    LOADPT xxxxxxxx  MODLx
+               EN xxxxxxxx',MF=L
+WC2EntPt EQU   WTOC2+4+10,8,C'C'
+WC2Use   EQU   WTOC2+4+26,4,C'C'
+WC2LoadPt EQU  WTOC2+4+41,8,C'C'
+WC2ModLen EQU  WTOC2+4+58,8,C'C'
+*
+***********************************************************************
+*        Dump FQE message
+***********************************************************************
+*
+WTOF1    WTO   'FQE  ADDR xxxxxxxx  NEXT xxxxxxxx  SIZE xxxxxxxx',MF=L
+WF1Addr  EQU   WTOF1+4+10,8,C'C'
+WF1Next  EQU   WTOF1+4+25,8,C'C'
+WF1Size  EQU   WTOF1+4+40,8,C'C'
+*
+DW       DS    D,XL1               Doubleword work and pad
+FW       DS    F,XL1               Fullword work and pad
+H2P      EQU   *-240
+         DC    C'0123456789ABCDEF'
+*
+***********************************************************************
+*        DSECTs
+***********************************************************************
+*
+FQE      DSECT
+FQENEXT  DS    A                   Address of next FQE
+FQESIZE  DS    F                   Size of free area
+FQELEN   EQU   *-FQE               Length of FQE
+*
+***********************************************************************
+*
+         CVTD  ,
+***********************************************************************
+*
+         ZCVTD ,
+*
+***********************************************************************
+*
+         CDED  ,
+***********************************************************************
+*
+         END

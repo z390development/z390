@@ -29,6 +29,17 @@ call bat\asmlg %z_TraceMode% rt\mlc\IS658    trace sysmac(mac) noloadhigh       
 call bat\asmlg %z_TraceMode% rt\mlc\IS658    trace sysmac(mac)                                || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\IS659    trace sysmac(mac) noloadhigh                     || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\IS660    trace sysmac(mac) noloadhigh                     || goto error
+
+call bat\asml  %z_TraceMode% rt\mlc\T714M1   trace sysmac(mac)                                || goto error
+call bat\asml  %z_TraceMode% rt\mlc\T714M2   trace sysmac(mac) rmode31                        || goto error
+call bat\asml  %z_TraceMode% rt\mlc\T714M3   trace sysmac(mac)                                || goto error
+call bat\asml  %z_TraceMode% rt\mlc\T714A    trace sysmac(mac)                                || goto error
+call bat\asml  %z_TraceMode% rt\mlc\T714B    trace sysmac(mac)                                || goto error
+call bat\exec  %z_TraceMode% rt\mlc\T714A    trace noinit noloadhigh                          || goto error
+call bat\exec  %z_TraceMode% rt\mlc\T714A    trace noinit                                     || goto error
+call bat\exec  %z_TraceMode% rt\mlc\T714A    trace noinit noloadhigh mem(32)                  || goto error
+call bat\exec  %z_TraceMode% rt\mlc\T714A    trace noinit mem(32)                             || goto error
+
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC1  trace sysmac(mac) noloadhigh optable(z390)       || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTASC1 trace sysmac(mac) noloadhigh optable(z390) ASCII || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC2  trace sysmac(mac) noloadhigh optable(z390)       || goto error
