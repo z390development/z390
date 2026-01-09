@@ -6,13 +6,13 @@ These commands are scripts that are included in the z390 source and distribution
 and can be enabled by including the script directory in your system path.
 
 Alternatively you can reference the scripts directly from the command line by
-specifying the full path.
+specifying the full path. Linux/MacOS users: see the `z390w` command below.
 
 === "Windows"
 
     `(z390 install dir)\bat`
 
-=== "MacOS/Unix"
+=== "Linux/MacOS"
 
     `(z390 install dir)/bash`
 
@@ -22,6 +22,15 @@ specifying the full path.
 ### z390
 
 Start the GUI interface with optional startup command file input.
+
+### z390w
+
+Wrapper for commands in the z390 bash directory. Intended for Linux/MacOS users
+who put the z390 bash directory in their shell path. Some command names 
+(exec, help, link) conflict with existing Linux/MacOS names. Wrapping such commands
+avoids the name conflicts. For example use `z390w exec [options]` in place of
+`exec [options]`. See the Installation section of the README.txt file located in
+the z390 root directory for additional information.
 
 ### mac
 
