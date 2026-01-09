@@ -1775,6 +1775,7 @@ private class section_definition                                                
 				|| key.equals("END_MULTIPLY")
 				|| key.equals("END_PERFORM")
 				|| key.equals("END_READ")
+				|| key.equals("END_SEARCH")
 				|| key.equals("END_SUBTRACT")
 				|| key.equals("ENTRY")
 				|| key.equals("EVALUATE")

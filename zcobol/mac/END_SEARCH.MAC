@@ -1,0 +1,76 @@
+         MACRO
+.*********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program; if not, see https://www.gnu.org/licenses.
+.*********************************************************************
+.* Author - Zane Hambly                                              *
+.* Date   - 2025/12                                                  *
+.*********************************************************************
+.* 2025/12 ZH: Implement END-SEARCH per FIPS PUB 21-2
+.*********************************************************************
+         END_SEARCH
+         COPY  ZC_WS
+         AIF   (&IE_LVL LT 1)
+               MNOTE 8,'END-SEARCH MISSING SEARCH'
+               MEXIT
+         AEND
+         AIF   (&IE_TYPE(&IE_LVL) NE 15)
+               MNOTE 8,'END-SEARCH MISSING SEARCH'
+               MEXIT
+         AEND
+.*
+.* Get SEARCH context
+.*
+         :&SRC_N SETA &IE_TCNT(&IE_LVL)
+         :&TBL_NAME SETC '&IE_SRC_TBL(&IE_LVL)'
+         :&IDX_NAME SETC '&IE_SRC_IDX(&IE_LVL)'
+         :&TBL_LEN SETA &IE_SRC_LEN(&IE_LVL)
+.*
+.* Jump to END (skip increment/loop if WHEN body executed)
+.*
+         J     PG_SEARCH_&SRC_N._END
+.*
+.* Increment label - increment index and loop back
+.*
+         GEN_LABEL SEARCH_&SRC_N._INCR,SEARCH_INCR
+.*
+.* Increment index by element length
+.* Index = (subscript-1) * element_length
+.* Add element_length to advance to next element
+.*
+         L     ZC_R1,&IDX_NAME
+         AHI   ZC_R1,&TBL_LEN
+         ST    ZC_R1,&IDX_NAME
+.*
+.* Jump back to top of loop
+.*
+         J     PG_SEARCH_&SRC_N._TOP
+.*
+.* AT END label (only if not already placed by SEARCH with AT END)
+.*
+         AIF (NOT &IE_SRC_ATEND(&IE_LVL))
+               GEN_LABEL SEARCH_&SRC_N._ATEND,SEARCH_AT_END
+         AEND
+.*
+.* END label - search complete
+.*
+         GEN_LABEL SEARCH_&SRC_N._END,END_SEARCH
+.*
+.* Decrement IE level
+.*
+         :&IE_LVL SETA &IE_LVL-1
+         MEND

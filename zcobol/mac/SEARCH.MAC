@@ -14,15 +14,113 @@
 .* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 .* GNU General Public License for more details.
 .*
-.* You should have received a copy of the GNU General Public License 
+.* You should have received a copy of the GNU General Public License
 .* along with this program; if not, see https://www.gnu.org/licenses.
 .*********************************************************************
 .* Author - Don Higgins                                              *
 .* Date   - 04/16/08                                                 *
 .*********************************************************************
-.* 02/20/09 stub for pending support              
+.* 02/20/09 stub for pending support
+.* 2025/12 ZH: Implement SEARCH per FIPS PUB 21-2 and COBOL-85
+.*             Format 1 - Sequential search with AT END and WHEN
 .*********************************************************************
          SEARCH
-         MNOTE 8,'SEARCH NOT SUPPORTED YET'
-         MEXIT
+         COPY  ZC_WS
+         :&NP SETA N'&SYSLIST
+         AIF (&NP LT 1)
+               MNOTE 8,'SEARCH REQUIRES TABLE NAME'
+               MEXIT
+         AEND
+.*
+.* Parse SEARCH parameters
+.* Format: SEARCH table [VARYING index] [AT END]
+.*
+         :&TBL_NAME SETC '&SYSLIST(1)'
+         :&I SETA 2
+         :&HAS_AT_END SETB 0
+.*
+.* Check for AT END
+.*
+         AWHILE (&I LE &NP)
+               AIF ('&SYSLIST(&I)' EQ 'AT')
+                   AIF ('&SYSLIST(&I+1)' EQ 'END')
+                       :&HAS_AT_END SETB 1
+                       :&I SETA &I+2
+                   AELSE
+                       :&I SETA &I+1
+                   AEND
+               AELSEIF ('&SYSLIST(&I)' EQ 'VARYING')
+                   :&I SETA &I+2
+               AELSE
+                   :&I SETA &I+1
+               AEND
+         AEND
+.*
+.* Look up the table symbol
+.*
+         ZC_SYM_FIND &TBL_NAME
+         AIF (&SYM_IX EQ 0)
+               MNOTE 8,'SEARCH TABLE NOT FOUND - &TBL_NAME'
+               MEXIT
+         AEND
+         :&TBL_IX SETA &SYM_IX
+         AIF (&SYM_DUP(&TBL_IX) LT 1)
+               MNOTE 8,'SEARCH TABLE REQUIRES OCCURS - &TBL_NAME'
+               MEXIT
+         AEND
+         :&TBL_MAX SETA &SYM_DUP(&TBL_IX)
+         :&TBL_LEN SETA &SYM_LEN(&TBL_IX)
+.*
+.* Find the index name by searching SET_SYM_IX for matching table
+.*
+         :&IDX_NAME SETC ''
+         :&J SETA 1
+         AWHILE (&J LE &SET_TOT)
+               AIF (&SET_SYM_IX(&J) EQ &TBL_IX)
+                   :&IDX_NAME SETC '&SET_INDEX(&J)'
+                   AEXIT AWHILE
+               AEND
+               :&J SETA &J+1
+         AEND
+         AIF ('&IDX_NAME' EQ '')
+               MNOTE 8,'SEARCH TABLE REQUIRES INDEXED BY - &TBL_NAME'
+               MEXIT
+         AEND
+.*
+.* Increment search label counter and set up IE level
+.*
+         :&SRC_LAB SETA &SRC_LAB+1
+         :&IE_LVL SETA &IE_LVL+1
+         :&IE_TYPE(&IE_LVL) SETA 15
+         :&IE_TCNT(&IE_LVL) SETA &SRC_LAB
+         :&IE_SRC_TBL(&IE_LVL) SETC '&TBL_NAME'
+         :&IE_SRC_IDX(&IE_LVL) SETC '&IDX_NAME'
+         :&IE_SRC_MAX(&IE_LVL) SETA &TBL_MAX
+         :&IE_SRC_LEN(&IE_LVL) SETA &TBL_LEN
+         :&IE_SRC_WHEN(&IE_LVL) SETA 0
+         :&IE_SRC_ATEND(&IE_LVL) SETB 0
+.*
+.* Generate top of search loop
+.*
+         GEN_LABEL SEARCH_&SRC_LAB._TOP,SEARCH_LOOP
+.*
+.* Check if index > max (end of table)
+.* Index value = (subscript-1) * element_length
+.* Max valid index = (max-1) * element_length
+.*
+         :&MAX_IDX SETA &TBL_LEN*(&TBL_MAX-1)
+         L     ZC_R1,&IDX_NAME
+         LARL  ZC_R14,=F'&MAX_IDX'
+         C     ZC_R1,0(ZC_R14)
+         JH    PG_SEARCH_&SRC_LAB._ATEND
+.*
+.* If AT END was specified, next statement is the AT END handler
+.* Otherwise continue to WHEN processing
+.*
+         AIF   (&HAS_AT_END)
+.*             Jump over AT END body to first WHEN check
+         J     PG_SEARCH_&SRC_LAB._WHEN1
+         GEN_LABEL SEARCH_&SRC_LAB._ATEND,SEARCH_AT_END
+         :&IE_SRC_ATEND(&IE_LVL) SETB 1
+         AEND
          MEND
