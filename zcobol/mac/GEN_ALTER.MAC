@@ -31,7 +31,11 @@
          LARL  ZC_R1,&ZC_PG_LAB
          LARL  ZC_R2,=X'A7F4'
          CLC   0(2,ZC_R1),0(ZC_R2)  IS THE TARGET A JUMP
-         JNE   ZCVT_ABORT_ALTER       NO ABORT
+         JE    GEN_ALTER_&SYSNDX    Yes it is: no problem!
+            LA    ZC_R1,ZCVT_ABORT_ALTER Error code
+            LGF   ZC_R15,ZCVT_ABORT      Pick up ABORT routine address
+            BALR  ZC_R14,ZC_R15          Go ABORT program
+         :GEN_ALTER_&SYSNDX DC 0H Continue to alter the jump target
          :&PG_NAME SETC '&PG_NEW'
          :&SN_NAME SETC '&SN_NEW'
          ACALL GET_PG_LAB

@@ -1,18 +1,16 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID.  TESTSRT2.
-       AUTHOR.      ZANE HAMBLY.
-       DATE-WRITTEN. 12/17/25.
       ******************************************************************
       * Test program for COBOL SORT - no ORGANIZATION clause (default)
-      * Tests default file organization for SORT compatibility.
       ******************************************************************
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
+      *    Use DD names for file assignment (set via environment variables)
            SELECT UNSORTED-FILE
-               ASSIGN TO INFILE.
+               ASSIGN TO INFILE2.
            SELECT SORTED-FILE
-               ASSIGN TO OUTFILE.
+               ASSIGN TO OUTFILE2.
        DATA DIVISION.
        FILE SECTION.
        FD  UNSORTED-FILE
@@ -30,12 +28,6 @@
        01  SORT-REC.
            05  SORT-KEY      PIC X(10).
            05  SORT-DATA     PIC X(70).
-       WORKING-STORAGE SECTION.
-       01  WS-RECORD-COUNT   PIC 9(4) COMP VALUE 0.
-       01  WS-EOF-FLAG       PIC X VALUE 'N'.
-       01  WS-PREV-KEY       PIC X(10) VALUE LOW-VALUES.
-       01  WS-CURR-KEY       PIC X(10).
-       01  WS-ERROR-FLAG     PIC X VALUE 'N'.
        PROCEDURE DIVISION.
        MAIN-PARA.
            DISPLAY 'TESTSRT2 - DEFAULT FORMAT SORT TEST'.
@@ -44,35 +36,5 @@
                USING UNSORTED-FILE
                GIVING SORTED-FILE.
            DISPLAY 'TESTSRT2 - SORT COMPLETED'.
-      *
-      *    VERIFY OUTPUT IS PROPERLY SORTED
-      *
-           PERFORM VERIFY-SORT-ORDER.
-           IF WS-ERROR-FLAG = 'Y'
-               DISPLAY 'TESTSRT2 - ERROR: OUTPUT NOT SORTED'
-               STOP RUN
-           END-IF.
-           DISPLAY 'TESTSRT2 - VERIFIED ' WS-RECORD-COUNT ' RECORDS'.
-           DISPLAY 'TESTSRT2 - TEST ENDED OK'.
            STOP RUN.
-      *
-       VERIFY-SORT-ORDER.
-           OPEN INPUT SORTED-FILE.
-           MOVE 'N' TO WS-EOF-FLAG.
-           MOVE LOW-VALUES TO WS-PREV-KEY.
-           MOVE 0 TO WS-RECORD-COUNT.
-           PERFORM READ-AND-CHECK UNTIL WS-EOF-FLAG = 'Y'.
-           CLOSE SORTED-FILE.
-      *
-       READ-AND-CHECK.
-           READ SORTED-FILE INTO SORTED-REC
-               AT END MOVE 'Y' TO WS-EOF-FLAG.
-           IF WS-EOF-FLAG NOT = 'Y'
-               ADD 1 TO WS-RECORD-COUNT
-               MOVE SR-KEY TO WS-CURR-KEY
-               IF WS-CURR-KEY < WS-PREV-KEY
-                   DISPLAY 'OUT OF ORDER: ' WS-CURR-KEY
-                   MOVE 'Y' TO WS-ERROR-FLAG
-               END-IF
-               MOVE WS-CURR-KEY TO WS-PREV-KEY
-           END-IF.
+

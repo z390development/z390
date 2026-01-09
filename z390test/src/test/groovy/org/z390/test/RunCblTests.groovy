@@ -18,7 +18,7 @@ class RunCblTests extends z390Test{
     Collection<DynamicTest> test_COBOL() {
         var tests = []
         var modules = [
-                'TESTADD1', 'TESTADD2', 'TESTBFP1', 'TESTIF1', 'TESTIF2', 'TESTIF3', 'TESTMOV1', 'TESTMOV2', 'TESTMOV3', 'CM101M01'
+                'TESTADD1', 'TESTADD2', 'TESTBFP1', 'TESTIF1', 'TESTIF2', 'TESTIF3', 'TESTMOV1', 'TESTMOV2', 'TESTMOV3', 'CM101M01', 'DB101A01'
         ]
         modules.each {
             module -> tests.add(
@@ -48,11 +48,6 @@ class RunCblTests extends z390Test{
         assert rc4 == 0   // Check return code
     }
 
-    void testCM101M03() {
-        int rc = this.cblc(basePath("zcobol", "tests", "CM101M03"))
-        this.printOutput()
-        assert rc == 0   // Check return code
-        }
     @Test
     void testCM101M02() {
         int rc = this.cblc(basePath("zcobol", "tests", "CM101M02"))
@@ -60,6 +55,40 @@ class RunCblTests extends z390Test{
         assert rc == 8   // Check return code
         assert this.fileData['ERR'].contains("MNOTE 8,'CD NOT SUPPORTED YET'"), "CM101M02.ERR does not contain expected error"
         assert !this.fileData['ERR'].contains("missing copy"), "CM101M02.ERR reports error that should have been fixed"
+    }
+    @Test
+    void testCM101M03() {
+        int rc = this.cblc(basePath("zcobol", "tests", "CM101M03"))
+        this.printOutput()
+        assert rc == 0   // Check return code
+        }
+    @Test
+    void testCM401M01() {
+        int rc = this.cblc(basePath("zcobol", "tests", "CM401M01"))
+        this.printOutput()
+        assert rc == 8   // Check return code
+        assert this.fileData['ERR'].contains("MNOTE 8,'PURGE NOT SUPPORTED YET'"), "CM401M01.ERR does not contain expected error"
+        assert !this.fileData['ERR'].contains("missing macro"), "CM401M01.ERR reports error that should have been fixed"
+    }
+
+    @Test
+    void testTESTSRT1() {
+        // Set DD names for file assignment (like JCL would do on mainframe)
+        this.env.put('INFILE', basePath("zcobol", "test", "TESTSRT1.TF1"))
+        this.env.put('OUTFILE', basePath("zcobol", "test", "TESTSRT1.OUT"))
+        int rc = this.cblclg(basePath("zcobol", "tests", "TESTSRT1"), 'TIME(30)')
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void testTESTSRT2() {
+        // Set DD names for file assignment (like JCL would do on mainframe)
+        this.env.put('INFILE2', basePath("zcobol", "test", "TESTSRT2.TF1"))
+        this.env.put('OUTFILE2', basePath("zcobol", "test", "TESTSRT2.OUT"))
+        int rc = this.cblclg(basePath("zcobol", "tests", "TESTSRT2"), 'TIME(30)')
+        this.printOutput()
+        assert rc == 0
     }
 
     @Test
