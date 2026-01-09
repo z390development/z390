@@ -756,6 +756,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#z390w" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        z390w
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mac" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1844,6 +1855,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#z390w" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        z390w
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mac" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1939,8 +1961,8 @@
 <p>These commands are scripts that are included in the z390 source and distribution
 and can be enabled by including the script directory in your system path.</p>
 <p>Alternatively you can reference the scripts directly from the command line by
-specifying the full path.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Windows</label><label for="__tabbed_1_2">MacOS/Unix</label></div>
+specifying the full path. Linux/MacOS users: see the <code>z390w</code> command below.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Windows</label><label for="__tabbed_1_2">Linux/MacOS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><code>(z390 install dir)\bat</code></p>
@@ -1953,6 +1975,13 @@ specifying the full path.</p>
 <h2 id="command-reference">Command reference</h2>
 <h3 id="z390">z390</h3>
 <p>Start the GUI interface with optional startup command file input.</p>
+<h3 id="z390w">z390w</h3>
+<p>Wrapper for commands in the z390 bash directory. Intended for Linux/MacOS users
+who put the z390 bash directory in their shell path. Some command names 
+(exec, help, link) conflict with existing Linux/MacOS names. Wrapping such commands
+avoids the name conflicts. For example use <code>z390w exec [options]</code> in place of
+<code>exec [options]</code>. See the Installation section of the README.txt file located in
+the z390 root directory for additional information.</p>
 <h3 id="mac">mac</h3>
 <p>Run mz390 macro processor to expand macro source file to BAL assembler source file. \
 The default extension for the input source file is MLC.</p>
@@ -2107,7 +2136,7 @@ contain explicit INCLUDE, ENTRY, ALIAS, and NAME commands.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.1-16-gf1415eb4"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.1-17-g441f06a6"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
