@@ -9,11 +9,11 @@ cd ..               # up to z390
 bash/cblclg zcobol/tests/TESTADD1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTADD2 $1 $2 $3 $4 $5 $6 $7 $8 $9
 # TESTCAL3 statically calls TESTASM4 - link them together
-call bash\asm    %z_TraceMode% zcobol\tests\TESTASM4 %1 %2 %3 %4 %5 %6 %7 %8 %9
-call bash\cblcl  %z_TraceMode% zcobol\tests\TESTCAL3 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call bash/asm    %z_TraceMode% zcobol/tests/TESTASM4 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call bash/cblcl  %z_TraceMode% zcobol/tests/TESTCAL3 %1 %2 %3 %4 %5 %6 %7 %8 %9
 # TESTCAL1 statically calls TESTCAL2 and dynamically calls TESTCAL3
-call bash\cblc   %z_TraceMode% zcobol\tests\TESTCAL2 %1 %2 %3 %4 %5 %6 %7 %8 %9
-call bash\cblclg %z_TraceMode% zcobol\tests\TESTCAL1 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call bash/cblc   %z_TraceMode% zcobol/tests/TESTCAL2 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call bash/cblclg %z_TraceMode% zcobol/tests/TESTCAL1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 bash/cblclg zcobol/tests/TESTBFP1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTIF1 $1 $2 $3 $4 $5 $6 $7 $8 $9
