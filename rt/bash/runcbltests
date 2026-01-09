@@ -9,17 +9,17 @@ cd ..               # up to z390
 bash/cblclg zcobol/tests/TESTADD1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTADD2 $1 $2 $3 $4 $5 $6 $7 $8 $9
 # TESTCAL3 statically calls TESTASM4 - link them together
-bash\asm    zcobol\tests\TESTASM4 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash\cblcl  zcobol\tests\TESTCAL3 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/asm    zcobol/tests/TESTASM4 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblcl  zcobol/tests/TESTCAL3 $1 $2 $3 $4 $5 $6 $7 $8 $9
 # TESTCAL1 statically calls TESTCAL2 and dynamically calls TESTCAL3
-bash\cblc   zcobol\tests\TESTCAL2 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash\cblclg zcobol\tests\TESTCAL1 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash\cblclg zcobol\tests\TESTCMP1 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash\cblclg zcobol\tests\TESTCMP2 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash\cblclg zcobol\tests\TESTCMP3 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash\cblclg zcobol\tests\TESTCMP4 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash\cblclg zcobol\tests\TESTCMP5 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash\cblclg zcobol\tests\TESTCMP6 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblc   zcobol/tests/TESTCAL2 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/TESTCAL1 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/TESTCMP1 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/TESTCMP2 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/TESTCMP3 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/TESTCMP4 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/TESTCMP5 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/TESTCMP6 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTBFP1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTIF1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTIF2 $1 $2 $3 $4 $5 $6 $7 $8 $9
