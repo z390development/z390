@@ -16,11 +16,11 @@ rem Output Java version for CI/CD
 java -version 2>&1 | echo ::set-output name=javaversion::%
 
 rem build the package
-call bat\BLDDIST.BAT %z_TraceMode% %*          || goto error
+call bat\BLDDIST.BAT %z_TraceMode% %*           || goto error
 
 rem run the tests
 call z390test\gradlew.bat -p z390test cleanTest || goto error
-call z390test\gradlew.bat -p z390test test     || goto error
+call z390test\gradlew.bat -p z390test test      || goto error
 
 set z_ReturnCode=0
 goto return

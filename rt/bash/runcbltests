@@ -22,9 +22,14 @@ bash/cblclg zcobol/tests/TESTIF3 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTMOV1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTMOV2 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTMOV3 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/cblc   zcobol/tests/CM101M03 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/cblclg zcobol/test/YOUZPI1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/CM101M01 $1 $2 $3 $4 $5 $6 $7 $8 $9
+# CM101M02 expects RC=8 (CD not supported)
+bash/cblclg zcobol/tests/CM101M02 $1 $2 $3 $4 $5 $6 $7 $8 $9 || [ $? -eq 8 ]
+bash/cblc   zcobol/tests/CM101M03 $1 $2 $3 $4 $5 $6 $7 $8 $9
+# CM401M01 expects RC=8 (Communication features not supported)
+bash/cblc   zcobol/tests/CM401M01 $1 $2 $3 $4 $5 $6 $7 $8 $9 || [ $? -eq 8 ]
+bash/cblclg zcobol/tests/DB101A01 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/test/YOUZPI1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTSRT1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTSRT2 $1 $2 $3 $4 $5 $6 $7 $8 $9
 

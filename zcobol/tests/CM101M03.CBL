@@ -1,6 +1,14 @@
 000100 IDENTIFICATION DIVISION.                                         CM1014.2
 000200 PROGRAM-ID.                                                      CM1014.2
 000300     CM101M.                                                      CM1014.2
+      ******************************************************************
+      *
+      * Testcase for compiling ampersands and apostrophes in literals.
+      *
+      * Validate by checking the correct number of ampersands and
+      * apostrophes in the generated object .prn file
+      *
+      ******************************************************************
 002200 ENVIRONMENT DIVISION.                                            CM1014.2
 002300 CONFIGURATION SECTION.                                           CM1014.2
 002800 INPUT-OUTPUT SECTION.                                            CM1014.2
