@@ -186,6 +186,14 @@ public class zc390{
 	String[] zc_copy_rep_lit1     = null; // RPI 1062 replacing lit1
 	String[] zc_copy_rep_lit2     = null; // RPI 1062 replacing lit2
     /*
+     * REPLACE statement global variables (2025/12 ZH)
+     * Implements FIPS PUB 21-2 Section XII Chapter 3
+     */
+	boolean  zc_replace_active    = false; // Is REPLACE currently active?
+	int      zc_replace_count     = 0;     // Number of active replacement pairs
+	String[] zc_replace_lit1      = null;  // Pseudo-text to find
+	String[] zc_replace_lit2      = null;  // Replacement pseudo-text
+    /*
      * zcob token variables
      */
 	int     zc_token_count = 0;
@@ -586,6 +594,9 @@ private class section_definition                                                
 		zc_copy_rep_lst_ix   = (int[])Array.newInstance(int.class,tz390.opt_maxfile);
 		zc_copy_rep_lit1     = (String[])Array.newInstance(String.class,tz390.opt_maxfile);
 		zc_copy_rep_lit2     = (String[])Array.newInstance(String.class,tz390.opt_maxfile);
+		// REPLACE statement arrays (2025/12 ZH)
+		zc_replace_lit1      = (String[])Array.newInstance(String.class,100);
+		zc_replace_lit2      = (String[])Array.newInstance(String.class,100);
 		zc_file[cur_zc_file] = new File(zc_file_name);                                         // #518
 		if (!zc_file[cur_zc_file].isFile()) {                                                  // #518
 			abort_error("zcobol: file not found - "+zc_file_name);                             // #518
@@ -1122,6 +1133,14 @@ private class section_definition                                                
 				zc_copy_trailer = false;
 			} else {
                 get_zc_read_cont();
+				// Apply global REPLACE substitutions (2025/12 ZH - FIPS PUB 21-2)
+				if (zc_line != null && zc_replace_active && zc_replace_count > 0){
+					for (int rep_ix = 0; rep_ix < zc_replace_count; rep_ix++){
+						if (zc_replace_lit1[rep_ix] != null && zc_replace_lit1[rep_ix].length() > 0){
+							zc_line = zc_line.replace(zc_replace_lit1[rep_ix], zc_replace_lit2[rep_ix]);
+						}
+					}
+				}
 				if (zc_line != null){
 					cur_rep_ix = zc_copy_rep_fst_ix[cur_zc_file];
 					if (cur_rep_ix > 0){
@@ -1260,6 +1279,8 @@ private class section_definition                                                
 				zc_next_token = "'";
 			} else if (zc_next_token.toUpperCase().equals("COPY")){
 				process_copy();
+			} else if (zc_next_token.toUpperCase().equals("REPLACE")){
+				process_replace();  // 2025/12 ZH - FIPS PUB 21-2 Section XII
 			}
 			if (pic_mode){
 				int index2 = zc_next_index + zc_token_match.group().length()-1;
@@ -2050,6 +2071,113 @@ private class section_definition                                                
 		log_error(msg + "\r" + zc_line);
 		zc_line = null;
 		zc_copy_trailer = false;
+	}
+	private void process_replace(){
+		/*
+		 * Process REPLACE statement per FIPS PUB 21-2 Section XII Chapter 3
+		 * Format 1: REPLACE {==pseudo-text-1== BY ==pseudo-text-2==}...
+		 * Format 2: REPLACE OFF
+		 * 
+		 * 2025/12 ZH - Implementation for z390 zCOBOL
+		 */
+		set_next_token();
+		
+		// Check for REPLACE OFF
+		if (zc_next_token != null && zc_next_token.toUpperCase().equals("OFF")){
+			zc_replace_active = false;
+			zc_replace_count = 0;
+			set_next_token(); // consume OFF
+			// Skip to period
+			while (!zc_eof && zc_next_token != null && !zc_next_token.equals(".")){
+				set_next_token();
+			}
+			return;
+		}
+		
+		// New REPLACE statement - reset and parse replacement pairs
+		zc_replace_active = true;
+		zc_replace_count = 0;
+		
+		while (!zc_eof && zc_next_token != null && !zc_next_token.equals(".")){
+			// Expect ==pseudo-text-1== or starting ==
+			String lit1 = "";
+			String lit2 = "";
+			
+			if (zc_next_token.equals("==")){
+				// Collect pseudo-text until closing ==
+				set_next_token();
+				while (!zc_eof && zc_next_token != null 
+						&& !zc_next_token.equals("==") 
+						&& !zc_next_token.equals(".")){
+					if (lit1.length() > 0) lit1 = lit1 + " ";
+					lit1 = lit1 + zc_next_token;
+					set_next_token();
+				}
+				if (zc_next_token != null && zc_next_token.equals("==")){
+					set_next_token(); // consume closing ==
+				}
+			} else if (zc_next_token.length() > 4 
+					   && zc_next_token.startsWith("==") 
+					   && zc_next_token.endsWith("==")){
+				// Single token ==text==
+				lit1 = zc_next_token.substring(2, zc_next_token.length()-2);
+				set_next_token();
+			} else {
+				// Not a valid pseudo-text, skip
+				set_next_token();
+				continue;
+			}
+			
+			// Expect BY
+			if (zc_next_token == null || !zc_next_token.toUpperCase().equals("BY")){
+				log_error("REPLACE missing BY after ==pseudo-text==");
+				return;
+			}
+			set_next_token(); // consume BY
+			
+			// Expect ==pseudo-text-2== or starting ==
+			if (zc_next_token != null && zc_next_token.equals("==")){
+				// Collect pseudo-text until closing ==
+				set_next_token();
+				while (!zc_eof && zc_next_token != null 
+						&& !zc_next_token.equals("==") 
+						&& !zc_next_token.equals(".")){
+					if (lit2.length() > 0) lit2 = lit2 + " ";
+					lit2 = lit2 + zc_next_token;
+					set_next_token();
+				}
+				if (zc_next_token != null && zc_next_token.equals("==")){
+					set_next_token(); // consume closing ==
+				}
+			} else if (zc_next_token != null 
+					   && zc_next_token.length() > 4 
+					   && zc_next_token.startsWith("==") 
+					   && zc_next_token.endsWith("==")){
+				// Single token ==text==
+				lit2 = zc_next_token.substring(2, zc_next_token.length()-2);
+				set_next_token();
+			} else if (zc_next_token != null 
+					   && zc_next_token.length() >= 4 
+					   && zc_next_token.startsWith("==") 
+					   && zc_next_token.endsWith("==")){
+				// Empty replacement ==== 
+				lit2 = "";
+				set_next_token();
+			} else {
+				log_error("REPLACE missing ==pseudo-text== after BY");
+				return;
+			}
+			
+			// Store the replacement pair
+			if (zc_replace_count < 100){
+				zc_replace_lit1[zc_replace_count] = lit1;
+				zc_replace_lit2[zc_replace_count] = lit2;
+				zc_replace_count++;
+			} else {
+				log_error("REPLACE maximum replacement pairs (100) exceeded");
+				return;
+			}
+		}
 	}
 	private void add_cpz_file(){
         /*

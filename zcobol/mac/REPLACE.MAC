@@ -20,9 +20,14 @@
 .* Author - Don Higgins                                              *
 .* Date   - 08/18/09                                                 *
 .*********************************************************************
-.* 08/18/09 stub for pending support              
+.* 08/18/09 RPI stub for pending support
+.* 2025/12 ZH: REPLACE is now implemented as a pre-processor directive
+.*             in zc390.java per FIPS PUB 21-2 Section XII Chapter 3.
+.*             This macro should not be invoked - if you see this error,
+.*             it means the REPLACE statement was not processed correctly
+.*             by the zCOBOL translator.
 .*********************************************************************
          REPLACE
-         MNOTE 8,'REPLACE NOT SUPPORTED YET'
+         MNOTE 4,'REPLACE macro invoked - should be handled by pre-processor'
          MEXIT
          MEND
