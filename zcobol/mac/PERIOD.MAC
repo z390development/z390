@@ -14,36 +14,39 @@
 .* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 .* GNU General Public License for more details.
 .*
-.* You should have received a copy of the GNU General Public License 
+.* You should have received a copy of the GNU General Public License
 .* along with this program; if not, see https://www.gnu.org/licenses.
 .*********************************************************************
 .* Author - Don Higgins                                              *
 .* Date   - 04/15/08                                                 *
 .*********************************************************************
-.* 04/15/08 initial coding for global flush pending IF,EVALUATE lvls    
+.* 04/15/08 initial coding for global flush pending IF,EVALUATE lvls
 .* 10/06/08 ZSTRMAC
 .* 07/14/09 RPI 1064 drop b2's at period if used
 .* 02/21/12 RPI 1182 move base reset to GEN_PERFROM and GEN_LABEL
+.* 2025/12 ZH: Add SEARCH support (IE_TYPE=15)
 .*********************************************************************
-         PERIOD    
+         PERIOD
          COPY  ZC_WS
          AWHILE (&IE_LVL GT 0)
-               AIF   (&IE_TYPE(&IE_LVL) EQ 1)        
+               AIF   (&IE_TYPE(&IE_LVL) EQ 1)
                      END_IF
-               AELSEIF (&IE_TYPE(&IE_LVL) EQ 2)             
+               AELSEIF (&IE_TYPE(&IE_LVL) EQ 2)
                      END_EVALUATE
-               AELSEIF (&IE_TYPE(&IE_LVL) EQ 3)               
+               AELSEIF (&IE_TYPE(&IE_LVL) EQ 3)
                      END_READ
-               AELSEIF (&IE_TYPE(&IE_LVL) EQ 4)               
+               AELSEIF (&IE_TYPE(&IE_LVL) EQ 4)
                      END_PERFORM
-               AELSEIF (&IE_TYPE(&IE_LVL) EQ 11)  RPI 1012             
+               AELSEIF (&IE_TYPE(&IE_LVL) EQ 11)  RPI 1012
                      END_ADD
-               AELSEIF (&IE_TYPE(&IE_LVL) EQ 12)  RPI 1012             
+               AELSEIF (&IE_TYPE(&IE_LVL) EQ 12)  RPI 1012
                      END_SUBTRACT
-               AELSEIF (&IE_TYPE(&IE_LVL) EQ 13)  RPI 1012             
+               AELSEIF (&IE_TYPE(&IE_LVL) EQ 13)  RPI 1012
                      END_MULTIPLY
-               AELSEIF (&IE_TYPE(&IE_LVL) EQ 14)  RPI 1012             
+               AELSEIF (&IE_TYPE(&IE_LVL) EQ 14)  RPI 1012
                      END_DIVIDE
+               AELSEIF (&IE_TYPE(&IE_LVL) EQ 15)  SEARCH
+                     END_SEARCH
                AELSE
                      MNOTE 8,'PERIOD UNKNOWN LEVEL TYPE - &IE_TYPE(&IE_X
                LVL)'
@@ -55,4 +58,3 @@
                GEN_LABEL PERIOD_NEXT_&PERIOD_NEXT_LAB,NEXT_SENTENCE
          AEND
          MEND
-

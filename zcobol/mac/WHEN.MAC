@@ -14,7 +14,7 @@
 .* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 .* GNU General Public License for more details.
 .*
-.* You should have received a copy of the GNU General Public License 
+.* You should have received a copy of the GNU General Public License
 .* along with this program; if not, see https://www.gnu.org/licenses.
 .*********************************************************************
 .* Author - Don Higgins                                              *
@@ -22,13 +22,21 @@
 .*********************************************************************
 .* 04/09/08 initial coding for global WHEN
 .* 10/06/08 ZSTRMAC
-.* 01/27/12 DSH RPI 1181 SUPPORT MULT TRUE/FALSE COND TESTS 
+.* 01/27/12 DSH RPI 1181 SUPPORT MULT TRUE/FALSE COND TESTS
 .* 03/07/12 DSH RPI 1182 GEN BASE FOR INDEX AFTER EACH LABEL
+.* 2025/12 ZH: Add SEARCH WHEN support per FIPS PUB 21-2
 .*********************************************************************
-         WHEN  &VAL  
+         WHEN  &VAL
          COPY  ZC_WS
          AIF   (&IE_LVL LT 1)
-               MNOTE 8,'WHEN MISSING EVALUATE'
+               MNOTE 8,'WHEN MISSING EVALUATE OR SEARCH'
+               MEXIT
+         AEND
+         AIF   (&IE_TYPE(&IE_LVL) EQ 15)
+.*
+.* SEARCH WHEN - Format: WHEN field = value
+.*
+               ACALL SEARCH_WHEN
                MEXIT
          AEND
          AIF   (&IE_TYPE(&IE_LVL) NE 2)
@@ -36,7 +44,7 @@
                MEXIT
          AEND
          :&IE_WHEN(&IE_LVL) SETA &IE_WHEN(&IE_LVL)+1
-         AIF   (&IE_WHEN(&IE_LVL) GT 1 AND N'&SYSLIST EQ 1) RPI 1181                
+         AIF   (&IE_WHEN(&IE_LVL) GT 1 AND N'&SYSLIST EQ 1) RPI 1181
                GEN_B EVAL&IE_EVAL(&IE_LVL)._END
          AEND
          GEN_LABEL EVAL&IE_EVAL(&IE_LVL)._WHEN&IE_WHEN(&IE_lVL),WHEN
@@ -56,6 +64,88 @@
                    GEN_BC   ZC_NE,EVAL&IE_EVAL(&IE_LVL)._WHEN&NEXT_WHEN
                AEND
          AEND
+         MEXIT
+.*
+.* SEARCH WHEN HANDLER - uses GET_PARM_FIELD from ZCGETFLD
+.*
+         AENTRY SEARCH_WHEN
+         :&IE_SRC_WHEN(&IE_LVL) SETA &IE_SRC_WHEN(&IE_LVL)+1
+         :&SRC_WHEN_N SETA &IE_SRC_WHEN(&IE_LVL)
+         :&SRC_N SETA &IE_TCNT(&IE_LVL)
+.*
+.*
+.* If this is the first WHEN, add jump to END for AT END fall-through
+.*
+         AIF (&SRC_WHEN_N EQ 1)
+               J     PG_SEARCH_&SRC_N._END
+         AEND
+.* Generate WHEN label
+.*
+         GEN_LABEL SEARCH_&SRC_N._WHEN&SRC_WHEN_N,SEARCH_WHEN
+.*
+.* Parse first field using GET_PARM_FIELD
+.* PARM_IX must point to the field (GET_PARM_FIELD will increment it)
+.*
+         :&PARM_IX SETA 1
+         :&FIELD_SS1 SETB 0
+         :&FIELD_REG SETC 'ZC_R2'
+         ACALL GET_PARM_FIELD
+         :&SRC_FLD1 SETC '&FIELD_NAME'
+         :&SRC_FLD1_IX SETA &FIELD_IX
+         AIF (&SRC_FLD1_IX EQ 0)
+               MNOTE 8,'SEARCH WHEN FIELD1 NOT FOUND - &SRC_FLD1'
+               MEXIT
+         AEND
+.*
+.* Get the operator (PARM_IX now points to operator)
+.*
+         :&OPER SETC '&SYSLIST(&PARM_IX)'
+         :&PARM_IX SETA &PARM_IX+1
+.*
+.* Parse second field using GET_PARM_FIELD
+.*
+         :&FIELD_SS1 SETB 0
+         :&FIELD_REG SETC 'ZC_R3'
+         ACALL GET_PARM_FIELD
+         :&SRC_FLD2 SETC '&FIELD_NAME'
+         :&SRC_FLD2_IX SETA &FIELD_IX
+.*
+.* Determine condition code for jump when FALSE
+.* We want to jump to INCR when condition is FALSE
+.* CCT is the INVERSE condition for branching
+.*
+         :&SRC_CCT SETC ''
+         AIF ('&OPER' EQ '=' OR '&OPER' EQ 'EQUAL')
+               :&SRC_CCT SETC 'ZC_NE'
+         AELSEIF ('&OPER' EQ '<' OR '&OPER' EQ 'LESS')
+               :&SRC_CCT SETC 'ZC_GE'
+         AELSEIF ('&OPER' EQ '>' OR '&OPER' EQ 'GREATER')
+               :&SRC_CCT SETC 'ZC_LE'
+         AELSEIF ('&OPER' EQ '<=' OR '&OPER' EQ 'LE')
+               :&SRC_CCT SETC 'ZC_H'
+         AELSEIF ('&OPER' EQ '>=' OR '&OPER' EQ 'GE')
+               :&SRC_CCT SETC 'ZC_L'
+         AELSEIF ('&OPER' EQ 'NOT')
+               :&SRC_CCT SETC 'ZC_EQ'
+         AELSE
+               MNOTE 8,'SEARCH WHEN INVALID OPERATOR - &OPER'
+               MEXIT
+         AEND
+.*
+.* Generate comparison
+.*
+         AIF (&SRC_FLD2_IX GT 0)
+               GEN_COMP &SRC_FLD1,&SRC_FLD1_IX,&SRC_FLD2,&SRC_FLD2_IX
+         AELSE
+               GEN_COMP &SRC_FLD1,&SRC_FLD1_IX,&SRC_FLD2,0
+         AEND
+.*
+.* If condition FALSE, jump to INCR; if TRUE, fall through
+.*
+         BRC   &SRC_CCT,PG_SEARCH_&SRC_N._INCR
+.*       If condition TRUE, execute statement (follows WHEN)
+.*       and then jump to SEARCH END (done in END_SEARCH)
+         AEND
 .*
 .* EVAL CONDITION FOR EVAL TRUE OR FALSE
 .*
@@ -73,16 +163,16 @@
          GEN_COMP &SYSLIST(1),&V1_IX,&SYSLIST(3),&V2_IX  RPI 1182
          :&PARM SETC '&SYSLIST(2)'
          ACALL SET_CCT
-         :&NEXT_WHEN SETA  &IE_WHEN(&IE_LVL)+1                
+         :&NEXT_WHEN SETA  &IE_WHEN(&IE_LVL)+1
          AEND
 .*
-.* SET CCT IF RELATION FOUND ELSE CCT NULL 
+.* SET CCT IF RELATION FOUND ELSE CCT NULL
 .*
          AENTRY SET_CCT
          :&CCT SETC ''     ASSUME RELATION NOT FOUND
                AIF   ('&PARM' EQ '='                                   X
-                      OR '&PARM' EQ 'EQUAL'                            X            
-                      OR '&PARM' EQ 'EQUALS')            
+                      OR '&PARM' EQ 'EQUAL'                            X
+                      OR '&PARM' EQ 'EQUALS')
                    :&CCT    SETC 'ZC_NE'
                AELSEIF ('&PARM' EQ '<'                                 X
                         OR '&PARM' EQ 'LESS')
@@ -99,4 +189,5 @@
                     MEXIT
                AEND
          AEND
+         COPY ZCGETFLD
          MEND
