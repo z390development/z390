@@ -22,6 +22,7 @@
 .*********************************************************************
 .* 04/28/12 RPI 1211 copied from GEN_ADD and changed add to sub opcode
 .* 05/17/12 RPI 1217 remove erroneous LR r0,r1 from case F - Q
+.* 12/20/25 Issue 719 BRAS needs *+6 instead of literal 3
 .*********************************************************************
 .* Notes:
 .*  1.  ROUNDED not supported yet.
@@ -282,7 +283,7 @@
       AWHEN C'P'
          :&LPNUM SETA (K'&NUM/2+3)/2*2 ROUNDED EVEN FOR LARL
         AIF (&LPNUM EQ 2)
-         BRAS  ZC_R14,3 SET ZC_R1 TO A(INLINE LIT) AND SKIP OVER IT
+         BRAS  ZC_R14,*+6 SET ZC_R1 TO A(INLINE LIT) AND SKIP OVER IT
          DC    PL2'&NUM'
         AELSE
          AIF (&LPNUM GT 16)
