@@ -14,15 +14,371 @@
 .* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 .* GNU General Public License for more details.
 .*
-.* You should have received a copy of the GNU General Public License 
+.* You should have received a copy of the GNU General Public License
 .* along with this program; if not, see https://www.gnu.org/licenses.
 .*********************************************************************
 .* Author - Don Higgins                                              *
 .* Date   - 04/16/08                                                 *
 .*********************************************************************
-.* 11/17/08 stub for pending support              
+.* 11/17/08 stub for pending support
+.* 2025/12 ZH: Implement COBOL UNSTRING per FIPS PUB 21-2 Sec VI-6.27
+.*********************************************************************
+.* UNSTRING identifier-1
+.*     [DELIMITED BY [ALL] {identifier-2|literal-1}
+.*         [OR [ALL] {identifier-3|literal-2}]...]
+.*     INTO {identifier-4 [DELIMITER IN identifier-5]
+.*           [COUNT IN identifier-6]}...
+.*     [WITH POINTER identifier-7]
+.*     [TALLYING IN identifier-8]
+.*     [ON OVERFLOW imperative-statement-1]
+.*     [NOT ON OVERFLOW imperative-statement-2]
+.*     [END-UNSTRING]
+.*
+.* Initial implementation: Basic UNSTRING with single delimiter
+.* Tokenized as: UNSTRING source,DELIMITED,BY,[ALL],delim,INTO,target
 .*********************************************************************
          UNSTRING
-         MNOTE 8,'UNSTRING NOT SUPPORTED YET'
+         COPY  ZC_WS
+         :&PARM_IX   SETA 1
+.*
+.* Source field
+.*
+         :&SRC_NAME  SETC ''
+         :&SRC_IX    SETA 0
+.*
+.* Delimiter (1 supported)
+.*
+         :&DELIM     SETC ''
+         :&DELIM_IX  SETA 0
+         :&DELIM_ALL SETB 0
+.*
+.* Target fields (up to 4 supported)
+.*
+         :&TGT_CNT   SETA 0
+         :&TGT1_NAME SETC ''
+         :&TGT1_IX   SETA 0
+         :&TGT2_NAME SETC ''
+         :&TGT2_IX   SETA 0
+         :&TGT3_NAME SETC ''
+         :&TGT3_IX   SETA 0
+         :&TGT4_NAME SETC ''
+         :&TGT4_IX   SETA 0
+.*
+.* Pointer and Tallying
+.*
+         :&PTR_NAME  SETC ''
+         :&PTR_IX    SETA 0
+         :&TALLY_NAME SETC ''
+         :&TALLY_IX  SETA 0
+.*
+.* Parser state
+.*
+         :&FIELD_REG SETC 'ZC_R2'
+         :&FIELD_SS1 SETB 0
+         :&STATE     SETC 'SOURCE'
+.*
+.* State machine to parse UNSTRING syntax
+.*
+.PARSE   ANOP
+         AIF   ('&SYSLIST(&PARM_IX)' EQ '').DONE
+.*
+.* Check for statement terminators
+.*
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'ON').DONE
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'NOT').DONE
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'END_UNSTRING').DONE
+.*
+.* Check keywords
+.*
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'DELIMITED').CK_BY
+         :&STATE SETC 'DELIM_BY'
+         :&PARM_IX SETA &PARM_IX+1
+         AGO .PARSE
+.CK_BY   ANOP
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'BY').CK_ALL
+         :&STATE SETC 'DELIM'
+         :&PARM_IX SETA &PARM_IX+1
+         AGO .PARSE
+.CK_ALL  ANOP
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'ALL').CK_INTO
+         :&DELIM_ALL SETB 1
+         :&PARM_IX SETA &PARM_IX+1
+         AGO .PARSE
+.CK_INTO ANOP
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'INTO').CK_WITH
+         :&STATE SETC 'TARGET'
+         :&PARM_IX SETA &PARM_IX+1
+         AGO .PARSE
+.CK_WITH ANOP
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'WITH').CK_PTR
+         :&PARM_IX SETA &PARM_IX+1
+         AGO .PARSE
+.CK_PTR  ANOP
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'POINTER').CK_TALLY
+         :&STATE SETC 'POINTER'
+         :&PARM_IX SETA &PARM_IX+1
+         AGO .PARSE
+.CK_TALLY ANOP
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'TALLYING').CK_IN
+         :&STATE SETC 'TALLY'
+         :&PARM_IX SETA &PARM_IX+1
+         AGO .PARSE
+.CK_IN   ANOP
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'IN').DO_STATE
+         :&PARM_IX SETA &PARM_IX+1
+         AGO .PARSE
+.*
+.* Process based on state
+.*
+.DO_STATE ANOP
+         AIF   ('&STATE' NE 'SOURCE').NOT_SRC
+.*        Getting source field (identifier-1)
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX EQ 0).SRC_ERR
+         :&SRC_NAME SETC '&FIELD_NAME'
+         :&SRC_IX   SETA &FIELD_IX
+         :&STATE SETC 'AFTER_SOURCE'
+         AGO .PARSE
+.SRC_ERR ANOP
+         MNOTE 8,'UNSTRING SOURCE NOT FOUND - &FIELD_NAME'
          MEXIT
+.NOT_SRC ANOP
+.*
+         AIF   ('&STATE' NE 'DELIM').NOT_DLM
+.*        Getting delimiter
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX GT 0).DLM_FLD
+.*        Check if literal
+         AIF   ('&FIELD_NAME'(1,1) NE '''').DLM_SET
+.DLM_FLD ANOP
+         :&DELIM SETC '&FIELD_NAME'
+         :&DELIM_IX SETA &FIELD_IX
+         AGO .DLM_DONE
+.DLM_SET ANOP
+         :&DELIM SETC '&FIELD_NAME'
+         :&DELIM_IX SETA 0
+.DLM_DONE ANOP
+         :&STATE SETC 'AFTER_DELIM'
+         AGO .PARSE
+.NOT_DLM ANOP
+.*
+         AIF   ('&STATE' NE 'DELIM_BY').NOT_DLMBY
+.*        DELIMITED BY - same as DELIM
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX GT 0).DLMBY_FLD
+         AIF   ('&FIELD_NAME'(1,1) NE '''').DLMBY_SET
+.DLMBY_FLD ANOP
+         :&DELIM SETC '&FIELD_NAME'
+         :&DELIM_IX SETA &FIELD_IX
+         AGO .DLMBY_DONE
+.DLMBY_SET ANOP
+         :&DELIM SETC '&FIELD_NAME'
+         :&DELIM_IX SETA 0
+.DLMBY_DONE ANOP
+         :&STATE SETC 'AFTER_DELIM'
+         AGO .PARSE
+.NOT_DLMBY ANOP
+.*
+         AIF   ('&STATE' NE 'TARGET').NOT_TGT
+         AGO   .DO_TGT
+.NOT_TGT ANOP
+         AIF   ('&STATE' NE 'AFTER_SOURCE').NOT_ASRC
+         AGO   .DO_TGT
+.NOT_ASRC ANOP
+         AIF   ('&STATE' NE 'AFTER_DELIM').NOT_ADLM
+         AGO   .DO_TGT
+.NOT_ADLM ANOP
+         AGO   .NOT_TARGET
+.DO_TGT  ANOP
+.*        Getting target field
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX EQ 0).TGT_ERR
+         :&TGT_CNT SETA &TGT_CNT+1
+         AIF   (&TGT_CNT NE 1).TGT2
+         :&TGT1_NAME SETC '&FIELD_NAME'
+         :&TGT1_IX   SETA &FIELD_IX
+         AGO   .TGT_OK
+.TGT2    ANOP
+         AIF   (&TGT_CNT NE 2).TGT3
+         :&TGT2_NAME SETC '&FIELD_NAME'
+         :&TGT2_IX   SETA &FIELD_IX
+         AGO   .TGT_OK
+.TGT3    ANOP
+         AIF   (&TGT_CNT NE 3).TGT4
+         :&TGT3_NAME SETC '&FIELD_NAME'
+         :&TGT3_IX   SETA &FIELD_IX
+         AGO   .TGT_OK
+.TGT4    ANOP
+         AIF   (&TGT_CNT NE 4).TGT_MAX
+         :&TGT4_NAME SETC '&FIELD_NAME'
+         :&TGT4_IX   SETA &FIELD_IX
+         AGO   .TGT_OK
+.TGT_MAX ANOP
+         MNOTE 4,'UNSTRING - MAX 4 TARGET FIELDS SUPPORTED'
+         AGO   .TGT_OK
+.TGT_ERR ANOP
+         MNOTE 8,'UNSTRING TARGET NOT FOUND - &FIELD_NAME'
+         MEXIT
+.TGT_OK  ANOP
+         :&STATE SETC 'TARGET'
+         AGO .PARSE
+.NOT_TARGET ANOP
+.*
+         AIF   ('&STATE' NE 'POINTER').NOT_PTR
+.*        Getting pointer field
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX EQ 0).PTR_ERR
+         :&PTR_NAME SETC '&FIELD_NAME'
+         :&PTR_IX   SETA &FIELD_IX
+         :&STATE SETC 'TARGET'
+         AGO .PARSE
+.PTR_ERR ANOP
+         MNOTE 8,'UNSTRING POINTER FIELD NOT FOUND'
+         MEXIT
+.NOT_PTR ANOP
+.*
+         AIF   ('&STATE' NE 'TALLY').NOT_TAL
+.*        Getting TALLYING IN field
+         ACALL GET_PARM_FIELD
+         AIF   (&FIELD_IX EQ 0).TAL_ERR
+         :&TALLY_NAME SETC '&FIELD_NAME'
+         :&TALLY_IX   SETA &FIELD_IX
+         :&STATE SETC 'TARGET'
+         AGO .PARSE
+.TAL_ERR ANOP
+         MNOTE 8,'UNSTRING TALLYING FIELD NOT FOUND'
+         MEXIT
+.NOT_TAL ANOP
+.*
+.* Unknown - skip
+         :&PARM_IX SETA &PARM_IX+1
+         AGO   .PARSE
+.*
+.DONE    ANOP
+.*
+.* Validate required fields
+.*
+         AIF   ('&SRC_NAME' NE '').SRC_OK
+         MNOTE 8,'UNSTRING - NO SOURCE FIELD FOUND'
+         MEXIT
+.SRC_OK  ANOP
+         AIF   (&TGT_CNT GT 0).TGT_CNT_OK
+         MNOTE 8,'UNSTRING - NO INTO TARGET FOUND'
+         MEXIT
+.TGT_CNT_OK ANOP
+.*
+.* Generate code - inline generation like STRING
+.*
+         LA    ZC_R1,ZCVT_WORKAREA
+.*
+.* Parameter block layout for UNSTRING runtime
+.* Offset 0:   A(source)     - Address of source field
+.* Offset 4:   L'source      - Length of source field
+.* Offset 8:   A(delim)      - Address of delimiter (0 if none)
+.* Offset 12:  L'delim       - Length of delimiter
+.* Offset 16:  delim flags   - Bit 0: ALL flag
+.* Offset 20:  Target count  - Number of target fields
+.* Offset 24:  A(pointer)    - Address of pointer field (0 if none)
+.* Offset 28:  A(tallying)   - Address of tallying field (0 if none)
+.* Offset 32:  A(target1)    - Address of target 1
+.* Offset 36:  L'target1     - Length of target 1
+.* ...repeat for targets 2-4
+.*
+.* Source field
+.*
+         LA    ZC_R0,&SRC_NAME
+         ST    ZC_R0,0(ZC_R1)
+         MVHI  4(ZC_R1),&SYM_LEN(&SRC_IX)
+.*
+.* Delimiter
+.*
+         AIF   ('&DELIM' EQ '').NO_DLM
+         AIF   (&DELIM_IX GT 0).DLM_FIELD
+.*        Literal delimiter
+         LA    ZC_R0,=C&DELIM
+         ST    ZC_R0,8(ZC_R1)
+         MVHI  12(ZC_R1),L'=C&DELIM
+         AGO   .DLM_FLAGS
+.DLM_FIELD ANOP
+         LA    ZC_R0,&DELIM
+         ST    ZC_R0,8(ZC_R1)
+         MVHI  12(ZC_R1),&SYM_LEN(&DELIM_IX)
+         AGO   .DLM_FLAGS
+.NO_DLM  ANOP
+         SR    ZC_R0,ZC_R0
+         ST    ZC_R0,8(ZC_R1)
+         ST    ZC_R0,12(ZC_R1)
+.DLM_FLAGS ANOP
+         AIF   (NOT &DELIM_ALL).NO_ALL
+         MVHI  16(ZC_R1),1
+         AGO   .AFTER_FLAGS
+.NO_ALL  ANOP
+         MVHI  16(ZC_R1),0
+.AFTER_FLAGS ANOP
+.*
+.* Target count
+.*
+         MVHI  20(ZC_R1),&TGT_CNT
+.*
+.* Pointer field
+.*
+         AIF   ('&PTR_NAME' EQ '').NO_PTR_F
+         LA    ZC_R0,&PTR_NAME
+         ST    ZC_R0,24(ZC_R1)
+         AGO   .PTR_DONE
+.NO_PTR_F ANOP
+         SR    ZC_R0,ZC_R0
+         ST    ZC_R0,24(ZC_R1)
+.PTR_DONE ANOP
+.*
+.* Tallying field
+.*
+         AIF   ('&TALLY_NAME' EQ '').NO_TAL_F
+         LA    ZC_R0,&TALLY_NAME
+         ST    ZC_R0,28(ZC_R1)
+         AGO   .TAL_DONE
+.NO_TAL_F ANOP
+         SR    ZC_R0,ZC_R0
+         ST    ZC_R0,28(ZC_R1)
+.TAL_DONE ANOP
+.*
+.* Target 1
+.*
+         AIF   (&TGT_CNT LT 1).NO_TGT1
+         LA    ZC_R0,&TGT1_NAME
+         ST    ZC_R0,32(ZC_R1)
+         MVHI  36(ZC_R1),&SYM_LEN(&TGT1_IX)
+.NO_TGT1 ANOP
+.*
+.* Target 2
+.*
+         AIF   (&TGT_CNT LT 2).NO_TGT2
+         LA    ZC_R0,&TGT2_NAME
+         ST    ZC_R0,40(ZC_R1)
+         MVHI  44(ZC_R1),&SYM_LEN(&TGT2_IX)
+.NO_TGT2 ANOP
+.*
+.* Target 3
+.*
+         AIF   (&TGT_CNT LT 3).NO_TGT3
+         LA    ZC_R0,&TGT3_NAME
+         ST    ZC_R0,48(ZC_R1)
+         MVHI  52(ZC_R1),&SYM_LEN(&TGT3_IX)
+.NO_TGT3 ANOP
+.*
+.* Target 4
+.*
+         AIF   (&TGT_CNT LT 4).NO_TGT4
+         LA    ZC_R0,&TGT4_NAME
+         ST    ZC_R0,56(ZC_R1)
+         MVHI  60(ZC_R1),&SYM_LEN(&TGT4_IX)
+.NO_TGT4 ANOP
+.*
+.* Call runtime
+.*
+         L     ZC_R15,ZCVT_UNSTRING
+         BASR  ZC_R14,ZC_R15
+.*
+         MEXIT
+         COPY  ZCGETFLD
          MEND

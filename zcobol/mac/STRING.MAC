@@ -20,9 +20,214 @@
 .* Author - Don Higgins                                              *
 .* Date   - 04/16/08                                                 *
 .*********************************************************************
-.* 11/17/08 stub for pending support              
+.* 11/17/08 stub for pending support
+.* 2025/12 ZH: Implement COBOL STRING statement per FIPS PUB 21-2
+.* 2025/12 ZH: Add DELIMITED BY identifier support
+.*********************************************************************
+.* STRING {identifier-1|literal-1} ...
+.*        DELIMITED BY {identifier-2|literal-2|SIZE}
+.*        ... INTO identifier-3
+.*        [WITH POINTER identifier-4]
+.*        [ON OVERFLOW imperative-statement-1]
+.*        [NOT ON OVERFLOW imperative-statement-2]
+.*        [END-STRING]
+.*
+.* Tokenized as: STRING source,DELIMITED,BY,delim,INTO,target,...
 .*********************************************************************
          STRING
-         MNOTE 8,'STRING NOT SUPPORTED YET'
+         COPY  ZC_WS
+         :&PARM_IX   SETA 1
+         :&SRC_NAME  SETC ''
+         :&SRC_IX    SETA 0
+         :&DELIM     SETC 'SIZE'
+         :&DELIM_IX  SETA 0
+         :&TGT_NAME  SETC ''
+         :&TGT_IX    SETA 0
+         :&PTR_NAME  SETC ''
+         :&PTR_IX    SETA 0
+         :&FIELD_REG SETC 'ZC_R2'
+         :&FIELD_SS1 SETB 0
+         :&STATE     SETC 'SOURCE'
+.*
+.* State machine to parse: source DELIMITED BY delim INTO target...
+.*
+.PARSE   ANOP
+         AIF   ('&SYSLIST(&PARM_IX)' EQ '')
+               AGO .DONE
+         AEND
+.*
+.* Check keywords
+.*
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'DELIMITED')
+               :&STATE SETC 'DELIM'
+               :&PARM_IX SETA &PARM_IX+1
+               AGO .PARSE
+         AEND
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'BY')
+               :&PARM_IX SETA &PARM_IX+1
+               AGO .PARSE
+         AEND
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'INTO')
+               :&STATE SETC 'TARGET'
+               :&PARM_IX SETA &PARM_IX+1
+               AGO .PARSE
+         AEND
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'WITH')
+               :&PARM_IX SETA &PARM_IX+1
+               AGO .PARSE
+         AEND
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'POINTER')
+               :&STATE SETC 'POINTER'
+               :&PARM_IX SETA &PARM_IX+1
+               AGO .PARSE
+         AEND
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'ON')
+               AGO .DONE
+         AEND
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'NOT')
+               AGO .DONE
+         AEND
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'END_STRING')
+               AGO .DONE
+         AEND
+.*
+.* Process based on state
+.*
+         AIF   ('&STATE' EQ 'SOURCE')
+.*            Getting source field
+               ACALL GET_PARM_FIELD
+               AIF (&FIELD_IX GT 0)
+                   :&SRC_NAME SETC '&FIELD_NAME'
+                   :&SRC_IX   SETA &FIELD_IX
+               AELSEIF ('&FIELD_NAME'(1,1) EQ '''')
+                   :&SRC_NAME SETC '&FIELD_NAME'
+                   :&SRC_IX   SETA 0
+               AELSE
+                   MNOTE 4,'STRING SOURCE NOT FOUND - &FIELD_NAME'
+               AEND
+               AGO .PARSE
+         AEND
+.*
+         AIF   ('&STATE' EQ 'DELIM')
+.*            Getting delimiter
+               AIF ('&SYSLIST(&PARM_IX)' EQ 'SIZE')
+                   :&DELIM SETC 'SIZE'
+                   :&DELIM_IX SETA 0
+                   :&PARM_IX SETA &PARM_IX+1
+.*                Generate code for previous source with SIZE delimiter
+               AELSE
+.*                Delimiter is a field or literal
+                   ACALL GET_PARM_FIELD
+                   AIF (&FIELD_IX GT 0)
+                       :&DELIM SETC '&FIELD_NAME'
+                       :&DELIM_IX SETA &FIELD_IX
+                   AELSEIF ('&FIELD_NAME'(1,1) EQ '''')
+                       :&DELIM SETC '&FIELD_NAME'
+                       :&DELIM_IX SETA 0
+                   AELSE
+                       :&DELIM SETC '&FIELD_NAME'
+                       :&DELIM_IX SETA 0
+                   AEND
+               AEND
+               :&STATE SETC 'SOURCE'
+               AGO .PARSE
+         AEND
+.*
+         AIF   ('&STATE' EQ 'TARGET')
+.*            Getting target field
+               ACALL GET_PARM_FIELD
+               AIF (&FIELD_IX GT 0)
+                   :&TGT_NAME SETC '&FIELD_NAME'
+                   :&TGT_IX   SETA &FIELD_IX
+               AELSE
+                   MNOTE 8,'STRING TARGET NOT FOUND - &FIELD_NAME'
+                   MEXIT
+               AEND
+               AGO .PARSE
+         AEND
+.*
+         AIF   ('&STATE' EQ 'POINTER')
+.*            Getting pointer field
+               ACALL GET_PARM_FIELD
+               AIF (&FIELD_IX GT 0)
+                   :&PTR_NAME SETC '&FIELD_NAME'
+                   :&PTR_IX   SETA &FIELD_IX
+               AELSE
+                   MNOTE 8,'STRING POINTER NOT FOUND - &FIELD_NAME'
+                   MEXIT
+               AEND
+               AGO .PARSE
+         AEND
+.*
+.* Unknown - skip
+         :&PARM_IX SETA &PARM_IX+1
+         AGO   .PARSE
+.*
+.DONE    ANOP
+.*
+.* Generate final STRING call
+.*
+         AIF   ('&SRC_NAME' EQ '')
+               MNOTE 8,'STRING - NO SOURCE ITEMS FOUND'
+               MEXIT
+         AEND
+         AIF   ('&TGT_NAME' EQ '')
+               MNOTE 8,'STRING - NO INTO TARGET FOUND'
+               MEXIT
+         AEND
+.*
+.* Inline code generation (avoiding macro call continuation issues)
+.*
+         LA    ZC_R1,ZCVT_WORKAREA
+.*
+.* P1/P2: Source
+.*
+         LA    ZC_R0,&SRC_NAME
+         ST    ZC_R0,0(ZC_R1)
+         MVHI  4(ZC_R1),&SYM_LEN(&SRC_IX)
+.*
+.* P3/P4: Delimiter (0 for SIZE, address/length for identifier)
+.*
+         AIF ('&DELIM' EQ 'SIZE')
+         SR    ZC_R0,ZC_R0
+         ST    ZC_R0,8(ZC_R1)
+         ST    ZC_R0,12(ZC_R1)
+         AELSEIF (&DELIM_IX GT 0)
+.*        Delimiter is an identifier - pass address and length
+         LA    ZC_R0,&DELIM
+         ST    ZC_R0,8(ZC_R1)
+         MVHI  12(ZC_R1),&SYM_LEN(&DELIM_IX)
+         AELSE
+               MNOTE 8,'STRING DELIMITER NOT FOUND - &DELIM'
+               MEXIT
+         AEND
+.*
+.* P5/P6: Target
+.*
+         LA    ZC_R0,&TGT_NAME
+         ST    ZC_R0,16(ZC_R1)
+         MVHI  20(ZC_R1),&SYM_LEN(&TGT_IX)
+.*
+.* P7: Pointer (0 if none)
+.*
+         AIF ('&PTR_NAME' NE '' AND &PTR_IX GT 0)
+         LA    ZC_R0,&PTR_NAME
+         ST    ZC_R0,24(ZC_R1)
+         AELSE
+         SR    ZC_R0,ZC_R0
+         ST    ZC_R0,24(ZC_R1)
+         AEND
+.*
+.* P8: Flags
+.*
+         SR    ZC_R0,ZC_R0
+         ST    ZC_R0,28(ZC_R1)
+.*
+.* Call runtime
+.*
+         L     ZC_R15,ZCVT_STRING
+         BASR  ZC_R14,ZC_R15
+.*
          MEXIT
+         COPY  ZCGETFLD
          MEND
