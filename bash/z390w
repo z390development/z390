@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# z390w: wrapper for scripts in the z390 bash directory
+
+# Needed when adding the z390 bash directory to the path
+# since some z390 script names conflict with
+#   shell builtins
+#     exec
+#     help
+#   functions
+#     link
+#
+# Usage:
+#   z390w asm [options]
+#   z390w exec [options]
+#   z390w help
+#   z390w link [options]
+#
+# Note that z390w may be used to wrap any of the scripts in
+# the z390 bash directory (except z390w), with or without the
+# z390 bash directory in the path.
+
+if [ $# -eq 0 ]; then echo "Usage: z390w cmd [options]"; exit 1; fi
+
+# Save and discard command name argument
+cmd390=$1; shift 1
+
+# prevent z390w recursion: don't allow "z390w z390w ,,,"
+if [ "$cmd390" = "z390w" ]; then echo "Error: cmd \"z390w\" not allowed"; exit 1; fi
+
+# Read command from directory into current shell
+#   "${0%/*}" extracts longest substring of $0 that is followed by "/"
+source "$( realpath  ${0%/*} )/$cmd390"

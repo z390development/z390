@@ -20,6 +20,12 @@ call bat\CBLCL  %z_TraceMode% zcobol\tests\TESTCAL3 %1 %2 %3 %4 %5 %6 %7 %8 %9 |
 rem TESTCAL1 statically calls TESTCAL2 and dynamically calls TESTCAL3
 call bat\CBLC   %z_TraceMode% zcobol\tests\TESTCAL2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTCAL1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTCMP1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTCMP2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTCMP3 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTCMP4 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTCMP5 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTCMP6 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testbfp1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testif1  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
@@ -35,6 +41,7 @@ call bat\CBLC   %z_TraceMode% zcobol\tests\CM101M03 %1 %2 %3 %4 %5 %6 %7 %8 %9 |
 call bat\CBLC   %z_TraceMode% zcobol\tests\CM401M01 %1 %2 %3 %4 %5 %6 %7 %8 %9
      if %ERRORLEVEL% NEQ 8 goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\DB101A01 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\NC106A01 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\test\youzpi1   %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 set z_ReturnCode=0
 goto return

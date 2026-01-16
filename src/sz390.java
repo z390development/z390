@@ -236,7 +236,8 @@ public class sz390 implements Runnable {
     * 2025-09-07 Issue #678 document optional label for test command A
     * 2025-09-28 Issue #681 Allow test script to revert to interactive mode
     * 2025-10-07 Issue #658 Change CDE CDUSE field usage from byte to halfword
-    * 2025-10-20 AFK        Add javadoc comments
+    * 2025-11-12 Issue #714 DELETE does not remove and FREEMAIN CDE from CVTCDE chain
+    * 2026-01-16 AFK        Add javadoc comments
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -2189,13 +2190,22 @@ private boolean find_link_cde(){
 }
 private boolean delete_cur_cde(){
 	/*
-	 * decrement use count for cur_cde 
-	 * if use count 0
-	 *    freemain memory
-	 *    set cde_loc to 0 to release cde entry
-	 *    return true
-	 * else 
+	 * if cur_cde not -1 and cde_loc not 0                  #714
+	 *    decrement use count for cur_cde
+	 *    if use count 0
+	 *       freemain memory
+	 *       set cde_loc to 0 to release cde entry
+	 *       if remove CDE from CVTCDE queue is successful  #714
+	 *          freemain CDE storage                        #714
+	 *          set cde_addr to 0 to indicate no cde        #714
+	 *       endif                                          #714
+	 *       return true
+	 * else if cur_cde not -1 and cde_addr = 0              #714
+	 *    return false                                      #714
+	 * else
+	 *    abort: delete cde system error                    #714
 	 *    return false
+	 * endif                                             
 	 */
 	if (cur_cde != -1 && cde_loc[cur_cde] != 0){
 		if ( cde_use[cur_cde] > 0 ) cde_use[cur_cde]--;  // #658
@@ -2205,13 +2215,43 @@ private boolean delete_cur_cde(){
         	pz390.reg.putInt(pz390.r0,cde_len[cur_cde]); // RPI 244
         	svc_freemain();
         	cde_loc[cur_cde] = 0;
+        	if (remove_cde(cde_addr[cur_cde])) {               // #714
+        		pz390.reg.putInt(pz390.r1,cde_addr[cur_cde]);  // #714
+            	pz390.reg.putInt(pz390.r0,cded_len);           // #714
+            	svc_freemain();                                // #714
+            	cde_addr[cur_cde] = 0;                         // #714
+        	}                                                  // #714
         }
 		return true;
+	} else if (cur_cde != -1 && cde_addr[cur_cde] == 0){       // #714
+	    return false;                                          // #714
 	} else {
 		abort_error(88,"delete cde system error");
 		return false;
 	}
 }
+/**
+ * Remove CDE from CVTCDE chain
+ * 
+ * @param cde address of CDE to remove
+ * @return {@code true} if CDE removed, else {@code false}
+ */
+private boolean remove_cde(int cde) {                   // #714
+	int prev, cur;                                      // #714
+	prev = 0;                                           // #714
+	cur = pz390.mem.getInt(pz390.cvt_cde);              // #714
+	while (cur != 0 && cur != cde) {                    // #714
+		prev = cur;                                     // #714
+		cur = pz390.mem.getInt(cur+pz390.cde_cdchain);  // #714
+	}                                                   // #714
+	if (cur == 0) return false;                         // #714
+	if (prev == 0) {                                    // #714
+		pz390.mem.putInt(pz390.cvt_cde, pz390.mem.getInt(cur+pz390.cde_cdchain));  // #714
+	} else {                                            // #714
+		pz390.mem.putInt(prev+pz390.cde_cdchain, pz390.mem.getInt(cur+pz390.cde_cdchain));  // #714
+	}                                                   // #714
+	return true;                                        // #714
+}                                                       // #714
 private void add_cde(){
 	/*
 	 * add new 390 load module to cde entry table
@@ -2244,6 +2284,7 @@ private void add_cde(){
     }
 	if (cde_addr[cur_cde] == 0){
 	    pz390.reg.putInt(pz390.r1,cded_len); // RPI 1063
+	    pz390.reg.putInt(pz390.r0,0);  // below the line  // #714
 	    svc_getmain();
 	    if (pz390.reg.getInt(pz390.r15) == 0){
 	    	cde_addr[cur_cde] = pz390.reg.getInt(pz390.r1);
