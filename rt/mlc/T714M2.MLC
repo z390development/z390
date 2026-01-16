@@ -1,0 +1,5 @@
+T714M2   CSECT
+T714M2   AMODE 31
+T714M2   RMODE 31
+         DC    4F'-1'
+         END
