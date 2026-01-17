@@ -1387,8 +1387,8 @@ public void put_stat_line(String msg){
 
 
 /**
- * close log, err, tre, 
- * xrd, xpr, xph, xgt, and xpt Assist files RPI 812
+ * close log, err, tre,
+ * xrd, xpr, xph, xgt, and xpt Assist files
  */
 private synchronized void close_files(){  // RPI 661
 
@@ -1436,7 +1436,8 @@ private void close_cmd(){
 /**
  * init pz390.cur_date and calendar with
  * current time and date or force
- * fixed time if NOTIMING option set.<br />
+ * fixed time if NOTIMING option set.
+ * <br />
  * Notes:
  * <ol>
  *  <li>This NOTTIMING option is used in
@@ -1677,7 +1678,7 @@ private void svc_exit(){
  * extract svc supports the following functions requires function code in R0.
  * Supported function code values:
  * <ol>
- *  <li>1 - GETENV get environment variable
+ *  <li>GETENV get environment variable
  *   <ul>
  *    <li>input r1=name with null terminator</li>
  *    <li>output r2=getmain'd area value and null terminator</li>
@@ -2133,7 +2134,7 @@ private boolean get_eploc_pgm_name(){
 /**
  * delete loaded pgm/dsn from irtual memory
  * if use count 0 after decrement.
- * 
+ * <br />
  * Input regs:
  * <ol>
  *  <li>r0  = 8 byte pgm name padded with spaces</li>
@@ -3649,7 +3650,7 @@ private void svc_open(){
 /**
  * open DCB file for sequential or random I/O
  * and use dsnam_path prefix for dcbdsnam option
- *
+ * <br />
  * Notes:
  * <ol>
  *  <li>R1 = DCB</li>
@@ -3781,7 +3782,7 @@ private void get_dcb_locate_buffer(){
 /**
  * Get file name from DCBDSNAM if not zero and append dsnam_path
  * else get file from DCBDDNAM environment variable.
- *
+ * <br />
  * Notes:
  * <ol>
  *  <li>DCBDSNAM is EBCDIC uless in ASCII mode.</li>
@@ -3893,6 +3894,7 @@ public void svc_close_dcb(){
 
 /**
  * get next record into area from dcb gm/gl
+ * <br />
  * Notes:
  * <ol>
  *  <li>Translate to EBCDIC unless ASCII mode</li>
@@ -4510,7 +4512,7 @@ private void dcb_eodad_exit(){
  * on full word bound and that
  * DCBID = EBCDIC or ASCII C'DCB1'
  * else abort.
- *
+ * <br />
  * Notes:
  * <ol>
  *  <li>Also reset dcb_synad_recur</li>
@@ -4609,7 +4611,7 @@ public String get_ascii_env_var_string(String env_var_name){
 /**
  * get ascii string with no trailing spaces from
  * memory address and length
- *
+ * <br />
  * Notes:
  * <ol>
  *  <li>Translates from EBCDIC to ASCII unless in ASCII mode.</li>
@@ -4643,7 +4645,7 @@ public String get_ascii_string(int mem_addr,int mem_len,boolean null_term){
 /**
  * put ascii string with trailing spaces to
  * memory address and length
- *
+ * <br />
  * Notes:
  * <ol>
  *  <li>Translates from ASCII to EBCDIC unless ASCII mode</li>
@@ -4773,7 +4775,7 @@ private void svc_cmd(){
 
 /**
  * start Windows command processer with synchronized buffered output.
- *
+ * <br />
  * Notes:
  * <ol>
  *  <li>Start process cmd_id</li>
@@ -5174,7 +5176,7 @@ public synchronized String cmd_get_queue(int cmd_id){
 
 /**
  * Read or write to TN3270 terminal
- *
+ * <br />
  * Notes:
  * <ol>
  *  <li>If GUAM GUI Access Method enabled, read or write to the GUAM GUI dialog.</li>
@@ -5639,7 +5641,7 @@ private void wto_msg(String wto_pfx,int msg_addr,int msg_len){
  * stimer exit request.  Retry the
  * wait after stimer exit assuming r1
  * restored to wait ecb parm.
- * 
+ * <br />
  * Notes:
  * <ol>
  *  <li>WTOR ecb's are posted by gz390 wtor thread at which time reply is fetched and stored.</li>
@@ -7343,6 +7345,7 @@ private String get_next_test_token(){
  * start with current test_token and continue
  * until next test_token not +, -, ?, % or valid address
  * If invalid return -1
+ * <br />
  * Notes:
  * <ol>
  *  <li>EPA returns last program load address</li>
@@ -7648,7 +7651,7 @@ private int get_test_addr(String text){
  * <ul>
  *  <li>0 - =</li>
  *  <li>1 - !=</li>
- *  <li>2 - &gt;&lt;<li>
+ *  <li>2 - &gt;&lt;</li>
  *  <li>3 - &gt;=</li>
  *  <li>4 - &lt;</li>
  *  <li>5 - &lt;=</li>
