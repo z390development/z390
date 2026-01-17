@@ -1,0 +1,769 @@
+         ZCOBOL PGM='C:\z390dev\wrk_rt\zcobol\test\testfun1.CBL',VER=1.X
+               8.4.1,CDATE=01/17/26,CTIME=19:57:16,OPTIONS=()
+         COPY  testfun1.CBL_ZC_LABELS.CPY
+*        IDENTIFICATION DIVISION.
+         IDENTIFICATION DIVISION
+*        PROGRAM-ID.    TESTFUN1.
+         PROGRAM_ID TESTFUN1
+*        AUTHOR.        DON HIGGINS.
+*        DATE-WRITTEN.  10/13/08.
+*      * TEST FUNCTIONS - LENGTH OF, ADDRESS OF                        X
+                 
+*        ENVIRONMENT DIVISION.
+         AUTHOR DIVISION
+*        DATA DIVISION.
+         DATA  DIVISION
+*        WORKING-STORAGE SECTION.
+         WORKING_STORAGE SECTION
+*        77 PTR-1   USAGE POINTER.    
+         WS      77,PTR_1,USAGE,POINTER
+*        77 PTR-2   USAGE POINTER.           
+         WS      77,PTR_2,USAGE,POINTER
+*        77 PTR-3   USAGE POINTER.           
+         WS      77,PTR_3,USAGE,POINTER
+*        77 W1      PIC 9(9) COMP VALUE 0.           
+         WS      77,W1,PIC,9(9),COMP,VALUE,0
+*        77 ADDR-1  PIC X(20).
+         WS      77,ADDR_1,PIC,X(20)
+*        77 ADDR-2  PIC X(20).
+         WS      77,ADDR_2,PIC,X(20)
+*        77 TP1     COMP-3 PIC S9.
+         WS      77,TP1,COMP_3,PIC,S9
+*        77 TP2     COMP-3 PIC S9.
+         WS      77,TP2,COMP_3,PIC,S9
+*        77 TZ1     PIC S9.
+         WS      77,TZ1,PIC,S9
+*        77 TZ2     PIC S99.
+         WS      77,TZ2,PIC,S99
+*        77 TX3     PIC X(3).
+         WS      77,TX3,PIC,X(3)
+*        77 TRM1    PIC X(3) VALUE 'ABC'.
+*      * THE FOLLOWING 3 TYPES ARE MAPPED TO DFP USING FLOAT(DECIMAL)
+*      * NOTE: FLOAT(DECIMAL) IS THE DEFAULT 
+         WS      77,TRM1,PIC,X(3),VALUE,'ABC'
+*        77 FLT-SRT FLOAT-SHORT.
+         WS      77,FLT_SRT,FLOAT_SHORT
+*        77 FLT-LNG FLOAT-LONG. 
+         WS      77,FLT_LNG,FLOAT_LONG
+*        77 FLT-EXT FLOAT-EXTENDED.
+*      * THE FOLLOWING 9 TYPES ALWAYS MAP TO HFP, BFP, AND DFP.
+         WS      77,FLT_EXT,FLOAT_EXTENDED
+*        77 HFP-SRT FLOAT-HEX-7      VALUE 1234567.
+         WS      77,HFP_SRT,FLOAT_HEX_7,VALUE,1234567
+*        77 HFP-LNG FLOAT-HEX-15     VALUE 123456789012345.
+         WS      77,HFP_LNG,FLOAT_HEX_15,VALUE,123456789012345
+*        77 HFP-EXT FLOAT-HEX-30 
+*                   VALUE 123456789012345678901234567890.
+         WS      77,HFP_EXT,FLOAT_HEX_30,VALUE,123456789012345678901234X
+               567890
+*        77 BFP-SRT FLOAT-BINARY-7   VALUE 1234567.
+         WS      77,BFP_SRT,FLOAT_BINARY_7,VALUE,1234567
+*        77 BFP-LNG FLOAT-BINARY-16  VALUE 1234567890123456.
+         WS      77,BFP_LNG,FLOAT_BINARY_16,VALUE,1234567890123456
+*        77 BFP-EXT FLOAT-BINARY-34
+*                   VALUE 1234567890123456789012345678901234.
+         WS      77,BFP_EXT,FLOAT_BINARY_34,VALUE,123456789012345678901X
+               2345678901234
+*        77 DFP-SRT FLOAT-DECIMAL-7  VALUE 1234567.
+         WS      77,DFP_SRT,FLOAT_DECIMAL_7,VALUE,1234567
+*        77 DFP-LNG FLOAT-DECIMAL-16 VALUE 1234567890123456.
+         WS      77,DFP_LNG,FLOAT_DECIMAL_16,VALUE,1234567890123456
+*        77 DFP-EXT FLOAT-DECIMAL-34
+*                   VALUE 1234567890123456789012345678901234.
+*      * THE FOLLOWING 4 TYPES DEFINE 16, 32, 64, AND 128 BINARY TYPES
+*      * NOTE 39 DIGIT QW LIMITED TO 34 DIGITS TO FIT IN BFP/DFP_EXT
+         WS      77,DFP_EXT,FLOAT_DECIMAL_34,VALUE,12345678901234567890X
+               12345678901234
+*        77 HW      COMP PIC S9(4)  VALUE 1234.
+         WS      77,HW,COMP,PIC,S9(4),VALUE,1234
+*        77 FW      COMP PIC S9(9)  VALUE 123456789.
+         WS      77,FW,COMP,PIC,S9(9),VALUE,123456789
+*        77 DW      COMP PIC S9(18) VALUE 123456789012345.
+         WS      77,DW,COMP,PIC,S9(18),VALUE,123456789012345
+*        77 QW      COMP PIC S9(39) 
+*                   VALUE 1234567890123456789012345678901234.
+*      * THE FOLLOWING 2 TYPES DEFINE 31 DIGIT PACKED AND ZONED DECIMAL
+         WS      77,QW,COMP,PIC,S9(39),VALUE,12345678901234567890123456X
+               78901234
+*        77 PD      COMP-3 PIC S9(31) 
+*                   VALUE 1234567890123456789012345678901.
+         WS      77,PD,COMP_3,PIC,S9(31),VALUE,123456789012345678901234X
+               5678901
+*        77 ZD             PIC S9(31) 
+*                   VALUE 1234567890123456789012345678901.
+         WS      77,ZD,PIC,S9(31),VALUE,1234567890123456789012345678901
+*        77 P1      COMP-3 PIC S9(31) VALUE 1.           
+         WS      77,P1,COMP_3,PIC,S9(31),VALUE,1
+*        77 Q1      COMP   PIC S9(39) VALUE 1.
+         WS      77,Q1,COMP,PIC,S9(39),VALUE,1
+*        77 Z1             PIC S9(4)  VALUE 1.           
+         WS      77,Z1,PIC,S9(4),VALUE,1
+*        77 D2      COMP-2            VALUE 2.           
+         WS      77,D2,COMP_2,VALUE,2
+*        77 GOOD   COMP-3 PIC 9(4)   VALUE 0.
+         WS      77,GOOD,COMP_3,PIC,9(4),VALUE,0
+         DATA  END
+*        PROCEDURE DIVISION.
+*ZC   PROCEDURE DIVISION
+         PROCEDURE DIVISION
+*        MAINLINE.
+         LABEL MAINLINE
+*            DISPLAY 'TESTFUN1 FUNCTIONS STARTING'
+*ZC     58         DISPLAY 'TESTFUN1 FUNCTIONS STARTING'
+         DISPLAY 'TESTFUN1 FUNCTIONS STARTING'
+*            NOTE TEST COMMENT SENTENCE
+*      * TEST LENGTH OF
+*ZC     59         NOTE  TEST,COMMENT,SENTENCE
+         NOTE  TEST,COMMENT,SENTENCE
+*            DISPLAY 'TEST LENGTH OF'
+*ZC     61         DISPLAY 'TEST LENGTH OF'
+         DISPLAY 'TEST LENGTH OF'
+*            MOVE LENGTH OF PTR-1 TO W1
+*ZC     62         MOVE  LENGTH,OF,PTR_1,TO,W1
+         MOVE  LENGTH,OF,PTR_1,TO,W1
+*             IF W1 = 4 PERFORM GOOD ELSE PERFORM BAD.
+*ZC     63         IF    W1,=,4
+         IF    W1,=,4
+*ZC     63         PERFORM GOOD
+         PERFORM GOOD
+*ZC     63         ELSE  
+         ELSE  
+*      * TEST ADDRESS OF
+*ZC     63         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            DISPLAY 'TEST ADDRESS OF'
+*ZC     65         DISPLAY 'TEST ADDRESS OF'
+         DISPLAY 'TEST ADDRESS OF'
+*            MOVE ADDRESS OF ADDR-1 TO PTR-1
+*ZC     66         MOVE  ADDRESS,OF,ADDR_1,TO,PTR_1
+         MOVE  ADDRESS,OF,ADDR_1,TO,PTR_1
+*            MOVE ADDRESS OF ADDR-2 TO PTR-2
+*ZC     67         MOVE  ADDRESS,OF,ADDR_2,TO,PTR_2
+         MOVE  ADDRESS,OF,ADDR_2,TO,PTR_2
+*            SUBTRACT PTR-1 FROM PTR-2
+*ZC     68         SUBTRACT PTR_1,FROM,PTR_2
+         SUBTRACT PTR_1,FROM,PTR_2
+*             IF PTR-2 = 20 PERFORM GOOD ELSE PERFORM BAD.           
+*ZC     69         IF    PTR_2,=,20
+         IF    PTR_2,=,20
+*ZC     69         PERFORM GOOD
+         PERFORM GOOD
+*ZC     69         ELSE  
+         ELSE  
+*      * TEST NUMERIC
+*ZC     69         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            DISPLAY 'TEST NUMERIC'
+*ZC     71         DISPLAY 'TEST NUMERIC'
+         DISPLAY 'TEST NUMERIC'
+*            MOVE 1 TO TP1
+*ZC     72         MOVE  1,TO,TP1
+         MOVE  1,TO,TP1
+*             IF TP1 = NUMERIC PERFORM GOOD ELSE PERFORM BAD.          X
+                
+*ZC     73         IF    TP1,=,NUMERIC
+         IF    TP1,=,NUMERIC
+*ZC     73         PERFORM GOOD
+         PERFORM GOOD
+*ZC     73         ELSE  
+         ELSE  
+*ZC     73         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE SPACES TO TP1
+*ZC     74         MOVE  SPACES,TO,TP1
+         MOVE  SPACES,TO,TP1
+*             IF TP1 NOT = NUMERIC PERFORM GOOD ELSE PERFORM BAD.      X
+                    
+*ZC     75         IF    TP1,NOT,=,NUMERIC
+         IF    TP1,NOT,=,NUMERIC
+*ZC     75         PERFORM GOOD
+         PERFORM GOOD
+*ZC     75         ELSE  
+         ELSE  
+*ZC     75         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE LOW-VALUES TO TP1
+*ZC     76         MOVE  LOW_VALUES,TO,TP1
+         MOVE  LOW_VALUES,TO,TP1
+*             IF TP1 NOT = NUMERIC PERFORM GOOD ELSE PERFORM BAD.      X
+                    
+*ZC     77         IF    TP1,NOT,=,NUMERIC
+         IF    TP1,NOT,=,NUMERIC
+*ZC     77         PERFORM GOOD
+         PERFORM GOOD
+*ZC     77         ELSE  
+         ELSE  
+*ZC     77         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE HIGH-VALUES TO TP1
+*ZC     78         MOVE  HIGH_VALUES,TO,TP1
+         MOVE  HIGH_VALUES,TO,TP1
+*             IF TP1 NOT = NUMERIC PERFORM GOOD ELSE PERFORM BAD.      X
+                    
+*ZC     79         IF    TP1,NOT,=,NUMERIC
+         IF    TP1,NOT,=,NUMERIC
+*ZC     79         PERFORM GOOD
+         PERFORM GOOD
+*ZC     79         ELSE  
+         ELSE  
+*ZC     79         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE 123 TO TP2
+*ZC     80         MOVE  123,TO,TP2
+         MOVE  123,TO,TP2
+*             IF TP2 = NUMERIC PERFORM GOOD ELSE PERFORM BAD.          X
+                
+*ZC     81         IF    TP2,=,NUMERIC
+         IF    TP2,=,NUMERIC
+*ZC     81         PERFORM GOOD
+         PERFORM GOOD
+*ZC     81         ELSE  
+         ELSE  
+*ZC     81         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE SPACES TO TP2
+*ZC     82         MOVE  SPACES,TO,TP2
+         MOVE  SPACES,TO,TP2
+*             IF TP2 NOT = NUMERIC PERFORM GOOD ELSE PERFORM BAD.      X
+                    
+*ZC     83         IF    TP2,NOT,=,NUMERIC
+         IF    TP2,NOT,=,NUMERIC
+*ZC     83         PERFORM GOOD
+         PERFORM GOOD
+*ZC     83         ELSE  
+         ELSE  
+*ZC     83         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE 1 TO TZ1
+*ZC     84         MOVE  1,TO,TZ1
+         MOVE  1,TO,TZ1
+*             IF TZ1 = NUMERIC PERFORM GOOD ELSE PERFORM BAD.          X
+                
+*ZC     85         IF    TZ1,=,NUMERIC
+         IF    TZ1,=,NUMERIC
+*ZC     85         PERFORM GOOD
+         PERFORM GOOD
+*ZC     85         ELSE  
+         ELSE  
+*ZC     85         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE SPACES TO TZ1
+*ZC     86         MOVE  SPACES,TO,TZ1
+         MOVE  SPACES,TO,TZ1
+*             IF TZ1 NOT = NUMERIC PERFORM GOOD ELSE PERFORM BAD.      X
+                    
+*ZC     87         IF    TZ1,NOT,=,NUMERIC
+         IF    TZ1,NOT,=,NUMERIC
+*ZC     87         PERFORM GOOD
+         PERFORM GOOD
+*ZC     87         ELSE  
+         ELSE  
+*ZC     87         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE -12 TO TZ2
+*ZC     88         MOVE  -,12,TO,TZ2
+         MOVE  -,12,TO,TZ2
+*             IF TZ2 = NUMERIC PERFORM GOOD ELSE PERFORM BAD.          X
+                
+*ZC     89         IF    TZ2,=,NUMERIC
+         IF    TZ2,=,NUMERIC
+*ZC     89         PERFORM GOOD
+         PERFORM GOOD
+*ZC     89         ELSE  
+         ELSE  
+*ZC     89         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE SPACES TO TZ2
+*ZC     90         MOVE  SPACES,TO,TZ2
+         MOVE  SPACES,TO,TZ2
+*             IF TZ2 NOT = NUMERIC PERFORM GOOD ELSE PERFORM BAD.      X
+                    
+*ZC     91         IF    TZ2,NOT,=,NUMERIC
+         IF    TZ2,NOT,=,NUMERIC
+*ZC     91         PERFORM GOOD
+         PERFORM GOOD
+*ZC     91         ELSE  
+         ELSE  
+*ZC     91         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE '123' TO TX3
+*ZC     92         MOVE  '123',TO,TX3
+         MOVE  '123',TO,TX3
+*             IF TX3 = NUMERIC PERFORM GOOD ELSE PERFORM BAD.          X
+                
+*ZC     93         IF    TX3,=,NUMERIC
+         IF    TX3,=,NUMERIC
+*ZC     93         PERFORM GOOD
+         PERFORM GOOD
+*ZC     93         ELSE  
+         ELSE  
+*ZC     93         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE SPACES TO TX3
+*ZC     94         MOVE  SPACES,TO,TX3
+         MOVE  SPACES,TO,TX3
+*             IF TX3 NOT = NUMERIC PERFORM GOOD ELSE PERFORM BAD.      X
+                    
+*ZC     95         IF    TX3,NOT,=,NUMERIC
+         IF    TX3,NOT,=,NUMERIC
+*ZC     95         PERFORM GOOD
+         PERFORM GOOD
+*ZC     95         ELSE  
+         ELSE  
+*      * TEST ALPHANUMERIC
+*ZC     95         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            DISPLAY 'TEST ALPHANUMERIC'
+*ZC     97         DISPLAY 'TEST ALPHANUMERIC'
+         DISPLAY 'TEST ALPHANUMERIC'
+*            MOVE 'ABC' TO TX3
+*ZC     98         MOVE  'ABC',TO,TX3
+         MOVE  'ABC',TO,TX3
+*             IF TX3 = ALPHABETIC PERFORM GOOD ELSE PERFORM BAD.       X
+                   
+*ZC     99         IF    TX3,=,ALPHABETIC
+         IF    TX3,=,ALPHABETIC
+*ZC     99         PERFORM GOOD
+         PERFORM GOOD
+*ZC     99         ELSE  
+         ELSE  
+*ZC     99         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE SPACES TO TX3
+*ZC    100         MOVE  SPACES,TO,TX3
+         MOVE  SPACES,TO,TX3
+*            IF TX3 NOT = ALPHABETIC PERFORM GOOD ELSE PERFORM BAD.    X
+                      
+*ZC    101         IF    TX3,NOT,=,ALPHABETIC
+         IF    TX3,NOT,=,ALPHABETIC
+*ZC    101         PERFORM GOOD
+         PERFORM GOOD
+*ZC    101         ELSE  
+         ELSE  
+*      * TEST TRANSFORM
+*ZC    101         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            DISPLAY 'TEST TRANSFORM'
+*ZC    103         DISPLAY 'TEST TRANSFORM'
+         DISPLAY 'TEST TRANSFORM'
+*            TRANSFORM TRM1 CHARACTERS FROM 'CBA' TO '321'
+*ZC    104         TRANSFORM TRM1,CHARACTERS,FROM,'CBA',TO,'321'
+         TRANSFORM TRM1,CHARACTERS,FROM,'CBA',TO,'321'
+*            IF TRM1 = '123' PERFORM GOOD ELSE PERFORM BAD.           
+*ZC    105         IF    TRM1,=,'123'
+         IF    TRM1,=,'123'
+*ZC    105         PERFORM GOOD
+         PERFORM GOOD
+*ZC    105         ELSE  
+         ELSE  
+*      * TEST CVTQTLB CONVERT Q 128 INT TO BFP LB
+*ZC    105         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            DISPLAY 'TEST CVTQTLB'
+*ZC    107         DISPLAY 'TEST CVTQTLB'
+         DISPLAY 'TEST CVTQTLB'
+*            MOVE 1  TO Q1
+*ZC    108         MOVE  1,TO,Q1
+         MOVE  1,TO,Q1
+*            MOVE Q1 TO BFP-EXT
+*ZC    109         MOVE  Q1,TO,BFP_EXT
+         MOVE  Q1,TO,BFP_EXT
+*            DISPLAY 'BFP-EXT 1 =' BFP-EXT
+*ZC    110         DISPLAY 'BFP-EXT 1 =',BFP_EXT
+         DISPLAY 'BFP-EXT 1 =',BFP_EXT
+*             IF Q1 = 1 PERFORM GOOD ELSE PERFORM BAD.
+*ZC    111         IF    Q1,=,1
+         IF    Q1,=,1
+*ZC    111         PERFORM GOOD
+         PERFORM GOOD
+*ZC    111         ELSE  
+         ELSE  
+*ZC    111         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE -1  TO Q1
+*ZC    112         MOVE  -,1,TO,Q1
+         MOVE  -,1,TO,Q1
+*            MOVE Q1 TO BFP-EXT
+*ZC    113         MOVE  Q1,TO,BFP_EXT
+         MOVE  Q1,TO,BFP_EXT
+*            DISPLAY 'BFP-EXT -1 =' BFP-EXT
+*ZC    114         DISPLAY 'BFP-EXT -1 =',BFP_EXT
+         DISPLAY 'BFP-EXT -1 =',BFP_EXT
+*             IF Q1 = -1 PERFORM GOOD ELSE PERFORM BAD.
+*ZC    115         IF    Q1,=,-,1
+         IF    Q1,=,-,1
+*ZC    115         PERFORM GOOD
+         PERFORM GOOD
+*ZC    115         ELSE  
+         ELSE  
+*ZC    115         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE 0  TO Q1
+*ZC    116         MOVE  0,TO,Q1
+         MOVE  0,TO,Q1
+*            MOVE Q1 TO BFP-EXT
+*ZC    117         MOVE  Q1,TO,BFP_EXT
+         MOVE  Q1,TO,BFP_EXT
+*            DISPLAY 'BFP-EXT 0 =' BFP-EXT
+*ZC    118         DISPLAY 'BFP-EXT 0 =',BFP_EXT
+         DISPLAY 'BFP-EXT 0 =',BFP_EXT
+*             IF Q1 = 0 PERFORM GOOD ELSE PERFORM BAD.
+*ZC    119         IF    Q1,=,0
+         IF    Q1,=,0
+*ZC    119         PERFORM GOOD
+         PERFORM GOOD
+*ZC    119         ELSE  
+         ELSE  
+*ZC    119         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE 1234567890123456789012345678901234 TO Q1
+*ZC    120         MOVE  1234567890123456789012345678901234,TO,Q1
+         MOVE  1234567890123456789012345678901234,TO,Q1
+*            MOVE Q1 TO BFP-EXT
+*ZC    121         MOVE  Q1,TO,BFP_EXT
+         MOVE  Q1,TO,BFP_EXT
+*            DISPLAY 'BFP-EXT 1234567890123456789012345678901234 =' 
+*               BFP-EXT
+*ZC    122         DISPLAY 'BFP-EXT 1234567890123456789012345678901234 X
+               =',BFP_EXT
+         DISPLAY 'BFP-EXT 1234567890123456789012345678901234 =',BFP_EXT
+*             IF Q1 = 1234567890123456789012345678901234 
+*ZC    124         IF    Q1,=,1234567890123456789012345678901234
+         IF    Q1,=,1234567890123456789012345678901234
+*                PERFORM GOOD ELSE PERFORM BAD.
+*ZC    125         PERFORM GOOD
+         PERFORM GOOD
+*ZC    125         ELSE  
+         ELSE  
+*ZC    125         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE 123456789012345678901234567890123456789 TO Q1
+*ZC    126         MOVE  123456789012345678901234567890123456789,TO,Q1
+         MOVE  123456789012345678901234567890123456789,TO,Q1
+*            MOVE Q1 TO BFP-EXT
+*ZC    127         MOVE  Q1,TO,BFP_EXT
+         MOVE  Q1,TO,BFP_EXT
+*            DISPLAY 'BFP-EXT 123456789012345678901234567890123456789 =X
+               '
+*               BFP-EXT
+*ZC    128         DISPLAY 'BFP-EXT 12345678901234567890123456789012345X
+               6789 =',BFP_EXT
+         DISPLAY 'BFP-EXT 123456789012345678901234567890123456789 =',BFX
+               P_EXT
+*             IF Q1 = 123456789012345678901234567890123456789 
+*ZC    130         IF    Q1,=,123456789012345678901234567890123456789
+         IF    Q1,=,123456789012345678901234567890123456789
+*                PERFORM GOOD ELSE PERFORM BAD.
+*ZC    131         PERFORM GOOD
+         PERFORM GOOD
+*ZC    131         ELSE  
+         ELSE  
+*      * TEST CVTLBTQ CONVERT BFP LB TO Q 128 BIT INTEGER
+*ZC    131         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            DISPLAY 'TEST CVTLBTQ'
+*ZC    133         DISPLAY 'TEST CVTLBTQ'
+         DISPLAY 'TEST CVTLBTQ'
+*            MOVE 1  TO BFP-EXT
+*ZC    134         MOVE  1,TO,BFP_EXT
+         MOVE  1,TO,BFP_EXT
+*            MOVE BFP-EXT TO Q1
+*ZC    135         MOVE  BFP_EXT,TO,Q1
+         MOVE  BFP_EXT,TO,Q1
+*            DISPLAY 'Q1 1 =' Q1
+*ZC    136         DISPLAY 'Q1 1 =',Q1
+         DISPLAY 'Q1 1 =',Q1
+*             IF Q1 = 1 PERFORM GOOD ELSE PERFORM BAD.
+*ZC    137         IF    Q1,=,1
+         IF    Q1,=,1
+*ZC    137         PERFORM GOOD
+         PERFORM GOOD
+*ZC    137         ELSE  
+         ELSE  
+*ZC    137         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE -1  TO BFP-EXT
+*ZC    138         MOVE  -,1,TO,BFP_EXT
+         MOVE  -,1,TO,BFP_EXT
+*            MOVE BFP-EXT TO Q1
+*ZC    139         MOVE  BFP_EXT,TO,Q1
+         MOVE  BFP_EXT,TO,Q1
+*            DISPLAY 'Q1 -1 =' Q1
+*ZC    140         DISPLAY 'Q1 -1 =',Q1
+         DISPLAY 'Q1 -1 =',Q1
+*             IF Q1 = -1 PERFORM GOOD ELSE PERFORM BAD.
+*ZC    141         IF    Q1,=,-,1
+         IF    Q1,=,-,1
+*ZC    141         PERFORM GOOD
+         PERFORM GOOD
+*ZC    141         ELSE  
+         ELSE  
+*ZC    141         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE 0  TO BFP-EXT
+*ZC    142         MOVE  0,TO,BFP_EXT
+         MOVE  0,TO,BFP_EXT
+*            MOVE BFP-EXT TO Q1
+*ZC    143         MOVE  BFP_EXT,TO,Q1
+         MOVE  BFP_EXT,TO,Q1
+*            DISPLAY 'Q1 0 =' Q1
+*ZC    144         DISPLAY 'Q1 0 =',Q1
+         DISPLAY 'Q1 0 =',Q1
+*             IF Q1 = 0 PERFORM GOOD ELSE PERFORM BAD.
+*ZC    145         IF    Q1,=,0
+         IF    Q1,=,0
+*ZC    145         PERFORM GOOD
+         PERFORM GOOD
+*ZC    145         ELSE  
+         ELSE  
+*ZC    145         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE 1234567890123456789012345678901234 TO BFP-EXT
+*ZC    146         MOVE  1234567890123456789012345678901234,TO,BFP_EXT
+         MOVE  1234567890123456789012345678901234,TO,BFP_EXT
+*            MOVE BFP-EXT TO Q1
+*ZC    147         MOVE  BFP_EXT,TO,Q1
+         MOVE  BFP_EXT,TO,Q1
+*            DISPLAY 'Q1 1234567890123456789012345678901234 =' Q1
+*ZC    148         DISPLAY 'Q1 1234567890123456789012345678901234 =',Q1
+         DISPLAY 'Q1 1234567890123456789012345678901234 =',Q1
+*             IF Q1 = 1234567890123456789012345678901234 
+*ZC    149         IF    Q1,=,1234567890123456789012345678901234
+         IF    Q1,=,1234567890123456789012345678901234
+*                PERFORM GOOD ELSE PERFORM BAD.
+*ZC    150         PERFORM GOOD
+         PERFORM GOOD
+*ZC    150         ELSE  
+         ELSE  
+*      * TEST CVTLDTP  CVT LD TO PD31
+*ZC    150         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            DISPLAY 'TEST CVTLDTP'
+*ZC    152         DISPLAY 'TEST CVTLDTP'
+         DISPLAY 'TEST CVTLDTP'
+*            MOVE 1  TO DFP-EXT
+*ZC    153         MOVE  1,TO,DFP_EXT
+         MOVE  1,TO,DFP_EXT
+*            MOVE DFP-EXT TO P1
+*ZC    154         MOVE  DFP_EXT,TO,P1
+         MOVE  DFP_EXT,TO,P1
+*            DISPLAY 'P1 1 =' P1
+*ZC    155         DISPLAY 'P1 1 =',P1
+         DISPLAY 'P1 1 =',P1
+*             IF P1 = 1 PERFORM GOOD ELSE PERFORM BAD.
+*ZC    156         IF    P1,=,1
+         IF    P1,=,1
+*ZC    156         PERFORM GOOD
+         PERFORM GOOD
+*ZC    156         ELSE  
+         ELSE  
+*ZC    156         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE -1  TO DFP-EXT
+*ZC    157         MOVE  -,1,TO,DFP_EXT
+         MOVE  -,1,TO,DFP_EXT
+*            MOVE DFP-EXT TO P1
+*ZC    158         MOVE  DFP_EXT,TO,P1
+         MOVE  DFP_EXT,TO,P1
+*            DISPLAY 'P1 -1 =' P1
+*ZC    159         DISPLAY 'P1 -1 =',P1
+         DISPLAY 'P1 -1 =',P1
+*             IF P1 = -1 PERFORM GOOD ELSE PERFORM BAD.
+*ZC    160         IF    P1,=,-,1
+         IF    P1,=,-,1
+*ZC    160         PERFORM GOOD
+         PERFORM GOOD
+*ZC    160         ELSE  
+         ELSE  
+*ZC    160         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE 0  TO DFP-EXT
+*ZC    161         MOVE  0,TO,DFP_EXT
+         MOVE  0,TO,DFP_EXT
+*            MOVE DFP-EXT TO P1
+*ZC    162         MOVE  DFP_EXT,TO,P1
+         MOVE  DFP_EXT,TO,P1
+*            DISPLAY 'P1 0 =' P1
+*ZC    163         DISPLAY 'P1 0 =',P1
+         DISPLAY 'P1 0 =',P1
+*             IF P1 = 0 PERFORM GOOD ELSE PERFORM BAD.
+*ZC    164         IF    P1,=,0
+         IF    P1,=,0
+*ZC    164         PERFORM GOOD
+         PERFORM GOOD
+*ZC    164         ELSE  
+         ELSE  
+*ZC    164         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE 1234567890123456789012345678901 TO DFP-EXT
+*ZC    165         MOVE  1234567890123456789012345678901,TO,DFP_EXT
+         MOVE  1234567890123456789012345678901,TO,DFP_EXT
+*            MOVE DFP-EXT TO P1
+*ZC    166         MOVE  DFP_EXT,TO,P1
+         MOVE  DFP_EXT,TO,P1
+*            DISPLAY 'P1 1234567890123456789012345678901 =' P1
+*ZC    167         DISPLAY 'P1 1234567890123456789012345678901 =',P1
+         DISPLAY 'P1 1234567890123456789012345678901 =',P1
+*             IF P1 = 1234567890123456789012345678901 
+*ZC    168         IF    P1,=,1234567890123456789012345678901
+         IF    P1,=,1234567890123456789012345678901
+*                PERFORM GOOD ELSE PERFORM BAD.
+*ZC    169         PERFORM GOOD
+         PERFORM GOOD
+*ZC    169         ELSE  
+         ELSE  
+*      * TEST MPYQ 128 BIT R0-R1 * 128 BIT R2-R3
+*ZC    169         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            DISPLAY 'TEST MPYQ'
+*ZC    171         DISPLAY 'TEST MPYQ'
+         DISPLAY 'TEST MPYQ'
+*            MOVE     3  TO D2
+*ZC    172         MOVE  3,TO,D2
+         MOVE  3,TO,D2
+*            MOVE     2  TO Z1
+*ZC    173         MOVE  2,TO,Z1
+         MOVE  2,TO,Z1
+*            MULTIPLY D2 BY Z1 
+*ZC    174         MULTIPLY D2,BY,Z1
+         MULTIPLY D2,BY,Z1
+*             IF Z1 = 6 PERFORM GOOD ELSE PERFORM BAD.
+*ZC    175         IF    Z1,=,6
+         IF    Z1,=,6
+*ZC    175         PERFORM GOOD
+         PERFORM GOOD
+*ZC    175         ELSE  
+         ELSE  
+*ZC    175         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE     3  TO D2
+*ZC    176         MOVE  3,TO,D2
+         MOVE  3,TO,D2
+*            MOVE     -2 TO Z1
+*ZC    177         MOVE  -,2,TO,Z1
+         MOVE  -,2,TO,Z1
+*            MULTIPLY D2 BY Z1 
+*ZC    178         MULTIPLY D2,BY,Z1
+         MULTIPLY D2,BY,Z1
+*             IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+*ZC    179         IF    Z1,=,-,6
+         IF    Z1,=,-,6
+*ZC    179         PERFORM GOOD
+         PERFORM GOOD
+*ZC    179         ELSE  
+         ELSE  
+*ZC    179         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE     -3  TO D2
+*ZC    180         MOVE  -,3,TO,D2
+         MOVE  -,3,TO,D2
+*            MOVE     2 TO Z1
+*ZC    181         MOVE  2,TO,Z1
+         MOVE  2,TO,Z1
+*            MULTIPLY D2 BY Z1 
+*ZC    182         MULTIPLY D2,BY,Z1
+         MULTIPLY D2,BY,Z1
+*             IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+*ZC    183         IF    Z1,=,-,6
+         IF    Z1,=,-,6
+*ZC    183         PERFORM GOOD
+         PERFORM GOOD
+*ZC    183         ELSE  
+         ELSE  
+*ZC    183         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE     -3  TO D2
+*ZC    184         MOVE  -,3,TO,D2
+         MOVE  -,3,TO,D2
+*            MOVE     -2 TO Z1
+*ZC    185         MOVE  -,2,TO,Z1
+         MOVE  -,2,TO,Z1
+*            MULTIPLY D2 BY Z1 
+*ZC    186         MULTIPLY D2,BY,Z1
+         MULTIPLY D2,BY,Z1
+*             IF Z1 = 6 PERFORM GOOD ELSE PERFORM BAD.
+*ZC    187         IF    Z1,=,6
+         IF    Z1,=,6
+*ZC    187         PERFORM GOOD
+         PERFORM GOOD
+*ZC    187         ELSE  
+         ELSE  
+*ZC    187         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            MOVE     -3  TO D2
+*ZC    188         MOVE  -,3,TO,D2
+         MOVE  -,3,TO,D2
+*            MOVE     -2 TO Z1
+*ZC    189         MOVE  -,2,TO,Z1
+         MOVE  -,2,TO,Z1
+*            MULTIPLY D2 BY Z1 
+*ZC    190         MULTIPLY D2,BY,Z1
+         MULTIPLY D2,BY,Z1
+*             IF Z1 = 6 PERFORM GOOD ELSE PERFORM BAD.
+*ZC    191         IF    Z1,=,6
+         IF    Z1,=,6
+*ZC    191         PERFORM GOOD
+         PERFORM GOOD
+*ZC    191         ELSE  
+         ELSE  
+*ZC    191         PERFORM BAD
+         PERFORM BAD
+         PERIOD 
+*            DISPLAY 'TESTFUN1 GOOD TESTS =' GOOD
+*ZC    192         DISPLAY 'TESTFUN1 GOOD TESTS =',GOOD
+         DISPLAY 'TESTFUN1 GOOD TESTS =',GOOD
+*            STOP RUN.
+*ZC    193         STOP  RUN
+         STOP  RUN
+         PERIOD 
+*        GOOD. 
+         LABEL GOOD
+*            ADD 1 TO GOOD.
+*ZC    195         ADD   1,TO,GOOD
+         ADD   1,TO,GOOD
+         PERIOD 
+*        BAD.
+         LABEL BAD
+*            MOVE 16 TO RETURN-CODE
+*ZC    197         MOVE  16,TO,RETURN_CODE
+         MOVE  16,TO,RETURN_CODE
+*            STOP RUN.
+*ZC    198         STOP  RUN
+         STOP  RUN
+         PERIOD 
+         PROCEDURE END
+         END   
