@@ -28,6 +28,7 @@ call bat\BLDLIB.BAT %z_TraceMode%                   || goto error
 call bat\BLDCBLLIB.BAT %z_TraceMode%                || goto error
 
 if /I %1. NEQ *All. goto Standard_build
+   call barcode\BLD390.BAT %z_TraceMode%            || goto error
    call cics\bat\DFHALL.BAT %z_TraceMode%           || goto error
    call cics\bat\DFHALLV.BAT %z_TraceMode%          || goto error
 :Standard_build
