@@ -71,4 +71,12 @@ class RunCblTests extends z390Test{
         assert !this.fileData['ERR'].contains("missing macro"), "CM401M01.ERR reports error that should have been fixed"
     }
 
+    @Test
+    void testTESTREPL() {
+        int rc = this.cblclg(basePath("zcobol", "tests", "TESTREPL"), 'TIME(30)')
+        this.printOutput()
+        assert rc == 0   // Check return code
+        assert this.fileData['LOG'].contains("TESTREPL - TEST ENDED OK"), "TESTREPL.LOG does not contain expected success message"
+    }
+
 }
