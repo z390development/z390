@@ -29,6 +29,8 @@ call bat\asmlg %z_TraceMode% rt\mlc\IS658    trace sysmac(mac) noloadhigh       
 call bat\asmlg %z_TraceMode% rt\mlc\IS658    trace sysmac(mac)                                || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\IS659    trace sysmac(mac) noloadhigh                     || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\IS660    trace sysmac(mac) noloadhigh                     || goto error
+call bat\asm   %z_TraceMode% rt\mlc\IS750    trace sysmac(mac) noloadhigh
+     if %ERRORLEVEL% NEQ 12 goto error
 
 call bat\asml  %z_TraceMode% rt\mlc\T714M1   trace sysmac(mac)                                || goto error
 call bat\asml  %z_TraceMode% rt\mlc\T714M2   trace sysmac(mac) rmode31                        || goto error
