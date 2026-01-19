@@ -62,7 +62,9 @@ before the source reaches the macro assembler.
 | File | Changes |
 |------|---------|
 | `src/zc390.java` | Added REPLACE parsing and text substitution logic |
-| `zcobol/mac/REPLACE.MAC` | Updated stub to note pre-processor handling |
+
+Note: `zcobol/mac/REPLACE.MAC` was removed: the preprocessor handles REPLACE
+before macro expansion, making the macro unnecessary.
 
 ### New Test Files
 

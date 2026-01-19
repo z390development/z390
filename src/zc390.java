@@ -106,6 +106,7 @@ public class zc390{
     * 2023-10-07 #518 jjg Setting program name fails when '.' in directory name in file path
     * 2025-06-09 #645 afk ZC390 issues error when input file has explicit extension
     * 2025-07-08 #655 afk zCobol fails on number in INSTALLATION paragraph of Identification division
+    * 2026-01-10 #742 zh  Implement COBOL REPLACE statement per FIPS PUB 21-2
     ****************************************************
     *                                         last RPI *
 	****************************************************
@@ -186,7 +187,7 @@ public class zc390{
 	String[] zc_copy_rep_lit1     = null; // RPI 1062 replacing lit1
 	String[] zc_copy_rep_lit2     = null; // RPI 1062 replacing lit2
     /*
-     * REPLACE statement global variables (2025/12 ZH)
+     * REPLACE statement global variables #742
      * Implements FIPS PUB 21-2 Section XII Chapter 3
      */
 	boolean  zc_replace_active    = false; // Is REPLACE currently active?
@@ -594,9 +595,9 @@ private class section_definition                                                
 		zc_copy_rep_lst_ix   = (int[])Array.newInstance(int.class,tz390.opt_maxfile);
 		zc_copy_rep_lit1     = (String[])Array.newInstance(String.class,tz390.opt_maxfile);
 		zc_copy_rep_lit2     = (String[])Array.newInstance(String.class,tz390.opt_maxfile);
-		// REPLACE statement arrays (2025/12 ZH)
-		zc_replace_lit1      = (String[])Array.newInstance(String.class,100);
-		zc_replace_lit2      = (String[])Array.newInstance(String.class,100);
+		// REPLACE statement arrays #742
+		zc_replace_lit1      = (String[])Array.newInstance(String.class,100);  // #742
+		zc_replace_lit2      = (String[])Array.newInstance(String.class,100);  // #742
 		zc_file[cur_zc_file] = new File(zc_file_name);                                         // #518
 		if (!zc_file[cur_zc_file].isFile()) {                                                  // #518
 			abort_error("zcobol: file not found - "+zc_file_name);                             // #518
@@ -1133,14 +1134,14 @@ private class section_definition                                                
 				zc_copy_trailer = false;
 			} else {
                 get_zc_read_cont();
-				// Apply global REPLACE substitutions (2025/12 ZH - FIPS PUB 21-2)
-				if (zc_line != null && zc_replace_active && zc_replace_count > 0){
-					for (int rep_ix = 0; rep_ix < zc_replace_count; rep_ix++){
-						if (zc_replace_lit1[rep_ix] != null && zc_replace_lit1[rep_ix].length() > 0){
-							zc_line = zc_line.replace(zc_replace_lit1[rep_ix], zc_replace_lit2[rep_ix]);
-						}
-					}
-				}
+				// Apply global REPLACE substitutions #742
+				if (zc_line != null && zc_replace_active && zc_replace_count > 0){  // #742
+					for (int rep_ix = 0; rep_ix < zc_replace_count; rep_ix++){       // #742
+						if (zc_replace_lit1[rep_ix] != null && zc_replace_lit1[rep_ix].length() > 0){  // #742
+							zc_line = zc_line.replace(zc_replace_lit1[rep_ix], zc_replace_lit2[rep_ix]);  // #742
+						}  // #742
+					}  // #742
+				}  // #742
 				if (zc_line != null){
 					cur_rep_ix = zc_copy_rep_fst_ix[cur_zc_file];
 					if (cur_rep_ix > 0){
@@ -1279,8 +1280,9 @@ private class section_definition                                                
 				zc_next_token = "'";
 			} else if (zc_next_token.toUpperCase().equals("COPY")){
 				process_copy();
-			} else if (zc_next_token.toUpperCase().equals("REPLACE")){
-				process_replace();  // 2025/12 ZH - FIPS PUB 21-2 Section XII
+			} else if (zc_next_token.toUpperCase().equals("REPLACE")){  // #742
+				process_replace();  // #742
+				return;  // #742 - REPLACE consumed, don't process further
 			}
 			if (pic_mode){
 				int index2 = zc_next_index + zc_token_match.group().length()-1;
@@ -2072,13 +2074,11 @@ private class section_definition                                                
 		zc_line = null;
 		zc_copy_trailer = false;
 	}
-	private void process_replace(){
+	private void process_replace(){  // #742
 		/*
-		 * Process REPLACE statement per FIPS PUB 21-2 Section XII Chapter 3
+		 * Process REPLACE statement per FIPS PUB 21-2 Section XII Chapter 3 #742
 		 * Format 1: REPLACE {==pseudo-text-1== BY ==pseudo-text-2==}...
 		 * Format 2: REPLACE OFF
-		 * 
-		 * 2025/12 ZH - Implementation for z390 zCOBOL
 		 */
 		set_next_token();
 		
