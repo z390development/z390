@@ -18,8 +18,8 @@ class RunCblTests extends z390Test{
     Collection<DynamicTest> test_COBOL() {
         var tests = []
         var modules = [
-                'TESTADD1', 'TESTADD2', 'TESTBFP1', 'TESTIF1', 'TESTIF2', 'TESTIF3', 'TESTMOV1', 'TESTMOV2', 'TESTMOV3', 'CM101M01', 'DB101A01', 'NC106A01',
-                'TESTCMP1', 'TESTCMP2', 'TESTCMP3', 'TESTCMP4', 'TESTCMP5', 'TESTCMP6'
+                'TESTADD1', 'TESTADD2', 'TESTBFP1', 'TESTIF1',  'TESTIF2',  'TESTIF3',  'TESTMOV1', 'TESTMOV2', 'TESTMOV3', 'CM101M01', 'DB101A01', 'NC106A01',
+                'TESTCMP1', 'TESTCMP2', 'TESTCMP3', 'TESTCMP4', 'TESTCMP5', 'TESTCMP6', 'TESTCPY1', 'TESTCPY2', 'TESTDFP1', 'TESTDIV1', 'TESTDIV2', 'TESTDSP1'
         ]
         modules.each {
             module -> tests.add(
@@ -70,6 +70,22 @@ class RunCblTests extends z390Test{
         assert rc == 8   // Check return code
         assert this.fileData['ERR'].contains("MNOTE 8,'PURGE NOT SUPPORTED YET'"), "CM401M01.ERR does not contain expected error"
         assert !this.fileData['ERR'].contains("missing macro"), "CM401M01.ERR reports error that should have been fixed"
+    }
+    @Test
+    void testTESTFIL1() {
+        this.env.put('INFILE', basePath("zcobol", "tests", "TESTFIL1.IN"))
+        this.env.put('OUTFILE', basePath("zcobol", "tests", "TESTFIL1.OUT"))
+        int rc = this.cblclg(basePath("zcobol", "tests", "TESTFIL1"))
+        this.printOutput()
+        assert rc == 0   // Check return code
+    }
+    @Test
+    void testTESTFIL2() {
+        this.env.put('INFILE', basePath("zcobol", "tests", "TESTFIL2.IN"))
+        this.env.put('OUTFILE', basePath("zcobol", "tests", "TESTFIL2.OUT"))
+        int rc = this.cblclg(basePath("zcobol", "tests", "TESTFIL2"))
+        this.printOutput()
+        assert rc == 0   // Check return code
     }
 
 }
