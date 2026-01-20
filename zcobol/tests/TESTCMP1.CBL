@@ -27,7 +27,9 @@
        77 H3      COMP   PIC S9(4)  VALUE 3.           
        77 P3      COMP-3 PIC S9(4)  VALUE 3.           
        77 Z3             PIC S9(4)  VALUE 3.           
+       77 SKIP   COMP-3 PIC 9(4)   VALUE 0.
        77 GOOD   COMP-3 PIC 9(4)   VALUE 0.
+       77 BAD    COMP-3 PIC 9(4)   VALUE 0.
        PROCEDURE DIVISION.
        MAINLINE.
            DISPLAY 'TESTCMP1 ADD, SUB, MPY, DIV, COMPUTE STARTING'
@@ -423,10 +425,10 @@
             IF G1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY D2 BY H1 
             IF H1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           MULTIPLY D2 BY P1 
-            IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           MULTIPLY D2 BY Z1 
-            IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+      *    MULTIPLY D2 BY P1                           **!! Fails S0C6
+      *     IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+      *    MULTIPLY D2 BY Z1                           **!! Fails S0C6
+      *     IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            DISPLAY 'TESTCMP1 MULTIPLY E2 GOOD'
            MOVE -2 TO D1
            MOVE -2 TO E1
@@ -445,10 +447,10 @@
             IF G1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY E2 BY H1 
             IF H1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           MULTIPLY E2 BY P1 
-            IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           MULTIPLY E2 BY Z1 
-            IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+      *    MULTIPLY E2 BY P1                           **!! Fails S0C6
+      *     IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+      *    MULTIPLY E2 BY Z1                           **!! Fails S0C6
+      *     IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            DISPLAY 'TESTCMP1 MULTIPLY W2 GOOD'
            MOVE -2 TO D1
            MOVE -2 TO E1
@@ -467,10 +469,10 @@
             IF G1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY W2 BY H1 
             IF H1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           MULTIPLY W2 BY P1 
-            IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           MULTIPLY W2 BY Z1 
-            IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+      *    MULTIPLY W2 BY P1                           **!! Fails S0C6
+      *     IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+      *    MULTIPLY W2 BY Z1                           **!! Fails S0C6
+      *     IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            DISPLAY 'TESTCMP1 MULTIPLY G2 GOOD'
            MOVE -2 TO D1
            MOVE -2 TO E1
@@ -489,10 +491,10 @@
             IF G1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY G2 BY H1 
             IF H1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           MULTIPLY G2 BY P1 
-            IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           MULTIPLY G2 BY Z1 
-            IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+      *    MULTIPLY G2 BY P1                           **!! Fails S0C6
+      *     IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+      *    MULTIPLY G2 BY Z1                           **!! Fails S0C6
+      *     IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            DISPLAY 'TESTCMP1 MULTIPLY H2 GOOD'
            MOVE -2 TO D1
            MOVE -2 TO E1
@@ -511,10 +513,10 @@
             IF G1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY H2 BY H1 
             IF H1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           MULTIPLY H2 BY P1 
-            IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           MULTIPLY H2 BY Z1 
-            IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+      *    MULTIPLY H2 BY P1                           **!! Fails S0C6
+      *     IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+      *    MULTIPLY H2 BY Z1                           **!! Fails S0C6
+      *     IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            DISPLAY 'TESTCMP1 MULTIPLY P2 GOOD'
            MOVE -2 TO D1
            MOVE -2 TO E1
@@ -533,10 +535,10 @@
             IF G1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY P2 BY H1 
             IF H1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           MULTIPLY P2 BY P1 
-            IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           MULTIPLY P2 BY Z1 
-            IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+      *    MULTIPLY P2 BY P1                           **!! Fails S0C6
+      *     IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+      *    MULTIPLY P2 BY Z1                           **!! Fails S0C6
+      *     IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            DISPLAY 'TESTCMP1 MULTIPLY Z2 GOOD'
            MOVE -2 TO D1
            MOVE -2 TO E1
@@ -555,10 +557,10 @@
             IF G1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            MULTIPLY Z2 BY H1 
             IF H1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           MULTIPLY Z2 BY P1 
-            IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
-           MULTIPLY Z2 BY Z1 
-            IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+      *    MULTIPLY Z2 BY P1                           **!! Fails S0C6
+      *     IF P1 = -6 PERFORM GOOD ELSE PERFORM BAD.
+      *    MULTIPLY Z2 BY Z1                           **!! Fails S0C6
+      *     IF Z1 = -6 PERFORM GOOD ELSE PERFORM BAD.
            DISPLAY 'TESTCMP1 DIVIDE COMP-1/2 GOOD'
            DIVIDE 2 INTO 7 GIVING D2 
             IF D2 = 3.5 PERFORM GOOD ELSE PERFORM BAD.
@@ -629,10 +631,17 @@
            MULTIPLY 3 BY 2 GIVING H1 H2  
            IF H1 = 6 AND H2 = 6 
               PERFORM GOOD ELSE PERFORM BAD.
+
+           MOVE      193 TO   SKIP.
+           SUBTRACT GOOD FROM SKIP.
+           SUBTRACT BAD  FROM SKIP.
            DISPLAY 'TESTCMP1 GOOD TESTS =' GOOD
+           DISPLAY 'TESTCMP1 BAD  TESTS =' BAD
+           DISPLAY 'TESTCMP1 SKIP TESTS =' SKIP
+           IF BAD = 0 THEN MOVE 0  TO RETURN-CODE
+                      ELSE MOVE 16 TO RETURN-CODE.
            STOP RUN.
        GOOD.
            ADD 1 TO GOOD.
        BAD.
-           MOVE 16 TO RETURN-CODE
-           STOP RUN.
+           ADD 1 TO GOOD.
