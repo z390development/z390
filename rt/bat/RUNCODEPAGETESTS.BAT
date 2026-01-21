@@ -72,7 +72,8 @@ echo Verify %workdir%\T1P#451.BAL and %workdir%\T1#451.BAL look okay
 goto return
 
 :error
-set z_ReturnCode=%ERRORLEVEL%
+if %ERRORLEVEL% EQU 0 (set z_ReturnCode=6
+               ) else (set z_ReturnCode=%ERRORLEVEL%)
 echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
 :return
 popd

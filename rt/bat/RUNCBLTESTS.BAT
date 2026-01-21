@@ -61,7 +61,8 @@ set z_ReturnCode=0
 goto return
 
 :error
-set z_ReturnCode=%ERRORLEVEL%
+if %ERRORLEVEL% EQU 0 (set z_ReturnCode=6
+               ) else (set z_ReturnCode=%ERRORLEVEL%)
 echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
 :return
 popd
