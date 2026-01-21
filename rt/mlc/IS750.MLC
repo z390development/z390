@@ -27,8 +27,16 @@ IS750    CSECT
 * MP Should fail: operand 2 length not less than operand 1 length
          MP    PL4,PL4
 *
+* DP Should fail: operand 2 too long
+         DP    PL5,PL10
+*
+* DP Should fail: operand 2 length not less than operand 1 length
+         DP    PL5,PL5
+*
 * Field definitions
 PL4      DC    PL4'1'
+PL5      DC    PL5'1'
 PL9      DC    PL9'1'
+PL10     DC    PL10'1'
 *
          END

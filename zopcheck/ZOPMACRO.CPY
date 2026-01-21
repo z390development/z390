@@ -914,7 +914,10 @@ DC      X'&HEX',AL1(&P3*16+0,&P1*16+&P2)
         AELSEIF ('&HEX' EQ 'FC') MP
 &LAB_OP ORG &OP_LAB+16
  DC      X'&HEX',AL1((LP1-1)*16+LP3-1),X'B0B0',X'D0D0'
-        AELSEIF ('&HEX'(1,1) EQ 'F') AP ETC. (not MP)
+        AELSEIF ('&HEX' EQ 'FD') DP
+&LAB_OP ORG &OP_LAB+16
+ DC      X'&HEX',AL1((LP1-1)*16+LP3-1),X'B0B0',X'D0D0'
+        AELSEIF ('&HEX'(1,1) EQ 'F') AP ETC. (not MP/DP)
 &LAB_OP ORG &OP_LAB+16
  DC      X'&HEX',AL1((LP1-1)*16+LP2-1),X'B0B0',X'C0C0'
         AELSE
