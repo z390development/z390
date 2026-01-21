@@ -21,7 +21,7 @@ class RunCblTests extends z390Test{
                 'TESTADD1', 'TESTADD2', 'TESTBFP1', 'TESTIF1',  'TESTIF2',  'TESTIF3',  'TESTMOV1', 'TESTMOV2', 'TESTMOV3', 'CM101M01', 'DB101A01', 'NC106A01',
                 'TESTCMP1', 'TESTCMP2', 'TESTCMP3', 'TESTCMP4', 'TESTCMP5', 'TESTCMP6', 'TESTCPY1', 'TESTCPY2', 'TESTDFP1', 'TESTDIV1', 'TESTDIV2', 'TESTDSP1',
                 'TESTGO1',  'TESTHFP1', 'TESTISP1', 'TESTPIC1', 'TESTPM1',  'TESTPM2',  'TESTSIX1', 'TESTSIX2', 'TESTSUB1', 'TESTSUB2', 'TESTTRC2', 'TESTWS1',
-                'youzpi1'
+                'YOUZPI1'
         ]
         modules.each {
             module -> tests.add(
