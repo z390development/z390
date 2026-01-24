@@ -23,6 +23,7 @@
 .* 04/29/12 RPI 1211 copy from GEN_MPY and modify for MPY see TESTMPY1
 .* 05/18/12 RPI 1217 replace SCALE_F with SCALE_G to avoid F and H ovf
 .* 12/20/25 Issue 718 BRAS needs *+6 instead of literal 3
+.* 01/24/26 Issue 730 MP with invalid length operands causes S0C6
 .*********************************************************************
 .* Notes:
 .*  1.  ROUNDED not supported yet.
