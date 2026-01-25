@@ -1133,7 +1133,7 @@
          CVD   ZC_R0,ZCVT_PWORK
          MP    &N_TARGET,ZCVT_PWORK
                AWHEN C'P'
-         MP    &N_TARGET,&N_SOURCE
+         GEN_MP &N_TARGET,&N_SOURCE
                AWHEN C'Q'
          ZC_CONV P,Q,&N_SOURCE
          STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
@@ -1441,6 +1441,8 @@
          JO    PG_MPY_&MPY_LAB._ON_SIZE    ERROR IF OVERFLOW SET 
          STM   ZC_R0,ZC_R1,&N_TARGET
          AEND
+
+
          COPY ZCRSTLAB
          COPY ZCNUMLIT
          MEND

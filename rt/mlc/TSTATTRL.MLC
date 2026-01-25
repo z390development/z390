@@ -1,0 +1,37 @@
+TSTATTRL TITLE 'Test Length Attribute evaluation'
+***********************************************************************
+* Start create : 24-01-2026
+* 1st delivery :
+* Designer     : AF Kornelis
+* Programmer   : AF Kornelis
+* Purpose      : For testing
+***********************************************************************
+
+TSTATTRL RSECT ,                       *
+TSTATTRL AMODE 24
+TSTATTRL RMODE 24
+***********************************************************************
+         XR    15,15                   * Set RC=0
+         BR    14                      * Return
+
+&Z       SETC  'P1'                    * Load name of field
+&X       SETA  (L'&Z)                  * Get length: should be 16
+         AIF   (&X EQ 16).LENOK
+         MNOTE 8,'Length attribute of P1 is &X - should be 16'
+         AGO   .SKIPL
+.LENOK   ANOP  ,
+         MNOTE 0,'Length attribute of P1 is &X - correct!'
+.SKIPL   ANOP  ,
+
+&Z       SETC  'P1'                    * Load name of field
+&Y       SETC  (T'&Z)                  * Get type: should be P
+         AIF   ('&Y' EQ 'P').TYPOK
+         MNOTE 8,'Type attribute of P1 is &Y - should be P'
+         AGO   .SKIPT
+.TYPOK   ANOP  ,
+         MNOTE 0,'Type attribute of P1 is &Y - correct!'
+.SKIPT   ANOP  ,
+
+P1       DC    PL16'0'
+
+         END

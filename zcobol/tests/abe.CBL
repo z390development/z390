@@ -1,0 +1,26 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID.    TESTCMP4.
+       AUTHOR.        DON HIGGINS.
+       DATE-WRITTEN.  05/07/12.
+      * TEST COMPUTE WITH SCALING FOR IMPLIED DECIMAL                              
+       ENVIRONMENT DIVISION.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       77 P1      COMP-3 PIC S9(26)V9(5) VALUE 1.5.
+       77 P2      COMP-3 PIC S9(26)V9(5) VALUE 1.5.
+       77 GOOD    COMP-3 PIC 9(4)   VALUE 0.
+       77 BAD     COMP-3 PIC 9(4)   VALUE 0.
+       PROCEDURE DIVISION.
+       MAINLINE.
+           DISPLAY 'TESTCMP4 TEST SCALED COMPUTE'.
+           COMPUTE P2 = P1*P1
+           IF P2 = 2.25 PERFORM GOOD ELSE PERFORM BAD.
+           DISPLAY 'TOTAL GOOD = ' GOOD ' TOTAL BAD = ' BAD.
+           STOP RUN.
+       GOOD.
+           DISPLAY 'GOOD-TEST'
+           ADD 1 TO GOOD.
+       BAD.
+           DISPLAY 'BAD-TEST'
+           MOVE 16 TO RETURN-CODE
+           ADD 1 TO BAD.

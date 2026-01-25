@@ -8084,7 +8084,7 @@ public mz390()
 		if (tz390.opt_traceall){
 			tz390.put_trace(" MZ390 CALLING AZ390 SYM LOCK");
 		}
-		az390.set_sym_lock("mz390_find for " + symbol + "(" + (mac_file_num[mac_line_index]+1) + "/" + mac_file_line_num[mac_line_index] + ")");
+		az390.set_sym_lock("mz390_find_sym for " + symbol + "(" + (mac_file_num[mac_line_index]+1) + "/" + mac_file_line_num[mac_line_index] + ")");
 		index = az390.find_sym(symbol);
        	az390.reset_sym_lock();
         return index;
@@ -8136,9 +8136,11 @@ public mz390()
  */
 	private int get_sym_len(String symbol){
 		if (!tz390.opt_asm){
+            tz390.put_trace("get_sym_len(" + symbol + ") opt_asm is off"); // **!!
 			return 1;
 		}
 		int cur_sym = mz390_find_sym(symbol);
+        tz390.put_trace("get_sym_len(" + symbol + ") cur_sym=" + cur_sym); // **!!
 		if (cur_sym != -1){
 			if (az390.sym_attr[cur_sym] == tz390.ascii_to_ebcdic['J']){
 				return 1; // RPI 415
