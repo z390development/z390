@@ -26,6 +26,20 @@ call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTCMP3 %1 %2 %3 %4 %5 %6 %7 %8 %9 |
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTCMP4 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTCMP5 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTCMP6 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTCPY1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTCPY2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTDFP1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTDIV1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTDIV2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTDSP1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+set INFILE=zcobol\tests\TESTFIL1.IN
+set OUTFILE=zcobol\tests\TESTFIL1.OUT
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTFIL1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+set INFILE=ZCOBOL\TESTS\TESTFIL2.IN
+set OUTFILE=ZCOBOL\TESTS\TESTFIL2.OUT
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTFIL2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+set INFILE=
+set OUTFILE=
 
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testbfp1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testif1  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
@@ -47,7 +61,8 @@ set z_ReturnCode=0
 goto return
 
 :error
-set z_ReturnCode=%ERRORLEVEL%
+if %ERRORLEVEL% EQU 0 (set z_ReturnCode=6
+               ) else (set z_ReturnCode=%ERRORLEVEL%)
 echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
 :return
 popd
