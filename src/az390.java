@@ -450,6 +450,7 @@ public  class  az390 implements Runnable {
     *                     displacement value being generated for an
     *                     RX-instruction that accesses that following field.
     * 2025-10-11 AFK #656 Change architecture level constants to an enum
+    * 2026-01-19 AFK #750 Missing error detection for MP/DP assembly
   	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -3701,6 +3702,20 @@ private void process_bal_op(){
        	} else {
        		log_error(70,"field 2 hex length > 16 = " + hex_ll);
        	}
+        // For MP/DP special length restrictions must be checked                 // #750
+        if (!bal_abort && (obj_code.equals("FC")     // X'FC' = MP instruction   // #750
+                       ||  obj_code.equals("FD"))) { // X'FD' = DP instruction   // #750
+            int l1 = hex_tab.indexOf(hex_len1.charAt(0));                        // #750
+            int l2 = hex_tab.indexOf(hex_len2.charAt(0));                        // #750
+            if (l2 > 7) {                                                        // #750
+                log_error(70,"field 2 hex length = " + hex_len2 +                // #750
+                             " must be no more than 7");                         // #750
+            }                                                                    // #750
+            if (l2 >= l1) {                                                      // #750
+                log_error(70,"field 2 length = " + hex_len2 +                    // #750
+                             " must be less than field 1 length = " + hex_len1); // #750
+            }                                                                    // #750
+        }                                                                        // #750
        	obj_code = obj_code + hex_len1 + hex_len2 + hex_bddd1 + hex_bddd2;
     	check_end_parms();
        	put_obj_text();

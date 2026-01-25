@@ -198,6 +198,16 @@ class RunAsmTests extends z390Test {
         assert rc == 0
     }
     @Test
+    void test_IS750() {
+        int rc = this.asm(basePath("rt", "mlc", "IS750"))
+        this.printOutput()
+        assert rc == 12   // Check return code
+        assert this.fileData['ERR'].contains("AZ390I field 2 hex length = 8 must be no more than 7"), "First MP not assembled with expected error"
+        assert this.fileData['ERR'].contains("AZ390I field 2 length = 3 must be less than field 1 length = 3"), "Second MP not assembled with expected error"
+        assert this.fileData['ERR'].contains("AZ390I field 2 hex length = 9 must be no more than 7"), "First DP not assembled with expected error"
+        assert this.fileData['ERR'].contains("AZ390I field 2 length = 4 must be less than field 1 length = 4"), "Second DP not assembled with expected error"
+    }
+    @Test
     void test_TESTDC1() {
         int rc = this.asmlg(basePath("rt", "mlc", "TESTDC1"), *options, 'optable(z390)', "SYSOBJ(${basePath("linklib")})")
         this.printOutput()
