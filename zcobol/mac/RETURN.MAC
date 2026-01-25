@@ -21,7 +21,94 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 04/11/08 initial coding for global RETURN
+.* 2025/12 ZH: Extended to support SORT RETURN statement
+.*         Implementation follows FIPS PUB 21-2 (ANSI X3.23-1985)
+.*         COBOL 85 standard, Section XI (Sort-Merge).
 .*********************************************************************
-         RETURN
-         GEN_RETURN
+.* RETURN Statement has two forms in COBOL:
+.*
+.* Form 1 - Program Return (no operands):
+.*   RETURN
+.*   Equivalent to STOP RUN - terminates program
+.*
+.* Form 2 - Sort Return (COBOL 85 Section XI):
+.*   RETURN file-name-1 RECORD [INTO identifier-1]
+.*       AT END imperative-statement-1
+.*       [NOT AT END imperative-statement-2]
+.*   [END-RETURN]
+.*
+.* Retrieves the next record from the final phase of a sort operation
+.* for processing by an output procedure.
+.*********************************************************************
+         RETURN &SORTFILE,&RECORD_KW,&INTO_KW,&INTO_ID,&AT_KW,&END_KW
+         COPY  ZC_WS
+         COPY  ZC_SD
+.*
+.* CHECK IF THIS IS PROGRAM RETURN OR SORT RETURN
+.*
+         AIF   ('&SORTFILE' EQ '')
+.*
+.*        PROGRAM RETURN - NO OPERANDS
+.*
+               GEN_RETURN
+               MEXIT
+         AEND
+.*
+.* SORT RETURN - GET SORTED RECORD
+.*
+         GBLA  &RETURN_LAB
+         :&RETURN_LAB SETA &RETURN_LAB+1
+.*
+.* FIND SORT FILE
+.*
+         ZC_SD_FIND &SORTFILE
+         AIF   (&SD_IX EQ 0)
+               MNOTE 8,'RETURN SORT FILE NOT FOUND - &SORTFILE'
+               MEXIT
+         AEND
+.*
+.* GET RECORD FROM SORT INTO SORT RECORD AREA
+.*
+         AIF   ('&SD_RECORD(&SD_IX)' NE '')
+               ZC_SYM_FIND &SD_RECORD(&SD_IX)
+               AIF (&SYM_IX GT 0)
+         GEN_BASE &SYM_IX
+         LAY   ZC_R1,&SD_RECORD(&SD_IX)
+               AEND
+         AELSE
+               MNOTE 8,'RETURN SORT FILE HAS NO RECORD DEFINED'
+               MEXIT
+         AEND
+         ZSORT GET,REC=(ZC_R1)
+.*
+.* CHECK FOR END OF SORTED RECORDS (RC=4)
+.*
+         CHI   ZC_R15,4
+         JNE   ZC_RET_OK&RETURN_LAB
+.*
+.* AT END - SORTED RECORDS EXHAUSTED
+.*
+         AIF   ('&AT_KW' EQ 'AT' AND '&END_KW' EQ 'END')
+.*             AT END PROCESSING WILL BE HANDLED BY END-RETURN
+.*             SET UP PENDING END-RETURN
+               :&AT_END_LAB SETA &AT_END_LAB+1
+               J     PG_RETURN_AT_END&AT_END_LAB
+ZC_RET_OK&RETURN_LAB DS 0H
+.*             INTO CLAUSE - MOVE RECORD TO TARGET
+               AIF   ('&INTO_KW' EQ 'INTO' AND '&INTO_ID' NE '')
+         MOVE  &SD_RECORD(&SD_IX),TO,&INTO_ID
+               AEND
+               J     PG_RETURN_END_RETURN&AT_END_LAB
+               GEN_LABEL RETURN_AT_END&AT_END_LAB,AT_END
+               :&IE_LVL SETA &IE_LVL+1
+               :&IE_TYPE(&IE_LVL) SETA 3
+               :&IE_TCNT(&IE_LVL) SETA &AT_END_LAB
+         AELSE
+.*             NO AT END - JUST CONTINUE
+ZC_RET_OK&RETURN_LAB DS 0H
+.*             INTO CLAUSE - MOVE RECORD TO TARGET
+               AIF   ('&INTO_KW' EQ 'INTO' AND '&INTO_ID' NE '')
+         MOVE  &SD_RECORD(&SD_IX),TO,&INTO_ID
+               AEND
+         AEND
          MEND
