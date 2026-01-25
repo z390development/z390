@@ -7,7 +7,7 @@
        WORKING-STORAGE SECTION.
        PROCEDURE DIVISION.
        S1 SECTION.
-           DISPLAY 'TESTZC1 STARTED'
+           DISPLAY 'TESTPM2 STARTED'
        P1.
            PERFORM P3.
        P2.
@@ -22,5 +22,5 @@
        P3.
            DISPLAY 'S2 P3'
        P4.
-           DISPLAY 'TESTZC1 ENDED'
+           DISPLAY 'TESTPM2 ENDED'
            STOP RUN.
