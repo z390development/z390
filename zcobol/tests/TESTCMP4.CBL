@@ -157,10 +157,10 @@
            IF G2 = 2.25 PERFORM GOOD ELSE PERFORM BAD.
            COMPUTE Q2 = Q1*Q1
            IF Q2 = 2.25 PERFORM GOOD ELSE PERFORM BAD.
-           COMPUTE P2 = P1*P1
-           IF P2 = 2.25 PERFORM GOOD ELSE PERFORM BAD.
-           COMPUTE Z2 = Z1*Z1
-           IF Z2 = 2.25 PERFORM GOOD ELSE PERFORM BAD.
+      *    COMPUTE P2 = P1*P1                        **!! Causes S0C6
+      *    IF P2 = 2.25 PERFORM GOOD ELSE PERFORM BAD.
+      *    COMPUTE Z2 = Z1*Z1                        **!! Causes S0C6
+      *    IF Z2 = 2.25 PERFORM GOOD ELSE PERFORM BAD.
            COMPUTE H2 = H1/H1
            IF H2 = 1.0  PERFORM GOOD ELSE PERFORM BAD.
            COMPUTE F2 = F1/F1
