@@ -1,0 +1,270 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- -------------------------------------------------------------- -->
+<!-- Thanks for reading the source of this document. Hope you enjoy -->
+<!-- what you find here. Please let us know if you find any errors. -->
+<!-- -------------------------------------------------------------- -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-gb" lang="en-gb">
+ <head>
+  <!-- -->
+  <!-- Saved from http://www.z390.org/index.htm -->
+  <!-- -->
+  <title>z390 - Home Page</title>
+  <link rel="shortcut icon"   href="../images/z390.ico" type="image/x-icon" />
+  <link rel="zcobol homepage" href="../zcobol/index.htm" />
+  <link rel="original z390 and zcobol homepage" href="orgindex.html" />
+  <meta http-equiv="keywords"     content="Mainframe, IBM, Assembler, Programming" />
+  <meta http-equiv="keywords"     content="MVS, OS/390, z/VSE, z/OS" />
+  <meta http-equiv="keywords"     content="Assembly, High Level Assembler, HLASM" />
+  <meta http-equiv="keywords"     content="Tools, z390, SuperZap, Open Source, Java" />
+  <meta http-equiv="description"  content="Homepage for z390" />
+  <meta http-equiv="robots"       content="index,follow" />
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <meta http-equiv="author"       content="Abe Kornelis" />
+  <meta http-equiv="review"       content="2025-11-09)" />
+  <meta http-equiv="reply-to"     content="abe@bixoft.nl (Abe Kornelis)" />
+  <meta http-equiv="content-language" content="en-US" />
+ </head>
+ <body>
+  <h1 align="center">
+   <img src="../images/z390.jpg" alt="z390 Portable Mainframe Assembler and Runtime Environment" border="0" height="60" width="100" /><br />
+   z390 Portable Mainframe Assembler and Runtime Environment
+  </h1>
+  <p>The z390 portable mainframe assembler and runtime environment is a Java-based open source tool
+     for writing, assembling, and running High Level Assembler programs.
+  </p>
+  <p>z390 provides compatability with IBM's High Level Assembler at the source code level.
+     The macros and other internals are fundamentally different.<br />
+     Generated object code is portable to MVS 3.8, or to any other IBM operating system,
+     provided you have a license to use the macro libraries for that operating system from IBM.
+  </p>
+  <h2>Related pages:</h2>
+   <ul>
+    <li><a href="../zcobol/index.htm">zCobol home page</a></li>
+    <li><a href="orgindex.html">Old z390 home page</a></li>
+   </ul>
+  <h2>z390 offers the following base services:</h2>
+  <table border="5%" cellspacing="5%" cellpadding="5%">
+   <tr>
+    <th>Component</th>
+    <th>Description</th>
+   </tr>
+   <tr>
+    <td><a href="#mz390">Macro processor</a></td>
+    <td>HLASM is renowned for its extremely powerful macro processor, which allows you to define and use macros.</td>
+   </tr>
+   <tr>
+    <td><a href="#az390">Assembler</a></td>
+    <td>The assembler allows you to translate assembler source code into object code.</td>
+   </tr>
+   <tr>
+    <td><a href="#lz390">Linkage editor</a></td>
+    <td>The linker allows you to combine object modules and transform them into a load module.</td>
+   </tr>
+   <tr>
+    <td><a href="#ez390">Runtime Environment</a></td>
+    <td>The runtime environment allows you to execute and test a load module.</td>
+   </tr>
+   <tr>
+    <td><a href="#zc390">zCobol Compiler</a></td>
+    <td>The zCobol component allows you to compile your Cobol programs.</td>
+   </tr>
+   <tr>
+    <td><a href="#docs">Documentation</a></td>
+    <td>Yes - we actually have some documentation!</td>
+   </tr>
+   <tr>
+    <td><a href="#code">Source Code Access</a></td>
+    <td>z390 source code is managed in a public github repository</td>
+   </tr>
+  </table>
+
+  <h2>z390 also offers the following additional services:</h2>
+  <table border="5%" cellspacing="5%" cellpadding="5%">
+   <tr>
+    <th>Component</th>
+    <th>Description</th>
+   </tr>
+   <tr>
+    <td>zCics</td>
+    <td>The zCics component offers the ability to compile/assemble both Cobol and Assembler programs and run/test them in a Cics-like environment.</td>
+   </tr>
+   <tr>
+    <td>zVSAM</td>
+    <td>Source-level compatible usage of data in a VSAM-like structure.</td>
+   </tr>
+   <tr>
+    <td>zSort</td>
+    <td>The zSort program provides an out-of-the-box solution for sorting data.</td>
+   </tr>
+   <tr>
+    <td>Structured macro code</td>
+    <td>A non-compatible extension that allows you to use structured coding elements at the macro code level.</td>
+   </tr>
+   <tr>
+    <td>Options files</td>
+    <td>z390 supports a large number of options to control its behavior. Files can be chained to avoid duplication.</td>
+   </tr>
+   <tr>
+    <td>Scripted debugging</td>
+    <td>The scripted debugging facility allows you to script your run-time tests, but can also be used for on-line debugging.</td>
+   </tr>
+   <tr>
+    <td>SOA support</td>
+    <td>Provides support for Service Oriented Architecture.</td>
+   </tr>
+   <tr>
+    <td>Tracing</td>
+    <td>z390 offers various traces to assist in debugging and analysis of run-time behavior.</td>
+   </tr>
+   <tr>
+    <td>Trace formatter</td>
+    <td>Allows you to combine traces and format them for further analysis.</td>
+   </tr>
+  </table>
+
+  <hr/>
+
+  <h1>Macro processor<a id="mz390"></a></h1>
+   <p>When in compatibility mode, the z390 macro processor behaves compatibly with IBM's HLASM macro facility.
+      It can be used to process conditional assembly logic in open code, in stored macros, and in nested macros.
+   </p>
+   <p>In z390 mode it offers options to allow non-compatible extensions, such as:
+    <ul>
+     <li>chkmac(0) - no additional checking. This is the default for chkmac.</li>
+     <li>chkmac(1) - check for missing AGO and AIF labels at macro load time.</li>
+     <li>chkmac(2) - as chkmac(1) and also check for non comment text after MEND.</li>
+     <li>mcall - list each inner macro call and exit on the assembly listing in addition to first level calls.</li>
+     <li>stats - report statistics in a separate file.</li>
+     <li>trace - trace macro expansion.</li>
+     <li>zstrmac - support expansion of ZSTRMAC structured conditional macro code instructions.</li>
+    </ul>
+   </p>
+
+  <h1>Assembler<a id="az390"></a></h1>
+   <p>When in compatibility mode, the z390 assembler behaves compatibly with IBM's HLASM assembler.
+      Use of macros, copy members, and the program code stack (AINSERT) are fully supported.
+   </p>
+   <p>In z390 mode it offers options to allow non-compatible extensions, such as:
+    <ul>
+     <li>assist - allow use of ASSIST mnemonics.</li>
+     <li>chksrc(0) - no additional checking. This is the default for chksrc.</li>
+     <li>chksrc(1) - check assembler source files for any non-ASCII characters.</li>
+     <li>chksrc(2) - check assembler source files, macros, and copy members for any non-ASCII characters.</li>
+     <li>chksrc(3) - as chksrc(2) and also check for out of sequence characters in columns 73-80 or any non-blank characters beyond column 80.</li>
+     <li>init - initialize all registers to hex x'F4', all memory to hex x'F5', and all uninitialized load module areas to x'F6'.</li>
+     <li>listcall - generate first level macro call and exit comments preceding assembler lines with "+" for macro generated source.</li>
+     <li>listuse - list active USING definitions in the assembly listing file each time USING or DROP is processed.</li>
+     <li>reformat - reformat expanded source code to align all opcodes at column 10 and operands at column 16 if possible.</li>
+     <li>stats - report statistics in a separate file.</li>
+     <li>trace - trace assembly process.</li>
+    </ul>
+   </p>
+
+  <h1>Linkage Editor<a id="lz390"></a></h1>
+   <p>When in compatibility mode, the z390 linkage editor behaves compatibly with IBM's binder.
+   </p>
+   <p>In z390 mode it offers options to allow non-compatible extensions, such as:
+    <ul>
+     <li>mod - generate raw code file from lz390 with .MOD suffix and no header or trailer and no RLDs.</li>
+     <li>stats - report statistics in a separate file.</li>
+    </ul>
+   </p>
+
+  <h1>Runtime Environment<a id="ez390"></a></h1>
+   <p>The z390 runtime environment can be used to execute programs after they have been assembled and linked.
+   </p>
+   <p>It offers options to allow non-compatible extensions, such as:
+    <ul>
+     <li>init - initialize all registers to hex x'F4', all memory to hex x'F5', and all uninitialized load module areas to x'F6'.</li>
+     <li>noloadhigh - load programs into low storage, starting at X'8000'.</li>
+     <li>stats - report statistics in a separate file.</li>
+     <li>trace - trace execution process.</li>
+    </ul>
+   </p>
+
+  <h1>zCobol compiler<a id="zc390"></a></h1>
+   <p>The zCobol compiler can be used to convert Cobol source programs to assembler code.
+      The generated assembler code can then be assmbled and linked like any other assembler program.
+   </p>
+
+  <h1>z390 documentation<a id="docs"></a></h1>
+   <p>The <a href="https://z390development.github.io/z390/">z390 documentation library</a> contains:
+    <ul>
+     <li>getting started</li>
+      <ul>
+       <li>Installation</li>
+       <li>Quick starts</li>
+       <li>Learning resources</li>
+       <li>Macro library</li>
+      </ul>
+     <li>user guide</li>
+      <ul>
+       <li>z390 commands</li>
+       <li>z390 Structured macro extensions</li>
+       <li>z390 file types</li>
+       <li>z390 options</li>
+       <li>zCobol commands</li>
+       <li>zCobol user guide</li>
+       <li>zCobol system programmer's guide</li>
+       <li>zCobol NIST Cobol 1985 test results</li>
+       <li>zCobol file types</li>
+       <li>zCobol options</li>
+       <li>zCics manuals</li>
+       <li>zCics application programming guide</li>
+      </ul>
+     <li>reference</li>
+      <ul>
+       <li>SVC services</li>
+       <li>Program services</li>
+       <li>Storage services</li>
+       <li>Non-VSAM file services</li>
+       <li>GUAM services</li>
+       <li>SOA services</li>
+       <li>Structured programming macros</li>
+       <li>zVSAM services</li>
+       <li>zPAR and zPARTRS</li>
+       <li>zSORT</li>
+       <li>ASSIST support</li>
+      </ul>
+     <li>contributing</li>
+      <ul>
+       <li>Contributing to z390</li>
+       <li>Contributing to z390 documentation</li>
+       <li>Contributing to zCobol</li>
+      </ul>
+    </ul>
+   </p>
+
+  <h1>Source code access<a id="code"></a></h1>
+   <p>All z390 code is open source and available under under the terms of the GNU General Public License as published by
+      the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+   </p>
+   <p>The source code is available from <a href="https://github.com/z390development/z390">the z390 github repository.</a>
+   </p>
+
+
+
+
+
+
+
+
+
+zCics:
+     <li>cics - support EXEC CICS pre-processor expansion and constants and enable PROLOG and EPILOG options</li>
+zCobol
+zIDT
+non-FB80 inputs and outputs?
+
+  <hr/>
+  <p align="center">
+   <b>IBM, CICS, MVS, OS/390, VSAM, and z/OS are registered trademarks of International Business Machines Corporation</b>
+  </p>
+  <p align="center">
+   <b>This page last updated Sunday, November 9, 2025.<br />
+    <a href="mailto:abe@bixoft.nl?subject=z390%20Portable%20Mainframe%20Assembler%Project">Email Us</a><br />
+     Copyright 2011-2025 Automated Software Tools Corporation
+   </b>
+  </p>
+ </body>
+</html>
