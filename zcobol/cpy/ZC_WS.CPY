@@ -252,7 +252,8 @@
          GBLC &LAST_SN_NAME         LAST PROC DIV SECTION NAME  
          GBLA &IE_LVL               CURRENT LEVEL FOR IF OR EVALUATE
          GBLA &IE_TYPE(100)     1=IF, 2=EVALUATE, 3=END_READ 4=PM
-.*                                  11=ADD,12=SUB,13=MPY,14=DIV,15=SEARCH
+.*                                  11=ADD,12=SUB,13=MPY,14=DIV
+.*                                  15=SEARCH
          GBLA &IE_TCNT(100)     IE TYPE  COUNT                  
          GBLA &IE_NOT(100)      NOT ON SIZE ERROR USED AT LEVEL
          GBLA &IE_BCNT(100)     IE BLOCK COUNT WITHIN TYPE     
