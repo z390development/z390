@@ -33,6 +33,30 @@
 .*        [END-STRING]
 .*
 .* Tokenized as: STRING source,DELIMITED,BY,delim,INTO,target,...
+.*
+.* Architecture:
+.*   1. State machine parses tokenized parameters into local variables
+.*   2. Validates required fields (source, target)
+.*   3. Builds parameter block (PLIST) at ZCVT_WORKAREA
+.*   4. Calls ZCVT_STRING runtime routine via BASR
+.*
+.* State machine states:
+.*   SOURCE  - Expecting source field (identifier or literal)
+.*   DELIM   - Expecting delimiter (SIZE, identifier, or literal)
+.*   TARGET  - Expecting INTO target field
+.*   POINTER - Expecting WITH POINTER field
+.*
+.* Local variables:
+.*   &SRC_NAME/&SRC_IX   - Source field name and symbol table index
+.*   &DELIM/&DELIM_IX    - Delimiter (default 'SIZE', index 0 for literals)
+.*   &TGT_NAME/&TGT_IX   - Target field name and symbol table index
+.*   &PTR_NAME/&PTR_IX   - Pointer field (optional)
+.*   &STATE              - Current parser state
+.*   &PARM_IX            - Current parameter index in SYSLIST
+.*
+.* Limitations:
+.*   - ON OVERFLOW / NOT ON OVERFLOW clauses not yet implemented
+.*   - Single source field only (multiple sources not supported)
 .*********************************************************************
          STRING
          COPY  ZC_WS
@@ -81,10 +105,14 @@
                :&PARM_IX SETA &PARM_IX+1
                AGO .PARSE
          AEND
+.*       ON OVERFLOW / NOT ON OVERFLOW not yet implemented
+.*       Stop parsing here - overflow clauses are ignored with warning
          AIF   ('&SYSLIST(&PARM_IX)' EQ 'ON')
+               MNOTE 4,'STRING - ON OVERFLOW not yet supported'
                AGO .DONE
          AEND
          AIF   ('&SYSLIST(&PARM_IX)' EQ 'NOT')
+               MNOTE 4,'STRING - NOT ON OVERFLOW not yet supported'
                AGO .DONE
          AEND
          AIF   ('&SYSLIST(&PARM_IX)' EQ 'END_STRING')
@@ -159,7 +187,8 @@
                AGO .PARSE
          AEND
 .*
-.* Unknown - skip
+.* Unknown token - warn and skip
+         MNOTE 4,'STRING - UNKNOWN TOKEN IGNORED: &SYSLIST(&PARM_IX)'
          :&PARM_IX SETA &PARM_IX+1
          AGO   .PARSE
 .*
@@ -177,6 +206,16 @@
          AEND
 .*
 .* Inline code generation (avoiding macro call continuation issues)
+.*
+.* Parameter block layout for STRING runtime (ZCVT_STRING):
+.* Offset 0:   A(source)     - Address of source field
+.* Offset 4:   L'source      - Length of source field
+.* Offset 8:   A(delimiter)  - Address of delimiter (0 if SIZE)
+.* Offset 12:  L'delimiter   - Length of delimiter (0 if SIZE)
+.* Offset 16:  A(target)     - Address of target field
+.* Offset 20:  L'target      - Length of target field
+.* Offset 24:  A(pointer)    - Address of pointer field (0 if none)
+.* Offset 28:  Flags         - Reserved (currently 0)
 .*
          LA    ZC_R1,ZCVT_WORKAREA
 .*

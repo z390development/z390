@@ -21,7 +21,7 @@
 .* Date   - 04/16/08                                                 *
 .*********************************************************************
 .* 11/17/08 stub for pending support
-.* 2025/12 ZH: Implement COBOL UNSTRING per FIPS PUB 21-2 Sec VI-6.27
+.* 2025/12 ZH: Implement COBOL UNSTRING per FIPS PUB 21-2
 .*********************************************************************
 .* UNSTRING identifier-1
 .*     [DELIMITED BY [ALL] {identifier-2|literal-1}
@@ -36,6 +36,28 @@
 .*
 .* Initial implementation: Basic UNSTRING with single delimiter
 .* Tokenized as: UNSTRING source,DELIMITED,BY,[ALL],delim,INTO,target
+.*
+.* Architecture:
+.*   1. State machine parses tokenized parameters into local variables
+.*   2. Validates required fields (source, at least one target)
+.*   3. Builds parameter block (PLIST) at ZCVT_WORKAREA
+.*   4. Calls ZCVT_UNSTRING runtime routine via BASR
+.*
+.* State machine states:
+.*   SOURCE       - Expecting source field (identifier-1)
+.*   DELIM_BY     - After DELIMITED, expecting BY
+.*   DELIM        - Expecting delimiter field/literal
+.*   AFTER_SOURCE - After source, before keywords
+.*   AFTER_DELIM  - After delimiter parsed
+.*   TARGET       - Expecting INTO target field(s)
+.*   POINTER      - Expecting WITH POINTER field
+.*   TALLY        - Expecting TALLYING IN field
+.*
+.* Limitations:
+.*   - ON OVERFLOW / NOT ON OVERFLOW clauses not yet implemented
+.*   - Single delimiter only (OR [ALL] delimiter-2 not supported)
+.*   - DELIMITER IN / COUNT IN clauses not supported
+.*   - Maximum 4 target fields
 .*********************************************************************
          UNSTRING
          COPY  ZC_WS
@@ -83,9 +105,16 @@
          AIF   ('&SYSLIST(&PARM_IX)' EQ '').DONE
 .*
 .* Check for statement terminators
+.* ON OVERFLOW / NOT ON OVERFLOW not yet implemented - warn and stop parsing
 .*
-         AIF   ('&SYSLIST(&PARM_IX)' EQ 'ON').DONE
-         AIF   ('&SYSLIST(&PARM_IX)' EQ 'NOT').DONE
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'ON').CK_NOT
+         MNOTE 4,'UNSTRING - ON OVERFLOW not yet supported'
+         AGO   .DONE
+.CK_NOT  ANOP
+         AIF   ('&SYSLIST(&PARM_IX)' NE 'NOT').CK_END
+         MNOTE 4,'UNSTRING - NOT ON OVERFLOW not yet supported'
+         AGO   .DONE
+.CK_END  ANOP
          AIF   ('&SYSLIST(&PARM_IX)' EQ 'END_UNSTRING').DONE
 .*
 .* Check keywords
@@ -250,7 +279,8 @@
          MEXIT
 .NOT_TAL ANOP
 .*
-.* Unknown - skip
+.* Unknown token - warn and skip
+         MNOTE 4,'UNSTRING - UNKNOWN TOKEN IGNORED: &SYSLIST(&PARM_IX)'
          :&PARM_IX SETA &PARM_IX+1
          AGO   .PARSE
 .*
