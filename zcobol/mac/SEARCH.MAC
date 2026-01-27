@@ -21,11 +21,33 @@
 .* Date   - 04/16/08                                                 *
 .*********************************************************************
 .* 02/20/09 stub for pending support
-.* 2025/12 ZH: Implement SEARCH per FIPS PUB 21-2 and COBOL-85
+.* 2025/12 ZH: Implement SEARCH per FIPS PUB 21-2 (ANSI X3.23-1985)
 .*             Format 1 - Sequential search with AT END and WHEN
+.*********************************************************************
+.* SEARCH Statement (Format 1) - Sequential Table Search
+.*
+.* Syntax: SEARCH table-name [VARYING index] [AT END stmt] WHEN...
+.*
+.* This macro generates code to sequentially search a table defined
+.* with OCCURS and INDEXED BY. The search starts at the current index
+.* value and increments until a WHEN condition matches or end-of-table.
+.*
+.* Uses IE (If/Evaluate) block tracking system - see ZC_WS.CPY:
+.*   IE_TYPE 15 = SEARCH (added to existing types 1-14)
+.*   IE_SRC_* variables store SEARCH-specific context for END_SEARCH
+.*
+.* Generated label structure:
+.*   SEARCH_n_TOP    - Loop entry point (bounds check)
+.*   SEARCH_n_WHEN1  - First WHEN condition check
+.*   SEARCH_n_INCR   - Index increment and loop back
+.*   SEARCH_n_ATEND  - AT END handler (if specified)
+.*   SEARCH_n_END    - Exit point after search completes
 .*********************************************************************
          SEARCH
          COPY  ZC_WS
+.*
+.* Count parameters - table name is required
+.*
          :&NP SETA N'&SYSLIST
          AIF (&NP LT 1)
                MNOTE 8,'SEARCH REQUIRES TABLE NAME'
@@ -33,16 +55,21 @@
          AEND
 .*
 .* Parse SEARCH parameters
-.* Format: SEARCH table [VARYING index] [AT END]
+.* Format: SEARCH table [VARYING index] [AT END imperative-stmt]
+.*
+.* TBL_NAME   - Name of table to search (first positional parameter)
+.* HAS_AT_END - Flag indicating AT END clause present
 .*
          :&TBL_NAME SETC '&SYSLIST(1)'
          :&I SETA 2
          :&HAS_AT_END SETB 0
 .*
-.* Check for AT END
+.* Scan remaining parameters looking for AT END and VARYING keywords
+.* VARYING is parsed but not yet fully implemented (uses table's own index)
 .*
          AWHILE (&I LE &NP)
                AIF ('&SYSLIST(&I)' EQ 'AT')
+.*                 Check for "AT END" keyword pair
                    AIF ('&SYSLIST(&I+1)' EQ 'END')
                        :&HAS_AT_END SETB 1
                        :&I SETA &I+2
@@ -50,19 +77,25 @@
                        :&I SETA &I+1
                    AEND
                AELSEIF ('&SYSLIST(&I)' EQ 'VARYING')
+.*                 VARYING index-name - skip the index name parameter
                    :&I SETA &I+2
                AELSE
                    :&I SETA &I+1
                AEND
          AEND
 .*
-.* Look up the table symbol
+.* Look up the table in the symbol table
+.* ZC_SYM_FIND sets SYM_IX to the symbol index (0 if not found)
 .*
          ZC_SYM_FIND &TBL_NAME
          AIF (&SYM_IX EQ 0)
                MNOTE 8,'SEARCH TABLE NOT FOUND - &TBL_NAME'
                MEXIT
          AEND
+.*
+.* Save symbol index and validate table has OCCURS clause
+.* SYM_DUP contains the OCCURS count, SYM_LEN contains element length
+.*
          :&TBL_IX SETA &SYM_IX
          AIF (&SYM_DUP(&TBL_IX) LT 1)
                MNOTE 8,'SEARCH TABLE REQUIRES OCCURS - &TBL_NAME'
@@ -71,12 +104,17 @@
          :&TBL_MAX SETA &SYM_DUP(&TBL_IX)
          :&TBL_LEN SETA &SYM_LEN(&TBL_IX)
 .*
-.* Find the index name by searching SET_SYM_IX for matching table
+.* Find the index name associated with this table
+.* Tables with INDEXED BY clause have entries in SET_INDEX/SET_SYM_IX
+.* SET_TOT      - Total number of index definitions
+.* SET_SYM_IX() - Symbol index of the table this index belongs to
+.* SET_INDEX()  - Name of the index variable
 .*
          :&IDX_NAME SETC ''
          :&J SETA 1
          AWHILE (&J LE &SET_TOT)
                AIF (&SET_SYM_IX(&J) EQ &TBL_IX)
+.*                 Found index for this table
                    :&IDX_NAME SETC '&SET_INDEX(&J)'
                    AEXIT AWHILE
                AEND
@@ -87,7 +125,20 @@
                MEXIT
          AEND
 .*
-.* Increment search label counter and set up IE level
+.* Set up IE (If/Evaluate) block tracking for this SEARCH
+.* This allows nested SEARCH/IF/EVALUATE and proper END_SEARCH matching
+.*
+.* IE_LVL   - Current nesting depth (incremented for each block)
+.* IE_TYPE  - Block type identifier (15 = SEARCH, see ZC_WS.CPY:254)
+.* IE_TCNT  - Label counter for unique label generation
+.*
+.* IE_SRC_* variables store SEARCH context for use by WHEN and END_SEARCH:
+.*   IE_SRC_TBL   - Table name being searched
+.*   IE_SRC_IDX   - Index variable name
+.*   IE_SRC_MAX   - Maximum OCCURS count
+.*   IE_SRC_LEN   - Element length in bytes
+.*   IE_SRC_WHEN  - Count of WHEN clauses processed
+.*   IE_SRC_ATEND - Flag: AT END clause was specified
 .*
          :&SRC_LAB SETA &SRC_LAB+1
          :&IE_LVL SETA &IE_LVL+1
@@ -100,27 +151,43 @@
          :&IE_SRC_WHEN(&IE_LVL) SETA 0
          :&IE_SRC_ATEND(&IE_LVL) SETB 0
 .*
-.* Generate top of search loop
+.* Generate top of search loop - this is where we check bounds
 .*
          GEN_LABEL SEARCH_&SRC_LAB._TOP,SEARCH_LOOP
 .*
-.* Check if index > max (end of table)
-.* Index value = (subscript-1) * element_length
-.* Max valid index = (max-1) * element_length
+.* Bounds check: has index exceeded table size?
+.*
+.* z390 indexes are zero-based byte offsets, not 1-based subscripts:
+.*   Index value = (subscript - 1) * element_length
+.*   For subscript 1: index = 0
+.*   For subscript N: index = (N-1) * element_length
+.*
+.* Maximum valid index = (OCCURS_count - 1) * element_length
+.* If current index > max, search exhausted - branch to AT END
 .*
          :&MAX_IDX SETA &TBL_LEN*(&TBL_MAX-1)
-         L     ZC_R1,&IDX_NAME
-         LARL  ZC_R14,=F'&MAX_IDX'
-         C     ZC_R1,0(ZC_R14)
-         JH    PG_SEARCH_&SRC_LAB._ATEND
+         L     ZC_R1,&IDX_NAME          Load current index value
+         LARL  ZC_R14,=F'&MAX_IDX'      Load address of max index constant
+         C     ZC_R1,0(ZC_R14)          Compare current to max
+         JH    PG_SEARCH_&SRC_LAB._ATEND  If higher, table exhausted
 .*
-.* If AT END was specified, next statement is the AT END handler
-.* Otherwise continue to WHEN processing
+.* Handle AT END clause placement
+.*
+.* If AT END specified: The imperative statement following AT END
+.* executes when search exhausts the table. We need to:
+.*   1. Jump over AT END body to reach WHEN checks (normal flow)
+.*   2. Place AT END label here (target for bounds check failure)
+.*   3. Set flag so END_SEARCH knows AT END label already placed
+.*
+.* If no AT END: END_SEARCH will generate the AT END label
 .*
          AIF   (&HAS_AT_END)
-.*             Jump over AT END body to first WHEN check
-         J     PG_SEARCH_&SRC_LAB._WHEN1
+         J     PG_SEARCH_&SRC_LAB._WHEN1    Skip AT END body initially
          GEN_LABEL SEARCH_&SRC_LAB._ATEND,SEARCH_AT_END
-         :&IE_SRC_ATEND(&IE_LVL) SETB 1
+         :&IE_SRC_ATEND(&IE_LVL) SETB 1     Mark AT END label placed
          AEND
+.*
+.* Control continues to WHEN clause(s) - processed by WHEN macro
+.* END_SEARCH macro completes the search structure
+.*
          MEND

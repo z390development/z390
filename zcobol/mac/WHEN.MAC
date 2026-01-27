@@ -66,25 +66,51 @@
          AEND
          MEXIT
 .*
-.* SEARCH WHEN HANDLER - uses GET_PARM_FIELD from ZCGETFLD
+.*********************************************************************
+.* SEARCH WHEN HANDLER
+.* Called when WHEN appears inside a SEARCH block (IE_TYPE=15)
 .*
+.* Syntax: WHEN field1 operator field2
+.* Example: WHEN TABLE-KEY(IDX) = SEARCH-ARG
+.*
+.* Generates comparison code and conditional branch:
+.*   - If condition TRUE:  fall through to imperative statement
+.*   - If condition FALSE: branch to INCR (try next element)
+.*
+.* Uses GET_PARM_FIELD (from ZCGETFLD) to parse field operands
+.*********************************************************************
          AENTRY SEARCH_WHEN
+.*
+.* Increment WHEN counter for this SEARCH and get label numbers
+.* SRC_WHEN_N - Which WHEN clause this is (1, 2, 3...)
+.* SRC_N      - SEARCH label counter for generating unique labels
+.*
          :&IE_SRC_WHEN(&IE_LVL) SETA &IE_SRC_WHEN(&IE_LVL)+1
          :&SRC_WHEN_N SETA &IE_SRC_WHEN(&IE_LVL)
          :&SRC_N SETA &IE_TCNT(&IE_LVL)
 .*
-.*
-.* If this is the first WHEN, add jump to END for AT END fall-through
+.* First WHEN needs jump to END for AT END clause fall-through
+.* This handles the case where AT END body falls through to WHEN1
 .*
          AIF (&SRC_WHEN_N EQ 1)
                J     PG_SEARCH_&SRC_N._END
          AEND
-.* Generate WHEN label
+.*
+.* Generate label for this WHEN clause
 .*
          GEN_LABEL SEARCH_&SRC_N._WHEN&SRC_WHEN_N,SEARCH_WHEN
 .*
-.* Parse first field using GET_PARM_FIELD
-.* PARM_IX must point to the field (GET_PARM_FIELD will increment it)
+.* Parse first operand (left side of comparison)
+.* GET_PARM_FIELD parses field name and optional subscripts
+.*
+.* Input variables for GET_PARM_FIELD:
+.*   PARM_IX   - Index into SYSLIST to start parsing
+.*   FIELD_SS1 - Flag for subscript handling
+.*   FIELD_REG - Register to use for address calculation
+.*
+.* Output variables from GET_PARM_FIELD:
+.*   FIELD_NAME - Parsed field name
+.*   FIELD_IX   - Symbol table index (0 if not found)
 .*
          :&PARM_IX SETA 1
          :&FIELD_SS1 SETB 0
@@ -97,12 +123,14 @@
                MEXIT
          AEND
 .*
-.* Get the operator (PARM_IX now points to operator)
+.* Get the comparison operator (=, <, >, etc.)
+.* PARM_IX was advanced by GET_PARM_FIELD, now points to operator
 .*
          :&OPER SETC '&SYSLIST(&PARM_IX)'
          :&PARM_IX SETA &PARM_IX+1
 .*
-.* Parse second field using GET_PARM_FIELD
+.* Parse second operand (right side of comparison)
+.* Can be a field name or a literal value
 .*
          :&FIELD_SS1 SETB 0
          :&FIELD_REG SETC 'ZC_R3'
@@ -110,9 +138,14 @@
          :&SRC_FLD2 SETC '&FIELD_NAME'
          :&SRC_FLD2_IX SETA &FIELD_IX
 .*
-.* Determine condition code for jump when FALSE
-.* We want to jump to INCR when condition is FALSE
-.* CCT is the INVERSE condition for branching
+.* Map COBOL operator to condition code for FALSE branch
+.*
+.* We branch to INCR when condition is FALSE (try next element)
+.* So we need the INVERSE condition code:
+.*   COBOL "="  -> branch on NOT EQUAL (ZC_NE)
+.*   COBOL "<"  -> branch on GREATER OR EQUAL (ZC_GE)
+.*   COBOL ">"  -> branch on LESS OR EQUAL (ZC_LE)
+.*   etc.
 .*
          :&SRC_CCT SETC ''
          AIF ('&OPER' EQ '=' OR '&OPER' EQ 'EQUAL')
@@ -132,7 +165,10 @@
                MEXIT
          AEND
 .*
-.* Generate comparison
+.* Generate the actual field comparison code
+.* GEN_COMP compares two fields and sets condition code
+.* Parameters: field1_name, field1_sym_ix, field2_name, field2_sym_ix
+.* If field2_sym_ix is 0, field2 is treated as a literal
 .*
          AIF (&SRC_FLD2_IX GT 0)
                GEN_COMP &SRC_FLD1,&SRC_FLD1_IX,&SRC_FLD2,&SRC_FLD2_IX
@@ -140,11 +176,15 @@
                GEN_COMP &SRC_FLD1,&SRC_FLD1_IX,&SRC_FLD2,0
          AEND
 .*
-.* If condition FALSE, jump to INCR; if TRUE, fall through
+.* Branch based on comparison result
+.* If condition FALSE: branch to INCR to try next table element
+.* If condition TRUE:  fall through to imperative statement
 .*
          BRC   &SRC_CCT,PG_SEARCH_&SRC_N._INCR
-.*       If condition TRUE, execute statement (follows WHEN)
-.*       and then jump to SEARCH END (done in END_SEARCH)
+.*
+.* After imperative statement executes, control reaches END_SEARCH
+.* which jumps to END (search successful, exit loop)
+.*
          AEND
 .*
 .* EVAL CONDITION FOR EVAL TRUE OR FALSE
