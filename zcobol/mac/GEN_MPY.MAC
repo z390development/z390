@@ -1133,11 +1133,11 @@
          CVD   ZC_R0,ZCVT_PWORK
          MP    &N_TARGET,ZCVT_PWORK
                AWHEN C'P'
-         GEN_MP &N_TARGET,&N_SOURCE
+         GEN_MP &N_TARGET,&L_TARGET,&N_SOURCE,&L_SOURCE,&ONSIZE
                AWHEN C'Q'
          ZC_CONV P,Q,&N_SOURCE
          STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
-         MP    &N_TARGET,ZCVT_PWORK2         
+         MP    &N_TARGET,ZCVT_PWORK2
                AWHEN C'Z'
                    :&PLEN SETA &L_SOURCE/2+1
                    ZC_PACK31  ZCVT_PWORK1,&PLEN,&N_SOURCE,&L_SOURCE
@@ -1147,11 +1147,11 @@
                '           
                     MEXIT
                AEND 
-               AIF (&SCALE GT 0)              
-         SRP   &N_TARGET,&SCALE,0                  
-               AELSEIF (&SCALE LT 0)          
-         SRP   &N_TARGET,64-&SCALE,0               
-               AEND           RPI 1178                
+               AIF (&SCALE GT 0)
+         SRP   &N_TARGET,&SCALE,0
+               AELSEIF (&SCALE LT 0)
+         SRP   &N_TARGET,64-&SCALE,0
+               AEND           RPI 1178
          
 .*
 .* MPY FLD ?? TO Q
@@ -1196,7 +1196,7 @@
                AWHEN C'Q'
          LMG   ZC_R0,ZC_R1,&N_SOURCE  
                AWHEN C'Z'
-                   ZC_PACK31  ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE             
+                   ZC_PACK31  ZCVT_PWORK2,16,&N_SOURCE,&L_SOURCE
          LMG   ZC_R0,ZC_R1,ZCVT_PWORK2
          CXSTR ZC_F4,ZC_R0
                ZC_CONV Q,LD

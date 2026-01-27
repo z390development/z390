@@ -36,6 +36,7 @@
 .*   6.  Added MVC to ZC390NUC.MLC init routine to set ZCVT_PVTMAXDL   
 .*   7.  Updated DISPLAY.MLC to use ZCVT_PVTMAXDL vs MAXBUFF EQU.   
 .* 01/25/12 DSH RPI 1181 CORRECT ZCVT_HIGH_VALUES TO X'FF'
+.* 01/24/26 Issue 730 MP with invalid length operands causes S0C6
 .*********************************************************************
 .* ZC390LIB loaded during init of zcobol program and R8 set to entry
 .*  DSECT AND COPY IN ZCOBOL\Z390\GEN_ID.MAC
@@ -107,6 +108,24 @@ ZCVT_PWORK3    DS PL16       DIV QUOTIENT
 ZCVT_PWORK4    DS PL16       DIV REMAINDER
 ZCVT_NDDX      DS XL16       DIV DIVIDEND HOLD AREA
 ZCVT_WORKAREA  DS XL256      GEN_INSPECT PARMS, GEN_EDIT WORK, ETC.
+         ORG   ZCVT_WORKAREA           Redefine for MP work fields #730
+ZCVT_SRC1      DS PL4                  Source digits  1- 7         #730
+ZCVT_SRC2      DS PL4                  Source digits  8-14         #730
+ZCVT_SRC3      DS PL4                  Source digits 15-21         #730
+ZCVT_SRC4      DS PL4                  Source digits 22-28         #730
+ZCVT_SRC5      DS PL4                  Source digits 28-31         #730
+ZCVT_TGT1      DS PL4                  Target digits  1- 7         #730
+ZCVT_TGT2      DS PL4                  Target digits  8-14         #730
+ZCVT_TGT3      DS PL4                  Target digits 15-21         #730
+ZCVT_TGT4      DS PL4                  Target digits 22-28         #730
+ZCVT_TGT5      DS PL4                  Target digits 28-31         #730
+ZCVT_RES0      DS PL16                 Result field                #730
+ZCVT_RES1      DS PL8                  Result digits  1- 7         #730
+ZCVT_RES2      DS PL8                  Result digits  8-14         #730
+ZCVT_RES3      DS PL8                  Result digits 15-21         #730
+ZCVT_RES4      DS PL8                  Result digits 22-28         #730
+ZCVT_RES5      DS PL8                  Result digits 28-31         #730
+          ORG   ,                      Reset to end                #730
 *
 * END OF ZC390CVT
 *

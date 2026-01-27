@@ -25,81 +25,56 @@
 .* Notes:
 .*  1.  ROUNDED not supported yet.
 .*********************************************************************
-         GEN_MP &TGT,&SRC
+         GEN_MP &TGTNAM,&TGTLEN,&SRCNAM,&SRCLEN,&ONSIZE
+.*
+.* &TGTNAM = name of target field
+.* &TGTLEN = length of target field
+.*           target field is operand1 and result field.
+.* &SRCNAM = name of source field
+.* &SRCLEN = length of source field
+.*           source field is immutable operand2
+.* &ONSIZE = '1' if ON SIZE clause is in effect
+.* &MPY_LAB= GBLA variable used to compose branch target address
+.*           for handling overflow, should one occur
+.*
          COPY  ZC_WS
+.*
+.* Check how to calculate the product of our two Packed fields
+.* Restriction of MP instruction:
+.* - Target length max 16 bytes (31 digits)
+.* - Source length max  8 bytes (15 digits)
+.* - Source length must be less than target length
+.* - At run-time target must contain (source-length) leading zero bytes
+.*   this last requirement cannot now be checked.
+         AIF   (&TGTLEN LE 16 AND &SRCLEN LT &TGTLEN).GENMP
+         AIF   (&SRCLEN LE 16 AND &TGTLEN LT &SRCLEN).SWAPEM
+         AIF   (&TGTLEN LE  8 AND &SRCLEN EQ &TGTLEN).LENGTHN
+         MNOTE 12,'MATRIX logic not implemented yet'
+         AGO   .MEND
 
 .*
-.* Dissect target field into its parts
-.* We expect only a plain field name, and optionally a length, no base
-         MNOTE *,'**!! TGT=&TGT'
-&I       SETA  ('&TGT' INDEX '(')      Parenthesis present?
-         AIF   (&I EQ 0).TGTFLD        Okay - field name only
-&TGTFLD  SETC  '&TGT'(1,&I-1)          Get field name
-&TGTLEN  SETC  '&TGT'(&I+1,*)          And get trailer text
-&CHAR    SETC  '&TGTLEN'(K'&TGTLEN,1)  Get trailing character
-         AIF   ('&CHAR' NE ')').ERR_TGTPAR
-&TGTLEN  SETC  '&TGTLEN'(1,K'&TGTLEN-1) Strip trailing parenthesis
-&I       SETA  ('&TGTLEN' INDEX ',')   Comma present?
-         AIF   (&I NE 0).ERR_TGTLEN    Oops - not supported!
-&I       SETA  ('&TGTLEN' INDEX '+')   Plus sign present?
-         AIF   (&I NE 0).ERR_TGTLEN    Oops - not supported!
-&I       SETA  ('&TGTLEN' INDEX '-')   Minus sign present?
-         AIF   (&I NE 0).ERR_TGTLEN    Oops - not supported!
-&TGTLENV SETA  D2A(&TGTLEN)            Convert to value
-         AGO   .TGTOK                  Assuming TGTLEN valid
-.TGTFLD  ANOP  ,                       Target is fieldname only
-&TGTFLD  SETC  '&TGT'                  Copy field name
-&TGTLEN  SETC  ''                      Implicit length to be used
-&TGTLENV SETA  (L'&TGTFLD)             Get defined length value
-.TGTOK   ANOP  ,                       TGT parm processed
-         MNOTE *,'**!! .TGTOK TGTFLD=&TGTFLD TGTLENV=&TGTLENV'
+.* The requirements for a normal MP instruction (see above) are met.
+.* A single MP suffices - no whistles or bells needed
+.* Overflow irrelevant - we get a S0C6 abend when overflow might occur
+.GENMP   ANOP  ,
+         MP    &TGTNAM.(&TGTLEN),&SRCNAM.(&SRCLEN)
+         AGO   .MEND
 
 .*
-.* Dissect source field into its parts
-.* We expect a plain field name, and optionally a length, no base
-         MNOTE *,'**!! SRC=&SRC'
-&I       SETA  ('&SRC' INDEX '(')      Parenthesis present?
-         AIF   (&I EQ 0).SRCFLD        Okay - field name only
-&SRCFLD  SETC  '&SRC'(1,&I-1)          Get field name
-&SRCLEN  SETC  '&SRC'(&I+1,*)          And get trailer text
-&CHAR    SETC  '&SRCLEN'(K'&SRCLEN,1)  Get trailing character
-         AIF   ('&CHAR' NE ')').ERR_SRCPAR
-&SRCLEN  SETC  '&SRCLEN'(1,K'&SRCLEN-1) Strip trailing parenthesis
-&I       SETA  ('&SRCLEN' INDEX ',')   Comma present?
-         AIF   (&I NE 0).ERR_SRCLEN    Oops - not supported!
-&I       SETA  ('&SRCLEN' INDEX '+')   Plus sign present?
-         AIF   (&I NE 0).ERR_SRCLEN    Oops - not supported!
-&I       SETA  ('&SRCLEN' INDEX '-')   Minus sign present?
-         AIF   (&I NE 0).ERR_SRCLEN    Oops - not supported!
-&SRCLENV SETA  D2A(&SRCLEN)            Convert to value
-         AGO   .SRCOK                  Assuming SRCLEN valid
-.SRCFLD  ANOP  ,                       Source is fieldname only
-&SRCFLD  SETC  '&SRC'                  Copy field name
-&SRCLEN  SETC  ''                      Implicit length to be used
-         MNOTE *,'**!! .SRCFLD SRCFLD=&SRCFLD'
-&SRCLENV SETA  (L'&SRCFLD)             Get defined length value
-.SRCOK   ANOP  ,                       SRC parm processed
-         MNOTE *,'**!! .SRCOK SRCFLD=&SRCFLD SRCLENV=&SRCLENV'
-
-  MPFAIL &TGTFLD.(&TGTLENV),&SRCFLD.(&SRCLENV)
-         AGO   .MEND
-
-
-
-
-
-.ERR_TGTSIZE ANOP  ,
-         MNOTE 8,'Length of target field &TGT exceeds 15 bytes'
-         AGO   .MEND
-.ERR_TGTOP ANOP  ,
-         MNOTE 8,'Target field &TGT has base/length specified: not supp*
-               orted'
-         AGO   .MEND
-.ERR_SRCPAR ANOP  ,
-         MNOTE 8,'Source field &SRC has unmatched parentheses'
-         AGO   .MEND
-.ERR_SRCLEN ANOP  ,
-         MNOTE 8,'Source field &SRC has unsupported length expression'
+.* The requirements for a normal MP instruction (see above) are met.
+.* Yet when we swap the operands, the restrictions are met.
+.* But since we cannot overwrite the source field we use a temp. field
+.* This temp field is 16 bytes long, so can be used also when
+.* lengths are equal.
+.* A single MP suffices - but we need to either swap/unswap the fields
+.* or we need to use a longer result field.
+.SWAPEM  ANOP  ,
+.LENGTHN ANOP  ,
+         ZAP   ZCVT_RES0,&SRCNAM.(&SRCLEN)
+         MP    ZCVT_RES0,&TGTNAM.(&TGTLEN)
+         ZAP   &TGTNAM.(&TGTLEN),ZCVT_RES0
+         AIF   ('&ONSIZE' NE '1').MEND
+         JO    PG_MPY_&MPY_LAB._ON_SIZE    Goto ON SIZE clause
          AGO   .MEND
 
 .MEND    ANOP  ,
