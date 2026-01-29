@@ -3708,7 +3708,7 @@ private void process_bal_op(){
             int l1 = hex_tab.indexOf(hex_len1.charAt(0))+1; // total field length  // #750
             int l2 = hex_tab.indexOf(hex_len2.charAt(0))+1; // total field length  // #750
             if (l2 > 8) {                                                          // #750
-                log_error(70,"field 2 hex length = " + l2 +                        // #750
+                log_error(70,"field 2 length = " + l2 +                            // #750
                              " must be no more than 8");                           // #750
             }                                                                      // #750
             if (l2 >= l1) {                                                        // #750
