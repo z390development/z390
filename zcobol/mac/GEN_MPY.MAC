@@ -271,7 +271,7 @@
          AEND
          LARL  ZC_R14,=PL&LPNUM'&NUM'
         AEND
-         MP    &N_TARGET,0(&LPNUM,ZC_R14)
+         GEN_MP &N_TARGET,&L_TARGET,0(ZC_R14),&LPNUM,&ONSIZE
                AIF (&SCALE GT 0)              
          SRP   &N_TARGET,&SCALE,0                  
                AELSEIF (&SCALE LT 0)          
@@ -299,7 +299,7 @@
              :&LPNUM SETA 16
          AEND
          LARL  ZC_R14,=PL&LPNUM'&NUM'
-         MP    ZCVT_PWORK1(&PLEN),0(&LPNUM,ZC_R14)
+         GEN_MP ZCVT_PWORK1,&PLEN,0(ZC_R14),&LPNUM,&ONSIZE
                AIF (&SCALE GT 0)              
          SRP ZCVT_PWORK1(&PLEN),&SCALE,0                  
                AELSEIF (&SCALE LT 0)          

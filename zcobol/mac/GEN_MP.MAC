@@ -39,6 +39,26 @@
 .*
          COPY  ZC_WS
 .*
+.* First take analyze the source and target field specs
+.* to construct the proper source code for referencing them.
+&TGTREF  SETC  '&TGTNAM.(&TGTLEN.)'    Assume field(length)
+&I       SETA  ('&TGTNAM' INDEX '(')   More than just a field name?
+         AIF   (&I EQ 0).TGTREFOK      No - default is okay
+&TGTREF  SETC  '&TGTNAM'(1,&I-1)       Extract offset part
+&X       SETC  '&TGTNAM'(&I+1,*)       Extract remainder
+&X       SETC  '&X'(1,K'&X-1)          Strip trailing parenthesis
+&TGTREF  SETC  '&TGTREF.(&TGTLEN.,&X)' Construct complete field ref
+.TGTREFOK ANOP ,
+.*
+&SRCREF  SETC  '&SRCNAM.(&SRCLEN.)'    Assume field(length)
+&I       SETA  ('&SRCNAM' INDEX '(')   More than just a field name?
+         AIF   (&I EQ 0).SRCREFOK      No - default is okay
+&SRCREF  SETC  '&SRCNAM'(1,&I-1)       Extract offset part
+&X       SETC  '&SRCNAM'(&I+1,*)       Extract remainder
+&X       SETC  '&X'(1,K'&X-1)          Strip trailing parenthesis
+&SRCREF  SETC  '&SRCREF.(&SRCLEN.,&X)' Construct complete field ref
+.SRCREFOK ANOP ,
+.*
 .* Check how to calculate the product of our two Packed fields
 .* Restriction of MP instruction:
 .* - Target length max 16 bytes (31 digits)
@@ -83,7 +103,7 @@
 .* A single MP suffices - no whistles or bells needed
 .* Overflow irrelevant - we get a S0C6 abend when overflow might occur
 .GENMP   ANOP  ,
-         MP    &TGTNAM.(&TGTLEN),&SRCNAM.(&SRCLEN)
+         MP    &TGTREF,&SRCREF
          AGO   .MEND
 
 .*
@@ -96,9 +116,9 @@
 .* or we need to use a longer result field.
 .SWAPEM  ANOP  ,
 .LENGTHN ANOP  ,
-         ZAP   ZCVT_RESX,&SRCNAM.(&SRCLEN)
-         MP    ZCVT_RESX,&TGTNAM.(&TGTLEN)
-         ZAP   &TGTNAM.(&TGTLEN),ZCVT_RESX
+         ZAP   ZCVT_RESX,&SRCREF
+         MP    ZCVT_RESX,&TGTREF
+         ZAP   &TGTREF,ZCVT_RESX
          AIF   ('&ONSIZE' NE '1').MEND
          JO    PG_MPY_&MPY_LAB._ON_SIZE    Goto ON SIZE clause
          AGO   .MEND
@@ -111,7 +131,7 @@
          XC    ZCVT_PZERO,ZCVT_PZERO       Set to zeroes
          OI    ZCVT_PZERO+L'ZCVT_PZERO-1,X'0C' Make positive
 * Create 13-digit numbers from the source field
-         ZAP   ZCVT_RESX,&SRCNAM.(&SRCLEN) Pick up source data
+         ZAP   ZCVT_RESX,&SRCREF           Pick up source data
          ZAP   ZCVT_SRC0,ZCVT_RESX+9(7)    Extract digits 19-31
          AIF   (&SRCLEN LE 7).GETSRC1      Got only 13 digits input
          SRP   ZCVT_RESX,64-13,0           Shift out used digits
@@ -126,7 +146,7 @@
          ZAP   ZCVT_SRC2,ZCVT_PZERO
 .GETTGT  ANOP  ,
 * Create 13-digit numbers from the target field
-         ZAP   ZCVT_RESX,&TGTNAM.(&TGTLEN) Pick up target data
+         ZAP   ZCVT_RESX,&TGTREF           Pick up target data
          ZAP   ZCVT_TGT0,ZCVT_RESX+9(7)    Extract digits 17-31
          AIF   (&TGTLEN LE 7).GETTGT1      Got only 13 digits input
          SRP   ZCVT_RESX,64-13,0           Shift out used digits
@@ -286,7 +306,7 @@
 &ZAPX    SETC  'AP'
 .CRT0    ANOP  ,
          &ZAPX ZCVT_RESX,ZCVT_RES0         Add in the 'units'
-         ZAP   &TGTNAM.(&TGTLEN),ZCVT_RESX Pick up result data
+         ZAP   &TGTREF,ZCVT_RESX           Pick up result data
          AIF   ('&ONSIZE' NE '1').MEND
          JO    PG_MPY_&MPY_LAB._ON_SIZE    Goto ON SIZE clause
          CP    ZCVT_RES4,ZCVT_PZERO        Check 'ten-thousands'
