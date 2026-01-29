@@ -1063,13 +1063,13 @@
          LER   ZC_F4,ZC_F0
                ZC_CONV P,EH
          STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
-         MP    &N_TARGET,ZCVT_PWORK2
+         GEN_MP &N_TARGET,&L_TARGET,ZCVT_PWORK2,L'ZCVT_PWORK2,&ONSIZE
                AWHEN C'2'
          LD    ZC_F0,&N_SOURCE 
          LDR   ZC_F4,ZC_F0
                ZC_CONV P,DH
          STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
-         MP    &N_TARGET,ZCVT_PWORK2
+         GEN_MP &N_TARGET,&L_TARGET,ZCVT_PWORK2,L'ZCVT_PWORK2,&ONSIZE
                AWHEN C'3'    
          LD    ZC_F0,&N_SOURCE
          LD    ZC_F2,8+&N_SOURCE
@@ -1077,20 +1077,20 @@
          LDR   ZC_F6,ZC_F2
                ZC_CONV P,LH
          STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
-         MP    &N_TARGET,ZCVT_PWORK2
+         GEN_MP &N_TARGET,&L_TARGET,ZCVT_PWORK2,L'ZCVT_PWORK2,&ONSIZE
                AWHEN C'4'  
          LE    ZC_F0,&N_SOURCE
          LDEBR ZC_F0,ZC_F0      
          LDR   ZC_F4,ZC_F0
                ZC_CONV P,DB
          STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
-         MP    &N_TARGET,ZCVT_PWORK2
+         GEN_MP &N_TARGET,&L_TARGET,ZCVT_PWORK2,L'ZCVT_PWORK2,&ONSIZE
                AWHEN C'5'   
          LD    ZC_F0,&N_SOURCE
          LDR   ZC_F4,ZC_F0
                ZC_CONV P,DB
          STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
-         MP    &N_TARGET,ZCVT_PWORK2
+         GEN_MP &N_TARGET,&L_TARGET,ZCVT_PWORK2,L'ZCVT_PWORK2,&ONSIZE
                AWHEN C'6'   
          LD    ZC_F0,&N_SOURCE
          LD    ZC_F2,8+&N_SOURCE
@@ -1098,20 +1098,20 @@
          LDR   ZC_F6,ZC_F2
                ZC_CONV P,LB
          STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
-         MP    &N_TARGET,ZCVT_PWORK2
+         GEN_MP &N_TARGET,&L_TARGET,ZCVT_PWORK2,L'ZCVT_PWORK2,&ONSIZE
                AWHEN C'7'  
          LE    ZC_F0,&N_SOURCE
          LDETR ZC_F0,ZC_F0,0    
          LDR   ZC_F4,ZC_F0
                ZC_CONV P,DD
          STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
-         MP    &N_TARGET,ZCVT_PWORK2
+         GEN_MP &N_TARGET,&L_TARGET,ZCVT_PWORK2,L'ZCVT_PWORK2,&ONSIZE
                AWHEN C'8'  
-         LD    ZC_F0,&N_SOURCE  
+         LD    ZC_F0,&N_SOURCE
          LDR   ZC_F4,ZC_F0
                ZC_CONV P,DD
          STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
-         MP    &N_TARGET,ZCVT_PWORK2
+         GEN_MP &N_TARGET,&L_TARGET,ZCVT_PWORK2,L'ZCVT_PWORK2,&ONSIZE
                AWHEN C'9' 
          LD    ZC_F0,&N_SOURCE
          LD    ZC_F2,8+&N_SOURCE
@@ -1119,34 +1119,34 @@
          LDR   ZC_F6,ZC_F2
                ZC_CONV P,LD
          STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
-         MP    &N_TARGET,ZCVT_PWORK2
+         GEN_MP &N_TARGET,&L_TARGET,ZCVT_PWORK2,L'ZCVT_PWORK2,&ONSIZE
                AWHEN C'F',C'A',C'I'
          L     ZC_R0,&N_SOURCE  
          CVD   ZC_R0,ZCVT_PWORK
-         MP    &N_TARGET,ZCVT_PWORK
+         GEN_MP &N_TARGET,&L_TARGET,ZCVT_PWORK,L'ZCVT_PWORK,&ONSIZE
                AWHEN C'G'
          LG    ZC_R0,&N_SOURCE
          CVDG  ZC_R0,ZCVT_PWORK1
-         MP    &N_TARGET,ZCVT_PWORK1
+         GEN_MP &N_TARGET,&L_TARGET,ZCVT_PWORK1,L'ZCVT_PWORK1,&ONSIZE
                AWHEN C'H'
          LH    ZC_R0,&N_SOURCE   
          CVD   ZC_R0,ZCVT_PWORK
-         MP    &N_TARGET,ZCVT_PWORK
+         GEN_MP &N_TARGET,&L_TARGET,ZCVT_PWORK,L'ZCVT_PWORK,&ONSIZE
                AWHEN C'P'
          GEN_MP &N_TARGET,&L_TARGET,&N_SOURCE,&L_SOURCE,&ONSIZE
                AWHEN C'Q'
          ZC_CONV P,Q,&N_SOURCE
          STMG  ZC_R0,ZC_R1,ZCVT_PWORK2
-         MP    &N_TARGET,ZCVT_PWORK2
+         GEN_MP &N_TARGET,&L_TARGET,ZCVT_PWORK2,L'ZCVT_PWORK2,&ONSIZE
                AWHEN C'Z'
                    :&PLEN SETA &L_SOURCE/2+1
                    ZC_PACK31  ZCVT_PWORK1,&PLEN,&N_SOURCE,&L_SOURCE
-         MP    &N_TARGET,ZCVT_PWORK1(&PLEN)
+         GEN_MP &N_TARGET,&L_TARGET,ZCVT_PWORK1,&PLEN,&ONSIZE
                AELSE
                     MNOTE 8,'GEN_MPY INVALID SOURCE DATA TYPE &N_SOURCEX
-               '           
+               '
                     MEXIT
-               AEND 
+               AEND
                AIF (&SCALE GT 0)
          SRP   &N_TARGET,&SCALE,0
                AELSEIF (&SCALE LT 0)
@@ -1293,7 +1293,7 @@
                 AEND 
                :&PLEN1 SETA &L_TARGET/2+1
                ZC_PACK31 ZCVT_PWORK1,&PLEN1,&N_TARGET,&L_TARGET
-         MP    ZCVT_PWORK1(&PLEN1),ZCVT_PWORK2
+         GEN_MP ZCVT_PWORK1,&PLEN1,ZCVT_PWORK2,L'ZCVT_PWORK2,&ONSIZE
                AIF (&SCALE GT 0)              
          SRP ZCVT_PWORK1(&PPLEN1),&SCALE,0                  
                AELSEIF (&SCALE LT 0)          

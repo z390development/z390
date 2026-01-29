@@ -6847,7 +6847,6 @@ private void process_sect(byte sect_type,String sect_name){
  */
 public int find_sym(String name){ // RPI 415 public
 	int index = 0;
-    tz390.put_trace("**!! az390.find_sym(" + name + ") dcv_type=" + dcv_type);
 	if (dcv_type){
 		index  = tz390.find_key_index('V',name.toUpperCase());
 		if (index == -1){
@@ -6857,7 +6856,6 @@ public int find_sym(String name){ // RPI 415 public
 		return index;
 	}
 	index  = tz390.find_key_index('S',name.toUpperCase());
-    tz390.put_trace("**!! az390.find_sym(" + name + ") index=" + index + " lookahead_mode=" + lookahead_mode);
 	if (!lookahead_mode){
 		if (index != -1
 			&& sym_def[index] != sym_def_lookahead){ // RPI 415 

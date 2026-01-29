@@ -45,12 +45,38 @@
 .* - Source length max  8 bytes (15 digits)
 .* - Source length must be less than target length
 .* - At run-time target must contain (source-length) leading zero bytes
+.* This leads to the following matrix, based on SRC/TGT field lengths:
+.* L1/L2  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16
+.*      ------------------------------------------------
+.*  1  |  =  S  S  S  S  S  S  S  S  S  S  S  S  S  S  S
+.*  2  |  M  =  S  S  S  S  S  S  S  S  S  S  S  S  S  S
+.*  3  |  M  M  =  S  S  S  S  S  S  S  S  S  S  S  S  S
+.*  4  |  M  M  M  =  S  S  S  S  S  S  S  S  S  S  S  S
+.*  5  |  M  M  M  M  =  S  S  S  S  S  S  S  S  S  S  S
+.*  6  |  M  M  M  M  M  =  S  S  S  S  S  S  S  S  S  S
+.*  7  |  M  M  M  M  M  M  =  S  S  S  S  S  S  S  S  S
+.*  8  |  M  M  M  M  M  M  M  =  S  S  S  S  S  S  S  S
+.*  9  |  M  M  M  M  M  M  M  M  X  X  X  X  X  X  X  X
+.* 10  |  M  M  M  M  M  M  M  M  X  X  X  X  X  X  X  X
+.* 11  |  M  M  M  M  M  M  M  M  X  X  X  X  X  X  X  X
+.* 12  |  M  M  M  M  M  M  M  M  X  X  X  X  X  X  X  X
+.* 13  |  M  M  M  M  M  M  M  M  X  X  X  X  X  X  X  X
+.* 14  |  M  M  M  M  M  M  M  M  X  X  X  X  X  X  X  X
+.* 15  |  M  M  M  M  M  M  M  M  X  X  X  X  X  X  X  X
+.* 16  |  M  M  M  M  M  M  M  M  X  X  X  X  X  X  X  X
+.* where:
+.* M indicates an MP will do the job
+.* = indicates equal lengths, one operand to be lengthened
+.* S indicates that an MP will do the job, although operands
+.*             will need to be swapped
+.* X indicates a single MP does not suffice and matrix
+.*             multipliction will have to be employed instead.
+.*
 .*   this last requirement cannot now be checked.
-         AIF   (&TGTLEN LE 16 AND &SRCLEN LT &TGTLEN).GENMP
-         AIF   (&SRCLEN LE 16 AND &TGTLEN LT &SRCLEN).SWAPEM
+         AIF   (&SRCLEN LE  8 AND &SRCLEN LT &TGTLEN).GENMP
+         AIF   (&TGTLEN LE  8 AND &TGTLEN LT &SRCLEN).SWAPEM
          AIF   (&TGTLEN LE  8 AND &SRCLEN EQ &TGTLEN).LENGTHN
-         MNOTE 12,'MATRIX logic not implemented yet'
-         AGO   .MEND
+         AGO   .MATRIX                 Requires matrix multiplication
 
 .*
 .* The requirements for a normal MP instruction (see above) are met.
@@ -70,11 +96,210 @@
 .* or we need to use a longer result field.
 .SWAPEM  ANOP  ,
 .LENGTHN ANOP  ,
-         ZAP   ZCVT_RES0,&SRCNAM.(&SRCLEN)
-         MP    ZCVT_RES0,&TGTNAM.(&TGTLEN)
-         ZAP   &TGTNAM.(&TGTLEN),ZCVT_RES0
+         ZAP   ZCVT_RESX,&SRCNAM.(&SRCLEN)
+         MP    ZCVT_RESX,&TGTNAM.(&TGTLEN)
+         ZAP   &TGTNAM.(&TGTLEN),ZCVT_RESX
          AIF   ('&ONSIZE' NE '1').MEND
          JO    PG_MPY_&MPY_LAB._ON_SIZE    Goto ON SIZE clause
+         AGO   .MEND
+
+.*
+.* The fields are too large for a single MP instruction
+.* We'll cut the fields up into subfields of 13 digits each.
+.* Then perform matrix multiplication to create the product.
+.MATRIX  ANOP  ,
+         XC    ZCVT_PZERO,ZCVT_PZERO       Set to zeroes
+         OI    ZCVT_PZERO+L'ZCVT_PZERO-1,X'0C' Make positive
+* Create 13-digit numbers from the source field
+         ZAP   ZCVT_RESX,&SRCNAM.(&SRCLEN) Pick up source data
+         ZAP   ZCVT_SRC0,ZCVT_RESX+9(7)    Extract digits 19-31
+         AIF   (&SRCLEN LE 7).GETSRC1      Got only 13 digits input
+         SRP   ZCVT_RESX,64-13,0           Shift out used digits
+         ZAP   ZCVT_SRC1,ZCVT_RESX+9(7)    Extract digits 6-18
+         AIF   (&SRCLEN LE 13).GETSRC2     Got only 25 digits input
+         SRP   ZCVT_RESX,64-13,0           Shift out used digits
+         ZAP   ZCVT_SRC2,ZCVT_RESX         Extract digits 1-5
+         AGO   .GETTGT
+.GETSRC1 ANOP  ,
+         ZAP   ZCVT_SRC1,ZCVT_PZERO
+.GETSRC2 ANOP  ,
+         ZAP   ZCVT_SRC2,ZCVT_PZERO
+.GETTGT  ANOP  ,
+* Create 13-digit numbers from the target field
+         ZAP   ZCVT_RESX,&TGTNAM.(&TGTLEN) Pick up target data
+         ZAP   ZCVT_TGT0,ZCVT_RESX+9(7)    Extract digits 17-31
+         AIF   (&TGTLEN LE 7).GETTGT1      Got only 13 digits input
+         SRP   ZCVT_RESX,64-13,0           Shift out used digits
+         ZAP   ZCVT_TGT1,ZCVT_RESX+9(7)    Extract digits 2-16
+         AIF   (&TGTLEN LE 13).GETTGT2     Got only 25 digits input
+         SRP   ZCVT_RESX,64-13,0           Shift out used digits
+         ZAP   ZCVT_TGT2,ZCVT_RESX         Extract digit 1
+         AGO   .MP1
+.GETTGT1 ANOP  ,
+         ZAP   ZCVT_TGT1,ZCVT_PZERO
+.GETTGT2 ANOP  ,
+         ZAP   ZCVT_TGT2,ZCVT_PZERO
+* Calculate partial sums and add them to form result fields
+.MP1     ANOP  ,
+*        Step 1: create units from units * units
+         ZAP   ZCVT_RESX,ZCVT_SRC0         Source 'units'
+         MP    ZCVT_RESX,ZCVT_TGT0         Target 'units'
+         ZAP   ZCVT_RES0,ZCVT_RESX+9(7)    Set result 'units'
+         SRP   ZCVT_RESX,64-13,0           Shift out 'units'
+         ZAP   ZCVT_RES1,ZCVT_RESX         Set result 'tens'
+.*
+.* Setup vars: each RES2-RES4 field needs to be zapped first
+&ZAP2    SETC  'ZAP'                       For ZCVT_RES2
+&ZAP3    SETC  'ZAP'                       For ZCVT_RES3
+&ZAP4    SETC  'ZAP'                       For ZCVT_RES4
+.*
+.MP2A    ANOP  ,
+         AIF   (&SRCLEN LE 7).MP2ANOT      Got no 'tens'
+*        Step 2a: create tens from tens * units
+         ZAP   ZCVT_RESX,ZCVT_SRC1         Source 'tens'
+         MP    ZCVT_RESX,ZCVT_TGT0         Target 'units'
+         AP    ZCVT_RES1,ZCVT_RESX+9(7)    Add 'tens'
+         SRP   ZCVT_RESX,64-13,0           Shift out 'tens'
+         &ZAP2 ZCVT_RES2,ZCVT_RESX         Set result 'hundreds'
+&ZAP2    SETC  'AP'                        For ZCVT_RES2
+.MP2ANOT ANOP  ,
+.*
+.MP2B    ANOP  ,
+         AIF   (&TGTLEN LE 7).MP2BNOT      Got no 'tens'
+*        Step 2b: create tens from units * tens
+         ZAP   ZCVT_RESX,ZCVT_SRC0         Source 'units'
+         MP    ZCVT_RESX,ZCVT_TGT1         Target 'tens'
+         AP    ZCVT_RES1,ZCVT_RESX+9(7)    Add 'tens'
+         SRP   ZCVT_RESX,64-13,0           Shift out 'tens'
+         &ZAP2 ZCVT_RES2,ZCVT_RESX         Add result 'hundreds'
+&ZAP2    SETC  'AP'                        For ZCVT_RES2
+.MP2BNOT ANOP  ,
+.*
+.MP3A    ANOP  ,
+         AIF   (&SRCLEN LE 13).MP3ANOT     Got no 'hundreds'
+*        Step 3a: create hundreds from hundreds * units
+         ZAP   ZCVT_RESX,ZCVT_SRC2         Source 'hundreds'
+         MP    ZCVT_RESX,ZCVT_TGT0         Target 'units'
+         AP    ZCVT_RES2,ZCVT_RESX+9(7)    Add 'hundreds'
+         SRP   ZCVT_RESX,64-13,0           Shift out 'hundreds'
+         &ZAP3 ZCVT_RES3,ZCVT_RESX         Set result 'thousands'
+&ZAP3    SETC  'AP'                        For ZCVT_RES3
+.MP3ANOT ANOP  ,
+.*
+.MP3B    ANOP  ,
+         AIF   (&SRCLEN LE 7).MP3BNOT      Got no 'tens'
+         AIF   (&TGTLEN LE 7).MP3BNOT      Got no 'tens'
+*        Step 3b: create hundreds from tens * tens
+         ZAP   ZCVT_RESX,ZCVT_SRC1         Source 'tens'
+         MP    ZCVT_RESX,ZCVT_TGT1         Target 'tens'
+         AP    ZCVT_RES2,ZCVT_RESX+9(7)    Add 'hundreds'
+         SRP   ZCVT_RESX,64-13,0           Shift out 'hundreds'
+         &ZAP3 ZCVT_RES3,ZCVT_RESX         Add result 'thousands'
+&ZAP3    SETC  'AP'                        For ZCVT_RES3
+.MP3BNOT ANOP  ,
+.*
+.MP3C    ANOP  ,
+         AIF   (&TGTLEN LE 13).MP3CNOT     Got no 'hundreds'
+*        Step 3c: create hundreds from units * hundreds
+         ZAP   ZCVT_RESX,ZCVT_SRC0         Source 'units'
+         MP    ZCVT_RESX,ZCVT_TGT2         Target 'hundreds'
+         AP    ZCVT_RES2,ZCVT_RESX+9(7)    Add 'hundreds'
+         SRP   ZCVT_RESX,64-13,0           Shift out 'hundreds'
+         &ZAP3 ZCVT_RES3,ZCVT_RESX         Add result 'thousands'
+&ZAP3    SETC  'AP'                        For ZCVT_RES3
+.MP3CNOT ANOP  ,
+.*
+.MP4A    ANOP  ,
+         AIF   (&SRCLEN LE 13).MP4ANOT     Got no 'hundreds'
+         AIF   (&TGTLEN LE 7).MP4ANOT      Got no 'tens'
+*        Step 4a: create thousands from hundreds * tens
+         ZAP   ZCVT_RESX,ZCVT_SRC2         Source 'hundreds'
+         MP    ZCVT_RESX,ZCVT_TGT1         Target 'tens'
+         AP    ZCVT_RES3,ZCVT_RESX+9(7)    Add 'thousands'
+         SRP   ZCVT_RESX,64-13,0           Shift out 'thousands'
+         &ZAP4 ZCVT_RES4,ZCVT_RESX         Set result 'ten-thousands'
+&ZAP4    SETC  'AP'                        For ZCVT_RES4
+.MP4ANOT ANOP  ,
+.*
+.MP4B    ANOP  ,
+         AIF   (&SRCLEN LE 7).MP4BNOT      Got no 'tens'
+         AIF   (&TGTLEN LE 13).MP4BNOT     Got no 'hundreds'
+*        Step 4b: create thousands from tens * hundreds
+         ZAP   ZCVT_RESX,ZCVT_SRC1         Source 'tens'
+         MP    ZCVT_RESX,ZCVT_TGT2         Target 'hundreds'
+         AP    ZCVT_RES3,ZCVT_RESX+9(7)    Add 'thousands'
+         SRP   ZCVT_RESX,64-13,0           Shift out 'thousands'
+         &ZAP4 ZCVT_RES4,ZCVT_RESX         Add result 'ten-thousands'
+&ZAP4    SETC  'AP'                        For ZCVT_RES4
+.MP4BNOT ANOP  ,
+.*
+.MP5A    ANOP  ,
+         AIF   (&SRCLEN LE 13).MP5ANOT     Got no 'hundreds'
+         AIF   (&TGTLEN LE 13).MP5ANOT     Got no 'hundreds'
+*        Step 5a: create ten-thousands from hundreds * hundreds
+.*                each has 5 digits only, product max 10 digits
+         ZAP   ZCVT_RESX,ZCVT_SRC2         Source 'hundreds'
+         MP    ZCVT_RESX,ZCVT_TGT2         Target 'hundreds'
+         &ZAP4 ZCVT_RES4,ZCVT_RESX+9(7)    Add 'ten-thousands'
+&ZAP4    SETC  'AP'                        For ZCVT_RES4
+.MP5ANOT ANOP  ,
+* Normalize results
+&SRCDIG  SETA  (2*&SRCLEN-1)               Nr of source digits
+&TGTDIG  SETA  (2*&TGTLEN-1)               Nr of target digits
+&TOTDIG  SETA  (&SRCDIG + &TGTDIG)         Total digits in product
+         ZAP   ZCVT_RESX,ZCVT_RES0         Get 'units'
+         SRP   ZCVT_RESX,64-13,0           Shift out 'units'
+         AP    ZCVT_RES1,ZCVT_RESX         Add to 'tens'
+         MVI   ZCVT_RES0,X'00'             Wipe overflow digits
+         AIF   (&TOTDIG LE 13).NORMAL      Nothing to normalize
+         ZAP   ZCVT_RESX,ZCVT_RES1         Get 'tens'
+         SRP   ZCVT_RESX,64-13,0           Shift out 'tens'
+         AP    ZCVT_RES2,ZCVT_RESX         Add to 'hundreds'
+         MVI   ZCVT_RES1,X'00'             Wipe overflow digits
+         AIF   (&TOTDIG LE 26).NORMAL      Nothing left to do
+         ZAP   ZCVT_RESX,ZCVT_RES2         Get 'hundreds'
+         SRP   ZCVT_RESX,64-13,0           Shift out 'hundreds'
+         AP    ZCVT_RES3,ZCVT_RESX         Add to 'thousands'
+         MVI   ZCVT_RES2,X'00'             Wipe overflow digits
+         AIF   (&TOTDIG LE 39).NORMAL      Nothing left to do
+         ZAP   ZCVT_RESX,ZCVT_RES3         Get 'thousands'
+         SRP   ZCVT_RESX,64-13,0           Shift out 'thousands'
+         AP    ZCVT_RES4,ZCVT_RESX         Add to 'ten-thousands'
+         MVI   ZCVT_RES3,X'00'             Wipe overflow digits
+.NORMAL  ANOP  ,
+* Create 31-digit result field and set result
+&ZAPX    SETC  'ZAP'                       Initial opcode
+         AIF   (&TOTDIG LE 13).CRT0        Only 'units'
+         AIF   (&TOTDIG LE 26).CRT1        'tens' and 'units'
+         AIF   (&TOTDIG LE 39).CRT2        'hundreds' thru 'units'
+.CRT3    ANOP  ,
+         &ZAPX ZCVT_RESX,ZCVT_RES3         Get the 'thousands'
+         SRP   ZCVT_RESX,13,0              Shift left 13 digits
+&ZAPX    SETC  'AP'
+.CRT2    ANOP  ,
+         &ZAPX ZCVT_RESX,ZCVT_RES2         Add in the 'hundreds'
+         SRP   ZCVT_RESX,13,0              Shift left 13 digits
+&ZAPX    SETC  'AP'
+.CRT1    ANOP  ,
+         &ZAPX ZCVT_RESX,ZCVT_RES1         Add in the 'tens'
+         SRP   ZCVT_RESX,13,0              Shift left 13 digits
+&ZAPX    SETC  'AP'
+.CRT0    ANOP  ,
+         &ZAPX ZCVT_RESX,ZCVT_RES0         Add in the 'units'
+         ZAP   &TGTNAM.(&TGTLEN),ZCVT_RESX Pick up result data
+         AIF   ('&ONSIZE' NE '1').MEND
+         JO    PG_MPY_&MPY_LAB._ON_SIZE    Goto ON SIZE clause
+         CP    ZCVT_RES4,ZCVT_PZERO        Check 'ten-thousands'
+         JNZ   PG_MPY_&MPY_LAB._ON_SIZE    Goto ON SIZE clause
+         AIF   (&TOTDIG GT 39).MEND
+         CP    ZCVT_RES3,ZCVT_PZERO        Check 'thousands'
+         JNZ   PG_MPY_&MPY_LAB._ON_SIZE    Goto ON SIZE clause
+         AIF   (&TOTDIG GT 26).MEND
+         CP    ZCVT_RES2,ZCVT_PZERO        Check 'hundreds'
+         JNZ   PG_MPY_&MPY_LAB._ON_SIZE    Goto ON SIZE clause
+         AIF   (&TOTDIG GT 13).MEND
+         CP    ZCVT_RES1,ZCVT_PZERO        Check 'tens'
+         JNZ   PG_MPY_&MPY_LAB._ON_SIZE    Goto ON SIZE clause
          AGO   .MEND
 
 .MEND    ANOP  ,

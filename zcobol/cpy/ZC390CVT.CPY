@@ -109,22 +109,21 @@ ZCVT_PWORK4    DS PL16       DIV REMAINDER
 ZCVT_NDDX      DS XL16       DIV DIVIDEND HOLD AREA
 ZCVT_WORKAREA  DS XL256      GEN_INSPECT PARMS, GEN_EDIT WORK, ETC.
          ORG   ZCVT_WORKAREA           Redefine for MP work fields #730
-ZCVT_SRC1      DS PL4                  Source digits  1- 7         #730
-ZCVT_SRC2      DS PL4                  Source digits  8-14         #730
-ZCVT_SRC3      DS PL4                  Source digits 15-21         #730
-ZCVT_SRC4      DS PL4                  Source digits 22-28         #730
-ZCVT_SRC5      DS PL4                  Source digits 28-31         #730
-ZCVT_TGT1      DS PL4                  Target digits  1- 7         #730
-ZCVT_TGT2      DS PL4                  Target digits  8-14         #730
-ZCVT_TGT3      DS PL4                  Target digits 15-21         #730
-ZCVT_TGT4      DS PL4                  Target digits 22-28         #730
-ZCVT_TGT5      DS PL4                  Target digits 28-31         #730
-ZCVT_RES0      DS PL16                 Result field                #730
-ZCVT_RES1      DS PL8                  Result digits  1- 7         #730
-ZCVT_RES2      DS PL8                  Result digits  8-14         #730
-ZCVT_RES3      DS PL8                  Result digits 15-21         #730
-ZCVT_RES4      DS PL8                  Result digits 22-28         #730
-ZCVT_RES5      DS PL8                  Result digits 28-31         #730
+* We're not using all available digit positions - that's to have   #730
+* room for carrying overflow digits after adding partial sums      #730
+ZCVT_SRC2      DS PL8                  Source digits  1- 5         #730
+ZCVT_SRC1      DS PL8                  Source digits  6-18         #730
+ZCVT_SRC0      DS PL8                  Source digits 19-31         #730
+ZCVT_TGT2      DS PL8                  Target digits  1 -5         #730
+ZCVT_TGT1      DS PL8                  Target digits  6-18         #730
+ZCVT_TGT0      DS PL8                  Target digits 19-31         #730
+ZCVT_RESX      DS PL16                 Result field / work field   #730
+ZCVT_RES4      DS PL8                  Result digits 'tenKs'       #730
+ZCVT_RES3      DS PL8                  Result digits 'thousands'   #730
+ZCVT_RES2      DS PL8                  Result digits 'hundreds'    #730
+ZCVT_RES1      DS PL8                  Result digits 'tens'        #730
+ZCVT_RES0      DS PL8                  Result digits 'units'       #730
+ZCVT_PZERO     DS PL8                  Preloaded with packed 0     #730
           ORG   ,                      Reset to end                #730
 *
 * END OF ZC390CVT

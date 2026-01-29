@@ -8136,11 +8136,9 @@ public mz390()
  */
 	private int get_sym_len(String symbol){
 		if (!tz390.opt_asm){
-            tz390.put_trace("get_sym_len(" + symbol + ") opt_asm is off"); // **!!
 			return 1;
 		}
 		int cur_sym = mz390_find_sym(symbol);
-        tz390.put_trace("get_sym_len(" + symbol + ") cur_sym=" + cur_sym); // **!!
 		if (cur_sym != -1){
 			if (az390.sym_attr[cur_sym] == tz390.ascii_to_ebcdic['J']){
 				return 1; // RPI 415
