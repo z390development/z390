@@ -25,14 +25,14 @@ This implementation conforms to:
 
 The following sections of FIPS PUB 21-2 were consulted:
 
-| Section | Title | Page Reference |
-|---------|-------|----------------|
-| XII | Source Text Manipulation Module | XII-1 to XII-8 |
-| XII-3 | The REPLACE Statement | **XII-6** |
-| XII-3.1 | Function | XII-6 |
-| XII-3.2 | General Format | XII-6 |
-| XII-3.3 | Syntax Rules | XII-6 |
-| XII-3.4 | General Rules | XII-7 |
+| Section  | Title                          | Page Reference |
+|----------|--------------------------------|----------------|
+| XII      | Source Text Manipulation Module| XII-1 to XII-8 |
+| XII-3    | The REPLACE Statement          | **XII-6**      |
+| XII-3.1  | Function                       | XII-6          |
+| XII-3.2  | General Format                 | XII-6          |
+| XII-3.3  | Syntax Rules                   | XII-6          |
+| XII-3.4  | General Rules                  | XII-7          |
 
 The standard document was obtained from NIST archives and verified against the
 official specification text.
@@ -59,18 +59,18 @@ before the source reaches the macro assembler.
 
 ### Modified Files
 
-| File | Changes |
-|------|---------|
-| `src/zc390.java` | Added REPLACE parsing and text substitution logic |
+| File             | Changes                                          |
+|------------------|--------------------------------------------------|
+| `src/zc390.java` | Added REPLACE parsing and text substitution logic|
 
 Note: `zcobol/mac/REPLACE.MAC` was removed: the preprocessor handles REPLACE
 before macro expansion, making the macro unnecessary.
 
 ### New Test Files
 
-| File | Purpose |
-|------|---------|
-| `zcobol/test/TESTREPL.CBL` | Test program for REPLACE functionality |
+| File                       | Purpose                                 |
+|----------------------------|-----------------------------------------|
+| `zcobol/tests/TESTREPL.CBL` | Test program for REPLACE functionality  |
 
 ### Key Changes in zc390.java
 
@@ -104,7 +104,7 @@ before macro expansion, making the macro unnecessary.
 ```cobol
        REPLACE ==AAA== BY ==BBB==.
        01  WS-AAA-FIELD     PIC X(20) VALUE 'TEST VALUE 1'.
-       
+
        REPLACE OFF.
        01  WS-AAA-KEPT      PIC X(15) VALUE 'NOT REPLACED'.
 ```
@@ -117,7 +117,7 @@ before macro expansion, making the macro unnecessary.
 ### Running the Test
 
 ```batch
-bat\CBLCLG.BAT zcobol\test\TESTREPL
+bat\CBLCLG.BAT zcobol\tests\TESTREPL
 ```
 
 ### Expected Output
@@ -125,8 +125,10 @@ bat\CBLCLG.BAT zcobol\test\TESTREPL
 ```
 TESTREPL - COBOL REPLACE TEST STARTED
 TEST 1:  TEST VALUE 1
-TEST 2:  TEST VALUE 2  
+TEST 2:  TEST VALUE 2
 TEST 3:  NOT REPLACED
+TEST 4:  MULTI 1
+TEST 5:  MULTI 2
 TESTREPL - ALL TESTS COMPLETED
 TESTREPL - TEST ENDED OK
 ```
