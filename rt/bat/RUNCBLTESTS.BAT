@@ -12,8 +12,8 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..\..
-call bat\CBLCLG %z_TraceMode% zcobol\tests\testadd1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\CBLCLG %z_TraceMode% zcobol\tests\testadd2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTADD1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTADD2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 rem TESTCAL3 statically calls TESTASM4 - link them together
 call bat\ASM    %z_TraceMode% zcobol\tests\TESTASM4 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCL  %z_TraceMode% zcobol\tests\TESTCAL3 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
@@ -40,6 +40,25 @@ set OUTFILE=ZCOBOL\TESTS\TESTFIL2.OUT
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTFIL2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 set INFILE=
 set OUTFILE=
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTGO1  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTHFP1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTISP1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTPIC1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTPM1  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTPM2  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+set INFILE=zcobol\tests\TESTPM3.IN
+set OUTFILE=zcobol\tests\TESTPM3.OUT
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTPM3  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+set INFILE=
+set OUTFILE=
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTSIX1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTSIX2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTSUB1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTSUB2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTTRC1 %1 %2 %3 %4 %5 %6 %7 %8 %9 TRUNC       || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTTRC2 %1 %2 %3 %4 %5 %6 %7 %8 %9             || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTTRC3 %1 %2 %3 %4 %5 %6 %7 %8 %9 TRUNC NOR64 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTWS1  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testbfp1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\testif1  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
@@ -56,7 +75,7 @@ call bat\CBLC   %z_TraceMode% zcobol\tests\CM401M01 %1 %2 %3 %4 %5 %6 %7 %8 %9
      if %ERRORLEVEL% NEQ 8 goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\DB101A01 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\NC106A01 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\CBLCLG %z_TraceMode% zcobol\test\youzpi1   %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\YOUZPI1  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 set z_ReturnCode=0
 goto return
 
