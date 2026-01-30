@@ -54,6 +54,6 @@ More details regarding NIST validation can be found in the [zCOBOL user guide](.
 ## Implementation Documentation
 
 The following documents describe recent COBOL statement implementations in detail,
-including normative references to FIPS PUB 21-2 (ANSI X3.23-1985):
+including normative references to [FIPS PUB 21-2](https://nvlpubs.nist.gov/nistpubs/Legacy/FIPS/fipspub21-2.pdf) (ANSI X3.23-1985):
 
 - [REPLACE Statement](./replace_implementation.md) - Compiler-directing text substitution per FIPS PUB 21-2 Section XII

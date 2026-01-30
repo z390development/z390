@@ -11,6 +11,7 @@
       * 1. REPLACE in open code - variable name substitution
       * 2. REPLACE OFF - stops substitution
       * 3. Multiple REPLACE pairs in one statement
+      * 4. COPY REPLACING - text substitution in copy members
       *
       * Author - Zane Hambly
       * Date   - 2025/12
@@ -42,6 +43,9 @@
 
        REPLACE OFF.
 
+      *    Test 4: COPY REPLACING - substitution in copy member
+           COPY REPLCOPY REPLACING ==:PREFIX:== BY ==WS-CPY==.
+
        PROCEDURE DIVISION.
        MAIN-PARA.
            DISPLAY 'TESTREPL - COBOL REPLACE TEST STARTED'.
@@ -56,6 +60,10 @@
       *    Test 3: Multiple replacement pairs
            DISPLAY 'TEST 4: ' WS-FIRST-VAR.
            DISPLAY 'TEST 5: ' WS-SECOND-VAR.
+
+      *    Test 4: COPY REPLACING
+           DISPLAY 'TEST 6: ' WS-CPY-NAME.
+           DISPLAY 'TEST 7: ' WS-CPY-VALUE.
 
            DISPLAY 'TESTREPL - ALL TESTS COMPLETED'.
            DISPLAY 'TESTREPL - TEST ENDED OK'.

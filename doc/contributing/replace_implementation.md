@@ -129,6 +129,8 @@ TEST 2:  TEST VALUE 2
 TEST 3:  NOT REPLACED
 TEST 4:  MULTI 1
 TEST 5:  MULTI 2
+TEST 6:  COPY MEMBER TEST
+TEST 7:  12345
 TESTREPL - ALL TESTS COMPLETED
 TESTREPL - TEST ENDED OK
 ```
@@ -147,19 +149,6 @@ This implementation follows the COBOL 85 standard specification. Key compliance 
 - REPLACE OFF deactivates all replacements
 - A new REPLACE statement replaces (not extends) prior replacements
 - Pseudo-text must be delimited by `==` markers
-
-## Building
-
-After modifying `zc390.java`:
-
-```bash
-# Compile Java sources
-javac -d bin src/*.java
-
-# Rebuild JAR (include z390.properties)
-copy z390.properties bin\
-jar cvf z390.jar -C bin .
-```
 
 ---
 
