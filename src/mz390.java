@@ -449,6 +449,7 @@ public  class  mz390 {
      * 2024-06-02 #527 set &SYSOPT_OPTABLE to correct value
      * 2024-07-03 #509 fixes for HLASM built-in functions
      * 2025-10-20 AFK      Add javadoc comments
+     * 2026-01-29 AFK #730 Incorrect code generated for zCobol MULTIPLY verb
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -8084,7 +8085,7 @@ public mz390()
 		if (tz390.opt_traceall){
 			tz390.put_trace(" MZ390 CALLING AZ390 SYM LOCK");
 		}
-		az390.set_sym_lock("mz390_find_sym for " + symbol + "(" + (mac_file_num[mac_line_index]+1) + "/" + mac_file_line_num[mac_line_index] + ")");
+		az390.set_sym_lock("mz390.find_sym for " + symbol + "(" + (mac_file_num[mac_line_index]+1) + "/" + mac_file_line_num[mac_line_index] + ")"); // #730
 		index = az390.find_sym(symbol);
        	az390.reset_sym_lock();
         return index;
