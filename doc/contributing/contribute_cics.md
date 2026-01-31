@@ -8,10 +8,10 @@ This document explains how to build zCICS and how to run a regression test
 It consists of the following chapters:
 1. Building zCICS
 2. Regression testing zCICS
-  1. Create a trace of your transactions
-  2. Running the simulation
-  3. Running the comparator
-  4. Abends
+2.1. Create a trace of your transactions
+2.2. Running the simulation
+2.3. Running the comparator
+2.4. Abends
 3. Trademarks & Credits
 
 ## Building zCICS
@@ -53,9 +53,9 @@ The standard zCICS tests are documented in `cics\seq\SEQDOC.TXT`.
 
 1. In the `Z390CICS.INI` file, set `SEQ_TERM=TRACE`.
    This will automatically adjust other INI parms:
-  - `LOCAL_TERMINALS=1`
-  - No `INITIAL_TRANSID=`
-  - `TRACE_LOCALS=YES`
+1.1 `LOCAL_TERMINALS=1`
+1.2 No `INITIAL_TRANSID=`
+1.3 `TRACE_LOCALS=YES`
 2. Start Z390\CICS
 3. Run a planned test of your transaction
 4. `CEMT P SHU` to end zCICS
@@ -74,9 +74,9 @@ The standard zCICS tests are documented in `cics\seq\SEQDOC.TXT`.
 
 1. In the `Z390CICS.INI` file, set `SEQ_TERM=YES`.
    This will automatically adjust other INI parms:
-  - `LOCAL_TERMINALS=0`
-  - No `INITIAL_TRANSID=`
-  - `TRACE_LOCALS=NO`
+1.1 `LOCAL_TERMINALS=0`
+1.2 No `INITIAL_TRANSID=`
+1.3 `TRACE_LOCALS=NO`
 2. If you want the simulation to shut down after running, a sample stream is
    provided called `SEQISHUT.TXT`, copy this to a new file called SEQInnnn,
    where nnnn is the next input file sequence.
@@ -109,14 +109,14 @@ This error is caused by a structural mismatch between `SEQO0001.TXT` and the com
 The output file `SEQCOMP.TXT` will contain an error message and a full dump of both files.
 
 Before reporting these as errors, please check the following:
-1) Are all the SEQI and SEQC files in sequence ?
-2) Has a simulation run been done using the SEQI files (`SEQ_TERM=YES`) ?
-3) Have any of the transactions changed since the last run of `Z390SEQ` for those transactions ?
+1. Are all the SEQI and SEQC files in sequence ?
+2. Has a simulation run been done using the SEQI files (`SEQ_TERM=YES`) ?
+3. Have any of the transactions changed since the last run of `Z390SEQ` for those transactions ?
 
 ## Trademarks
 
 IBM, CICS and VSAM are registered trademarks of International Business Machines Corporation.
 
-### Credits
+## Credits
 
 Author: : Melvyn Maltz
