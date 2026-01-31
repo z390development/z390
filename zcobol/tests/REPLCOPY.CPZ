@@ -1,5 +1,0 @@
-      * REPLCOPY.CPZ - Copy member for testing REPLACE/COPY interaction
-      * Used by TESTREPL.CBL to verify text substitution in COPY members
-       01  :PREFIX:-RECORD.
-           05  :PREFIX:-NAME      PIC X(20) VALUE 'COPY MEMBER TEST'.
-           05  :PREFIX:-VALUE     PIC 9(5)  VALUE 12345.
