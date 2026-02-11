@@ -118,29 +118,29 @@ class RunCblTests extends z390Test{
     }
 
     @Test
-    void testTESTSRT1() {
-        this.env.put('INFILE', basePath('zcobol', 'tests', 'TESTSRT1.TF1'))
-        this.env.put('OUTFILE', basePath('zcobol', 'tests', 'TESTSRT1.OUT'))
-        int rc = this.cblclg(basePath("zcobol", "tests", "TESTSRT1"), 'TIME(30)')
+    void testSORTASC() {
+        this.env.put('INFILE', basePath('zcobol', 'tests', 'SORTASC.TF1'))
+        this.env.put('OUTFILE', basePath('zcobol', 'tests', 'SORTASC.OUT'))
+        int rc = this.cblclg(basePath("zcobol", "tests", "SORTASC"), 'TIME(30)')
         this.printOutput()
         assert rc == 0
     }
 
     @Test
-    void testTESTSRT2() {
-        this.env.put('INFILE', basePath('zcobol', 'tests', 'TESTSRT2.TF1'))
-        this.env.put('OUTFILE', basePath('zcobol', 'tests', 'TESTSRT2.OUT'))
-        int rc = this.cblclg(basePath("zcobol", "tests", "TESTSRT2"), 'TIME(30)')
+    void testSORTDEF() {
+        this.env.put('INFILE', basePath('zcobol', 'tests', 'SORTDEF.TF1'))
+        this.env.put('OUTFILE', basePath('zcobol', 'tests', 'SORTDEF.OUT'))
+        int rc = this.cblclg(basePath("zcobol", "tests", "SORTDEF"), 'TIME(30)')
         this.printOutput()
         assert rc == 0
     }
 
     @Test
-    void testTESTSRT3() {
-        this.env.put('INFILE', basePath('zcobol', 'tests', 'TESTSRT3.TF1'))
-        this.env.put('ASCFILE', basePath('zcobol', 'tests', 'TESTSRT3.ASC'))
-        this.env.put('DESCFILE', basePath('zcobol', 'tests', 'TESTSRT3.DSC'))
-        int rc = this.cblclg(basePath("zcobol", "tests", "TESTSRT3"), 'TIME(30)')
+    void testSORTMULT() {
+        this.env.put('INFILE', basePath('zcobol', 'tests', 'SORTMULT.TF1'))
+        this.env.put('ASCFILE', basePath('zcobol', 'tests', 'SORTMULT.ASC'))
+        this.env.put('DESCFILE', basePath('zcobol', 'tests', 'SORTMULT.DSC'))
+        int rc = this.cblclg(basePath("zcobol", "tests", "SORTMULT"), 'TIME(30)')
         this.printOutput()
         assert rc == 0
     }

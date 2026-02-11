@@ -77,12 +77,20 @@ call bat\CBLCLG %z_TraceMode% zcobol\tests\DB101A01 %1 %2 %3 %4 %5 %6 %7 %8 %9 |
 call bat\CBLCLG %z_TraceMode% zcobol\tests\NC106A01 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTREPL %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\YOUZPI1  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-set INFILE=zcobol\tests\TESTSRT1.TF1
-set OUTFILE=zcobol\tests\TESTSRT1.OUT
-call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTSRT1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-set INFILE=zcobol\tests\TESTSRT2.TF1
-set OUTFILE=zcobol\tests\TESTSRT2.OUT
-call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTSRT2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+set INFILE=zcobol\tests\SORTASC.TF1
+set OUTFILE=zcobol\tests\SORTASC.OUT
+call bat\CBLCLG %z_TraceMode% zcobol\tests\SORTASC  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+set INFILE=zcobol\tests\SORTDEF.TF1
+set OUTFILE=zcobol\tests\SORTDEF.OUT
+call bat\CBLCLG %z_TraceMode% zcobol\tests\SORTDEF  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+set INFILE=zcobol\tests\SORTMULT.TF1
+set ASCFILE=zcobol\tests\SORTMULT.ASC
+set DESCFILE=zcobol\tests\SORTMULT.DSC
+call bat\CBLCLG %z_TraceMode% zcobol\tests\SORTMULT %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+set INFILE=
+set OUTFILE=
+set ASCFILE=
+set DESCFILE=
 set z_ReturnCode=0
 goto return
 

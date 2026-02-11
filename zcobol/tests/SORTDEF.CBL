@@ -1,5 +1,5 @@
        IDENTIFICATION DIVISION.
-       PROGRAM-ID.  TESTSRT2.
+       PROGRAM-ID.  SORTDEF.
        AUTHOR.      ZANE HAMBLY.
        DATE-WRITTEN. 12/17/25.
       ******************************************************************
@@ -38,19 +38,19 @@
        01  WS-ERROR-FLAG     PIC X VALUE 'N'.
        PROCEDURE DIVISION.
        MAIN-PARA.
-           DISPLAY 'TESTSRT2 - DEFAULT FORMAT SORT TEST'.
+           DISPLAY 'SORTDEF - DEFAULT FORMAT SORT TEST'.
            SORT SORT-FILE
                ON ASCENDING KEY SORT-KEY
                USING UNSORTED-FILE
                GIVING SORTED-FILE.
-           DISPLAY 'TESTSRT2 - SORT COMPLETED'.
+           DISPLAY 'SORTDEF - SORT COMPLETED'.
            PERFORM VERIFY-SORT-ORDER.
            IF WS-ERROR-FLAG = 'Y'
-               DISPLAY 'TESTSRT2 - ERROR: OUTPUT NOT SORTED'
+               DISPLAY 'SORTDEF - ERROR: OUTPUT NOT SORTED'
                STOP RUN
            END-IF.
-           DISPLAY 'TESTSRT2 - VERIFIED ' WS-RECORD-COUNT ' RECORDS'.
-           DISPLAY 'TESTSRT2 - TEST ENDED OK'.
+           DISPLAY 'SORTDEF - VERIFIED ' WS-RECORD-COUNT ' RECORDS'.
+           DISPLAY 'SORTDEF - TEST ENDED OK'.
            STOP RUN.
       *
        VERIFY-SORT-ORDER.

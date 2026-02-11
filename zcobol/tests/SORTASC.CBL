@@ -1,5 +1,5 @@
        IDENTIFICATION DIVISION.
-       PROGRAM-ID.  TESTSRT1.
+       PROGRAM-ID.  SORTASC.
        AUTHOR.      ZANE HAMBLY.
        DATE-WRITTEN. 12/17/25.
       ******************************************************************
@@ -40,21 +40,21 @@
        01  WS-ERROR-FLAG     PIC X VALUE 'N'.
        PROCEDURE DIVISION.
        MAIN-PARA.
-           DISPLAY 'TESTSRT1 - COBOL SORT TEST STARTED'.
+           DISPLAY 'SORTASC - COBOL SORT TEST STARTED'.
            DISPLAY 'SORTING RECORDS BY KEY ASCENDING'.
            SORT SORT-FILE
                ON ASCENDING KEY SORT-KEY
                USING UNSORTED-FILE
                GIVING SORTED-FILE.
       *
-           DISPLAY 'TESTSRT1 - SORT COMPLETED'.
+           DISPLAY 'SORTASC - SORT COMPLETED'.
            PERFORM VERIFY-SORT-ORDER.
            IF WS-ERROR-FLAG = 'Y'
-               DISPLAY 'TESTSRT1 - ERROR: OUTPUT NOT SORTED'
+               DISPLAY 'SORTASC - ERROR: OUTPUT NOT SORTED'
                STOP RUN
            END-IF.
-           DISPLAY 'TESTSRT1 - VERIFIED ' WS-RECORD-COUNT ' RECORDS'.
-           DISPLAY 'TESTSRT1 - TEST ENDED OK'.
+           DISPLAY 'SORTASC - VERIFIED ' WS-RECORD-COUNT ' RECORDS'.
+           DISPLAY 'SORTASC - TEST ENDED OK'.
            STOP RUN.
       *
        VERIFY-SORT-ORDER.
