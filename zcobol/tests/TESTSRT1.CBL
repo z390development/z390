@@ -3,11 +3,8 @@
        AUTHOR.      ZANE HAMBLY.
        DATE-WRITTEN. 12/17/25.
       ******************************************************************
-      * Test program for COBOL SORT statement implementation.
-      * Tests basic SORT with USING/GIVING files.
-      *
-      * Implementation follows FIPS PUB 21-2 (ANSI X3.23-1985)
-      * COBOL 85 standard, Section XI (Sort-Merge).
+      * Basic SORT with USING/GIVING on LINE SEQUENTIAL files.
+      * Reads 5 unsorted records, sorts ascending by key, verifies.
       ******************************************************************
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
@@ -45,18 +42,12 @@
        MAIN-PARA.
            DISPLAY 'TESTSRT1 - COBOL SORT TEST STARTED'.
            DISPLAY 'SORTING RECORDS BY KEY ASCENDING'.
-      *
-      *    SORT USING/GIVING - SIMPLEST FORM
-      *
            SORT SORT-FILE
                ON ASCENDING KEY SORT-KEY
                USING UNSORTED-FILE
                GIVING SORTED-FILE.
       *
            DISPLAY 'TESTSRT1 - SORT COMPLETED'.
-      *
-      *    VERIFY OUTPUT IS PROPERLY SORTED
-      *
            PERFORM VERIFY-SORT-ORDER.
            IF WS-ERROR-FLAG = 'Y'
                DISPLAY 'TESTSRT1 - ERROR: OUTPUT NOT SORTED'

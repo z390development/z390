@@ -3,8 +3,8 @@
        AUTHOR.      ZANE HAMBLY.
        DATE-WRITTEN. 12/17/25.
       ******************************************************************
-      * Test program for COBOL SORT - no ORGANIZATION clause (default)
-      * Tests default file organization for SORT compatibility.
+      * SORT with default file organisation (no ORGANIZATION clause).
+      * Same logic as TESTSRT1 but omits LINE SEQUENTIAL.
       ******************************************************************
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
@@ -44,9 +44,6 @@
                USING UNSORTED-FILE
                GIVING SORTED-FILE.
            DISPLAY 'TESTSRT2 - SORT COMPLETED'.
-      *
-      *    VERIFY OUTPUT IS PROPERLY SORTED
-      *
            PERFORM VERIFY-SORT-ORDER.
            IF WS-ERROR-FLAG = 'Y'
                DISPLAY 'TESTSRT2 - ERROR: OUTPUT NOT SORTED'
