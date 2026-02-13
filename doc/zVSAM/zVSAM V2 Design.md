@@ -137,8 +137,8 @@ We have taken the following measures to facilitate the transition from zVSAM V1 
     3. ZVSAM(2) – zVSAM V2 is enabled, zVSAM V1 is disabled
 2. To convert your zVSAM V1 clusters to zVSAM V2 you'll have to take the following steps:
     1. unload the existing data from their clusters using REPRO.
-       For details on how to use Repro, please refer to the "z390_VSAM_User_Guide"
+       For details on how to use Repro, please refer to the "z390_VSAM_User_Guide" \
     2. reload your data from your unload files, using ZREPRO.
-       For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"
+       For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide" \
 3. For zVSAM V1 and zVSAM v2 there are distinct macro libraries.
    To use the correct zVSAM maclib, specify the correct version in your maclib concatenation.
