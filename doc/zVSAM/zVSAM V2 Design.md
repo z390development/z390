@@ -5,12 +5,12 @@
 This document describes the structure of the zVSAM component of the z390 assembler and runtime engine.
 It consists of the following parts:
 
-- This introduction.
-- A description of the structure of the interfaces used.
-- A description of the structure of the files.
-- A description of the logical processes that implement ACB-based requests
-- A description of the logical processes that implement RPL-based requests
-- Addenda
+1. This introduction.
+2. A description of the structure of the interfaces used.
+3. A description of the structure of the files.
+4. A description of the logical processes that implement ACB-based requests
+5. A description of the logical processes that implement RPL-based requests
+6. Addenda
 
 ## Copyright Notice
 
@@ -129,16 +129,16 @@ inconvenience this may cause.
 We have taken the following measures to facilitate the transition from zVSAM V1 to zVSAM V2:
 
 1. We have introduced a new z390 option: ZVSAM which indicates which version of
-   zVSAM you want z390 to use. For maximum compatibility the default is set enable zVSAM V1.
+   zVSAM you want z390 to use. The parameter takes the following forms:
+    1. ZVSAM(0) – zVSAM usage is disallowed
+    2. ZVSAM(1) – zVSAM V1 is enabled, zVSAM V2 is disabled
+    3. ZVSAM(2) – zVSAM V2 is enabled, zVSAM V1 is disabled
+   For maximum compatibility the default is set to zVSAM(1).
    The default will be changed to zVSAM v2 in a future release of z390.
-   The parameter takes the following forms:
-1.1. ZVSAM(0) – zVSAM usage is disallowed
-1.2. ZVSAM(1) – zVSAM V1 is enabled, zVSAM V2 is disabled
-1.3. ZVSAM(2) – zVSAM V2 is enabled, zVSAM V1 is disabled
 2. To convert your zVSAM V1 clusters to zVSAM V2 you'll have to take the following steps:
-2.1. unload the existing data from their clusters using REPRO
+    1. unload the existing data from their clusters using REPRO
    For details on how to use Repro, please refer to the "z390_VSAM_User_Guide"
-2.2. reload your data from your unload files, using ZREPRO
+    2 reload your data from your unload files, using ZREPRO
    For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"
 3. For zVSAM V1 and zVSAM v2 there are distinct macro libraries.
    To use the correct zVSAM maclib, specify the correct version in your maclib concatenation.
