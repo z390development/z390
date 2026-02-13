@@ -61,7 +61,7 @@ The table below shows how the ACB macro can be coded.
 
 | Opcode | Operand              | Remarks                                                                                                |
 |--------|----------------------|--------------------------------------------------------------------------------------------------------|
-| ACB    | [AM=<u>VSAM</u>]     | Designates this ACB as a zVSAM ACB                                                                     |
+| ACB    | [AM=VSAM]            | Designates this ACB as a zVSAM ACB; this is the default                                                |
 |        | [DDNAME=ddname]      | DDNAME: name of an environment variable in the host OS holding the name of the cluster to be processed |
 |        | [PASSWD=ptr]         | Pointer to password for the cluster                                                                    |
 |        | [EXLST=ptr]          | Pointer to EXLST structure                                                                             |
@@ -79,29 +79,35 @@ The table below shows how the ACB macro can be coded.
 
 Supported options for the MACRF parameter are listed below:
 
-| Keyword subset           | Keyword | Remarks                                                                                             |
-|--------------------------|---------|-----------------------------------------------------------------------------------------------------|
-| [ADR/<u>KEY</u>]         | ADR     | Addressed access to ESDS                                                                            |
-|                          | KEY     | Keyed access to KSDS or RRDS                                                                        |
-|                          | _CNV_   | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
-| [DFR/<u>NDF</u>]         | DFR     | Allow writes to be deferred                                                                         |
-|                          | NDF     | Disallow deferred writes                                                                            |
-| [DIR]/[<u>SEQ</u>]/[SKP] | DIR     | Direct access to RRDS                                                                               |
-|                          | SEQ     | Sequential access to ESDS, KSDS or RRDS                                                             |
-|                          | SKP     | Skip sequential access to KSDS or RRDS                                                              |
-| [<u>IN</u>/OUT]          | IN      | Read access for ESDS, KSDS or RRDS                                                                  |
-|                          | OUT     | Both read and write access for ESDS, KSDS or RRDS                                                   |
-| [<u>NIS</u>/SIS]         | NIS     | Normal Insert Strategy for KSDS                                                                     |
-|                          | SIS     | Sequential Insert Strategy                                                                          |
-| [<u>NRM</u>/AIX]         | NRM     | DDname indicates cluster to be processed                                                            |
-|                          | AIX     | DDname indicates an AIX to be processed as a path into its base cluster                             |
-| [_NRS/RST_]              |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
-| [_NSR/LSR/GSR/RLS_]      |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
-| [_NUB/UBF_]              |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
-| [_CFX/NFX_]              |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
-| [_DDN/DSN_]              |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
-| [_ICI/NCI_]              |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
-| [_LEW/NLW_]              |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+| Keyword subset      | Keyword | Remarks                                                                                             |
+|---------------------|---------|-----------------------------------------------------------------------------------------------------|
+| [ADR/KEY]           |         | ADR is the default                                                                                  |
+|                     | ADR     | Addressed access to ESDS                                                                            |
+|                     | KEY     | Keyed access to KSDS or RRDS                                                                        |
+|                     | _CNV_   | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+| [DFR/NDF]           |         | DFR is the default                                                                                  |
+|                     | DFR     | Allow writes to be deferred                                                                         |
+|                     | NDF     | Disallow deferred writes                                                                            |
+| [DIR]/[SEQ]/[SKP]   |         | SEQ is the default                                                                                  |
+|                     | DIR     | Direct access to RRDS                                                                               |
+|                     | SEQ     | Sequential access to ESDS, KSDS or RRDS                                                             |
+|                     | SKP     | Skip sequential access to KSDS or RRDS                                                              |
+| [IN/OUT]            |         | IN is the default                                                                                   |
+|                     | IN      | Read access for ESDS, KSDS or RRDS                                                                  |
+|                     | OUT     | Both read and write access for ESDS, KSDS or RRDS                                                   |
+| [NIS/SIS]           |         | NIS is the default                                                                                  |
+|                     | NIS     | Normal Insert Strategy for KSDS                                                                     |
+|                     | SIS     | Sequential Insert Strategy                                                                          |
+| [NRM/AIX]           |         | NRM is the default                                                                                  |
+|                     | NRM     | DDname indicates cluster to be processed                                                            |
+|                     | AIX     | DDname indicates an AIX to be processed as a path into its base cluster                             |
+| [_NRS/RST_]         |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+| [_NSR/LSR/GSR/RLS_] |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+| [_NUB/UBF_]         |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+| [_CFX/NFX_]         |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+| [_DDN/DSN_]         |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+| [_ICI/NCI_]         |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+| [_LEW/NLW_]         |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
 
 DDNAME= DDname is required before open is executed. If DDname is not supplied on the ACB
 macro, the label used on the ACB macro is used as DDname. If neither is specified,
@@ -137,13 +143,13 @@ The GENCB ACB macro can be coded as follows:
 | Opcode | Operand                   | Remarks                                                             |
 |--------|---------------------------|---------------------------------------------------------------------|
 | GENCB  | BLK=ACB                   | Instructs GENCB to generate 1 or more ACBs                          |
-|        | [AM=<u>VSAM</u>]          | Optional, no other values allowed                                   |
+|        | [AM=VSAM]                 | Optional, no other values allowed; VSAM is the default              |
 |        | [COPIES=nr]               | The number of identical ACBs to generate                            |
 |        | [WAREA=addr]              | The work area where the ACBs are to be constructed                  |
 |        | [LENGTH=nr]               | Length of the work area in bytes                                    |
 |        | [LOC=keyword]             | Where GENCB is to allocate dynamically acquired storage - if needed |
 |        | **[other]**               | **Any parameter supported on the ACB macro**                        |
-|        | [<u>MF=</u>]              | Use standard form of GENCB ACB                                      |
+|        | [MF=]                     | Use standard form of GENCB ACB; this is the default                 |
 |        | [MF=L/MF=(L,addr,[label]] | Use list form of GENCB ACB                                          |
 |        | [MF=(E,addr)]             | Use execute form of GENCB ACB                                       |
 |        | [MF=(G,addr,[label])]     | Use generate form of GENCB ACB                                      |
@@ -169,14 +175,14 @@ Direct access to subfields in the CBMR is strongly discouraged.
 
 The MODCB ACB macro can be coded as follows:
 
-| Opcode | Operand                   | Remarks                                      |
-|--------|---------------------------|----------------------------------------------|
-| MODCB  | ACB=address               | Points MODCB to the ACB to be modified       |
-|        | **[other]**               | **Any parameter supported on the ACB macro** |
-|        | [<u>MF=</u>]              | Use standard form of MODCB ACB               |
-|        | [MF=L/MF=(L,addr,[label]] | Use list form of MODCB ACB                   |
-|        | [MF=(E,addr)]             | Use execute form of MODCB ACB                |
-|        | [MF=(G,addr,[label])]     | Use generate form of MODCB ACB               |
+| Opcode | Operand                   | Remarks                                             |
+|--------|---------------------------|-----------------------------------------------------|
+| MODCB  | ACB=address               | Points MODCB to the ACB to be modified              |
+|        | **[other]**               | **Any parameter supported on the ACB macro**        |
+|        | [MF=]                     | Use standard form of MODCB ACB; this is the default |
+|        | [MF=L/MF=(L,addr,[label]] | Use list form of MODCB ACB                          |
+|        | [MF=(E,addr)]             | Use execute form of MODCB ACB                       |
+|        | [MF=(G,addr,[label])]     | Use generate form of MODCB ACB                      |
 
 All supported parameters are implemented compatibly with IBM's VSAM implementation.
 For details, please refer to the relevant IBM manual.
@@ -198,17 +204,17 @@ Direct access to subfields in the CBMR is strongly discouraged.
 
 The SHOWCB ACB macro can be coded as follows:
 
-| Opcode | Operand                    | Remarks                                            |
-|--------|----------------------------|--------------------------------------------------- |
-| SHOWCB | ACB=address                | Points MODCB to the ACB to be queried              |
-|        | AREA=addr                  | Address of return area                             |
-|        | LENGTH=nr                  | Size of return area in bytes                       |
-|        | [OBJECT=<u>DATA</u>/INDEX] | For KSDS: select data or index component           |
-|        | FIELDS=(keywd_list)        | List of keywords indicating which fields to return |
-|        | [<u>MF=</u>]               | Use standard form of SHOWCB ACB                    |
-|        | [MF=L/MF=(L,addr,[label]]  | Use list form of SHOWCB ACB                        |
-|        | [MF=(E,addr)]              | Use execute form of SHOWCB ACB                     |
-|        | [MF=(G,addr,[label])]      | Use generate form of SHOWCB ACB                    |
+| Opcode | Operand                    | Remarks                                                       |
+|--------|----------------------------|---------------------------------------------------------------|
+| SHOWCB | ACB=address                | Points MODCB to the ACB to be queried                         |
+|        | AREA=addr                  | Address of return area                                        |
+|        | LENGTH=nr                  | Size of return area in bytes                                  |
+|        | [OBJECT=DATA/INDEX]        | For KSDS: select data or index component; DATA is the default |
+|        | FIELDS=(keywd_list)        | List of keywords indicating which fields to return            |
+|        | [MF=]                      | Use standard form of SHOWCB ACB; this is the default          |
+|        | [MF=L/MF=(L,addr,[label]]  | Use list form of SHOWCB ACB                                   |
+|        | [MF=(E,addr)]              | Use execute form of SHOWCB ACB                                |
+|        | [MF=(G,addr,[label])]      | Use generate form of SHOWCB ACB                               |
 
 Supported options for the FIELDS parameter are listed below:
 
@@ -282,53 +288,53 @@ Direct access to subfields in the CBMR is strongly discouraged.
 
 The TESTCB ACB macro can be coded as follows:
 
-| Opcode | Operand                    | Remarks                                        |
-|--------|----------------------------|------------------------------------------------|
-| TESTCB | ACB=address                | Points TESTCB to the ACB to be tested          |
-|        | ERET=addr                  | Address of error handling routine              |
-|        | [OBJECT=<u>DATA</u>/INDEX] | For KSDS: select data or index component       |
-|        | ATRB=(keywd_list)          | List of keywords indicating attributes to test |
-|        | o ATRB=COMPRESS            | Compression on? Always false for zVSAM         |
-|        | o ATRB=UNQ                 | Path is defined on unique key?                 |
-|        | o ATRB=XADDR               | Extended format? Always true for zVSAM         |
-|        | OFLAGS=OPEN                | Opened successfully?                           |
-|        | OPENOBJ=PATH/BASE/AIX      | ACB represents Path/Base/AIX?                  |
-|        | ACBLEN=nr                  | length of ACB in bytes                         |
-|        | AVSPAC=nr                  | available space in bytes                       |
-|        | BSTRNO=nr                  | Initial nr of strings                          |
-|        | BUFND=nr                   | Nr of data buffers                             |
-|        | BUFNI=nr                   | Nr of index buffers                            |
-|        | BUFNO=nr                   | nr of I/O Buffers                              |
-|        | BUFSP=nr                   | Buffer space in bytes                          |
-|        | CINV=nr                    | Control interval size / Block size in bytes    |
-|        | DDNAME=string              | DDname                                         |
-|        | ENDRBA=nr                  | High water mark XLRA                           |
-|        | ERROR=nr                   | Error code of last error                       |
-|        | EXLST=adr                  | EXLST address                                  |
-|        | FS=nr                      | Free Block per 100                             |
-|        | KEYLEN=nr                  | Length of key field                            |
-|        | LRECL=nr                   | Logical Record Length                          |
-|        | MAREA=adr                  | Message area address                           |
-|        | MLEN=nr                    | Length of message area in bytes                |
-|        | NCIS=nr                    | Nr of Block splits                             |
-|        | NDELR=nr                   | Nr of deleted records                          |
-|        | NEXCP=nr                   | Nr of I/O requests                             |
-|        | NEXT=nr                    | Nr of extents                                  |
-|        | NINSR=nr                   | Nr of records inserted                         |
-|        | NIXL=nr                    | Nr of index levels                             |
-|        | NLOGR=nr                   | Nr of records                                  |
-|        | NRETR=nr                   | Nr of records retrieved                        |
-|        | NSSS=nr                    | Nr of control area splits. Foxes.              |
-|        | NUPDR=nr                   | Nr of updates applied                          |
-|        | PASSWD=adr                 | Ptr to 1-byte length followed by password      |
-|        | RKP=nr                     | Offset of key field within record              |
-|        | SHRPOOL=nr                 | SHRPOOL number                                 |
-|        | STMST=adr                  | Pointer to system timestamp field              |
-|        | STRNO=nr                   | Max. nr of parallel requests                   |
-|        | [<u>MF=</u>]               | Use standard form of SHOWCB ACB                |
-|        | [MF=L/MF=(L,addr,[label]]  | Use list form of SHOWCB ACB                    |
-|        | [MF=(E,addr)]              | Use execute form of SHOWCB ACB                 |
-|        | [MF=(G,addr,[label])]      | Use generate form of SHOWCB ACB                |
+| Opcode | Operand                   | Remarks                                                       |
+|--------|---------------------------|---------------------------------------------------------------|
+| TESTCB | ACB=address               | Points TESTCB to the ACB to be tested                         |
+|        | ERET=addr                 | Address of error handling routine                             |
+|        | [OBJECT=DATA/INDEX]       | For KSDS: select data or index component; this is the default |
+|        | ATRB=(keywd_list)         | List of keywords indicating attributes to test                |
+|        | o ATRB=COMPRESS           | Compression on? Always false for zVSAM                        |
+|        | o ATRB=UNQ                | Path is defined on unique key?                                |
+|        | o ATRB=XADDR              | Extended format? Always true for zVSAM                        |
+|        | OFLAGS=OPEN               | Opened successfully?                                          |
+|        | OPENOBJ=PATH/BASE/AIX     | ACB represents Path/Base/AIX?                                 |
+|        | ACBLEN=nr                 | length of ACB in bytes                                        |
+|        | AVSPAC=nr                 | available space in bytes                                      |
+|        | BSTRNO=nr                 | Initial nr of strings                                         |
+|        | BUFND=nr                  | Nr of data buffers                                            |
+|        | BUFNI=nr                  | Nr of index buffers                                           |
+|        | BUFNO=nr                  | nr of I/O Buffers                                             |
+|        | BUFSP=nr                  | Buffer space in bytes                                         |
+|        | CINV=nr                   | Control interval size / Block size in bytes                   |
+|        | DDNAME=string             | DDname                                                        |
+|        | ENDRBA=nr                 | High water mark XLRA                                          |
+|        | ERROR=nr                  | Error code of last error                                      |
+|        | EXLST=adr                 | EXLST address                                                 |
+|        | FS=nr                     | Free Block per 100                                            |
+|        | KEYLEN=nr                 | Length of key field                                           |
+|        | LRECL=nr                  | Logical Record Length                                         |
+|        | MAREA=adr                 | Message area address                                          |
+|        | MLEN=nr                   | Length of message area in bytes                               |
+|        | NCIS=nr                   | Nr of Block splits                                            |
+|        | NDELR=nr                  | Nr of deleted records                                         |
+|        | NEXCP=nr                  | Nr of I/O requests                                            |
+|        | NEXT=nr                   | Nr of extents                                                 |
+|        | NINSR=nr                  | Nr of records inserted                                        |
+|        | NIXL=nr                   | Nr of index levels                                            |
+|        | NLOGR=nr                  | Nr of records                                                 |
+|        | NRETR=nr                  | Nr of records retrieved                                       |
+|        | NSSS=nr                   | Nr of control area splits. Foxes.                             |
+|        | NUPDR=nr                  | Nr of updates applied                                         |
+|        | PASSWD=adr                | Ptr to 1-byte length followed by password                     |
+|        | RKP=nr                    | Offset of key field within record                             |
+|        | SHRPOOL=nr                | SHRPOOL number                                                |
+|        | STMST=adr                 | Pointer to system timestamp field                             |
+|        | STRNO=nr                  | Max. nr of parallel requests                                  |
+|        | [MF=]                     | Use standard form of SHOWCB ACB; this is the default          |
+|        | [MF=L/MF=(L,addr,[label]] | Use list form of SHOWCB ACB                                   |
+|        | [MF=(E,addr)]             | Use execute form of SHOWCB ACB                                |
+|        | [MF=(G,addr,[label])]     | Use generate form of SHOWCB ACB                               |
 
 Supported options for the ATRB parameter are listed below:
 
@@ -349,3 +355,75 @@ All supported parameters and keywords are implemented compatibly with IBM's VSAM
 For details, please refer to the relevant IBM manual.
 
 For ease of access a short summary can be found in the addenda.
+
+### EXLST macro
+
+The EXLST macro will generate an Exit_List control block and initialize it according to the parameters specified
+on the macro invocation.
+
+The structure and layout of the generated EXLST are not part of the interface and are therefore not shown in this chapter.
+Direct access to subfields in the EXLST is discouraged. Use SHOWCB EXLST, TESTCB EXLST and/or MODCB EXLST
+to inspect, test, and/or modify the EXLST's content.
+
+All keywords on the EXLST macro are optional. Before the cluster is opened,
+all EXLST values can be modified using MODCB EXLST, or by changing the EXLST directly.
+The latter is not recommended, as it is not guaranteed to be portable or compatible with future versions of zVSAM.
+
+The table below shows how the EXLST macro can be coded.
+
+| Opcode | Operand                | Remarks                                                                                             |
+|--------|------------------------|-----------------------------------------------------------------------------------------------------|
+| EXLST  | [AM=VSAM]              | Designates this EXLST as a zVSAM EXLST; VSAM is the default                                         |
+|        | [EODAD=addr[,mod]]     | End-of-data exit routine                                                                            |
+|        | [LERAD=addr[,mod]]     | Logical error analysis routine                                                                      |
+|        | [SYNAD=addr[,mod]]     | Physical error analysis routine                                                                     |
+|        | [_JRNAD_=addr[,mod]]   | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+|        | [_UPAD_=addr[,mod]]    | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+|        | [_RLSWAIT_=addr[,mod]] | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+For ease of access a short summary can be found in the addenda.
+
+### GENCB EXLST macro
+
+The GENCB macro with BLK=EXLST will generate or manipulate Exit Lists for use with ACBs and initialize or change them
+according to the parameters specified on the macro invocation.
+It is for this reason that all supported parameters and keywords of the EXLST macro (as described above)
+are supported on the GENCB macro when BLK=EXLST is specified.
+
+The structure and layout of the generated EXLST are not part of the interface and are therefore not shown in this chapter.
+Direct access to subfields in the EXLST is discouraged. Use SHOWCB EXLST, TESTCB EXLST and/or MODCB EXLST
+to inspect, test, and/or modify the EXLST's content.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
+are  not part of the interface and are therefore not shown in this chapter.
+Direct access to subfields in the CBMR is strongly discouraged.
+
+The GENCB EXLST macro can be coded as follows:
+
+| Opcode | Operand                   | Remarks                                                             |
+|--------|---------------------------|-------------------------------------------------------------------- |
+| GENCB  | BLK=EXLST                 | Instructs GENCB to generate 1 or more EXLSTs                        |
+|        | [AM=VSAM]                 | Optional, no other values allowed; VSAM is the default              |
+|        | [COPIES=nr]               | The number of identical EXLSTs to generate                          |
+|        | [WAREA=addr]              | The work area where the EXLSTs are to be constructed                |
+|        | [LENGTH=nr]               | Length of the work area in bytes                                    |
+|        | [LOC=keyword]             | Where GENCB is to allocate dynamically acquired storage - if needed |
+|        | **[other]**               | **Any parameter supported on the EXLST macro**                      |
+|        | [MF=]                     | Use standard form of GENCB EXLST; this is the default               |
+|        | [MF=L/MF=(L,addr,[label]] | Use list form of GENCB EXLST                                        |
+|        | [MF=(E,addr)]             | Use execute form of GENCB EXLST                                     |
+|        | [MF=(G,addr,[label])]     | Use generate form of GENCB EXLST                                    |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+For ease of access a short summary can be found in the addenda.
+
+
+
+
+
+
