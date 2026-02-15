@@ -21,9 +21,10 @@
 .* Date   - 04/16/08                                                 *
 .*********************************************************************
 .* 11/17/08 stub for pending support              
-.* 2025/12 ZH: Implement RELEASE statement for COBOL SORT INPUT PROCEDURE
-.*         Implementation follows FIPS PUB 21-2 (ANSI X3.23-1985)
-.*         COBOL 85 standard, Section XI (Sort-Merge).
+.* 2025/12 ZH: Implement RELEASE statement for COBOL SORT INPUT 
+.*  PROCEDURE
+.*  Implementation follows FIPS PUB 21-2 (ANSI X3.23-1985)
+.*   COBOL 85 standard, Section XI (Sort-Merge).
 .*********************************************************************
 .* RELEASE Statement Format (COBOL 85):
 .*
