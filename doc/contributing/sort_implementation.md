@@ -1,12 +1,8 @@
-# zCOBOL SORT Implementation
+# zCOBOL SORT
 
-**Author:** Zane Hambly
-**Date:** December 2025
-**Standard:** FIPS PUB 21-2 (ANSI X3.23-1985, ISO 1989-1985), Section XI
+Zane Hambly, December 2025. Per FIPS PUB 21-2, Section XI.
 
 ---
-
-## Abstract
 
 `SORT.MAC` has said `MNOTE 8,'SORT NOT SUPPORTED YET'` since November 2008.
 Seventeen years is a long time to leave records unsorted. The stub has been
@@ -17,8 +13,6 @@ and generates HLASM targeting the existing z390 ZSORT infrastructure
 Both USING/GIVING and INPUT/OUTPUT PROCEDURE forms are supported.
 Multi-key sorts with mixed ASCENDING/DESCENDING work. MERGE does not,
 but Rome wasn't built in a day and neither was COBOL.
-
----
 
 ## How It Works
 
@@ -37,15 +31,15 @@ COBOL source --> SORT.MAC (parse) --> ZC_SD_FIND (lookup) --> GEN_SORT (emit) --
 
 ## Files
 
-| File                          | What It Does                                         |
-|-------------------------------|------------------------------------------------------|
-| `zcobol/mac/SORT.MAC`        | Parses SORT statement - replaces the 2008 stub       |
-| `zcobol/mac/GEN_SORT.MAC`    | Generates HLASM code targeting ZSORT                 |
-| `zcobol/mac/ZCSD.MAC`        | Parses SD entries, stores sort file metadata          |
-| `zcobol/mac/ZC_SD_FIND.MAC`  | Looks up sort files by name                          |
-| `zcobol/cpy/ZC_SD.CPY`       | Global variables for sort file tracking              |
-| `zcobol/mac/RELEASE.MAC`     | Implements RELEASE for INPUT PROCEDURE               |
-| `zcobol/mac/RETURN.MAC`      | Extended to support SORT RETURN                      |
+| File                        | What It Does                                    |
+|-----------------------------|-------------------------------------------------|
+| `zcobol/mac/SORT.MAC`      | Parses SORT statement — replaces the 2008 stub  |
+| `zcobol/mac/GEN_SORT.MAC`  | Generates HLASM code targeting ZSORT             |
+| `zcobol/mac/ZCSD.MAC`      | Parses SD entries, stores sort file metadata     |
+| `zcobol/mac/ZC_SD_FIND.MAC`| Looks up sort files by name                      |
+| `zcobol/cpy/ZC_SD.CPY`     | Global variables for sort file tracking          |
+| `zcobol/mac/RELEASE.MAC`   | Implements RELEASE for INPUT PROCEDURE           |
+| `zcobol/mac/RETURN.MAC`    | Extended to support SORT RETURN                  |
 
 `ZC_WS.CPY` was intentionally left alone. Touching shared copybooks to add
 sort variables felt like defusing a bomb with a hammer.
@@ -54,12 +48,12 @@ sort variables felt like defusing a bomb with a hammer.
 
 COBOL PIC types map to ZSORT key types:
 
-| COBOL PIC          | ZSORT | Notes                  |
-|--------------------|-------|------------------------|
-| X, A               | CH    | EBCDIC character       |
-| 9 (DISPLAY)        | ZD    | Zoned decimal          |
-| 9 COMP-3           | PD    | Packed decimal         |
-| 9 COMP (H/F/G)     | FI    | Signed binary          |
+| COBOL PIC      | ZSORT | Notes            |
+|----------------|-------|------------------|
+| X, A           | CH    | EBCDIC character |
+| 9 (DISPLAY)    | ZD    | Zoned decimal    |
+| 9 COMP-3       | PD    | Packed decimal   |
+| 9 COMP (H/F/G) | FI   | Signed binary    |
 
 ## File Encoding
 
@@ -79,34 +73,24 @@ Not yet implemented (flagged via MNOTE 4 at assembly time):
 
 ## Tests
 
-| Test                          | Covers                                    |
-|-------------------------------|-------------------------------------------|
-| `zcobol/tests/TESTSRT1.CBL`  | LINE SEQUENTIAL sort with USING/GIVING    |
-| `zcobol/tests/TESTSRT2.CBL`  | Fixed-format EBCDIC sort                  |
+| Test                         | Covers                                         |
+|------------------------------|-------------------------------------------------|
+| `zcobol/tests/SORTASC.CBL`  | LINE SEQUENTIAL, ascending, USING/GIVING        |
+| `zcobol/tests/SORTDEF.CBL`  | Default file organisation (no explicit ORGANIZATION) |
+| `zcobol/tests/SORTMULT.CBL` | Multiple SORTs in one programme (ASC then DESC) |
 
-Both tests use DD name environment variables (`INFILE`, `OUTFILE`) for
-file assignment, consistent with JCL conventions:
+All tests use DD name environment variables for file assignment,
+consistent with JCL conventions. Output is compared against `.TF2`
+reference files:
 
 ```bash
-export INFILE=zcobol/tests/TESTSRT1.TF1
-export OUTFILE=zcobol/tests/TESTSRT1.OUT
-bash/cblclg zcobol/tests/TESTSRT1
+export INFILE=zcobol/tests/SORTASC.TF1
+export OUTFILE=zcobol/tests/SORTASC.OUT
+bash/cblclg zcobol/tests/SORTASC
+diff zcobol/tests/SORTASC.OUT zcobol/tests/SORTASC.TF2
 ```
 
-## Normative Reference
+## Reference
 
-> **FIPS PUB 21-2**, *COBOL*, Federal Information Processing Standards Publication,
-> U.S. Department of Commerce, National Institute of Standards and Technology, 1985.
-> Incorporates ANSI X3.23-1985 and ISO 1989-1985.
-
-Relevant sections:
-
-| Section | Title                     |
-|---------|---------------------------|
-| XI      | Sort-Merge Module         |
-| XI-2    | The SORT Statement        |
-| XI-3    | The RELEASE Statement     |
-| XI-4    | The RETURN Statement      |
-| XI-5    | The SD Entry              |
-
-If you need a copy of the standard, ask.
+FIPS PUB 21-2 (1985), sections XI through XI-5 (Sort-Merge Module).
+Incorporates ANSI X3.23-1985 and ISO 1989-1985.
