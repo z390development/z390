@@ -401,6 +401,8 @@ public class pz390 {
      * 2022-03-12 DSH fixed overflow for cc3 MSC, MSGC, MSGRKC, MSRKC
      * 2023-03-29 Issue 434 ED instruction handles alternate signs incorrectly
      * 2025-10-20 AFK       Add javadoc comments
+     * 2026-02-06 Issue 760 Divide Decimal (DP) incorrectly issues S0CA when quotient
+     *                      length too long; should issue S0CB
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -3963,10 +3965,18 @@ public pz390()
 	                    if (pdf_big_int2.signum() == 0) {
 //	                        psw_cc = psw_cc3;              // RPI 2013
 	                        set_psw_check(psw_pic_pd_div);
+	                        break;                                                                    // #760
 	                    }
 	                    BigInteger[] big_quo_rem = pdf_big_int1
 	                            .divideAndRemainder(pdf_big_int2);
 	                    pdf_big_int = big_quo_rem[0];
+	                    String s = pdf_big_int.toString();                                            // #760
+	                    int numDigits = (s.charAt(0) == '-' ? s.substring(1).length() : s.length());  // #760
+	                    // numDigits/2 + 1 = num packed bytes; decimal divide if exceeds area length  // #760
+	                    if (numDigits/2 >= rflen1 - rflen2) {                                         // #760
+	                        set_psw_check(psw_pic_pd_div);                                            // #760
+	                        break;                                                                    // #760
+	                    }                                                                             // #760
 	                    put_pd(mem_byte, bd1_loc, rflen1 - rflen2);
 	                    pdf_big_int = big_quo_rem[1];
 	                    put_pd(mem_byte, bd1_loc + rflen1 - rflen2, rflen2);
@@ -3977,6 +3987,13 @@ public pz390()
 	                        break;
 	                    }
 	                    pdf_long = pdf_long1 / pdf_long2;
+	                    String s = Long.toString(pdf_long);                                           // #760
+	                    int numDigits = (s.charAt(0) == '-' ? s.substring(1).length() : s.length());  // #760
+	                    // numDigits/2 + 1 = num packed bytes; decimal divide if exceeds area length  // #760
+	                    if (numDigits/2 >= rflen1 - rflen2) {                                         // #760
+	                        set_psw_check(psw_pic_pd_div);                                            // #760
+	                        break;                                                                    // #760
+	                    }                                                                             // #760
 	                    put_pd(mem_byte, bd1_loc, rflen1 - rflen2);
 	                    pdf_long = pdf_long1 - pdf_long * pdf_long2;
 	                    put_pd(mem_byte, bd1_loc + rflen1 - rflen2, rflen2);
@@ -3984,6 +4001,7 @@ public pz390()
 	            }
 	        } else {                              // RPI 2013
 	            set_psw_check(psw_pic_spec);      // RPI 2013
+	            break;                                                                                // #760
 	        }                                     // RPI 2013
 			break;
 		}
