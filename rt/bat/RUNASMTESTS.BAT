@@ -29,6 +29,19 @@ call bat\asmlg %z_TraceMode% rt\mlc\IS658    trace sysmac(mac) noloadhigh       
 call bat\asmlg %z_TraceMode% rt\mlc\IS658    trace sysmac(mac)                                || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\IS659    trace sysmac(mac) noloadhigh                     || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\IS660    trace sysmac(mac) noloadhigh                     || goto error
+call bat\asm   %z_TraceMode% rt\mlc\IS750    trace sysmac(mac) noloadhigh
+     if %ERRORLEVEL% NEQ 12 goto error
+
+call bat\asml  %z_TraceMode% rt\mlc\T714M1   trace sysmac(mac)                                || goto error
+call bat\asml  %z_TraceMode% rt\mlc\T714M2   trace sysmac(mac) rmode31                        || goto error
+call bat\asml  %z_TraceMode% rt\mlc\T714M3   trace sysmac(mac)                                || goto error
+call bat\asml  %z_TraceMode% rt\mlc\T714A    trace sysmac(mac)                                || goto error
+call bat\asml  %z_TraceMode% rt\mlc\T714B    trace sysmac(mac)                                || goto error
+call bat\exec  %z_TraceMode% rt\mlc\T714A    trace noinit noloadhigh                          || goto error
+call bat\exec  %z_TraceMode% rt\mlc\T714A    trace noinit                                     || goto error
+call bat\exec  %z_TraceMode% rt\mlc\T714A    trace noinit noloadhigh mem(32)                  || goto error
+call bat\exec  %z_TraceMode% rt\mlc\T714A    trace noinit mem(32)                             || goto error
+
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC1  trace sysmac(mac) noloadhigh optable(z390)       || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTASC1 trace sysmac(mac) noloadhigh optable(z390) ASCII || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC2  trace sysmac(mac) noloadhigh optable(z390)       || goto error
@@ -42,7 +55,8 @@ set z_ReturnCode=0
 goto return
 
 :error
-set z_ReturnCode=%ERRORLEVEL%
+if %ERRORLEVEL% EQU 0 (set z_ReturnCode=6
+               ) else (set z_ReturnCode=%ERRORLEVEL%)
 echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
 :return
 popd
