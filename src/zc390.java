@@ -106,6 +106,7 @@ public class zc390{
     * 2023-10-07 #518 jjg Setting program name fails when '.' in directory name in file path
     * 2025-06-09 #645 afk ZC390 issues error when input file has explicit extension
     * 2025-07-08 #655 afk zCobol fails on number in INSTALLATION paragraph of Identification division
+    * 2026-01-01 #728 afk zCobol fails on multiple programs within a single source file
     * 2026-01-10 #742 zh  Implement COBOL REPLACE statement per FIPS PUB 21-2
     ****************************************************
     *                                         last RPI *
@@ -1441,6 +1442,13 @@ private class section_definition                                                
                {sc_current_index = sc_new_index;                                                  // #655
                 }                                                                                 // #655
             }                                                                                     // #655
+        else // no change of section - but we might have END PROGRAM                              // #728
+             // An END PROGRAM statement might be followed by another program                     // #728
+             // That is: an embedded (sub-)program - so we need to reset the sequence pointer     // #728
+           {if (sc_current_token.equals("PROGRAM") && sc_previous_token.equals("END"))            // #728
+               {sc_current_index = -1;                                                            // #728
+                }                                                                                 // #728
+            }                                                                                     // #728
                                                                                                   // #655
         // ignore current token if it is in a pseudo-comment section or paragraph                 // #655
         if (sc_current_index >= 0)                                                                // #655
