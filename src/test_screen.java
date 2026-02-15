@@ -26,12 +26,32 @@ import java.awt.font.TextLayout;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 
+/**
+ * test_screen is probably for testing only.
+ */
 public class test_screen{
-	
+   /****************************************************
+    * Maintenance
+    ****************************************************
+    * 2026-02-15 AFK        Add javadoc comments
+    */
+
+
+
+   /**
+    * Dummy constructor - no initialization needed
+    */
+    public test_screen()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
+   /**
+    * start a test window for gz390_screen
+    * @param argv standard argument list
+    */
 	public static void main(String argv[]) {
-    	/*
-    	 * start a test window for gz390_screen
-    	 */
         gz390_screen tn_scn = new gz390_screen();
 	    int max_rows = 24;
 	    int max_cols = 80;
