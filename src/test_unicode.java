@@ -22,53 +22,89 @@ import java.util.Iterator;
 import java.util.Map;
 
 
+/**
+ * test_unicode is probably for testing only.
+ */
 public class  test_unicode{
-	public static void main(String argv[]) {		
-	      /*
-	       * start instance of zcobol class
-	       */
+   /****************************************************
+    * Maintenance
+    ****************************************************
+    * 2026-02-15 AFK        Add javadoc comments
+    */
+
+
+
+   /**
+    * Dummy constructor - no initialization needed
+    */
+    public test_unicode()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
+   /**
+    * start instance of zcobol class
+    * @param argv standard argument list
+    */
+	public static void main(String argv[]) {
 		  test_unicode pgm = new test_unicode();
 	      pgm.main();
 	}
-public void main(){
-// System 390 EBCDIC
-// 2019-09-20 dsh fix raw interator by adding <?>
-String encoding = "Cp1047";
 
-// microsoft proprietary USA
-// encoding = "Cp037";
 
-// IBM PC OEM DOS
-// encoding = "Cp437";
-try {
-	String unicode = "1234567890abcdefghijklmnopqrstuvwxyz";
-	byte[] ebcdic = unicode.getBytes( encoding );
-	String reconsituted = new String( ebcdic, encoding );
-	System.out.println( unicode );
-	System.out.println( reconsituted );
-	list_default_charset();
-	list_available_charsets();
-} catch (Exception e){
-	System.out.println("test_unicode trap - " + e);
+   /**
+    * start instance of zcobol class
+    */
+    public void main(){
+        // System 390 EBCDIC
+        // 2019-09-20 dsh fix raw interator by adding <?>
+        String encoding = "Cp1047";
+        
+        // microsoft proprietary USA
+        // encoding = "Cp037";
+        
+        // IBM PC OEM DOS
+        // encoding = "Cp437";
+        try {
+        	String unicode = "1234567890abcdefghijklmnopqrstuvwxyz";
+        	byte[] ebcdic = unicode.getBytes( encoding );
+        	String reconsituted = new String( ebcdic, encoding );
+        	System.out.println( unicode );
+        	System.out.println( reconsituted );
+        	list_default_charset();
+        	list_available_charsets();
+        } catch (Exception e){
+        	System.out.println("test_unicode trap - " + e);
+        }
+    }
+
+
+
+   /**
+    * report default character set
+    */
+    private void list_default_charset(){
+    	String name = Charset.defaultCharset().name();
+    	System.out.println("default charset = " + name);
+    }
+
+
+
+   /**
+    * report all available character sets
+    */
+    private void list_available_charsets(){
+    	Map<?, ?> map = Charset.availableCharsets();
+    	Iterator<?> it = map.keySet().iterator();
+    	while (it.hasNext()) {
+        // Get charset name
+    	String charsetName = (String)it.next();
+    
+        // Get charset
+    	Charset charset = Charset.forName(charsetName);
+    	System.out.println(charset);
+    	}
+    
+    }
 }
-}
-private void list_default_charset(){
-	String name = Charset.defaultCharset().name();
-	System.out.println("default charset = " + name);
-}
-private void list_available_charsets(){
-	Map<?, ?> map = Charset.availableCharsets();
-	Iterator<?> it = map.keySet().iterator();
-	while (it.hasNext()) {
-    // Get charset name
-		String charsetName = (String)it.next();
-
-    // Get charset
-		Charset charset = Charset.forName(charsetName);
-		System.out.println(charset);
-	}
-
-}
-
-}
-
