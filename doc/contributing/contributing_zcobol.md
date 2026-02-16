@@ -57,3 +57,4 @@ The following documents describe recent COBOL statement implementations in detai
 including normative references to [FIPS PUB 21-2](https://nvlpubs.nist.gov/nistpubs/Legacy/FIPS/fipspub21-2.pdf) (ANSI X3.23-1985):
 
 - [REPLACE Statement](./replace_implementation.md) - Compiler-directing text substitution per FIPS PUB 21-2 Section XII
+- [SORT Statement](./sort_implementation.md) - Sort-Merge module implementation per FIPS PUB 21-2 Section XI
