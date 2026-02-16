@@ -1,0 +1,38 @@
+         MACRO
+.*********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program; if not, see https://www.gnu.org/licenses.
+.*********************************************************************
+.* Author - Zane Hambly                                              *
+.* Date   - 02/13/26                                                 *
+.*********************************************************************
+.* 02/13/26 initial coding for END-RETURN scope terminator
+.*          Terminates AT END clause of RETURN sort-file statement
+.*********************************************************************
+         END_RETURN
+         COPY  ZC_WS
+         AIF   (&IE_LVL LT 1)
+               MNOTE 8,'END_RETURN MISSING RETURN'
+               MEXIT
+         AEND
+         AIF   (&IE_TYPE(&IE_LVL) NE 15)
+               MNOTE 8,'END-RETURN INVALID TYPE - &IE_TYPE(&IE_LVL)'
+               MEXIT
+         AEND
+         GEN_LABEL RETURN_END_RETURN&IE_TCNT(&IE_LVL),END_RETURN
+         :&IE_LVL  SETA  &IE_LVL-1
+         MEND
