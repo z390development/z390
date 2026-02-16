@@ -75,6 +75,10 @@ export INFILE=zcobol/tests/SORTDEF.TF1
 export OUTFILE=zcobol/tests/SORTDEF.OUT
 bash/cblclg zcobol/tests/SORTDEF $1 $2 $3 $4 $5 $6 $7 $8 $9
 diff zcobol/tests/SORTDEF.OUT zcobol/tests/SORTDEF.TF2 || exit 1
+export INFILE=zcobol/tests/SORTPROC.TF1
+export OUTFILE=zcobol/tests/SORTPROC.OUT
+bash/cblclg zcobol/tests/SORTPROC $1 $2 $3 $4 $5 $6 $7 $8 $9
+diff zcobol/tests/SORTPROC.OUT zcobol/tests/SORTPROC.TF2 || exit 1
 export INFILE=zcobol/tests/SORTMULT.TF1
 export ASCFILE=zcobol/tests/SORTMULT_ASC.OUT
 export DESCFILE=zcobol/tests/SORTMULT_DSC.OUT

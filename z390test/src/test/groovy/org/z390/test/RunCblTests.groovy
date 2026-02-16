@@ -142,6 +142,18 @@ class RunCblTests extends z390Test{
     }
 
     @Test
+    void testSORTPROC() {
+        this.env.put('INFILE', basePath('zcobol', 'tests', 'SORTPROC.TF1'))
+        this.env.put('OUTFILE', basePath('zcobol', 'tests', 'SORTPROC.OUT'))
+        int rc = this.cblclg(basePath("zcobol", "tests", "SORTPROC"), 'TIME(30)')
+        this.printOutput()
+        assert rc == 0
+        var actual = new File(basePath('zcobol', 'tests', 'SORTPROC.OUT')).text
+        var expected = new File(basePath('zcobol', 'tests', 'SORTPROC.TF2')).text
+        assert actual == expected, "SORTPROC output does not match reference"
+    }
+
+    @Test
     void testSORTMULT() {
         this.env.put('INFILE', basePath('zcobol', 'tests', 'SORTMULT.TF1'))
         this.env.put('ASCFILE', basePath('zcobol', 'tests', 'SORTMULT_ASC.OUT'))

@@ -21,9 +21,7 @@
 .* Date   - 04/07/08                                                 *
 .*********************************************************************
 .* 04/11/08 initial coding for global RETURN
-.* 2025/12 ZH: Extended to support SORT RETURN statement
-.*         Implementation follows FIPS PUB 21-2 (ANSI X3.23-1985)
-.*         COBOL 85 standard, Section XI (Sort-Merge).
+.* 2025/12 ZH: Extended to support SORT RETURN (COBOL 85 XI)
 .*********************************************************************
 .* RETURN Statement has two forms in COBOL:
 .*
@@ -101,7 +99,7 @@ ZC_RET_OK&RETURN_LAB DS 0H
                J     PG_RETURN_END_RETURN&AT_END_LAB
                GEN_LABEL RETURN_AT_END&AT_END_LAB,AT_END
                :&IE_LVL SETA &IE_LVL+1
-               :&IE_TYPE(&IE_LVL) SETA 3
+               :&IE_TYPE(&IE_LVL) SETA 15
                :&IE_TCNT(&IE_LVL) SETA &AT_END_LAB
          AELSE
 .*             NO AT END - JUST CONTINUE
