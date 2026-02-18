@@ -6,7 +6,6 @@ It contains the following major chapters:
 1. [Basic Concepts](#Basic-Concepts)
 2. [File Structure](#File-Structure)
 3. [Block Structures](#Block-Structures)
-4. [Logical processes for ACB-based requests](#Logical-processes-for-ACB-based-requests)
 
 ## Basic Concepts
 
