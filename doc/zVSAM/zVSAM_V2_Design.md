@@ -6,8 +6,8 @@ This document describes the structure of the zVSAM component of the z390 assembl
 It consists of the following parts:
 
 1. This introduction.
-2. [A description of the structure of the interfaces used](zVSAM_V2_Interfaces.md)
-3. A description of the structure of the files.
+2. [A description of the structure of the interfaces used](zVSAM_V2_Design_Interfaces.md)
+3. [A description of the structure of the files](zVSAM_V2_Design_File_Structure.md)
 4. A description of the logical processes that implement ACB-based requests
 5. A description of the logical processes that implement RPL-based requests
 6. Addenda
