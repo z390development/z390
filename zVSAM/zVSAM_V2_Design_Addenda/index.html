@@ -1,0 +1,6544 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+        <meta name="author" content="z390 Development team">
+      
+      
+      
+        <link rel="prev" href="../zVSAM_V2_Design_ACB_Processes/">
+      
+      
+        <link rel="next" href="../zVSAM_V2_Design_File_Structure/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+    
+    
+      
+        <title>zVSAM V2 - Addenda - z390</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#zvsam-v2-addenda" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+            
+  <p>This is a work in progress. Contributions to the documentation are welcome. See <a
+    href="../../contributing/contribute_docs">Contributing</a> for more information.</p>
+
+          </div>
+          
+        </aside>
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="z390" class="md-header__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            z390
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              zVSAM V2 - Addenda
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting_started/install/" class="md-tabs__link">
+          
+  
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../user_guide/z390/commands/" class="md-tabs__link">
+          
+  
+  
+  User guide
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/svc_services/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contributing/contribute_code/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="z390" class="md-nav__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    z390
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick starts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/learning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learning resources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/macro_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mainframe OS compatible macros
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Z390
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Z390
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/z390/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/z390/structured_macro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structured Macro Extensions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/z390/z390_filetypes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    z390 File types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/z390/z390_options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    z390 Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    zCOBOL
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/zCOBOL_User_Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/zCOBOL_System_Programmer_Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL System Programmer's Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/zCOBOL_NIST_COBOL_1985_Test_Results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL NIST COBOL 1985 Test Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/zCOBOL_filetypes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL file types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/zCOBOL_options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCICS
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    zCICS
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCICS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manuals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCICS/zcics_app_prog_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCICS Application Programming Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/svc_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SVC services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/program_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Program Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/storage_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/file_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Non-VSAM File Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/guam_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GUAM services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/soa_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SOA services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/structured_program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structured programming macros
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/vsam_file_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/zpar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zPAR and zPARTRS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/sort/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zSORT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/assist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ASSIST support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/contribute_code/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing to z390
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/contribute_docs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing to z390 Documentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/contributing_zcobol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing to zCOBOL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/replace_implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL REPLACE Statement Implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/sort_implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL SORT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#api-for-acb-based-interfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API for ACB-based interfaces
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API for ACB-based interfaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#acb-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ACB macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gencb-acb-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GENCB ACB macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modcb-acb-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MODCB ACB macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#showcb-acb-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SHOWCB ACB macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-acb-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TESTCB ACB macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exlst-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EXLST macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gencb-exlst-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GENCB EXLST macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modcb-exlst-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MODCB EXLST macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#showcb-exlst-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SHOWCB EXLST macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-exlst-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TESTCB EXLST macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#open-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OPEN macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#close-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLOSE macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zacb-description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        zACB description
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zexlst-description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        zEXLST description
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cbmr-description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CBMR description
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cbmr-description-body-for-acb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CBMR description – body for ACB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cbmr-description-body-for-exlst" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CBMR description – body for EXLST
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rpl-based-interfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RPL-based interfaces
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RPL-based interfaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rpl-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RPL macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gencb-rpl-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GENCB RPL macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modcb-rpl-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MODCB RPL macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#showcb-rpl-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SHOWCB RPL macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-rpl-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TESTCB RPL macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#point-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POINT macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#put-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PUT macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#erase-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ERASE macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CHECK macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#endreq-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ENDREQ macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-macro-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VERIFY macro parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#zrpl-description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        zRPL description
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cbmr-description-body-for-rpl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CBMR description – body for RPL
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#list-of-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        List of changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="zvsam-v2-addenda">zVSAM V2 - Addenda</h1>
+<p>This document describes Macro parameters and control blocks used in the zVSAM V2 implementation.
+It contains the following major chapters:</p>
+<ol>
+<li><a href="#API-for-ACB-based-interfaces">API for ACB-based interfaces</a><ol>
+<li><a href="#ACB-macro-parameters">ACB macro parameters</a></li>
+<li><a href="#GENCB-ACB-macro-parameters">GENCB ACB macro parameters</a></li>
+<li><a href="#MODCB-ACB-macro-parameters">MODCB ACB macro parameters</a></li>
+<li><a href="#SHOWCB-ACB-macro-parameters">SHOWCB ACB macro parameters</a></li>
+<li><a href="#TESTCB-ACB-macro-parameters">TESTCB ACB macro parameters</a></li>
+<li><a href="#EXLST-macro-parameters">EXLST macro parameters</a></li>
+<li><a href="#GENCB-EXLST-macro-parameters">GENCB EXLST macro parameters</a></li>
+<li><a href="#MODCB-EXLST-macro-parameters">MODCB EXLST macro parameters</a></li>
+<li><a href="#SHOWCB-EXLST-macro-parameters">SHOWCB EXLST macro parameters</a></li>
+</ol>
+</li>
+<li><a href="#TESTCB-EXLST-macro-parameters">TESTCB EXLST macro parameters</a></li>
+<li><a href="#OPEN-macro-parameters">OPEN macro parameters</a></li>
+<li><a href="#CLOSE-macro-parameters">CLOSE macro parameters</a></li>
+<li><a href="#zACB-description">zACB description</a></li>
+<li><a href="#zEXLST-description">zEXLST description</a></li>
+<li><a href="#CBMR-description">CBMR description</a></li>
+<li><a href="#CBMR-description-–-body-for-ACB">CBMR description – body for ACB</a></li>
+<li><a href="#CBMR-description-–-body-for-EXLST">CBMR description – body for EXLST</a></li>
+<li><a href="#RPL-based-interfaces">RPL-based interfaces</a><ol>
+<li><a href="#RPL-macro-parameters">RPL macro parameters</a></li>
+<li><a href="#GENCB-RPL-macro-parameters">GENCB RPL macro parameters</a></li>
+<li><a href="#MODCB-RPL-macro-parameters">MODCB RPL macro parameters</a></li>
+<li><a href="#SHOWCB-RPL-macro-parameters">SHOWCB RPL macro parameters</a></li>
+<li><a href="#TESTCB-RPL-macro-parameters">TESTCB RPL macro parameters</a></li>
+<li><a href="#POINT-macro-parameters">POINT macro parameters</a></li>
+<li><a href="#GET-macro-parameters">GET macro parameters</a></li>
+<li><a href="#PUT-macro-parameters">PUT macro parameters</a></li>
+<li><a href="#ERASE-macro-parameters">ERASE macro parameters</a></li>
+</ol>
+</li>
+<li><a href="#CHECK-macro-parameters">CHECK macro parameters</a></li>
+<li><a href="#ENDREQ-macro-parameters">ENDREQ macro parameters</a></li>
+<li><a href="#VERIFY-macro-parameters">VERIFY macro parameters</a></li>
+<li><a href="#zRPL-description">zRPL description</a></li>
+<li><a href="#CBMR-description-–-body-for-RPL">CBMR description – body for RPL</a></li>
+<li><a href="#List-of-changes">List of changes</a></li>
+</ol>
+<h2 id="api-for-acb-based-interfaces">API for ACB-based interfaces</h2>
+<h3 id="acb-macro-parameters">ACB macro parameters</h3>
+<p>With the exception of the DDNAME parameter, all supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AM</code>=</td>
+<td>Optional parameter. AM=VSAM is the default. No other values are supported.</td>
+</tr>
+<tr>
+<td><code>DDNAME</code>=</td>
+<td>DDname is required before open is executed. If DDname is not supplied on the ACB macro, the label used on the ACB macro is used as DDname. If neither is specified, a proper value must be supplied by using MODCB ACB.</td>
+</tr>
+<tr>
+<td></td>
+<td>In zVSAM the DDname is to hold the name of an environment variable in the host OS. This variable in turn should contain the path and qualified filename of the cluster to be opened.</td>
+</tr>
+<tr>
+<td></td>
+<td>The qualifier is the name of another environment variable in the host OS and is the path to the assembled catalog. For more information on zVSAM catalogs, please refer to the "z390_zVSAM_Catalog_User_Guide".</td>
+</tr>
+<tr>
+<td><code>PASSWD</code>=</td>
+<td>Supply the address of the password, consisting of a single byte with the password's length (1-8 characters) followed by the password value.</td>
+</tr>
+<tr>
+<td><code>EXLST</code>=</td>
+<td>Pointer to an exit list. Please see the EXLST macro description for details.</td>
+</tr>
+<tr>
+<td><code>BUFSP</code>=</td>
+<td>Maximum buffer space in virtual storage for this cluster. This is the combined size in bytes of all buffers allocated for this cluster.</td>
+</tr>
+<tr>
+<td></td>
+<td>If (<code>BUFND</code> + <code>BUFNI</code>) * Block_size exceeds the value specified for <code>BUFSP</code>, then <code>BUFND</code> and <code>BUFNI</code> will be reduced proportionally to keep total allocation below the limit specified in the <code>BUFSP</code> parameter.</td>
+</tr>
+<tr>
+<td><code>BUFND</code>=</td>
+<td>Number of data buffers to allocate. Specify a number up to 65535. When over-allocating (see <code>BUFSP</code> parameter above) fewer data buffers will be allocated than requested.</td>
+</tr>
+<tr>
+<td><code>BUFNI</code>=</td>
+<td>Number of index buffers to allocate. Specify a number up to 65535. When over-allocating (see <code>BUFSP</code> parameter above) fewer index buffers will be allocated than requested.</td>
+</tr>
+<tr>
+<td><code>RMODE31</code>=</td>
+<td>Specifies whether buffers and/or control blocks should be allocated below the 16M line, or may be allocated above the 16M line. The default for RMODE31 is NONE. The following keywords are supported:</td>
+</tr>
+<tr>
+<td>- <code>NONE</code></td>
+<td>Control Blocks and buffers below 16M</td>
+</tr>
+<tr>
+<td>- <code>CB</code></td>
+<td>Control Blocks above or below 16M, buffers below 16M</td>
+</tr>
+<tr>
+<td>- <code>BUFF</code></td>
+<td>Control Blocks below 16M, buffers above or below 16M</td>
+</tr>
+<tr>
+<td>- <code>ALL</code></td>
+<td>Control Blocks and buffers above 16M or below 16M</td>
+</tr>
+<tr>
+<td><code>STRNO</code>=</td>
+<td>Maximum number of strings (concurrent requests) for this ACB. If specified requires a number between 1 and 255 inclusive.</td>
+</tr>
+<tr>
+<td><code>BSTRNO</code>=</td>
+<td>Beginning (or initial) number of strings (concurrent requests) allocated to this ACB when a path is opened. If specified requires a number between 1 and 255 inclusive.</td>
+</tr>
+<tr>
+<td><code>MACRF</code>=</td>
+<td>List of keywords specifying how the cluster will be processed after open. The following keywords are supported:</td>
+</tr>
+<tr>
+<td>- <code>ADR/KEY</code></td>
+<td>Non-exclusive <code>MACRF</code> keywords indicating whether the cluster may be accessed by address or by key.</td>
+</tr>
+<tr>
+<td></td>
+<td>ADR can be used only with ESDS or KSDS to access records by RBA or XRBA.</td>
+</tr>
+<tr>
+<td></td>
+<td>KEY can be used with KSDS to access records by key</td>
+</tr>
+<tr>
+<td></td>
+<td>KEY can be used with RRDS to access records by relative record number.</td>
+</tr>
+<tr>
+<td>- <code>DFR/NDF</code></td>
+<td>Mutually exclusive <code>MACRF</code> keywords indicating whether or not buffer changes need to be written out to the file immediately.</td>
+</tr>
+<tr>
+<td>- <code>DFR</code></td>
+<td>allows zVSAM to defer writing and keep changes in the buffer. When multiple changes are combined, fewer I/Os are needed which should improve program performance.</td>
+</tr>
+<tr>
+<td>- <code>NDF</code></td>
+<td>disallows zVSAM to defer writing, forcing a buffer write for every single change to the buffer.</td>
+</tr>
+<tr>
+<td>- <code>DIR</code>,<code>SEQ</code>,<code>SKP</code></td>
+<td>can be coded in any combination. If none of the three is specified <code>SEQ</code> is used as a default.</td>
+</tr>
+<tr>
+<td>- <code>DIR</code></td>
+<td><code>MACRF</code> keyword indicating that the cluster will be processed directly. <code>DIR</code> can be used with ESDS, KSDS, or RRDS to access data randomly.</td>
+</tr>
+<tr>
+<td>- <code>SEQ</code></td>
+<td><code>MACRF</code> keyword indicating that the cluster will be processed sequentially. <code>SEQ</code> can be used with ESDS, KSDS, or RRDS to access data sequentially.</td>
+</tr>
+<tr>
+<td>- <code>SKP</code></td>
+<td><code>MACRF</code> keyword to allow skip-sequential access. I.e. specifying this keyword allows usage of the POINT macro to position the file to a specific position to access data randomly.</td>
+</tr>
+<tr>
+<td></td>
+<td><code>SKP</code> can be used with KSDS or RRDS to randomly position the file to a specific key or RRN prior to sequential access</td>
+</tr>
+<tr>
+<td>- <code>IN</code>/<code>OUT</code></td>
+<td>Non-exclusive <code>MACRF</code> keywords indicating whether the cluster will be processed for input only or for both input and output. <code>OUT</code> implies <code>IN</code>.</td>
+</tr>
+<tr>
+<td>- <code>IN</code></td>
+<td>data in the cluster can be read but not changed in any way.</td>
+</tr>
+<tr>
+<td>- <code>OUT</code></td>
+<td>data in the cluster can be read, updated, inserted, or deleted.</td>
+</tr>
+<tr>
+<td>- <code>NIS</code>/<code>SIS</code></td>
+<td>Mutually exclusive <code>MACRF</code> keywords indicating how zVSAM inserts new records into the cluster. Relevant only for KSDS clusters.</td>
+</tr>
+<tr>
+<td>- <code>NIS</code></td>
+<td>Normal insert strategy: zVSAM will insert records optimizing for inserts that are dispersed randomly across the data set</td>
+</tr>
+<tr>
+<td>- <code>SIS</code></td>
+<td>Sequential insert stragegy: zVSAM will insert records optimizing for inserts that are (generally, mostly) packed together in a sequential manner.</td>
+</tr>
+<tr>
+<td>- <code>NRM</code>/<code>AIX</code></td>
+<td>Mutually exclusive <code>MACRF</code> keywords indicating how zVSAM is to process accesses to an AIX. Relevant only when the DDname specifies a path.</td>
+</tr>
+<tr>
+<td>- <code>NRM</code></td>
+<td>Normal mode: zVSAM treats the AIX data as a normal KSDS. This allows direct access to the AIX's data records.</td>
+</tr>
+<tr>
+<td>- <code>AIX</code></td>
+<td>AIX mode: zVSAM will use the AIX to access records in the underlying base cluster.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="gencb-acb-macro-parameters">GENCB ACB macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BLK</code>=ACB</td>
+<td>required to indicate the ACB-supporting logic of the macro is being invoked</td>
+</tr>
+<tr>
+<td><code>COPIES</code>=</td>
+<td>Number of identical copies to generate. Specify a number between 1 and 65535. The default is 1.</td>
+</tr>
+<tr>
+<td><code>WAREA</code>=</td>
+<td>Address of a work area where the ACB/ACBs is/are to be constructed.</td>
+</tr>
+<tr>
+<td></td>
+<td>When <code>WAREA</code> is specified, <code>LENGTH</code> must be specified too.</td>
+</tr>
+<tr>
+<td></td>
+<td>When <code>WAREA</code> is not specified, the CBMR handler allocates an area of storage.</td>
+</tr>
+<tr>
+<td></td>
+<td>The address of this area is returned in R1; its length in R0.</td>
+</tr>
+<tr>
+<td><code>LENGTH</code>=</td>
+<td>Length in bytes of the area indicated by <code>WAREA</code>.</td>
+</tr>
+<tr>
+<td></td>
+<td>When <code>LENGTH</code> is specified, <code>WAREA</code> must be specified as well.</td>
+</tr>
+<tr>
+<td><code>LOC</code>=</td>
+<td>Where a work area for constructing the ACB/ACBs is to be allocated. Used only when <code>WAREA</code> and <code>LENGTH</code> are not specified. Supports the keywords <code>BELOW</code> and <code>ANY</code>, with <code>BELOW</code> being the default</td>
+</tr>
+<tr>
+<td>- <code>BELOW</code></td>
+<td>the work area is to be allocated below the line</td>
+</tr>
+<tr>
+<td>- <code>ANY</code></td>
+<td>the work area is to be allocated above the line if possible, below the line otherwise.</td>
+</tr>
+<tr>
+<td><em>other</em></td>
+<td>Any parameters and/or keywords supported by the ACB macro. Please see the description of the ACB macro for details.</td>
+</tr>
+<tr>
+<td></td>
+<td>Supported parameters and keywords on the ACB macro are supported on GENCB ACB as well. Likewise, unsupported parameters and keywords on the ACB macro are not supported on GENCB ACB either.</td>
+</tr>
+<tr>
+<td></td>
+<td>How the parameters can be specified differs per parameter.</td>
+</tr>
+<tr>
+<td></td>
+<td>For a complete list of options, please see the IBM manual “DFSMS Macro Instructions for Data Sets” or equivalent for the operating system and version that you are porting to/from.</td>
+</tr>
+<tr>
+<td>Please note:</td>
+<td>not supported are expressions like (S,scon) or (*,scon)</td>
+</tr>
+<tr>
+<td><code>MF</code>=</td>
+<td>When omitted, specifies the standard form of the GENCB to generate an inline CBMR and an inline call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>Specifies the list form of the GENCB macro which generates an inline CBMR but no call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Specifies the list form of the GENCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr,label)</code></td>
+<td>Same as <code>MF=(L,addr)</code> but label will be equated to the length of the CBMR.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Specifies the execute form of the GENCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr)</code></td>
+<td>Specifies the generate form of the GENCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr,label)</code></td>
+<td>Same as <code>MF=(G,addr)</code> but label will be equated to the length of the CBMR</td>
+</tr>
+</tbody>
+</table>
+<h3 id="modcb-acb-macro-parameters">MODCB ACB macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ACB</code>=addr</td>
+<td>required to indicate the ACB to be modified</td>
+</tr>
+<tr>
+<td><em>other</em></td>
+<td>Any parameters and/or keywords supported by the ACB macro. Please see the description of the ACB macro for details.</td>
+</tr>
+<tr>
+<td></td>
+<td>Supported parameters and keywords on the ACB macro are supported on MODCB ACB as well. Likewise, unsupported parameters and keywords on the ACB macro are not supported on MODCB ACB either.</td>
+</tr>
+<tr>
+<td></td>
+<td>How the parameters can be specified differs per parameter.</td>
+</tr>
+<tr>
+<td></td>
+<td>For a complete list of options, please see the IBM manual “DFSMS Macro Instructions for Data Sets” or equivalent for the operating system and version that you are porting to/from.</td>
+</tr>
+<tr>
+<td>Please note:</td>
+<td>not supported are expressions like (S,scon) or (*,scon)</td>
+</tr>
+<tr>
+<td><code>MF</code>=</td>
+<td>When omitted, specifies the standard form of the MODCB to generate an inline CBMR and an inline call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>Specifies the list form of the MODCB macro which generates an inline CBMR but no call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Specifies the list form of the MODCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr,label)</code></td>
+<td>Same as <code>MF=(L,addr)</code> but label will be equated to the length of the CBMR.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Specifies the execute form of the MODCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr)</code></td>
+<td>Specifies the generate form of the MODCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr,label)</code></td>
+<td>Same as <code>MF=(G,addr)</code> but label will be equated to the length of the CBMR</td>
+</tr>
+</tbody>
+</table>
+<h3 id="showcb-acb-macro-parameters">SHOWCB ACB macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ACB</code>=addr</td>
+<td>required to indicate the ACB to be queried</td>
+</tr>
+<tr>
+<td><code>FIELDS</code>=</td>
+<td>specifies a list of keywords. Each keyword specified returns a field of 4 or 8 bytes. These return values are stored consecutively in the return area specified in the <code>AREA</code>= and <code>LENGTH</code>= parameters.</td>
+</tr>
+<tr>
+<td></td>
+<td>Some keywords are valid only when the ACB is open. An error is returned when any of these keywords are used while the ACB is not open.</td>
+</tr>
+<tr>
+<td></td>
+<td>For the following keywords there are a few things to keep in mind:</td>
+</tr>
+<tr>
+<td>- <code>AVSPAC</code></td>
+<td>Count of available space in bytes – taken from prefix counter field <code>CTRAVSPAC</code></td>
+</tr>
+<tr>
+<td>- <code>BFRFND</code></td>
+<td>nr of times since this ACB was opened that a get/read request for this ACB was satisfied from a buffer, without doing any I/O.</td>
+</tr>
+<tr>
+<td>- <code>BUFRDS</code></td>
+<td>nr or times since this ACB was opened an I/O was needed for this ACB to read a block into a buffer.</td>
+</tr>
+<tr>
+<td>- <code>CDTASIZE</code></td>
+<td>Compressed data size. Since zVSAM does not support compression, this is the same as <code>SDTASIZE</code>. Taken from prefix counter field <code>CTRSDTA</code>.</td>
+</tr>
+<tr>
+<td>- <code>ENDRBA</code></td>
+<td>high water mark of the component in bytes, discounting the prefix block. Taken from prefix counter field <code>CTRENDRBA</code>.</td>
+</tr>
+<tr>
+<td></td>
+<td>If the last block in the component is free, it's the starting XRBA of that block. If the last block holds the last record, it's the XRBA of that record's last byte.</td>
+</tr>
+<tr>
+<td></td>
+<td>Otherwise, it's the XRBA of the last byte of the last record on the block.</td>
+</tr>
+<tr>
+<td>- <code>FS</code></td>
+<td>For data component <code>PFXFRBLK</code> / (<code>PFXFRBLK</code> + <code>PFXFRINT</code>) * 100. Foxes for index.</td>
+</tr>
+<tr>
+<td>- <code>HALCRBA</code></td>
+<td>XRBA of the last byte of the last record. Taken from prefix counter field <code>CTRHALCRBA</code>.</td>
+</tr>
+<tr>
+<td>- <code>KEYLEN</code></td>
+<td>length of key field. For KSDS this is the length of the key field. For RRDS/ESDS the value is always 8. Taken from prefix field <code>PFXKEYLN</code>.</td>
+</tr>
+<tr>
+<td>- <code>NCIS</code></td>
+<td>nr of times a block was split for this component. Taken from prefix counter field <code>CTRNCIS</code>.</td>
+</tr>
+<tr>
+<td>- <code>NDELR</code></td>
+<td>nr of times a record was deleted for this component. Taken from prefix counter field <code>CTRNDELR</code>.</td>
+</tr>
+<tr>
+<td>- <code>NEXCP</code></td>
+<td>nr of times an I/O was issued for this component. Taken from prefix counter field <code>CTRNEXCP</code>.</td>
+</tr>
+<tr>
+<td>- <code>NEXT</code></td>
+<td>nr of extents. For zVSAM this is the number of files used to store the component. Taken from prefix counter field <code>CTRNEXT</code>.</td>
+</tr>
+<tr>
+<td>- <code>NINSR</code></td>
+<td>nr of times a record was inserted for this component. Taken from prefix counter field <code>CTRNINSR</code>.</td>
+</tr>
+<tr>
+<td>- <code>NIXL</code></td>
+<td>nr of index levels. Taken from prefix field <code>PFXIXLVL</code>.</td>
+</tr>
+<tr>
+<td>- <code>NLOGR</code></td>
+<td>nr of records in the component. Taken from prefix counter field <code>CTRNLOGR</code>.</td>
+</tr>
+<tr>
+<td>- <code>NRETR</code></td>
+<td>nr of times a record was retrieved for this component. Taken from prefix counter field <code>CTRNRETR</code>.</td>
+</tr>
+<tr>
+<td>- <code>NSSS</code></td>
+<td>nr of CA splits. Always foxes.</td>
+</tr>
+<tr>
+<td>- <code>NUIW</code></td>
+<td>nr of times a block was written for this component by zVSAM rather than the user program. Taken from prefix counter field <code>CTRNNUIW</code>.</td>
+</tr>
+<tr>
+<td>- <code>NUPDR</code></td>
+<td>nr of times a record was updated for this component. Taken from prefix counter field <code>CTRNUPDR</code>.</td>
+</tr>
+<tr>
+<td>- <code>RKP</code></td>
+<td>relative key position. Taken from prefix field <code>PFXKYOFF</code>.</td>
+</tr>
+<tr>
+<td>- <code>SDTASIZE</code></td>
+<td>Total nr of data bytes currently stored in the component. Sum of all record lengths. Taken from prefix counter field <code>CTRSDTA</code>.</td>
+</tr>
+<tr>
+<td>- <code>SHRPOOL</code></td>
+<td>where do we take this value from?</td>
+</tr>
+<tr>
+<td>- <code>STMST</code></td>
+<td>system timestamp of last close operation on the component. Taken from prefix counter field <code>CTRSTMST</code>.</td>
+</tr>
+<tr>
+<td>- <code>UIW</code></td>
+<td>nr of times a block was written for this component by the user program rather than zVSAM. Taken from prefix counter field <code>CTRNUIW</code>.</td>
+</tr>
+<tr>
+<td><code>MF</code>=</td>
+<td>When omitted, specifies the standard form of the SHOWCB to generate an inline CBMR and an inline call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>Specifies the list form of the SHOWCB macro which generates an inline CBMR but no call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Specifies the list form of the SHOWCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr,label)</code></td>
+<td>Same as <code>MF=(L,addr)</code> but label will be equated to the length of the CBMR.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Specifies the execute form of the SHOWCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr)</code></td>
+<td>Specifies the generate form of the SHOWCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr,label)</code></td>
+<td>Same as <code>MF=(G,addr)</code> but label will be equated to the length of the CBMR</td>
+</tr>
+</tbody>
+</table>
+<p>Review notes:
+1. ENDRBA - current last sentence seems superfluous. Left-over from a prior version? Double-check and remove or rephrase.
+2. NSSS should be zero, rather than foxes - we never do CA splits.
+3. SHRPOOL - Is it an attribute of a cluster, of a component, or of an ACB? i.e. is it always the same for a given cluster,
+   for a given component, or can the user freely choose a pool number when building the ACB?</p>
+<h3 id="testcb-acb-macro-parameters">TESTCB ACB macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ACB</code>=addr</td>
+<td>required to indicate the ACB to be tested</td>
+</tr>
+<tr>
+<td><em>other</em></td>
+<td>All other keywords function the same way that they do on a SHOWCB ACB request. Please see the preceding chapter for details.</td>
+</tr>
+<tr>
+<td><code>MF</code>=</td>
+<td>When omitted, specifies the standard form of the TESTCB to generate an inline CBMR and an inline call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>Specifies the list form of the TESTCB macro which generates an inline CBMR but no call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Specifies the list form of the TESTCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr,label)</code></td>
+<td>Same as <code>MF=(L,addr)</code> but label will be equated to the length of the CBMR.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Specifies the execute form of the TESTCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr)</code></td>
+<td>Specifies the generate form of the TESTCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr,label)</code></td>
+<td>Same as <code>MF=(G,addr)</code> but label will be equated to the length of the CBMR</td>
+</tr>
+</tbody>
+</table>
+<h3 id="exlst-macro-parameters">EXLST macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AM</code>=</td>
+<td>Optional parameter. AM=VSAM is the default. No other values are supported.</td>
+</tr>
+<tr>
+<td><code>EODAD</code>=</td>
+<td>Optional parameter to specify the entry address of an exit that handles an end-of-data condition during sequential access.</td>
+</tr>
+<tr>
+<td></td>
+<td>The routine address may be followed by a modifier. For details, please see below. The amode for the routine is encoded in the address using the common convention.</td>
+</tr>
+<tr>
+<td><code>LERAD</code>=</td>
+<td>Optional parameter to specify the entry address of an exit that handles logic errors.</td>
+</tr>
+<tr>
+<td></td>
+<td>The routine address may be followed by a modifier. For details, please see below. The amode for the routine is encoded in the address using the common convention.</td>
+</tr>
+<tr>
+<td><code>SYNAD</code>=</td>
+<td>Optional parameter to specify the entry address of an exit that handles physical errors.</td>
+</tr>
+<tr>
+<td></td>
+<td>The routine address may be followed by a modifier. For details, please see below. The amode for the routine is encoded in the address using the common convention.</td>
+</tr>
+<tr>
+<td><em>mod</em></td>
+<td>modifier, can optionally be specified after each routine address. Values: A or N for Active or Not-active.</td>
+</tr>
+<tr>
+<td></td>
+<td>As long as the routine is not active it will not be called by zVSAM.</td>
+</tr>
+<tr>
+<td></td>
+<td>The secondary modifier of L (for Load from Linklib) is not supported.</td>
+</tr>
+</tbody>
+</table>
+<p>Review notes:
+1. We have no linklib, but we might load a module anyway using our existing support for SVC 6 (Load macro)</p>
+<h3 id="gencb-exlst-macro-parameters">GENCB EXLST macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BLK=EXLST</code></td>
+<td>required to indicate the EXLST-supporting logic of the macro is being invoked</td>
+</tr>
+<tr>
+<td><code>COPIES</code>=</td>
+<td>Number of identical copies to generate. Specify a number between 1 and 65535. The default is 1.</td>
+</tr>
+<tr>
+<td><code>WAREA</code>=</td>
+<td>Address of a work area where the EXLST/EXLSTs is/are to be constructed.</td>
+</tr>
+<tr>
+<td></td>
+<td>When <code>WAREA</code> is specified, <code>LENGTH</code> must be specified too.</td>
+</tr>
+<tr>
+<td></td>
+<td>When <code>WAREA</code> is not specified, the CBMR handler allocates an area of storage. The address of this area is returned in R1; its length in R0.</td>
+</tr>
+<tr>
+<td><code>LENGTH</code>=</td>
+<td>Length in bytes of the area indicated by <code>WAREA</code>. When <code>LENGTH</code> is specified, <code>WAREA</code> must be specified as well.</td>
+</tr>
+<tr>
+<td><code>LOC=</code></td>
+<td>Where a work area for constructing the EXLST/EXLSTs is to be allocated. Used only when <code>WAREA</code> and <code>LENGTH</code> are not specified. Supports the keywords <code>BELOW</code> and <code>ANY</code>, with <code>BELOW</code> being the default</td>
+</tr>
+<tr>
+<td>- <code>BELOW</code></td>
+<td>the work area is to be allocated below the line</td>
+</tr>
+<tr>
+<td>- <code>ANY</code></td>
+<td>the work area is to be allocated above the line if possible, below the line otherwise.</td>
+</tr>
+<tr>
+<td><em>other</em></td>
+<td>Any parameters and/or keywords supported by the EXLST macro. Please see the description of the EXLST macro for details.</td>
+</tr>
+<tr>
+<td></td>
+<td>Supported parameters and keywords on the EXLST macro are supported on GENCB EXLST as well. Likewise, unsupported parameters and keywords on the EXLST macro are not supported on GENCB EXLST either.</td>
+</tr>
+<tr>
+<td></td>
+<td>How the parameters can be specified differs per parameter.</td>
+</tr>
+<tr>
+<td></td>
+<td>For a complete list of options, please see the IBM manual “DFSMS Macro Instructions for Data Sets” or equivalent for the operating system and version that you are porting to/from.</td>
+</tr>
+<tr>
+<td>Please note:</td>
+<td>not supported are expressions like (S,scon) or (*,scon)</td>
+</tr>
+<tr>
+<td><code>MF</code>=</td>
+<td>When omitted, specifies the standard form of the GENCB to generate an inline CBMR and an inline call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>Specifies the list form of the GENCB macro which generates an inline CBMR but no call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Specifies the list form of the GENCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr,label)</code></td>
+<td>Same as <code>MF=(L,addr)</code> but label will be equated to the length of the CBMR.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Specifies the execute form of the GENCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr)</code></td>
+<td>Specifies the generate form of the GENCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr,label)</code></td>
+<td>Same as <code>MF=(G,addr)</code> but label will be equated to the length of the CBMR</td>
+</tr>
+</tbody>
+</table>
+<h3 id="modcb-exlst-macro-parameters">MODCB EXLST macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EXLST</code>=addr</td>
+<td>required to indicate the EXLST to be modified</td>
+</tr>
+<tr>
+<td><em>other</em></td>
+<td>Any parameters and/or keywords supported by the EXLST macro. Please see the description of the EXLST macro for details.</td>
+</tr>
+<tr>
+<td></td>
+<td>Supported parameters and keywords on the EXLST macro are supported on MODCB EXLST as well. Likewise, unsupported parameters and keywords on the EXLST macro are not supported on MODCB EXLST either.</td>
+</tr>
+<tr>
+<td></td>
+<td>How the parameters can be specified differs per parameter.</td>
+</tr>
+<tr>
+<td></td>
+<td>For a complete list of options, please see the IBM manual “DFSMS Macro Instructions for Data Sets” or equivalent for the operating system and version that you are porting to/from.</td>
+</tr>
+<tr>
+<td>Please note:</td>
+<td>not supported are expressions like (S,scon) or (*,scon)</td>
+</tr>
+<tr>
+<td><code>MF</code>=</td>
+<td>When omitted, specifies the standard form of the MODCB to generate an inline CBMR and an inline call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>Specifies the list form of the MODCB macro which generates an inline CBMR but no call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Specifies the list form of the MODCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr,label)</code></td>
+<td>Same as <code>MF=(L,addr)</code> but label will be equated to the length of the CBMR.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Specifies the execute form of the MODCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr)</code></td>
+<td>Specifies the generate form of the MODCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr,label)</code></td>
+<td>Same as <code>MF=(G,addr)</code> but label will be equated to the length of the CBMR</td>
+</tr>
+</tbody>
+</table>
+<h3 id="showcb-exlst-macro-parameters">SHOWCB EXLST macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EXLST=addr</code></td>
+<td>required to indicate the EXLST to be queried</td>
+</tr>
+<tr>
+<td><code>FIELDS</code>=</td>
+<td>specifies a list of keywords. Each keyword specified returns a field of 4 or 8 bytes. These return values are stored consecutively in the return area specified in the <code>AREA</code>= and <code>LENGTH</code>= parameters.</td>
+</tr>
+<tr>
+<td><code>MF</code>=</td>
+<td>When omitted, specifies the standard form of the SHOWCB to generate an inline CBMR and an inline call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>Specifies the list form of the SHOWCB macro which generates an inline CBMR but no call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Specifies the list form of the SHOWCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr,label)</code></td>
+<td>Same as <code>MF=(L,addr)</code> but label will be equated to the length of the CBMR.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Specifies the execute form of the SHOWCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr)</code></td>
+<td>Specifies the generate form of the SHOWCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr,label)</code></td>
+<td>Same as <code>MF=(G,addr)</code> but label will be equated to the length of the CBMR</td>
+</tr>
+</tbody>
+</table>
+<h3 id="testcb-exlst-macro-parameters">TESTCB EXLST macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EXLST=addr</code></td>
+<td>required to indicate the EXLST to be tested</td>
+</tr>
+<tr>
+<td><em>mod</em></td>
+<td>modifier, can optionally be specified after each routine address. Values: A or N for Active or Not-active.</td>
+</tr>
+<tr>
+<td></td>
+<td>When this modifier is specified, only Equal or Not-Equal condition can be returned.</td>
+</tr>
+<tr>
+<td></td>
+<td>The secondary modifier of L (for Load from Linklib) is not supported.</td>
+</tr>
+<tr>
+<td><code>MF</code>=</td>
+<td>When omitted, specifies the standard form of the TESTCB to generate an inline CBMR and an inline call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>Specifies the list form of the TESTCB macro which generates an inline CBMR but no call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Specifies the list form of the TESTCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr,label)</code></td>
+<td>Same as <code>MF=(L,addr)</code> but label will be equated to the length of the CBMR.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Specifies the execute form of the TESTCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr)</code></td>
+<td>Specifies the generate form of the TESTCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr,label)</code></td>
+<td>Same as <code>MF=(G,addr)</code> but label will be equated to the length of the CBMR</td>
+</tr>
+</tbody>
+</table>
+<h3 id="open-macro-parameters">OPEN macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>entry</em></td>
+<td>The OPEN macro accepts a list of entries. Each entry consists of two consecutive parameters: an address and an optional list of options.</td>
+</tr>
+<tr>
+<td><em>address</em></td>
+<td>The address can be specified as an A-type address or as a register. If a register is coded the register number or name must be enclosed in parentheses.</td>
+</tr>
+<tr>
+<td></td>
+<td>The address can be either the address of a DCB or the address of an ACB.</td>
+</tr>
+<tr>
+<td><em>options</em></td>
+<td>For a DCB options may be encoded according to the z390_File_Access_Method_Guide.</td>
+</tr>
+<tr>
+<td></td>
+<td>For an ACB the options list is ignored and should be coded as an omitted parameter. Any options (e.g. <code>IN</code>/<code>OUT</code>) are taken from the ACB, not the open parmlist.</td>
+</tr>
+<tr>
+<td><code>MF</code>=</td>
+<td>If the MF parameter is omitted an open parmlist is generated inline, plus a call to the open SVC using the parmlist.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>With MF=L an open parmlist is generated inline</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Code is generated to construct the open parmlist at run-time, rather than at assembly time, at the indicated address.</td>
+</tr>
+<tr>
+<td></td>
+<td>If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Code is generated to call the open SVC using the parmlist at the indicated address.</td>
+</tr>
+<tr>
+<td></td>
+<td>If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="close-macro-parameters">CLOSE macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>entry</em></td>
+<td>The CLOSE macro accepts a list of entries. Each entry consists of two consecutive parameters: an address and an optional list of options.</td>
+</tr>
+<tr>
+<td><em>address</em></td>
+<td>The address can be specified as an A-type address or as a register. If a register is coded the register number or name must be enclosed in parentheses.</td>
+</tr>
+<tr>
+<td></td>
+<td>The address can be either the address of a DCB or the address of an ACB.</td>
+</tr>
+<tr>
+<td><em>options</em></td>
+<td>For a DCB options may be encoded according to the z390_File_Access_Method_Guide.</td>
+</tr>
+<tr>
+<td></td>
+<td>For an ACB the options list is ignored and should be coded as an omitted parameter.</td>
+</tr>
+<tr>
+<td><code>MF</code>=</td>
+<td>If the MF parameter is omitted a close parmlist is generated inline, plus a call to the close SVC using the parmlist.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>With MF=L a close parmlist is generated inline</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Code is generated to construct the close parmlist at run-time, rather than at assembly time, at the indicated address.</td>
+</tr>
+<tr>
+<td></td>
+<td>If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Code is generated to call the close SVC using the parmlist at the indicated address.</td>
+</tr>
+<tr>
+<td></td>
+<td>If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="zacb-description">zACB description</h3>
+<p>The structure and layout of the zACB are not formally part of the interface and may change in future releases.
+Therefore the zACB layout is shown here only for the sake of completeness. Direct access to subfields in the zACB is discouraged.
+Use SHOWCB ACB, TESTCB ACB and/or MODCB ACB to inspect, test, and/or modify the zACB's content.
+Accessing subfields of the zACB directly may adversely impact portability of your programs.</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Equate</th>
+<th>Designation</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IFGACB</td>
+<td></td>
+<td>DSECT</td>
+<td></td>
+</tr>
+<tr>
+<td>IHAACB</td>
+<td></td>
+<td>DSECT</td>
+<td>Synonym of IFGACB</td>
+</tr>
+<tr>
+<td>ACBEYE</td>
+<td></td>
+<td>CL4</td>
+<td>Eye catcher</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBZACB</td>
+<td>=C'zACB'</td>
+<td>Fixed value</td>
+</tr>
+<tr>
+<td>ACBID</td>
+<td></td>
+<td>XL1</td>
+<td>Identifier</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBIDVAL</td>
+<td>=X'A0'</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>ACBSTYP</td>
+<td></td>
+<td>XL1</td>
+<td>Subtype</td>
+</tr>
+<tr>
+<td>ACBSTYPE</td>
+<td></td>
+<td>XL1</td>
+<td>Synonym of ACBSTYP</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBVSAM</td>
+<td>=X'10'</td>
+<td>VSAM ACB</td>
+</tr>
+<tr>
+<td>ACBLENG</td>
+<td></td>
+<td>H</td>
+<td>Length of this ACB in bytes</td>
+</tr>
+<tr>
+<td>ACBLENG2</td>
+<td></td>
+<td></td>
+<td>Synonym of ACBLENG</td>
+</tr>
+<tr>
+<td>ACBLEN</td>
+<td></td>
+<td></td>
+<td>Synonym of ACBLENG</td>
+</tr>
+<tr>
+<td>ACBLEN2</td>
+<td></td>
+<td></td>
+<td>Synonym of ACBLENG</td>
+</tr>
+<tr>
+<td>ACBDDNM</td>
+<td></td>
+<td>CL8</td>
+<td>Name of host variable holding cluster name</td>
+</tr>
+<tr>
+<td>ACBDDNAM</td>
+<td></td>
+<td></td>
+<td>Synonym of ACBDDNM</td>
+</tr>
+<tr>
+<td>ACBMACRF</td>
+<td></td>
+<td></td>
+<td>ACBMACR1 + ACBMACR2</td>
+</tr>
+<tr>
+<td>ACBMACR1</td>
+<td></td>
+<td>BL1</td>
+<td>Option bits</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBKEY</td>
+<td>=X'80'</td>
+<td>Indexed access by logical key</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBMACR1_KEY</td>
+<td></td>
+<td>Synonym of ACBKEY</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBADDR</td>
+<td>=X'40'</td>
+<td>Non-indexed access by address</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBADD</td>
+<td></td>
+<td>Synonym of ACBADDR</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBMACR1_ADR</td>
+<td></td>
+<td>Synonym of ACBADDR</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBSEQ</td>
+<td>=X'10'</td>
+<td>Sequential access</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBMACR1_SEQ</td>
+<td></td>
+<td>Synonym of ACBSEQ</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBDIR</td>
+<td>=X'08'</td>
+<td>Direct access</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBMACR1_DIR</td>
+<td></td>
+<td>Synonym of ACBDIR</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBIN</td>
+<td>=X'04'</td>
+<td>Get allowed</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBMACR1_IN</td>
+<td></td>
+<td>Synonym of ACBIN</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBGET</td>
+<td></td>
+<td>Synonym of ACBIN</td>
+</tr>
+<tr>
+<td></td>
+<td>ACNOUT</td>
+<td>=X'02'</td>
+<td>Get / Put / Erase allowed</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBMACR1_OUT</td>
+<td></td>
+<td>Synonym of ACBOUT</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBPUT</td>
+<td></td>
+<td>Synonym of ACBOUT</td>
+</tr>
+<tr>
+<td>ACBMACR2</td>
+<td></td>
+<td>BL1</td>
+<td>More option bits</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBSKP</td>
+<td>=X'10'</td>
+<td>Skip-sequential access</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBMACR2_SKP</td>
+<td></td>
+<td>Synonym of ACBSKP</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBRST</td>
+<td>=X'04'</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBMACR2_RST</td>
+<td></td>
+<td>Synonym of ACBRST</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBAIX</td>
+<td>=X'01'</td>
+<td>Access through AIX</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBMACR2_AIX</td>
+<td></td>
+<td>Synonym of ACBAIX</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBAIXP</td>
+<td></td>
+<td>Synonym of ACBAIX</td>
+</tr>
+<tr>
+<td>ACBMACR3</td>
+<td></td>
+<td>BL1</td>
+<td>Additional option bits</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBNLW</td>
+<td>=X'80'</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBLSR</td>
+<td>=X'40'</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBMACR3_LSR</td>
+<td></td>
+<td>Synonym of ACBLSR</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBGSR</td>
+<td>=X'20'</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBMACR3_GSR</td>
+<td></td>
+<td>Synonym of ACBGSR</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBDFR</td>
+<td>=X'08'</td>
+<td>Deferred writes allowed</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBMACR3_DFR</td>
+<td></td>
+<td>Synonym of ACBDFR</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBSIS</td>
+<td>=X'04'</td>
+<td>Sequential insert strategy</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBMACR3_SIS</td>
+<td></td>
+<td>Synonym of ACBSIS</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBMODE</td>
+<td>=X'01'</td>
+<td>Buffers allowed above the line</td>
+</tr>
+<tr>
+<td>ACBMACR4</td>
+<td></td>
+<td>BL1</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td>ACBBUFND</td>
+<td></td>
+<td>XL2</td>
+<td>Nr of data buffers</td>
+</tr>
+<tr>
+<td>ACBBUFNI</td>
+<td></td>
+<td>XL2</td>
+<td>Nr of index buffers</td>
+</tr>
+<tr>
+<td>ACBBUFSP</td>
+<td></td>
+<td>F</td>
+<td>Max buffer space in bytes</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>H</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td>ACBLRECL</td>
+<td></td>
+<td>XL2</td>
+<td>Record length</td>
+</tr>
+<tr>
+<td>ACBPASSW</td>
+<td></td>
+<td>A</td>
+<td>Password pointer</td>
+</tr>
+<tr>
+<td>ACBEXLST</td>
+<td></td>
+<td>A</td>
+<td>EXLST ptr</td>
+</tr>
+<tr>
+<td>ACBUEL</td>
+<td></td>
+<td></td>
+<td>Synonym of ACBEXLST</td>
+</tr>
+<tr>
+<td>ACBINFLG</td>
+<td></td>
+<td></td>
+<td>ACBINFL1 + ACBINFL2</td>
+</tr>
+<tr>
+<td>ACBINFL</td>
+<td></td>
+<td></td>
+<td>Synonym of ACBINFLG</td>
+</tr>
+<tr>
+<td>ACBINFL1</td>
+<td></td>
+<td>BL1</td>
+<td>Indicator flags</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBCAT</td>
+<td>=X'10'</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td>ACBINFL2</td>
+<td></td>
+<td>BL1</td>
+<td>More indicator flags</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBSWARN</td>
+<td>=X'80'</td>
+<td>Suppress open warning</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBSHROP</td>
+<td>=X'03'</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBSHR02</td>
+<td>=X'02'</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBSHR01</td>
+<td>=X'01'</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td>ACBOFLGS</td>
+<td></td>
+<td>BL1</td>
+<td>Open / Close flags</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBR31B</td>
+<td>=X'80'</td>
+<td>31-bit addressing for buffers</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBR31C</td>
+<td>=X'40'</td>
+<td>31-bit addressing for control blocks</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBEOV</td>
+<td>=X'20'</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBOPEN</td>
+<td>=X'10'</td>
+<td>ACB currently open</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBDSERR</td>
+<td>=X'08'</td>
+<td>Error – ACB must be closed</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBRECOV</td>
+<td>=X'04'</td>
+<td>Open for recovery</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBEXFG</td>
+<td>=X'02'</td>
+<td>Off when user exit in progress</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBLOCK</td>
+<td></td>
+<td>Synonym of ACBEXFG</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBIOSFG</td>
+<td>=X'01'</td>
+<td>Open / close in progress</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBBUSY</td>
+<td></td>
+<td>Synonym of ACBIOSFG</td>
+</tr>
+<tr>
+<td>ACBERFLG</td>
+<td></td>
+<td>BL1</td>
+<td>Error flags</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBOALR</td>
+<td>=X'04'</td>
+<td>Already opened / closed</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBCALR</td>
+<td></td>
+<td>Synonym of ACBOALR</td>
+</tr>
+<tr>
+<td>ACBBSTNO</td>
+<td></td>
+<td>XL1</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td>ACBSTRNO</td>
+<td></td>
+<td>XL1</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td>ACBSHRP</td>
+<td></td>
+<td>XL1</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td>ACBVER</td>
+<td></td>
+<td>XL1</td>
+<td>zACB layout version</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBV2</td>
+<td>=X'02'</td>
+<td>zACB V2 version</td>
+</tr>
+<tr>
+<td>ACBPFX</td>
+<td></td>
+<td>AL4</td>
+<td>Prefix Block in buffer</td>
+</tr>
+<tr>
+<td>ACBXPFX</td>
+<td></td>
+<td>AL4</td>
+<td>Prefix Block of index; zeroes if no index open</td>
+</tr>
+</tbody>
+</table>
+<h3 id="zexlst-description">zEXLST description</h3>
+<p>The structure and layout of the zEXLST are not formally part of the interface and may change in future releases.
+Therefore the zEXLST layout is shown here only for the sake of completeness. Direct access to subfields in the zEXLST is discouraged.
+Use SHOWCB EXLST, TESTCB EXLST and/or MODCB EXLST to inspect, test, and/or modify the zEXLST's content.
+Accessing subfields of the zEXLST directly may adversely impact portability of your programs.</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Equate</th>
+<th>Designation</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IFGEXLST</td>
+<td></td>
+<td>DSECT</td>
+<td></td>
+</tr>
+<tr>
+<td>EXLEYE</td>
+<td></td>
+<td>CL4</td>
+<td>Eye catcher</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLZLST</td>
+<td>=C'zLST'</td>
+<td>Fixed value</td>
+</tr>
+<tr>
+<td>EXLLEN</td>
+<td></td>
+<td>H</td>
+<td>Length of exit list</td>
+</tr>
+<tr>
+<td>EXLLEN2</td>
+<td></td>
+<td></td>
+<td>Synonym of EXLLEN</td>
+</tr>
+<tr>
+<td>EXLSTYP</td>
+<td></td>
+<td>XL1</td>
+<td>Subtype</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLSVSAM</td>
+<td>=X'10'</td>
+<td>zVSAM</td>
+</tr>
+<tr>
+<td>EXLEODF</td>
+<td></td>
+<td>XL1</td>
+<td>Eodad routine flags</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLEODS</td>
+<td>=X'80'</td>
+<td>Present</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLEODA</td>
+<td>=X'40'</td>
+<td>Active</td>
+</tr>
+<tr>
+<td>EXLLERF</td>
+<td></td>
+<td>XL1</td>
+<td>Lerad routine flags</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLLERS</td>
+<td>=X'80'</td>
+<td>Present</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLLERA</td>
+<td>=X'40'</td>
+<td>Active</td>
+</tr>
+<tr>
+<td>EXLSYNF</td>
+<td></td>
+<td>XL1</td>
+<td>Synad routine flags</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLSYNS</td>
+<td>X'80'</td>
+<td>Present</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLSYNA</td>
+<td>X'40'</td>
+<td>Active</td>
+</tr>
+<tr>
+<td>EXLEODP</td>
+<td></td>
+<td>AL4</td>
+<td>EODAD address</td>
+</tr>
+<tr>
+<td>EXLLERP</td>
+<td></td>
+<td>AL4</td>
+<td>SYNAD address</td>
+</tr>
+<tr>
+<td>EXLSYNP</td>
+<td></td>
+<td>AL4</td>
+<td>LERAD address</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cbmr-description">CBMR description</h3>
+<p>The structure and layout of the CBMR are not formally part of the interface and may change in future releases.
+Therefore the CBMR layout is shown here only for the sake of completeness. Direct access to subfields in the CBMR is discouraged.
+Use SHOWCB, TESTCB and/or MODCB to inspect, test, and/or modify the content of an ACB, EXLST, or RPL.
+Use the appropriate MF= parameter on any of these macros to modify and/or use a CBMR.</p>
+<p>The CBMR consists of three parts: a header, a body, and a tail. The header has a fixed layout.
+The body consists of request-dependent fields and a list of verb codes.
+The tail contains all the data fields that go with the verb codes. Data fields can be 0, 4, or 8 bytes in length.
+Verb codes X'00'-X'5F' have a zero-length data field (i.e. no data field).
+Verb codes '60'-X'DF' have a 4-byte data field. Verb codes X'E0'-X'FF' have an 8-byte data field.
+All data fields in the tail are allocated consecutively, in the same order as the verbs that define their meaning.</p>
+<p>For valid verb values and their data field lengths, please refer to the relevant CBMR body chapter.</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Equate</th>
+<th>Designation</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CBMR</td>
+<td></td>
+<td>DSECT</td>
+<td></td>
+</tr>
+<tr>
+<td>CBMREYE</td>
+<td></td>
+<td>CL4</td>
+<td>Eye catcher</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRCBMR</td>
+<td>=C'CBMR'</td>
+<td>Fixed value</td>
+</tr>
+<tr>
+<td>CBMRREQ</td>
+<td></td>
+<td>XL1</td>
+<td>Request type</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB</td>
+<td>=X'01'</td>
+<td>ACB request</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXLST</td>
+<td>=X'02'</td>
+<td>EXLST request</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL</td>
+<td>=X'04'</td>
+<td>RPL request</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRGEN</td>
+<td>=X'10'</td>
+<td>GENCB request</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRMOD</td>
+<td>=X'20'</td>
+<td>MODCB request</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRSHOW</td>
+<td>=X'40'</td>
+<td>SHOWCB request</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRTEST</td>
+<td>=X'80'</td>
+<td>TESTCB request</td>
+</tr>
+<tr>
+<td>CBMRRMOD</td>
+<td></td>
+<td>XL1</td>
+<td>Request modifier</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRLOCB</td>
+<td>=X'01'</td>
+<td>Work area below 16M</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRLOCA</td>
+<td>=X'03'</td>
+<td>Work area below 2G</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMROBJD</td>
+<td>=X'10'</td>
+<td>Object=Data</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMROBJI</td>
+<td>=X'20'</td>
+<td>Object=Index</td>
+</tr>
+<tr>
+<td>CBMRVRBS</td>
+<td></td>
+<td>AL1</td>
+<td>Nr of verbs in body</td>
+</tr>
+<tr>
+<td>–</td>
+<td>–</td>
+<td>XL1</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td>CBMRWORK</td>
+<td></td>
+<td>AL4</td>
+<td>Workarea pointer</td>
+</tr>
+<tr>
+<td>CBMRWLEN</td>
+<td></td>
+<td>AL2</td>
+<td>Workarea length</td>
+</tr>
+<tr>
+<td>CBMRSIZE</td>
+<td></td>
+<td>AL2</td>
+<td>CBMR size</td>
+</tr>
+<tr>
+<td>CBMRBODY</td>
+<td></td>
+<td>Depends</td>
+<td>List of verb codes</td>
+</tr>
+<tr>
+<td>CBMRTAIL</td>
+<td></td>
+<td>Depends</td>
+<td>Data fields</td>
+</tr>
+</tbody>
+</table>
+<p>Remarks:
+- <code>CBMRLOCA</code>: when both bits are off the CBMR handler will not allocate a work area, rather it will use <code>CBMRWORK</code>/<code>CBMRWLEN</code> instead.
+- <code>CBMRVRBS</code>: The number of verbs in the body of the CBMR. This number is always a multiple of 4.
+- <code>CBMRSIZE</code>: length in bytes of CBMR header and tail combined. Tail follows header directly</p>
+<h3 id="cbmr-description-body-for-acb">CBMR description – body for ACB</h3>
+<p>The CBMR header is described in the addenda, <a href="#CBMR-description">CBMR description</a>.</p>
+<p>The CBMR tail for ACB is applicable only when the CBMR header's CBMRACB bit is on.
+It's length is determined by the <code>CBMRVRBS</code> fields in the CBMR header. This is always a multiple of 4
+to allow word alignment of the tail area that directly follows the body section.
+Any unused/unneeded verb bytes should be set to zero, indicating a no-operation.</p>
+<p>The body is directly followed by the tail, if applicable.
+It contains a data field of 0, 4, or 8 bytes for each verb code in the body, in the same sequence.
+The starting point of the tail can be found by adding the <code>CBMRVRBS</code> value to the end of the CBMR header.
+Its length can be deduced form the <code>CBMRSIZE</code> field, by subtracting both the header length and the <code>CBMRVRBS</code> field.</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Equate</th>
+<th>Designation</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CBMR</td>
+<td></td>
+<td>DSECT</td>
+<td></td>
+</tr>
+<tr>
+<td>CBMRBODY</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CBMRACB_VERBS</td>
+<td></td>
+<td>XL1</td>
+<td>Verb code, repeats</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NOOP</td>
+<td>=X'00'</td>
+<td>Filler, no-operation</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_ADR</td>
+<td>=X'01'</td>
+<td>RBA-addressed</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_KEY</td>
+<td>=X'02'</td>
+<td>Key addressed</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_CNV</td>
+<td>=X'03'</td>
+<td>Control Interval</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_DFR</td>
+<td>=X'04'</td>
+<td>Deferred writes</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NDF</td>
+<td>=X'05'</td>
+<td>Immediate writes</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_DIR</td>
+<td>=X'06'</td>
+<td>Direct</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_SEQ</td>
+<td>=X'07'</td>
+<td>Sequential</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_SKP</td>
+<td>=X'08'</td>
+<td>Skip-sequential</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_IN</td>
+<td>=X'09'</td>
+<td>Input</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_OUT</td>
+<td>=X'0A'</td>
+<td>Output</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NIS</td>
+<td>=X'0B'</td>
+<td>Normal inserts</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_SIS</td>
+<td>=X'0C'</td>
+<td>Sequential inserts</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NRM</td>
+<td>=X'0D'</td>
+<td>Normal, non-path</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_AIX</td>
+<td>=X'0E'</td>
+<td>Path</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NRS</td>
+<td>=X'0F'</td>
+<td>Not reusable</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_RST</td>
+<td>=X'10'</td>
+<td>Reset on open</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NSR</td>
+<td>=X'11'</td>
+<td>Nonshared resources</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_LSR</td>
+<td>=X'12'</td>
+<td>Local shared resources</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_GSR</td>
+<td>=X'13'</td>
+<td>Global shared resources</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_RLS</td>
+<td>=X'14'</td>
+<td>Record-level sharing</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NUB</td>
+<td>=X'15'</td>
+<td>No user buffering</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_UBF</td>
+<td>=X'16'</td>
+<td>User buffering</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_CFX</td>
+<td>=X'17'</td>
+<td>Buffers fixed</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NFX</td>
+<td>=X'18'</td>
+<td>Buffers fixed</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_DDN</td>
+<td>=X'19'</td>
+<td>Share by DDName</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_DSN</td>
+<td>=X'1A'</td>
+<td>Share by DSN</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_ICI</td>
+<td>=X'1B'</td>
+<td>Improved CI processing</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NCI</td>
+<td>=X'1C'</td>
+<td>Normal CI processing</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_LEW</td>
+<td>=X'1D'</td>
+<td>LSR enqueue wait</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NLW</td>
+<td>=X'1E'</td>
+<td>No lock wait</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_ESDS</td>
+<td>=X'20'</td>
+<td>Cluster is ESDS</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_KSDS</td>
+<td>=X'21'</td>
+<td>Cluster is KSDS</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_LDS</td>
+<td>=X'22'</td>
+<td>Cluster is LDS</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_RRDS</td>
+<td>=X'23'</td>
+<td>Cluster is RRDS</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_REPL</td>
+<td>=X'24'</td>
+<td>Index is replicated</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_SPAN</td>
+<td>=X'25'</td>
+<td>Spanned</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_SSWD</td>
+<td>=X'26'</td>
+<td>Sequence set with data</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_VRRDS</td>
+<td>=X'27'</td>
+<td>Variable RRDS</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_WCK</td>
+<td>=X'28'</td>
+<td>Write checks</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_CMPRS</td>
+<td>=X'29'</td>
+<td>Compression</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_UNQ</td>
+<td>=X'2A'</td>
+<td>Unique key</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_XADDR</td>
+<td>=X'2B'</td>
+<td>8-byte RBAs</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_OPEN</td>
+<td>=X'2C'</td>
+<td>ACB is open</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_PATH</td>
+<td>=X'2D'</td>
+<td>ACB uses a path</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_BASE</td>
+<td>=X'2E'</td>
+<td>ACB uses base cluster</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_AIX</td>
+<td>=X'2F'</td>
+<td>ACB uses AIX</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMR_ACB_VESDS</td>
+<td>=X'30'</td>
+<td>Variable ESDS</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_COPIES</td>
+<td>=X'60'</td>
+<td>Nr of copies</td>
+</tr>
+<tr>
+<td></td>
+<td>CMBRACB_ERET</td>
+<td>=X'61'</td>
+<td>Error return address</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_PASSWD</td>
+<td>=X'62'</td>
+<td>Password pointer</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_EXLST</td>
+<td>=X'63'</td>
+<td>EXLST pointer</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_BUFSP</td>
+<td>=X'64'</td>
+<td>Buffer space</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_BUFND</td>
+<td>=X'65'</td>
+<td>Nr of data buffers</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_BUFNI</td>
+<td>=X'66'</td>
+<td>Nr of index buffers</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_STRNO</td>
+<td>=X'67'</td>
+<td>Parallel threads</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_BSTRNO</td>
+<td>=X'68'</td>
+<td>Nr of strings</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_MAREA</td>
+<td>=X'69'</td>
+<td>Messagearea</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_MLEN</td>
+<td>=X'6A'</td>
+<td>Message area length</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_RLSREAD</td>
+<td>=X'6B'</td>
+<td>RLS/CR/NORD</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_SHRPL</td>
+<td>=X'6C'</td>
+<td>Sharepool number</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_ACBLEN</td>
+<td>=X'6D'</td>
+<td>Length of ACB</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_AVSPAC</td>
+<td>=X'6E'</td>
+<td>Available space</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_BFRND</td>
+<td>=X'6F'</td>
+<td>Buffer found count</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_BUFNO</td>
+<td>=X'70'</td>
+<td>Nr of I/O buffers</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_BUFRDS</td>
+<td>=X'71'</td>
+<td>Buffer read count</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_CINV</td>
+<td>=X'72'</td>
+<td>Block size</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_ENDRBA</td>
+<td>=X'73'</td>
+<td>End RBA</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_ERROR</td>
+<td>=X'74'</td>
+<td>Open/close error code</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_FS</td>
+<td>=X'75'</td>
+<td>Free Space</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_HALCRBA</td>
+<td>=X'76'</td>
+<td>High allocated RBA</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_KEYLEN</td>
+<td>=X'77'</td>
+<td>Key length</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_LRECL</td>
+<td>=X'78'</td>
+<td>(max) record length</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NCIS</td>
+<td>=X'79'</td>
+<td>Nr of Block splits</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NDELR</td>
+<td>=X'7A'</td>
+<td>Nr. of deletes</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NEXCP</td>
+<td>=X'7B'</td>
+<td>Nr of I/O requests</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NEXT</td>
+<td>=X'7C'</td>
+<td>Nr. of file extents</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NINSR</td>
+<td>=X'7D'</td>
+<td>Nr of inserts</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NIXL</td>
+<td>=X'7E'</td>
+<td>Nr of index levels</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NLOGR</td>
+<td>=X'7F'</td>
+<td>Nr of records</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NRETR</td>
+<td>=X'80'</td>
+<td>Nr of retrievals</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NSSS</td>
+<td>=X'81'</td>
+<td>Nr of CA splits</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NUIW</td>
+<td>=X'82'</td>
+<td>Nr of VSAM writes</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_NUPDR</td>
+<td>=X'83'</td>
+<td>Nr of updates</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_RKP</td>
+<td>=X'84'</td>
+<td>Relative key position</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_SDTASZ</td>
+<td>=X'85'</td>
+<td>Uncompressed data size</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_STRMAX</td>
+<td>=X'86'</td>
+<td>Max. nr of strings</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_UIW</td>
+<td>=X'87'</td>
+<td>User initiated writes</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_DDNM</td>
+<td>=X'E0'</td>
+<td>DDname</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_CDTASZ</td>
+<td>=X'E1'</td>
+<td>Compressed data size</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_LEVEL</td>
+<td>=X'E2'</td>
+<td>zVSAM level</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_LOKEY</td>
+<td>=X'E3'</td>
+<td>Lowest valid key ptr</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_RELEASE</td>
+<td>=X'E4'</td>
+<td>zVSAM level</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_STMST</td>
+<td>=X'E5'</td>
+<td>Last close timestamp</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_XAVCSPC</td>
+<td>=X'E6'</td>
+<td>8-byte AVCSPAC</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_XENDRBA</td>
+<td>=X'E7'</td>
+<td>8-byte ENDRBA</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRACB_XHALCRBA</td>
+<td>=X'E8'</td>
+<td>8-byte HALXRBA</td>
+</tr>
+</tbody>
+</table>
+<p>The validity of verb codes differ per macro. Whether any given verb code is valid is determined by the syntax definition of the GENCB, MODCB, SHOWCB, TESTCB macros.
+Please refer to the appropriate chapter to check which parameters are supported.</p>
+<p>For SHOWCB and TESTCB some keywords are applicable only after open. If they are issued before the ACB has been opened, an error is returned.</p>
+<p>Additional notes:</p>
+<ul>
+<li><code>CBMRACB_NRS</code> – TESTCB only, always true</li>
+<li><code>CBMRACB_RST</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_NSR</code> – TESTCB only, always true</li>
+<li><code>CBMRACB_LSR</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_GSR</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_RLS</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_NUB</code> – TESTCB only, always true</li>
+<li><code>CBMRACB_UBF</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_CFX</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_NFX</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_DDN</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_DSN</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_ICI</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_NCI</code> – TESTCB only, always true</li>
+<li><code>CBMRACB_LEW</code> – TESTCB only, always true</li>
+<li><code>CBMRACB_NLW</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_REPL</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_SSWD</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_WCK</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_CMPRS</code> – TESTCB only, always false</li>
+<li><code>CBMRACB_XADDR</code> – TESTCB only, always true</li>
+<li><code>CBMRACB_COPIES</code> – GENCB only. If not specified, the CBMR handler assumes 1.</li>
+<li><code>CBMRACB_PASSWD</code> – pointer to a one-byte length field, followed by the password</li>
+<li><code>CBMRACB_MAREA</code> – TESTCB only, always 0</li>
+<li><code>CBMRACB_MLEN</code> – TESTCB only, always 0</li>
+<li><code>CBMRACB_SHRPL</code> – TESTCB only, always 0</li>
+<li><code>CBMRACB_ENDRBA</code> – ending RBA of the component, derived from ending XLRA.</li>
+<li><code>CBMRACB_FS</code> – Nr of free blocks per 100</li>
+<li><code>CBMRACB_HALCRBA</code> – High allocated RBA, derived from highest allocated XLRA.</li>
+<li><code>CBMRACB_NEXT</code> – for zVSAM the value is always 1.</li>
+<li><code>CBMRACB_NSSS</code> – always 0</li>
+<li><code>CBMRACB_LEVEL</code> – 4-byte address followed by 4-byte length of level info field</li>
+<li><code>CBMRACB_LOKEY</code> – 4-byte address followed by 4-byte length of key field</li>
+<li><code>CBMRACB_RELEASE</code> – 4-byte address followed by 4-byte length of level info field</li>
+</ul>
+<h3 id="cbmr-description-body-for-exlst">CBMR description – body for EXLST</h3>
+<p>The CBMR header is described in the addenda, <a href="#CBMR-description">CBMR description</a>.</p>
+<p>The CBMR tail for EXLST is applicable only when the CBMR header's <code>CBMRXLST</code> bit is on.
+It's length is determined by the <code>CBMRVRBS</code> fields in the CBMR header.
+This is always a multiple of 4 to allow word alignment of the tail area that directly follows the body section.
+Any unused/unneeded verb bytes should be set to zero, indicating a no-operation.</p>
+<p>The body is directly followed by the tail, if applicable.
+It contains a data field of 0, 4, or 8 bytes for each verb code in the body, in the same sequence.
+The starting point of the tail can be found by adding the <code>CBMRVRBS</code> value to the end of the CBMR header.
+Its length can be deduced form the <code>CBMRSIZE</code> field, by subtracting both the header length and the <code>CBMRVRBS</code> field.</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Equate</th>
+<th>Designation</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CBMR</td>
+<td></td>
+<td>DSECT</td>
+<td></td>
+</tr>
+<tr>
+<td>CBMRBODY</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CBMRXL_VERBS</td>
+<td></td>
+<td>XL1</td>
+<td>Verb code, repeats</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NOOP</td>
+<td>=X'00'</td>
+<td>Filler, no-operation</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_COPIES</td>
+<td>=X'60'</td>
+<td>Nr of copies</td>
+</tr>
+<tr>
+<td></td>
+<td>CMBRXL_ERET</td>
+<td>=X'61'</td>
+<td>Error return address</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_XLSTLEN</td>
+<td>=X'6D'</td>
+<td>Length of EXLST</td>
+</tr>
+<tr>
+<td></td>
+<td>CBRMXL_NEODAD</td>
+<td>=X'A0'</td>
+<td>No EODAD routine</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_EODAD</td>
+<td>=X'A1'</td>
+<td>End-of-data routine</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NEOD_A</td>
+<td>=X'A2'</td>
+<td>(,A)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_EOD_A</td>
+<td>=X'A3'</td>
+<td>(address,A)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NEOD_N</td>
+<td>=X'A4'</td>
+<td>(,N)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_EOD_N</td>
+<td>=X'A5'</td>
+<td>(address,N)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NEOD_L</td>
+<td>=X'A8'</td>
+<td>(,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_EOD_L</td>
+<td>=X'A9'</td>
+<td>(address,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NEOD_AL</td>
+<td>=X'AA'</td>
+<td>(,A,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_EOD_AL</td>
+<td>=X'AB'</td>
+<td>(address,A,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NEOD_NL</td>
+<td>=X'AC'</td>
+<td>(,N,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_EOD_NL</td>
+<td>=X'AD'</td>
+<td>(address,N,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBRMXL_NLERAD</td>
+<td>=X'B0'</td>
+<td>No LERAD routine</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_LERAD</td>
+<td>=X'B1'</td>
+<td>Logical error routine</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NLER_A</td>
+<td>=X'B2'</td>
+<td>(,A)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_LER_A</td>
+<td>=X'B3'</td>
+<td>(address,A)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NLER_N</td>
+<td>=X'B4'</td>
+<td>(,N)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_LER_N</td>
+<td>=X'B5'</td>
+<td>(address,N)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NLER_L</td>
+<td>=X'B8'</td>
+<td>(,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_LER_L</td>
+<td>=X'B9'</td>
+<td>(address,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NLER_AL</td>
+<td>=X'BA'</td>
+<td>(,A,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_LER_AL</td>
+<td>=X'BB'</td>
+<td>(address,A,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NLER_NL</td>
+<td>=X'BC'</td>
+<td>(,N,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_LER_NL</td>
+<td>=X'BD'</td>
+<td>(address,N,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBRMXL_NSYNAD</td>
+<td>=X'C0'</td>
+<td>No SYNAD routine</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_SYNAD</td>
+<td>=X'C1'</td>
+<td>Physical error routine</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NSYN_A</td>
+<td>=X'C2'</td>
+<td>(,A)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_SYN_A</td>
+<td>=X'C3'</td>
+<td>(address,A)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NSYN_N</td>
+<td>=X'C4'</td>
+<td>(,N)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_SYN_N</td>
+<td>=X'C5'</td>
+<td>(address,N)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NSYN_L</td>
+<td>=X'C8'</td>
+<td>(,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_SYN_L</td>
+<td>=X'C9'</td>
+<td>(address,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NSYN_AL</td>
+<td>=X'CA'</td>
+<td>(,A,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_SYN_AL</td>
+<td>=X'CB'</td>
+<td>(address,A,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NSYN_NL</td>
+<td>=X'CC'</td>
+<td>(,N,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_SYN_NL</td>
+<td>=X'CD'</td>
+<td>(address,N,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBRMXL_NJRNAD</td>
+<td>=X'D0'</td>
+<td>No JRNAD routine</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_JRNAD</td>
+<td>=X'D1'</td>
+<td>Journaling routine</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NJRN_A</td>
+<td>=X'D2'</td>
+<td>(,A)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_JRN_A</td>
+<td>=X'D3'</td>
+<td>(address,A)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NJRN_N</td>
+<td>=X'D4'</td>
+<td>(,N)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_JRN_N</td>
+<td>=X'D5'</td>
+<td>(address,N)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NJRN_L</td>
+<td>=X'D8'</td>
+<td>(,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_JRN_L</td>
+<td>=X'D9'</td>
+<td>(address,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NJRN_AL</td>
+<td>=X'DA'</td>
+<td>(,A,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_JRN_AL</td>
+<td>=X'DB'</td>
+<td>(address,A,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_NJRN_NL</td>
+<td>=X'DC'</td>
+<td>(,N,L)</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRXL_JRN_NL</td>
+<td>=X'DD'</td>
+<td>(address,N,L)</td>
+</tr>
+</tbody>
+</table>
+<p>The validity of verb codes differ per macro.
+Whether any given verb code is valid is determined by the syntax definition of the GENCB, MODCB, SHOWCB, TESTCB macros.
+Please refer to the appropriate chapter to check which parameters are supported.</p>
+<h2 id="rpl-based-interfaces">RPL-based interfaces</h2>
+<h3 id="rpl-macro-parameters">RPL macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AM</code>=</td>
+<td>Optional parameter. AM=VSAM is the default. No other values are supported.</td>
+</tr>
+<tr>
+<td><code>ACB</code>=</td>
+<td>Pointer to an open ACB that represents the clusteer to be accessed</td>
+</tr>
+<tr>
+<td><code>AREA</code>=</td>
+<td>Record area. In Move mode reading a record implies moving the record into this area. In locate mode a pointer to the record is moved into the area instead.</td>
+</tr>
+<tr>
+<td><code>AREALEN</code>=</td>
+<td>Length of record area</td>
+</tr>
+<tr>
+<td><code>ARG</code>=</td>
+<td>Pointer to search argument. This is a key, a relative record number, or a RBA.</td>
+</tr>
+<tr>
+<td><code>KEYLEN</code>=</td>
+<td>Length of key value specified in <code>ARG</code> when a generic key search is requested</td>
+</tr>
+<tr>
+<td><code>ECB</code>=</td>
+<td>Pointer to ECB. Used with Asynchronous requests.</td>
+</tr>
+<tr>
+<td><code>MSGAREA</code>=</td>
+<td>Pointer to a message area where error information may be returned</td>
+</tr>
+<tr>
+<td><code>MSGLEN</code>=</td>
+<td>Length of messagea area</td>
+</tr>
+<tr>
+<td><code>NXTRPL</code>=</td>
+<td>Pointer to next RPL in the chain. RPLs can be chained together to request a series of operations in a single call to zVSAM.</td>
+</tr>
+<tr>
+<td><code>RECLEN</code>=</td>
+<td>Record length. Required when updating or adding records.</td>
+</tr>
+<tr>
+<td></td>
+<td>When updating a record that has not changed its length, the parameter can be omitted if the immediately preceding operation on the RPL was the read for the record being updated.</td>
+</tr>
+<tr>
+<td><code>OPTCD</code>=</td>
+<td>List of keywords specifying how the request is to be handled. Please see below for the list of supported keywords and their meaning.</td>
+</tr>
+<tr>
+<td>- <code>ADR</code>/<code>KEY</code></td>
+<td>Mutually exclusive <code>OPTCD</code> keywords indicating whether the cluster is to be accessed by address or by key.</td>
+</tr>
+<tr>
+<td>- <code>ADR</code></td>
+<td>can be used only with ESDS to access records by RBA or XRBA.</td>
+</tr>
+<tr>
+<td>- <code>KEY</code></td>
+<td>can be used with KSDS to access records by key, or with RRDS to access records by relative record number.</td>
+</tr>
+<tr>
+<td>- <code>DIR</code>/<code>SKP</code>/<code>SEQ</code></td>
+<td>Mutually exclusive <code>OPTCD</code> keywords on the RPL macro. When none of the three is specified, a default of <code>SEQ</code> will be used.</td>
+</tr>
+<tr>
+<td>- <code>DIR</code></td>
+<td><code>OPTCD</code> keyword indicating that the cluster is to be processed directly.</td>
+</tr>
+<tr>
+<td></td>
+<td>can be used with ESDS, KSDS or RRDS to access data randomly</td>
+</tr>
+<tr>
+<td>- <code>SEQ</code></td>
+<td><code>OPTCD</code> keyword indicating that the cluster is to be processed sequentially.</td>
+</tr>
+<tr>
+<td></td>
+<td>can be used with ESDS, KSDS, or RRDS to access data sequentially</td>
+</tr>
+<tr>
+<td>- <code>SKP</code></td>
+<td><code>OPTCD</code> keyword to request skip-sequential access.</td>
+</tr>
+<tr>
+<td></td>
+<td>can be used with KSDS to randomly position the file to a specific key prior to sequential access</td>
+</tr>
+<tr>
+<td></td>
+<td>can be used with RRDS to randomly position the file to a specific RRN prior to sequential access</td>
+</tr>
+<tr>
+<td>- <code>ARD</code>/<code>LRD</code></td>
+<td>Mutually exclusive <code>OPTCD</code> keywords indicating whether the cluster is to be accessed as specified by the user/current position, or just the very last record.</td>
+</tr>
+<tr>
+<td>- <code>FWD</code>/<code>BWD</code></td>
+<td>Mutually exclusive <code>OPTCD</code> keywords indicating whether the cluster is to be accessed in a forward or backward direction</td>
+</tr>
+<tr>
+<td>- <code>SYN</code>/<code>ASY</code></td>
+<td>Synchronous or asynchronous handling of the request.</td>
+</tr>
+<tr>
+<td>- <code>NUP</code>/<code>UPD</code>/<code>NSP</code></td>
+<td>Mutually exclusive <code>OPTCD</code> keywords indicating whether or not the record is to be locked for update. Updates are allowed if the cluster was opened with the <code>OUT</code> option specified.</td>
+</tr>
+<tr>
+<td></td>
+<td><code>NSP</code> is used only with <code>OPTCD</code>=<code>DIR</code>: retain file position, to enable sequential access from this point.</td>
+</tr>
+<tr>
+<td>- <code>KEQ</code>/<code>KGE</code></td>
+<td>Mutually exclusive <code>OPTCD</code> keywords indicating whether the key has to match exactly (<code>KEQ</code>) or – if an exact match cannot be found – the next higher value is acceptable too.</td>
+</tr>
+<tr>
+<td>- <code>FKS</code>/<code>GEN</code></td>
+<td>Mutually exclusive <code>OPTCD</code> keywords indicating whether we're doing a full key search, or we're specifying only a partial key value.</td>
+</tr>
+<tr>
+<td></td>
+<td>In the latter case <code>KEYLEN</code> has to be specified to indicate how many key positions we're specifying.</td>
+</tr>
+<tr>
+<td>- <code>MVE</code>/<code>LOC</code></td>
+<td>Mutually exclusive OPTCD keywords indicating whether we're working in move mode (zVSAM moves record between user record buffer and zVSAM buffer)</td>
+</tr>
+<tr>
+<td></td>
+<td>or in locate mode (record is not moved, data are processed in the zVSAM buffer, zVSAM provides a pointer only)</td>
+</tr>
+<tr>
+<td>- <code>RBA</code>/<code>XRBA</code></td>
+<td>Mutually exclusive <code>OPTCD</code> keywords indicating whether we're using 4-byte RBA values or 8-byte extended RBA values.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="gencb-rpl-macro-parameters">GENCB RPL macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BLK</code>=RPL</td>
+<td>required to indicate the RPL-supporting logic of the macro is being invoked</td>
+</tr>
+<tr>
+<td><code>COPIES</code>=</td>
+<td>Number of identical copies to generate. Specify a number between 1 and 65535. The default is 1.</td>
+</tr>
+<tr>
+<td><code>WAREA</code>=</td>
+<td>Address of a work area where the RPL/RPLs is/are to be constructed. When <code>WAREA</code> is specified, <code>LENGTH must</code> be specified too.</td>
+</tr>
+<tr>
+<td></td>
+<td>When WAREA is not specified, the CBMR handler allocates an area of storage. The address of this area is returned in R1; its length in R0.</td>
+</tr>
+<tr>
+<td><code>LENGTH</code>=</td>
+<td>Length in bytes of the area indicated by <code>WAREA</code>. When <code>LENGTH</code> is specified, <code>WAREA</code> must be specified as well.</td>
+</tr>
+<tr>
+<td><code>LOC</code>=</td>
+<td>Where a work area for constructing the RPL/RPLs is to be allocated. Used only when <code>WAREA</code> and <code>LENGTH</code> are not specified. Supports the keywords <code>BELOW</code> and <code>ANY</code>, with <code>BELOW</code> being the default</td>
+</tr>
+<tr>
+<td>- <code>BELOW</code></td>
+<td>the work area is to be allocated below the line</td>
+</tr>
+<tr>
+<td>- <code>ANY</code></td>
+<td>the work area is to be allocated above the line if possible, below the line otherwise.</td>
+</tr>
+<tr>
+<td><em>other</em></td>
+<td>Any parameters and/or keywords supported by the RPL macro. Please see the description of the RPL macro for details.</td>
+</tr>
+<tr>
+<td></td>
+<td>Supported parameters and keywords on the RPL macro are supported on GENCB RPL as well. Likewise, unsupported parameters and keywords on the RPL macro are not supported on GENCB RPL either.</td>
+</tr>
+<tr>
+<td></td>
+<td>How the parameters can be specified differs per parameter.</td>
+</tr>
+<tr>
+<td></td>
+<td>For a complete list of options, please see the IBM manual “DFSMS Macro Instructions for Data Sets” or equivalent for the operating system and version that you are porting to/from.</td>
+</tr>
+<tr>
+<td>Please note:</td>
+<td>not supported are expressions like (S,scon) or (*,scon)</td>
+</tr>
+<tr>
+<td><code>MF</code>=</td>
+<td>When omitted, specifies the standard form of the GENCB to generate an inline CBMR and an inline call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>Specifies the list form of the GENCB macro which generates an inline CBMR but no call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Specifies the list form of the GENCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr,label)</code></td>
+<td>Same as <code>MF=(L,addr)</code> but label will be equated to the length of the CBMR.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Specifies the execute form of the GENCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr)</code></td>
+<td>Specifies the generate form of the GENCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr,label)</code></td>
+<td>Same as <code>MF=(G,addr)</code> but label will be equated to the length of the CBMR</td>
+</tr>
+</tbody>
+</table>
+<h3 id="modcb-rpl-macro-parameters">MODCB RPL macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RPL</code>=addr</td>
+<td>required to indicate the RPL to be modified</td>
+</tr>
+<tr>
+<td><em>other</em></td>
+<td>Any parameters and/or keywords supported by the RPL macro. Please see the description of the RPL macro for details.</td>
+</tr>
+<tr>
+<td></td>
+<td>Supported parameters and keywords on the RPL macro are supported on MODCB RPL as well. Likewise, unsupported parameters and keywords on the RPL macro are not supported on MODCB RPL either.</td>
+</tr>
+<tr>
+<td></td>
+<td>How the parameters can be specified differs per parameter.</td>
+</tr>
+<tr>
+<td></td>
+<td>For a complete list of options, please see the IBM manual “DFSMS Macro Instructions for Data Sets” or equivalent for the operating system and version that you are porting to/from.</td>
+</tr>
+<tr>
+<td>Please note:</td>
+<td>not supported are expressions like (S,scon) or (*,scon)</td>
+</tr>
+<tr>
+<td><code>MF</code>=</td>
+<td>When omitted, specifies the standard form of the MODCB to generate an inline CBMR and an inline call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>Specifies the list form of the MODCB macro which generates an inline CBMR but no call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Specifies the list form of the MODCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr,label)</code></td>
+<td>Same as <code>MF=(L,addr)</code> but label will be equated to the length of the CBMR.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Specifies the execute form of the MODCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr)</code></td>
+<td>Specifies the generate form of the MODCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr,label)</code></td>
+<td>Same as <code>MF=(G,addr)</code> but label will be equated to the length of the CBMR</td>
+</tr>
+</tbody>
+</table>
+<h3 id="showcb-rpl-macro-parameters">SHOWCB RPL macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RPL</code>=addr</td>
+<td>required to indicate the RPL to be queried</td>
+</tr>
+<tr>
+<td><code>FIELDS</code>=</td>
+<td>specifies a list of keywords. Each keyword specified returns a field of 4 or 8 bytes. These return values are stored consecutively in the return area specified in the <code>AREA</code>= and <code>LENGTH</code>= parameters.</td>
+</tr>
+<tr>
+<td></td>
+<td>Some keywords are valid only when the RPL's reqeuest is not in progress. Unpredictable results may occur when any of these keywords are used on a SHOWCB RPL request that is still processing.</td>
+</tr>
+<tr>
+<td></td>
+<td>For the following keywords there are a few things to keep in mind:</td>
+</tr>
+<tr>
+<td>- <code>AIXPC</code></td>
+<td>What info is this indicating? Value will be taken from <code>PFXAIXN</code> (to be defined)?</td>
+</tr>
+<tr>
+<td>- <code>RBA</code>/<code>XRBA</code></td>
+<td>How to determine??? zVSAM supports these keywords only for ESDS. For any other type of cluster a value of foxes will be returned by default.</td>
+</tr>
+<tr>
+<td>- <code>TRANSID</code></td>
+<td>Always returns foxes.</td>
+</tr>
+<tr>
+<td><code>MF</code>=</td>
+<td>When omitted, specifies the standard form of the SHOWCB to generate an inline CBMR and an inline call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>Specifies the list form of the SHOWCB macro which generates an inline CBMR but no call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Specifies the list form of the SHOWCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr,label)</code></td>
+<td>Same as <code>MF=(L,addr)</code> but label will be equated to the length of the CBMR.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Specifies the execute form of the SHOWCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr)</code></td>
+<td>Specifies the generate form of the SHOWCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr,label)</code></td>
+<td>Same as <code>MF=(G,addr)</code> but label will be equated to the length of the CBMR</td>
+</tr>
+</tbody>
+</table>
+<p>Review notes:
+- <code>AIXPC</code> - What info is this indicating? Value will be taken from <code>PFXAIXN</code> (to be defined)? Need to validate this decision.
+- <code>RBA</code>/<code>XRBA</code> - How to determine??? zVSAM supports these keywords only for ESDS. For any other type of cluster a value of foxes will be returned by default. Need to validate this decision.</p>
+<h3 id="testcb-rpl-macro-parameters">TESTCB RPL macro parameters</h3>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<p>For ease of access a short summary follows here:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RPL</code>=addr</td>
+<td>required to indicate the RPL to be tested</td>
+</tr>
+<tr>
+<td><code>FTNCD</code>=nr</td>
+<td>Values used for <code>FTNCD</code> and their meaning can be found in the IBM manual “DFSMS Macro Instructions for Datasets”, chapter “Return and Reason Codes”, section “Component Codes”</td>
+</tr>
+<tr>
+<td><code>RBA</code>=nr</td>
+<td>zVSAM supports this keyword only for ESDS. For any other type of cluster a value of foxes will be assumed by default.</td>
+</tr>
+<tr>
+<td><code>MF</code>=</td>
+<td>When omitted, specifies the standard form of the TESTCB to generate an inline CBMR and an inline call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>Specifies the list form of the TESTCB macro which generates an inline CBMR but no call to the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Specifies the list form of the TESTCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr,label)</code></td>
+<td>Same as <code>MF=(L,addr)</code> but label will be equated to the length of the CBMR.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Specifies the execute form of the TESTCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr)</code></td>
+<td>Specifies the generate form of the TESTCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.</td>
+</tr>
+<tr>
+<td><code>MF=(G,addr,label)</code></td>
+<td>Same as <code>MF=(G,addr)</code> but label will be equated to the length of the CBMR</td>
+</tr>
+</tbody>
+</table>
+<h3 id="point-macro-parameters">POINT macro parameters</h3>
+<h3 id="get-macro-parameters">GET macro parameters</h3>
+<h3 id="put-macro-parameters">PUT macro parameters</h3>
+<h3 id="erase-macro-parameters">ERASE macro parameters</h3>
+<h3 id="check-macro-parameters">CHECK macro parameters</h3>
+<h3 id="endreq-macro-parameters">ENDREQ macro parameters</h3>
+<h3 id="verify-macro-parameters">VERIFY macro parameters</h3>
+<h3 id="zrpl-description">zRPL description</h3>
+<p>The structure and layout of the zRPL are not formally part of the interface and may change in future releases.
+Therefore the zRPL layout is shown here only for the sake of completeness. Direct access to subfields in the zRPL is discouraged.
+Use SHOWCB RPL, TESTCB RPL and/or MODCB RPL to inspect, test, and/or modify the zRPL's content.
+Accessing subfields of the zRPL directly may adversely impact portability of your programs.</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Equate</th>
+<th>Designation</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IFGRPL</td>
+<td></td>
+<td>DSECT</td>
+<td></td>
+</tr>
+<tr>
+<td>IHARPL</td>
+<td></td>
+<td></td>
+<td>Synonym of IFGRPL</td>
+</tr>
+<tr>
+<td>RPLEYE</td>
+<td></td>
+<td>CL4</td>
+<td>Eye catcher</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLZRPL</td>
+<td>=C'zRPL'</td>
+<td>Fixed value</td>
+</tr>
+<tr>
+<td>RPLACB</td>
+<td></td>
+<td>AL4</td>
+<td>Pointer to ACB</td>
+</tr>
+<tr>
+<td>RPLAREA</td>
+<td></td>
+<td>AL4</td>
+<td>Pointer to record area</td>
+</tr>
+<tr>
+<td>RPLAREAL</td>
+<td></td>
+<td>XL4</td>
+<td>Length of record area</td>
+</tr>
+<tr>
+<td>RPLARG</td>
+<td></td>
+<td>AL4</td>
+<td>Pointer to argument</td>
+</tr>
+<tr>
+<td>RPLECB</td>
+<td></td>
+<td>AL4</td>
+<td>Pointer to ECB</td>
+</tr>
+<tr>
+<td>RPLMSGAR</td>
+<td></td>
+<td>AL4</td>
+<td>Pointer to message area</td>
+</tr>
+<tr>
+<td>RPLRPL</td>
+<td></td>
+<td>AL4</td>
+<td>Pointer to chained RPL</td>
+</tr>
+<tr>
+<td>RPLRECLN</td>
+<td></td>
+<td>XL4</td>
+<td>Length of record read or of record to be written</td>
+</tr>
+<tr>
+<td>RPLMSGLN</td>
+<td></td>
+<td>XL2</td>
+<td>Length of message area</td>
+</tr>
+<tr>
+<td>RPLKEYLN</td>
+<td></td>
+<td>XL1</td>
+<td>Key length</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>XL1</td>
+<td>Reserved</td>
+</tr>
+<tr>
+<td>RPLOPTCD</td>
+<td></td>
+<td>0XL2</td>
+<td>Option codes</td>
+</tr>
+<tr>
+<td>RPLOPTCD1</td>
+<td></td>
+<td>XL1</td>
+<td>Option byte 1</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_KEY</td>
+<td>=X'80'</td>
+<td>0: OPTCD=ADR 1: OPTCD=KEY</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_SEQ</td>
+<td>=X'40'</td>
+<td>0: OPTCD=DIR 1: OPTCD=SEQ</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_SKP</td>
+<td>=X'20'</td>
+<td>0: OPTCD=SEQ/DIR 1: OPTCD=SKP</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_ARD</td>
+<td>=X'10'</td>
+<td>0: OPTCD=LRD 1: OPTCD=ARD</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_FWD</td>
+<td>=X'08'</td>
+<td>0: OPTCD=BWD 1: OPTCD=FWD</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_SYN</td>
+<td>=X'04'</td>
+<td>0: OPTCD=ASY 1: OPTCD=SYN</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_NUP</td>
+<td>=X'02'</td>
+<td>0: OPTCD=UPD 1: OPTCD=NUP</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_NSP</td>
+<td>=X'01'</td>
+<td>0: OPTCD=NUP/UPD 1: OPTCD=NSP</td>
+</tr>
+<tr>
+<td>RPLOPTCD2</td>
+<td></td>
+<td>XL1</td>
+<td>Option byte 2</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_KEQ</td>
+<td>=X'80'</td>
+<td>0: OPTCD=KGE 1: OPTCD=KEQ</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_FKS</td>
+<td>=X'40'</td>
+<td>0: OPTCD=GEN 1: OPTCD=FKS</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_MVE</td>
+<td>=X'20'</td>
+<td>0: OPTCD=LOC 1: OPTCD=MVE</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_RBA</td>
+<td>=X'10'</td>
+<td>0: OPTCD=XRBA 1: OPTCD=RBA</td>
+</tr>
+<tr>
+<td>RPLID</td>
+<td>?</td>
+<td>XL1</td>
+<td>Identifier</td>
+</tr>
+<tr>
+<td></td>
+<td>??</td>
+<td></td>
+<td>Fixed value for RPL</td>
+</tr>
+<tr>
+<td>RPLSTYPE</td>
+<td>?</td>
+<td>XL1</td>
+<td>RPL Subtype</td>
+</tr>
+<tr>
+<td></td>
+<td>??</td>
+<td></td>
+<td>Fixed value for VSAM</td>
+</tr>
+<tr>
+<td>RPLFEEDB</td>
+<td></td>
+<td>XL4</td>
+<td>Feedback code</td>
+</tr>
+<tr>
+<td></td>
+<td>???</td>
+<td></td>
+<td>Which codes do we support?</td>
+</tr>
+<tr>
+<td>RPLNEXT</td>
+<td></td>
+<td>A</td>
+<td>Ptr to next RPL</td>
+</tr>
+<tr>
+<td>RPLLXRBBA</td>
+<td></td>
+<td>XL8</td>
+<td>XRBA of last record</td>
+</tr>
+<tr>
+<td>RPLCXRBA</td>
+<td></td>
+<td>XL8</td>
+<td>XRBA of current record</td>
+</tr>
+<tr>
+<td>RPLOPENC</td>
+<td></td>
+<td>F</td>
+<td>Unique ACB Open count</td>
+</tr>
+<tr>
+<td>RPLFLAG</td>
+<td></td>
+<td>0XL4</td>
+<td>Processing flags</td>
+</tr>
+<tr>
+<td>RPLFLG1</td>
+<td></td>
+<td>XL1</td>
+<td>Processing flags</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLF1GOK</td>
+<td>=X'80'</td>
+<td>Previous GET ok</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLF1GNF</td>
+<td>=X'40'</td>
+<td>Previous GET not found</td>
+</tr>
+<tr>
+<td>RPLFLG2</td>
+<td></td>
+<td>XL1</td>
+<td>Processing flags</td>
+</tr>
+<tr>
+<td>RPLFLG3</td>
+<td></td>
+<td>XL1</td>
+<td>Processing flags</td>
+</tr>
+<tr>
+<td>RPLFLG4</td>
+<td></td>
+<td>XL1</td>
+<td>Processing flags</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLEND</td>
+<td>*</td>
+<td>End of RPL marker</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLLEN</td>
+<td>*-RPLEYE</td>
+<td>Length of RPL</td>
+</tr>
+</tbody>
+</table>
+<p>Review notes:
+- <code>RPLID</code> and next entry - Reason for ? in column 2 not clear. Need to double check.
+- <code>RPLSTYPE</code> and next entry - Reason for ? in column 2 not clear. Need to double check.
+- <code>RPLFEEDB</code> and next entry - Determine feedback codes we need to support and document them here.
+- <code>RPLNEXT</code> - Describe purpose of this chain.</p>
+<h3 id="cbmr-description-body-for-rpl">CBMR description – body for RPL</h3>
+<p>The CBMR header is described in the addenda, <a href="#CBMR-description">CBMR description</a>.</p>
+<p>The CBMR tail for RPL is applicable only when the CBMR header's <code>CBMRRPL</code> bit is on.
+Its length is determined by the <code>CBMRVRBS</code> fields in the CBMR header.
+This is always a multiple of 4 to allow word alignment of the tail area that directly follows the body section.
+Any unused/unneeded verb bytes should be set to zero, indicating a no-operation.</p>
+<p>The body is directly followed by the tail, if applicable.
+It contains a data field of 0, 4, or 8 bytes for each verb code in the body, in the same sequence.
+The starting point of the tail can be found by adding the <code>CBMRVRBS</code> value to the end of the CBMR header.
+Its length can be deduced form the <code>CBMRSIZE</code> field, by subtracting both the header length and the <code>CBMRVRBS</code> field.</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Equate</th>
+<th>Designation</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CBMR</td>
+<td></td>
+<td>DSECT</td>
+<td></td>
+</tr>
+<tr>
+<td>CBMRBODY</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CBMRRPL_VERBS</td>
+<td></td>
+<td>XL1</td>
+<td>Verb code, repeats</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_NOOP</td>
+<td>=X'00'</td>
+<td>Filler, no-operation</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_ADR</td>
+<td>=X'01'</td>
+<td>RBA-addressed</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_KEY</td>
+<td>=X'02'</td>
+<td>Key addressed</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_CNV</td>
+<td>=X'03'</td>
+<td>Control Interval</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_DIR</td>
+<td>=X'06'</td>
+<td>Direct</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_SEQ</td>
+<td>=X'07'</td>
+<td>Sequential</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_SKP</td>
+<td>=X'08'</td>
+<td>Skip-sequential</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_ARD</td>
+<td>=X'30'</td>
+<td>Argument-determined</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_LRD</td>
+<td>=X'31'</td>
+<td>Last Record</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_FWD</td>
+<td>=X'32'</td>
+<td>Forward</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_BWD</td>
+<td>=X'33'</td>
+<td>Backward</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_ASY</td>
+<td>=X'34'</td>
+<td>Asynchronous</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_SYN</td>
+<td>=X'35'</td>
+<td>Synchronous</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_NSP</td>
+<td>=X'36'</td>
+<td>Next Sequential Position</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_NUP</td>
+<td>=X'37'</td>
+<td>Not for update</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_UPD</td>
+<td>=X'38'</td>
+<td>For update</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_KEQ</td>
+<td>=X'39'</td>
+<td>Exact key match</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_KGE</td>
+<td>=X'3A'</td>
+<td>Exact match or next greater key</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_FKS</td>
+<td>=X'3B'</td>
+<td>Full key search</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_GEN</td>
+<td>=X'3C'</td>
+<td>Generic</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_LOC</td>
+<td>=X'3D'</td>
+<td>Locate mode</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_MVE</td>
+<td>=X'3E'</td>
+<td>Move mode</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_PKP</td>
+<td>=X'3F'</td>
+<td>AIXFLAG=AIXPKP</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_COMPL</td>
+<td>=X'40'</td>
+<td>IO=COMPLETE</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_COPIES</td>
+<td>=X'60'</td>
+<td>Nr of copies</td>
+</tr>
+<tr>
+<td></td>
+<td>CMBRRPL_ERET</td>
+<td>=X'61'</td>
+<td>Error return address</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_MAREA</td>
+<td>=X'69'</td>
+<td>Message area</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_MLEN</td>
+<td>=X'6A'</td>
+<td>Message area length</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_RPLLEN</td>
+<td>=X'6D'</td>
+<td>Length of ACB</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_KEYLEN</td>
+<td>=X'77'</td>
+<td>Key length</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_RECLEN</td>
+<td>=X'78'</td>
+<td>record length</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_ACB</td>
+<td>=X'90'</td>
+<td>ACB pointer</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_AREA</td>
+<td>=X'91'</td>
+<td>Record area</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_AREALEN</td>
+<td>=X'92'</td>
+<td>Area length</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_ARG</td>
+<td>=X'93'</td>
+<td>Argument pointer</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_ECB</td>
+<td>=X'94'</td>
+<td>ECB pointer</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_NXTRPL</td>
+<td>=X'95'</td>
+<td>Next RPL in chain</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_TRANSID</td>
+<td>=X'96'</td>
+<td>Transaction ID</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMR_RPL_AIXPC</td>
+<td>=X'97'</td>
+<td>Nr of AIX pointers</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_FDBK</td>
+<td>=X'98'</td>
+<td>Feedback code</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_FTNCD</td>
+<td>=X'99'</td>
+<td>Function code</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRRPL_CRBA</td>
+<td>=X'9A'</td>
+<td>Current RBA</td>
+</tr>
+<tr>
+<td></td>
+<td>CBMRTPL_XRBA</td>
+<td>=X'F0'</td>
+<td>8-byte Current RBA</td>
+</tr>
+</tbody>
+</table>
+<p>The validity of verb codes differ per macro.
+Whether any given verb code is valid is determined by the syntax definition of the GENCB, MODCB, SHOWCB, TESTCB macros.
+Please refer to the appropriate chapter to check which parameters are supported.</p>
+<p>For SHOWCB and TESTCB some keywords are applicable only when no I/O is in progress.
+If they are issued before the ECB has been posted, unpredictable results may occur.</p>
+<p>Additional notes:
+- <code>CBMRRPL_CNV</code> – TESTCB only, always false
+- <code>CBMRRPL_TRANSID</code> – Always foxes</p>
+<h2 id="list-of-changes">List of changes</h2>
+<p>This list of changes starts after the meeting between Abe Kornelis, Melvyn Maltz, and Hugh Sweeney
+where earlier drafts were corroborated and finalized.</p>
+<table>
+<thead>
+<tr>
+<th>Date</th>
+<th>Author</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2018-09-16</td>
+<td>Abe Kornelis</td>
+<td>Remove SPX from VS records that have only a single segment.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Change order and numbering of chapters</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Move macro parameter descriptions to addendum</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Expand chapter on compatibility</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>In the addendum for GENCB ACB add explanation on MF usage</td>
+</tr>
+<tr>
+<td>2018-09-18</td>
+<td>Abe Kornelis</td>
+<td>Various small changes as suggested by Hugh Sweeney</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Moved zACB and zEXLST layout paragraphs to the addenda.</td>
+</tr>
+<tr>
+<td>2018-09-20</td>
+<td>Abe Kornelis</td>
+<td>Various small changes as suggested by Melvyn. See mail dated 2018-09-19 22:19</td>
+</tr>
+<tr>
+<td>2018-09-27</td>
+<td>Abe Kornelis</td>
+<td>Added content for MODCB ACB, including addendum.</td>
+</tr>
+<tr>
+<td>2018-09-29</td>
+<td>Abe Kornelis</td>
+<td>Added content for SHOWCB ACB, including addendum</td>
+</tr>
+<tr>
+<td>2018-10-01</td>
+<td>Abe Kornelis</td>
+<td>Added content for TESTCB ACB, including addendum</td>
+</tr>
+<tr>
+<td>2018-10-07</td>
+<td>Abe Kornelis</td>
+<td>Added comment on CBMR layout to chapters on GENCB ACB, MODCB ACB, SHOWCB ACB and TESTCB ACB.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Parm AM=VSAM added to GENCB ACB chapter.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added content for GENCB EXLST, including addendum</td>
+</tr>
+<tr>
+<td>2018-10-08</td>
+<td>Abe Kornelis</td>
+<td>Added content for MODCB EXLST, including addendum</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added content for SHOWCB EXLST, including addendum</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added content for TESTCB EXLST, including addendum</td>
+</tr>
+<tr>
+<td>2018-10-09</td>
+<td>Abe Kornelis</td>
+<td>CBMR split into header and separate tail sections</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>CBMR header description added</td>
+</tr>
+<tr>
+<td>2018-10-10</td>
+<td>Abe Kornelis</td>
+<td>Minor changes as suggested by Melvyn's mail dd 2018-10-09 23:40</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Addition of chapter titles for RPL-based interfaces to addenda.</td>
+</tr>
+<tr>
+<td>2018-10-11</td>
+<td>Abe Kornelis</td>
+<td>Added CBMR description – body for ACB</td>
+</tr>
+<tr>
+<td>2018-10-13</td>
+<td>Abe Kornelis</td>
+<td>Added CBMR description – body for EXLST</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added RPL macro description, including addendum</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added GENCB RPL macro description, including addendum</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added MODCB RPL macro description, including addendum</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added SHOWCB RPL macro description, including addendum</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added TESTCB RPL macro description, including addendum</td>
+</tr>
+<tr>
+<td>2018-10-15</td>
+<td>Abe Kornelis</td>
+<td>Added ACBPFX pointer to zACB layout</td>
+</tr>
+<tr>
+<td>2018-10-16</td>
+<td>Abe Kornelis</td>
+<td>Added CBMR description – body for RPL</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Changed ACBTYPE to ACBSTYPE</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Removed ACBMACR3_NLW and ACBMACR3_MODE</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Changed ACBCUEL to ACBUEL</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Changed ACBOCK to ACBLOCK</td>
+</tr>
+<tr>
+<td>2018-10-21</td>
+<td>Abe Kornelis</td>
+<td>ACB ADR/KEY improved keyword description in addendum</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>ACB IN/OUT improved keyword description in addendum</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>ACB DDNAME improved keyword description in ACB macro chapter and the addendum</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Unsupported parameters and keywords on ACB, EXLST, RPL changed from “flagged as error” to “ignored”</td>
+</tr>
+<tr>
+<td>2018-10-22</td>
+<td>Abe Kornelis</td>
+<td>Add description of prefix block, including counters area.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Updated addendum for SHOWCB/TESTCB with reference to source of data for each keyword.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added prefix field PFXIXLVL.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added instructions for RPL-based operations on how to maintain prefix counter fields.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added description of spacemap block.</td>
+</tr>
+<tr>
+<td>2018-10-23</td>
+<td>Abe Kornelis</td>
+<td>Specify that SHOWCB/TESTCB for RBA/XRBA is supported for ESDS only. Foxes for any other component.</td>
+</tr>
+<tr>
+<td>2018-10-24</td>
+<td>Abe Kornelis</td>
+<td>Add description for block header, block, footer, record pointer list</td>
+</tr>
+<tr>
+<td>2018-10-26</td>
+<td>Abe Kornelis</td>
+<td>Added description of open macro logic</td>
+</tr>
+<tr>
+<td>2018-10-27</td>
+<td>Abe Kornelis</td>
+<td>Added eyecatcher to the prefix area, moved record length and key info fields to beginning of prefix area</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>BHDRPREV/NEXT on prefix block documented as being foxes</td>
+</tr>
+<tr>
+<td>2018-10-28</td>
+<td>Abe Kornelis</td>
+<td>Added ACBVER to zACB layout</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added Area to Terminology chapter</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Max. block size reduced from 2G to 16MB</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added ACBXPFX to zACB layout</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added description of open execution logic</td>
+</tr>
+<tr>
+<td>2018-11-21</td>
+<td>Abe Kornelis</td>
+<td>In API on macro interfaces improved wording for handling of (as yet) unsupported macro parameters.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Add ATRB=VESDS for TESTCB ACB</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Improved picture and text on spacemap block layout</td>
+</tr>
+<tr>
+<td>2018-11-22</td>
+<td>Abe Kornelis</td>
+<td>BHDRPREV/NEXT details expanded</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Removed PFXBSEG/PFXESEG</td>
+</tr>
+<tr>
+<td>2018-11-25</td>
+<td>Abe Kornelis</td>
+<td>Spacemap area structure. Segmented records were missing. Added.</td>
+</tr>
+<tr>
+<td>2018-11-29</td>
+<td>Abe Kornelis</td>
+<td>Added diagrams to chapter on block header structure.</td>
+</tr>
+<tr>
+<td>2018-12-02</td>
+<td>Abe Kornelis</td>
+<td>Added alternative diagram for chaining segments. Preferred solution not yet determined</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>And added drawings for chaining index blocks</td>
+</tr>
+<tr>
+<td>2018-12-09</td>
+<td>Abe Kornelis</td>
+<td>Structure of Physical files: ELIX added to the list of block types</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Block Header Structure: BHDRFLGS changed to BHDRFLG1 and added BHDRFLG2 with BHDR_ELX</td>
+</tr>
+<tr>
+<td>2018-12-17</td>
+<td>Abe Kornelis</td>
+<td>Put PFXBSEG/PFXESEG back in</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Corrected typos in drawings for explaining BHDRNEXT/PREV</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>RPTR_END no longer all foxes, foxes only for RPTRREC@</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Added 4 date fields to the prefix structure for creation and last update timestamps for both data and index component.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>MF=omitted changed to MF= in various locations</td>
+</tr>
+<tr>
+<td>2019-01-06</td>
+<td>Abe Kornelis</td>
+<td>Added various fields to RPL</td>
+</tr>
+</tbody>
+</table>
+<p>The end of this change section marks the point where Melvyn Maltz took over maintenance of the document.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      &copy; 2025 z390 Assembler LLC. All rights reserved
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.2-1-g9a2c165a"}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

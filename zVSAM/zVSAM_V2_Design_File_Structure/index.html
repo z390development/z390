@@ -1,0 +1,4010 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+        <meta name="author" content="z390 Development team">
+      
+      
+      
+        <link rel="prev" href="../zVSAM_V2_Design_Addenda/">
+      
+      
+        <link rel="next" href="../zVSAM_V2_Design_Interfaces/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.2">
+    
+    
+      
+        <title>zVSAM V2 - Physical structure of the files - z390</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#zvsam-v2-physical-structure-of-the-files" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+            
+  <p>This is a work in progress. Contributions to the documentation are welcome. See <a
+    href="../../contributing/contribute_docs">Contributing</a> for more information.</p>
+
+          </div>
+          
+        </aside>
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="z390" class="md-header__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            z390
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              zVSAM V2 - Physical structure of the files
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting_started/install/" class="md-tabs__link">
+          
+  
+  
+  Getting started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../user_guide/z390/commands/" class="md-tabs__link">
+          
+  
+  
+  User guide
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/svc_services/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contributing/contribute_code/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="z390" class="md-nav__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    z390
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick starts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/learning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learning resources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/macro_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mainframe OS compatible macros
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Z390
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Z390
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/z390/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/z390/structured_macro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structured Macro Extensions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/z390/z390_filetypes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    z390 File types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/z390/z390_options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    z390 Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    zCOBOL
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/zCOBOL_User_Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/zCOBOL_System_Programmer_Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL System Programmer's Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/zCOBOL_NIST_COBOL_1985_Test_Results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL NIST COBOL 1985 Test Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/zCOBOL_filetypes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL file types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCOBOL/zCOBOL_options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCICS
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    zCICS
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCICS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manuals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user_guide/zCICS/zcics_app_prog_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCICS Application Programming Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/svc_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SVC services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/program_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Program Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/storage_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/file_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Non-VSAM File Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/guam_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GUAM services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/soa_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SOA services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/structured_program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structured programming macros
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/vsam_file_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/zpar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zPAR and zPARTRS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/sort/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zSORT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/assist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ASSIST support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/contribute_code/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing to z390
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/contribute_docs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing to z390 Documentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/contributing_zcobol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing to zCOBOL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/replace_implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL REPLACE Statement Implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/sort_implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL SORT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#basic-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Concepts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Basic Concepts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#files-blocks-records" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files, Blocks, Records
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cluster-types-and-cluster-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cluster types and Cluster Components
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#record-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Record Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concept-of-fixed-length-records-stored-in-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concept of Fixed-length records stored in blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concept-of-fixed-length-segmented-records-stored-in-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concept of Fixed-length Segmented records stored in blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concept-of-variable-length-records-stored-in-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concept of Variable-length records stored in blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concept-of-variable-length-segmented-records-stored-in-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concept of Variable-length Segmented records stored in blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Structure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#structure-of-physical-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structure of physical files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prefix-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prefix Block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spacemap-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spacemap Blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#index-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Index Blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#raw-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Raw Blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#structure-of-esds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structure of ESDS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#structure-of-ksds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structure of KSDS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#structure-of-rrds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structure of RRDS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#structure-of-lds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structure of LDS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#free-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Free Blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#block-structures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Block Structures
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Block Structures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#block-header-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Block Header Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#block-footer-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Block Footer Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#record-pointer-list-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Record Pointer List Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#free-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Free Space
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prefix-area-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prefix Area Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#counters-area-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Counters Area Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spacemap-area-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spacemap Area Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed-record-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed Record Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variable-record-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variable Record Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed-segmented-record-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed-Segmented Record Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variable-segmented-record-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variable-Segmented Record Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logical-processes-for-acb-based-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logical processes for ACB-based requests
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logical processes for ACB-based requests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#acb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ACB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gencb-acb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GENCB ACB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modcb-acb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MODCB ACB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#showcb-acb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SHOWCB ACB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-acb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TESTCB ACB
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exlst" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EXLST
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gencb-exlst" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GENCB EXLST
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modcb-exlst" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MODCB EXLST
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#showcb-exlst" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SHOWCB EXLST
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-exlst" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TESTCB EXLST
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#open" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="zvsam-v2-physical-structure-of-the-files">zVSAM V2 - Physical structure of the files</h1>
+<p>This document describes the file structure for implementing zVSAM V2 data sets.
+It contains the following major chapters:</p>
+<ol>
+<li><a href="#Basic-Concepts">Basic Concepts</a></li>
+<li><a href="#File-Structure">File Structure</a></li>
+<li><a href="#Block-Structures">Block Structures</a></li>
+</ol>
+<h2 id="basic-concepts">Basic Concepts</h2>
+<h3 id="files-blocks-records">Files, Blocks, Records</h3>
+<p>The logical unit of access or storage is the record. Yet the unit for any given I/O operation is the block.
+Block sizes may vary from 512 bytes to 16MB. Each block holds up to 255 records. For any given cluster component,
+choosing an appropriate block size is important. Block size can greatly affect not only performance,
+but also both internal and external storage consumption.</p>
+<p>A cluster consists of one or more files that belong together and should be managed together. Whether you take a backup, perform a restore,
+or perform other administrative tasks, the files that make up a cluster should be managed alike. When creating a backup copy of a cluster
+or restoring a cluster, make sure no other processes try to access the data at the same time.</p>
+<p>zVSAM implements a number of checks and balances to prevent inadvertent access to data that may have been compromised.
+Names and locations of files are managed. Tampering with files or file attributes may render the cluster unusable.</p>
+<p>As a result, it is not possible to rename a zVSAM cluster or file. Unload and reload your cluster in order to move the data
+or to assign a different name to cluster or file.</p>
+<p>Just like files in a cluster belong together and should be managed together, clusters in a sphere are logically connected and should be managed together.
+Again, failing to manage the files in a correct and comprehensive manner may render your data inaccessible.</p>
+<h3 id="cluster-types-and-cluster-components">Cluster types and Cluster Components</h3>
+<p>Each cluster consists of a data component and an index component as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Cluster type</th>
+<th>Index content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ESDS</td>
+<td>Index on XRBA</td>
+</tr>
+<tr>
+<td>KSDS</td>
+<td>Index on key value</td>
+</tr>
+<tr>
+<td>RRDS</td>
+<td>Index on RRN</td>
+</tr>
+<tr>
+<td>LDS</td>
+<td>No index</td>
+</tr>
+<tr>
+<td>AIX</td>
+<td>Index on alternate key value</td>
+</tr>
+</tbody>
+</table>
+<h3 id="record-formats">Record Formats</h3>
+<p>In zVSAM we recognize and support the following record formats:</p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Properties</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F</td>
+<td>Fixed. All records have the same length Records never span a Block boundary.</td>
+</tr>
+<tr>
+<td>FS</td>
+<td>Fixed Spanned. All records have the same length. Records may span a Block boundary.</td>
+</tr>
+<tr>
+<td>V</td>
+<td>Variable. Records have varying lengths. Records never span a Block boundary.</td>
+</tr>
+<tr>
+<td>VS</td>
+<td>Variable Spanned. Records have varying lengths. Records may or may not span a Block boundary.</td>
+</tr>
+</tbody>
+</table>
+<p>For ESDS, KSDS, and RRDS all record types are supported.
+For AIX only F and VS record formats are supported: F for unique, and VS for non-unique indexes.</p>
+<p>Supported Record Formats per Cluster Type:</p>
+<table>
+<thead>
+<tr>
+<th>Cluster Type</th>
+<th>F</th>
+<th>FS</th>
+<th>V</th>
+<th>VS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ESDS</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y*</td>
+<td>Y*</td>
+</tr>
+<tr>
+<td>KSDS</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+<tr>
+<td>RRDS</td>
+<td>Y</td>
+<td>Y*</td>
+<td>Y</td>
+<td>Y*</td>
+</tr>
+<tr>
+<td>LDS</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr>
+<td>AIX - unique</td>
+<td>Y</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr>
+<td>AIX - non-unique</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+<td>Y</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>* denotes a zVSAM extension *</li>
+</ul>
+<p>For a unique AIX each record holds an alternate key value plus the primary key (KSDS) or XLRA (ESDS)
+of the associated record in the cluster's data component. This fixed configuration dictates a record type of F.</p>
+<p>For a non-unique AIX each record holds an alternate key value and as many primary keys (KSDS) or XLRAs (ESDS)
+of associated records in the cluster's data component as there are records holding that specific alternate key value.
+The table of primary keys may vary in length from 1 to very large numbers. No block size is guaranteed to be large enough
+to hold the largest possible index record, therefore a record type of VS is mandated.
+When a non-unique index record needs to be split into segments, no primary key value or XLRA is ever split;
+i.e. only an exact number of these reside within a single segment of the record.</p>
+<p>Supported Index-types per Cluster Type</p>
+<table>
+<thead>
+<tr>
+<th>Cluster Type</th>
+<th>Primary - Unique</th>
+<th>AIX - unique</th>
+<th>AIX - Non-unique</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ESDS</td>
+<td>Y*</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+<tr>
+<td>KSDS</td>
+<td>Y</td>
+<td>Y</td>
+<td>Y</td>
+</tr>
+<tr>
+<td>RRDS</td>
+<td>Y*</td>
+<td>N</td>
+<td>N</td>
+</tr>
+<tr>
+<td>LDS</td>
+<td>N</td>
+<td>N</td>
+<td>N</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>* denotes a zVSAM extension *</li>
+</ul>
+<h3 id="concept-of-fixed-length-records-stored-in-blocks">Concept of Fixed-length records stored in blocks</h3>
+<p>Disregarding block structure elements, F-type records are conceptually stored one after another,
+filling the block until no space is left. When  remaining free space is insufficient to accommodate another record,
+that free space remains unallocated (marked in blue). The actual implementation is quite different,
+but we'll leave those details alone for the moment.</p>
+<p><img alt="Diagram showing Blocked records of type F" src="../zVSAM_V2_Drawing_Record_Type_F.jpg" /></p>
+<p>This holds for all cluster types, except LDS. In an LDS there is no block structure.
+Each block and each record holds 4096 bytes of data.</p>
+<p>Below we show an example of records in a LDS:</p>
+<p><img alt="Diagram showing records in an LDS" src="../zVSAM_V2_Drawing_Record_Type_LDS.jpg" /></p>
+<h3 id="concept-of-fixed-length-segmented-records-stored-in-blocks">Concept of Fixed-length Segmented records stored in blocks</h3>
+<p>Disregarding block structure elements, FS-type records are conceptually stored one after another, using a block for each segment
+and starting each record on a new block. Record size is expected to exceed block size, so the record is split into segments,
+the first segment is created to fill an entire block, and the rest of the record goes into a second segment, which is stored on the next block.
+Each segment is preceded by a Segment Prefix (SPX, marked in yellow). Depending on record size and usable block size,
+more than two segments may be needed to store the record. The actual implementation is quite different, but we'll leave those details alone for the moment.</p>
+<p>Below we show an example where each record requires three blocks and is therefore split into three segments:</p>
+<p><img alt="Diagram showing Blocked records of type FS" src="../zVSAM_V2_Drawing_Record_Type_FS.jpg" /></p>
+<h3 id="concept-of-variable-length-records-stored-in-blocks">Concept of Variable-length records stored in blocks</h3>
+<p>Disregarding block structure elements, V-type records are conceptually stored one after another, filling the block until no space is left.
+When  remaining free space is insufficient to accommodate another record, that free space remains unallocated (marked in blue).
+Every record is preceded by a Record Length Field (RLF, marked in grey). The actual implementation is quite different,
+but we'll leave those details alone for the moment.</p>
+<p>Below we show an example showing how various numbers of records might fit into the blocks of the file:</p>
+<p><img alt="Diagram showing Blocked records of type V" src="../zVSAM_V2_Drawing_Record_Type_V.jpg" /></p>
+<h3 id="concept-of-variable-length-segmented-records-stored-in-blocks">Concept of Variable-length Segmented records stored in blocks</h3>
+<p>Disregarding block structure elements, VS-type records are conceptually stored one after another, filling the block until no space is left.
+Every record is preceded by a Record Length Field (RLF, marked in grey). When  remaining free space is insufficient to accommodate a complete record,
+the record is placed on the next block. Only if the record size exceeds usable block size, the record is split into segments
+and each segment is prefixed with a Segment Prefix. The first segment is created to fill a block and the rest of the record goes into a second segment,
+which is stored on the next block. Each segment is preceded by a Segment Prefix (SPX, marked in yellow).
+Please note that the RLF occurs only once in each record, whereas each record segment has its own SPX.</p>
+<p>Depending on record size and usable block size, more than two segments may be needed to store a record.
+The actual implementation is quite different, but we'll leave those details alone for the moment.</p>
+<p>Below we show an example showing how various numbers of records might fit into the blocks of
+the file, or how a single record might occupy multiple blocks of the file:</p>
+<p><img alt="Diagram showing Blocked records of type VS" src="../zVSAM_V2_Drawing_Record_Type_VS.jpg" /></p>
+<h2 id="file-structure">File Structure</h2>
+<p>All zVSAM data is stored in physical files, as defined to the operating system. Each component consists of one file.
+This file is formatted as a zVSAM file. The structure of which is explained in the next set of chapters.</p>
+<p><em>Please note:</em> the hosting operating system may impose a limit on physical file size and not every host OS supports a physical file
+spanning a volume boundary of the storage device(s). Therefore, to support clusters that exceed the maximum size of a single physical file,
+in the future we may need to support clusters that consist of multiple files.</p>
+<h3 id="structure-of-physical-files">Structure of physical files</h3>
+<p>Every zVSAM file has a block size. The block being the basic unit of I/O.
+The first block of every file is the prefix block, which  is always 4096 bytes in size.
+The prefix block holds information about the cluster, its data, and its structure.</p>
+<p>Data in the prefix block are not accessible to user programs.
+However, selected fields in the prefix block can be queried using a SHOWCB ACB request.</p>
+<p>All other blocks in the file have a user-defined blocksize. That is, the user defines the blocksize.
+All blocks in the file are created with that size, except the prefix block which is always 4096 bytes,
+irrespective of the size of the other blocks in the file. The file is assumed to logically begin with
+the first block after the prefix block.</p>
+<p>There are 6 types of blocks that may occur in zVSAM files:</p>
+<p>1) Prefix block – one for each file, being the first 4096 bytes of every file
+2) Spacemap block – used to manage free space in the file
+3) Data block – used to hold user data, or AIX data records (in an AIX only)
+4) Index block – used to hold index information
+5) ELIX block – used to index segmented (read: large) non-unique AIX records
+6) Raw block – used to hold a block's worth of LDS data</p>
+<p>Every block, except a raw block, has an internal structure, consisting of a block header,
+a list of record pointers (data and index blocks only), a block body and a block footer.
+The block header and footer have a fixed structure. The list of record pointers, if present,
+has a variable length. The block body contains record data and/or free space.</p>
+<p>Raw blocks have no internal structure, as far as zVSAM is concerned.
+Any and all internal structure(s) in an LDS are to be maintained by the application program.
+Each of the 6 block types is explained in more detail below.</p>
+<h3 id="prefix-block">Prefix Block</h3>
+<p>The prefix block consists of the first 4096 bytes of every physical file.
+It contains meta-data defining the file and its attributes. It also contains various counters.</p>
+<p>The prefix block consists of a block header immediately followed by the prefix area described below.
+The prefix block also contains other data fields, these are addressed from the prefix area.
+The prefix block ends with a block footer. A record pointer list is not present on the prefix block.</p>
+<p>There are various pointer fields in the prefix area. These point to fields allocated elsewhere in the prefix block.
+Their exact addresses on the prefix block may vary.</p>
+<p>The <code>PFXDVOL@</code>, <code>PFXDPAT@</code>, <code>PFXDNAM@</code> pointers and the <code>PFXXVOL@</code>, <code>PFXXPAT@</code>, <code>PFXXNAM@</code> all point to a halfword-prefixed string.</p>
+<p>The <code>PFXCTRS@</code> pointer addresses a separate area that holds various counters.
+This area is expected to move into the catalog dataset in a future release.
+The overall structure of the prefix block would look something like this (areas not to scale):</p>
+<p><img alt="Diagram showing layout of a Prefix Block" src="../zVSAM_V2_Drawing_Block_Type_Prefix.jpg" /></p>
+<h3 id="spacemap-blocks">Spacemap Blocks</h3>
+<p>Spacemap blocks are used to manage available free space in a component.
+Each spacemap block has a size that matches the blocksize of all other blocks (except possibly the prefix block) in the component.</p>
+<p>A component will hold as many spacemap blocks as needed to map all of its allocated blocks,
+including all spacemap blocks but excluding the prefix block. Whenever a single spacemap block is not enough,
+the spacemap blocks are chained together by means of the <code>BHDRNEXT</code>/<code>BHDRPREV</code> pointers in the block header area.
+The spacemap chain starts/ends from the prefix block, fields <code>PFXBMAP</code>/<code>PFXEMAP</code>.</p>
+<p>When a single spacemap block suffices, <code>PFXBMAP</code> and <code>PFXEMAP</code> will both point to that block.</p>
+<p>Each spacemap block consists of a block header immediately followed by the spacemap area, which in turn is followed
+directly by the block footer. No free space exists on a spacemap block. Thus, the last spacemap block may map blocks
+that do not exist in the dataset. The bit settings for blocks beyond the <code>PFXHXLRA</code> should all be zero to indicate an unallocated block.
+zVSAM is aware that any block beyond <code>PFXHXLRA</code> needs to be created and initialized before it can be allocated.</p>
+<p>Conceptually, the overall structure of a spacemap block would look something like this (areas not to scale):</p>
+<p><img alt="Diagram showing layout of a Spacemap Block" src="../zVSAM_V2_Drawing_Block_Type_Spacemap.jpg" /></p>
+<h3 id="data-blocks">Data Blocks</h3>
+<h3 id="index-blocks">Index Blocks</h3>
+<h3 id="raw-blocks">Raw Blocks</h3>
+<h3 id="structure-of-esds">Structure of ESDS</h3>
+<h3 id="structure-of-ksds">Structure of KSDS</h3>
+<h3 id="structure-of-rrds">Structure of RRDS</h3>
+<h3 id="structure-of-lds">Structure of LDS</h3>
+<h3 id="free-blocks">Free Blocks</h3>
+<h2 id="block-structures">Block Structures</h2>
+<h3 id="block-header-structure">Block Header Structure</h3>
+<p>Every block (except raw blocks) has a block header. All block headers have the same structure.
+It is formatted as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Offset</th>
+<th>Field type</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAMHDR</td>
+<td></td>
+<td>DSECT</td>
+<td>Block header area</td>
+</tr>
+<tr>
+<td>BHDREYE</td>
+<td>X'000'</td>
+<td>CL3</td>
+<td>=C'HDR' – eyecatcher to mark the area</td>
+</tr>
+<tr>
+<td>BHDRSEQ#</td>
+<td>X'003'</td>
+<td>XL1</td>
+<td>Write control value</td>
+</tr>
+<tr>
+<td>BHDRVER</td>
+<td>X'004'</td>
+<td>XL1</td>
+<td>Design sequence number</td>
+</tr>
+<tr>
+<td>BHDR_V2</td>
+<td></td>
+<td>=X'02'</td>
+<td>Current design version number</td>
+</tr>
+<tr>
+<td>BHDRFLG1</td>
+<td>X'005'</td>
+<td>XL1</td>
+<td>Flags</td>
+</tr>
+<tr>
+<td>BHDR_PFX</td>
+<td></td>
+<td>=X'80'</td>
+<td>Prefix block</td>
+</tr>
+<tr>
+<td>BHDR_MAP</td>
+<td></td>
+<td>=X'40'</td>
+<td>Spacemap block</td>
+</tr>
+<tr>
+<td>BHDR_DTA</td>
+<td></td>
+<td>=X'20'</td>
+<td>Data block</td>
+</tr>
+<tr>
+<td>BHDR_IDX</td>
+<td></td>
+<td>=X'10'</td>
+<td>Index block</td>
+</tr>
+<tr>
+<td>BHDR_SEG</td>
+<td></td>
+<td>=X'08'</td>
+<td>Segment block</td>
+</tr>
+<tr>
+<td>BHDR_LEF</td>
+<td></td>
+<td>=X'04'</td>
+<td>Index leaf Block</td>
+</tr>
+<tr>
+<td>BHDR_INT</td>
+<td></td>
+<td>=X'02'</td>
+<td>Index intermediate block</td>
+</tr>
+<tr>
+<td>BHDR_ROT</td>
+<td></td>
+<td>=X'01'</td>
+<td>Index root block</td>
+</tr>
+<tr>
+<td>BHDR#REC</td>
+<td>X'006'</td>
+<td>XL1</td>
+<td>Nr of records on this block</td>
+</tr>
+<tr>
+<td>BHDRXLVL</td>
+<td>X'007'</td>
+<td>XL1</td>
+<td>Index level</td>
+</tr>
+<tr>
+<td>BHDRSELF</td>
+<td>X'008'</td>
+<td>XL8</td>
+<td>XLRA of this block</td>
+</tr>
+<tr>
+<td>BHDRNEXT</td>
+<td>X'010'</td>
+<td>XL8</td>
+<td>XLRA of next block on chain</td>
+</tr>
+<tr>
+<td>BHDRPREV</td>
+<td>X'018'</td>
+<td>XL8</td>
+<td>XLRA of previous block on chain</td>
+</tr>
+<tr>
+<td>BHDRFRE@</td>
+<td>X'020'</td>
+<td>XL3</td>
+<td>Offset of free area on this block</td>
+</tr>
+<tr>
+<td>BHDRFLG2</td>
+<td>X'023'</td>
+<td>XL1</td>
+<td>Flags</td>
+</tr>
+<tr>
+<td>BHDR_ELX</td>
+<td></td>
+<td>=X'80'</td>
+<td>ELIX block</td>
+</tr>
+<tr>
+<td>BHDRFREE</td>
+<td>X'024'</td>
+<td>XL3</td>
+<td>Length of free area on this block</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>XL2</td>
+<td>Reserved</td>
+</tr>
+</tbody>
+</table>
+<p><code>BHDRSEQ#</code> is incremented by one every time the block is written out to the file.
+The footer area contains a comparable field: <code>BFTRSEQ#</code>. Together they guard against incomplete writes.</p>
+<p><code>BHDRXLVL</code> indicates the index level. Zero is the leaf level. Index blocks are chained by level.
+That is, for every index level in use there is a pair of pointers in the prefix block (<code>PFXBLVLn</code>/<code>PFXELVLn</code>)
+that starts and ends the chain for that level.</p>
+<p><code>BHDRSELF</code> contains the block's own XLRA. This helps to guard against misdirected reads and/or writes.</p>
+<p><code>BHDRNEXT</code>/<code>BHDRPREV</code> point to the next and previous block on the chain. Which chain this is, depends on the <code>BHDRFLAG</code> setting,
+and, if this is an index block, by the <code>BHDRXLVL</code> value. For the prefix block, these two fields are set to foxes.
+Free blocks are not on any chain, for these blocks the <code>BHDRPREV</code>/<code>BHDRNEXT</code> pointers can have any value.</p>
+<p>Segmented records are a special case. Segments of a segmented record never share their block with other data.
+The block holding the first segment is part of the data chain. A block holding a non-first segment is part of the segment chain.
+A block that holds a record's first segment has an SPX pointing into the segment chain at the block holding the second segment.
+From the second segment the <code>BHDRPREV</code>/<code>BHDRNEXT</code> chain can be used to sequentially read subsequent segments up to the last segment of the record.</p>
+<p>The following table summarizes the way that blocks in the file are chained from the prefix block.
+Please note that free data blocks do not reside on any chain. Nor does the prefix block.</p>
+<table>
+<thead>
+<tr>
+<th>Block Type</th>
+<th>Begin of chain</th>
+<th>End of chain</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prefix</td>
+<td>foxes</td>
+<td>foxes</td>
+</tr>
+<tr>
+<td>Spacemap</td>
+<td>PFXBMAP</td>
+<td>PFXEMAP</td>
+</tr>
+<tr>
+<td>Data (in use)</td>
+<td>PFXBDATA</td>
+<td>PFXEDATA</td>
+</tr>
+<tr>
+<td>Data (non-first segment)</td>
+<td>PFXBSEGM</td>
+<td>PFXESEGM</td>
+</tr>
+<tr>
+<td>Data (free)</td>
+<td>foxes</td>
+<td>foxes</td>
+</tr>
+<tr>
+<td>Index</td>
+<td>PFXBLVLn</td>
+<td>PFXELVLn</td>
+</tr>
+<tr>
+<td>Free</td>
+<td>n.a.</td>
+<td>n.a.</td>
+</tr>
+</tbody>
+</table>
+<p><em>Example 1:</em> Assume we have a cluster with three data blocks holding unsegmented records.
+The blocks are on the data chain as outlined in the picture below. Please note that all depicted pointers are block pointers.
+Each pointer thus originates with the indicated field, and ends at the block it points to.
+The location where the arrows attach has no meaning since it's a block pointer.</p>
+<p><img alt="Diagram showing Chained Data Blocks" src="../zVSAM_V2_Drawing_Chain_Data_Blocks.jpg" /></p>
+<p><em>Example 2:</em> Now suppose we have a cluster with three data blocks, the first block holding two unsegmented records,
+the second block holding the first segment of a record consisting of three segments and the third block holding the first segment
+of a record consisting of two segments.</p>
+<p>In the picture we show the data chain as a solid line (as in the picture above), we show the segment chain as a dotted line,
+and we show the SPX pointers as fat lines.</p>
+<p>The picture shows the prefix area's pointer to start/end block of both the data chain and the segment chain.
+It also shows the first and second block on each chain pointing to one another. Same thing for the second and third block on each chain.</p>
+<p>The picture also shows that the SPX only occurs on the first segment of each segmented record.</p>
+<p>As in the example above, all depicted pointers are block pointers. Each pointer originates with the indicated field,
+and ends at the block it points to. The location where the arrows attach has no meaning since it's a block pointer.</p>
+<p><img alt="Diagram showing Chained Segmented Data Blocks" src="../zVSAM_V2_Drawing_Chain_Segmented_Data_Blocks.jpg" /></p>
+<p><em>Example 3:</em> This example is the same as the example 2 – the only difference being that now all segments go onto the segment chain.
+The SPX resides by itself on the data block and just points to the first segment on the segment chain.</p>
+<p><img alt="Diagram showing Chained Data Blocks - alternative design" src="zVSAM_V2_Drawing_Chain_Data_Blocks_alt.jpg" /></p>
+<p><em>Example 4:</em> This example shows an index of only one block, holding two record pointers.</p>
+<p><img alt="Diagram showing a single Index Block" src="../zVSAM_V2_Drawing_Chain_Index_Blocks_1.jpg" /></p>
+<p><em>Example 5:</em> This example shows the index after adding three more record pointers,
+causing the only index block to overflow and split. Now there are two leaf blocks, still on the LVL0 chain,
+and a new root block has been created on the LVL1 chain.</p>
+<p><img alt="Diagram showing two Chained Index Blocks" src="../zVSAM_V2_Drawing_Chain_Index_Blocks_2.jpg" /></p>
+<h3 id="block-footer-structure">Block Footer Structure</h3>
+<p>Every block (except raw blocks) has a block footer. All block footers have the same structure.
+It is formatted as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Offset</th>
+<th>Field type</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAMFTR</td>
+<td></td>
+<td>DSECT</td>
+<td>Block header area</td>
+</tr>
+<tr>
+<td>BFTREYE</td>
+<td>X'000'</td>
+<td>CL3</td>
+<td>=C'FTR' – eyecatcher to mark the area</td>
+</tr>
+<tr>
+<td>BFTRSEQ#</td>
+<td>X'003'</td>
+<td>XL1</td>
+<td>Write control value</td>
+</tr>
+</tbody>
+</table>
+<p><code>BFTRSEQ#</code> is incremented by one every time the block is written out to the file.
+The header area contains a comparable field: <code>BHDRSEQ#</code>. Together they guard against incomplete writes.</p>
+<h3 id="record-pointer-list-structure">Record Pointer List Structure</h3>
+<p>Every block that contains data records contains a record pointer list. Records are accessible only through their Record Pointer or RPTR.
+Every entry in the list corresponds with a single record on the block. The last byte of a record's XLRA is the index into the Record Pointer List.
+Index value of X'00' is reserved for block pointers; values X'01' through X'FF' inclusive are usable as RPTR index values.
+The difference of 1 always needs to be taken into account when indexing the RPTR list.</p>
+<p>The RPTR list always follows the block header directly.</p>
+<p>The number of entries on the RPTR list varies with the number of records stored on the block (<code>BHDR#REC</code>) and is terminated
+by <code>RPTR_END</code> to mark the end of the list.</p>
+<p>Record Pointer List entries are formatted as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Offset</th>
+<th>Field type</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAMRPT</td>
+<td></td>
+<td>DSECT</td>
+<td>Record Pointer</td>
+</tr>
+<tr>
+<td>RPTRFLGS</td>
+<td>X'000'</td>
+<td>XL1</td>
+<td>Flag byte</td>
+</tr>
+<tr>
+<td>RPTR_ACT</td>
+<td></td>
+<td>=X'80'</td>
+<td>Active record</td>
+</tr>
+<tr>
+<td>RPTR_MTY</td>
+<td></td>
+<td>=X'40'</td>
+<td>Empty record slot</td>
+</tr>
+<tr>
+<td>RPTR_DIS</td>
+<td></td>
+<td>=X'20'</td>
+<td>Record has been displaced to another block</td>
+</tr>
+<tr>
+<td>RPTR_MOV</td>
+<td></td>
+<td>=X'10'</td>
+<td>New location of a moved record</td>
+</tr>
+<tr>
+<td>RPTR_SEG</td>
+<td></td>
+<td>=X'08'</td>
+<td>Record segment</td>
+</tr>
+<tr>
+<td>RPTR_END</td>
+<td></td>
+<td>=X'01'</td>
+<td>Terminating entry</td>
+</tr>
+<tr>
+<td>RPTRREC@</td>
+<td>X'001'</td>
+<td>AL3</td>
+<td>Record offset within block - foxes when RPTR_END is set</td>
+</tr>
+</tbody>
+</table>
+<p><code>RPTR_ACT</code> and <code>RPTR_MTY</code> are mutually exclusive. Either one must be set, otherwise the RPTR list is compromised and data access will fail.
+When <code>RPTR_DIS</code> is set, the RPTR addresses a Displaced Record Pointer, rather than the actual data.
+The format of a Displaced Record Pointer is as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Offset</th>
+<th>Field type</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAMDRP</td>
+<td></td>
+<td>DSECT</td>
+<td>Displaced Record Pointer</td>
+</tr>
+<tr>
+<td>DRPIXLRA</td>
+<td>X'000'</td>
+<td>XL8</td>
+<td>Indirect XLRA = location of actual record data</td>
+</tr>
+</tbody>
+</table>
+<h3 id="free-space">Free Space</h3>
+<p>Free space on any block is maintained in a single extent, usually but not necessarily following the RPTR list and preceding the stored record data.</p>
+<p>Additionally, there may be empty records on the block. These are marked with the <code>RPTR_MTY</code> bit in their RPTR list entry.
+These empty record slots are available for reuse and may (if needed) be merged with each other and with the available
+free space on the block to create a larger area of free space to satisfy an allocation request.</p>
+<h3 id="prefix-area-structure">Prefix Area Structure</h3>
+<p>The prefix area occurs only on the prefix block. It is located directly after the block header on the prefix block.
+No record pointer list lies in between.</p>
+<p>The prefix area contains basic structural information about the file. It has the following format:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Offset</th>
+<th>Field type</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAMPFX</td>
+<td></td>
+<td>DSECT</td>
+<td>Prefix area</td>
+</tr>
+<tr>
+<td>PFXEYE</td>
+<td>X'000'</td>
+<td>CL4</td>
+<td>Eye catcher</td>
+</tr>
+<tr>
+<td>PFXZPFX</td>
+<td></td>
+<td>=C'zPFX'</td>
+<td></td>
+</tr>
+<tr>
+<td>PFXRCLEN</td>
+<td>X'004'</td>
+<td>XL4</td>
+<td>record length, max length if variable</td>
+</tr>
+<tr>
+<td>PFXKYLEN</td>
+<td>X'008'</td>
+<td>XL4</td>
+<td>key length</td>
+</tr>
+<tr>
+<td>PFXKYOFF</td>
+<td>X'00C'</td>
+<td>XL4</td>
+<td>key offset, excluding SDW/RDW</td>
+</tr>
+<tr>
+<td>PFXDVOL@</td>
+<td>X'010'</td>
+<td>XL3</td>
+<td>offset to the data component's volume label</td>
+</tr>
+<tr>
+<td>PFXDNAM@</td>
+<td>X'013'</td>
+<td>XL3</td>
+<td>offset to the data component's filename</td>
+</tr>
+<tr>
+<td>PFXDPAT@</td>
+<td>X'016'</td>
+<td>XL3</td>
+<td>offset to the data component's pathname</td>
+</tr>
+<tr>
+<td>PFXXVOL@</td>
+<td>X'019'</td>
+<td>XL3</td>
+<td>offset to the index component's volume label</td>
+</tr>
+<tr>
+<td>PFXXNAM@</td>
+<td>X'01C'</td>
+<td>XL3</td>
+<td>offset to the index component's filename</td>
+</tr>
+<tr>
+<td>PFXXPAT@</td>
+<td>X'01F'</td>
+<td>XL3</td>
+<td>offset to the index component's pathname</td>
+</tr>
+<tr>
+<td>PFXIXLVL</td>
+<td>X'022'</td>
+<td>XL1</td>
+<td>nr of index levels</td>
+</tr>
+<tr>
+<td>PFXALTHR</td>
+<td>X'023'</td>
+<td>XL1</td>
+<td>allocation redrive threshold</td>
+</tr>
+<tr>
+<td>PFXBLKSZ</td>
+<td>X'024'</td>
+<td>XL4</td>
+<td>blocksize used for this file (except prefix block)</td>
+</tr>
+<tr>
+<td>PFXHXLRA</td>
+<td>X'028'</td>
+<td>XL8</td>
+<td>XLRA of highest allocated block</td>
+</tr>
+<tr>
+<td>PFXBMAP</td>
+<td>X'030'</td>
+<td>XL8</td>
+<td>XLRA of first spacemap block</td>
+</tr>
+<tr>
+<td>PFXEMAP</td>
+<td>X'038'</td>
+<td>XL8</td>
+<td>XLRA of last spacemap block</td>
+</tr>
+<tr>
+<td>PFXMAPNW</td>
+<td>X'040'</td>
+<td>XL8</td>
+<td>XLRA of spacemap block last used for allocation</td>
+</tr>
+<tr>
+<td>PFXBDATA</td>
+<td>X'048'</td>
+<td>XL8</td>
+<td>XLRA of first data block</td>
+</tr>
+<tr>
+<td>PFXEDATA</td>
+<td>X'050'</td>
+<td>XL8</td>
+<td>XLRA of last data block</td>
+</tr>
+<tr>
+<td>PFXBSEGM</td>
+<td>X'058'</td>
+<td>XL8</td>
+<td>XLRA of first segment block</td>
+</tr>
+<tr>
+<td>PFXESEGM</td>
+<td>X'060'</td>
+<td>XL8</td>
+<td>XLRA of last segment block</td>
+</tr>
+<tr>
+<td>PFXROOT</td>
+<td>X'068'</td>
+<td>XL8</td>
+<td>XLRA of root index block</td>
+</tr>
+<tr>
+<td>PFXBLVL0</td>
+<td>X'070'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 0</td>
+</tr>
+<tr>
+<td>PFXELVL0</td>
+<td>X'078'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 0</td>
+</tr>
+<tr>
+<td>PFXBLVL1</td>
+<td>X'080'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 1</td>
+</tr>
+<tr>
+<td>PFXELVL1</td>
+<td>X'088'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 1</td>
+</tr>
+<tr>
+<td>PFXBLVL2</td>
+<td>X'090'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 2</td>
+</tr>
+<tr>
+<td>PFXELVL2</td>
+<td>X'098'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 2</td>
+</tr>
+<tr>
+<td>PFXBLVL3</td>
+<td>X'0A0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 3</td>
+</tr>
+<tr>
+<td>PFXELVL3</td>
+<td>X'0A8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 3</td>
+</tr>
+<tr>
+<td>PFXBLVL4</td>
+<td>X'0B0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 4</td>
+</tr>
+<tr>
+<td>PFXELVL4</td>
+<td>X'0B8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 4</td>
+</tr>
+<tr>
+<td>PFXBLVL5</td>
+<td>X'0C0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 5</td>
+</tr>
+<tr>
+<td>PFXELVL5</td>
+<td>X'0C8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 5</td>
+</tr>
+<tr>
+<td>PFXBLVL6</td>
+<td>X'0D0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 6</td>
+</tr>
+<tr>
+<td>PFXELVL6</td>
+<td>X'0D8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 6</td>
+</tr>
+<tr>
+<td>PFXBLVL7</td>
+<td>X'0E0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 7</td>
+</tr>
+<tr>
+<td>PFXELVL7</td>
+<td>X'0E8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 7</td>
+</tr>
+<tr>
+<td>PFXBLVL8</td>
+<td>X'0F0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 8</td>
+</tr>
+<tr>
+<td>PFXELVL8</td>
+<td>X'0F8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 8</td>
+</tr>
+<tr>
+<td>PFXBLVL9</td>
+<td>X'100'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 9</td>
+</tr>
+<tr>
+<td>PFXELVL9</td>
+<td>X'108'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 9</td>
+</tr>
+<tr>
+<td>PFXBLVLA</td>
+<td>X'110'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 10</td>
+</tr>
+<tr>
+<td>PFXELVLA</td>
+<td>X'118'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 10</td>
+</tr>
+<tr>
+<td>PFXBLVLB</td>
+<td>X'120'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 11</td>
+</tr>
+<tr>
+<td>PFXELVLB</td>
+<td>X'128'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 11</td>
+</tr>
+<tr>
+<td>PFXBLVLC</td>
+<td>X'130'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 412</td>
+</tr>
+<tr>
+<td>PFXELVLC</td>
+<td>X'138'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 12</td>
+</tr>
+<tr>
+<td>PFXBLVLD</td>
+<td>X'140'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 13</td>
+</tr>
+<tr>
+<td>PFXELVLD</td>
+<td>X'148'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 13</td>
+</tr>
+<tr>
+<td>PFXBLVLE</td>
+<td>X'150'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 14</td>
+</tr>
+<tr>
+<td>PFXELVLE</td>
+<td>X'158'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 14</td>
+</tr>
+<tr>
+<td>PFXBLVLF</td>
+<td>X'160'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 15</td>
+</tr>
+<tr>
+<td>PFXELVLF</td>
+<td>X'168'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 15</td>
+</tr>
+<tr>
+<td>PFXMAPOF</td>
+<td>X'170'</td>
+<td>XL3</td>
+<td>offset within spacemap block to last used byte for allocation</td>
+</tr>
+<tr>
+<td>PFXFRSPC</td>
+<td>X'173'</td>
+<td>XL1</td>
+<td>initial freespace % within block</td>
+</tr>
+<tr>
+<td>PFXFRBLK</td>
+<td>X'174'</td>
+<td>XL2</td>
+<td>initial freespace blocks</td>
+</tr>
+<tr>
+<td>PFXFRINT</td>
+<td>X'176'</td>
+<td>XL2</td>
+<td>initial freespace interval between free blocks</td>
+</tr>
+<tr>
+<td>PFXFFLGS</td>
+<td>X'178'</td>
+<td>XL1</td>
+<td>file flags</td>
+</tr>
+<tr>
+<td>PFX_ESDS</td>
+<td></td>
+<td>=X'80'</td>
+<td>ESDS</td>
+</tr>
+<tr>
+<td>PFX_KSDS</td>
+<td></td>
+<td>=X'40'</td>
+<td>KSDS</td>
+</tr>
+<tr>
+<td>PFX_RRDS</td>
+<td></td>
+<td>=X'20'</td>
+<td>RRDS</td>
+</tr>
+<tr>
+<td>PFX_LDS</td>
+<td></td>
+<td>=X'10'</td>
+<td>LDS</td>
+</tr>
+<tr>
+<td>PFX_AIX</td>
+<td></td>
+<td>=X'08'</td>
+<td>AIX</td>
+</tr>
+<tr>
+<td>PFX_INDX</td>
+<td></td>
+<td>=X'01'</td>
+<td>index component</td>
+</tr>
+<tr>
+<td>PFXRFLGS</td>
+<td>X'179'</td>
+<td>XL1</td>
+<td>record flags</td>
+</tr>
+<tr>
+<td>PFX_RFIX</td>
+<td></td>
+<td>=X'80'</td>
+<td>1=fixed, 0=variable</td>
+</tr>
+<tr>
+<td>PFX_RSPN</td>
+<td></td>
+<td>=X'40'</td>
+<td>1=spanned, 0=non-spanned</td>
+</tr>
+<tr>
+<td>PFX_KUNQ</td>
+<td></td>
+<td>=X'20'</td>
+<td>1=AIX unique, 0=AIX non-unique</td>
+</tr>
+<tr>
+<td>PFX_AIXT</td>
+<td></td>
+<td>=X'10'</td>
+<td>1=AIX on KSDS, 0=AIX on ESDS</td>
+</tr>
+<tr>
+<td></td>
+<td>X'17A'</td>
+<td>XL6</td>
+<td>reserved</td>
+</tr>
+<tr>
+<td>PFXDTSKC</td>
+<td>X'180'</td>
+<td>XL8</td>
+<td>STCK of data component creation</td>
+</tr>
+<tr>
+<td>PFXIXSKC</td>
+<td>X'188'</td>
+<td>XL8</td>
+<td>STCK of index component creation</td>
+</tr>
+<tr>
+<td>PFXDTSKU</td>
+<td>X'190'</td>
+<td>XL8</td>
+<td>STCK of last update to data component</td>
+</tr>
+<tr>
+<td>PFXIXSKU</td>
+<td>X'198'</td>
+<td>XL8</td>
+<td>STCK of last update to index component</td>
+</tr>
+<tr>
+<td>PFXMAPDT</td>
+<td>X'1A0'</td>
+<td>XL8</td>
+<td>STCK of last allocation action</td>
+</tr>
+<tr>
+<td>PFXCTRS@</td>
+<td>X'1A8'</td>
+<td>XL3</td>
+<td>pointer to counters area</td>
+</tr>
+<tr>
+<td></td>
+<td>X'1AB'</td>
+<td>XL5</td>
+<td>reserved</td>
+</tr>
+</tbody>
+</table>
+<p>There are 7 pointer fields in the prefix area. These point to fields allocated elsewhere in the prefix block.
+Their exact addresses on the prefix block may vary.</p>
+<p>The <code>PFXDVOL@</code>, <code>PFXDPAT@</code>, <code>PFXDNAM@</code> pointers and the <code>PFXXVOL@</code>, <code>PFXXPAT@</code>, <code>PFXXNAM@</code> all point to a halfword-prefixed string.
+The <code>PFXCTRS@</code> pointer addresses a separate area that holds various counters.
+This area is expected to move into the catalog dataset in a future release.</p>
+<h3 id="counters-area-structure">Counters Area Structure</h3>
+<p>The counters area occurs only on the prefix block. Its location can be found by following the prefix area's <code>PFXCTRS@</code> field.</p>
+<p>The counters area has the following format:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Offset</th>
+<th>Field type</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAMCTR</td>
+<td></td>
+<td>DSECT</td>
+<td>Counters area</td>
+</tr>
+<tr>
+<td>CTREYE</td>
+<td>X'000'</td>
+<td>CL4</td>
+<td>Eyecatcher</td>
+</tr>
+<tr>
+<td>CTRZCTR</td>
+<td></td>
+<td>='zCTR'</td>
+<td></td>
+</tr>
+<tr>
+<td>CTRAVGRL</td>
+<td>X'004'</td>
+<td>XL4</td>
+<td>average record length</td>
+</tr>
+<tr>
+<td>CTRAVSPAC</td>
+<td>X'008'</td>
+<td>XL8</td>
+<td>available space</td>
+</tr>
+<tr>
+<td>CTRHALCRBA</td>
+<td>X'010'</td>
+<td>XL8</td>
+<td>high-allocated RBA</td>
+</tr>
+<tr>
+<td>CTRENDRBA</td>
+<td>X'018'</td>
+<td>XL8</td>
+<td>high water mark for the component</td>
+</tr>
+<tr>
+<td>CTRNCIS</td>
+<td>X'020'</td>
+<td>XL8</td>
+<td>nr of block-split operations</td>
+</tr>
+<tr>
+<td>CTRNDELR</td>
+<td>X'028'</td>
+<td>XL8</td>
+<td>nr of delete operations</td>
+</tr>
+<tr>
+<td>CTRNEXCP</td>
+<td>X'030'</td>
+<td>XL8</td>
+<td>nr of I/O operations</td>
+</tr>
+<tr>
+<td>CTRNEXT</td>
+<td>X'038'</td>
+<td>XL8</td>
+<td>nr of physical files allocated (always 1)</td>
+</tr>
+<tr>
+<td>CTRNINSR</td>
+<td>X'040'</td>
+<td>XL8</td>
+<td>nr of insert operations</td>
+</tr>
+<tr>
+<td>CTRNLOGR</td>
+<td>X'048'</td>
+<td>XL8</td>
+<td>nr of records in this component</td>
+</tr>
+<tr>
+<td>CTRNRETR</td>
+<td>X'050'</td>
+<td>XL8</td>
+<td>nr of retrieval operations</td>
+</tr>
+<tr>
+<td>CTRNNUIW</td>
+<td>X'058'</td>
+<td>XL8</td>
+<td>nr of zVSAM writes</td>
+</tr>
+<tr>
+<td>CTRNUPDR</td>
+<td>X'060'</td>
+<td>XL8</td>
+<td>nr of updates</td>
+</tr>
+<tr>
+<td>CTRSDTA</td>
+<td>X'068'</td>
+<td>XL8</td>
+<td>uncompressed data size</td>
+</tr>
+<tr>
+<td>CTRSTMST</td>
+<td>X'070'</td>
+<td>XL8</td>
+<td>system timestamp of last close operation</td>
+</tr>
+<tr>
+<td>CTRNUIW</td>
+<td>X'078'</td>
+<td>XL8</td>
+<td>nr of user writes</td>
+</tr>
+<tr>
+<td>CTRLOKEY@</td>
+<td>X'080'</td>
+<td>XL3</td>
+<td>pointer to lowest valid key value</td>
+</tr>
+<tr>
+<td></td>
+<td>X'083'</td>
+<td>XL5</td>
+<td>Reserved</td>
+</tr>
+</tbody>
+</table>
+<p>The values in the counters area are maintained to support SHOWCB ACB and/or TESTCB ACB requests.
+They are mapped as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Keyword</th>
+<th>SHOWCB</th>
+<th>TESTCB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CTRAVSPAC</td>
+<td>AVSPAC</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRHALCRBA</td>
+<td>HALCRBA</td>
+<td>ACB</td>
+<td>n.a.</td>
+</tr>
+<tr>
+<td>CTRENDRBA</td>
+<td>ENDRBA</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNCIS</td>
+<td>NCIS</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNDELR</td>
+<td>NDELR</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNEXCP</td>
+<td>NEXCP</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNEXT</td>
+<td>NEXT</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNINSR</td>
+<td>NINSR</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNLOGR</td>
+<td>NLOGR</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNRETR</td>
+<td>NRETR</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNNUIW</td>
+<td>NUIW</td>
+<td>ACB</td>
+<td>n.a.</td>
+</tr>
+<tr>
+<td>CTRNUPDR</td>
+<td>NUPDR</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRSDTA</td>
+<td>SDTASIZE</td>
+<td>ACB</td>
+<td>n.a.</td>
+</tr>
+<tr>
+<td>CTRSTMST</td>
+<td>STMST</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNUIW</td>
+<td>UIW</td>
+<td>ACB</td>
+<td>n.a.</td>
+</tr>
+<tr>
+<td>CTRLOKEY@</td>
+<td>LOKEY</td>
+<td>ACB</td>
+<td>n.a.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="spacemap-area-structure">Spacemap Area Structure</h3>
+<p>The spacemap area fills every spacemap block. It consumes the entire area between the block header and the block footer.
+No free space is left.</p>
+<p>The spacemap area is formatted as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Offset</th>
+<th>Field type</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAMMAP</td>
+<td></td>
+<td>DSECT</td>
+<td>Spacemap area</td>
+</tr>
+<tr>
+<td>MAPXLRA</td>
+<td>X'000'</td>
+<td>XL8</td>
+<td>XLRA of first block addressed by this spacemap area</td>
+</tr>
+<tr>
+<td>MAPBITS</td>
+<td>X'008'</td>
+<td>0B</td>
+<td>Bitmap indicating availability</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>MAPBITS</code> label addresses an array of bytes, each of which addresses 4 blocks of the file,
+the status of each block being represented by two bits. Each byte relates to 4 blocks in direct succession to one another,
+the bytes in the array mapping to successive sequences of 4 blocks.</p>
+<p>The bits in the <code>MAPBITS</code> array are encoded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>B'00'</td>
+<td>block is not allocated. I.e. the block resides on no chain. The block's <code>BHDRNEXT</code>/<code>BHDRPREV</code> fields are meaningless.</td>
+</tr>
+<tr>
+<td>B'01'</td>
+<td>block is allocated but may have insufficient free space. I.e. last allocation attempt failed, but a smaller record might fit. Or last allocation succeeded but left fewer than <code>CTRAVGRL</code> bytes of free space. Not used for blocks holding a segment of a segmented record.</td>
+</tr>
+<tr>
+<td>B'10'</td>
+<td>block is allocated and eligible for record allocation. i.e. last allocation succeeded and left enough free space for a record of average size. (<code>CTRAVGRL</code>) Not used for blocks holding a segment of a segmented record.</td>
+</tr>
+<tr>
+<td>B'11'</td>
+<td>Nothing can be allocated to this block. i.e. last allocation attempt failed, block holds a segment of a segmented record, block is an ELIX block, or block is a spacemap block.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="fixed-record-structure">Fixed Record Structure</h3>
+<h3 id="variable-record-structure">Variable Record Structure</h3>
+<h3 id="fixed-segmented-record-structure">Fixed-Segmented Record Structure</h3>
+<h3 id="variable-segmented-record-structure">Variable-Segmented Record Structure</h3>
+<h2 id="logical-processes-for-acb-based-requests">Logical processes for ACB-based requests</h2>
+<h3 id="acb">ACB</h3>
+<h3 id="gencb-acb">GENCB ACB</h3>
+<h3 id="modcb-acb">MODCB ACB</h3>
+<h3 id="showcb-acb">SHOWCB ACB</h3>
+<h3 id="testcb-acb">TESTCB ACB</h3>
+<h3 id="exlst">EXLST</h3>
+<h3 id="gencb-exlst">GENCB EXLST</h3>
+<h3 id="modcb-exlst">MODCB EXLST</h3>
+<h3 id="showcb-exlst">SHOWCB EXLST</h3>
+<h3 id="testcb-exlst">TESTCB EXLST</h3>
+<h3 id="open">Open</h3>
+<p>Open logic has two major components: the open macro and the actual run-time logic to execute a request to open a file or a number of files.</p>
+<h4 id="open-macro-logic">Open macro logic</h4>
+<p>The open macro generates an open/close parameter list and/or an SVC 19 instruction to invoke the open routine.
+The syntax of the open macro is given in <a href="#OPEN-macro">OPEN macro</a></p>
+<p>The macro generates the following code:</p>
+<table>
+<thead>
+<tr>
+<th>MF variant</th>
+<th>Generated Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MF=L</td>
+<td>Open/close parameter list data only</td>
+</tr>
+<tr>
+<td>MF=E</td>
+<td>1) Code to modify/populate the open/close parameter list at the indicated address, which may be a relocatable constant or a (register).</td>
+</tr>
+<tr>
+<td></td>
+<td>2) Code to invoke the open routine with R1 pointing to the open/close parameter list.</td>
+</tr>
+<tr>
+<td>MF omitted</td>
+<td>1) Open/close parameter list data (inline)</td>
+</tr>
+<tr>
+<td></td>
+<td>2) Code to invoke the open routine with R1 pointing to the open/close parameter list.</td>
+</tr>
+</tbody>
+</table>
+<p>When constructing the open/close parameter list, the end-of-list indicator of the last entry is set.</p>
+<p>Open/close parameter list entries have two different formats. The one being used depends on the current addressing mode as indicated in the &amp;MODE parameter.</p>
+<ul>
+<li>When &amp;MODE=24 then each entry is one fullword on a fullword boundary.</li>
+<li>When &amp;MODE=31 then each entry is two fullwords on a fullword boundary.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Offset</th>
+<th>Field type</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OCPL</td>
+<td></td>
+<td>DSECT</td>
+<td>Open/Close Parameter List</td>
+</tr>
+<tr>
+<td>OC24</td>
+<td>X'000'</td>
+<td>XL4</td>
+<td>Entry for &amp;MODE=24</td>
+</tr>
+<tr>
+<td>OC24OPT</td>
+<td>X'000'</td>
+<td>XL1</td>
+<td>Option byte (ignored for ACB)</td>
+</tr>
+<tr>
+<td>OC24_EOL</td>
+<td></td>
+<td>=X'80'</td>
+<td>End-of-list indicator</td>
+</tr>
+<tr>
+<td>OC24DCB</td>
+<td>X'001'</td>
+<td>AL3</td>
+<td>Pointer to DCB or ACB</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>OC31</td>
+<td>X'000'</td>
+<td>XL8</td>
+<td>Entry for &amp;MODE=31</td>
+</tr>
+<tr>
+<td>OC31OPT</td>
+<td>X'000'</td>
+<td>XL1</td>
+<td>Option byte (ignored for ACB)</td>
+</tr>
+<tr>
+<td>OC31_EOL</td>
+<td></td>
+<td>=X'80'</td>
+<td>End-of-list indicator</td>
+</tr>
+<tr>
+<td>OC31NULL</td>
+<td>X'001'</td>
+<td>XL3</td>
+<td>Reserved, should contain zeroes</td>
+</tr>
+<tr>
+<td>OC31DCB</td>
+<td>X'004'</td>
+<td>AL4</td>
+<td>Pointer to DCB or ACB</td>
+</tr>
+</tbody>
+</table>
+<p>To invoke the open execution logic SVC 19 (X'13') is used.
+The type of parameter list is indicated as follows:
+- if R1 is zero, then R0 contains a pointer to a list of OC31 entries
+- otherwise R1 contains a pointer to a list of OC24 entries.</p>
+<h4 id="open-execution-logic">Open execution logic</h4>
+<p>Open execution logic is implemented as a Java routine.</p>
+<p>This logic consists of the following elements:</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>determine type of parameter list</td>
+<td>The list consists solely of OC31 entries, addressed by R0, if R1 = 0.</td>
+</tr>
+<tr>
+<td></td>
+<td>The list consists solely of OC24 entries, addressed by R1, if R1 &lt;&gt; 0.</td>
+</tr>
+<tr>
+<td>loop over all entries in the parameter list</td>
+<td>End-of-list is indicated in the option byte of the entry</td>
+</tr>
+<tr>
+<td>- check pointer: ACB or DCB</td>
+<td>First byte = X'A0' =&gt; ACB V1</td>
+</tr>
+<tr>
+<td></td>
+<td>First four bytes = C'zACB' =&gt; assume ACB</td>
+</tr>
+<tr>
+<td></td>
+<td>Otherwise =&gt; Assume DCB</td>
+</tr>
+<tr>
+<td>- if DCB invoke DCB open routine</td>
+<td></td>
+</tr>
+<tr>
+<td>- if ACB validate ACB</td>
+<td><code>ACBID</code> &lt;&gt; X'A0' =&gt; Error</td>
+</tr>
+<tr>
+<td></td>
+<td><code>ACBSTYP</code> &lt;&gt; X'10' =&gt; Error</td>
+</tr>
+<tr>
+<td></td>
+<td><code>ACBVER</code> &lt;&gt; X'02' =&gt; Error</td>
+</tr>
+<tr>
+<td>- if ACB valid invoke VSAM open routine</td>
+<td></td>
+</tr>
+<tr>
+<td>- next entry or end-of-loop</td>
+<td>If bit 0 of OCPL entry is on, terminate loop</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      &copy; 2025 z390 Assembler LLC. All rights reserved
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.2-1-g9a2c165a"}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
