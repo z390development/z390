@@ -12,6 +12,14 @@ It consists of the following parts:
 5. [A description of the logical processes that implement RPL-based requests](zVSAM_V2_Design_RPL_Processes.md)
 6. [Addenda](zVSAM_V2_Design_Addenda.md)
 
+This part of the document (the introductory part) contains the following main chapters:
+
+1. This introduction
+2. [Copyright Notice]#(Copyright-Notice)
+3. [Acknowledgements](#Acknowledgements)
+4. [Terminology](#Terminology)
+5. [Compatibility](#Compatibility)
+
 ## Copyright Notice
 
 This document Copyright 2018-2026 – z390 development team
@@ -84,7 +92,7 @@ The ones that are used by IBM as well, are intended to have the same meaning the
 | Term      | Meaning                                                                   |
 |-----------|---------------------------------------------------------------------------|
 | Area      | a section of storage with a defined layout, depending on the type of Area |
-| Block     | zVSAM equivalent of a Control Interval                                    |
+| Block     | zVSAM equivalent of a Control Interval - the unit of I/O operations       |
 | Cluster   | a set of files that logically belong together                             |
 | Component | either a data component or an index component of a cluster                |
 | File      | a single file as seen by the hosting operating system                     |
