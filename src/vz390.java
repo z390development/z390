@@ -81,10 +81,15 @@ public class vz390 {
 	 *  Global variables                  (last RPI)
 	 **************************************************************************/
     /** variable      */ tz390 tz390 = null;
+
     /** variable      */ pz390 pz390 = null;
+
     /** variable      */ sz390 sz390 = null;
+
     /** variable      */ byte cur_vsam_op = 0;
+
     /** variable      */ byte vsam_op_open = 19;
+
     /** variable      */ byte vsam_op_close = 20;
 
 	/*
@@ -92,247 +97,439 @@ public class vz390 {
 	 * VPTH DSECTS)
 	 */
     /** variable - addr loaded VCDT VSAM catalog */ int cur_vcdt_addr = 0;
+
     /** variable - VCDTID C'VCDT'                */ String cur_vcdt_id;
+
     /** variable - VCDTNAME name of VCDT catalog */ String cur_vcdt_name;
+
     /** variable - VCDTCLRT total base clusters  */ int cur_vcdt_clrt = 0;
+
     /** variable - VCDTAIXT tot aix indexes      */ int cur_vcdt_aixt = 0;
+
     /** variable - VCDTPTHT total paths          */ int cur_vcdt_ptht = 0;
+
     /** variable - VCDTPTHA addr path entry      */ int cur_vcdt_ptha = 0;
+
     /** variable                                 */ int cur_vcdt_dcba = 0;
+
     /** variable - VCDTID C'VCDT'                */ int vcdt_id = 0;
+
     /** variable - VCDTNAME name of catalog      */ int vcdt_name = 4;
+
     /** variable - VCDTCLRT tot base clusters    */ int vcdt_clrt = 12;
+
     /** variable - VCDTCLRA addr base cluster entry           */ int vcdt_clra = 16;
+
     /** variable - VCDTAIXT tot aix indexes                   */ int vcdt_aixt = 20;
+
     /** variable - VCDTAIXA addr aix index                    */ int vcdt_aixa = 24;
+
     /** variable - VCDTPTHT tot paths                         */ int vcdt_ptht = 28;
+
     /** variable - VCDTPTHA addr path                         */ int vcdt_ptha = 32;
+
     /** variable - VCDTDCBA addr model DCB for ACB allocation */ int vcdt_dcba = 36;
+
     /** variable - from ACB DDNAME/DSNAME        */ String cur_vcdt_file_name;
+
     /** variable                                 */ String cur_vcdt_path;
+
     /** variable - index of tiot entry + 1       */ int cur_vcdt_tiot = 0;
 
 	/**
 	 * VCLR - VSAM Cluster entry in VCDT catalog
 	 */
     /** variable - VCLRID C"VCLR"                                             */ String cur_vclr_id;    // is476
+
     /** variable - VCLRNAME name of base cluster                              */ String cur_vclr_name;
+
     /** variable - VCLRTYPE type of base cluster                              */ String cur_vclr_type;
+
     /** variable - VCLRFLAG 4 bytes of flags                                  */ int cur_vclr_flag = 0;
+
     /** variable - VCLRLAVG average record length for VREC                    */ int cur_vclr_lavg = 0;
+
     /** variable - VCLRLREC max length or fixed length                        */ int cur_vclr_lrec = 0;
+
     /** variable - VCLRKLEN KSDS primary key length                           */ int cur_vclr_klen = 0;
+
     /** variable - VCLRKOFF KSDS primary key offset                           */ int cur_vclr_koff = 0;
+
     /** variable - VCLRVESA addr DSNAME override for VES                      */ int cur_vclr_vesa = 0;
+
     /** variable - VCLRVX0A addr DSNAME override for VX0                      */ int cur_vclr_vx0a = 0;
+
     /** variable - VCLRAIXN total alterante indexes with upgrade for cluster7 */ int cur_vclr_aixn = 0;
+
     /** variable - VCLRAIXA addr of VAIX addr table                           */ int cur_vclr_aixa = 0;
+
     /** variable - VCLRID C'VCLR'                                             */ int vclr_id = 0;
+
     /** variable - VCLRNAME name of base cluster                              */ int vclr_name = 4;
+
     /** variable - VCLRTYPE ESDS/RRDS/ESDS/LDS                                */ int vclr_type = 12;
+
     /** variable - VCLRFLAG option flags                                      */ int vclr_flag = 16;
 
 	/**
 	 * cur_vclr_flag bits
 	 */
     /** variable - VCLRVREC variable record length                         */ int vclr_flag_vrec = 0x80000000;
+
     /** variable - VCLRRUSE reset EOF at ACB open                          */ int vclr_flag_ruse = 0x40000000;
+
     /** variable - VCLRKSDS key sequential (default)                       */ int vclr_flag_ksds = 0x08000000;
+
     /** variable - VCLRRRDS relative record data set                       */ int vclr_flag_rrds = 0x04000000;
+
     /** variable - VCLRESDS entry sequenced data set                       */ int vclr_flag_esds = 0x02000000;
+
     /** variable - VCLRLDS linear                                          */ int vclr_flag_lds = 0x01000000; 
+
     /** variable - VCLRLAVG average record length for VREC                 */ int vclr_lavg = 20;
+
     /** variable - VCLRLREC max or fixed record length                     */ int vclr_lrec = 24;
+
     /** variable - VCLRKLEN KSDS primary key length                        */ int vclr_klen = 28;
+
     /** variable - VCLRKOFF KSDS primary key offset                        */ int vclr_koff = 32;
+
     /** variable - VCLRVESA addr optional VES DSNAME (Def NAME.VES)        */ int vclr_vesa = 36;
+
     /** variable - VCLRVX0A addr optional VX0 DSNAME (Def NAME.VX0)        */ int vclr_vx0a = 40;
-    /** variable - VCLRCI optional CI size RPI 704                         */ int vclr_ci = 44;   // is476
+
+    /** variable - VCLRCI optional CI size                                 */ int vclr_ci = 44;   //  RPI 704  is476
+
     /** variable - VCLRAIXN total AIX with upgrade for cluster changes     */ int vclr_aixn = 48; // is476
+
     /** variable - VCLRAIXA addr of table with AIX upgrade catalog entries */ int vclr_aixa = 52; // is476
+
     /** variable - VCLRLEN length of VCLR catalog entry                    */ int vclr_len = 56;
 
 	/**
 	 * VAIX alternate index VCDT catalog entries
 	 */
     /** variable - cur aix section addr                                     */ int cur_vaix_addr = 0;
+
     /** variable - VAIXID C'VAIX'                                           */ String cur_vaix_id;
+
     /** variable - VAIXNAME name of alternate index                         */ String cur_vaix_name;
+
     /** variable - VAIXRELN name of related VCLR base cluster               */ String cur_vaix_reln;
+
     /** variable - VAIXFLAG option flags                                    */ int cur_vaix_flag = 0;
+
     /** variable - VAIXKLEN length of aix key in base cluster               */ int cur_vaix_klen = 0;
+
     /** variable - VAIXKOFF offset of aix key in base cluster               */ int cur_vaix_koff = 0;
+
     /** variable - VAIXVXNA addr optional DSNAME (def. NAME.VXN)            */ int cur_vaix_vxna = 0;
+
     /** variable - VAIXRELA addr related VCLR base cluster catalog entry    */ int cur_vaix_rela = 0;
-    /** variable - VAIXFLAG 4 bytes of option flags                         */ int vaix_id = 0;    // RPI 865
-    /** variable - VAIXRELN name of related VCLR base cluster               */ int vaix_name = 4;
-    /** variable - VAIXNAME name of AIX                                     */ int vaix_reln = 12;
-    /** variable - VAIXID C'VAIX'                                           */ int vaix_flag = 20;
+
+    /** variable - VAIXID C'VAIX'                                           */ int vaix_id = 0;    // RPI 865
+
+    /** variable - VAIXNAME name of AIX                                     */ int vaix_name = 4;
+
+    /** variable - VAIXRELN name of related VCLR base cluster               */ int vaix_reln = 12;
+
+    /** variable - VAIXFLAG 4 bytes of option flags                         */ int vaix_flag = 20;
+
     /** variable - VAIXRUSE reset aix eof at open                           */ int vaix_flag_ruse = 0x80000000;
+
     /** variable - VAIXUKEY inforce unique keys                             */ int vaix_flag_ukey = 0x40000000;
+
     /** variable - VAIXUAIX upgrade AIX for base cluster updates            */ int vaix_flag_uaix = 0x20000000;
-    /** variable - VAIXLEN length of VAIX catalog entry                     */ int vaix_klen = 24; // RPI 865
-    /** variable - VAIXRELA addr of related VCLR base cluster catalog entry */ int vaix_koff = 28; // RPI 865
+
+    /** variable - VAIXKLEN aix key length in VES                           */ int vaix_klen = 24; // RPI 865
+
+    /** variable - VAIXKOFF aix key offset in VES                           */ int vaix_koff = 28; // RPI 865
+
     /** variable - VAIXVXNA addr optional VXN DSNAME (def. NAME.VXN)        */ int vaix_vxna = 32; // RPI 865
-    /** variable - VAIXKOFF aix key offset in VES                           */ int vaix_rela = 36; // RPI 865
-    /** variable - VAIXKLEN aix key length in VES                           */ int vaix_len = 40;  // RPI 865
+
+    /** variable - VAIXRELA addr of related VCLR base cluster catalog entry */ int vaix_rela = 36; // RPI 865
+
+    /** variable - VAIXLEN length of VAIX catalog entry                     */ int vaix_len = 40;  // RPI 865
 
 	/**
 	 * VPTH path VCDT catalog entry
 	 */
     /** variable - VPTHID C'VPTH'                                     */ String cur_vpth_id;
+
     /** variable - VPTHNAME name of path                              */ String cur_vpth_name;
+
     /** variable - VPTHENTN name of path (VAIX or VCLR)               */ String cur_vpth_entn;
+
     /** variable - VPTHFLAG 4 byte option flags                       */ int cur_vpth_flag = 0;
+
     /** variable - VPTHENTA addr of VAIX or VCLR entry for path       */ int cur_vpth_enta = 0;
+
     /** variable - VPTHID C'VPTH'                                     */ int vpth_id = 0;
+
     /** variable - VPTHNAME name of path                              */ int vpth_name = 4;
+
     /** variable - VPTHENTN name of entry VAIX or VCLR path           */ int vpth_entn = 12;
+
     /** variable - VPTHFLAG 4 bytes of option flags                   */ int vpth_flag = 20;
+
     /** variable - VPTHUAIX update all upgrade AIX's for base cluster */ int vpth_flag_aixp = 0x80000000;
+
     /** variable - VPTHPAIX path is for VAIX vs alias VCLR            */ int vpth_flag_aixu = 0x40000000;
+
     /** variable - VPTHENTA addr of entry VAIX or VCLR entry          */ int vpth_enta = 24;
+
     /** variable - VPTHLEN length of VPTH catalog entry               */ int vpth_len = 28;
 
 	/**
 	 * ACB
 	 */
     /** variable - true unless REPRO output                             */ boolean open_acb_mod = true; // RPI 701
+
     /** variable                                                        */ int cur_acb_addr = 0;
+
     /** variable - ACBID x'A0'                                          */ byte cur_acb_id;
+
     /** variable - ACBSTYPE x'11' - x'1F' VSAM vs VTAM types            */ byte cur_acb_stype;
+
     /** variable - ACBLEN length of ACB                                 */ short cur_acb_len;
+
     /** variable - ACBAMBL AMB list pointer                             */ int cur_acb_ambl = 0;
+
     /** variable - ACBIFR VTAM interface routine 0 for VSAM             */ int cur_acb_ifr = 0;
+
     /** variable - ACBMACRF 4 bytes of option bits                      */ int cur_acb_macrf = 0;
+
     /** variable                                                        */ byte cur_acb_oflgs = 0;
+
     /** variable - ACBVCLRN label of ACB (def. VCLR/VPTH entry)         */ String cur_acb_vclrn;
+
     /** variable - ACBVCLRA addr of VCLR entry in VCDT catalog          */ int cur_acb_vclra = 0;
+
     /** variable - ACBVAIXA addr of VAIX entry in VCDT catalog for path */ int cur_acb_vaixa = 0;
+
     /** variable - ACBDCBT total DCB's for VES, VX0, and VNN upgrades   */ int cur_acb_dcbt = 0;
+
     /** variable - ACBDCBA addr of dyn alloc DCB table                  */ int cur_acb_dcba = 0;
+
     /** variable - ACBOPENC unique open ACB count used to reset RPL pos */ int cur_acb_openc = 0;
+
     /** variable - counter for unique ddnames "V??#NNNN"                */ int tot_dcb_alloc = 0;
+
     /** variable - ACBID x'A0'                                          */ int acb_id = 0;
+
     /** variable - ACBSTYPE x'11' - x'1F' for VSAM vs VTAM              */ int acb_stype = 1;
+
     /** variable - ACBLEN half word length of ACB                       */ int acb_len = 2;
+
     /** variable - ACBAMBL AMB list                                     */ int acb_ambl = 4;
+
     /** variable - ACBIFR VTAM interface routine (0 for VSAM)           */ int acb_ifr = 8;
+
     /** variable - ACBMACRF macrf flags                                 */ int acb_macrf = 12; 
+
     /** variable - ACBMACR1_KEY key access                              */ int acb_macrf_key = 0x80000000;
+
     /** variable - ACBMACR1_ADR access bu RBA or XRBA                   */ int acb_macrf_adr = 0x40000000;
+
     /** variable - ACBMACR1_CNV control interval access (not supported) */ int acb_macrf_cnv = 0x20000000;
+
     /** variable - ACBMACR1_SEQ sequential access                       */ int acb_macrf_seq = 0x10000000;
+
     /** variable - ACBMACR1_DIR direct access                           */ int acb_macrf_dir = 0x08000000;
+
     /** variable - ACBMACR1_IN input only                               */ int acb_macrf_in = 0x04000000; 
+
     /** variable - ACBMACR1_OUT output add, update, delete              */ int acb_macrf_out = 0x02000000;
+
     /** variable - ACBMACR1_UBF user buffer management (ignored)        */ int acb_macrf_ubf = 0x01000000;
+
     /** variable - ACBMACR2_SKP skip sequential access                  */ int acb_macrf_skp = 0x00800000;
+
     /** variable - ACBMACR2_NLOGON no logon required                    */ int acb_macrf_nlogon = 0x00400000;
+
     /** variable - ACBMACR2_RST data set reusable (reset rba at open)   */ int acb_macrf_rst = 0x00200000;
+
     /** variable - ACBMACR2_DSN subtask sharing based on DSN            */ int acb_macrf_dsn = 0x00100000;
+
     /** variable - ACBMACR2_AIX process alt. index versus base          */ int acb_macrf_aix = 0x00080000;
+
     /** variable - ACBMACR2_LSR local shared resources                  */ int acb_macrf_lsr = 0x00040000;
+
     /** variable - ACBMACR2_GSR global shared resources                 */ int acb_macrf_gsr = 0x00020000;
+
     /** variable - ACBMACR2_ICI improve control interval processing     */ int acb_macrf_ici = 0x00010000;
+
     /** variable - ACBMACR3_DFR defer puts until WRTBUF or required     */ int acb_macrf_dfr = 0x00008000;
+
     /** variable - ACBMACR3_SIS sequential insert strategy              */ int acb_macrf_sis = 0x00004000;
+
     /** variable - ACBMACR3_CFX fix control blocks and buffers          */ int acb_macrf_cfx = 0x00002000;
+
     /** variable - ACBPFLGS offset to open flag                         */ int acb_oflgs = 16;
+
     /** variable - ACB_OPEN open                                        */ byte acb_oflgs_open = (byte) 0x80;
+
     /** variable - ACBGET only                                          */ byte acb_oflgs_in = (byte) 0x40;
+
     /** variable - ACBPUT output add, update, delete                    */ byte acb_oflgs_out = (byte) 0x20;
+
     /** variable - ACBAIXP use aix vs primary key                       */ byte acb_oflgs_aixp = (byte) 0x10;
+
     /** variable - ACBAIXU ugrade aix indexes for VCLR                  */ byte acb_oflgs_aixu = (byte) 0x08;
+
     /** variable - ACBDDNAM DDNAME > env. var.> VCDT[.VCLR/VPTH)        */ int acb_ddnam = 20;
+
     /** variable - ACBDSNAM DSNAME addr > VCDT[.VCLR/VPTH]              */ int acb_dsnam = 28;
+
     /** variable - ACBVCLRN name from label field (def VCDT entry)      */ int acb_vclrn = 32;
+
     /** variable - ACBVCLRA addr VCLR in VCDT catalog                   */ int acb_vclra = 40;
+
     /** variable - ACBVAIXA addr VAIX in VCDT catalog for alt path      */ int acb_vaixa = 44;
+
     /** variable - ACBDCBN total DCB's for this ACB                     */ int acb_dcbt = 48;
+
     /** variable - ACBDCBA addr of dynamically allocated DCB's          */ int acb_dcba = 52;
+
     /** variable - ACBOPENC unique open ACB count                       */ int acb_openc = 56;// RPI 702
 
 	/**
 	 * RPL request list
 	 */
-    /** variable - RPL option flags                                */ int cur_rpl_addr = 0;
-    /** variable - argument with KSDS key, RRDS rec #, or RBA/XRBA */ int cur_rpl_ecb = 0;
-    /** variable - addr record area                                */ int cur_rpl_feedb = 0;
+    /** variable - cur RPL address                                 */ int cur_rpl_addr = 0;
+
+    /** variable - addr ECB to post completion                     */ int cur_rpl_ecb = 0;
+
+    /** variable - feedback codes                                  */ int cur_rpl_feedb = 0;
+
     /** variable - generic key length                              */ int cur_rpl_lkey = 0;
-    /** variable - feedback codes                                  */ int cur_rpl_area = 0;
-    /** variable - addr ECB to post completion                     */ int cur_rpl_arg = 0;
-    /** variable - cur RPL address                                 */ int cur_rpl_opt = 0;
+
+    /** variable - addr record area                                */ int cur_rpl_area = 0;
+
+    /** variable - argument with KSDS key, RRDS rec #, or RBA/XRBA */ int cur_rpl_arg = 0;
+
+    /** variable - RPL option flags                                */ int cur_rpl_opt = 0;
 
 	/**
 	 * cur_rpl_opt flag bits
 	 */
     /** variable - RPL option leave rec in buffer                    */ int rpl_opt_loc = 0x8000;
+
     /** variable - RPL option direct access                          */ int rpl_opt_dir = 0x4000;
+
     /** variable - RPL option sequential access                      */ int rpl_opt_seq = 0x2000;
+
     /** variable - RPL option skip sequential access                 */ int rpl_opt_skp = 0x1000;
+
     /** variable - RPL option                                        */ int rpl_opt_asy = 0x0800;
+
     /** variable - RPL option                                        */ int rpl_opt_kge = 0x0400;
+
     /** variable - RPL option                                        */ int rpl_opt_gen = 0x0200;
+
     /** variable - RPL option                                        */ int rpl_opt_xrba = 0x0100;
+
     /** variable - RPL option                                        */ int rpl_opt_key = 0x0080;
+
     /** variable - RPL option                                        */ int rpl_opt_adr = 0x0040;
+
     /** variable - RPL option                                        */ int rpl_opt_cnv = 0x0020;
+
     /** variable - RPL option                                        */ int rpl_opt_bwd = 0x0010;
+
     /** variable - RPL option                                        */ int rpl_opt_lrd = 0x0008;
+
     /** variable - RPL option                                        */ int rpl_opt_waitx = 0x0004;
+
     /** variable - RPL option                                        */ int rpl_opt_upd = 0x0002;
+
     /** variable - RPL option                                        */ int rpl_opt_nsp = 0x0001;
+
     /** variable - RPL next RPL address in chained requests          */ int cur_rpl_next = 0;
+
     /** variable - RPL record length for RECV PUT                    */ int cur_rpl_lrec = 0;
+
     /** variable - RPL last rec VES/VX0 XRBA if neg = last KSIR XRBA */ long cur_rpl_lxrba = 0; // RPI 702 RPI 723
+
     /** variable - RPL cur position VES/VX0                          */ long cur_rpl_cxrba = 0; // RPI 702
+
     /** variable - unique ACB open count to detect req'd pos reet    */ int cur_rpl_openc = 0;  // RPI 702
+
     /** variable - RPL area length                                   */ int cur_rpl_larea = 0;
+
     /** variable - RPL flags for UPD positioning etc.                */ int cur_rpl_flag = 0;
+
     /** variable - XRBA of current KSIT                              */ long cur_rpl_ksit = 0;
+
     /** variable - XRBA of current KSIR                              */ long cur_rpl_ksir = 0;
 
 	/**
 	 * cur_rpl_flag bits
 	 */
-    /** variable - get/put in KSIT               */ int rpl_flag_getok = 0x80000000;
+    /** variable - prev RPL GET successful       */ int rpl_flag_getok = 0x80000000;
+
     /** variable - prev RPL GET record not found */ int rpl_flag_getnf = 0x40000000;
-    /** variable - prev RPL GET successful       */ int rpl_flag_ksit = 0x20000000; 
+
+    /** variable - get/put in KSIT               */ int rpl_flag_ksit = 0x20000000; 
 
 	/**
 	 * RPL field offsets
 	 */
-    /** variable - RPL current KSIR XRBA                               */ int rpl_id  = 0;   
-    /** variable - RPL current KSIT XRBA                               */ int rpl_stype = 1; 
-    /** variable - RPL flags for UPD positioning etc.                  */ int rpl_len = 2;   
-    /** variable - RPL length of record area                           */ int rpl_ecb = 4;   
-    /** variable - RPL unique open ACB count                           */ int rpl_feedb = 8; //  RPI 702
-    /** variable - RPL cur pos XRBA in VES or VX0                      */ int rpl_lkey = 12; // RPI 702
-    /** variable - RPL last rec XRBA in VES or VX0                     */ int rpl_acb = 16; // RPI 702
-    /** variable - RPL length of record for recv PUT                   */ int rpl_area = 20; 
-    /** variable - RPL next RPL in chain                               */ int rpl_arg = 24;  
+    /** variable - RPL ID                                              */ int rpl_id  = 0;   // is476
+
+    /** variable - RPL type VSAM                                       */ int rpl_stype = 1; // is476
+
+    /** variable - RPL length                                          */ int rpl_len = 2;   // is476
+
+    /** variable - RPL address ecb to post                             */ int rpl_ecb = 4;   
+
+    /** variable - RPL feedback                                        */ int rpl_feedb = 8;
+
+    /** variable - RPL length of generic key                           */ int rpl_lkey = 12;
+
+    /** variable - RPL acb addr                                        */ int rpl_acb = 16;
+
+    /** variable - RPL record area                                     */ int rpl_area = 20; 
+
+    /** variable - RPL argment for KSDS key, RRDS #, ESDS/LDS RBA/XRBA */ int rpl_arg = 24;  
+
     /** variable - RPL options 2 bytes and 2 bytes filler              */ int rpl_opt = 28;  
-    /** variable - RPL argment for KSDS key, RRDS #, ESDS/LDS RBA/XRBA */ int rpl_next = 32;
-    /** variable - RPL record area                                     */ int rpl_lrec = 36;
-    /** variable - RPL acb addr                                        */ int rpl_lxrba = 40;
-    /** variable - RPL length of generic key                           */ int rpl_cxrba = 48;
-    /** variable - RPL feedback                                        */ int rpl_openc = 56;
-    /** variable - RPL address ecb to post                             */ int rpl_larea = 60;
-    /** variable - RPL length                                          */ int rpl_flag = 64; // is476
-    /** variable - RPL type VSAM                                       */ int rpl_ksit = 68; // is476
-    /** variable - RPL ID                                              */ int rpl_ksir = 76; // is476
+
+    /** variable - RPL next RPL in chain                               */ int rpl_next = 32;
+
+    /** variable - RPL length of record for recv PUT                   */ int rpl_lrec = 36;
+
+    /** variable - RPL last rec XRBA in VES or VX0                     */ int rpl_lxrba = 40; // RPI 702
+
+    /** variable - RPL cur pos XRBA in VES or VX0                      */ int rpl_cxrba = 48; // RPI 702
+
+    /** variable - RPL unique open ACB count                           */ int rpl_openc = 56; // RPI 702
+
+    /** variable - RPL length of record area                           */ int rpl_larea = 60;
+
+    /** variable - RPL flags for UPD positioning etc.                  */ int rpl_flag = 64;
+
+    /** variable - RPL current KSIT XRBA                               */ int rpl_ksit = 68;
+
+    /** variable - RPL current KSIR XRBA                               */ int rpl_ksir = 76;
+
     /** variable                                                       */ int rpl_length = 84; // RPI 750  is476
 
 	/**
 	 * VSAM RPL feedback codes 4 bytes (PDF,RC,CC,RNC)
 	 */
     /** variable - default Problem Determination Field */ byte pdf_def = 0;
+
     /** variable - operation sccessful                 */ byte rc_ok = 0;  
+
     /** variable - rpl logical error                   */ byte rc_log = 8; 
+
     /** variable - rpl physical error                  */ byte rc_phy = 12;
+
     /** variable - RPLBASER error accessing ES base    */ byte cmp_ves = 0;
+
     /** variable - RPLAIXER error accessing AIX index  */ byte cmp_vxn = 2;
+
     /** variable - primary KSDS ro VRRDS index         */ byte cmp_vx0 = 1;
 
 	/* rc_ok reason codes (see MVS 3.8 IDARMRCD.MAC) */
@@ -340,75 +537,127 @@ public class vz390 {
 
 	/* rc_log logical error reason codes */
     /** variable - RPLEODER end of data                               */ byte rn_eod = 4;
+
     /** variable - RPLDUP attempt to write dup pri or unique aix key  */ byte rn_dup_key = 8;
+
     /** variable - RPLSEQCK skip seq key out of sequence              */ byte rn_out_of_seq = 12;
+
     /** variable - RPLNOREC record not found                          */ byte rn_rcd_not_fnd = 16;
+
     /** variable - RPLINRBA RBA not a record address                  */ byte rn_rba_not_rcd = 32;
+
     /** variable - RPLINBUF record area too small                     */ byte rn_area_len_err = 44;
+
     /** variable - RPLINACC invalid RPL access for ACB MACRF          */ byte rn_inv_acc_type = 68;
+
     /** variable - RPLINKEY invalid key req for ESDS/RRDS             */ byte rn_inv_key_req = 72;
+
     /** variable - RPLINVP invalid RPL options                        */ byte rn_inv_rpl_opt = 104;
+
     /** variable - RPLINLEN rec len &gt; max or &lt;&gt; fixed len    */ byte rn_inv_rec_len = 108;
+
     /** variable - RPLKEYLC key len &gt; max or 0                     */ byte rn_inv_key_len = 112;
+
     /** variable - RPLIRRNO invalid RRDS record #                     */ byte rn_inv_rec_num = (byte) 192;
+
     /** variable - RPLRRADR invalid RBA req to RRDS                   */ byte rn_inv_rba_req = (byte) 196;
+
     /** variable - z390 catch all                                     */ byte rn_acb_not_open = (byte) 235;
+
     /** variable                                                      */ String rn_log_reason[] = new String[256];
 
 	/* rc_phy physical read/write error reason codes */
     /** variable - RPLRDERD data read error     */ byte rn_read_data_err = 4;
+
     /** variable - RPLRDERI index read error    */ byte rn_read_index_err = 8;
+
     /** variable - RPLWTERD data write error    */ byte rn_write_data_err = 16;
+
     /** variable - RPLWTERI index write error   */ byte rn_write_index_err = 20;
+
     /** variable                                */ String rn_phy_reason[] = new String[256];
 
 	/*
 	 * excp level I/O
 	 */
     /** variable                     */ int cur_ves_dcba = 0;
+
     /** variable                     */ int cur_ves_tiot_index = 0;
+
     /** variable                     */ int cur_ves_rec = 0;
+
     /** variable                     */ long cur_ves_xrba = 0;
+
     /** variable - last ves rec xrba */ long last_ves_xrba = 0; // RPI 702
+
     /** variable                     */ int cur_vx0_dcba = 0;
+
     /** variable                     */ int cur_vx0_tiot_index = 0;
+
     /** variable                     */ long cur_vx0_xrba = 0;
+
     /** variable                     */ long cur_vx0_ves_xrba = 0;
+
     /** variable                     */ boolean null_rec = false;
+
     /** variable                     */ byte[] null_rec_bytes;
+
     /** variable                     */ byte[] cur_rec_bytes;
+
     /** variable                     */ long cur_vxn_xrba = 0;
+
     /** variable                     */ int write_lrec = 0;
+
     /** variable                     */ int read_lrec = 0;
+
     /** variable                     */ long bwd_xrba = 0;
 
      /*_                                                      (RPI 1627)
       * find ksds key variables
       */
     /** variable      */ byte[] cur_key;
+
     /** variable      */ ByteBuffer cur_key_buff; // RPI 750
+
     /** variable      */ byte[] last_key;
+
     /** variable      */ long vx0_lrec = 0;
+
     /** variable      */ int comp_key_len = 0; // RPI 750
+
     /** variable      */ long high_key_rec = 0;
+
     /** variable      */ long low_key_rec = 0;
+
     /** variable      */ long next_key_rec = 0;
+
     /** variable      */ long last_key_rec = 0;
+
     /** variable      */ long last_key_vx0_xrba = 0;
+
     /** variable      */ long last_key_ves_xrba = 0;
+
     /** variable      */ int last_key_gen_rc = 0;
+
     /** variable      */ long prev_key_rec = 0;
+
     /** variable      */ long prev_key_vx0_xrba = 0;
+
     /** variable      */ long prev_key_ves_xrba = 0;
+
     /** variable      */ int prev_key_gen_rc = 0;
 
 	/**
 	 * stats option statistics for log
 	 */
     /** variable                                */ int tot_vsam_oper = 0;
+
     /** variable                                */ int tot_acb_open = 0;
+
     /** variable                                */ int tot_acb_close = 0;
+
     /** variable                                */ int tot_rpl_get = 0;
+
     /** variable                                */ int tot_rpl_put = 0;
     /** variable - KSIR finds in AVL tree       */ int tot_avl_find   = 0; // RPI 806
     /** variable - max height of AVL tree       */ int max_avl_height = 0; // RPI 806
@@ -420,12 +669,19 @@ public class vz390 {
     /** variable - KSIR rotates to bal AVL tree */ int tot_avl_rotate_rr = 0; // RPI 806
     /** variable - KSIR rotates to bal AVL tree */ int tot_avl_rotate_rl = 0; // RPI 806
     /** variable                                */ int tot_rpl_point = 0;
+
     /** variable                                */ int tot_rpl_erase = 0;
+
     /** variable                                */ int tot_ves_cache = 0;
+
     /** variable                                */ int tot_ves_read = 0;
+
     /** variable                                */ int tot_ves_write = 0;
+
     /** variable                                */ int tot_vxn_cache = 0;
+
     /** variable                                */ int tot_vxn_read = 0;
+
     /** variable                                */ int tot_vxn_write = 0;
     /** variable                                */ int tot_vxn_find  = 0;
     /** variable                                */ int max_vxn_height = 0;
@@ -434,48 +690,78 @@ public class vz390 {
       * KSDS work areas
       */
     /** variable      */ int comp_rc = 0; // result of last key compare
+
     /** variable      */ int comp_key_gen_rc = 0; // RPI 757
 
 	/**
 	 * KSDS insert top control block ZKSITD
 	 */
     /** variable                                                                   */ byte[] cb_byte = null;
+
     /** variable                                                                   */ ByteBuffer cb = null;
+
     /** variable                                                                   */ long cur_ksit_xrba = 0;
+
     /** variable - C'KSIT'                                                         */ int cur_ksit_id = 0;
+
     /** variable - C'KSIT"                                                         */ int ksit_id_val = 0xD2E2C9E3; // RPI 723
+
     /** variable - top of balanced tree KSIR                                       */ long cur_ksit_top = 0;
+
     /** variable - next first and lowest KSIR XRBA (-1 none, high bit if last add) */ long cur_ksit_fst = 0;
+
     /** variable - next last and higher KSIR XRBA (-1 none, high bit if last add)  */ long cur_ksit_lst = 0;
+
     /** variable - id                                                              */ int ksit_id = 0;
+
     /** variable - top KSIR XRBA                                                   */ int ksit_top = 4;
+
     /** variable - first and lowest KSIR XRBA                                      */ int ksit_fst = 12;
+
     /** variable - last and highest KSIR XRBA                                      */ int ksit_lst = 20;
+
     /** variable - KSIT length                                                     */ int ksit_len = 28;
+
     /** variable                                                                   */ byte[] cbksit_byte = new byte[ksit_len];
 
 	/**
 	 * KSDS insert record control block ZKSIRD
 	 */
     /** variable                                                   */ long cur_ksir_xrba = 0;
+
     /** variable                                                   */ long xrba_high_bit = (long) 1 << 63;
+
     /** variable                                                   */ long xrba_max_pos = (long) -1 >>> 1;
+
     /** variable - C'KSIR'                                         */ int cur_ksir_id = 0;
+
     /** variable - C'KSIR'                                         */ int ksir_id_val = 0xD2E2C9D9; // RPI 723
+
     /** variable - parent KSIR or KSIT                             */ long cur_ksir_par = 0;
-    /** variable - xrba of cur record (may change for var update)  */ long cur_ksir_low = 0;
-    /** variable - next seq backward KSIR XRBA (-1 none)           */ long cur_ksir_high = 0;
+
+    /** variable - lower KSIR XRBA (-1 none, high bit if last add) */ long cur_ksir_low = 0;
+
+    /** variable - higer KSIR XRBA (-1 none, high bit if last add) */ long cur_ksir_high = 0;
+
     /** variable - next seq forward KSIR XRBA (-1 none)            */ long cur_ksir_fwd = 0;
-    /** variable - higer KSIR XRBA (-1 none, high bit if last add) */ long cur_ksir_bwd = 0;
-    /** variable - lower KSIR XRBA (-1 none, high bit if last add) */ long cur_ksir_rec = 0;
+
+    /** variable - next seq backward KSIR XRBA (-1 none)           */ long cur_ksir_bwd = 0;
+
+    /** variable - xrba of cur record (may change for var update)  */ long cur_ksir_rec = 0;
     /** variable - max height of low  node                         */ byte cur_ksir_low_height  = 0;
     /** variable - max height of high node                         */ byte cur_ksir_high_height = 0;
     /** variable - id C'KSIR'                                      */ int ksir_id = 0;
+
     /** variable - parent KSIR or KSIT                             */ int ksir_par = 4;
+
     /** variable - next lower KSIR or -1 (high bit if last add)    */ int ksir_low = 12;
+
     /** variable - next highest KSIR or -1 (high bit if last add)  */ int ksir_high = 20;
+
     /** variable - next backward KSIR or -1                        */ int ksir_bwd = 28;
+
     /** variable - next foward KSIR or -1                          */ int ksir_fwd = 36;
+
     /** variable - xrba of cur record (may change for var update)  */ int ksir_rec = 44;
     /** variable - max height of low node                          */ int ksir_low_height  = 52;
     /** variable - max height of high node                         */ int ksir_high_height = 53;
@@ -509,35 +795,58 @@ public class vz390 {
 	 * VSAM Cache Buffer (vcb_) data areas
 	 */
     /** variable                                           */ boolean vcb_alloc = false;
+
     /** variable - max vcb alloc allowed                   */ int max_vcb = 10000;
     /** variable - hash index with no dup allowed          */ int max_vcb_hash = 40003;
     /** variable - max vcb record size allowed             */ int max_vcb_lrec = 64;
+
     /** variable - total vcb allocated + 1 to skip 0 index */ int tot_vcb = 1;
+
     /** variable - total buffers requested                 */ int tot_vcb_req = 0;
+
     /** variable - total buffers reused (saved I/O)        */ int tot_vcb_hits = 0;
+
     /** variable - file tiot index                         */ int cur_vcb_tiot = 0;
+
     /** variable - file xrba addr                          */ long cur_vcb_xrba = 0;
+
     /** variable - file rec length                         */ int cur_vcb_lrec = 0; 
+
     /** variable                                           */ int ver_rpl_lrec = 0;
+
     /** variable - index of alloc vcb                      */ int vcb_index = -1;
+
     /** variable                                           */ int[] vcb_tiot = new int[max_vcb];
+
     /** variable                                           */ long[] vcb_xrba = new long[max_vcb];
+
     /** variable                                           */ int[] vcb_lrec = new int[max_vcb];
+
     /** variable                                           */ int[] vcb_addr = new int[max_vcb];
+
     /** variable - addr next vcb buffer to alloc           */ int cur_vcb_addr = 0;
+
     /** variable - vcb buffer                              */ byte[] vcb_byte = new byte[max_vcb * max_vcb_lrec];
+
     /** variable                                           */ ByteBuffer vcb_buff = ByteBuffer.wrap(vcb_byte, 0, max_vcb * max_vcb_lrec);
+
     /** variable                                           */ int vcb_hash = 0;
+
     /** variable                                           */ int[] vcb_hash_index = new int[max_vcb_hash];
 
 	/**
 	 * VSAM cache buffer Least recently used and most recently used queues
 	 */
     /** variable      */ int vcb_lru = 0;
+
     /** variable      */ int vcb_mru = 0;
+
     /** variable      */ int next_vcb = 0;
+
     /** variable      */ int prev_vcb = 0;
+
     /** variable      */ int[] vcb_mru_prev = new int[max_vcb];
+
     /** variable      */ int[] vcb_mru_next = new int[max_vcb];
 
 	/* **************************************************************************
