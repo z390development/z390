@@ -20,12 +20,12 @@ with this program; if not, see <https://www.gnu.org/licenses/>.
 import java.io.File;
 import java.nio.ByteBuffer;
 
+/**
+ * vz390 is the zVSAM component of z390 called from sz390 to perform
+ * VSAM access method services.
+ */
 public class vz390 {
-	/* 
-	vz390 is the emulator component of z390 called from sz390 to perform which
-	VSAM access method services.
-	 * 
-	 **************************************************** 
+	/**************************************************** 
 	 * Maintenance
 	 **************************************************** 
 	 * 06/22/07 initial coding 
@@ -543,11 +543,27 @@ public class vz390 {
 	/* **************************************************************************
 	 * end of global variables
 	 **************************************************************************/
+
+
+
+/**
+ * Dummy constructor - no initialization needed
+ */
+public vz390()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
+/**
+ * init vz390
+ *
+ * @param shared_tz390 shared tz390
+ * @param shared_pz390 shared pz390
+ * @param shared_sz390 shared sz390
+ */
 	public void init_vz390(tz390 shared_tz390, pz390 shared_pz390,
 			sz390 shared_sz390) {
-		/*
-		 * init vz390
-		 */
 		tz390 = shared_tz390;
 		pz390 = shared_pz390;
 		sz390 = shared_sz390;
@@ -556,11 +572,10 @@ public class vz390 {
 
 
 
-    /**
-     * init logical and physical reason codes for use in set_feedback
-     * tracing
-     * 
-     */
+/**
+ * init logical and physical reason codes for use in set_feedback
+ * tracing
+ */
 	private void init_rn_codes() {
 
 		rn_log_reason[4] = "end of data";
@@ -586,10 +601,10 @@ public class vz390 {
 
 
 
-		/**
-		 * Execute VSAM access method service requested
-		 * 
-		 */
+/**
+ * Execute VSAM access method service requested
+ * 
+ */
 	public void svc_vsam() {
 
 		switch (cur_vsam_op) {
@@ -618,17 +633,17 @@ public class vz390 {
 
 
 
-   /**
-     * Open ACB defining VSAM ESDS, RRDS, or KSDS
-     * <ol>
-     * <li> Use DDNAME/DSNAME to load VCDT and find VCLR entry based
-     *      on cat.name or search for VCLR with matching ACBNAME. RPI 681 </li> 
-     * <li> Verify ACB vs VCDT options </li> 
-     * <li> Open VES, VX0, and any upgrade VXN's </li> 
-     * <li> If REPRO and OUTPUT, then reset ves/vx0 eof RPI 701 </li> 
-     * </ol>
-     * Notes: 1. Issue ABEND 013 if open fails.
-     */
+/**
+ * Open ACB defining VSAM ESDS, RRDS, or KSDS
+ * <ol>
+ * <li> Use DDNAME/DSNAME to load VCDT and find VCLR entry based
+ *      on cat.name or search for VCLR with matching ACBNAME. RPI 681 </li> 
+ * <li> Verify ACB vs VCDT options </li> 
+ * <li> Open VES, VX0, and any upgrade VXN's </li> 
+ * <li> If REPRO and OUTPUT, then reset ves/vx0 eof RPI 701 </li> 
+ * </ol>
+ * Notes: 1. Issue ABEND 013 if open fails.
+ */
 	public void svc_open_acb() {
 
 		tot_acb_open++;
@@ -666,14 +681,14 @@ public class vz390 {
 
 
 
-    /**
-     * Close open acb.
-     * <ol>
-     * <li> Close VESDCB </li> 
-     * <li> Close VX0 if not ESDS or fixed RRDS </li> 
-     * <li> If KSDS index updates pending, rewrite VXNDCB's from key index trees. </li> 
-     * </ol>
-     */
+/**
+ * Close open acb.
+ * <ol>
+ * <li> Close VESDCB </li> 
+ * <li> Close VX0 if not ESDS or fixed RRDS </li> 
+ * <li> If KSDS index updates pending, rewrite VXNDCB's from key index trees. </li> 
+ * </ol>
+ */
 	public void svc_close_acb() {
 
 		tot_acb_close++;
@@ -694,9 +709,11 @@ public class vz390 {
 		}
 	}
 
-	/**
-	 * Initialize VSAM "control block" fields
-	 */
+
+
+/**
+ * Initialize VSAM "control block" fields
+ */
 	private void init_fields() {                 // is476
 		init_vcdt_fields();
 		init_vclr_fields();
@@ -704,10 +721,12 @@ public class vz390 {
 		init_vpth_fields();
 		init_acb_fields();
 	}
-	
-	/**
-	 * Initialize VCDT fields
-	 */
+
+
+
+/**
+ * Initialize VCDT fields
+ */
 	private void init_vcdt_fields() {            // is476
 		cur_vcdt_addr = 0;
 		
@@ -722,9 +741,11 @@ public class vz390 {
 		cur_vcdt_dcba = 0;
 	}
 
-	/**
-	 * Initialize VCLR fields
-	 */
+
+
+/**
+ * Initialize VCLR fields
+ */
 	private void init_vclr_fields() {            // is476
 		//cur_vclr_addr = 0;
 		
@@ -742,10 +763,12 @@ public class vz390 {
 		cur_vclr_aixn = 0;
 		cur_vclr_aixa = 0;
 	}
-	
-	/**
-	 * Initialize VAIX fields
-	 */
+
+
+
+/**
+ * Initialize VAIX fields
+ */
 	private void init_vaix_fields() {            // is476
 		cur_vaix_addr = 0;
 		
@@ -759,9 +782,10 @@ public class vz390 {
 		cur_vaix_rela = 0;
 	}
 
-	/**
-	 * Initialize VPTH fields
-	 */
+
+/**
+ * Initialize VPTH fields
+ */
 	private void init_vpth_fields() {            // is476
 		//cur_vpth_addr = 0;
 		
@@ -772,9 +796,11 @@ public class vz390 {
 		cur_vpth_enta = 0;
 	}
 
-	/**
-	 * Initialize ACB fields
-	 */
+
+
+/**
+ * Initialize ACB fields
+ */
 	private void init_acb_fields() {             // is476
 		cur_acb_addr = 0;
 		
@@ -795,9 +821,11 @@ public class vz390 {
 		cur_acb_openc = 0;
 	}
 
-	/**
-	 * Initialzie RPL fields
-	 */
+
+
+/**
+ * Initialzie RPL fields
+ */
 	private void init_rpl_fields() {             // is476
 		cur_rpl_addr = 0;
 		
@@ -822,14 +850,16 @@ public class vz390 {
 		cur_rpl_ksir = 0;
 	}
 
-    /**
-     * load VCDT using ACB DSNAME or DDNAME
-     * <ol>
-     * <li> If file spec includes dot, use suffix to find VCDT entry else use ACBNAME field. </li> 
-     * <li> Set ACBDCBN, and ACBDCBA from VCDT VCLR or VPTH entry. </li> 
-     * </ol>
-     * @return boolean to indicate success (true) or failure (false)
-     */
+
+
+/**
+ * load VCDT using ACB DSNAME or DDNAME
+ * <ol>
+ * <li> If file spec includes dot, use suffix to find VCDT entry else use ACBNAME field. </li> 
+ * <li> Set ACBDCBN, and ACBDCBA from VCDT VCLR or VPTH entry. </li> 
+ * </ol>
+ * @return boolean to indicate success (true) or failure (false)
+ */
 	private boolean load_vcdt() {
 
 		int cur_dsn_addr = pz390.mem.getInt(cur_acb_addr + acb_dsnam);
@@ -856,19 +886,19 @@ public class vz390 {
 
 
 
-    /**
-     * find VCLR/VPTH entry in VCDT
-     * <ol>
-     * <li> Set cur_vclra_addr </li> 
-     * <li> Set cur_vptha_addr or 0
-     *    <ol>
-     *    <li> If vpth_flag_aixp, set acb_oflgs_aixp else 0 </li> 
-     *    <li> If vpth_flag_aixu, set acb_oflgs_aixu else 0 </li> 
-     *    </ol> </li>
-     * <li> Set cur_vcdt_dcba for use by init_acb_dcb. </li> 
-     * </ol>
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * find VCLR/VPTH entry in VCDT
+ * <ol>
+ * <li> Set cur_vclra_addr </li> 
+ * <li> Set cur_vptha_addr or 0
+ *    <ol>
+ *    <li> If vpth_flag_aixp, set acb_oflgs_aixp else 0 </li> 
+ *    <li> If vpth_flag_aixu, set acb_oflgs_aixu else 0 </li> 
+ *    </ol> </li>
+ * <li> Set cur_vcdt_dcba for use by init_acb_dcb. </li> 
+ * </ol>
+ * @return boolean to indicate success (true) or failure (false)
+ */
 	private boolean find_vclr() {
 
 		cur_vcdt_dcba = pz390.mem.getInt(cur_vcdt_addr + vcdt_dcba);
@@ -921,9 +951,9 @@ public class vz390 {
 
 
 
-    /**
-     * fetch acb fields from cur_acb_addr
-     */
+/**
+ * fetch acb fields from cur_acb_addr
+ */
     private void fetch_acb_fields() {
 
 		cur_acb_macrf = pz390.mem.getInt(cur_acb_addr + acb_macrf);
@@ -952,10 +982,10 @@ public class vz390 {
 
 
 
-    /*
-     * fetch current vclr fields used by rpl_get/put. Note open_acb does
-     * additional vclr field fetches,
-     */
+/**
+ * fetch current vclr fields used by rpl_get/put. Note open_acb does
+ * additional vclr field fetches,
+ */
     private void fetch_vclr_fields() {
 
 		cur_vclr_flag = pz390.mem.getInt(cur_acb_vclra + vclr_flag);
@@ -969,9 +999,9 @@ public class vz390 {
 
 
 
-    /**
-     * fetch RPL, ACB, and VCDT fields for GET, PUT, etc.
-     */
+/**
+ * fetch RPL, ACB, and VCDT fields for GET, PUT, etc.
+ */
     private void fetch_rpl_fields() {
 
 		cur_rpl_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
@@ -1020,10 +1050,10 @@ public class vz390 {
 
 
 
-    /**
-     * check for consistency between VCDT and ACB options and if
-     * @return true
-     */
+/**
+ * check for consistency between VCDT and ACB options and if
+ * @return true
+ */
     private boolean check_acb_macrf() {
 
 		if ((cur_vclr_flag & vclr_flag_esds) != 0) {
@@ -1042,13 +1072,13 @@ public class vz390 {
 
 
 
-    /**
-     * <ol>
-     * <li> dynamically allocate and open dcbs required for VES, VX0, and any upgrade VXN's. </li> 
-     * <li> Alloc memory for last key if KSDS. </li> 
-     * </ol>
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * <ol>
+ * <li> dynamically allocate and open dcbs required for VES, VX0, and any upgrade VXN's. </li> 
+ * <li> Alloc memory for last key if KSDS. </li> 
+ * </ol>
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean open_acb_dcbs() {
 
 		int save_open_flags = pz390.reg.getInt(pz390.r0);
@@ -1112,14 +1142,14 @@ public class vz390 {
 
 
 
-    /**
-     * copy model dcb from vcdt_dcba to new dynamcially allocated dcb
-     * address and set DCBLRECLF and DCBDSNAM fields
-     * @param dcb_addr - int
-     * @param dcb_lrecl_f - int
-     * @param dcb_dsname - int
-     * @param dcb_ddname - String
-     */
+/**
+ * copy model dcb from vcdt_dcba to new dynamcially allocated dcb
+ * address and set DCBLRECLF and DCBDSNAM fields
+ * @param dcb_addr - int
+ * @param dcb_lrecl_f - int
+ * @param dcb_dsname - int
+ * @param dcb_ddname - String
+ */
     private void init_acb_dcb(int dcb_addr, int dcb_lrecl_f, int dcb_dsname, String dcb_ddname) {
 
 		System.arraycopy(pz390.mem_byte, cur_vcdt_dcba, pz390.mem_byte,
@@ -1134,11 +1164,11 @@ public class vz390 {
 
 
 
-    /**
-     * dynamically allocate and open DCB for VES, VX0, VXN's
-     * @param dcb_addr - int - address of DCB or ACB
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * dynamically allocate and open DCB for VES, VX0, VXN's
+ * @param dcb_addr - int - address of DCB or ACB
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean open_acb_dcb(int dcb_addr) {
 
 		// use same flags in r0 for open acb and dcb's
@@ -1158,10 +1188,10 @@ public class vz390 {
 
 
 
-    /**
-     * close dynamically allocated ACB DCB's
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * close dynamically allocated ACB DCB's
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean close_acb_dcbs() {
 
 		if ((cur_acb_oflgs & acb_oflgs_aixu) != 0) {
@@ -1194,9 +1224,9 @@ public class vz390 {
 
 
 
-    /**
-     * get VCDT path for use in VX?DCB file opens
-     */
+/**
+ * get VCDT path for use in VX?DCB file opens
+ */
     private void get_vcdt_path() {
 
 		int index = sz390.cde_file[cur_vcdt_tiot - 1]
@@ -1211,9 +1241,9 @@ public class vz390 {
 
 
 
-    /**
-     * retrieve record from open VSAM ACB/VCDT cluster.
-     */
+/**
+ * retrieve record from open VSAM ACB/VCDT cluster.
+ */
     private void svc_rpl_get() {
 
 		tot_rpl_get++;
@@ -1274,9 +1304,9 @@ public class vz390 {
 
 
 
-    /*
-     * ESDS seq get
-     */
+/**
+ * ESDS seq get
+ */
     private void rpl_get_esds_seq() {
 
 		if ((cur_rpl_opt & rpl_opt_bwd) != 0) {
@@ -1309,9 +1339,9 @@ public class vz390 {
 
 
 
-    /*
-     * ESDS get by rba or xrba
-     */
+/**
+ * ESDS get by rba or xrba
+ */
     private void rpl_get_esds_adr() {
 
 		// get ves rba or xrba from RPLARG addr
@@ -1344,16 +1374,16 @@ public class vz390 {
 
 
 
-    /**
-     * <ol>
-     * <li>set RPLLXRBA last rec XRBA
-     *     <ol>
-     *     <li> VES for ESDS/RRDS </li>
-     *     <li> VX0 for KSDS/VRRDS </li>
-     *     </ol></li>
-     * </ol>
-     * @param xrba - long
-     */
+/**
+ * <ol>
+ * <li>set RPLLXRBA last rec XRBA
+ *     <ol>
+ *     <li> VES for ESDS/RRDS </li>
+ *     <li> VX0 for KSDS/VRRDS </li>
+ *     </ol></li>
+ * </ol>
+ * @param xrba - long
+ */
     private void set_rpl_lxrba(long xrba) {
 		cur_rpl_lxrba = xrba;
 		pz390.mem.putLong(cur_rpl_addr + rpl_lxrba, cur_rpl_lxrba);
@@ -1361,10 +1391,10 @@ public class vz390 {
 
 
 
-    /**
-     * set RPL cur pos xrba 1. VES for ESDS/RRDS 2. VX0 for KSDS/VRRDS
-     * @param xrba - long
-     */
+/**
+ * set RPL cur pos xrba 1. VES for ESDS/RRDS 2. VX0 for KSDS/VRRDS
+ * @param xrba - long
+ */
     private void set_rpl_cxrba(long xrba) {
 
 		cur_rpl_cxrba = xrba;
@@ -1373,15 +1403,15 @@ public class vz390 {
 
 
 
-    /**
-     * <ol>
-     * <li>set RPLLXRBA last rec XRBA
-     *     <ol>
-     *     <li> VES for ESDS/RRDS </li>
-     *     <li> VX0 for KSDS/VRRDS </li>
-     *     </ol></li>
-     * </ol>
-     */
+/**
+ * <ol>
+ * <li>set RPLLXRBA last rec XRBA
+ *     <ol>
+ *     <li> VES for ESDS/RRDS </li>
+ *     <li> VX0 for KSDS/VRRDS </li>
+ *     </ol></li>
+ * </ol>
+ */
     private void set_rpl_ksit() {
 
 		if (tz390.opt_tracev) {
@@ -1396,9 +1426,9 @@ public class vz390 {
 
 
 
-    /**
-     * store cur_ves_xrba as RBA or XRBA in RPLARG and limit check
-     */
+/**
+ * store cur_ves_xrba as RBA or XRBA in RPLARG and limit check
+ */
     private void set_rpl_arg_rba() {
 
 		if ((cur_rpl_opt & rpl_opt_xrba) != 0) {
@@ -1419,9 +1449,9 @@ public class vz390 {
 
 
 
-    /**
-     * get next KSDS seq. rcd else eof/error
-     */
+/**
+ * get next KSDS seq. rcd else eof/error
+ */
     private void rpl_get_ksds_seq() {
 
 		if ((cur_rpl_flag & rpl_flag_ksit) != 0) {
@@ -1469,10 +1499,10 @@ public class vz390 {
 
 
 
-    /**
-     * position to first KSIR in KSIT for either FWD or BWD seq. access.
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * position to first KSIR in KSIT for either FWD or BWD seq. access.
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean get_first_seq_ksir() {
 
 		if (!read_ksit()) {
@@ -1488,11 +1518,11 @@ public class vz390 {
 
 
 
-    /**
-     * read record from current KSIR and postion to next KSIR or index entry
-     * or return eod
-     * @return boolean to indicate success (true) or end-of-data (false)
-     */
+/**
+ * read record from current KSIR and postion to next KSIR or index entry
+ * or return eod
+ * @return boolean to indicate success (true) or end-of-data (false)
+ */
     private boolean read_ksir_cur_rec() {
 
 		// read cur KSIR in KSIT
@@ -1522,13 +1552,13 @@ public class vz390 {
 
 
 
-    /*
-     * display error message for KSIR 
-     * broken links and set feedback ves data error
-     * @param type - String
-     * @param xrba1 - long
-     * @param xrba2 - long
-     */
+/**
+ * display error message for KSIR 
+ * broken links and set feedback ves data error
+ * @param type - String
+ * @param xrba1 - long
+ * @param xrba2 - long
+ */
     private void broken_ksir_link(String type, long xrba1, long xrba2){
 		sz390.put_log("VSAM KSIR BROKEN LINK " + type 
 				+ " XRBA1=" + tz390.get_long_hex(xrba1,16)
@@ -1538,11 +1568,11 @@ public class vz390 {
 
 
 
-    /**
-     * set cur_vx0_xrba to next ksds index going forward or backward else
-     * set eod
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * set cur_vx0_xrba to next ksds index going forward or backward else
+ * set eod
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean set_ksds_next_index() {
 		if ((cur_rpl_opt & rpl_opt_bwd) != 0) {
 			cur_vx0_xrba = cur_rpl_cxrba;
@@ -1570,10 +1600,10 @@ public class vz390 {
 
 
 
-    /**
-     * setup for next seq record either in KSIT or VX0 index and turn off
-     * rpl_flag_ksit if done
-     */
+/**
+ * setup for next seq record either in KSIT or VX0 index and turn off
+ * rpl_flag_ksit if done
+ */
     private void set_rpl_ksds_next() {
 
 		if ((cur_rpl_flag & rpl_flag_ksit) != 0) {
@@ -1593,9 +1623,9 @@ public class vz390 {
 
 
 
-    /**
-     * store rpl_flag
-     */
+/**
+ * store rpl_flag
+ */
     private void set_rpl_flag() {
 		if (tz390.opt_tracev) {
 			tz390.put_trace("VSAM RPL FLAG=" + tz390.get_hex(cur_rpl_flag, 8));
@@ -1605,9 +1635,9 @@ public class vz390 {
 
 
 
-    /**
-     * inc or dec vx0 for next key index entry
-     */
+/**
+ * inc or dec vx0 for next key index entry
+ */
     private void set_vx0_ksds_next() {
 		if ((cur_rpl_opt & rpl_opt_bwd) != 0) {
 			cur_vx0_xrba = cur_vx0_xrba - 8 - cur_vclr_klen;
@@ -1618,9 +1648,9 @@ public class vz390 {
 
 
 
-    /**
-     * get KSDS get by key
-     */
+/**
+ * get KSDS get by key
+ */
     private void rpl_get_ksds_key() {
 
 		reset_rpl_cur_rec_flags();
@@ -1648,13 +1678,13 @@ public class vz390 {
 
 
 
-    /**
-     * get for open RRDS file
-     * Notes:
-     * <ol>
-     * <li> Read vx0 XRBA for rel. rcd # </li>
-     * </ol>
-     */
+/**
+ * get for open RRDS file
+ * Notes:
+ * <ol>
+ * <li> Read vx0 XRBA for rel. rcd # </li>
+ * </ol>
+ */
     private void rpl_get_rrds_key() {
 
 		if ((cur_rpl_opt & rpl_opt_kge) != 0) {
@@ -1683,13 +1713,13 @@ public class vz390 {
 
 
 
-    /**
-     * get seq for RRDS file
-     * Notes:
-     * <ol>
-     * <li> Read vx0 at rpl_cxrba to get ves xrba </li>
-     * </ol>
-     */
+/**
+ * get seq for RRDS file
+ * Notes:
+ * <ol>
+ * <li> Read vx0 at rpl_cxrba to get ves xrba </li>
+ * </ol>
+ */
     private void rpl_get_rrds_seq() {
 
 		cur_vx0_xrba = cur_rpl_cxrba;
@@ -1743,11 +1773,11 @@ public class vz390 {
 
 
 
-    /**
-     * search vx0 for ksds key in rplarg and set cur_vx0_xrba entry if found
-     * else false.
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * search vx0 for ksds key in rplarg and set cur_vx0_xrba entry if found
+ * else false.
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean find_ksds_key() {
 
 		tot_vxn_find++;
@@ -1859,11 +1889,11 @@ public class vz390 {
 
 
 
-    /**
-     * set rpl_flag_getok or rpl_flag_getnf and save along with
-     * rpl_flag_ksit possible following put or insert.
-     * @param found - boolean
-     */
+/**
+ * set rpl_flag_getok or rpl_flag_getnf and save along with
+ * rpl_flag_ksit possible following put or insert.
+ * @param found - boolean
+ */
     private void set_rpl_cur_rec(boolean found) {
 
 		if (found) {
@@ -1878,9 +1908,9 @@ public class vz390 {
 
 
 
-    /**
-     * reset flags for RPL current record
-     */
+/**
+ * reset flags for RPL current record
+ */
     private void reset_rpl_cur_rec_flags() {
 
 		cur_rpl_flag = cur_rpl_flag
@@ -1890,16 +1920,16 @@ public class vz390 {
 
 
 
-    /**
-     * search ksit binary tree at cur_vx0_xrba (negative) 
-     * <ol>
-     * <li> Set cur_ves_xrba to record if found </li>
-     * <li> Set cur_rpl_ksir to last ksir for use by insert_ksir </li>
-     * <li> Set avl_r_xrba/par/low/high if ksir found requiring AVL
-     *    rotation to keep tree balanced after KSIR is inserted. </li>
-     * </ol>
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * search ksit binary tree at cur_vx0_xrba (negative) 
+ * <ol>
+ * <li> Set cur_ves_xrba to record if found </li>
+ * <li> Set cur_rpl_ksir to last ksir for use by insert_ksir </li>
+ * <li> Set avl_r_xrba/par/low/high if ksir found requiring AVL
+ *    rotation to keep tree balanced after KSIR is inserted. </li>
+ * </ol>
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean find_ksir() {
 		tot_avl_find++;
 		if (tz390.opt_tracev){
@@ -1958,10 +1988,10 @@ public class vz390 {
 
 
 
-    /**
-     * set cur_ves_xrba to ksir rec unless deleted
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * set cur_ves_xrba to ksir rec unless deleted
+ * @return boolean to indicate success (true) or failure (false)
+ */
 private boolean get_ksir_rec() {
 
 		if (cur_ksir_rec > 0) {
@@ -1975,23 +2005,23 @@ private boolean get_ksir_rec() {
 
 
 
-     /**
-      * <ol>
-      * <li> if random access by key rec #, then cur_vx0_rba = rec# * 8 else cur_vx0_xrba = cur_rpl_cxrba. </li>
-      * <li> Set cur_ves_xrba as follows if cur_vx0_xrba &gt; eod set cur_vx0_xrba = -1 (not found) and return false </li>
-      * <li> Set cur_ves_xrba as follows:
-      *    <ol>
-      *    <li> -1 if 0 return false (no rec found) </li>
-      *    <li> xrba and return true. </li>
-      *    </ol> </li>
-      * </ol>
-      * Note:
-      * <ol>
-      * <li> VX0 XRBA's for valid records are stored +1. to distinguish 0 as unwritten VES XRBA. </li>
-      * </ol>
-      * @param key - boolean
-      * @return boolean to indicate success (true) or failure (false)
-      */
+/**
+ * <ol>
+ * <li> if random access by key rec #, then cur_vx0_rba = rec# * 8 else cur_vx0_xrba = cur_rpl_cxrba. </li>
+ * <li> Set cur_ves_xrba as follows if cur_vx0_xrba &gt; eod set cur_vx0_xrba = -1 (not found) and return false </li>
+ * <li> Set cur_ves_xrba as follows:
+ *    <ol>
+ *    <li> -1 if 0 return false (no rec found) </li>
+ *    <li> xrba and return true. </li>
+ *    </ol> </li>
+ * </ol>
+ * Note:
+ * <ol>
+ * <li> VX0 XRBA's for valid records are stored +1. to distinguish 0 as unwritten VES XRBA. </li>
+ * </ol>
+ * @param key - boolean
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean get_rrds_ves_xrba(boolean key) {
 
 		if (key) {
@@ -2039,9 +2069,9 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * update or write new record in open VSAM ACB/VCDT cluster.
-     */
+/**
+ * update or write new record in open VSAM ACB/VCDT cluster.
+ */
     private void svc_rpl_put() {
 
 		tot_rpl_put++;
@@ -2076,9 +2106,9 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * put for open ESDS output file
-     */
+/**
+ * put for open ESDS output file
+ */
     private void rpl_put_esds() {
 
 		if ((cur_rpl_opt & rpl_opt_key) != 0) {
@@ -2121,9 +2151,9 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * put for open KSDS output file
-     */
+/**
+ * put for open KSDS output file
+ */
     private void rpl_put_ksds() {
 		if ((cur_rpl_opt & rpl_opt_upd) != 0) {
 			if ((cur_rpl_flag & rpl_flag_getok) != 0) {
@@ -2198,15 +2228,15 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * put for open RRDS output file
-     * Notes:
-     * <ol>
-     * <li> Always use rel rec # to calc </li>
-     * <li> Read vx0 XRBA for rel. rcd # </li>
-     * <li> If XRBA = 0, add rec to VES else rewrite </li>
-     * </ol>
-     */
+/**
+ * put for open RRDS output file
+ * Notes:
+ * <ol>
+ * <li> Always use rel rec # to calc </li>
+ * <li> Read vx0 XRBA for rel. rcd # </li>
+ * <li> If XRBA = 0, add rec to VES else rewrite </li>
+ * </ol>
+ */
     private void rpl_put_rrds() {
 
 		if ((cur_rpl_opt & rpl_opt_adr) != 0) {
@@ -2236,13 +2266,15 @@ private boolean get_ksir_rec() {
 		set_feedback(pdf_def, rc_ok, cmp_ves, rn_ok);
 	}
 
-    /**
-     * rewrite RRDS or KSDS record at cur_ves_xrba and update index xrba if
-     * it changed due to variable length change.
-     * @param tiot_index - int
-     * @param xrba_index - long
-     * @return boolean to indicate success (true) or failure (false)
-     */
+
+
+/**
+ * rewrite RRDS or KSDS record at cur_ves_xrba and update index xrba if
+ * it changed due to variable length change.
+ * @param tiot_index - int
+ * @param xrba_index - long
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean rewrite_ves_rec(int tiot_index, long xrba_index) {
 
 		try {
@@ -2280,13 +2312,13 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * add RRDS or KSDS record to VES and update index XRBA address which
-     * may be in VX0 or in VES KSIR.
-     * @param tiot_index - int
-     * @param index_xrba - long
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * add RRDS or KSDS record to VES and update index XRBA address which
+ * may be in VX0 or in VES KSIR.
+ * @param tiot_index - int
+ * @param index_xrba - long
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean add_ves_rec(int tiot_index, long index_xrba) {
 
 		cur_ves_xrba = sz390.tiot_eof_rba[cur_ves_tiot_index];
@@ -2323,13 +2355,13 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * erase current record retrieved from open VSAM ACB/VCDT cluster.
-     * Notes:
-     * <ol>
-     * <li> The current XRBA in VX0 primary index is set to high values. </li>
-     * </ol>
-     */
+/**
+ * erase current record retrieved from open VSAM ACB/VCDT cluster.
+ * Notes:
+ * <ol>
+ * <li> The current XRBA in VX0 primary index is set to high values. </li>
+ * </ol>
+ */
     private void svc_rpl_erase() {
 
 		tot_rpl_erase++;
@@ -2345,9 +2377,9 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * set current position to specified key, record, or RBA in ESDS base
-     */
+/**
+ * set current position to specified key, record, or RBA in ESDS base
+ */
     private void svc_rpl_point() {
 
 		tot_rpl_point++;
@@ -2471,15 +2503,15 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * store RPLFEEDB 4 byte field with: 0 - pdf_ Problem Determination
-     * Field 1 - rc_ return code (also stored in R15) 2 - cmp_ component
-     * code 3 - rn_ reason code for corresponding rc_
-     * @param pdf - byte
-     * @param rc - byte
-     * @param cmp - byte
-     * @param rn - byte
-     */
+/**
+ * store RPLFEEDB 4 byte field with: 0 - pdf_ Problem Determination
+ * Field 1 - rc_ return code (also stored in R15) 2 - cmp_ component
+ * code 3 - rn_ reason code for corresponding rc_
+ * @param pdf - byte
+ * @param rc - byte
+ * @param cmp - byte
+ * @param rn - byte
+ */
     private void set_feedback(byte pdf, byte rc, byte cmp, byte rn) {
 
 		int feedback = ((pdf << 8 | rc) << 8 | cmp) << 8 | (rn & 0xff);
@@ -2530,12 +2562,12 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * read record from VES into RPLAREA and set length in RPLLREC to the
-     * VES ESDS base cluster data file at specified xrba. Notes: 1. If ESDS,
-     * skip duplicate length after record. // RPI 672
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * read record from VES into RPLAREA and set length in RPLLREC to the
+ * VES ESDS base cluster data file at specified xrba. Notes: 1. If ESDS,
+ * skip duplicate length after record. // RPI 672
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean read_ves_rec() {
 
 		if (cur_ves_xrba >= sz390.tiot_eof_rba[cur_ves_tiot_index]
@@ -2680,18 +2712,18 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * write current RPL record in RPLAREA with length RPLLREC to the VES
-     * base cluster data file at specified xrba.
-     * Notes:
-     * <ol>
-     * <li> Variable length records have 4 byte length preceeding record. </li>
-     * <li> ESDS variable length records also have 4 byte length following record
-     *      to support BWD read backward option without any index. </li>
-     * <li> Used by ESDS, RRDS, and KSDS when not inserted record </li>
-     * </ol>
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * write current RPL record in RPLAREA with length RPLLREC to the VES
+ * base cluster data file at specified xrba.
+ * Notes:
+ * <ol>
+ * <li> Variable length records have 4 byte length preceeding record. </li>
+ * <li> ESDS variable length records also have 4 byte length following record
+ *      to support BWD read backward option without any index. </li>
+ * <li> Used by ESDS, RRDS, and KSDS when not inserted record </li>
+ * </ol>
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean write_ves_rec() {
 
 		if (cur_ves_xrba > tz390.max_file_size || cur_ves_xrba < 0) {
@@ -2781,12 +2813,12 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * write control block in ves at xrba into cb byte array Notes:
-     * @param cb_xrba - long
-     * @param cb_len - int
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * write control block in ves at xrba into cb byte array Notes:
+ * @param cb_xrba - long
+ * @param cb_len - int
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean write_ves_cb(long cb_xrba, int cb_len) {
 
 		if (cb_xrba > tz390.max_file_size) {
@@ -2818,12 +2850,12 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * read control block in ves at xrba into cb byte array Notes:
-     * @param cb_xrba - long
-     * @param cb_len - int
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * read control block in ves at xrba into cb byte array Notes:
+ * @param cb_xrba - long
+ * @param cb_len - int
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean read_ves_cb(long cb_xrba, int cb_len) {
 
 		if (cb_xrba > tz390.max_file_size) {
@@ -2866,11 +2898,11 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * read ksds index entry with key at cur_vx0_xrba and set cur_ves_xrba
-     * and cur_key
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * read ksds index entry with key at cur_vx0_xrba and set cur_ves_xrba
+ * and cur_key
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean read_ksds_index() {
 
 		if (!read_xrba_ptr()) {
@@ -2918,10 +2950,10 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * read ksir key at cur_ksir_rec + cur_vclr_koff into cur_key
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * read ksir key at cur_ksir_rec + cur_vclr_koff into cur_key
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean read_ksir_key() {
 
 		cur_ves_xrba = cur_ksir_rec;
@@ -2970,10 +3002,10 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * read ves xrba prt in vx0 at cur_vx0_xrba and set cur_ves_xrba
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * read ves xrba prt in vx0 at cur_vx0_xrba and set cur_ves_xrba
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean read_xrba_ptr() {
 
 		if (cur_vx0_xrba > tz390.max_file_size) {
@@ -3009,10 +3041,10 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * write ksds primary index entry with last_ves_xrba ptr and key.
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * write ksds primary index entry with last_ves_xrba ptr and key.
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean write_ksds_index() {
 
 		if (!write_xrba_ptr(cur_vx0_tiot_index, cur_vx0_xrba, last_ves_xrba)) {
@@ -3052,14 +3084,14 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * write ves rcd xrba ptr at vx0/ves(KSIR) index xrba in and update
-     * cache for reuse
-     * @param tiot_index - int
-     * @param xrba_index - long
-     * @param xrba_rec - long
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * write ves rcd xrba ptr at vx0/ves(KSIR) index xrba in and update
+ * cache for reuse
+ * @param tiot_index - int
+ * @param xrba_index - long
+ * @param xrba_rec - long
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean write_xrba_ptr(int tiot_index, long xrba_index, long xrba_rec) {
 
 		if (xrba_index > tz390.max_file_size) {
@@ -3090,12 +3122,12 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * reset file length and tiot_eof addr for files being resused either
-     * due to reuse option or REPRO seq out options..
-     * @param adcb - int
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * reset file length and tiot_eof addr for files being resused either
+ * due to reuse option or REPRO seq out options..
+ * @param adcb - int
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean reuse_file(int adcb) {
 
 		int tiot_index = pz390.mem.getInt(adcb + sz390.dcb_iobad) - 1;
@@ -3111,11 +3143,11 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * backup to next record for ESDS SEQ BWD retrieval and return logical
-     * EOD error if at front of file.
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * backup to next record for ESDS SEQ BWD retrieval and return logical
+ * EOD error if at front of file.
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean set_esds_bwd_next() {
 
 		cur_ves_xrba = cur_rpl_cxrba;
@@ -3183,17 +3215,17 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * compare key in RPLAREA+KEYOFF with key in last_vx0_key or cur_vx0_key
-     * array using comp_key_len set by rpl fetch -1, 0, 1 for low, equal, high
-     * Notes:
-     * <ol>
-     * <li> Set matching_key_bytes for generic key processing </li>
-     * </ol>
-     * @param key1_loc - int
-     * @param key_byte - byte[]
-     * @return int - return code
-     */
+/**
+ * compare key in RPLAREA+KEYOFF with key in last_vx0_key or cur_vx0_key
+ * array using comp_key_len set by rpl fetch -1, 0, 1 for low, equal, high
+ * Notes:
+ * <ol>
+ * <li> Set matching_key_bytes for generic key processing </li>
+ * </ol>
+ * @param key1_loc - int
+ * @param key_byte - byte[]
+ * @return int - return code
+ */
     private int comp_key(int key1_loc, byte[] key_byte) {
 
 		int key1_end = key1_loc + cur_vclr_klen;
@@ -3229,11 +3261,11 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * compare key in RPLAREA+KEYOFF with high values RPI 779 using
-     * cur_vclr_klen -1, 0, 1 for low, equal, high.
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * compare key in RPLAREA+KEYOFF with high values RPI 779 using
+ * cur_vclr_klen -1, 0, 1 for low, equal, high.
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean rpl_key_high_values() {
 
 		int index = 0;
@@ -3251,19 +3283,19 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * get VSAM Cache Buffer (VCB) for file tiot_index, xrba, rec_len 
-     * <ol>
-     * <li> If rec_len &gt; max_vcb_lrec return false. </li>
-     * <li> search for allocated vcb If not found add new vcb up to
-     *      max_vcb else replace least recently used allocated vcb.</li>
-     * <li> Set vcb_index and return true. </li>
-     * </ol>
-     * @param tiot_index - int - index into tiot
-     * @param xrba - long
-     * @param rec_len - int 
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * get VSAM Cache Buffer (VCB) for file tiot_index, xrba, rec_len 
+ * <ol>
+ * <li> If rec_len &gt; max_vcb_lrec return false. </li>
+ * <li> search for allocated vcb If not found add new vcb up to
+ *      max_vcb else replace least recently used allocated vcb.</li>
+ * <li> Set vcb_index and return true. </li>
+ * </ol>
+ * @param tiot_index - int - index into tiot
+ * @param xrba - long
+ * @param rec_len - int 
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean get_vcb_buff(int tiot_index, long xrba, int rec_len) {
 
 		vcb_alloc = false;
@@ -3307,9 +3339,9 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * move current vcb at vcb_index to most recently used (vcb_mru).
-     */
+/**
+ * move current vcb at vcb_index to most recently used (vcb_mru).
+ */
     private void update_vcb_mru() {
 
 		// remove current vcb from
@@ -3337,12 +3369,12 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * find matching vcb with same tiot, xrba, and record length
-     * 
-     * if found set vcb_index and return true else false
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * find matching vcb with same tiot, xrba, and record length
+ * 
+ * if found set vcb_index and return true else false
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean find_vcb() {
 
 		vcb_index = -1;
@@ -3389,10 +3421,10 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * read KSIT into cb array and set cur_ksit xrbas
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * read KSIT into cb array and set cur_ksit xrbas
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean read_ksit() {
 
 		cur_rpl_flag = cur_rpl_flag | rpl_flag_ksit;
@@ -3415,11 +3447,11 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * read KSIR int cb and set cur_ksit xrba's
-     * @param xrba long input xrba value
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * read KSIR int cb and set cur_ksit xrba's
+ * @param xrba long input xrba value
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean read_ksir(long xrba) {
 
 		cur_ksir_xrba = xrba;
@@ -3453,10 +3485,10 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * rewrite ksds record following successful GET with UPD
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * rewrite ksds record following successful GET with UPD
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean update_ksds_rec() {
 
 		cur_vx0_xrba = cur_rpl_lxrba;
@@ -3487,10 +3519,10 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * insert ksds record following unsuccessful GET with UPD
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * insert ksds record following unsuccessful GET with UPD
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean insert_ksds_rec() {
 
 		if ((cur_rpl_flag & rpl_flag_ksit) != 0) {
@@ -3515,11 +3547,11 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * insert new KSIT for cur_vx0 entry with KSIR for existing record and
-     * KSIR for new inserted record
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * insert new KSIT for cur_vx0 entry with KSIR for existing record and
+ * KSIR for new inserted record
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean insert_ksit() {
 
 		tot_avl_insert_ksit++;
@@ -3620,11 +3652,11 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * return xrba of new ves cb/rec area and update eof xrba
-     * @param cb_len - int - length of cb to be allocated
-     * @return long - xrba
-     */
+/**
+ * return xrba of new ves cb/rec area and update eof xrba
+ * @param cb_len - int - length of cb to be allocated
+ * @return long - xrba
+ */
     private long alloc_ves(int cb_len) {
 
 		long xrba = sz390.tiot_eof_rba[cur_ves_tiot_index];
@@ -3634,12 +3666,12 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * insert new KSIR to existing KSIT 
-     * at current KSIR and balance AVT
-     * tree by rotating KSIR's if needed.
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * insert new KSIR to existing KSIT 
+ * at current KSIR and balance AVT
+ * tree by rotating KSIR's if needed.
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean insert_ksir() {
 
 		long save_ksir_xrba = -1;
@@ -3774,20 +3806,20 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * search up KSIR nodes from insertion and perform the following steps:
-     * <ol>
-     * <li> Increment height of all nodes on path prior to unbalanced node. </li>
-     * <li> Find first (and only) node which may be unbalanced
-     *      (left vs right height differs by 2). </li>
-     * <li> If unbalanced node found, set avl_unbalanced and avl_r_xrba </li>
-     * </ol>
-     * Notes:
-     * <ol>
-     * <li> Only returns false if I/O error </li>
-     * </ol>
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * search up KSIR nodes from insertion and perform the following steps:
+ * <ol>
+ * <li> Increment height of all nodes on path prior to unbalanced node. </li>
+ * <li> Find first (and only) node which may be unbalanced
+ *      (left vs right height differs by 2). </li>
+ * <li> If unbalanced node found, set avl_unbalanced and avl_r_xrba </li>
+ * </ol>
+ * Notes:
+ * <ol>
+ * <li> Only returns false if I/O error </li>
+ * </ol>
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean avl_update_height(){
 
     	avl_unbalanced = false;
@@ -3876,15 +3908,15 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * verify updated T1-T4 within +-1
-     * @param type - String - name of KSIR type
-     * @param t1  -byte
-     * @param t2  -byte
-     * @param t3  -byte
-     * @param t4  -byte
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * verify updated T1-T4 within +-1
+ * @param type - String - name of KSIR type
+ * @param t1  -byte
+ * @param t2  -byte
+ * @param t3  -byte
+ * @param t4  -byte
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean check_heights(String type, byte t1, byte t2, byte t3, byte t4){
     	if (   Math.abs(t1-t2) > 1
     		|| Math.abs(t1-t3) > 1
@@ -3900,10 +3932,10 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * display unbalanced KSIR found
-     * @param type - String - Name of KSIR type
-     */
+/**
+ * display unbalanced KSIR found
+ * @param type - String - Name of KSIR type
+ */
     private void unbalanced_ksir_error(String type){
 
     	sz390.put_log("VSAM AVL UNBALANCED KSIR ERROR TYPE " + type);
@@ -3912,43 +3944,43 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * perform AVL rotation around the last
-     * avl_r_xrba found during find_ksir prior
-     * to insert.  Note the KSIR to be rotated
-     * may be anywhere between the inserted KSIR
-     * and the KSIT.  Only one rotation is
-     * required per insert.
-     * 
-     * The AVL tree is named after its two inventors
-     * G.M. Adelson-Velsky and E.M. Landis. who published it in their 1962
-     * paper "An algorithm for the organization of information."
-     * 
-     * For good overview of the process to maintain balanced tree during
-     * random insertions, see * *
-     * http://sky.fit.qut.edu.au/~maire/avl/System/AVLTree.html
-     *
-     * In summary the process is as follows: 
-     * <ol>
-     * <li> Following binary search of tree to
-     *      insert record at correct node, update current and parent nodes to 1
-     *      of 3 possible states: 
-     *      <ol>
-     *      <li> left/low side +1 depth (high bit in cur_ksir_low) </li>
-     *      <li> even </li>
-     *      <li> right/high side +1 depth (high bit in cur_ksir_high) </li>
-     *      </ol> </li>
-     * <li> If node found with new +2 state, rotate as follows
-     *      to rebalance which ends the update process.
-     *      <ol>
-     *      <li> LL - move left left node up one level by swapping n ode with left node. </li>
-     *      <li> RR - move right right node up one level by swapping node with right node </li>
-     *      <li> LR - move left right node up one level by swapping node with left right node </li>
-     *      <li> RL - move right left node up one level by swapping mode with right left node. </li>
-     *      </ol> </li>
-     * </ol>
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * perform AVL rotation around the last
+ * avl_r_xrba found during find_ksir prior
+ * to insert.  Note the KSIR to be rotated
+ * may be anywhere between the inserted KSIR
+ * and the KSIT.  Only one rotation is
+ * required per insert.
+ * 
+ * The AVL tree is named after its two inventors
+ * G.M. Adelson-Velsky and E.M. Landis. who published it in their 1962
+ * paper "An algorithm for the organization of information."
+ * 
+ * For good overview of the process to maintain balanced tree during
+ * random insertions, see * *
+ * http://sky.fit.qut.edu.au/~maire/avl/System/AVLTree.html
+ *
+ * In summary the process is as follows: 
+ * <ol>
+ * <li> Following binary search of tree to
+ *      insert record at correct node, update current and parent nodes to 1
+ *      of 3 possible states: 
+ *      <ol>
+ *      <li> left/low side +1 depth (high bit in cur_ksir_low) </li>
+ *      <li> even </li>
+ *      <li> right/high side +1 depth (high bit in cur_ksir_high) </li>
+ *      </ol> </li>
+ * <li> If node found with new +2 state, rotate as follows
+ *      to rebalance which ends the update process.
+ *      <ol>
+ *      <li> LL - move left left node up one level by swapping n ode with left node. </li>
+ *      <li> RR - move right right node up one level by swapping node with right node </li>
+ *      <li> LR - move left right node up one level by swapping node with left right node </li>
+ *      <li> RL - move right left node up one level by swapping mode with right left node. </li>
+ *      </ol> </li>
+ * </ol>
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean avl_rotate_ksir() {
 
 		tot_avl_rotate++;
@@ -4012,11 +4044,11 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * avl rotate x to r, and r to x_high,
-     * and x_high to r_low. 
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * avl rotate x to r, and r to x_high,
+ * and x_high to r_low. 
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean avl_rotate_left_left(){
 
     	tot_avl_rotate_ll++;
@@ -4097,12 +4129,12 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * avl rotate w (x_high) to r,
-     * r to w_high, w_low to x_high,
-     * and w_high to r_low.
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * avl rotate w (x_high) to r,
+ * r to w_high, w_low to x_high,
+ * and w_high to r_low.
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean avl_rotate_left_right(){
 
     	tot_avl_rotate_lr++;
@@ -4216,11 +4248,11 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * avl rotate x to r, and r to x_low,
-     * and x_low to r_high.
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * avl rotate x to r, and r to x_low,
+ * and x_low to r_high.
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean avl_rotate_right_right(){
 
     	tot_avl_rotate_rr++;
@@ -4301,12 +4333,12 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * avl rotate w (x_low) to r,
-     * r to w_low, w_high to x_low,
-     * and w_low to r_high.
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * avl rotate w (x_low) to r,
+ * r to w_low, w_high to x_low,
+ * and w_low to r_high.
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean avl_rotate_right_left(){
 
     	tot_avl_rotate_rl++;
@@ -4420,10 +4452,10 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * write new KSIT at ves eof xrba
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * write new KSIT at ves eof xrba
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean write_ksit() {
 
 		if (cb_byte == null || cb_byte.length < ksit_len) {
@@ -4443,10 +4475,10 @@ private boolean get_ksir_rec() {
 
 
 
-    /**
-     * write ves KSIR at cur_ksir_xrba
-     * @return boolean to indicate success (true) or failure (false)
-     */
+/**
+ * write ves KSIR at cur_ksir_xrba
+ * @return boolean to indicate success (true) or failure (false)
+ */
     private boolean write_ksir() {
 		if (cb_byte == null || cb_byte.length < ksir_len) {
 			cb_byte = new byte[ksir_len];
