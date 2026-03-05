@@ -89,7 +89,7 @@ For details, please refer to the relevant IBM manual.
 
 ## GENCB, MODCB, TESTCB and SHOWCB macros
 
-### GENCB, MODCB, TESTCB and SHOWCB use of the CBMR
+### GENCB, MODCB, TESTCB and SHOWCB use of the CBMR<a id="MF-details"></a>
 
 A CBMR is generated for all forms of these macros.
 
@@ -200,7 +200,7 @@ The GENCB ACB macro can be coded as follows:
 |               | [LENGTH=value]    | Length of the work area in bytes. If WAREA/LENGTH are omitted then storage is dynamically acquired and LOC=BELOW is the default |
 |               | [LOC=BELOW | ANY] | Where GENCB is to allocate dynamically acquired storage if needed                                                               |
 |               | [other]           | Any parameter supported on the ACB macro                                                                                        |
-|               | [MF=]             | See the [description of MF=](#GENCB,-MODCB,-TESTCB-and-SHOWCB-use-of-MF=)                                                        |
+|               | [MF=]             | See the [description of MF=](#MF-details)                                                                                       |
 
 
 
