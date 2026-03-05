@@ -125,7 +125,7 @@ It contains a data field of 4 or 8 bytes for each verb coded in the body, in the
 The starting point of the tail can be found by adding the CBMRVRBS value to the end of the CBMR header.
 Its length can be calculated from the CBMRSIZE field, by subtracting both the header length and the CBMRVRBS field.
 
-### GENCB, MODCB, TESTCB and SHOWCB use of MF=<a id="MF-details"></a>
+### GENCB, MODCB, TESTCB and SHOWCB use of MF=<a id="MFdetails" />
 
 All forms except MF=L generate executable code.
 
@@ -200,7 +200,7 @@ The GENCB ACB macro can be coded as follows:
 |               | [LENGTH=value]    | Length of the work area in bytes. If WAREA/LENGTH are omitted then storage is dynamically acquired and LOC=BELOW is the default |
 |               | [LOC=BELOW | ANY] | Where GENCB is to allocate dynamically acquired storage if needed                                                               |
 |               | [other]           | Any parameter supported on the ACB macro                                                                                        |
-|               | [MF=]             | See the [description of MF=](#MF-details)                                                                                       |
+|               | [MF=]             | See the [description of MF=](#MFdetails)                                                                                        |
 
 
 
