@@ -174,13 +174,33 @@ should be avoided
 address means 'don't test the address'
 
 *Note 3:* The following fields only support the indirect form in TESTCB:
-SDTASZ, STMST and all X\* fields.
+`SDTASZ`, `STMST` and all `X*` fields.
 The lack of proper syntax checking in the IBM macro can cause access to low storage or
-environmental destruction, so the following syntaxes are not allowed: (\*,\*) and (\*,n)
+environmental destruction, so the following syntaxes are not allowed: `(*,*)` and `(*,n)`.
 
+### GENCB BLK=ACB macro
 
+This GENCB macro will generate ACBs and initialize or change them according to the parameters specified
+on the macro invocation. It is for this reason that all supported parameters and keywords of the ACB macro
+(as described above) are supported on the GENCB macro.
 
+Direct access to subfields in the ACB is discouraged. Use SHOWCB ACB=, TESTCB ACB= and/or
+MODCB ACB= to inspect, test, and/or modify the ACB's content.
 
+Direct access to subfields in the CBMR is strongly discouraged.
+
+The GENCB ACB macro can be coded as follows:
+
+| Opcode        | Operand           | Remarks                                                                                                                         |
+|---------------|-------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| [label] GENCB | BLK=ACB           | Instructs GENCB to generate 1 or more ACBs                                                                                      |
+|               | [AM=VSAM]         | Optional, no other values allowed                                                                                               |
+|               | [COPIES=1]        | The number of identical ACBs to generate. Specify a number between 1 and 65535                                                  |
+|               | [WAREA=address]   | The work area where the ACBs are to be constructed                                                                              |
+|               | [LENGTH=value]    | Length of the work area in bytes. If WAREA/LENGTH are omitted then storage is dynamically acquired and LOC=BELOW is the default |
+|               | [LOC=BELOW | ANY] | Where GENCB is to allocate dynamically acquired storage if needed                                                               |
+|               | [other]           | Any parameter supported on the ACB macro                                                                                        |
+|               | [MF=]             | See the [description of MF=](#GENCB,-MODCB,-TESTCB-and-SHOWCB-use-of-MF=)                                                        |
 
 
 
