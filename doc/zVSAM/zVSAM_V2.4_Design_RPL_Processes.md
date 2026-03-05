@@ -89,7 +89,7 @@ For details, please refer to the relevant IBM manual.
 
 ## GENCB, MODCB, TESTCB and SHOWCB macros
 
-### GENCB, MODCB, TESTCB and SHOWCB use of the CBMR<a id="MF-details"></a>
+### GENCB, MODCB, TESTCB and SHOWCB use of the CBMR
 
 A CBMR is generated for all forms of these macros.
 
@@ -125,7 +125,7 @@ It contains a data field of 4 or 8 bytes for each verb coded in the body, in the
 The starting point of the tail can be found by adding the CBMRVRBS value to the end of the CBMR header.
 Its length can be calculated from the CBMRSIZE field, by subtracting both the header length and the CBMRVRBS field.
 
-### GENCB, MODCB, TESTCB and SHOWCB use of MF=
+### GENCB, MODCB, TESTCB and SHOWCB use of MF=<a id="MF-details"></a>
 
 All forms except MF=L generate executable code.
 
