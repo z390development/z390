@@ -3122,7 +3122,7 @@ public z390()
 /**
  * set status line display on or off
  * or set interval for logging status.
- * If seconds specified as 0 or null, loggging
+ * If seconds specified as 0 or null, logging
  * status is turned off
  *
  * @param cmd_parm1 first command parameter
@@ -3764,7 +3764,7 @@ public z390()
 
 
 /**
- * Event notification when a component is hidded
+ * Event notification when a component is hidden
  *
  * @param e component event
  */
@@ -3835,7 +3835,7 @@ public z390()
  * </ul>
  *
  * @param exec_cmd command to be executed
- * @return -1 if exceptio occurred; 0 otherwise
+ * @return -1 if exception occurred; 0 otherwise
  */
             public int cmd_exec_start(String[] exec_cmd){
                 	int rc;
