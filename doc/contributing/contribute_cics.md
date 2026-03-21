@@ -5,15 +5,6 @@ Transactions can be written either in assembler or in zCobol.
 
 This document explains how to build zCICS and how to run a regression test
 
-It consists of the following chapters:
-1. Building zCICS
-2. Regression testing zCICS
-2.1. Create a trace of your transactions
-2.2. Running the simulation
-2.3. Running the comparator
-2.4. Abends
-3. Trademarks & Credits
-
 ## Building zCICS
 
 The zCICS source code is pre-packaged with z390.
@@ -34,7 +25,7 @@ The build procedure for zCICS consists of two steps:
     `bash> ./cics/bash/dfhall`
     `bash> ./cics/bash/dfhallv`
 
-Under Windows, the DFHALL.BAT may be invoked with argumen unref:
+Under Windows, the DFHALL.BAT may be invoked with argument unref:
     `bat> cics\bat\DFHALL.BAT unref`
 When the unref parameter is supplied the UNREF utility will be run
 after each assembly to provide an overview of unreferenced fields.
@@ -51,15 +42,15 @@ This chapter explains the use of zCICS Sequential Terminal Support.
 You are well advised to keep a document relating the file number to the transaction and functions being tested.
 The standard zCICS tests are documented in `cics\seq\SEQDOC.TXT`.
 
-1. In the `Z390CICS.INI` file, set `SEQ_TERM=TRACE`.
-   This will automatically adjust other INI parms:
-1.1 `LOCAL_TERMINALS=1`
-1.2 No `INITIAL_TRANSID=`
-1.3 `TRACE_LOCALS=YES`
-2. Start Z390\CICS
-3. Run a planned test of your transaction
-4. `CEMT P SHU` to end zCICS
-5. Run `Z390SEQG`
+1. Run `cics\bat\Z390TRC.BAT` to start Z390\CICS in trace mode
+1.1 This uses the Z390TRC.INI file which has `SEQ_TERM=TRACE`
+    This adjusts other INI parms:
+1.2 `LOCAL_TERMINALS=1`
+1.3 No `INITIAL_TRANSID=`
+1.4 `TRACE_LOCALS=YES`
+2. Run a planned test of your transaction
+3. `CEMT P SHU` to end zCICS
+4. Run `cics\bat\Z390SEQG.BAT`
    If you change the `INI` parm `TERMID_PREFIX` then change `Z390SEQG.BAT` as well.
    This reads the trace file ttt0.TRE and extracts the input and output streams to
    create the files SEQInnnn.TXT and SEQCnnnn.TXT.
@@ -68,26 +59,26 @@ The standard zCICS tests are documented in `cics\seq\SEQDOC.TXT`.
    nnnn is one more than the last one starting from 0001 or the file number if you
    are replacing a previous one.
    Note: The final CEMT P SHU command is not included in the SEQInnnn stream.
-6. Repeat the above steps for each of your transactions
+5. Repeat the above steps for each of your transactions
 
 ### Runnning the simulation
 
-1. In the `Z390CICS.INI` file, set `SEQ_TERM=YES`.
-   This will automatically adjust other INI parms:
-1.1 `LOCAL_TERMINALS=0`
-1.2 No `INITIAL_TRANSID=`
-1.3 `TRACE_LOCALS=NO`
-2. If you want the simulation to shut down after running, a sample stream is
+1. If you want the simulation to shut down after running, a sample stream is
    provided called `SEQISHUT.TXT`, copy this to a new file called SEQInnnn,
-   where nnnn is the next input file sequence.
-3. Start Z390\CICS
-   It will run and shut down if item 2 above has been done.
+   where nnnn is the next available input file sequence.
+2. Run `cics\bat\Z390RT.BAT` to start Z390\CICS
+2.1 This uses the Z390RT.INI file which has `SEQ_TERM=YES`
+    This adjusts other INI parms:
+2.2 `LOCAL_TERMINALS=0`
+2.3 No `INITIAL_TRANSID=`
+2.4 `TRACE_LOCALS=NO`
+3. The regression test will run and shut down if item 1 above has been done.
    It will use the SEQInnnn files as input and creates a single `SEQO0001.TXT` file as output.
    The output streams are also sent to the Sequential terminal.
 
 ### Running the comparator
 
-1. Run `Z390CMPG`
+1. Run `cics\bat\Z390CMPG.BAT`
    This will compare all SEQCnnnn files with the new output stream `SEQO0001.TXT`.
    It produces `SEQCOMP.TXT` with those data streams that have differences.
    There is a WTO message at the end with the number of streams that have
