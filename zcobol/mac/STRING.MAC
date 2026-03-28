@@ -208,14 +208,15 @@
 .* Inline code generation (avoiding macro call continuation issues)
 .*
 .* Parameter block layout for STRING runtime (ZCVT_STRING):
-.* Offset 0:   A(source)     - Address of source field
-.* Offset 4:   L'source      - Length of source field
-.* Offset 8:   A(delimiter)  - Address of delimiter (0 if SIZE)
-.* Offset 12:  L'delimiter   - Length of delimiter (0 if SIZE)
-.* Offset 16:  A(target)     - Address of target field
-.* Offset 20:  L'target      - Length of target field
-.* Offset 24:  A(pointer)    - Address of pointer field (0 if none)
-.* Offset 28:  Flags         - Reserved (currently 0)
+.* See DSECT in zcobol/cpy/ZCSTRPLD.CPY for named field mappings.
+.* Offset 0:   ZCSTR_SRC_ADDR  - Address of source field
+.* Offset 4:   ZCSTR_SRC_LEN   - Length of source field
+.* Offset 8:   ZCSTR_DLM_ADDR  - Address of delimiter (0 if SIZE)
+.* Offset 12:  ZCSTR_DLM_LEN   - Length of delimiter (0 if SIZE)
+.* Offset 16:  ZCSTR_TGT_ADDR  - Address of target field
+.* Offset 20:  ZCSTR_TGT_LEN   - Length of target field
+.* Offset 24:  ZCSTR_PTR_ADDR  - Address of pointer field (0 if none)
+.* Offset 28:  ZCSTR_FLAGS     - Reserved (currently 0)
 .*
          LA    ZC_R1,ZCVT_WORKAREA
 .*

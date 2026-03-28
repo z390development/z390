@@ -302,17 +302,18 @@
          LA    ZC_R1,ZCVT_WORKAREA
 .*
 .* Parameter block layout for UNSTRING runtime
-.* Offset 0:   A(source)     - Address of source field
-.* Offset 4:   L'source      - Length of source field
-.* Offset 8:   A(delim)      - Address of delimiter (0 if none)
-.* Offset 12:  L'delim       - Length of delimiter
-.* Offset 16:  delim flags   - Bit 0: ALL flag
-.* Offset 20:  Target count  - Number of target fields
-.* Offset 24:  A(pointer)    - Address of pointer field (0 if none)
-.* Offset 28:  A(tallying)   - Address of tallying field (0 if none)
-.* Offset 32:  A(target1)    - Address of target 1
-.* Offset 36:  L'target1     - Length of target 1
-.* ...repeat for targets 2-4
+.* See DSECT in zcobol/cpy/ZCUNSPLD.CPY for named field mappings.
+.* Offset 0:   ZCUNS_SRC_ADDR  - Address of source field
+.* Offset 4:   ZCUNS_SRC_LEN   - Length of source field
+.* Offset 8:   ZCUNS_DLM_ADDR  - Address of delimiter (0 if none)
+.* Offset 12:  ZCUNS_DLM_LEN   - Length of delimiter
+.* Offset 16:  ZCUNS_DLM_FLAGS - Bit 0: ALL flag
+.* Offset 20:  ZCUNS_TGT_COUNT - Number of target fields
+.* Offset 24:  ZCUNS_PTR_ADDR  - Address of pointer field (0 if none)
+.* Offset 28:  ZCUNS_TAL_ADDR  - Address of tallying field (0 if none)
+.* Offset 32:  ZCUNS_TGT1_ADDR - Address of target 1
+.* Offset 36:  ZCUNS_TGT1_LEN  - Length of target 1
+.* ...repeat for targets 2-N
 .*
 .* Source field
 .*
