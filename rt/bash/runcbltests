@@ -63,10 +63,32 @@ bash/cblclg zcobol/tests/TESTMOV2 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTMOV3 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/CM101M01 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblc   zcobol/tests/CM101M03 $1 $2 $3 $4 $5 $6 $7 $8 $9
-bash/cblc   zcobol/tests/DB101A01 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/DB101A01 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/NC106A01 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTREPL $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/YOUZPI1 $1 $2 $3 $4 $5 $6 $7 $8 $9
+export INFILE=zcobol/tests/SORTASC.TF1
+export OUTFILE=zcobol/tests/SORTASC.OUT
+bash/cblclg zcobol/tests/SORTASC $1 $2 $3 $4 $5 $6 $7 $8 $9
+diff zcobol/tests/SORTASC.OUT zcobol/tests/SORTASC.TF2 || exit 1
+export INFILE=zcobol/tests/SORTDEF.TF1
+export OUTFILE=zcobol/tests/SORTDEF.OUT
+bash/cblclg zcobol/tests/SORTDEF $1 $2 $3 $4 $5 $6 $7 $8 $9
+diff zcobol/tests/SORTDEF.OUT zcobol/tests/SORTDEF.TF2 || exit 1
+export INFILE=zcobol/tests/SORTPROC.TF1
+export OUTFILE=zcobol/tests/SORTPROC.OUT
+bash/cblclg zcobol/tests/SORTPROC $1 $2 $3 $4 $5 $6 $7 $8 $9
+diff zcobol/tests/SORTPROC.OUT zcobol/tests/SORTPROC.TF2 || exit 1
+export INFILE=zcobol/tests/SORTMULT.TF1
+export ASCFILE=zcobol/tests/SORTMULT_ASC.OUT
+export DESCFILE=zcobol/tests/SORTMULT_DSC.OUT
+bash/cblclg zcobol/tests/SORTMULT $1 $2 $3 $4 $5 $6 $7 $8 $9
+diff zcobol/tests/SORTMULT_ASC.OUT zcobol/tests/SORTMULT_ASC.TF2 || exit 1
+diff zcobol/tests/SORTMULT_DSC.OUT zcobol/tests/SORTMULT_DSC.TF2 || exit 1
+export INFILE=
+export OUTFILE=
+export ASCFILE=
+export DESCFILE=
 
 # if we get here, there were no errors
 echo "Verify ZCOBOL regression tests ran without errors"
