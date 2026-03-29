@@ -17,10 +17,10 @@
 .* along with this program; if not, see https://www.gnu.org/licenses.
 .********************************************************************
 .* RESET LAB LEN - REMOVE SS1 LENGTH IF ANY FROM LAB 
-.* USED BY ZC_CALC, GEN_ADD
+.* USED BY ZC_CALC, GEN_ADD, GEN_MPY, GEN_SUB, GEN_DIV
 .********************************************************************
 .* 05/26/09 RPI 1019 INITIAL CODING SEE TESTSIX1 CALC TEST
-,* 04/06/11 ROU 1139 FIX SETA STRING FOR HLASM COMP.
+.* 04/06/11 RPI 1139 FIX SETA STRING FOR HLASM COMP.
 .********************************************************************
          AENTRY RESET_LAB_LEN
          AIF   ('&LAB'(1,1) GE '0')  IS THIS O(L,R) 

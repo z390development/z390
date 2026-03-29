@@ -5,8 +5,11 @@ import org.junit.jupiter.api.Test
 class RunAsmTests extends z390Test {
 
     var options = ['trace', 'noloadhigh', "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
+    var optionsRmode31 = ['trace', 'noloadhigh', 'rmode31', "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
     var optionsNoinit = ['trace', 'noinit', "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
+    var optionsNoinitMem32 = ['trace', 'noinit', "mem(32)", "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
     var optionsNoinitNoloadhigh = ['trace', 'noinit', 'noloadhigh', "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
+    var optionsNoinitNoloadhighMem32 = ['trace', 'noinit', 'noloadhigh', "mem(32)", "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
 
     @Test
     void test_TESTINS1() {
@@ -121,6 +124,88 @@ class RunAsmTests extends z390Test {
         int rc = this.asmlg(basePath("rt", "mlc", "IS660"), *options)
         this.printOutput()
         assert rc == 0
+    }
+    @Test
+    void test_IS714_1() {
+        int rc = this.asml(basePath("rt", "mlc", "T714M1"), *options)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asml(basePath("rt", "mlc", "T714M2"), *optionsRmode31)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asml(basePath("rt", "mlc", "T714M3"), *options)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asml(basePath("rt", "mlc", "T714B"), *options)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asmlg(basePath("rt", "mlc", "T714A"), *optionsNoinitNoloadhigh)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_IS714_2() {
+        int rc = this.asml(basePath("rt", "mlc", "T714M1"), *options)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asml(basePath("rt", "mlc", "T714M2"), *optionsRmode31)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asml(basePath("rt", "mlc", "T714M3"), *options)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asml(basePath("rt", "mlc", "T714B"), *options)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asmlg(basePath("rt", "mlc", "T714A"), *optionsNoinitNoloadhighMem32)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_IS714_3() {
+        int rc = this.asml(basePath("rt", "mlc", "T714M1"), *options)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asml(basePath("rt", "mlc", "T714M2"), *optionsRmode31)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asml(basePath("rt", "mlc", "T714M3"), *options)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asml(basePath("rt", "mlc", "T714B"), *options)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asmlg(basePath("rt", "mlc", "T714A"), *optionsNoinit)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_IS714_4() {
+        int rc = this.asml(basePath("rt", "mlc", "T714M1"), *options)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asml(basePath("rt", "mlc", "T714M2"), *optionsRmode31)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asml(basePath("rt", "mlc", "T714M3"), *options)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asml(basePath("rt", "mlc", "T714B"), *options)
+        this.printOutput()
+        assert rc == 0
+        rc = this.asmlg(basePath("rt", "mlc", "T714A"), *optionsNoinitMem32)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_IS750() {
+        int rc = this.asm(basePath("rt", "mlc", "IS750"))
+        this.printOutput()
+        assert rc == 12   // Check return code
+        assert this.fileData['ERR'].contains("AZ390I field 2 length = 9 must be no more than 8"), "First MP not assembled with expected error"
+        assert this.fileData['ERR'].contains("AZ390I field 2 length = 4 must be less than field 1 length = 4"), "Second MP not assembled with expected error"
+        assert this.fileData['ERR'].contains("AZ390I field 2 length = 10 must be no more than 8"), "First DP not assembled with expected error"
+        assert this.fileData['ERR'].contains("AZ390I field 2 length = 5 must be less than field 1 length = 5"), "Second DP not assembled with expected error"
     }
     @Test
     void test_TESTDC1() {

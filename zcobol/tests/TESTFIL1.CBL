@@ -5,10 +5,10 @@
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT IN-FILE
-               ASSIGN TO 'zcobol\test\TESTFIL1.IN'
+               ASSIGN TO INFILE
                ORGANIZATION IS LINE SEQUENTIAL.
            SELECT OUT-FILE
-               ASSIGN TO 'zcobol\test\TESTFIL1.OUT'
+               ASSIGN TO OUTFILE
                ORGANIZATION IS LINE SEQUENTIAL.
        DATA DIVISION.
        FILE SECTION.
