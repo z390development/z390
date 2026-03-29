@@ -103,11 +103,3 @@ Before reporting these as errors, please check the following:
 1. Are all the SEQI and SEQC files in sequence ?
 2. Has a simulation run been done using the SEQI files (`SEQ_TERM=YES`) ?
 3. Have any of the transactions changed since the last run of `Z390SEQ` for those transactions ?
-
-## Trademarks
-
-IBM, CICS and VSAM are registered trademarks of International Business Machines Corporation.
-
-## Credits
-
-Author: : Melvyn Maltz
