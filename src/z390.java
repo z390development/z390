@@ -73,16 +73,16 @@ import javax.swing.KeyStroke;
 import javax.swing.Timer;
 import javax.swing.filechooser.FileFilter;
 
+/**
+ * z390 is the interactive command screen component of z390
+ */
 public  class  z390 
     implements MouseListener, KeyListener,
 	           ActionListener, 
 			   ComponentListener,
 			   Runnable,
 			   FocusListener {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+
 	/*****************************************************
 	 * Maintenance
 	 * ***************************************************
@@ -144,249 +144,277 @@ public  class  z390
      * 2021-04-21 jjg Add CBLC, CBLCL, CBLCLG as commands
      * 2023-01-25 RPI 1598 re-implement javadoc changes by Hugh Sweeney
      * 2024-08-12 #545 Extend generated java doco to include private methods
+     * 2026-03-08 AFK Fix/Add javadoc comments
 	 ********************************************************
      * Global variables                  last RPI
-     *****************************************************
+     *****************************************************/
+    /** variable      */ private static final long serialVersionUID = 1L;
+
+    /*
      * global command mode variables
      */
-	    tz390 tz390 = null;
-	    String startup_cmd_file = null;
-	    int first_user_parm = 0;
-        int hex_base = 16;
-	    boolean echo_cmd = true;
-	    boolean console_log = false;
-        int z390_errors = 0;
-	    boolean cmd_error = false;
-	    int max_errors = 100;
-	    boolean main_applet  = false;  // running as browser applet
-	    boolean main_gui     = false;     // parm = /g
-        boolean main_console = false; // parm = /c
-	    boolean main_batch   = false;   // parm = file name
-        String  main_title = "z390";
-        boolean check_perms = true;          //reset with /NP
-        boolean perm_file_user_dir = false;  //set if user.dir ok
-        boolean perm_file_read     = false;  //set if read  ok
-        boolean perm_file_write    = false;  //set if write ok
-        boolean perm_file_execute  = false;  //set if exec ok
-        boolean perm_runtime_thread = false; //set if popup file chooser ok
-        boolean perm_file_log      = false;  //set if write log ok
-        boolean perm_select        = false;  //set if select dir/file ok
-        boolean main_demo  = false; //set if no permissions
-        boolean main_lic   = false; //set if permissions ok
-        String mode_msg1 = null;
-        String mode_msg2 = null;
-        Date lic_end_date = null;
-        Date cur_date = null;
-   	    SimpleDateFormat mmddyy = new SimpleDateFormat("MM/dd/yy");
-   	    SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
+    /** variable      */ tz390 tz390 = null;
+    /** variable      */ String startup_cmd_file = null;
+    /** variable      */ int first_user_parm = 0;
+    /** variable      */ int hex_base = 16;
+    /** variable      */ boolean echo_cmd = true;
+    /** variable      */ boolean console_log = false;
+    /** variable      */ int z390_errors = 0;
+    /** variable      */ boolean cmd_error = false;
+    /** variable      */ int max_errors = 100;
+    /** running as browser applet    */ boolean main_applet  = false;
+    /** parm = /g                    */ boolean main_gui     = false;
+    /** parm = /c                    */ boolean main_console = false;
+    /** parm = file name             */ boolean main_batch   = false;
+    /** variable                     */ String  main_title = "z390";
+    /** reset with /NP               */ boolean check_perms = true;
+    /** set if user.dir ok           */ boolean perm_file_user_dir = false;
+    /** set if read  ok              */ boolean perm_file_read     = false;
+    /** set if write ok              */ boolean perm_file_write    = false;
+    /** set if exec ok               */ boolean perm_file_execute  = false;
+    /** set if popup file chooser ok */ boolean perm_runtime_thread = false;
+    /** set if write log ok          */ boolean perm_file_log      = false;
+    /** set if select dir/file ok    */ boolean perm_select        = false;
+    /** set if no permissions        */ boolean main_demo  = false;
+    /** set if permissions ok        */ boolean main_lic   = false;
+    /** variable      */ String mode_msg1 = null;
+    /** variable      */ String mode_msg2 = null;
+    /** variable      */ Date lic_end_date = null;
+    /** variable      */ Date cur_date = null;
+    /** variable      */ SimpleDateFormat mmddyy = new SimpleDateFormat("MM/dd/yy");
+    /** variable      */ SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
+
     /*
      * current directory file
      */
-   	    File dir_cur_file = null;
+    /** current directory file */ File dir_cur_file = null;
+
    	/*
      * Global log output file variables
      */
-	    String log_file_name = null;
-	    boolean log_tod = true; 
-        BufferedWriter log_file = null;
-        int max_line_length = 80;
+    /** variable      */ String log_file_name = null;
+    /** variable      */ boolean log_tod = true; 
+    /** variable      */ BufferedWriter log_file = null;
+    /** variable      */ int max_line_length = 80;
+
     /*
      * Monitor variables
      */   
-        int     ins_count = 0;  
-        int     io_count  = 0;
-        int     start_cmd_io_count;
-        long    start_cmd_time;
-        Timer   monitor_timer = null;
-        int     monitor_wait = 300;
-        int     monitor_timeout_limit = 0 * 1000;
-        long    monitor_cmd_time_total = 0;
-	    long    monitor_last_time = 0;
-        long    monitor_next_time = 0;
-        long    monitor_cur_interval = 0;
-        int     monitor_last_ins_count = 0;
-        int     monitor_next_ins_count = 0;
-        int     monitor_last_io_count = 0;
-        int     monitor_next_io_count = 0;
-        long    monitor_cur_ins  = 0;
-        long    monitor_cur_int  = 0;
-        long    monitor_cur_rate = 0;
-        boolean monitor_last_cmd_mode = false;
+    /** variable      */ int     ins_count = 0;  
+    /** variable      */ int     io_count  = 0;
+    /** variable      */ int     start_cmd_io_count;
+    /** variable      */ long    start_cmd_time;
+    /** variable      */ Timer   monitor_timer = null;
+    /** variable      */ int     monitor_wait = 300;
+    /** variable      */ int     monitor_timeout_limit = 0 * 1000;
+    /** variable      */ long    monitor_cmd_time_total = 0;
+    /** variable      */ long    monitor_last_time = 0;
+    /** variable      */ long    monitor_next_time = 0;
+    /** variable      */ long    monitor_cur_interval = 0;
+    /** variable      */ int     monitor_last_ins_count = 0;
+    /** variable      */ int     monitor_next_ins_count = 0;
+    /** variable      */ int     monitor_last_io_count = 0;
+    /** variable      */ int     monitor_next_io_count = 0;
+    /** variable      */ long    monitor_cur_ins  = 0;
+    /** variable      */ long    monitor_cur_int  = 0;
+    /** variable      */ long    monitor_cur_rate = 0;
+    /** variable      */ boolean monitor_last_cmd_mode = false;
+
     /*
      *  status interval display variables
      */    
-        boolean status_visible = true;
-        int     status_interval =  0;
-	    long    status_last_time = 0;
-        long    status_next_time = 0;
-        int     status_last_ins_count = 0;
-        int     status_next_ins_count = 0;
-        int     status_next_io_count = 0;
-        int     status_last_io_count = 0;
-        long    status_cur_ins  = 0;
-        long    status_cur_int  = 0;
-        long    status_cur_rate = 0;
+    /** variable      */ boolean status_visible = true;
+    /** variable      */ int     status_interval =  0;
+    /** variable      */ long    status_last_time = 0;
+    /** variable      */ long    status_next_time = 0;
+    /** variable      */ int     status_last_ins_count = 0;
+    /** variable      */ int     status_next_ins_count = 0;
+    /** variable      */ int     status_next_io_count = 0;
+    /** variable      */ int     status_last_io_count = 0;
+    /** variable      */ long    status_cur_ins  = 0;
+    /** variable      */ long    status_cur_int  = 0;
+    /** variable      */ long    status_cur_rate = 0;
+
 	/*
 	 *  CMD Command execution variables
 	 */ 	
-    boolean cmd_mode = false;
-    boolean cmd_running = false;
-    int cmd_io_total = 0;
-	Process cmd_exec_process = null;
-	BufferedReader     cmd_exec_error_reader = null;  // RPI 731
-	BufferedReader     cmd_exec_output_reader = null; // RPI 731
-    PrintStream        cmd_exec_input_writer  = null;  // RPI 731
-	String cmd_exec_error_msg = "";
-	String cmd_exec_output_msg = "";
-	Thread cmd_exec_process_thread = null;
-	Thread cmd_exec_error_reader_thread = null;
-	Thread cmd_exec_output_reader_thread = null;
-	int    cmd_exec_rc = 0;
-	String cmd_line = "";       // RPI 508 prevent last becoming null
-	String last_cmd_line = "x"; // RPI 506
-    boolean shutdown_exit = false;
+    /** variable      */ boolean cmd_mode = false;
+    /** variable      */ boolean cmd_running = false;
+    /** variable      */ int cmd_io_total = 0;
+    /** variable      */ Process cmd_exec_process = null;
+    /** variable      */ BufferedReader     cmd_exec_error_reader = null;  // RPI 731
+    /** variable      */ BufferedReader     cmd_exec_output_reader = null; // RPI 731
+    /** variable      */ PrintStream        cmd_exec_input_writer  = null;  // RPI 731
+    /** variable      */ String cmd_exec_error_msg = "";
+    /** variable      */ String cmd_exec_output_msg = "";
+    /** variable      */ Thread cmd_exec_process_thread = null;
+    /** variable      */ Thread cmd_exec_error_reader_thread = null;
+    /** variable      */ Thread cmd_exec_output_reader_thread = null;
+    /** variable      */ int    cmd_exec_rc = 0;
+    /** variable      */ String cmd_line = "";       // RPI 508 prevent last becoming null
+    /** variable      */ String last_cmd_line = "x"; // RPI 506
+    /** variable      */ boolean shutdown_exit = false;
+
     /*
      *  Global Z390 GUI objects 
      */
-    int ascii_lf = 10;
-    int ascii_cr = 13;
- 	boolean refresh_request = false;
- 	boolean main_status  = true;
-        JFrame main_frame    = null;
-        int main_width  = 625;
-        int main_height = 400;
-        int main_border = 2;
-        int main_loc_x = 50;
-        int main_loc_y = 50;
-        int scrollbar_width = 15;
-        int font_space = 10;
-	int font_size = 12;       //see FONT command
-    int title_height = 0;
-	int menu_height = 0;
-	int font_width = 0;
-    int log_char_height = 0; //see FONT command
-    int tool_height = 0;     //reset to 0 if hidden;
-    int lines_per_page = 0;   //set by update_main_view()
-	int log_height = 0;       //set by update_main_view()
-	int log_width  = 0;      //set by update_main_view()
-   	int command_columns  = 75; // RPI 685
-	 int command_height = font_size + font_space 
-           + main_border;
-     int status_height  = font_size + font_space
-           + main_border;
-	int applet_status_height = 0;
-	boolean labels_visible = true;
-	int labels_min_width = main_width;
-	int labels_max_font  = font_size;
-	int label_width    = 0;
-        JPanel main_panel    = null;
-        JTextArea log_text = null;
-        JScrollPane log_view    = null;
-        JLabel cmd_label = null;
-        JTextField  z390_cmd_line = null;
-        JLabel status_line_label = null;
-        JTextField  status_line = null;
-        int cur_cmd = 0;  // index of most recent comment entered
-        int end_cmd = 0;  // index of highest cmd entered
-        int max_cmd  = 100;
-        int view_cmd = 0; // index of current cmd in view
-        boolean view_restore = false; // RPI 603
-        String[] cmd_history = new String[100];
+    /** variable      */ int ascii_lf = 10;
+    /** variable      */ int ascii_cr = 13;
+    /** variable      */ boolean refresh_request = false;
+    /** variable      */ boolean main_status  = true;
+    /** variable      */ JFrame main_frame    = null;
+    /** variable      */ int main_width  = 625;
+    /** variable      */ int main_height = 400;
+    /** variable      */ int main_border = 2;
+    /** variable      */ int main_loc_x = 50;
+    /** variable      */ int main_loc_y = 50;
+    /** variable      */ int scrollbar_width = 15;
+    /** variable      */ int font_space = 10;
+    /** variable      */ int font_size = 12;       //see FONT command
+    /** variable      */ int title_height = 0;
+    /** variable      */ int menu_height = 0;
+    /** variable      */ int font_width = 0;
+    /** variable      */ int log_char_height = 0; //see FONT command
+    /** variable      */ int tool_height = 0;     //reset to 0 if hidden;
+    /** variable      */ int lines_per_page = 0;   //set by update_main_view()
+    /** variable      */ int log_height = 0;       //set by update_main_view()
+    /** variable      */ int log_width  = 0;      //set by update_main_view()
+    /** variable      */ int command_columns  = 75; // RPI 685
+    /** variable      */ int command_height = font_size + font_space + main_border;
+    /** variable      */ int status_height  = font_size + font_space + main_border;
+    /** variable      */ int applet_status_height = 0;
+    /** variable      */ boolean labels_visible = true;
+    /** variable      */ int labels_min_width = main_width;
+    /** variable      */ int labels_max_font  = font_size;
+    /** variable      */ int label_width    = 0;
+    /** variable      */ JPanel main_panel    = null;
+    /** variable      */ JTextArea log_text = null;
+    /** variable      */ JScrollPane log_view    = null;
+    /** variable      */ JLabel cmd_label = null;
+    /** variable      */ JTextField  z390_cmd_line = null;
+    /** variable      */ JLabel status_line_label = null;
+    /** variable      */ JTextField  status_line = null;
+    /** index of most recent comment entered */ int cur_cmd = 0;
+    /** index of highest cmd entered         */ int end_cmd = 0;
+    /** variable                             */ int max_cmd  = 100;
+    /** index of current cmd in view         */ int view_cmd = 0;
+    /** variable      */ boolean view_restore = false; // RPI 603
+    /** variable      */ String[] cmd_history = new String[100];
+
     /*
      *  Menu items requiring state changes
      */  
-        JMenuBar menuBar = null;  //RPI81       
-        JMenu file_menu = null;            
-        JMenu edit_menu = null;            
-        JMenu option_menu = null;          
-        JMenu view_menu = null;            
-        JMenu help_menu = null;             
-        JMenuItem file_menu_cd = null;         
-        JMenuItem file_menu_edit = null;       
-        JMenuItem file_menu_mac = null;        
-        JMenuItem file_menu_asm = null;        
-        JMenuItem file_menu_asml = null;       
-        JMenuItem file_menu_asmlg = null;      
-        JMenuItem file_menu_job = null;        
-        JMenuItem file_menu_link = null;       
-        JMenuItem file_menu_exec = null;       
-        JMenuItem file_menu_exit = null;       
-        JMenuItem edit_menu_cut = null;        
-        JMenuItem edit_menu_copy = null;       
-        JMenuItem edit_menu_paste = null;      
-        JMenuItem edit_menu_select_log = null; // RPI 1041
-        JMenuItem edit_menu_select_cmd = null; // RPI 1041
-        JMenuItem edit_menu_copy_log = null;   
-        JMenuItem edit_menu_editor = null; 
-        JCheckBoxMenuItem option_menu_ascii = null;
-        JCheckBoxMenuItem option_menu_con = null;  
-        JCheckBoxMenuItem option_menu_dump = null;
-        JCheckBoxMenuItem option_menu_guam  = null;
-        JCheckBoxMenuItem option_menu_list = null;              
-        JCheckBoxMenuItem option_menu_listcall = null;         
-        JCheckBoxMenuItem option_menu_stats = null;            
-        JCheckBoxMenuItem option_menu_amode31 = null;          
-        JCheckBoxMenuItem option_menu_rmode31 = null;          
-        JCheckBoxMenuItem option_menu_test = null;              
-        JCheckBoxMenuItem option_menu_trace = null;             
-        JCheckBoxMenuItem view_menu_status = null;              
-        JCheckBoxMenuItem view_menu_cmd = null;              
-        JMenuItem help_menu_help = null;            
-        JMenuItem help_menu_commands = null;        
-        JMenuItem help_menu_guide = null;           
-        JMenuItem help_menu_perm = null;            
-        JMenuItem help_menu_releases = null;        
-        JMenuItem help_menu_support = null;         
-        JMenuItem help_menu_about = null;           
+    /** variable      */ JMenuBar menuBar = null;  //RPI81       
+    /** variable      */ JMenu file_menu = null;            
+    /** variable      */ JMenu edit_menu = null;            
+    /** variable      */ JMenu option_menu = null;          
+    /** variable      */ JMenu view_menu = null;            
+    /** variable      */ JMenu help_menu = null;             
+    /** variable      */ JMenuItem file_menu_cd = null;         
+    /** variable      */ JMenuItem file_menu_edit = null;       
+    /** variable      */ JMenuItem file_menu_mac = null;        
+    /** variable      */ JMenuItem file_menu_asm = null;        
+    /** variable      */ JMenuItem file_menu_asml = null;       
+    /** variable      */ JMenuItem file_menu_asmlg = null;      
+    /** variable      */ JMenuItem file_menu_job = null;        
+    /** variable      */ JMenuItem file_menu_link = null;       
+    /** variable      */ JMenuItem file_menu_exec = null;       
+    /** variable      */ JMenuItem file_menu_exit = null;       
+    /** variable      */ JMenuItem edit_menu_cut = null;        
+    /** variable      */ JMenuItem edit_menu_copy = null;       
+    /** variable      */ JMenuItem edit_menu_paste = null;      
+    /** variable      */ JMenuItem edit_menu_select_log = null; // RPI 1041
+    /** variable      */ JMenuItem edit_menu_select_cmd = null; // RPI 1041
+    /** variable      */ JMenuItem edit_menu_copy_log = null;   
+    /** variable      */ JMenuItem edit_menu_editor = null; 
+    /** variable      */ JCheckBoxMenuItem option_menu_ascii = null;
+    /** variable      */ JCheckBoxMenuItem option_menu_con = null;  
+    /** variable      */ JCheckBoxMenuItem option_menu_dump = null;
+    /** variable      */ JCheckBoxMenuItem option_menu_guam  = null;
+    /** variable      */ JCheckBoxMenuItem option_menu_list = null;              
+    /** variable      */ JCheckBoxMenuItem option_menu_listcall = null;         
+    /** variable      */ JCheckBoxMenuItem option_menu_stats = null;            
+    /** variable      */ JCheckBoxMenuItem option_menu_amode31 = null;          
+    /** variable      */ JCheckBoxMenuItem option_menu_rmode31 = null;          
+    /** variable      */ JCheckBoxMenuItem option_menu_test = null;              
+    /** variable      */ JCheckBoxMenuItem option_menu_trace = null;             
+    /** variable      */ JCheckBoxMenuItem view_menu_status = null;              
+    /** variable      */ JCheckBoxMenuItem view_menu_cmd = null;              
+    /** variable      */ JMenuItem help_menu_help = null;            
+    /** variable      */ JMenuItem help_menu_commands = null;        
+    /** variable      */ JMenuItem help_menu_guide = null;           
+    /** variable      */ JMenuItem help_menu_perm = null;            
+    /** variable      */ JMenuItem help_menu_releases = null;        
+    /** variable      */ JMenuItem help_menu_support = null;         
+    /** variable      */ JMenuItem help_menu_about = null;           
+
     /*
      * Pop-up edit menu variables (right click)
      */    
-        JPopupMenu popup_edit_menu = null; 
-        Component focus_comp = null;
-        /*
-         * Dialog frames
-         */
-           JFrame select_dir_frame  = null;
-           JFrame select_file_frame = null; 
-           File selected_file = null;
-           String selected_file_name = null;
-           String selected_dir_name = null;
-           String select_cmd = null;
-           String select_file_type = null;
-           String select_opt  = "";
-     /*
-      * batch command global variables
-      */
-           String bat_file_name = null;
-           String mac_opt = "";
-           String asm_opt = "";
-           String asml_opt = "";
-           String asmlg_opt = "";
-           String job_opt = "";
-           String link_opt = "";
-           String exec_opt = "";
-     /*
-      * web site and install location
-      */
-        String web_site = "http://www.z390.org";
-        String install_loc = null;
-        String install_webdoc = null; // RPI 872
-      /*
-       * macro assembler command global variables
-       */
-        String sysin_file_name = null;
-        String syslib_dir_name = null;
-        String sysout_dir_name = null;
-        boolean print_option = true;
-        boolean anim_option  = true;
-       /* 
-        * end of global z390 class data and start of procs
-        */
+    /** variable      */ JPopupMenu popup_edit_menu = null; 
+    /** variable      */ Component focus_comp = null;
 
-  	public static void main(String[] args) {
-  	/*
-  	 * Create instance of z390 class
-  	 */
+    /*
+     * Dialog frames
+     */
+    /** variable      */ JFrame select_dir_frame  = null;
+    /** variable      */ JFrame select_file_frame = null; 
+    /** variable      */ File selected_file = null;
+    /** variable      */ String selected_file_name = null;
+    /** variable      */ String selected_dir_name = null;
+    /** variable      */ String select_cmd = null;
+    /** variable      */ String select_file_type = null;
+    /** variable      */ String select_opt  = "";
+
+    /*
+     * batch command global variables
+     */
+    /** variable      */ String bat_file_name = null;
+    /** variable      */ String mac_opt = "";
+    /** variable      */ String asm_opt = "";
+    /** variable      */ String asml_opt = "";
+    /** variable      */ String asmlg_opt = "";
+    /** variable      */ String job_opt = "";
+    /** variable      */ String link_opt = "";
+    /** variable      */ String exec_opt = "";
+
+    /*
+     * web site and install location
+     */
+    /** variable      */ String web_site = "http://www.z390.org";
+    /** variable      */ String install_loc = null;
+    /** variable      */ String install_webdoc = null; // RPI 872
+
+    /*
+     * macro assembler command global variables
+     */
+    /** variable      */ String sysin_file_name = null;
+    /** variable      */ String syslib_dir_name = null;
+    /** variable      */ String sysout_dir_name = null;
+    /** variable      */ boolean print_option = true;
+    /** variable      */ boolean anim_option  = true;
+
+    /* 
+     * end of global z390 class data and start of procs
+     */
+
+
+
+/**
+ * Dummy constructor - no initialization needed
+ */
+public z390()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
+/**
+ * Create instance of z390 class
+ *
+ * @param args argument string
+ */
+    public static void main(String[] args) {
     	    z390 pgm = new z390();
             pgm.main_applet = false;
             pgm.set_main_mode(args);
@@ -394,16 +422,22 @@ public  class  z390
                 pgm.init_z390(args);
             }
           }
-  	  private int set_main_mode(String[] args){
-  		/*
-  		 * Set main program execution mode
-  		 * Set security permissions
-  		 * 
-  		 * Notes:
-  		 *   1.  called from main or init before
-  		 *       z390 instance started so only
-  		 *       set class variables.
-  		 */	
+
+
+
+/**
+ * Set main program execution mode.
+ * Set security permissions
+ * 
+ * Notes:
+ * <ol>
+ *  <li>called from main or init before z390 instance started so only set class variables</li>
+ * </ol>
+ *
+ * @param args argument string
+ * @return 16 on error, 0 if okay.
+ */
+    private int set_main_mode(String[] args){
   		    tz390 = new tz390();              // RPI 1175
             if (!tz390.check_java_version()){ // RPI 1175
   					MessageBox box = new MessageBox();
@@ -501,16 +535,22 @@ public  class  z390
             main_demo = false;
             return 0;
   		}
+
+
+
+/**
+ * process startup parms:
+ * <ul>
+ *  <li>/G  - graphical interface (default)</li>
+ *  <li>/NP - no permissions (supress checking permissions</li>
+ *  <li>/NT - no unique log file timestamps </li>
+ *  <li>/RT - regress test mode (supress time stamps </li>
+ *  <li>/SC file - startup cmd mode file (.bat)</li>
+ * </ul>
+ *
+ * @param args argument string
+ */
   		private void set_startup_parm_options(String args[]){
-  	    /* 
-  	     * process startup parms
-  	     *
-  	     *    /G   - graphical interface (default)
-  	     *    /NP  - no permissions (supress checking permissions
-  	     *    /NT  - no unique log file timestamps 
-  	     *    /RT  - regress test mode (supress time stamps 
-  	     *    /SC  file -  startup cmd mode file (.bat)                
-  	     */
             int index1 = 0;
             main_gui = false;
             main_batch = false;
@@ -557,12 +597,18 @@ public  class  z390
   				main_gui = true;
   			}
   		}  		
+
+
+
+/**
+ * if OFF specified, turn log off.
+ * If file specified, open new log.
+ * else error.
+ *
+ * @param cmd_parm1 argument string
+ * @param cmd_parm2 not used
+ */
   		private void log_command(String cmd_parm1,String cmd_parm2){
-  		/*
-  		 * if OFF specified, turn log off
-  		 * If file specified, open new log
-  		 * else error.
-  		 */	
   			  if  (cmd_parm1 != null
   			  		&& cmd_parm1.toUpperCase().equals("OFF")){
   			  	    close_log_file();
@@ -580,10 +626,13 @@ public  class  z390
   			  	    log_error(74,"missing log command file or OFF parm");  			  	
   			  }
   		}
+
+
+
+/**
+ * Open log file
+ */ 
 		private void open_log_file() {
-			/*
-			 * Open log file
-			 */ 
 	      if (perm_file_log){	    	  
 	    	  install_loc = System.getProperty("user.dir");
 			  File temp_file = new File(install_loc);
@@ -641,10 +690,13 @@ public  class  z390
 	       }
            put_log("Enter command or help");
 		}
+
+
+
+/**
+ * Close log file
+ */
 		private void close_log_file(){
-		/*
-		 * Close log file
-		 */
 			if (log_file != null){  // RPI 236
 			   try {
 	               log_file.close();
@@ -655,14 +707,26 @@ public  class  z390
 			   }
 			}
 		}
+
+
+
+/**
+ * display error total on log and close
+ * data and log files
+ */
 		private void close_all_files(){
-		/*
-		 * display error total on log and close
-		 * data and log files
-		 */	
             put_log("Z390I total errors = " + z390_errors);
 	        close_log_file();
 		}
+
+
+
+/**
+ * Write error to log
+ *
+ * @param error error number
+ * @param msg error message text
+ */
 		private void log_error(int error,String msg){
 			z390_errors++;
 			cmd_error = true;
@@ -685,6 +749,15 @@ public  class  z390
 		        abort_error(10,"maximum errors exceeded");
             }
 		}
+
+
+
+/**
+ * Abort with error message
+ *
+ * @param error error number
+ * @param msg error message text
+ */
 		private synchronized void abort_error(int error,String msg){ // RPI 646
 			z390_errors++;
 			msg = "SZ390E " + error + " " + msg;
@@ -692,11 +765,16 @@ public  class  z390
  		    System.out.println(msg);
 	        exit_main(16);
 		}
+
+
+
+/**
+ * cancel threads and exit with rc
+ * (turn off runtime shutdown exit
+ *
+ * @param return_code return code
+ */
 		private void shut_down(int return_code){
-		/*
-		 * cancel threads and exit with rc
-		 * (turn off runtime shutdown exit
-		 */
 			if  (monitor_timer != null){
 			    monitor_timer.stop();
 			}
@@ -716,10 +794,13 @@ public  class  z390
 			}
 		}
 		
+
+
+
+/**
+ *   install hook for shutdown when -Xrs VM set
+ */
 	   private void set_runtime_hooks(){
-	   	/*
-         *   install hook for shutdown when -Xrs VM set
-         */
   		     if (main_console && !shutdown_exit){
 	   	        Runtime.getRuntime().addShutdownHook(new Thread() {
                     public void run() {
@@ -739,10 +820,13 @@ public  class  z390
                 });
   		     }
 	   }
+
+
+
+/**
+ * display z390 version and copyright
+ */
 	   private void put_copyright(){
-	   /*
-	    * display z390 version and copyright
-	    */
 	   	put_log("Z390I " + tz390.version + " Copyright (C) 2021 z390 Assembler");
 		put_log("z390 comes with ABSOLUTELY NO WARRANTY;");   
 		put_log("This is free software, and you are welcome to redistribute it");
@@ -754,12 +838,16 @@ public  class  z390
 	   		put_log(mode_msg2);
 	   	}
 	   }
+
+
+
+/**
+ * Write message to log file and to console
+ * if console mode or console option on.
+ *
+ * @param msg message text
+ */
 	   private synchronized void put_log(String msg) {
-	   	/*
-	   	 * Write message to log file and to console
-	   	 * if console mode or console option on.
-	   	 * 
-	   	 */
             if (msg.trim().length() == 0){
             	return;  // RPI 1050
             }
@@ -779,36 +867,33 @@ public  class  z390
 	   	       }	   	 	
 	   	    }
 	   }
+
+
+
+/**
+ * Process a command:
+ * <ol>
+ *  <li>parse parms and execute z390 command if found
+ *   <ol>
+ *    <li>* in position 1 is a comment</li>
+ *    <li>space or null logged as blank line </li>
+ *   </ol>
+ *  </li>
+ *  <li>If not a known z390 command, issue CMD Windows command.</li>
+ * </ol>
+ * 
+ * Notes:
+ * <ol>
+ *  <li>z390_cmd_line event handler routes input to CMD processor when in cmd_mode.</li>
+ *  <li>Some commands will issue retry or cancel error message if command running on separate thread to avoid file conflicts or deadlocks.</li>
+ *  <li>Other non destructive commands will proceed in parallel which may cause log messages to be intermixed.</li>
+ *  <li>Status bar shows progress of command processes on separate threads.</li>
+ *  <li>Use EXIT or BREAK event to abort CMD process. CTRL-C works in command mode only.</li>
+ * </ol>
+ *
+ * @param cmd_text command string
+ */
 	   private void process_command(String cmd_text) {  // RPI 508
-	   	/* 
-	   	 * 1.  parse parms and execute 
-	   	 *     z390 command if found.
-	   	 *     a.  * in position 1 is a comment
-	   	 *     e.  space or null logged as blank line 
-	   	 *      
-	   	 * 2.  If not a known z390 command, 
-	   	 *     issue CMD Windows command.
-	   	 * 
-	   	 * Notes:
-	   	 * 
-	   	 * 1.  z390_cmd_line event handler
-	   	 *     routes input to CMD processor when in
-	   	 *     cmd_mode.
-	   	 * 
-	   	 * 2.  Some commands will issue retry or
-	   	 *     cancel error message if command
-	   	 *     running on separate thread to avoid
-	   	 *     file conflicts or deadlocks.  Other
-	   	 *     non destructivecommands will proceed
-	   	 *     in parallel which may cause log 
-	   	 *     messages to be intermixed.
-	   	 * 
-	   	 * 3.  Status bar shows progress of command
-	   	 *     processes on separate threads.
-	   	 * 
-	   	 * 4.  Use EXIT or BREAK event to abort CMD
-	   	 *     process. CTRL-C works in command mode only.
-	   	 */
 		 cmd_line = cmd_text; // RPI 508
 		 try {
 	   	    cmd_error = false;
@@ -1179,10 +1264,13 @@ public  class  z390
 			 log_error(51,"command error on -" + cmd_line);
 		 }
        }
+
+
+
+/**
+ * add command cmd_line to rolling history
+ */
 	   private void add_cmd_hist(){
-		   /*
-		    * add command cmd_line to rolling history
-		    */
 		   if (last_cmd_line.equals(cmd_line)){
 			   return;  // RPI 506
 		   }
@@ -1198,10 +1286,13 @@ public  class  z390
            view_restore = true; // RPI 603 force cmd restore on next up/down
            view_cmd = cur_cmd;
 	   }
+
+
+
+/**
+ * restore prev cmd to z390_cmd_line
+ */
 	   private void get_prev_cmd(){
-		   /*
-		    * restore prev cmd to z390_cmd_line
-		    */
 		   if (view_restore){
 			   view_restore = false;
 		   } else {
@@ -1212,10 +1303,13 @@ public  class  z390
    	   	   }
    	   	   z390_cmd_line.setText(cmd_history[view_cmd]);
 	   }
+
+
+
+/**
+ * display next cmd
+ */
 	   private void get_next_cmd(){
-		   /*
-		    * display next cmd
-		    */
 		   view_restore = false;
 		   view_cmd++;  // RPI 603
   	   	   if  (view_cmd > end_cmd){
@@ -1223,10 +1317,15 @@ public  class  z390
   	   	   }
  	   	   z390_cmd_line.setText(cmd_history[view_cmd]);
 	   }
+
+
+
+/**
+ * return date and time if tz390.opt_timing
+ *
+ * @return date and time as a string value
+ */
 	   private String time_stamp(){
-		   /*
-		    * return date and time if tz390.opt_timing
-		    */
    	    String temp_date_text = "";
 	    if  (tz390.opt_timing){
 	        Date temp_date = new Date(); 
@@ -1235,15 +1334,21 @@ public  class  z390
         }
 	    return temp_date_text;
 	   }
+
+
+
+/**
+ * get string with or without single/double quotes.
+ * <ul>
+ *  <li>ignore leading spaces or commas if ignore_spaces = true, else return null</li>
+ *  <li>if space or comma found next.</li>
+ * </ul>
+ *
+ * @param st string tokenizer
+ * @param ignore_spaces flag to ignore/honor spaces
+ * @return next token as text
+ */
 	   private String get_next_parm(StringTokenizer st,boolean ignore_spaces){
-	   /*
-	    * get string with or without single/double
-	    * quotes.
-	    * 
-	    * ignore leading spaces or commas if 
-	    * ignore_spaces = true, else return null
-	    * if space or comma found next.
-	    */
 	   	String parm_string = st.nextToken();
 	   	String delimiter;
         String next_token;
@@ -1265,6 +1370,12 @@ public  class  z390
 	   	}
 	   	return parm_string;
 	   }
+
+
+
+/**
+ * write basic info to log
+ */
 	   private void about_command(){
 	   	  put_copyright();
 	   	  put_log("z390 Portable mainframe macro assembler, linker, and emulator tool");
@@ -1282,11 +1393,16 @@ public  class  z390
           put_log("  * z390 open source project for support and extensions");         
           put_log("Visit www.z390.org for additional information");
 	   }
+
+
+
+/**
+ * reset font size for log, and command line and menu pop-ups
+ *
+ * @param cmd_parm1 requested font size as text
+ * @param cmd_parm2 not used
+ */
 	   private void font_command(String cmd_parm1,String cmd_parm2){
-	   /* 
-	    * reset font size for log, and command line
-	    * and menu pop-ups (RPI 81)
-	    */
 	   	    int new_font_size;
 	   	    if (cmd_parm1 != null){
 	   	    	new_font_size = get_dec_int(cmd_parm1);
@@ -1305,11 +1421,13 @@ public  class  z390
 	   	    	log_error(63,"font outside fixed width font limits");
 	   	    }
 	   }
+
+
+
+/**
+ * reset font size for menu, log, cmd and status line
+ */
 	   private void set_text_font(){
-		   /*
-		    * reset font size for menu, log, cmd
-		    * and status line
-		    */
 	          menuBar.setFont(new Font(tz390.z390_font,Font.BOLD,font_size)); //RPI81
    	          file_menu.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
    	          edit_menu.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
@@ -1359,20 +1477,32 @@ public  class  z390
    	          status_line_label.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));
    	          status_line.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));
 	   }
+
+
+
+/**
+ * return int from immediate decimal parm
+ *
+ * @param cmd_parm input text parameter
+ * @return decimal value of input parameter
+ */
 	   private int get_dec_int(String cmd_parm){
-		   /*
-		    * return int from immeidate decimal parm
-		    */
 		   	     int save_hex_base = hex_base;
 		   	     hex_base = 10;
 		   	     int work_int = get_int(cmd_parm);
 		   	     hex_base = save_hex_base;
 		   	     return work_int;
 		   }
+
+
+
+/**
+ * return int from immediate hex parm:or reg
+ *
+ * @param cmd_parm input parameter in text format
+ * @return decimal value from input parameter
+ */
 		   private int get_int(String cmd_parm){
-		   	/*
-		   	 * return int from immediate hex parm:or reg
-		   	 */
 		   	       int work_int = 0;
 		   	       int index1 = 1;
 		   	           try {
@@ -1400,19 +1530,28 @@ public  class  z390
 		   	       	       return 0;
 		   	           }
 		   }
+
+
+
+/**
+ * return int value of char or 0 if not printable
+ *
+ * @param work_int integer input value
+ * @return input value, or adjusted integer value
+ */
 		   private int  get_text_char(int work_int){
-			   /*
-			    * return int value of char or 0 if not printable
-			    */	
 			   	if (work_int < 0){
 			   		work_int = work_int +256;
 			   	}
 		        return work_int;
 			   }
+
+
+
+/**
+ * log summary list of commands and help reference
+ */
 	   private void help_command(){
-	   	/*
-	   	 * log summary list of commands and help reference
-	   	 */
 	   	put_log("\nz390 help command summary");
         put_log("File menu selections");
 	   	put_log("  EDIT  - open source file to edit");
@@ -1429,11 +1568,14 @@ public  class  z390
         put_log("Type GUIDE to view online or local help (if installed)");
         put_log("Type SUPPORT to visit support web site");
            }
+
+
+
+/**
+ * start monitor to terminate cmd 
+ * command if timeout limit reached
+ */
 	   private void monitor_startup(){
-	   /*
-	    * start monitor to terminate cmd 
-	    * command if timeout limit reached
-	    */
               monitor_last_time = System.currentTimeMillis();
               monitor_last_ins_count = ins_count;
 	   	      status_last_time = monitor_last_time;
@@ -1450,16 +1592,21 @@ public  class  z390
 		       	  log_error(66,"execution startup error " + e.toString());
 		      }
 	   }
+
+
+
+/**
+ * start Windows command processer with synchronized buffered output to log.
+ *
+ * <ol>
+ *  <li>If cmd_line is null, set cmd_mode and start command processor without command.</li>
+ *  <li>Future commands in cmd_mode will be passed to processor via cmd_exec_input_writer.</li>
+ * </ol>
+ *
+ * @param cmd_line command text
+ * @return return code
+ */
 	   private int cmd_startup(String cmd_line){
-	   /*
-	    * start Windows command processer with 
-	    * synchronized buffered output to log.  
-	    * 
-	    * If cmd_line is null, set cmd_mode and 
-	    * start command processor without command.
-	    * Future commands in cmd_mode will be passed
-	    * to processor via cmd_exec_input_writer.
-	    */
 	   	    int rc;
 	   	    String[] cmd_parms;
 	   	    try {
@@ -1511,10 +1658,13 @@ public  class  z390
 	   		    return 16;
     	 	}
 	   }
+
+
+
+/**
+ * sleep for monitor interval if not abort
+ */
 	   private void sleep_now(){
-		   /*
-		    * sleep for monitor interval if not abort
-		    */
 		   if (tz390.z390_abort){
 			   exit_command();
 		   }	    
@@ -1524,12 +1674,13 @@ public  class  z390
                  abort_error(77,"Wait interrupted " + e.toString() );
            }
 	   }
+
+
+
+/**
+ * sync the cmd task directory with current directory.
+ */
 	   private void sync_cmd_dir(){
-		   /*
-		    * sync the cmd task directory with
-		    * current directory.
-		    *
-		    */
 	           if (!tz390.dir_cur.equals(install_loc)){
 	        	   if (tz390.z390_os_type == tz390.z390_os_linux){
 	        		   cmd_exec_input("cd " + tz390.dir_cur); // RPI 499 change Linux directory and/or drive
@@ -1541,25 +1692,19 @@ public  class  z390
 	        	   }
 		       }
 	   }
+
+
+
+/**
+ * <ol>
+ *  <li>At monitor_wait intervals, update the z390 GUI title date and time and the status line information.</li>
+ *  <li>If CMD mode and monitor_wait_total greater than timeout_interval then abort CMD.</li>
+ *  <li>If monitor_wait_total greater than status_interval then update and log status line in batch or command mode.</li>
+ *  <li>If current time beyond main_demo timeout then terminate.</li>
+ *  <li>reset focus to z390_cmd_line after update</li>
+ * </ol>
+ */
 	   private void monitor_update(){
-	   /*
-	    * 1.  At monitor_wait intervals, update the
-	    *     z390 GUI title date and time and the status
-	    *     line information.
-	    *  
-	    * 2.  If CMD mode and 
-	    *     monitor_wait_total > timeout_interval
-	    *     then abort CMD.
-	    * 
-	    * 3.  If monitor_wait_total > status_interval
-	    *     then update and log status line in batch
-	    *     or command mode.
-	    * 
-	    * 4.  If current time beyond main_demo timeout
-	    *     terminate.
-	    * 
-	    * 5.  reset focus to z390_cmd_line after update
-	    */
 		    if (tz390.z390_abort){
 		    	exit_command();
 		    }
@@ -1614,29 +1759,36 @@ public  class  z390
 	   	    monitor_last_ins_count  = monitor_next_ins_count;
 	   	    monitor_last_io_count   = monitor_next_io_count;
 	   }
+
+
+
+/**
+ * issue timeout error
+ */
 	   private void cmd_timeout_error(){
 	   	   cmd_exec_cancel();
  	       status_log_update();
   	       log_error(69,"CMD command timeout error - command aborted");
 	   	   reset_z390_cmd();
 	   }
+
+
+
+/**
+ * exec Windows command as follows:
+ * <ol>
+ *  <li>If cmd_mode set via prior cmd with no command, then all commands are routed to command processor via cmd_exec_input.
+ *   <ul>
+ *    <li>Use BREAK key or EXIT command passed to command processor to end cmd_mode.</li>
+ *   </ul>
+ *  <li>If prior Windows command is still running, display current status and request user hit break or retry later.</li>
+ *  <li>If cmd_mode not set then start command processor via call to cmd_exec_start.</li>
+ *  <li>See STATUS command to set interval for display of status of long running commands.</li>
+ * </ol>
+ *
+ * @param cmd command text
+ */
 	   private void cmd_command(String cmd){
-	   /*
-	    * exec Windows command as follows:.
-        * 1.  If cmd_mode set via prior cmd with no
-        *     command, then all commands are routed
-        *     to command processor via cmd_exec_input.  Use
-        *     BREAK key or EXIT command passed to
-        *     command processor to end cmd_mode.
-        * 2.  If prior Windows command is still running,
-        *     display current status and request 
-        *     user hit break or retry later.
-        * 3.  If cmd_mode not set then start command
-        *     processor via call to cmd_exec_start.
-        * 4.  See STATUS command to set interval for
-        *     display of status of long running
-        *     commands.        * 
-	    */	
 		     cmd_line = cmd;
 	   	     if  (cmd_exec_rc() == -1){
 	   	    	 cmd_exec_input(cmd); // route cmd to existing CMD task running
@@ -1651,22 +1803,29 @@ public  class  z390
 	   	    	 }
   	 	     }
 	   }
+
+
+
 	   /*
 	    **************************************************
 	    * Command support functions
 	    **************************************************  
 	    */
 
+
+
+/**
+ * format fixed field status line for both z390 gui status line and status log requests
+ * <ol>
+ *  <li>Time of date</li>
+ *  <li>INS total</li>
+ *  <li>I/O total</li>
+ *  <li>CMD mode</li>
+ * </ol>
+ *
+ * @return status text
+ */
      private String get_status_line(){
-     /*
-      * format fixed field status line for both
-      * z390 gui status line and status log requests
-      * 
-      *     1.  Time of date
-   	  *     2.  INS total
-   	  *     3.  I/O total
-   	  *     4.  CMD mode
-      */
      	String cmd_mode_text = "";
      	if (cmd_exec_rc() == -1){
      	   cmd_mode_text = " CMD";
@@ -1676,12 +1835,19 @@ public  class  z390
 		  + cmd_mode_text;
      	return status_text;
      }
+
+
+
+/**
+ * format and pad status line number to
+ * specified length. If number 0, return
+ * all spaces. If number &gt; 1000, return K.
+ *
+ * @param num number of pad characters to generate
+ * @param pad pad character to use
+ * @return padding string
+ */
      private String get_pad(long num,int pad){
-     /*
-      * format and pad status line number to
-      * specified length.  If number 0, return
-      * all spaces.  If number > 1000, return K.
-      */
      	String padding = "           ";
      	String text = "";
      	if  (num > 0){
@@ -1695,11 +1861,13 @@ public  class  z390
      	    return padding.substring(0,pad);
      	}
      }
+
+
+
+/**
+ * update status interval and write status line to log
+ */
      private void status_log_update(){	
-     /*
-      * update status interval and write
-      * status line to log
-      */
      	status_next_time = System.currentTimeMillis();
         status_next_ins_count = ins_count;
         status_next_io_count = io_count;
@@ -1715,10 +1883,15 @@ public  class  z390
      	status_last_ins_count = status_next_ins_count;
      	status_last_io_count = status_next_io_count;
      }
+
+
+
+/**
+ * load shared tables and file routines
+ *
+ * @param args argument string
+ */
    private void init_z390(String[] args){
-	   /*
-	    * load shared tables and file routines
-	    */	 	  
 	   tz390.init_tz390();    // RPI 1080
 	   dir_cur_file = new File(tz390.dir_cur); // RPI 309
        main_title = "Z390 " + tz390.version;
@@ -1755,13 +1928,17 @@ public  class  z390
             main_frame.setVisible(true);
             z390_cmd_line.requestFocus();
    }
+
+
+
+/**
+ * Build the main panel with:
+ * <ol>
+ *  <li>Scrolling log display</li>
+ *  <li>command entry field</li>
+ * </ol>
+ */
    private void build_main_panel(){ 
-        /*
-   	     *  Build the main panel with:
-   	     *    a.  Scrolling log display
-   	     *    b.  command entry field
-   	     * 
-   	     */
    	        main_panel = new JPanel();
    	        main_panel.setBorder(BorderFactory.createEmptyBorder(0,main_border,main_border,main_border));
             main_panel.setLayout(new FlowLayout(FlowLayout.LEFT)); 
@@ -1791,15 +1968,25 @@ public  class  z390
 	  		      });
 	        refresh_request = true;
         } 
+
+
+
+/**
+ * terminate the program
+ *
+ * @param rc return code
+ */
         private void exit_main(int rc){
         	close_all_files();
 	        shut_down(rc);
         }
+
+
+
+/**
+ * calculate gui object sizes based on screen size and font size
+ */
      private void set_gui_size(){
-    	 /* 
-    	  * calculate gui object sizes based on
-    	  * sreen size and font size
-    	  */
     	title_height = 56;
   	    menu_height = font_size + font_space;
  	    log_char_height = font_size + font_space;
@@ -1811,11 +1998,13 @@ public  class  z390
    	    status_height  = font_size + font_space
    	                   + main_border;
      }
+
+
+
+/**
+ * build scrolling log view based on current screen and font size
+ */
      private void build_log_view(){
-    	 /*
-    	  * build scrolling log view based on
-    	  * current screen and font size
-    	  */
         log_text = new JTextArea();
 	    log_text.addMouseListener(this);
         log_view = new JScrollPane(log_text);
@@ -1831,10 +2020,13 @@ public  class  z390
 	    log_view.setPreferredSize(   	        		
          	new Dimension(log_width, log_height));
      }
+
+
+
+/**
+ *   Build the command entry field
+ */
      private void build_z390_cmd_line(){
-	/*
-     *   Build the command entry field
-     */
      	cmd_label = new JLabel("Command: ");
         z390_cmd_line = new JTextField(command_columns);
         z390_cmd_line.addActionListener(this);
@@ -1842,10 +2034,13 @@ public  class  z390
         z390_cmd_line.addKeyListener(this);
         z390_cmd_line.addFocusListener(this);
      }
+
+
+
+/**
+ *   Build the statuts line
+ */
      private void build_status_line(){
-    	/*
-         *   Build the statuts line
-         */
      	    status_line_label = new JLabel(" Status: ");
             status_line = new JTextField(command_columns);
             status_line.addActionListener(this);
@@ -1853,10 +2048,13 @@ public  class  z390
             status_line.addKeyListener(this);
             status_line.addFocusListener(this);
          }
+
+
+
+/**
+ *    Build the menu bar
+ */
      private void build_menu_items(){
-    /* 
-     *    Build the menu bar
-     */
      menuBar = new JMenuBar();
      file_menu = new JMenu("File");
      edit_menu = new JMenu("Edit");
@@ -2054,10 +2252,13 @@ public  class  z390
      help_menu.add(help_menu_support);
      help_menu.add(help_menu_about);
    }
+
+
+
+/**
+ * set tooltips after font changes
+ */
    private void set_tooltips(){
-	   /*
-	    * set tooltips after font changes
-	    */
 	     String text_font_pfx = "<html><font size=" + font_size/3 + ">";
 	     String text_font_sfx = "</html>";
 	     file_menu_cd.setToolTipText(text_font_pfx + "CD change directory" + text_font_sfx);
@@ -2098,19 +2299,24 @@ public  class  z390
 	     help_menu_support.setToolTipText(text_font_pfx + "Link to www.z390.org online support" + text_font_sfx);
 	     help_menu_about.setToolTipText(text_font_pfx + "Display information about this version of z390" + text_font_sfx);
    }
+
+
+
+/**
+ * update main frame title with current date and time.
+ */
    private void title_update(){
-   /*
-    * update main frame title with current
-    * date and time.
-    */	
 		 Date cur_date = new Date();
      	 main_frame.setTitle(main_title + "   " + mmddyy.format(cur_date)
      			     + " " + hhmmss.format(cur_date));
    }
+
+
+
+/**
+ * Perform menu and command line requests
+ */
    	  public void actionPerformed(ActionEvent event){
-   	  /*
-   	   * Perform menu and command line requests 
-   	   */	
    	  	String event_name = event.getActionCommand().toUpperCase();
    	  	if  (z390_cmd_line.hasFocus()){
    	  	    if  (cmd_mode){
@@ -2389,10 +2595,13 @@ public  class  z390
   			exec_gui_command();
 	  		reset_z390_cmd();}	        
    	  	}
+
+
+
+/**
+ * exec command
+ */
    	  private void exec_gui_command(){
-   	  /*
-   	   * exec command 
-   	   */  	   
   		   cmd_line = z390_cmd_line.getText();
   		   if  (cmd_line == null || cmd_line.length() == 0){
   		   	   cmd_line = " ";
@@ -2404,10 +2613,13 @@ public  class  z390
         	   process_command(cmd_line);
            }
    	  } 
+
+
+
+/**
+ * display Java security access permissions
+ */
    	  private void perm_command(){
-   	  /*
-   	   * display Java security access permissions
-   	   */
    	  	if  (check_perms){
    	  	    put_log("Java Security Manager Permissions - see Java PropertyTool Settings");
    	  	} else {
@@ -2439,11 +2651,13 @@ public  class  z390
    	  		put_log("  File Permissions - write - denied");
    	  	}
   	  }
+
+
+
+/**
+ * display Windows, Java Runtime, and z390 software releases led
+ */
    	  private void rel_command(){
-   	  /*
-   	   * display Windows, Java Runtime, and z390
-   	   * software releases led
-   	   */
     	String temp_version;
     	try {
   	        temp_version = System.getProperty("os.name") + " " + System.getProperty("os.version");
@@ -2459,32 +2673,50 @@ public  class  z390
         }
         put_log("Z390I Version = " + tz390.version);
 	  }
+
+
+
+/**
+ * link to z390\webdoc\index.html or www.z390.org
+ * note start parms are /d"path" file 
+ */
    	  private void guide_command(){
-   	  /*
-   	   * link to z390\webdoc\index.html or www.z390.org
-   	   * note start parms are /d"path" file 
-   	   */
    		  if (install_webdoc == null){
    			  start_doc(web_site); // RPI 872
    		  } else {
    			  start_doc(install_webdoc); // RPI 872
    		  }
       }
+
+
+
+/**
+ * reset z390_cmd text and set focus
+ */
    	  private void reset_z390_cmd(){
-   	  /*
-   	   * reset z390_cmd text and set focus
-   	   */
    	  	   if  (main_gui){
    	  		   z390_cmd_line.setText("");
    	           z390_cmd_line.requestFocus();
    	  	   }
    	  }
+
+
+
+/**
+ * link to online support www.z390.org
+ */
    	  private void support_command(){
-   	  /*
-   	   * link to online support www.z390.org
-   	   */	
  	  	start_doc(web_site);
       }
+
+
+
+/**
+ * document start from url
+ *
+ * @param url url of command to be executed
+ * @return false on error, true otherwise
+ */
    	public boolean start_doc(String url){
    		   if  (tz390.exec_cmd(tz390.z390_browser + " " + url)){  // RPI 904
    			   put_log("Start issued for " + url);
@@ -2494,10 +2726,15 @@ public  class  z390
    			   return false;
    		   }
 	  }
+
+
+
+/**
+ * Get string text from system clipboard
+ *
+ * @return text from clipboard
+ */
       public static String getClipboard() {
-      /*
-       * Get string text from system clipboard
-       */
       	Transferable t = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
           try {
               if (t != null && t.isDataFlavorSupported(DataFlavor.stringFlavor)) {
@@ -2509,17 +2746,27 @@ public  class  z390
           }
           return null;
       }
+
+
+
+/**
+ * put string to system clipboard
+ *
+ * @param str string to write to clipboard
+ */
        public static void setClipboard(String str) {
-       /*
-        * put string to system clipboard
-        */
        	StringSelection ss = new StringSelection(str);
           Toolkit.getDefaultToolkit().getSystemClipboard().setContents(ss, null);
       }
+
+
+
+/**
+ * Handle key pressed events
+ *
+ * @param e keypress event
+ */
        public void keyPressed(KeyEvent e) {
-       /*
-        * Handle key pressed events
-        */
 //dsh          displayInfo(e, "KEY PRESSED: ");
            int keyCode = e.getKeyCode();
            if  (e.isActionKey()){
@@ -2544,11 +2791,14 @@ public  class  z390
           	   }
            }
        }
+
+
+
+/**
+ * cancel cmd, or gui cmd in response to
+ * F3 or CTRL-BREAK
+ */
        private void process_cancel_key(){
-       /*
-        * cancel cmd, or gui cmd in response to
-        * F3 or CTRL-BREAK
-        */	
        	  if  (cmd_exec_rc() == -1){
 	   	  	  if (!cmd_mode){
 	   	  	     log_error(70,"previous command execution cancelled");
@@ -2562,10 +2812,15 @@ public  class  z390
 	   	      exit_main(16);
 	   	  }
        }
+
+
+
+/**
+ * Handle key typed events
+ *
+ * @param e keypress event
+ */
        public void keyTyped(KeyEvent e) {
-       /*
-        * Handle key typed events
-        */
     //dsh displayInfo(e, "KEY TYPED: "); 
        	  /*
        	   * collect any characters for accept
@@ -2575,12 +2830,26 @@ public  class  z390
        	   * but following ones not?  Hooky fix!
        	   */
        }
+
+
+
+/**
+ * Handle key released events
+ *
+ * @param e keypress event
+ */
        public void keyReleased(KeyEvent e) {
-       /* 
-        * Handle key released events
-        */
   //dsh         displayInfo(e, "KEY RELEASED: ");
        }
+
+
+
+/**
+ * display key event
+ *
+ * @param e keypress event
+ * @param s Key pressed as text
+ */
        protected void displayInfo(KeyEvent e, String s){
         String keyString, modString, tmpString,
                actionString, locationString;
@@ -2636,10 +2905,15 @@ public  class  z390
                            + "    " + locationString + newline);
        
     }
+
+
+
+/**
+ * Popup edit menu on right mouse click
+ *
+ * @param e mouse event
+ */
     public void mousePressed(MouseEvent e) {
-    /*
-     * Popup edit menu on right mouse ck
-     */	
     	   check_main_view();
            if (e.getButton() == MouseEvent.BUTTON3){	
               if (popup_edit_menu == null){
@@ -2670,31 +2944,65 @@ public  class  z390
               popup_edit_menu.show(mouse_comp,e.getX(),e.getY());
            }
     }
+
+
+
+/**
+ * Handle mouse release event
+ *
+ * @param e mouse event
+ */
     public void mouseReleased(MouseEvent e) {
 
     }
 
+
+
+/**
+ * Handle mouse event
+ *
+ * @param e mouse event
+ */
     public void mouseEntered(MouseEvent e) {
 
     }
 
+
+
+/**
+ * Handle mouse event
+ *
+ * @param e mouse event
+ */
     public void mouseExited(MouseEvent e) {
 
     }
 
+
+
+/**
+ * Handle mouse click event
+ *
+ * @param e mouse event
+ */
     public void mouseClicked(MouseEvent e) {
 
     }
+
+
+
+/**
+ * last component to lose focus (ignored for now)
+ */
     public void focusLost(FocusEvent e) {
-    /*
-     * last component to lose focus (ignored for now)
-     */	
     }
 
+
+
+/**
+ * Save last component to get focus
+ */
     public void focusGained(FocusEvent e) {
-    /*
-     * Save last component to get focus
-     */	
      	   Component temp_comp = e.getComponent();
     	   if  (temp_comp == z390_cmd_line){
     	   	   focus_comp = temp_comp;
@@ -2702,22 +3010,30 @@ public  class  z390
     		   focus_comp = log_text; // RPI 1041 
     	   }
     }
+
+
+
+/**
+ * abort command if runnung and turn off cmd_mode.
+ * If no command running and not cmd_mode, then exit z390.
+ */
 	    private void exit_command(){
-	    /*
-	     * abort command if runnung and turn off cmd_mode
-	     * If no command running and not cmd_mode,
-	     * then exit z390.
-	     */
 	    	 if (!cmd_mode && cmd_exec_rc() != -1){
 	   	  		exit_main(0);
 	    	 } else {
 	    	 	cmd_exec_cancel();
 	    	 }
 	    }
+
+
+
+/**
+ * set location of main window x, y
+ *
+ * @param cmd_parm1 first command parameter
+ * @param cmd_parm2 second command parameter
+ */
         private void loc_command(String cmd_parm1,String cmd_parm2){
-        /*
-         * set location of main window x, y
-         */
         	int x;
         	int y;
         	if (main_gui 
@@ -2758,10 +3074,16 @@ public  class  z390
         		log_error(64,"invalid window location");
         	}
         }
+
+
+
+/**
+ * resize main window
+ *
+ * @param cmd_parm1 first command parameter
+ * @param cmd_parm2 second command parameter
+ */	
 	    private void size_command(String cmd_parm1, String cmd_parm2){
-	    /*
-	     * resize main window
-	     */	
 	    	int x;
 	    	int y;
 	    	if (main_gui
@@ -2794,13 +3116,19 @@ public  class  z390
 	    	}
 	    	refresh_request = true;
 	    }
+
+
+
+/**
+ * set status line display on or off
+ * or set interval for logging status.
+ * If seconds specified as 0 or null, logging
+ * status is turned off
+ *
+ * @param cmd_parm1 first command parameter
+ * @param cmd_parm2 not used
+ */
 	    private void status_command(String cmd_parm1,String cmd_parm2){
-	    /*
-	     * set status line display on or off
-	     * or set interval for logging status.
-	     * If seconds specified as 0 or null, loggging
-	     * status is turned off
-	     */	
 	    	if (cmd_parm1 != null){
 		    		if (cmd_parm1.toUpperCase().equals("ON")){
 		    		   if (!main_status){
@@ -2837,23 +3165,35 @@ public  class  z390
          	   log_error(50,"missing immediate data parm");	
          	}
 	    }
+
+
+
+/**
+ * set GUI window title
+ *
+ * @param cmd_parm1 command parameter
+ * @param cmd_parm2 not used
+ */
 	    private void title_command(String cmd_parm1,String cmd_parm2){
-	    /*
-	     * set GUI window title 
-	     */	
 	    	if (main_gui && cmd_parm1 != null
 	    		&& cmd_parm1.length() >= 3){
 	    		main_title = cmd_parm1.substring(1,cmd_parm1.length()-1);
 	    		title_update();
 	    	}
 	    }
+
+
+
+/**
+ * set timeout interval in seconds used to timeout
+ * commands when not in command mode.  Default
+ * is 3 seconds.  Issue command with no arugment to
+ * turn off timeout.  Commands can be cancelled via BREAK.
+ *
+ * @param cmd_parm1 timeout limit as text
+ * @param cmd_parm2 not used
+ */
 	    private void timeout_command(String cmd_parm1,String cmd_parm2){
-	    /*	
-	     * set timeout interval in seconds used to timeout
-	     * commands when not in command mode.  Default
-	     * is 3 seconds.  Issue command with no arugment to
-	     * turn off timeout.  Commands can be cancelled via BREAK.
-	     */
 	    	  int sec = 0;
 	    	  if  (cmd_parm1 != null){
 	    	  	  sec = get_dec_int(cmd_parm1);
@@ -2866,11 +3206,18 @@ public  class  z390
 	    	  	  put_log("Timeout limit for CMD set to " + sec + " seconds");	  
 	          }
 	    }
+
+
+
+/**
+ * check or uncheck option menu item and update option parm lists for commands
+ *
+ * @param option_men menu option
+ * @param cmd_parm1 command parameter
+ * @param cmd_parm2 not used
+ * @return flag: true of false
+ */
 	    private boolean options_command(JCheckBoxMenuItem option_men, String cmd_parm1, String cmd_parm2){
-	    	/*
-	    	 * check or uncheck option menu item 
-	    	 * and update option parm lists for commands
-	    	 */
 	    	boolean option_flag = false;
 	    	if (cmd_parm1.toUpperCase().equals("ON")){
 	    		option_flag = true;
@@ -2975,11 +3322,15 @@ public  class  z390
 	    	}
 	    	return option_flag;
 	    }
+
+
+
+/**
+ * set current directory using file chooser dialog if parm1 null else use path
+ *
+ * @param cmd_parm1 command parameter
+ */
 		  private void cd_command(String cmd_parm1){
-			  /*
-			   * set current directory using file chooser
-			   * dialog if parm1 null else use path
-			   */
 		       	if  (perm_file_user_dir){
 		    	    if  (cmd_parm1 == null){
 		    	    	if (!main_batch){
@@ -3009,13 +3360,18 @@ public  class  z390
 		    	  	log_error(23,"Permission for CD change directory denied");
 		    	}
 			  }
+
+
+
+/**
+ * Invoke file chooser dialog to set dir_cur
+ *
+ * Note:
+ * <ul>
+ *  <li>dialog is kept for non gui mode to avoid dispose causing gui shutdown on last window</li>
+ * </ul>
+ */
 		   private void select_dir(){
-		   	    /*
-		   	     * Invoke file chooser dialog to
-		   	     * set dir_cur
-		   	     * (Note dialog is kept for non gui mode to avoid
-		   	     *  dispose causing gui shutdown on last window)
-		   	     */
 		   	   if (perm_select){
 		   		   final JFileChooser select_dir_chooser 
 		               = new JFileChooser();
@@ -3025,11 +3381,15 @@ public  class  z390
 		   	   	 	log_error(38,"Permision for directory selection denied");
 		   	   }
 		   }
+
+
+
+/**
+ * create dialog with file chooser to select current directory
+ *
+ * @param select_dir_chooser file chooser object
+ */
 		   private void create_select_dir(final JFileChooser select_dir_chooser){
-			   /*
-			    * create dialog with file chooser to
-			    * select current directory 
-			    */
 	             select_dir_frame = new JFrame(main_title + " Select Current Directory");
 	             select_dir_frame.addWindowListener(new WindowAdapter() {
 	     		     public void windowClosing(WindowEvent e) {
@@ -3085,16 +3445,22 @@ public  class  z390
 	  	     	 }
 	             select_dir_frame.setVisible(true);
 		   }
+
+
+
+/**
+ * Invoke file chooser dialog to set selected_file_name within select_file_type if any.
+ * 
+ * Notes:
+ * <ol>
+ *  <li>Note dialog is kept for non gui mode to avoid dispose causing gui shutdown on last window)</li>
+ * </ol>
+ *
+ * @param file_cmd select command
+ * @param file_type file type
+ * @param file_opt file option (not used)
+ */
 		   private void select_file(String file_cmd,String file_type,String file_opt){
-			    /*
-			     * Invoke file chooser dialog to
-			     * set selected_file_name within 
-			     * select_file_type if any.
-			     * 
-			     * Notes:
-			     *   1.  Note dialog is kept for non gui mode to avoid
-			     *       dispose causing gui shutdown on last window)
-			     */
 			   select_cmd       = file_cmd;
 			   select_file_type = file_type;
 			   select_opt       = file_opt; 
@@ -3119,12 +3485,16 @@ public  class  z390
 			   	} else {
 			   		log_error(39,"Permission for file selection denied");
 			   	}
-		   } 
+		   }
+
+
+
+/**
+ * create select file frame with chooser on first call. It is updated after that.
+ *
+ * @param select_file_chooser file chooser object
+ */
 		private void create_select_file(final JFileChooser select_file_chooser){
-			/*
-			 * create select file frame with chooser
-			 * on first call.  It is updated after that.
-			 */
             select_file_frame = new JFrame(main_title + " Select " + select_file_type + " file for " + select_cmd);
             select_file_frame.addWindowListener(new WindowAdapter() {
 		         public void windowClosing(WindowEvent e) {
@@ -3203,11 +3573,16 @@ public  class  z390
             select_file_frame.getContentPane().add("North", select_file_panel);
             select_file_frame.pack();
 		}
+
+
+
+/**
+ * return shortest file name possible with quotes if LSN
+ *
+ * @param file_name file name
+ * @return file name
+ */
 		private String get_short_file_name(String file_name){
-			/*
-			 * return shortest file name possible
-			 * with quotes if LSN
-			 */
 			if (file_name.length() > tz390.dir_cur.length()
 				&& file_name.substring(0,tz390.dir_cur.length()).equals(tz390.dir_cur)){
 				file_name = file_name.substring(tz390.dir_cur.length()); // skip dir + sep // RPI 499 remove +1 (already skipping sep)
@@ -3220,10 +3595,16 @@ public  class  z390
 			}
 			return file_name;
 		}
+
+
+
+/**
+ * display alphabetical list of basic and extended commands
+ *
+ * @param cmd_parm1 not used
+ * @param cmd_parm2 not used
+ */
 	    private void commands_command(String cmd_parm1, String cmd_parm2){
-	    /*
-	     * display alphabetical list of basic and extended commands
-	     */ 
 	    	put_log("\nz390 alphabetical command list");
 	    	put_log(" ");
 	    	put_log("ABOUT                    display summary information about z390 tool      ");
@@ -3271,11 +3652,13 @@ public  class  z390
 	    	put_log("TRACE    ON/OFF          set trace for BAL, PRN, LST, and/or LOG file cmds");
 	    }
 
-    /** Returns an ImageIcon, or null if the path was invalid.
-     * @param path - full path and file name
-     * @param description - description to add to ImageIcon
-     * @return ImageIcon
-     */
+
+
+/** Returns an ImageIcon, or null if the path was invalid.
+ * @param path - full path and file name
+ * @param description - description to add to ImageIcon
+ * @return ImageIcon
+ */
     protected static ImageIcon createImageIcon(String path, String description) {
 
 	        java.net.URL imgURL = z390.class.getResource(path);
@@ -3289,12 +3672,12 @@ public  class  z390
 
 
 
+/**
+ * if main window size has changed due to
+ * user streching without window event handler
+ * triggering update, do it now.
+ */
 	    private void check_main_view(){
-	    /*
-	     * if main window size has changed due to
-	     * user streching without window event handler
-	     * triggering update, do it now.
-	     */
 	    	if (refresh_request
 	    		|| main_width != main_frame.getSize().getWidth()
 	    		|| main_height != main_frame.getSize().getHeight()){
@@ -3305,13 +3688,17 @@ public  class  z390
 	    		refresh_request = false;
 	    	}
 	    }
+
+
+
+/**
+ * update log and command line size following any of the following changes:
+ * <ul>
+ *  <li>Change in window size</li>
+ *  <li>Change in font size</li>
+ * </ul>
+ */
         private void update_main_view(){
-        /*
-         * update log and command line size 
-         * following any of the following changes:
-         *   1.  Change in window size
-         *   2.  Change in font size
-         */	
           if (main_gui){
         		log_height = main_height - title_height - menu_height - command_height - status_height - applet_status_height;
         		log_width  = main_width - scrollbar_width - 4 * main_border;
@@ -3324,14 +3711,17 @@ public  class  z390
         		refresh_request = true;
         	}
         }
+
+
+
+/**
+ * rebuild z390_cmd and status lines
+ * with or without labels to fix current
+ * main_panel size.
+ * 
+ * start by removing labels and lines
+ */
         private void rebuild_lines(){
-        /*
-         * rebuild z390_cmd and status lines
-         * with or without labels to fix current
-         * main_panel size.
-         * 
-         * start by removing labels and lines
-         */	
         	if  (labels_visible){
         		main_panel.remove(cmd_label);
         		if (status_visible){
@@ -3370,11 +3760,26 @@ public  class  z390
                 main_panel.add(status_line);
             }
         }
+
+
+
+/**
+ * Event notification when a component is hidden
+ *
+ * @param e component event
+ */
         public void componentHidden(ComponentEvent e) {
     //dsh    	System.out.println("componentHidden event from "
     //dsh    		       + e.getComponent().getClass().getName());
             }
 
+
+
+/**
+ * Event notification when a component is moved
+ *
+ * @param e component event
+ */
             public void componentMoved(ComponentEvent e) {
      //dsh           Component c = e.getComponent();
      //dsh           System.out.println("componentMoved event from "
@@ -3385,6 +3790,13 @@ public  class  z390
      //dsh                          + c.getLocation().y);
             }
 
+
+
+/**
+ * Event notification when a component is resized
+ *
+ * @param e component event
+ */
             public void componentResized(ComponentEvent e) {
      //dsh           Component c = e.getComponent();
      //dsh           System.out.println("componentResized event from "
@@ -3396,23 +3808,36 @@ public  class  z390
                                update_main_view();
             }
 
+
+
+/**
+ * Event notification when a component is shown
+ *
+ * @param e component event
+ */
             public void componentShown(ComponentEvent e) {
    //dsh     	System.out.println("componentShown event from "
    //dsh     		       + e.getComponent().getClass().getName());
             }
+
+
+
+/**
+ * <ol>
+ *  <li>Terminate any prior exec process with error if non zero completion.</li>
+ *  <li>Start new process running on separate thread.</li>
+ * </ol>
+ *
+ * Note:
+ * <ul>
+ *  <li>cmd monitor will issue exec_term if timeout limit is reached before next start command does it.</li>
+ *  <li>Error will be issued by exec_term if non zero return code or if process had to be cancelled.</li>
+ * </ul>
+ *
+ * @param exec_cmd command to be executed
+ * @return -1 if exception occurred; 0 otherwise
+ */
             public int cmd_exec_start(String[] exec_cmd){
-                /*
-                 * 1. Terminate any prior exec process with
-                 *    error if non zero completion.
-                 * 2. Start new process running on 
-                 *    separate thread.  
-                 * 
-                 * Note: cmd monitor will issue exec_term
-                 *       if timeout limit is reached before next
-                 *       start command does it.  Error will be
-                 *       issued by exec_term if non zero return code
-                 *       or if process had to be cancelled.
-                 */
                 	int rc;
                 	if  (cmd_exec_process != null){
                 		rc = cmd_exec_rc();
@@ -3452,10 +3877,15 @@ public  class  z390
                         return -1;
                 	}
                 }
+
+
+
+/**
+ * send input to exec command in process
+ *
+ * @param cmd_line command text
+ */
             private void cmd_exec_input(String cmd_line){
-            /*
-             * send input to exec command in process
-             */
             	try {
             		if (cmd_line == null){  // RPI 731
             			cmd_exec_input_writer.println("");
@@ -3469,11 +3899,18 @@ public  class  z390
             		log_error(68,"execution input error" + e.toString());
             	}
             }
+
+
+
+/**
+ * <ol>
+ *  <li>return ending rc else -1</li>
+ *  <li>return 0 if no process defined</li>
+ * </ol>
+ *
+ * @return return code
+ */
             private int cmd_exec_rc(){
-                /*
-                 * return ending rc else -1
-                 * return 0 if no process defined
-                 */           	
                 	int rc = -1;
                 	if  (cmd_exec_process != null){
                 	    try {
@@ -3486,11 +3923,13 @@ public  class  z390
                 	}
                 	return rc;
                 }
+
+
+
+/**
+ * cancel exec process
+ */
             private void cmd_exec_cancel(){
-            /*
-             * cancel exec process
-             * 
-             */
             	ins_count++;
             	if  (cmd_exec_process != null){
             	    try {
@@ -3504,6 +3943,12 @@ public  class  z390
    	  		       	view_menu_cmd.setSelected(false);
    	  		    }
             }
+
+
+
+/**
+ * run something
+ */
         	public void run() {
         	    if (cmd_exec_process_thread == Thread.currentThread()) {
         			try {
@@ -3519,11 +3964,14 @@ public  class  z390
                     copy_cmd_error_to_log();
         		}
         	}
+
+
+
+/**
+ * copy cmd output to log a byte at a time
+ * to handle cmd output with cr/lf (ie TIME)
+ */
      private void copy_cmd_output_to_log(){
-     /*
-      * copy cmd output to log a byte at a time
-      * to handle cmd output with cr/lf (ie TIME)
-      */	
      	try {
             cmd_exec_output_msg = cmd_exec_output_reader.readLine();
 			while (cmd_exec_output_msg != null){
@@ -3544,10 +3992,13 @@ public  class  z390
 			}
 		}
      }
+
+
+
+/**
+ * copy cmd error to log a line at a time
+ */
      private void copy_cmd_error_to_log(){
-        /*
-         * copy cmd error to log a line at a time
-         */	
         	try {
         		cmd_exec_error_msg = cmd_exec_error_reader.readLine();
    			   	while (cmd_exec_error_msg != null){
@@ -3561,30 +4012,32 @@ public  class  z390
         		}
         	}
         }
+
+
+
+/**
+ * invoke batch command with specified file
+ * and options. If file is null, invoke file
+ * selection dialog with specified file type
+ * and then launch batch command when selection
+ * dialog closes.
+ * 
+ * Notes:
+ * <ol>
+ *  <li>select_file_type is set to filter files to type for command.</li>
+ *  <li>select_opt is set to any override options for command. The override options are updated on any change to the options menu.</li>
+ *  <li>CMD mode is started if not already running and mult batch commands just queue up for single process.</li>
+ *  <li>EDIT command is launched separately in parallel to allow multiple edits to run.</li>
+ *  <li>Editor is defined by EDIT environment variable else it uses hard coded default.</li>
+ *  <li>JOB launches selected BAT file with options</li>
+ * </ol>
+ *
+ * @param bat_cmd batch command
+ * @param bat_file_name batch file name
+ * @param bat_file_type batch file type
+ * @param bat_opt batch file options
+ */
 		private void batch_cmd(String bat_cmd, String bat_file_name, String bat_file_type, String bat_opt){
-	        /*
-	         * invoke batch command with specified file
-	         * and options.  If file is null, invoke file
-	         * selection dialog with specified file type
-	         * and then launch batch command when selection
-	         * dialog closes.
-	         * 
-	         * Note:
-	         *   1.  select_file_type is set to filter
-	         *       files to type for command.
-	         *   2.  select_opt is set to any override
-	         *       options for command.  The override
-	         *       options are updated on any change to
-	         *       the options menu.
-	         *   3.  CMD mode is started if not already
-	         *       running and mult batch commands just
-	         *       queue up for single process.
-	         *   4.  EDIT command is launched separately in
-	         *       parallel to allow multiple edits to run.
-	         *       Editor is defined by EDIT environment variable
-	         *       else it uses hard coded default.
-	         *   5.  JOB launches selected BAT file with options
-	         */
 	    	 select_cmd = bat_cmd;
 	    	 select_opt = bat_opt;
 	    	 if (select_opt == null){
@@ -3616,14 +4069,34 @@ public  class  z390
 	     	} else {
 	     		log_error(17,"Permission for file execute denied");
 	     	}
-
 	     }
+
+
+
+/**
+ * define accept and getdescription methods
+ * for file chooser to filter files to just
+ * select_file_type if any
+ */
 	 private class SelectFileType extends FileFilter{
-		 /*
-		  * define accept and getdescription methods
-		  * for file chooser to filter files to just
-		  * select_file_type if any
-		  */
+
+
+
+    /**
+     * Dummy constructor - no initialization needed
+     */
+    public SelectFileType()
+           {// dummy constructor - no initialization needed.
+            }
+
+
+
+    /**
+     * accept a file
+     *
+     * @param f file object
+     * @return true if file selected; false otherwise
+     */
 		   public boolean accept(File f) {
 			    if (f.isDirectory()) {
 				return true;
@@ -3639,10 +4112,26 @@ public  class  z390
 
 			    return false;
 			}
+
+
+
+    /**
+     * get description for file type
+     *
+     * @return text for file type
+     */
 		    public String getDescription() {
 		        return "Select files of type " + select_file_type;
 		    }
 
+
+
+    /**
+     * get extension from file object
+     *
+     * @param f file object
+     * @return file extension
+     */
 		    private String getExtension(File f) {
 		        String ext = null;
 		        String s = f.getName();
