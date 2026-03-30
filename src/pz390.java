@@ -27,14 +27,14 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Date;
 
+/**
+    pz390 is the processor emulator component of z390 which is called from
+    ez390 to execute 390 code loaded in memory. Both ez390 and pz390 call
+    sz390 svc component to perform os functions such as memory allocation and
+    loading.
+    */
 public class pz390 {
-	/* 
-	pz390 is the processor emulator component of z390 which is called from
-	ez390 to execute 390 code loaded in memory. Both ez390 and pz390 call
-	sz390 svc component to perform os functions such as memory allocation and
-	loading.
-	 * 
-	 * *************************************************** Maintenance
+	/* *************************************************** Maintenance
 	 * *************************************************** 04/18/05 copied from
 	 * lz390.java and modified 06/20/05 start adding and testing common instr.
 	 * 06/25/05 add opcodes to trace 
@@ -395,405 +395,408 @@ public class pz390 {
 	 *                       Other exceptions as defined in PoP
 	 *                       And implement as a no-op if all tests are passed
 	 * 2022-02-24 DSH ISSUE #300 add support for MGRK, MSGRKC, MSRKC, MSC
-           * 2022-03-05 DSH issue #300 updated based on review by John Yanci
-           *                     1) Simplify get_signed_bytes by dropping extra leading byte
-           *                     2) cleanup comments
-          * 2022-03-12 DSH fixed overflow for cc3 MSC, MSGC, MSGRKC, MSRKC
+     * 2022-03-05 DSH issue #300 updated based on review by John Ganci
+     *                      1) Simplify get_signed_bytes by dropping extra leading byte
+     *                      2) cleanup comments
+     * 2022-03-12 DSH fixed overflow for cc3 MSC, MSGC, MSGRKC, MSRKC
      * 2023-03-29 Issue 434 ED instruction handles alternate signs incorrectly
+     * 2025-10-20 AFK       Add javadoc comments
+     * 2026-02-06 Issue 760 Divide Decimal (DP) incorrectly issues S0CA when quotient
+     *                      length too long; should issue S0CB
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
 	/*
 	 * limits
 	 */
-	int max_pc_stk = 50; // PC, PR, PT stack for psw and regs /*
+    /** variable      */ int max_pc_stk = 50; // PC, PR, PT stack for psw and regs /*
 
-	int max_reg_off = 128; // max reg offset 16*8
+    /** variable      */ int max_reg_off = 128; // max reg offset 16*8
 	/*
 	 * shared tables and functions
 	 */
-	tz390 tz390 = null;
+    /** variable      */ tz390 tz390 = null;
 
 	/*
 	 * shared svc handler also accessed by ez390
 	 */
-	sz390 sz390 = null;
+    /** variable      */ sz390 sz390 = null;
 
 	/*
 	 * date variables
 	 */
-	Date cur_date = null;
+    /** variable      */ Date cur_date = null;
 
-	long ibm_mil = 0; // milliseconds from 1900 to 1970 Epoch
+    /** variable      */ long ibm_mil = 0; // milliseconds from 1900 to 1970 Epoch
 
-	long java_mil = 0; // milliseconds from 1970 to now
+    /** variable      */ long java_mil = 0; // milliseconds from 1970 to now
 
-	long ibm_ms = 0; // microseconds from 1900 to now
+    /** variable      */ long ibm_ms = 0; // microseconds from 1900 to now
 
 	/*
 	 * psw and instruction decode variables
 	 */
-	int test_trace_count = 0;
-	boolean trace_psw = false; // prevent ex_mode reset RPI 538
+    /** variable      */ int test_trace_count = 0;
+    /** variable      */ boolean trace_psw = false; // prevent ex_mode reset RPI 538
 
-	String ins_trace_line = null;
+    /** variable      */ String ins_trace_line = null;
 
-	long cpu_id = 0x390;
+    /** variable      */ long cpu_id = 0x390;
 
-	int psw_loc = 0;
+    /** variable      */ int psw_loc = 0;
 
-    boolean psw_problem_state   = true; /* z390 is always in problem state, supervisor state is not supported */
-    boolean psw_problem_mode    = true;
-    boolean psw_supervisor_mode = false;
+    /** variable      */ boolean psw_problem_state   = true; /* z390 is always in problem state, supervisor state is not supported */
+    /** variable      */ boolean psw_problem_mode    = true;
+    /** variable      */ boolean psw_supervisor_mode = false;
 
-	int psw_short = 0;
+    /** variable      */ int psw_short = 0;
 
-	short ins_short0 = 0;
+    /** variable      */ short ins_short0 = 0;
 
-	short ins_short1 = 0;
+    /** variable      */ short ins_short1 = 0;
 
-	short ins_short2 = 0;
+    /** variable      */ short ins_short2 = 0;
 
-	long long_high_bit = ((long) -1) << 63;
+    /** variable      */ long long_high_bit = ((long) -1) << 63;
 
-	int int_high_bit = 0x80000000;
+    /** variable      */ int int_high_bit = 0x80000000;
 
-	int max_pos_int = 0x7fffffff;
+    /** variable      */ int max_pos_int = 0x7fffffff;
 
-	int min_neg_int = 0x80000000;
+    /** variable      */ int min_neg_int = 0x80000000;
 
-	long max_pos_long = ((long) -1) >>> 1;
+    /** variable      */ long max_pos_long = ((long) -1) >>> 1;
 
-	long min_neg_long = ((long) 1) << 63;
-    long max_srp_long = max_pos_long / 10; // RPI 781
-    long min_srp_long = min_neg_long / 10; // RPI 781
-	BigInteger bi_max_pos_long = BigInteger.valueOf(max_pos_long);
-    BigDecimal bd_max_pos_long = BigDecimal.valueOf(max_pos_long); // RPI 791
-    BigDecimal bd_min_neg_long = BigDecimal.valueOf(min_neg_long); // RPI 791
-	BigDecimal bd_max_log_long = bd_max_pos_long.add(BigDecimal.ONE).multiply(BigDecimal.valueOf(2)); // rpi 1125
-    
-    BigInteger bi_min_neg_long = BigInteger.valueOf(min_neg_long);
-	BigInteger bi_max_pos_int = BigInteger.valueOf(max_pos_int); // rpi 781
+    /** variable      */ long min_neg_long = ((long) 1) << 63;
+    /** variable      */ long max_srp_long = max_pos_long / 10; // RPI 781
+    /** variable      */ long min_srp_long = min_neg_long / 10; // RPI 781
+    /** variable      */ BigInteger bi_max_pos_long = BigInteger.valueOf(max_pos_long);
+    /** variable      */ BigDecimal bd_max_pos_long = BigDecimal.valueOf(max_pos_long); // RPI 791
+    /** variable      */ BigDecimal bd_min_neg_long = BigDecimal.valueOf(min_neg_long); // RPI 791
+    /** variable      */ BigDecimal bd_max_log_long = bd_max_pos_long.add(BigDecimal.ONE).multiply(BigDecimal.valueOf(2)); // rpi 1125
 
-	BigInteger bi_min_neg_int = BigInteger.valueOf(min_neg_int); // rpi 781
-	long long_num_bits = ((long) -1) ^ long_high_bit;
+    /** variable      */ BigInteger bi_min_neg_long = BigInteger.valueOf(min_neg_long);
+    /** variable      */ BigInteger bi_max_pos_int = BigInteger.valueOf(max_pos_int); // rpi 781
 
-	long long_low32_bits = (((long) 1) << 32) - 1;
+    /** variable      */ BigInteger bi_min_neg_int = BigInteger.valueOf(min_neg_int); // rpi 781
+    /** variable      */ long long_num_bits = ((long) -1) ^ long_high_bit;
 
-	long long_low48_bits = (((long) 1) << 48) - 1;
+    /** variable      */ long long_low32_bits = (((long) 1) << 32) - 1;
 
-	long long_high32_bits = ((long) -1) << 32;
+    /** variable      */ long long_low48_bits = (((long) 1) << 48) - 1;
 
-	long long_sign_bits = ((long) -1) << 31;
+    /** variable      */ long long_high32_bits = ((long) -1) << 32;
 
-	long long_zone_ones = (((long) 0xf0f0f0f0) << 32)
-			| ((long) 0xf0f0f0f0 & long_low32_bits);
+    /** variable      */ long long_sign_bits = ((long) -1) << 31;
 
-	long long_num_ones = (((long) 0x0f0f0f0f) << 32) | (long) 0x0f0f0f0f;
+    /** variable      */ long long_zone_ones = (((long) 0xf0f0f0f0) << 32)
+                                              | ((long) 0xf0f0f0f0 & long_low32_bits);
 
-	int psw_amode24 = 0x00ffffff;
+    /** variable      */ long long_num_ones = (((long) 0x0f0f0f0f) << 32) | (long) 0x0f0f0f0f;
 
-	int psw_amode31 = 0x7fffffff;
+    /** variable      */ int psw_amode24 = 0x00ffffff;
+
+    /** variable      */ int psw_amode31 = 0x7fffffff;
 
     /* psw address fields all 4 bytes long currnetly. */                       // RPI 2001
     /* Needs to be extended to 8 bytes when amode64 is more fully supported */ // RPI 2001
-    int psw_amode64 = 0xfffffffe;                                              // RPI 2001
+    /** variable      */ int psw_amode64 = 0xfffffffe;                                              // RPI 2001
 
-	int psw_amode = psw_amode31;
-	int psw_amode24_high_bits = 0xff000000;          // RPI 828
-	int psw_amode31_high_bits = 0;                   // RPI 828
-	int psw_amode_high_bits = psw_amode31_high_bits; // RPI 828
+    /** variable      */ int psw_amode = psw_amode31;
+    /** variable      */ int psw_amode24_high_bits = 0xff000000;          // RPI 828
+    /** variable      */ int psw_amode31_high_bits = 0;                   // RPI 828
+    /** variable      */ int psw_amode_high_bits = psw_amode31_high_bits; // RPI 828
 
-	int psw_amode24_bit = 0;
+    /** variable      */ int psw_amode24_bit = 0;
 
-	int psw_amode31_bit = 0x80000000;
+    /** variable      */ int psw_amode31_bit = 0x80000000;
 
-	int psw_amode_bit = psw_amode31_bit;
+    /** variable      */ int psw_amode_bit = psw_amode31_bit;
 
-    int psw_extended_amode64_bit = 1;                      // RPI 1506
-    int psw_extended_amode64_on = 1;                       // RPI 1506
-    int psw_extended_amode64_off = 0;                      // RPI 1506
-    int psw_extended_amode_bit = psw_extended_amode64_off; // RPI 1506
+    /** variable      */ int psw_extended_amode64_bit = 1;                      // RPI 1506
+    /** variable      */ int psw_extended_amode64_on = 1;                       // RPI 1506
+    /** variable      */ int psw_extended_amode64_off = 0;                      // RPI 1506
+    /** variable      */ int psw_extended_amode_bit = psw_extended_amode64_off; // RPI 1506
 
-	long cur_stck = 0;
+    /** variable      */ long cur_stck = 0;
 
-	long last_stck = long_high_bit;
+    /** variable      */ long last_stck = long_high_bit;
 
 	/*
 	 * psw_cc program condition code
 	 */
-	int psw_cc0 = 8; // EQUAL, ZERO.
+    /** variable      */ int psw_cc0 = 8; // EQUAL, ZERO.
 
-	int psw_cc1 = 4; // LOW, LT
+    /** variable      */ int psw_cc1 = 4; // LOW, LT
 
-	int psw_cc2 = 2; // HIGH, GT
+    /** variable      */ int psw_cc2 = 2; // HIGH, GT
 
-	int psw_cc3 = 1; // OVERFLOW, ONES
+    /** variable      */ int psw_cc3 = 1; // OVERFLOW, ONES
 
-	// PSW CODE FROM MASK 1 2 4 8
-	int[] psw_cc_code = { -1, 3, 2, -1, 1, -1, -1, -1, 0 };
+                         // PSW CODE FROM MASK 1 2 4 8
+    /** variable      */ int[] psw_cc_code = { -1, 3, 2, -1, 1, -1, -1, -1, 0 };
 
-	int[] psw_cc_mask = { 8, 4, 2, 1 };
+    /** variable      */ int[] psw_cc_mask = { 8, 4, 2, 1 };
 
-	int psw_cc_equal = psw_cc0; // mask 8
+    /** variable      */ int psw_cc_equal = psw_cc0; // mask 8
 
-	int psw_cc_low = psw_cc1; // mask 4
+    /** variable      */ int psw_cc_low = psw_cc1; // mask 4
 
-	int psw_cc_high = psw_cc2; // mask 2
+    /** variable      */ int psw_cc_high = psw_cc2; // mask 2
 
-	int psw_cc_ovf = psw_cc3; // mask 1
+    /** variable      */ int psw_cc_ovf = psw_cc3; // mask 1
 
-	int psw_cc = psw_cc_equal;
+    /** variable      */ int psw_cc = psw_cc_equal;
 
 	/*
 	 * psw_pgm_mask fields and pgm interruption fields
 	 */
-	int psw_pgm_mask_fix = 0x8; // fixed point overflow
+    /** variable      */ int psw_pgm_mask_fix = 0x8; // fixed point overflow
 
-	int psw_pgm_mask_dec = 0x4; // decimal overflow
+    /** variable      */ int psw_pgm_mask_dec = 0x4; // decimal overflow
 
-	int psw_pgm_mask_exp = 0x2; // fp exponent overflow
+    /** variable      */ int psw_pgm_mask_exp = 0x2; // fp exponent overflow
 
-	int psw_pgm_mask_sig = 0x1; // fp significance
+    /** variable      */ int psw_pgm_mask_sig = 0x1; // fp significance
 
-	int psw_pgm_mask = 0x6; // enable all but fixed and fp sig.//RPI33
+    /** variable      */ int psw_pgm_mask = 0x6; // enable all but fixed and fp sig.//RPI33
     /*
      * psw trace table
      */
-	byte   max_trace_table   = 10; // also change trace_table_next RPI 819
-	byte   trace_table_index = 9;
-	int[]  trace_table_addr  = new int[max_trace_table];
-    byte[] trace_table_next  = {1,2,3,4,5,6,7,8,9,0};
+    /** variable      */ byte   max_trace_table   = 10; // also change trace_table_next RPI 819
+    /** variable      */ byte   trace_table_index = 9;
+    /** variable      */ int[]  trace_table_addr  = new int[max_trace_table];
+    /** variable      */ byte[] trace_table_next  = {1,2,3,4,5,6,7,8,9,0};
 	/*
 	 * FPC IEEE BFP/DFP control registers
 	 */
-	int fp_fpc_mask_inv = 0x80000000;
+    /** variable      */ int fp_fpc_mask_inv = 0x80000000;
 
-	int fp_fpc_mask_div = 0x40000000;
+    /** variable      */ int fp_fpc_mask_div = 0x40000000;
 
-	int fp_fpc_mask_ovf = 0x20000000;
+    /** variable      */ int fp_fpc_mask_ovf = 0x20000000;
 
-	int fp_fpc_mask_unf = 0x10000000;
+    /** variable      */ int fp_fpc_mask_unf = 0x10000000;
 
-	int fp_fpc_mask_sig = 0x08000000;
-	// fp_dd_mod_bi to truncate digits         1234567890123456    
-    BigInteger fp_dd_mod_bi = new BigInteger("10000000000000000");
-	// fp_ld_mod_bi to truncate digits         1234567890123456789012345678901234    
-    BigInteger fp_ld_mod_bi = new BigInteger("10000000000000000000000000000000000");
-    int alt_rnd_mode = 0; // RPI 1125 set alternate round mode if ?=A
-    int alt_fpe_mode = 0; // RPI 1125 set alt FP extension if bits 20-23 set
-    int fp_bfp_rnd_mask = 0x00000007; // bfp rounding mode  RPI 1125 was 3
-	int fp_bfp_rnd_not = 0xfffffff8; // not round mode bits RPI 1125 was c
-	int fp_bfp_rnd_even = 0x0; // round to nearest (default)
-	int fp_bfp_rnd_zero = 0x1; // round toward zero (discard bits to right)
-	int fp_bfp_rnd_pi = 0x2; // round toward plus infinity
-	int fp_bfp_rnd_ni = 0x3; // round toward negative infinity
-	int fp_bfp_rnd = fp_bfp_rnd_even; // default rounding mode
-	int fp_bfp_rnd_default = fp_bfp_rnd;
-	int fp_dfp_rnd_mask = 0x00000070; // bfp rounding mode
-	int fp_dfp_rnd_not = 0xffffff8f; // not round mode bits
-	int fp_rnd_near_even  = 0x0; // round to nearest with ties to even (default)
-	int fp_rnd_zero       = 0x1; // round toward zero (discard bits to right)
-	int fp_rnd_pi         = 0x2; // round toward plus infinity
-	int fp_rnd_ni         = 0x3; // round toward negative infinity
-	int fp_rnd_near_nzero = 0x4; // round to hearest with ties to not zero 
-	int fp_rnd_near_zero  = 0x5; // round to nearest with ties to zero
-	int fp_rnd_nzero      = 0x6; // round to not zero
-	int fp_rnd_shorter    = 0x7; // round to shorter precision 
-	int fp_sig_req = 0; // dfp significant digits requested
-	int fp_sig_dig = 0; // dfp significant digits found
-	int fp_dfp_rnd = fp_rnd_near_even; // default rounding mode
-	int fp_dfp_rnd_default = fp_dfp_rnd; // RPI 1125
-	int fp_fpc_reg = 0x70000000; // div+ovf+unf
+    /** variable      */ int fp_fpc_mask_sig = 0x08000000;
+                         // fp_dd_mod_bi to truncate digits         1234567890123456    
+    /** variable      */ BigInteger fp_dd_mod_bi = new BigInteger("10000000000000000");
+                         // fp_ld_mod_bi to truncate digits         1234567890123456789012345678901234    
+    /** variable      */ BigInteger fp_ld_mod_bi = new BigInteger("10000000000000000000000000000000000");
+    /** variable      */ int alt_rnd_mode = 0; // RPI 1125 set alternate round mode if ?=A
+    /** variable      */ int alt_fpe_mode = 0; // RPI 1125 set alt FP extension if bits 20-23 set
+    /** variable      */ int fp_bfp_rnd_mask = 0x00000007; // bfp rounding mode  RPI 1125 was 3
+    /** variable      */ int fp_bfp_rnd_not = 0xfffffff8; // not round mode bits RPI 1125 was c
+    /** variable      */ int fp_bfp_rnd_even = 0x0; // round to nearest (default)
+    /** variable      */ int fp_bfp_rnd_zero = 0x1; // round toward zero (discard bits to right)
+    /** variable      */ int fp_bfp_rnd_pi = 0x2; // round toward plus infinity
+    /** variable      */ int fp_bfp_rnd_ni = 0x3; // round toward negative infinity
+    /** variable      */ int fp_bfp_rnd = fp_bfp_rnd_even; // default rounding mode
+    /** variable      */ int fp_bfp_rnd_default = fp_bfp_rnd;
+    /** variable      */ int fp_dfp_rnd_mask = 0x00000070; // bfp rounding mode
+    /** variable      */ int fp_dfp_rnd_not = 0xffffff8f; // not round mode bits
+    /** variable      */ int fp_rnd_near_even  = 0x0; // round to nearest with ties to even (default)
+    /** variable      */ int fp_rnd_zero       = 0x1; // round toward zero (discard bits to right)
+    /** variable      */ int fp_rnd_pi         = 0x2; // round toward plus infinity
+    /** variable      */ int fp_rnd_ni         = 0x3; // round toward negative infinity
+    /** variable      */ int fp_rnd_near_nzero = 0x4; // round to hearest with ties to not zero 
+    /** variable      */ int fp_rnd_near_zero  = 0x5; // round to nearest with ties to zero
+    /** variable      */ int fp_rnd_nzero      = 0x6; // round to not zero
+    /** variable      */ int fp_rnd_shorter    = 0x7; // round to shorter precision 
+    /** variable      */ int fp_sig_req = 0; // dfp significant digits requested
+    /** variable      */ int fp_sig_dig = 0; // dfp significant digits found
+    /** variable      */ int fp_dfp_rnd = fp_rnd_near_even; // default rounding mode
+    /** variable      */ int fp_dfp_rnd_default = fp_dfp_rnd; // RPI 1125
+    /** variable      */ int fp_fpc_reg = 0x70000000; // div+ovf+unf
 
-	int fp_dxc_dec = 0x00; // packed decimal data exception
+    /** variable      */ int fp_dxc_dec = 0x00; // packed decimal data exception
 
-	int fp_dxc_it = 0x08; // IEEE inexact and truncated
+    /** variable      */ int fp_dxc_it = 0x08; // IEEE inexact and truncated
 
-	int fp_dxc_ii = 0x0C; // IEEE inexact and incremented
+    /** variable      */ int fp_dxc_ii = 0x0C; // IEEE inexact and incremented
 
-	int fp_dxc_ue = 0x10; // IEEE underflow, exact
+    /** variable      */ int fp_dxc_ue = 0x10; // IEEE underflow, exact
 
-	int fp_dxc_uit = 0x18; // IEEE underflow, inexact and truncated
+    /** variable      */ int fp_dxc_uit = 0x18; // IEEE underflow, inexact and truncated
 
-	int fp_dxc_uii = 0x1C; // IEEE underflow, inexact and incremented
+    /** variable      */ int fp_dxc_uii = 0x1C; // IEEE underflow, inexact and incremented
 
-	int fp_dxc_oe = 0x20; // IEEE overflow, exact
+    /** variable      */ int fp_dxc_oe = 0x20; // IEEE overflow, exact
 
-	int fp_dxc_oit = 0x28; // IEEE overflow, inexact and truncated
+    /** variable      */ int fp_dxc_oit = 0x28; // IEEE overflow, inexact and truncated
 
-	int fp_dxc_oii = 0x2C; // IEEE overflow, inexact and incremented
+    /** variable      */ int fp_dxc_oii = 0x2C; // IEEE overflow, inexact and incremented
 
-	int fp_dxc_div = 0x40; // IEEE division by zero
+    /** variable      */ int fp_dxc_div = 0x40; // IEEE division by zero
 
-	int fp_dxc_oper = 0x80; // IEEE invalid operation
-	int fp_dxc_trap = 0xff; // compare and trap exception RPI 817
-	int fp_dxc = 0; // byte 2 of fp_fpc_reg with IEEE exceptions
-    String fp_dfp_digits = null;
-	
+    /** variable      */ int fp_dxc_oper = 0x80; // IEEE invalid operation
+    /** variable      */ int fp_dxc_trap = 0xff; // compare and trap exception RPI 817
+    /** variable      */ int fp_dxc = 0; // byte 2 of fp_fpc_reg with IEEE exceptions
+    /** variable      */ String fp_dfp_digits = null;
+
     /*
      * ASSIST global execution data areas RPI 812
      */
-    int ast_xdump_addr = 0; // default xdump area
-    int ast_xdump_len  = 0; // default xdump area length
-    int ast_xread_tiot = -1;
-    int ast_xprnt_tiot = -1;
-    int ast_xpnch_tiot = -1;
-    int ast_xget_tiot  = -1;
-    int ast_xput_tiot  = -1; 
-    int ast_xread_dcb = 0xe00;
-    int ast_xprnt_dcb = 0xe02;
-    int ast_xpnch_dcb = 0xe04;
-    int ast_xget_dcb  = 0xe0a;
-    int ast_xput_dcb  = 0xe0c;
-    String ast_file_line;
+    /** variable      */ int ast_xdump_addr = 0; // default xdump area
+    /** variable      */ int ast_xdump_len  = 0; // default xdump area length
+    /** variable      */ int ast_xread_tiot = -1;
+    /** variable      */ int ast_xprnt_tiot = -1;
+    /** variable      */ int ast_xpnch_tiot = -1;
+    /** variable      */ int ast_xget_tiot  = -1;
+    /** variable      */ int ast_xput_tiot  = -1; 
+    /** variable      */ int ast_xread_dcb = 0xe00;
+    /** variable      */ int ast_xprnt_dcb = 0xe02;
+    /** variable      */ int ast_xpnch_dcb = 0xe04;
+    /** variable      */ int ast_xget_dcb  = 0xe0a;
+    /** variable      */ int ast_xput_dcb  = 0xe0c;
+    /** variable      */ String ast_file_line;
     /*
 	 * program check and program interruption fields
 	 */
-	boolean psw_check = false;
-	boolean psw_abend = false; // RPI 1054 once per cycle
+    /** variable      */ boolean psw_check = false;
+    /** variable      */ boolean psw_abend = false; // RPI 1054 once per cycle
 
-	boolean fp_signal = false;
+    /** variable      */ boolean fp_signal = false;
 
-	int psw_pic_exit = 0; // exit normally
+    /** variable      */ int psw_pic_exit = 0; // exit normally
 
-	int psw_pic_io = 0x013;
+    /** variable      */ int psw_pic_io = 0x013;
 
-	int psw_pic_oper = 0x0c1;
+    /** variable      */ int psw_pic_oper = 0x0c1;
 
-	int psw_pic_priv = 0x0c2;
+    /** variable      */ int psw_pic_priv = 0x0c2;
 
-	int psw_pic_exec = 0x0c3;
+    /** variable      */ int psw_pic_exec = 0x0c3;
 
-	int psw_pic_prot = 0x0c4;
+    /** variable      */ int psw_pic_prot = 0x0c4;
 
-	int psw_pic_addr = 0x0c5;
+    /** variable      */ int psw_pic_addr = 0x0c5;
 
-	int psw_pic_spec = 0x0c6; // specification exception
+    /** variable      */ int psw_pic_spec = 0x0c6; // specification exception
 
-	int psw_pic_data = 0x0c7;
+    /** variable      */ int psw_pic_data = 0x0c7;
 
-	int psw_pic_fx_ovf = 0x0c8;
+    /** variable      */ int psw_pic_fx_ovf = 0x0c8;
 
-	int psw_pic_fx_div = 0x0c9;
+    /** variable      */ int psw_pic_fx_div = 0x0c9;
 
-	int psw_pic_pd_ovf = 0x0ca;
+    /** variable      */ int psw_pic_pd_ovf = 0x0ca;
 
-	int psw_pic_pd_div = 0x0cb;
+    /** variable      */ int psw_pic_pd_div = 0x0cb;
 
-	int psw_pic_fp_ovf = 0x0cc;
+    /** variable      */ int psw_pic_fp_ovf = 0x0cc;
 
-	int psw_pic_fp_unf = 0x0cd;
+    /** variable      */ int psw_pic_fp_unf = 0x0cd;
 
-	int psw_pic_fp_sig = 0x0ce;
+    /** variable      */ int psw_pic_fp_sig = 0x0ce;
 
-	int psw_pic_fp_div = 0x0cf;
+    /** variable      */ int psw_pic_fp_div = 0x0cf;
 
-	int psw_pic_spec_op = 0x0d3; // RPI 1622 DK Special Operation Exception
+    /** variable      */ int psw_pic_spec_op = 0x0d3; // RPI 1622 DK Special Operation Exception
 
-	int psw_pic_timeout = 0x422;
-    int psw_pic_gm_err = 0x804; // getmain request invalid
+    /** variable      */ int psw_pic_timeout = 0x422;
+    /** variable      */ int psw_pic_gm_err = 0x804; // getmain request invalid
 
-	int psw_pic_link_err = 0x806; // link failed
+    /** variable      */ int psw_pic_link_err = 0x806; // link failed
 
-	int psw_pic_no_mem = 0x80a; // out of memory
-	int psw_pic_fm_err = 0x90a; // freemain request invalid
+    /** variable      */ int psw_pic_no_mem = 0x80a; // out of memory
+    /** variable      */ int psw_pic_fm_err = 0x90a; // freemain request invalid
 
-	int psw_pic_bad_mem = 0xa0a; // memory corruption
+    /** variable      */ int psw_pic_bad_mem = 0xa0a; // memory corruption
 
-	int psw_pic_stkerr = 0xf01; // pc stack errror
+    /** variable      */ int psw_pic_stkerr = 0xf01; // pc stack errror
 
-	int psw_pic_operr = 0xf02; // opcode mask error
+    /** variable      */ int psw_pic_operr = 0xf02; // opcode mask error
 
-	int psw_pic_interr = 0xf03; // Bigint error
+    /** variable      */ int psw_pic_interr = 0xf03; // Bigint error
 
-	int psw_pic_memerr = 0xf04; // memory exceeded
+    /** variable      */ int psw_pic_memerr = 0xf04; // memory exceeded
 
-	int psw_pic_waiterr = 0xf05; // wait for pz390 thread error
+    /** variable      */ int psw_pic_waiterr = 0xf05; // wait for pz390 thread error
 
-	int psw_pic_error = 0xfff; // internal error
+    /** variable      */ int psw_pic_error = 0xfff; // internal error
 
-	int psw_pic = 0;
-	// psw_cc? code = 3 2 1 0
-	// psw_cc value = 1 2 4 8 //RPI174
-	int[] psw_carry = { -1, 1, 1, -1, 0, -1, -1, -1, 0 }; // index by psw_cc
+    /** variable      */ int psw_pic = 0;
+                         // psw_cc? code = 3 2 1 0
+                         // psw_cc value = 1 2 4 8 //RPI174
+    /** variable      */ int[] psw_carry = { -1, 1, 1, -1, 0, -1, -1, -1, 0 }; // index by psw_cc
 
-	int[] psw_borrow = { -1, 0, 0, -1, 1, -1, -1, -1, 1 }; // index by psw_cc
+    /** variable      */ int[] psw_borrow = { -1, 0, 0, -1, 1, -1, -1, -1, 1 }; // index by psw_cc
 
-	byte psw_ins_len = 0;
-    byte last_psw_ins_len = 0; // RPI 845
-	int opcode1 = 0;
+    /** variable      */ byte psw_ins_len = 0;
+    /** variable      */ byte last_psw_ins_len = 0; // RPI 845
+    /** variable      */ int opcode1 = 0;
 
-	int opcode2 = -1;
-	int opcode_clc = 0xd5; // allow psw clc RPI 538
-    int opcode_srp = 0xf0; // RPI 820 don't S0c5 on neg shift
-	int opcode2_offset_e = 1; // E PR oooo
+    /** variable      */ int opcode2 = -1;
+    /** variable      */ int opcode_clc = 0xd5; // allow psw clc RPI 538
+    /** variable      */ int opcode_srp = 0xf0; // RPI 820 don't S0c5 on neg shift
+    /** variable      */ int opcode2_offset_e = 1; // E PR oooo
 
-	int opcode2_offset_ri = 1; // RI IIHH ooroiiii
+    /** variable      */ int opcode2_offset_ri = 1; // RI IIHH ooroiiii
 
-	int opcode2_offset_rie = 5; // RIE BRXLG oorriiii00oo
+    /** variable      */ int opcode2_offset_rie = 5; // RIE BRXLG oorriiii00oo
 
-	int opcode2_offset_ril = 1; // RIL BRCL oomollllllll
+    /** variable      */ int opcode2_offset_ril = 1; // RIL BRCL oomollllllll
 
-	int opcode2_offset_rrf = 1; // RRF MAER oooor0rr
+    /** variable      */ int opcode2_offset_rrf = 1; // RRF MAER oooor0rr
 
-	int opcode2_offset_rre = 1; // RRE MSR oooo00rr
+    /** variable      */ int opcode2_offset_rre = 1; // RRE MSR oooo00rr
 
-	int opcode2_offset_rsl = 5; // RSL TP oor0bddd00oo
+    /** variable      */ int opcode2_offset_rsl = 5; // RSL TP oor0bddd00oo
 
-	int opcode2_offset_rsy = 5; // RSY LMG oorrbdddhhoo
+    /** variable      */ int opcode2_offset_rsy = 5; // RSY LMG oorrbdddhhoo
 
-	int opcode2_offset_rxf = 5; // RXF MAE oorxbdddr0oo
+    /** variable      */ int opcode2_offset_rxf = 5; // RXF MAE oorxbdddr0oo
 
-	int opcode2_offset_rxe = 5; // RXE ADB oorxbddd00oo
+    /** variable      */ int opcode2_offset_rxe = 5; // RXE ADB oorxbddd00oo
 
-	int opcode2_offset_rxy = 5; // RXY MLG oorxbdddhhoo
+    /** variable      */ int opcode2_offset_rxy = 5; // RXY MLG oorxbdddhhoo
 
-	int opcode2_offset_s = 1; // S SSM oooobddd
+    /** variable      */ int opcode2_offset_s = 1; // S SSM oooobddd
 
-	int opcode2_offset_siy = 5; // SIY TMY ooiibdddhhoo
+    /** variable      */ int opcode2_offset_siy = 5; // SIY TMY ooiibdddhhoo
 
-	int opcode2_offset_sse = 1; // SSE LASP oooobdddbddd
+    /** variable      */ int opcode2_offset_sse = 1; // SSE LASP oooobdddbddd
 
-	int opcode2_offset_ssf = 1; // SSF MVCOS oorobdddbddd
+    /** variable      */ int opcode2_offset_ssf = 1; // SSF MVCOS oorobdddbddd
 
-    int opcode2_offset_vqst = 1; // V-QST VAS   RPI VF01
-    int opcode2_offset_vqv  = 1; // V-QV        RPI VF01
-    int opcode2_offset_vst  = 1; // V-VST       RPI VF01
-    int opcode2_offset_vv   = 1; // V-VV        RPI VF01
-    int opcode2_offset_vrre = 1; // V-RRE       RPI VF01
-    int opcode2_offset_vrse = 1; // V-RSE       RPI VF01
-    int opcode2_offset_vrx  = 5;  // RPI 2202
-    int opcode2_offset_vs   = 1; // V-S   VRCL  RPI VF01
-    int opcode2_offset_vvr  = 1; // V-VR        RPI VF01
-    int opcode2_offset_vvs  = 1; // V-VS        RPI VF01
+    /** variable      */ int opcode2_offset_vqst = 1; // V-QST VAS   RPI VF01
+    /** variable      */ int opcode2_offset_vqv  = 1; // V-QV        RPI VF01
+    /** variable      */ int opcode2_offset_vst  = 1; // V-VST       RPI VF01
+    /** variable      */ int opcode2_offset_vv   = 1; // V-VV        RPI VF01
+    /** variable      */ int opcode2_offset_vrre = 1; // V-RRE       RPI VF01
+    /** variable      */ int opcode2_offset_vrse = 1; // V-RSE       RPI VF01
+    /** variable      */ int opcode2_offset_vrx  = 5;  // RPI 2202
+    /** variable      */ int opcode2_offset_vs   = 1; // V-S   VRCL  RPI VF01
+    /** variable      */ int opcode2_offset_vvr  = 1; // V-VR        RPI VF01
+    /** variable      */ int opcode2_offset_vvs  = 1; // V-VS        RPI VF01
 
-		int dup_opcodes = 0; // count of duplicate opcodes
+    /** variable      */ int dup_opcodes = 0; // count of duplicate opcodes
 
-	int max_espie = 50;
+    /** variable      */ int max_espie = 50;
 
-	int tot_espie = 0;
-	int  espie_psw_cc        = 0; // RPI 809
-	int  espie_psw_amode     = 0; // RPI 809
-	int  espie_psw_amode_bit = 0; // RPI 809
-	long espie_last_ins_cnt = 0;  // RPI 825
+    /** variable      */ int tot_espie = 0;
+    /** variable      */ int  espie_psw_cc        = 0; // RPI 809
+    /** variable      */ int  espie_psw_amode     = 0; // RPI 809
+    /** variable      */ int  espie_psw_amode_bit = 0; // RPI 809
+    /** variable      */ long espie_last_ins_cnt = 0;  // RPI 825
 
-	boolean espie_exit_running = false;
+    /** variable      */ boolean espie_exit_running = false;
 
-	int[] espie_pie = (int[]) Array.newInstance(int.class, max_espie); // espie
+    /** variable      */ int[] espie_pie = (int[]) Array.newInstance(int.class, max_espie); // espie
 																		// psw_pic
 																		// bit
 																		// mask
 																		// from
 																		// R0
 
-	int[] espie_exit = (int[]) Array.newInstance(int.class, max_espie); // espie
+    /** variable      */ int[] espie_exit = (int[]) Array.newInstance(int.class, max_espie); // espie
 																		// exit
 																		// addr
 																		// from
 																		// R1
 
-	int[] espie_parm = (int[]) Array.newInstance(int.class, max_espie); // parm
+    /** variable      */ int[] espie_parm = (int[]) Array.newInstance(int.class, max_espie); // parm
 																		// address
 																		// if
 																		// not
@@ -801,738 +804,760 @@ public class pz390 {
 																		// from
 																		// R15
 
-	int max_estae = 50;
+    /** variable      */ int max_estae = 50;
 
-	int tot_estae = 0;
-	int  estae_psw_cc        = 0; // RPI 809
-	int  estae_psw_amode     = 0; // RPI 809
-	int  estae_psw_amode_bit = 0; // RPI 809
-	long estae_last_ins_cnt = 0;   // RPI 825
+    /** variable      */ int tot_estae = 0;
+    /** variable      */ int  estae_psw_cc        = 0; // RPI 809
+    /** variable      */ int  estae_psw_amode     = 0; // RPI 809
+    /** variable      */ int  estae_psw_amode_bit = 0; // RPI 809
+    /** variable      */ long estae_last_ins_cnt = 0;   // RPI 825
 
-	boolean estae_exit_running = false;
+    /** variable      */ boolean estae_exit_running = false;
 
-	int[] estae_exit = (int[]) Array.newInstance(int.class, max_estae);
-	int[] estae_parm = (int[]) Array.newInstance(int.class, max_estae);
-    int[] estae_link = (int[]) Array.newInstance(int.class, max_estae);
-	int if1 = 0;
+    /** variable      */ int[] estae_exit = (int[]) Array.newInstance(int.class, max_estae);
+    /** variable      */ int[] estae_parm = (int[]) Array.newInstance(int.class, max_estae);
+    /** variable      */ int[] estae_link = (int[]) Array.newInstance(int.class, max_estae);
+    /** variable      */ int if1 = 0;
 
-	int if2 = 0;
-	int if3 = 0; // RIE8 RNSBG RPI 817
-    int if4 = 0; // RIE4 RNSBG and CGIJ  RPI 817
-	int if5 = 0; // RIE8 RNSBG RPI 817
-	int sv1 = 0; 
+    /** variable      */ int if2 = 0;
+    /** variable      */ int if3 = 0; // RIE8 RNSBG RPI 817
+    /** variable      */ int if4 = 0; // RIE4 RNSBG and CGIJ  RPI 817
+    /** variable      */ int if5 = 0; // RIE8 RNSBG RPI 817
+    /** variable      */ int sv1 = 0; 
 
-	int rflen = 0;
+    /** variable      */ int rflen = 0;
 
-	int rflen1 = 0;
+    /** variable      */ int rflen1 = 0;
 
-	int rflen2 = 0;
+    /** variable      */ int rflen2 = 0;
 
-	int rf1 = 0;
+    /** variable      */ int rf1 = 0;
 
-	int rf2 = 0;
+    /** variable      */ int rf2 = 0;
 
-	int rf3 = 0;
+    /** variable      */ int rf3 = 0;
 
-	int mf1 = 0;
+    /** variable      */ int mf1 = 0;
 
-	int mf2 = 0;
+    /** variable      */ int mf2 = 0;
 
-	int mf3 = 0;
+    /** variable      */ int mf3 = 0;
 
-	int mf4 = 0;
+    /** variable      */ int mf4 = 0;
 
-	int[] mask_bits = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
+    /** variable      */ int[] mask_bits = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
 
-	int rv1 = 0;
+    /** variable      */ int rv1 = 0;
 
-	int rv2 = 0;
+    /** variable      */ int rv2 = 0;
 
-	int rv3 = 0;
+    /** variable      */ int rv3 = 0;
 
-	int rvw = 0;
+    /** variable      */ int rvw = 0;
 
-	long rlv1 = 0;
+    /** variable      */ long rlv1 = 0;
 
-	long rlv2 = 0;
+    /** variable      */ long rlv2 = 0;
 
-	long rlv3 = 0;
+    /** variable      */ long rlv3 = 0;
 
-	long rlvw = 0;
+    /** variable      */ long rlvw = 0;
 
-	int bf1 = 0;
+    /** variable      */ int bf1 = 0;
 
-	int df1 = 0;
-    int xf1 = 0; // RPI 812 for ASSIST
-	int xf2 = 0;
+    /** variable      */ int df1 = 0;
+    /** variable      */ int xf1 = 0; // RPI 812 for ASSIST
+    /** variable      */ int xf2 = 0;
 
-	int bf2 = 0;
+    /** variable      */ int bf2 = 0;
 
-	int df2 = 0;
-	int bf3 = 0;
+    /** variable      */ int df2 = 0;
+    /** variable      */ int bf3 = 0;
 
-	int df3 = 0;
-	int bd3_loc = 0;
-	int bd1_loc = 0;
+    /** variable      */ int df3 = 0;
+    /** variable      */ int bd3_loc = 0;
+    /** variable      */ int bd1_loc = 0;
 
-	int bd2_loc = 0;
-	int bf4     = 0;
-	int df4     = 0;
-    int bd4_loc = 0;  // RRS1/RRS3 RPI 817
-	int bd1_start = 0;
+    /** variable      */ int bd2_loc = 0;
+    /** variable      */ int bf4     = 0;
+    /** variable      */ int df4     = 0;
+    /** variable      */ int bd4_loc = 0;  // RRS1/RRS3 RPI 817
+    /** variable      */ int bd1_start = 0;
 
-	int bd2_start = 0;
+    /** variable      */ int bd2_start = 0;
 
-	int xbd2_loc = 0;
-	int xbd1_loc = 0; // RPI 812 for ASSIST
+    /** variable      */ int xbd2_loc = 0;
+    /** variable      */ int xbd1_loc = 0; // RPI 812 for ASSIST
 
-	int bd1_end = 0;
+    /** variable      */ int bd1_end = 0;
 
-	byte string_eod = 0;
+    /** variable      */ byte string_eod = 0;
 
-	byte test_control = 0; // RPI 454
+    /** variable      */ byte test_control = 0; // RPI 454
 
-	byte test_byte1 = 0; // RPI 454
+    /** variable      */ byte test_byte1 = 0; // RPI 454
 
-	byte test_byte2 = 0; // RPI 454
-	byte function_byte1 = 0; // RPI 580
-	byte function_byte2 = 0; // RPI 580;
+    /** variable      */ byte test_byte2 = 0; // RPI 454
+    /** variable      */ byte function_byte1 = 0; // RPI 580
+    /** variable      */ byte function_byte2 = 0; // RPI 580;
 
-	boolean string_eod_found = false;
+    /** variable      */ boolean string_eod_found = false;
 
-	boolean fields_equal = true;
+    /** variable      */ boolean fields_equal = true;
 
-	int bd2_end = 0;
+    /** variable      */ int bd2_end = 0;
 
-	int data_len = 0;
+    /** variable      */ int data_len = 0;
 
-	int pad_len = 0;
+    /** variable      */ int pad_len = 0;
 
-	byte fill_char;
-	byte fill_mem_char = (byte)0xF5; // RPI 819
-	byte fill_reg_char = (byte)0xF4; // RPI 819
+    /** variable      */ byte fill_char;
+    /** variable      */ byte fill_mem_char = (byte)0xF5; // RPI 819
+    /** variable      */ byte fill_reg_char = (byte)0xF4; // RPI 819
 
-	boolean ex_mode = false;
+    /** variable      */ boolean ex_mode = false;
 
-	int ex_opcode1 = 0x44;   // EX   "44"   RPI 817
-	int exrl_opcode1 = 0xc6; // EXRL "C6x0" RPI 817
-    int exrl_opcode2 = 0x00; // EXR: "C6x0" RPI 817
-	byte ex_mod_byte = 0; // save targe+1 byte
+    /** variable      */ int ex_opcode1 = 0x44;   // EX   "44"   RPI 817
+    /** variable      */ int exrl_opcode1 = 0xc6; // EXRL "C6x0" RPI 817
+    /** variable      */ int exrl_opcode2 = 0x00; // EXR: "C6x0" RPI 817
+    /** variable      */ byte ex_mod_byte = 0; // save targe+1 byte
 
-	int ex_psw_return = 0; // return from ex
-    int ex_psw_ilc =0; // length of ex instruction in halfwords // RPI 1505
+    /** variable      */ int ex_psw_return = 0; // return from ex
+    /** variable      */ int ex_psw_ilc =0; // length of ex instruction in halfwords // RPI 1505
 
-	byte[] pd_bytes = (byte[]) Array.newInstance(byte.class, 16);
+    /** variable      */ byte[] pd_bytes = (byte[]) Array.newInstance(byte.class, 16);
 
-	ByteBuffer pd_byte = ByteBuffer.wrap(pd_bytes, 0, 16);
+    /** variable      */ ByteBuffer pd_byte = ByteBuffer.wrap(pd_bytes, 0, 16);
 
-    byte[] zone_bytes = null;
-	byte zone_byte_zone = (byte)0xf0;
-	int    zone_len = 0;
-	int    zone_index = 0;
-	boolean zone_sign_zero = true;
-	
-	String pdf_str = null;
+    /** variable      */ byte[] zone_bytes = null;
+    /** variable      */ byte zone_byte_zone = (byte)0xf0;
+    /** variable      */ int    zone_len = 0;
+    /** variable      */ int    zone_index = 0;
+    /** variable      */ boolean zone_sign_zero = true;
 
-	int pdf_str_len = 0;
+    /** variable      */ String pdf_str = null;
 
-	int pdf_zeros = 0;
+    /** variable      */ int pdf_str_len = 0;
 
-	int pdf_leftmost_zeros = 0;  // RPI 2013
+    /** variable      */ int pdf_zeros = 0;
 
-	int pdf_leftmost_zeros1 = 0; // RPI 2013
+    /** variable      */ int pdf_leftmost_zeros = 0;  // RPI 2013
 
-	char pdf_sign = '+';
-    boolean pdf_trunc = false; // RPI 788
-	int pdf_zone = 0xf0;
+    /** variable      */ int pdf_leftmost_zeros1 = 0; // RPI 2013
 
-	byte pdf_next_out = 0;
+    /** variable      */ char pdf_sign = '+';
+    /** variable      */ boolean pdf_trunc = false; // RPI 788
+    /** variable      */ int pdf_zone = 0xf0;
 
-	byte pdf_next_in = 0;
+    /** variable      */ byte pdf_next_out = 0;
 
-	boolean pdf_next_right = true;
+    /** variable      */ byte pdf_next_in = 0;
 
-	BigInteger big_int = null;
+    /** variable      */ boolean pdf_next_right = true;
 
-	BigInteger big_int1 = null;
+    /** variable      */ BigInteger big_int = null;
 
-	BigInteger big_int2 = null;
+    /** variable      */ BigInteger big_int1 = null;
 
-	boolean pdf_is_big = false;
-	boolean pdf_signed = true;
-	boolean pdf_ignore_sign = false; // rpi 2204
+    /** variable      */ BigInteger big_int2 = null;
 
-	BigInteger pdf_big_int = null;
+    /** variable      */ boolean pdf_is_big = false;
+    /** variable      */ boolean pdf_signed = true;
+    /** variable      */ boolean pdf_ignore_sign = false; // rpi 2204
 
-	BigInteger pdf_big_int1 = null;
+    /** variable      */ BigInteger pdf_big_int = null;
 
-	BigInteger pdf_big_int2 = null;
+    /** variable      */ BigInteger pdf_big_int1 = null;
 
-	long pdf_long = 0;
+    /** variable      */ BigInteger pdf_big_int2 = null;
 
-	long pdf_long1 = 0;
+    /** variable      */ long pdf_long = 0;
 
-	long pdf_long2 = 0;
+    /** variable      */ long pdf_long1 = 0;
 
-	BigInteger[] big_int_array = null;
+    /** variable      */ long pdf_long2 = 0;
 
-	int pd_cc = 0;
+    /** variable      */ BigInteger[] big_int_array = null;
+
+    /** variable      */ int pd_cc = 0;
     /*
      * R?SBG rotate selected bits data RPI 817  
      */
-	boolean rsbg_test = false;
-	boolean rsbg_zero = false;
-	long rsbg_mask_zeros = 0;
-	long rsbg_mask_ones = 0;
-	boolean risb_zero = false; // RPI 1125
-	int  risb_mask_zeros = 0; // RPI 1125
-	int  risb_mask_ones = 0;  // RPI 1125	
+    /** variable      */ boolean rsbg_test = false;
+    /** variable      */ boolean rsbg_zero = false;
+    /** variable      */ long rsbg_mask_zeros = 0;
+    /** variable      */ long rsbg_mask_ones = 0;
+    /** variable      */ boolean risb_zero = false; // RPI 1125
+    /** variable      */ int  risb_mask_zeros = 0; // RPI 1125
+    /** variable      */ int  risb_mask_ones = 0;  // RPI 1125	
 	/*
 	 * 16 gpr registers
 	 */
-	byte[] reg_byte = (byte[]) Array.newInstance(byte.class, 16 * 8);
+    /** variable      */ byte[] reg_byte = (byte[]) Array.newInstance(byte.class, 16 * 8);
 
-	ByteBuffer reg = ByteBuffer.wrap(reg_byte, 0, 16 * 8);
+    /** variable      */ ByteBuffer reg = ByteBuffer.wrap(reg_byte, 0, 16 * 8);
 
-	int reg_len = 128;
+    /** variable      */ int reg_len = 128;
 
-	byte[] work_reg_byte = (byte[]) Array.newInstance(byte.class, 16);
+    /** variable      */ byte[] work_reg_byte = (byte[]) Array.newInstance(byte.class, 16);
 
-	ByteBuffer work_reg = ByteBuffer.wrap(work_reg_byte, 0, 16);
+    /** variable      */ ByteBuffer work_reg = ByteBuffer.wrap(work_reg_byte, 0, 16);
 
-	byte[] log_reg_byte = new byte[9];
+    /** variable      */ byte[] log_reg_byte = new byte[9];
 
-	ByteBuffer log_reg = ByteBuffer.wrap(log_reg_byte, 0, 9);
+    /** variable      */ ByteBuffer log_reg = ByteBuffer.wrap(log_reg_byte, 0, 9);
 
-	int r0 = 4;
+    /** variable      */ int r0 = 4;
 
-	int r1 = 12;
+    /** variable      */ int r1 = 12;
 
-	int r2 = 20;
+    /** variable      */ int r2 = 20;
 
-	int r3 = 28;
+    /** variable      */ int r3 = 28;
 
-	int r4 = 36;
+    /** variable      */ int r4 = 36;
 
-	int r5 = 44;
+    /** variable      */ int r5 = 44;
 
-	int r6 = 52;
+    /** variable      */ int r6 = 52;
 
-	int r7 = 60;
+    /** variable      */ int r7 = 60;
 
-	int r8 = 68;
+    /** variable      */ int r8 = 68;
 
-	int r9 = 76;
+    /** variable      */ int r9 = 76;
 
-	int r10 = 84;
+    /** variable      */ int r10 = 84;
 
-	int r11 = 92;
+    /** variable      */ int r11 = 92;
 
-	int r12 = 100;
+    /** variable      */ int r12 = 100;
 
-	int r13 = 108;
+    /** variable      */ int r13 = 108;
 
-	int r14 = 116;
+    /** variable      */ int r14 = 116;
 
-	int r15 = 124;
+    /** variable      */ int r15 = 124;
 
-	/*
-	 * 16 fp registers with eb, db, and bd co-regs to avoid conversions when
-	 * possible fp_ctl defines fp reg state as follows: 0 = fp_ctl_ld no co-reg
-	 * defined (set by LE,LD) 1 = fp_ctl_eb set for EB float operations 2 =
-	 * fp_ctl_db set for EH, DH, DB operations 3 = fp_ctl_bd set for LH, LB
-	 * operations Notes: 1. LE and LD set fp_reg with fp_ctl_ld 2. STE and STD
-	 * store from fp_reg or co_reg 3. fp_reg is indexed by reg * 8 byte index 4.
-	 * fp_ctl and co-regs are indexed by reg #
-	 */
-	byte[] fp_reg_byte = (byte[]) Array.newInstance(byte.class, 16 * 8);
+/**
+ * 16 fp registers with eb, db, and bd co-regs to avoid conversions when
+ * possible fp_ctl defines fp reg state as follows:
+ * <ul>
+ * <li>0 = fp_ctl_ld no co-reg defined (set by LE,LD)</li>
+ * <li>1 = fp_ctl_eb set for EB float operations</li>
+ * <li>2 = fp_ctl_db set for EH, DH, DB operations</li>
+ * <li>3 = fp_ctl_bd set for LH, LB operations</li>
+ * </ul>
+ *
+ * Notes:
+ * <ol>
+ * <li>LE and LD set fp_reg with fp_ctl_ld</li>
+ * <li>STE and STD store from fp_reg or co_reg</li>
+ * <li>fp_reg is indexed by reg * 8 byte index</li>
+ * <li>fp_ctl and co-regs are indexed by reg #</li>
+ * </ol>
+ */
+                         byte[] fp_reg_byte = (byte[]) Array.newInstance(byte.class, 16 * 8);
 
-	ByteBuffer fp_reg = ByteBuffer.wrap(fp_reg_byte, 0, 16 * 8);
+    /** variable      */ ByteBuffer fp_reg = ByteBuffer.wrap(fp_reg_byte, 0, 16 * 8);
 
-	byte[] trace_reg_byte = (byte[]) Array.newInstance(byte.class, 16 * 8);
+    /** variable      */ byte[] trace_reg_byte = (byte[]) Array.newInstance(byte.class, 16 * 8);
 
-	ByteBuffer trace_reg = ByteBuffer.wrap(trace_reg_byte, 0, 16 * 8);
+    /** variable      */ ByteBuffer trace_reg = ByteBuffer.wrap(trace_reg_byte, 0, 16 * 8);
 
-	byte fp_ctl_ld = 0;
+    /** variable      */ byte fp_ctl_ld = 0;
 
-	byte fp_ctl_eb = 1;  // EB
+    /** variable      */ byte fp_ctl_eb = 1;  // EB
 
-	byte fp_ctl_db = 2;  // EH, DB
+    /** variable      */ byte fp_ctl_db = 2;  // EH, DB
 
-	byte fp_ctl_bd1 = 3; // DH, ED, DD, or first half LB, LH, LD
+    /** variable      */ byte fp_ctl_bd1 = 3; // DH, ED, DD, or first half LB, LH, LD
 
-	byte fp_ctl_bd2 = 4; // second half LB, LH, LD
+    /** variable      */ byte fp_ctl_bd2 = 4; // second half LB, LH, LD
 
-	byte[] fp_reg_type = (byte[]) Array.newInstance(byte.class, 16);
+    /** variable      */ byte[] fp_reg_type = (byte[]) Array.newInstance(byte.class, 16);
 
-	byte[] fp_reg_ctl = (byte[]) Array.newInstance(byte.class, 16);
+    /** variable      */ byte[] fp_reg_ctl = (byte[]) Array.newInstance(byte.class, 16);
 
-	float[] fp_reg_eb = (float[]) Array.newInstance(float.class, 16);
+    /** variable      */ float[] fp_reg_eb = (float[]) Array.newInstance(float.class, 16);
 
-	double[] fp_reg_db = (double[]) Array.newInstance(double.class, 16);
+    /** variable      */ double[] fp_reg_db = (double[]) Array.newInstance(double.class, 16);
 
-	BigDecimal[] fp_reg_bd = (BigDecimal[]) Array.newInstance(BigDecimal.class,
-			16);
+    /** variable      */ BigDecimal[] fp_reg_bd = (BigDecimal[]) Array.newInstance(BigDecimal.class, 16);
 
-	byte[] work_fp_reg_byte = (byte[]) Array.newInstance(byte.class, 16);
+    /** variable      */ byte[] work_fp_reg_byte = (byte[]) Array.newInstance(byte.class, 16);
 
-	ByteBuffer work_fp_reg = ByteBuffer.wrap(work_fp_reg_byte, 0, 16);
-    boolean[] fp_pair_type  = {
-    		false, false, false, // DB, DD, DH
-    		false, false, false, // EB, ED, EH
-    		true,  true,  true};  // LB, LD, LH
-	boolean[] fp_pair_valid = { // RPI 229
-	/* 0 1 2 3 */
-	        true, true, false, false, // 0 - 3 (0,2) (1,3)
-			true, true, false, false, // 4 - 7 (4,6) (5,7)
-			true, true, false, false, // 8 - 11 (8,10) (9,11)
-			true, true, false, false }; // 12 - 15 (12,14) (13,15)
-	byte[] ar_reg_byte = (byte[]) Array.newInstance(byte.class, 16 * 4); // RPI 1055
+    /** variable      */ ByteBuffer work_fp_reg = ByteBuffer.wrap(work_fp_reg_byte, 0, 16);
+    /** variable      */ boolean[] fp_pair_type  = {
+                                                    false, false, false, // DB, DD, DH
+                                                    false, false, false, // EB, ED, EH
+                                                    true,  true,  true};  // LB, LD, LH
+    /** variable      */ boolean[] fp_pair_valid = { // RPI 229
+                                                    /* 0 1 2 3 */
+                                                    true, true, false, false, // 0 - 3 (0,2) (1,3)
+                                                    true, true, false, false, // 4 - 7 (4,6) (5,7)
+                                                    true, true, false, false, // 8 - 11 (8,10) (9,11)
+                                                    true, true, false, false }; // 12 - 15 (12,14) (13,15)
+    /** variable      */ byte[] ar_reg_byte = (byte[]) Array.newInstance(byte.class, 16 * 4); // RPI 1055
 
-	ByteBuffer ar_reg = ByteBuffer.wrap(ar_reg_byte, 0, 16 * 4); // RPI 1055
+    /** variable      */ ByteBuffer ar_reg = ByteBuffer.wrap(ar_reg_byte, 0, 16 * 4); // RPI 1055
 
-    int ar_reg_len = 64;                                         // RPI 2003
+    /** variable      */ int ar_reg_len = 64;                                         // RPI 2003
 	/*
 	 * fp work variables
 	 */
-	long lrv1 = 0;
+    /** variable      */ long lrv1 = 0;
 
-	float fp_rev1 = 0;
+    /** variable      */ float fp_rev1 = 0;
 
-	float fp_rev2 = 0;
+    /** variable      */ float fp_rev2 = 0;
 
-	double fp_rdv1 = 0;
+    /** variable      */ double fp_rdv1 = 0;
 
-	double fp_rdv2 = 0;
+    /** variable      */ double fp_rdv2 = 0;
 
-	double fp_rdv3 = 0;
+    /** variable      */ double fp_rdv3 = 0;
 
-	double fp_rdv4 = 0;
+    /** variable      */ double fp_rdv4 = 0;
 
-	BigDecimal fp_rbdv1 = null;
+    /** variable      */ BigDecimal fp_rbdv1 = null;
 
-	BigDecimal fp_rbdv2 = null;
+    /** variable      */ BigDecimal fp_rbdv2 = null;
 
-	BigDecimal fp_rbdv3 = null;
+    /** variable      */ BigDecimal fp_rbdv3 = null;
 
-	BigDecimal fp_bd_half = BigDecimal.ONE.divide(BigDecimal.valueOf(2));
+    /** variable      */ BigDecimal fp_bd_half = BigDecimal.ONE.divide(BigDecimal.valueOf(2));
 
-	BigDecimal fp_bd_two = BigDecimal.valueOf(2);
+    /** variable      */ BigDecimal fp_bd_two = BigDecimal.valueOf(2);
 
-	BigDecimal[] fp_bd_int_rem = null; // RPI 333 bd integer and remainder
+    /** variable      */ BigDecimal[] fp_bd_int_rem = null; // RPI 333 bd integer and remainder
 
-	BigDecimal fp_bd_inc = null;
+    /** variable      */ BigDecimal fp_bd_inc = null;
 
-	int fp_bd_sqrt_scale = 0;
+    /** variable      */ int fp_bd_sqrt_scale = 0;
 
-	byte[] work_fp_bi1_bytes = (byte[]) Array.newInstance(byte.class, 15);
+    /** variable      */ byte[] work_fp_bi1_bytes = (byte[]) Array.newInstance(byte.class, 15);
 
-	BigInteger work_fp_bi1 = null;
+    /** variable      */ BigInteger work_fp_bi1 = null;
 
-	BigDecimal work_fp_bd1 = null;
+    /** variable      */ BigDecimal work_fp_bd1 = null;
 
-	BigDecimal work_fp_bd2 = null; // RPI 407
+    /** variable      */ BigDecimal work_fp_bd2 = null; // RPI 407
 
-	long long_dh_zero = 0; // RPI 384
+    /** variable      */ long long_dh_zero = 0; // RPI 384
 
-	long long_dh_exp_bits = (long) (0x7f) << 56;
+    /** variable      */ long long_dh_exp_bits = (long) (0x7f) << 56;
 
-	long long_dh_man_bits = ((long) (1) << 56) - 1;
+    /** variable      */ long long_dh_man_bits = ((long) (1) << 56) - 1;
 
-	int fp_round = 0;
+    /** variable      */ int fp_round = 0;
 
-	long long_work = 0;
+    /** variable      */ long long_work = 0;
 
-	long long_sign = 0;
+    /** variable      */ long long_sign = 0;
 
-	long long_exp = 0;
+    /** variable      */ long long_exp = 0;
 
-	long long_man = 0;
+    /** variable      */ long long_man = 0;
 
-	long long_db_exp_bits = (long) (0x7ff) << 52;
+    /** variable      */ long long_db_exp_bits = (long) (0x7ff) << 52;
 
-	long long_db_one_bits = ((long) (1) << 53) - 1;
+    /** variable      */ long long_db_one_bits = ((long) (1) << 53) - 1;
 
-	long long_db_one_bit = ((long) (1) << 52);
+    /** variable      */ long long_db_one_bit = ((long) (1) << 52);
 
-	long long_db_man_bits = ((long) (1) << 52) - 1;
+    /** variable      */ long long_db_man_bits = ((long) (1) << 52) - 1;
 
-	int int_eh_exp_bits = 0x7f << 24;
+    /** variable      */ int int_eh_exp_bits = 0x7f << 24;
 
-	int int_eh_zero = 0x00000000; // RPI 384
+    /** variable      */ int int_eh_zero = 0x00000000; // RPI 384
 
-	int int_work = 0;
+    /** variable      */ int int_work = 0;
 
-	int int_man = 0;
+    /** variable      */ int int_man = 0;
 
-	int int_eh_man_bits = 0xffffff;
-    MathContext fp_dhg_context = null; // RPI 821 for DH
-	MathContext fp_lxg_context = null; // RPI 821 for LB/LH
-	MathContext fp_dbg_context = null; //         for EH, DB
-	MathContext fp_ebg_context = null; //         for EB
-	MathContext fp_dh_context = null; // RPI 821
-	MathContext fp_lh_context = null; // RPI 821
-	MathContext fp_ld_context = null; // RPI 1211
-	// RPI 1125 use array for BFP context
-	RoundingMode[] fp_bfp_rnd_mode = {
-			RoundingMode.HALF_EVEN, // 0
-			RoundingMode.DOWN,      // 1
-			RoundingMode.CEILING,   // 2
-			RoundingMode.FLOOR,     // 3
-			RoundingMode.HALF_EVEN, // 4 not valid
-			RoundingMode.HALF_EVEN, // 5 not valid
-			RoundingMode.HALF_EVEN, // 6 not valid
-			RoundingMode.HALF_UP,   // 7 (prepare for shorter)
-	};
-	MathContext[] fp_db_rnd_context = {
-			new MathContext(16,RoundingMode.HALF_EVEN), // 0
-			new MathContext(16,RoundingMode.DOWN),      // 1
-			new MathContext(16,RoundingMode.CEILING),   // 2
-			new MathContext(16,RoundingMode.FLOOR),     // 3
-			new MathContext(16,RoundingMode.HALF_EVEN), // 4 not used
-			new MathContext(16,RoundingMode.HALF_EVEN), // 5 not used
-			new MathContext(16,RoundingMode.HALF_EVEN), // 6 not used
-			new MathContext(16,RoundingMode.HALF_UP),   // 7 (prevare for shorter)
-	};
-	MathContext[] fp_eb_rnd_context = {
-			new MathContext(7,RoundingMode.HALF_EVEN), // 0
-			new MathContext(7,RoundingMode.DOWN),      // 1
-			new MathContext(7,RoundingMode.CEILING),   // 2
-			new MathContext(7,RoundingMode.FLOOR),     // 3
-			new MathContext(7,RoundingMode.HALF_EVEN),   // 4 not used
-			new MathContext(7,RoundingMode.HALF_EVEN),   // 5 not used
-			new MathContext(7,RoundingMode.HALF_EVEN),   // 6 not used
-			new MathContext(7,RoundingMode.HALF_UP),   // 7
-	};
-	MathContext[] fp_lb_rnd_context = {
-			new MathContext(34,RoundingMode.HALF_EVEN), // 0
-			new MathContext(34,RoundingMode.DOWN),      // 1
-			new MathContext(34,RoundingMode.CEILING),   // 2
-			new MathContext(34,RoundingMode.FLOOR),     // 3
-			new MathContext(34,RoundingMode.HALF_EVEN), // 4 not used
-			new MathContext(34,RoundingMode.HALF_EVEN), // 5 not used
-			new MathContext(34,RoundingMode.HALF_EVEN), // 6 not used
-			new MathContext(34,RoundingMode.HALF_UP),   // 7
-	};
-	byte fp_hfp_class = 0;
-	byte fp_bfp_class = 1;
-	byte fp_dfp_class = 3;
-	RoundingMode[] fp_dfp_rnd_mode = {
-			RoundingMode.HALF_EVEN, // 0
-			RoundingMode.DOWN,      // 1
-			RoundingMode.CEILING,   // 2
-			RoundingMode.FLOOR,     // 3
-			RoundingMode.HALF_UP,   // 4
-			RoundingMode.HALF_DOWN, // 5
-			RoundingMode.UP,        // 6
-			RoundingMode.HALF_UP,   // 7 (prepare for shorter)
-	};
-	MathContext[] fp_dd_rnd_context = {
-			new MathContext(16,RoundingMode.HALF_EVEN), // 0
-			new MathContext(16,RoundingMode.DOWN),      // 1
-			new MathContext(16,RoundingMode.CEILING),   // 2
-			new MathContext(16,RoundingMode.FLOOR),     // 3
-			new MathContext(16,RoundingMode.HALF_UP),   // 4
-			new MathContext(16,RoundingMode.HALF_DOWN), // 5
-			new MathContext(16,RoundingMode.UP),        // 6
-			new MathContext(16,RoundingMode.HALF_UP),   // 7 (prevare for shorter)
-	};
-	MathContext[] fp_ed_rnd_context = {
-			new MathContext(7,RoundingMode.HALF_EVEN), // 0
-			new MathContext(7,RoundingMode.DOWN),      // 1
-			new MathContext(7,RoundingMode.CEILING),   // 2
-			new MathContext(7,RoundingMode.FLOOR),     // 3
-			new MathContext(7,RoundingMode.HALF_UP),   // 4
-			new MathContext(7,RoundingMode.HALF_DOWN), // 5
-			new MathContext(7,RoundingMode.UP),        // 6
-			new MathContext(7,RoundingMode.HALF_UP),   // 7
-	};
-	MathContext[] fp_ld_rnd_context = {
-			new MathContext(34,RoundingMode.HALF_EVEN), // 0
-			new MathContext(34,RoundingMode.DOWN),      // 1
-			new MathContext(34,RoundingMode.CEILING),   // 2
-			new MathContext(34,RoundingMode.FLOOR),     // 3
-			new MathContext(34,RoundingMode.HALF_UP),   // 4
-			new MathContext(34,RoundingMode.HALF_DOWN), // 5
-			new MathContext(34,RoundingMode.UP),        // 6
-			new MathContext(34,RoundingMode.HALF_UP),   // 7
-	};
-	MathContext[] fp_dh_rnd_context = { // RPI 1211
-			new MathContext(15,RoundingMode.HALF_EVEN), // 0
-			new MathContext(15,RoundingMode.DOWN),      // 1
-			new MathContext(15,RoundingMode.CEILING),   // 2
-			new MathContext(15,RoundingMode.FLOOR),     // 3
-			new MathContext(15,RoundingMode.HALF_UP),   // 4
-			new MathContext(15,RoundingMode.HALF_DOWN), // 5
-			new MathContext(15,RoundingMode.UP),        // 6
-			new MathContext(15,RoundingMode.HALF_UP),   // 7
-	};
+    /** variable      */ int int_eh_man_bits = 0xffffff;
+    /** variable      */ MathContext fp_dhg_context = null; // RPI 821 for DH
+    /** variable      */ MathContext fp_lxg_context = null; // RPI 821 for LB/LH
+    /** variable      */ MathContext fp_dbg_context = null; //         for EH, DB
+    /** variable      */ MathContext fp_ebg_context = null; //         for EB
+    /** variable      */ MathContext fp_dh_context = null; // RPI 821
+    /** variable      */ MathContext fp_lh_context = null; // RPI 821
+    /** variable      */ MathContext fp_ld_context = null; // RPI 1211
+    /**
+     *RPI 1125 use array for BFP context
+     */
+                         RoundingMode[] fp_bfp_rnd_mode = {
+                                                           RoundingMode.HALF_EVEN, // 0
+                                                           RoundingMode.DOWN,      // 1
+                                                           RoundingMode.CEILING,   // 2
+                                                           RoundingMode.FLOOR,     // 3
+                                                           RoundingMode.HALF_EVEN, // 4 not valid
+                                                           RoundingMode.HALF_EVEN, // 5 not valid
+                                                           RoundingMode.HALF_EVEN, // 6 not valid
+                                                           RoundingMode.HALF_UP,   // 7 (prepare for shorter)
+                                                           };
+    /** variable      */ MathContext[] fp_db_rnd_context = {
+                                                            new MathContext(16,RoundingMode.HALF_EVEN), // 0
+                                                            new MathContext(16,RoundingMode.DOWN),      // 1
+                                                            new MathContext(16,RoundingMode.CEILING),   // 2
+                                                            new MathContext(16,RoundingMode.FLOOR),     // 3
+                                                            new MathContext(16,RoundingMode.HALF_EVEN), // 4 not used
+                                                            new MathContext(16,RoundingMode.HALF_EVEN), // 5 not used
+                                                            new MathContext(16,RoundingMode.HALF_EVEN), // 6 not used
+                                                            new MathContext(16,RoundingMode.HALF_UP),   // 7 (prevare for shorter)
+                                                            };
+    /** variable      */ MathContext[] fp_eb_rnd_context = {
+                                                            new MathContext(7,RoundingMode.HALF_EVEN), // 0
+                                                            new MathContext(7,RoundingMode.DOWN),      // 1
+                                                            new MathContext(7,RoundingMode.CEILING),   // 2
+                                                            new MathContext(7,RoundingMode.FLOOR),     // 3
+                                                            new MathContext(7,RoundingMode.HALF_EVEN),   // 4 not used
+                                                            new MathContext(7,RoundingMode.HALF_EVEN),   // 5 not used
+                                                            new MathContext(7,RoundingMode.HALF_EVEN),   // 6 not used
+                                                            new MathContext(7,RoundingMode.HALF_UP),   // 7
+                                                            };
+    /** variable      */ MathContext[] fp_lb_rnd_context = {
+                                                            new MathContext(34,RoundingMode.HALF_EVEN), // 0
+                                                            new MathContext(34,RoundingMode.DOWN),      // 1
+                                                            new MathContext(34,RoundingMode.CEILING),   // 2
+                                                            new MathContext(34,RoundingMode.FLOOR),     // 3
+                                                            new MathContext(34,RoundingMode.HALF_EVEN), // 4 not used
+                                                            new MathContext(34,RoundingMode.HALF_EVEN), // 5 not used
+                                                            new MathContext(34,RoundingMode.HALF_EVEN), // 6 not used
+                                                            new MathContext(34,RoundingMode.HALF_UP),   // 7
+                                                            };
+    /** variable      */ byte fp_hfp_class = 0;
+    /** variable      */ byte fp_bfp_class = 1;
+    /** variable      */ byte fp_dfp_class = 3;
+    /** variable      */ RoundingMode[] fp_dfp_rnd_mode = {
+                                                           RoundingMode.HALF_EVEN, // 0
+                                                           RoundingMode.DOWN,      // 1
+                                                           RoundingMode.CEILING,   // 2
+                                                           RoundingMode.FLOOR,     // 3
+                                                           RoundingMode.HALF_UP,   // 4
+                                                           RoundingMode.HALF_DOWN, // 5
+                                                           RoundingMode.UP,        // 6
+                                                           RoundingMode.HALF_UP,   // 7 (prepare for shorter)
+                                                           };
+    /** variable      */ MathContext[] fp_dd_rnd_context = {
+                                                            new MathContext(16,RoundingMode.HALF_EVEN), // 0
+                                                            new MathContext(16,RoundingMode.DOWN),      // 1
+                                                            new MathContext(16,RoundingMode.CEILING),   // 2
+                                                            new MathContext(16,RoundingMode.FLOOR),     // 3
+                                                            new MathContext(16,RoundingMode.HALF_UP),   // 4
+                                                            new MathContext(16,RoundingMode.HALF_DOWN), // 5
+                                                            new MathContext(16,RoundingMode.UP),        // 6
+                                                            new MathContext(16,RoundingMode.HALF_UP),   // 7 (prevare for shorter)
+                                                            };
+    /** variable      */ MathContext[] fp_ed_rnd_context = {
+                                                            new MathContext(7,RoundingMode.HALF_EVEN), // 0
+                                                            new MathContext(7,RoundingMode.DOWN),      // 1
+                                                            new MathContext(7,RoundingMode.CEILING),   // 2
+                                                            new MathContext(7,RoundingMode.FLOOR),     // 3
+                                                            new MathContext(7,RoundingMode.HALF_UP),   // 4
+                                                            new MathContext(7,RoundingMode.HALF_DOWN), // 5
+                                                            new MathContext(7,RoundingMode.UP),        // 6
+                                                            new MathContext(7,RoundingMode.HALF_UP),   // 7
+                                                            };
+    /** variable      */ MathContext[] fp_ld_rnd_context = {
+                                                            new MathContext(34,RoundingMode.HALF_EVEN), // 0
+                                                            new MathContext(34,RoundingMode.DOWN),      // 1
+                                                            new MathContext(34,RoundingMode.CEILING),   // 2
+                                                            new MathContext(34,RoundingMode.FLOOR),     // 3
+                                                            new MathContext(34,RoundingMode.HALF_UP),   // 4
+                                                            new MathContext(34,RoundingMode.HALF_DOWN), // 5
+                                                            new MathContext(34,RoundingMode.UP),        // 6
+                                                            new MathContext(34,RoundingMode.HALF_UP),   // 7
+                                                            };
+    /** variable      */ MathContext[] fp_dh_rnd_context = { // RPI 1211
+                                                            new MathContext(15,RoundingMode.HALF_EVEN), // 0
+                                                            new MathContext(15,RoundingMode.DOWN),      // 1
+                                                            new MathContext(15,RoundingMode.CEILING),   // 2
+                                                            new MathContext(15,RoundingMode.FLOOR),     // 3
+                                                            new MathContext(15,RoundingMode.HALF_UP),   // 4
+                                                            new MathContext(15,RoundingMode.HALF_DOWN), // 5
+                                                            new MathContext(15,RoundingMode.UP),        // 6
+                                                            new MathContext(15,RoundingMode.HALF_UP),   // 7
+                                                            };
 
-	double fp_log2 = Math.log(2);
+    /** variable      */ double fp_log2 = Math.log(2);
 
-	double fp_log10 = Math.log(10);
+    /** variable      */ double fp_log10 = Math.log(10);
 
-	BigDecimal fp_bd = new BigDecimal("0");
+    /** variable      */ BigDecimal fp_bd = new BigDecimal("0");
 
-	BigDecimal fp_big_dec2 = new BigDecimal("0");
+    /** variable      */ BigDecimal fp_big_dec2 = new BigDecimal("0");
 
-	BigDecimal fp_big_dec3 = new BigDecimal("0");
+    /** variable      */ BigDecimal fp_big_dec3 = new BigDecimal("0");
 
-	BigInteger fp_big_int1 = new BigInteger("0");
+    /** variable      */ BigInteger fp_big_int1 = new BigInteger("0");
 
-	BigInteger fp_big_int2 = new BigInteger("0");
+    /** variable      */ BigInteger fp_big_int2 = new BigInteger("0");
 
-	BigInteger fp_big_int_one_bits = BigInteger.ONE.shiftLeft(113).subtract(
-			BigInteger.ONE);
+    /** variable      */ BigInteger fp_big_int_one_bits = BigInteger.ONE.shiftLeft(113).subtract(
+                                                          BigInteger.ONE);
 
-	BigInteger fp_big_int_lx_man_bits = BigInteger.ONE.shiftLeft(112).subtract(
-			BigInteger.ONE); // RPI 821
-	BigInteger fp_big_int_dh_man_bits = BigInteger.ONE.shiftLeft(56).subtract(
-			BigInteger.ONE);  // RPI 821
-	int fp_int1 = 0;
-	int fp_int2 = 0; // RPI 767
+    /** variable      */ BigInteger fp_big_int_lx_man_bits = BigInteger.ONE.shiftLeft(112).subtract(
+                                                             BigInteger.ONE); // RPI 821
+    /** variable      */ BigInteger fp_big_int_dh_man_bits = BigInteger.ONE.shiftLeft(56).subtract(
+                                                             BigInteger.ONE);  // RPI 821
+    /** variable      */ int fp_int1 = 0;
+    /** variable      */ int fp_int2 = 0; // RPI 767
 
-	int fp_int_eb_one_bits = 0xffffff;
+    /** variable      */ int fp_int_eb_one_bits = 0xffffff;
 
-	int fp_int_eb_man_bits = 0x7fffff;
+    /** variable      */ int fp_int_eb_man_bits = 0x7fffff;
 
-	int fp_int_eh_man_bits = 0xffffff;
+    /** variable      */ int fp_int_eh_man_bits = 0xffffff;
 
-	long fp_long1 = 0;
-	long fp_long2 = 0; // RPI 767
-    long fp_long3 = 0; // RPI 767
-	byte fp_exp1 = 0;
-    byte fp_exp2 = 0;
-    byte fp_exp3 = 0;
-    byte fp_sign1 = 0;
-    byte fp_sign2 = 0;
-    byte fp_sign3 = 0;
-	long fp_long_db_one_bits = ((long) (1) << 53) - 1;
+    /** variable      */ long fp_long1 = 0;
+    /** variable      */ long fp_long2 = 0; // RPI 767
+    /** variable      */ long fp_long3 = 0; // RPI 767
+    /** variable      */ byte fp_exp1 = 0;
+    /** variable      */ byte fp_exp2 = 0;
+    /** variable      */ byte fp_exp3 = 0;
+    /** variable      */ byte fp_sign1 = 0;
+    /** variable      */ byte fp_sign2 = 0;
+    /** variable      */ byte fp_sign3 = 0;
+    /** variable      */ long fp_long_db_one_bits = ((long) (1) << 53) - 1;
 
-	long fp_long_db_man_bits = ((long) (1) << 52) - 1;
+    /** variable      */ long fp_long_db_man_bits = ((long) (1) << 52) - 1;
 
-	long fp_long_dh_man_bits = ((long) (1) << 56) - 1;
-    int     fp_eb_pos_inf = 0x7f8 << 23; // RPI 830
-    int     fp_eb_neg_inf = 0xff8 << 23; // RPI 830
-	long    fp_db_pos_inf = (long)(0x7ff) << 52; // RPI 830
-    long    fp_db_neg_inf = (long)(0xfff) << 52; // RPI 830
-    long    fp_dd_pos_inf = (long)(0x7a) << 56;
-    long    fp_dd_neg_inf = (long)(0xfa) << 56;
-	long    fp_lb_pos_inf = (long)(0x7a) << 56; // RPI 830
-    long    fp_lb_neg_inf = (long)(0xfa) << 56; // RPI 830
-    long    fp_ld_pos_inf = (long)(0x7fff) << 48;
-    long    fp_ld_neg_inf = (long)(0xffff) << 48;
-    float fp_eb_min = (float) 1.2e-38; // BFP range ref. pop 19-5
+    /** variable      */ long fp_long_dh_man_bits = ((long) (1) << 56) - 1;
+    /** variable      */ int     fp_eb_pos_inf = 0x7f8 << 23; // RPI 830
+    /** variable      */ int     fp_eb_neg_inf = 0xff8 << 23; // RPI 830
+    /** variable      */ long    fp_db_pos_inf = (long)(0x7ff) << 52; // RPI 830
+    /** variable      */ long    fp_db_neg_inf = (long)(0xfff) << 52; // RPI 830
+    /** variable      */ long    fp_dd_pos_inf = (long)(0x7a) << 56;
+    /** variable      */ long    fp_dd_neg_inf = (long)(0xfa) << 56;
+    /** variable      */ long    fp_lb_pos_inf = (long)(0x7a) << 56; // RPI 830
+    /** variable      */ long    fp_lb_neg_inf = (long)(0xfa) << 56; // RPI 830
+    /** variable      */ long    fp_ld_pos_inf = (long)(0x7fff) << 48;
+    /** variable      */ long    fp_ld_neg_inf = (long)(0xffff) << 48;
+    /** variable      */ float fp_eb_min = (float) 1.2e-38; // BFP range ref. pop 19-5
 
-	float fp_eb_max = (float) 3.4e+38;
+    /** variable      */ float fp_eb_max = (float) 3.4e+38;
 
-	double fp_db_min = 2.2e-308;
+    /** variable      */ double fp_db_min = 2.2e-308;
 
-	double fp_db_max = 1.79e+308; // (1.8 too big?)
+    /** variable      */ double fp_db_max = 1.79e+308; // (1.8 too big?)
 
-	double fp_eh_min = 5.41e-79; // HFP range ref. pop 18-4
+    /** variable      */ double fp_eh_min = 5.41e-79; // HFP range ref. pop 18-4
 
-	double fp_eh_max = 7.2e+75;
+    /** variable      */ double fp_eh_max = 7.2e+75;
 
-	BigDecimal fp_dh_min = BigDecimal.valueOf(5.41e-79); // RPI 821
+    /** variable      */ BigDecimal fp_dh_min = BigDecimal.valueOf(5.41e-79); // RPI 821
 
-	BigDecimal fp_dh_max = BigDecimal.valueOf(7.2e+75);  // RPI 821
+    /** variable      */ BigDecimal fp_dh_max = BigDecimal.valueOf(7.2e+75);  // RPI 821
 
-	BigDecimal fp_lh_min = null;
+    /** variable      */ BigDecimal fp_lh_min = null;
 
-	BigDecimal fp_lh_max = null;
+    /** variable      */ BigDecimal fp_lh_max = null;
 
-	BigDecimal fp_lb_min = null; // RPI 367 allow (MIN)
-	BigDecimal fp_lb_neg_zero = null; // RPI 834
-	BigDecimal fp_lb_max = null;
-	BigDecimal fp_dd_pos_max = null;
-	BigDecimal fp_dd_pos_min = null;
-	BigDecimal fp_dd_neg_max = null;
-	BigDecimal fp_dd_neg_min = null;
-	BigDecimal fp_ed_pos_max = null;
-	BigDecimal fp_ed_pos_min = null;
-	BigDecimal fp_ed_neg_max = null;
-	BigDecimal fp_ed_neg_min = null;
-	BigDecimal fp_ld_pos_max = null;
-	BigDecimal fp_ld_pos_min = null;
-	BigDecimal fp_ld_neg_max = null;
-	BigDecimal fp_ld_neg_min = null;
-    int fp_dd_exp_min = -398;
-    int fp_dd_exp_max =  369;
-    int fp_ed_exp_min = -101;
-    int fp_ed_exp_max =   90;
-    int fp_ld_exp_min = -6178;
-    int fp_ld_exp_max =  6111;
+    /** variable      */ BigDecimal fp_lb_min = null; // RPI 367 allow (MIN)
+    /** variable      */ BigDecimal fp_lb_neg_zero = null; // RPI 834
+    /** variable      */ BigDecimal fp_lb_max = null;
+    /** variable      */ BigDecimal fp_dd_pos_max = null;
+    /** variable      */ BigDecimal fp_dd_pos_min = null;
+    /** variable      */ BigDecimal fp_dd_neg_max = null;
+    /** variable      */ BigDecimal fp_dd_neg_min = null;
+    /** variable      */ BigDecimal fp_ed_pos_max = null;
+    /** variable      */ BigDecimal fp_ed_pos_min = null;
+    /** variable      */ BigDecimal fp_ed_neg_max = null;
+    /** variable      */ BigDecimal fp_ed_neg_min = null;
+    /** variable      */ BigDecimal fp_ld_pos_max = null;
+    /** variable      */ BigDecimal fp_ld_pos_min = null;
+    /** variable      */ BigDecimal fp_ld_neg_max = null;
+    /** variable      */ BigDecimal fp_ld_neg_min = null;
+    /** variable      */ int fp_dd_exp_min = -398;
+    /** variable      */ int fp_dd_exp_max =  369;
+    /** variable      */ int fp_ed_exp_min = -101;
+    /** variable      */ int fp_ed_exp_max =   90;
+    /** variable      */ int fp_ld_exp_min = -6178;
+    /** variable      */ int fp_ld_exp_max =  6111;
 	/*
 	 * PC, PR, PT stack for psw and regs
 	 */
-	int cur_pc_stk = 0;
+    /** variable      */ int cur_pc_stk = 0;
 
-	int cur_pc_stk_reg = 0;
+    /** variable      */ int cur_pc_stk_reg = 0;
 
-	byte[] pc_stk_reg_byte = (byte[]) Array.newInstance(byte.class, max_pc_stk
-			* reg_len);
+    /** variable      */ byte[] pc_stk_reg_byte = (byte[]) Array.newInstance(byte.class, max_pc_stk
+                                                  * reg_len);
 
-	ByteBuffer pc_stk_reg = ByteBuffer.wrap(pc_stk_reg_byte, 0, max_pc_stk
-			* reg_len);
+    /** variable      */ ByteBuffer pc_stk_reg = ByteBuffer.wrap(pc_stk_reg_byte, 0, max_pc_stk
+                                                 * reg_len);
 
-	int[] pc_stk_psw_loc = (int[]) Array.newInstance(int.class, max_pc_stk);
+    /** variable      */ int[] pc_stk_psw_loc = (int[]) Array.newInstance(int.class, max_pc_stk);
 
-	int[] pc_stk_psw_cc = (int[]) Array.newInstance(int.class, max_pc_stk);
-    boolean[] pc_stk_type_pc = (boolean[]) Array.newInstance(boolean.class,max_pc_stk); // RPI 1026 PC vs BAKR
+    /** variable      */ int[] pc_stk_psw_cc = (int[]) Array.newInstance(int.class, max_pc_stk);
+    /** variable      */ boolean[] pc_stk_type_pc = (boolean[]) Array.newInstance(boolean.class,max_pc_stk); // RPI 1026 PC vs BAKR
 	/*
 	 * virtual memory with 24 bit and 31 bit fqes all initialized by init_mem()
 	 */
-	int mem24_start = 0x8000; // RPI 276 start at 32k RPI 894 was 64k
+    /** variable      */ int mem24_start = 0x8000; // RPI 276 start at 32k RPI 894 was 64k
 
-	int mem24_line = 0x1000000; // start at 1MB if avail.
+    /** variable      */ int mem24_line = 0x1000000; // start at 1MB if avail.
 
-	byte[] mem_byte = null; // see init_mem
+    /** variable      */ byte[] mem_byte = null; // see init_mem
 
-	ByteBuffer mem = null; // see init_mem
+    /** variable      */ ByteBuffer mem = null; // see init_mem
 
-	int dsa24_start = 0;
+    /** variable      */ int dsa24_start = 0;
 
-	int dsa24_end = 0;
+    /** variable      */ int dsa24_end = 0;
 
-	int dsa31_start = 0;
+    /** variable      */ int dsa31_start = 0;
 
-	int dsa31_end = 0;
+    /** variable      */ int dsa31_end = 0;
 
-	int tot_mem = 0;
+    /** variable      */ int tot_mem = 0;
 
-	int tot_mem_alloc = 0;
+    /** variable      */ int tot_mem_alloc = 0;
 
 	/*
 	 * psa low memory supported fields
 	 */
-	int psa_cvt = 0x10;    // pointer to os cvt
-	int psa_svc_old_psw = 0x20;
-	int psa_svc_new_psw = 0x60;
-	int psa_pgm_old_psw = 0x28; // RPI 1063 see update_psa
-	int psa_pgm_nwq_paq = 0x68; // RPI `063
-	int psa_cvt2 = 0x4c;   // pointer to os cvt
-    int psa_psw_ins_len = 0x8d; // RPI 1063 see update_psa
-	int psa_len  = 0x2000; // length of PSA (see PSAD macro) RPI 538
+    /** variable      */ int psa_cvt = 0x10;    // pointer to os cvt
+    /** variable      */ int psa_svc_old_psw = 0x20;
+    /** variable      */ int psa_svc_new_psw = 0x60;
+    /** variable      */ int psa_pgm_old_psw = 0x28; // RPI 1063 see update_psa
+    /** variable      */ int psa_pgm_nwq_paq = 0x68; // RPI `063
+    /** variable      */ int psa_cvt2 = 0x4c;   // pointer to os cvt
+    /** variable      */ int psa_psw_ins_len = 0x8d; // RPI 1063 see update_psa
+    /** variable      */ int psa_len  = 0x2000; // length of PSA (see PSAD macro) RPI 538
 	/*
 	 * z390 communication vector table at x'2000';
 	 */
-	int zcvt_start = 0x2000; // RPI 286 // cvt start
+    /** variable      */ int zcvt_start = 0x2000; // RPI 286 // cvt start
 
-	int zcvt_user_pgm = zcvt_start + 0x00; // user pgm name
+    /** variable      */ int zcvt_user_pgm = zcvt_start + 0x00; // user pgm name
 
-	int zcvt_ipl_pgm = zcvt_start + 0x08; // ipl pgm name
+    /** variable      */ int zcvt_ipl_pgm = zcvt_start + 0x08; // ipl pgm name
 
-	int zcvt_fqe24 = zcvt_start + 0x10; // amode 24 fqe
+    /** variable      */ int zcvt_fqe24 = zcvt_start + 0x10; // amode 24 fqe
 
-	int zcvt_fqe31 = zcvt_start + 0x14; // amode 31 fqe
+    /** variable      */ int zcvt_fqe31 = zcvt_start + 0x14; // amode 31 fqe
 
-	int zcvt_exit = zcvt_start + 0x18; // svc 3 exit to last link or term
+    /** variable      */ int zcvt_exit = zcvt_start + 0x18; // svc 3 exit to last link or term
 
-	int zcvt_tget_ecb = zcvt_start + 0x1c; // ecb for tget reply in non GUAM GUI
-											// mode
+    /** variable      */ int zcvt_tget_ecb = zcvt_start + 0x1c; // ecb for tget reply in non GUAM GUI mode
 
-	int zcvt_save = zcvt_start + 0x100; // user save
+    /** variable      */ int zcvt_save = zcvt_start + 0x100; // user save
 
-	int zcvt_stimer_save = zcvt_start + 0x200;
-    int zcvt_exec_parma = zcvt_start + 0x300; // address of exec_parm RPI 582
-	int zcvt_exec_parm  = zcvt_start + 0x304; // half word length followed by
-												// EBCDIC/ASCII value of PARM(.)
+    /** variable      */ int zcvt_stimer_save = zcvt_start + 0x200;
+    /** variable      */ int zcvt_exec_parma = zcvt_start + 0x300; // address of exec_parm RPI 582
+    /** variable      */ int zcvt_exec_parm  = zcvt_start + 0x304; // half word length followed by
+                                                                   // EBCDIC/ASCII value of PARM(.)
 
-	int zcvt_epie = zcvt_start + 0x400; // espie passed in r1
+    /** variable      */ int zcvt_epie = zcvt_start + 0x400; // espie passed in r1
 
-	int zcvt_sdwa = zcvt_start + 0x500; // sdwa passed in r1 to ESTAE exit RPI 845
-    int zcvt_comrg = zcvt_start + 0x600; // start of VSE COMRG area RPI 558
+    /** variable      */ int zcvt_sdwa = zcvt_start + 0x500; // sdwa passed in r1 to ESTAE exit RPI 845
+    /** variable      */ int zcvt_comrg = zcvt_start + 0x600; // start of VSE COMRG area RPI 558
 	/*
 	 * OS/MVS compatible CVT with pointer at x'10'
 	 */
-	int cvt_start = 0x2000;  // rpi 894 was 0x8000
-	int cvt_date = cvt_start + 0x38; // IPL date
+    /** variable      */ int cvt_start = 0x2000;  // rpi 894 was 0x8000
+    /** variable      */ int cvt_date = cvt_start + 0x38; // IPL date
 
-	int cvt_dcb = cvt_start + 0x74; // os flags (x'80' 31 bit, x'13' MVS+) RPI
-	int cvt_cde = cvt_start + 208;  // RPI 1063
+    /** variable      */ int cvt_dcb = cvt_start + 0x74; // os flags (x'80' 31 bit, x'13' MVS+) RPI
+    /** variable      */ int cvt_cde = cvt_start + 208;  // RPI 1063
 	/*
 	 * cde offsets (see mac\CDED.MAC)
 	 */
-	int cde_cdchain   =  0;    // next CDE (first pointed to by cvtcde)
-	int cde_cdname    =  8;    // load module name in EBCDIC
-	int cde_cdentpt   = 16;  // entry point
-	int cde_cduse     = 24;  // use count 0 = deleted cde
-	int cde_cdloadpt  = 32;  // load address
-	int cde_cdmodlen  = 36;  // module length
-	int cde_len       = 40;  // length of CDE entry block
-	
+    /** variable      */ int cde_cdchain   =  0;    // next CDE (first pointed to by cvtcde)
+    /** variable      */ int cde_cdname    =  8;    // load module name in EBCDIC
+    /** variable      */ int cde_cdentpt   = 16;  // entry point
+    /** variable      */ int cde_cduse     = 24;  // use count 0 = deleted cde
+    /** variable      */ int cde_cdloadpt  = 32;  // load address
+    /** variable      */ int cde_cdmodlen  = 36;  // module length
+    /** variable      */ int cde_len       = 40;  // length of CDE entry block
+
     /*
      * VSE COMRG data fields
      */
-	int zcvt_comrg_jobdate = zcvt_comrg +  0; // COMRG JOBDATE  0  8 MM/DD/YY
-	int zcvt_comrg_comname = zcvt_comrg + 24; // COMRG COMNAME 24  8 JOB NAME 
+    /** variable      */ int zcvt_comrg_jobdate = zcvt_comrg +  0; // COMRG JOBDATE  0  8 MM/DD/YY
+    /** variable      */ int zcvt_comrg_comname = zcvt_comrg + 24; // COMRG COMNAME 24  8 JOB NAME 
 	/*
 	 * epie fields
 	 */
-	int epie_id = zcvt_epie; // C'EPIE'
+    /** variable      */ int epie_id = zcvt_epie; // C'EPIE'
 
-	int epie_parm  = zcvt_epie + 0x04; // ESPIE PARAM addr
+    /** variable      */ int epie_parm  = zcvt_epie + 0x04; // ESPIE PARAM addr
 
-	int epie_psw   = zcvt_epie + 0x48; // PSW int,addr RPI 845
-    int epie_ilc   = zcvt_epie + 0x51; // RPI 845 last instruction length byte (2,4,6)
-	int epie_inc   = zcvt_epie + 0x52; // RPI 845 interruption code (2 bytes)
-    int epie_flags = zcvt_epie + 0x99; // RPI 845 set X'40' 64 bit reg flag
-	int epie_gpr   = zcvt_epie + 0xA0; // GPR 64 bit regs R0-R15 RPI 845
+    /** variable      */ int epie_psw   = zcvt_epie + 0x48; // PSW int,addr RPI 845
+    /** variable      */ int epie_ilc   = zcvt_epie + 0x51; // RPI 845 last instruction length byte (2,4,6)
+    /** variable      */ int epie_inc   = zcvt_epie + 0x52; // RPI 845 interruption code (2 bytes)
+    /** variable      */ int epie_flags = zcvt_epie + 0x99; // RPI 845 set X'40' 64 bit reg flag
+    /** variable      */ int epie_gpr   = zcvt_epie + 0xA0; // GPR 64 bit regs R0-R15 RPI 845
 
 	/*
 	 * sdwa dsect fields (r1 at exit entry) 
 	 */
-	int sdwa_parm = zcvt_sdwa + 0x00; // SDWA ESPIE PARAM addr
-    int sdwa_cmp  = zcvt_sdwa + 0x04; // SDWA SDWAABSS completion code FFSSSUUU RPI 845
-	int sdwa_psw  = zcvt_sdwa + 0x68; // SDWA SDWAEC1 PSW at error RPI 845
-    int sdwa_xpad = zcvt_sdwa + 0x170; // SDWA addr extensions RPI 845
-    int sdwa_ptrs = zcvt_sdwa + 0x200; // SDWA address for extensions RPI 845
-    int sdwa_xeme = sdwa_ptrs + 0x18;  // SDWA PTRS addr of SDWARC4 regs RPI 845
-    int sdwa_rc4  = zcvt_sdwa + 0x300; // SDWA RC4 registers extension RPI 834
-    int sdwa_g64  = sdwa_rc4  + 0x00;  // SDWA RC4 extension 16 - 64 bit regs at error RPI 845
-	/*
-	 * byte bit count lookup table
-	 */
-    byte[] bit_cnt = {  // RPI 1125 for use by POPCNT instr
-            00,01,01,02,01,02,02,03,01,02,02,03,02,03,03,04, //  0
-            01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  1
-            01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  2
-            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  3
-            01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  4
-            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  5
-            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  6
-            03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  7
-            01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  8
-            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  9
-            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  A
-            03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  B
-            02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  C
-            03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  D
-            03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  E
-            04,05,05,06,05,06,06,07,05,06,06,07,06,07,07,8  //  F
-    };
-    /*
-	 * opcode lookup tables unique to ez390
-	 */
-	int[] op_type_offset = new int[256];
+    /** variable      */ int sdwa_parm = zcvt_sdwa + 0x00; // SDWA ESPIE PARAM addr
+    /** variable      */ int sdwa_cmp  = zcvt_sdwa + 0x04; // SDWA SDWAABSS completion code FFSSSUUU RPI 845
+    /** variable      */ int sdwa_psw  = zcvt_sdwa + 0x68; // SDWA SDWAEC1 PSW at error RPI 845
+    /** variable      */ int sdwa_xpad = zcvt_sdwa + 0x170; // SDWA addr extensions RPI 845
+    /** variable      */ int sdwa_ptrs = zcvt_sdwa + 0x200; // SDWA address for extensions RPI 845
+    /** variable      */ int sdwa_xeme = sdwa_ptrs + 0x18;  // SDWA PTRS addr of SDWARC4 regs RPI 845
+    /** variable      */ int sdwa_rc4  = zcvt_sdwa + 0x300; // SDWA RC4 registers extension RPI 834
+    /** variable      */ int sdwa_g64  = sdwa_rc4  + 0x00;  // SDWA RC4 extension 16 - 64 bit regs at error RPI 845
+   /**
+    * byte bit count lookup table
+    */
+                         byte[] bit_cnt = {  // RPI 1125 for use by POPCNT instr
+                                           00,01,01,02,01,02,02,03,01,02,02,03,02,03,03,04, //  0
+                                           01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  1
+                                           01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  2
+                                           02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  3
+                                           01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  4
+                                           02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  5
+                                           02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  6
+                                           03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  7
+                                           01,02,02,03,02,03,03,04,02,03,03,04,03,04,04,05, //  8
+                                           02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  9
+                                           02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  A
+                                           03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  B
+                                           02,03,03,04,03,04,04,05,03,04,04,05,04,05,05,06, //  C
+                                           03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  D
+                                           03,04,04,05,04,05,05,06,04,05,05,06,05,06,06,07, //  E
+                                           04,05,05,06,05,06,06,07,05,06,06,07,06,07,07,8  //  F
+                                           };
+    /**
+     * opcode lookup tables unique to ez390
+     */
+                         int[] op_type_offset = new int[256];
 
-	int[] op_type_mask = new int[256];
+    /** variable      */ int[] op_type_mask = new int[256];
 
-	int[] opcode2_offset = new int[256];
+    /** variable      */ int[] opcode2_offset = new int[256];
 
-	int[] opcode2_mask = new int[256];
-    // array op_trace_type moved to tz390 RPI 1209
+    /** variable      */ int[] opcode2_mask = new int[256];
 
-    // retaddr holds return address for instructions that form a return address
-    int retaddr = 0; // RPI 1510
+    /**
+     * retaddr holds return address for instructions that form a return address
+     */
+                         int retaddr = 0; // RPI 1510
 	/*
 	 * end of pz390 global variables
 	 */
+
+
+
+/**
+ * Dummy constructor - no initialization needed
+ */
+public pz390()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
+/**
+ * execute 390 code at psw_addr in mem[]
+ */
 	public void exec_pz390() {
-		/*
-		 * execute 390 code at psw_addr in mem[]
-		 */
 		psw_check = false;
 		last_psw_ins_len = 0;
 		while (!tz390.z390_abort && !psw_check) { // RPI208 run until check or													// abort
@@ -1589,10 +1614,12 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * exec opcodes x'00 - x'3F'
+ */
 	private void ins_lt_40() {
-		/*
-		 * exec opcodes < x'40'
-		 */
 		switch (opcode1) {
 		case 0x01:
 			ins_01XX();
@@ -2187,10 +2214,12 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * excute instr x'40' - x'7F'
+ */
 	private void ins_lt_80() {
-		/*
-		 * excute instr < x'80'
-		 */
 		switch (opcode1) {
 		case 0x40: // 860 "40" "STH" "RX"
 			psw_check = false;
@@ -2798,10 +2827,12 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * execute opcodes x'80' - x'BF'
+ */
 	private void ins_lt_c0() {
-		/*
-		 * execute opcodes >= x'80'
-		 */
 		switch (opcode1) {
 		case 0x80: // 1530 "8000" "SSM" "S"
             psw_check = false;
@@ -3273,10 +3304,12 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * exec instr. x'C0'- x'FF'
+ */
 	private void ins_lt_ff() {
-		/*
-		 * exec instr. <= x'ff'
-		 */
 		switch (opcode1) {
 		case 0xC0:
 			ins_C0XX();
@@ -3932,10 +3965,18 @@ public class pz390 {
 	                    if (pdf_big_int2.signum() == 0) {
 //	                        psw_cc = psw_cc3;              // RPI 2013
 	                        set_psw_check(psw_pic_pd_div);
+	                        break;                                                                    // #760
 	                    }
 	                    BigInteger[] big_quo_rem = pdf_big_int1
 	                            .divideAndRemainder(pdf_big_int2);
 	                    pdf_big_int = big_quo_rem[0];
+	                    String s = pdf_big_int.toString();                                            // #760
+	                    int numDigits = (s.charAt(0) == '-' ? s.substring(1).length() : s.length());  // #760
+	                    // numDigits/2 + 1 = num packed bytes; decimal divide if exceeds area length  // #760
+	                    if (numDigits/2 >= rflen1 - rflen2) {                                         // #760
+	                        set_psw_check(psw_pic_pd_div);                                            // #760
+	                        break;                                                                    // #760
+	                    }                                                                             // #760
 	                    put_pd(mem_byte, bd1_loc, rflen1 - rflen2);
 	                    pdf_big_int = big_quo_rem[1];
 	                    put_pd(mem_byte, bd1_loc + rflen1 - rflen2, rflen2);
@@ -3946,6 +3987,13 @@ public class pz390 {
 	                        break;
 	                    }
 	                    pdf_long = pdf_long1 / pdf_long2;
+	                    String s = Long.toString(pdf_long);                                           // #760
+	                    int numDigits = (s.charAt(0) == '-' ? s.substring(1).length() : s.length());  // #760
+	                    // numDigits/2 + 1 = num packed bytes; decimal divide if exceeds area length  // #760
+	                    if (numDigits/2 >= rflen1 - rflen2) {                                         // #760
+	                        set_psw_check(psw_pic_pd_div);                                            // #760
+	                        break;                                                                    // #760
+	                    }                                                                             // #760
 	                    put_pd(mem_byte, bd1_loc, rflen1 - rflen2);
 	                    pdf_long = pdf_long1 - pdf_long * pdf_long2;
 	                    put_pd(mem_byte, bd1_loc + rflen1 - rflen2, rflen2);
@@ -3953,10 +4001,17 @@ public class pz390 {
 	            }
 	        } else {                              // RPI 2013
 	            set_psw_check(psw_pic_spec);      // RPI 2013
+	            break;                                                                                // #760
 	        }                                     // RPI 2013
 			break;
 		}
 	}
+
+
+
+/**
+ * opcodes x'0100' - x'01FF'
+ */
 	private void ins_01XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_e] & 0xff;
 		switch (opcode2) {
@@ -4042,6 +4097,12 @@ public class pz390 {
             break;
 		}
 	}
+
+
+
+/**
+ * opcodes x'A400' - x'A4FF' for Vector Facility
+ */
     private void ins_A4XX_VF(){ // RPI VF01 new routine to support A4xx opcodes for vector facility
             opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
             switch (opcode2) {
@@ -4051,6 +4112,12 @@ public class pz390 {
                     break;
             }
     } // RPI VF01 end of new routine to support A4xx opcodes for vector facility
+
+
+
+/**
+ * opcodes x'A50' - x'A5F'
+ */
 	private void ins_A5XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ri] & 0x0f;
 		switch (opcode2) {
@@ -4184,6 +4251,12 @@ public class pz390 {
 			break;
 		}
 	}
+
+
+
+/**
+ * opcodes x'A500' - x'A5FF' for Vector Facility
+ */
     private void ins_A5XX_VF(){ // RPI VF01 new routine to support A5xx opcodes for vector facility
             opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
             switch (opcode2) {
@@ -4193,6 +4266,12 @@ public class pz390 {
                     break;
             }
     } // RPI VF01 end of new routine to support A5xx opcodes for vector facility
+
+
+
+/**
+ * opcodes x'A600' - x'A6FF' for Vector Facility
+ */
     private void ins_A6XX_VF(){ // RPI VF01 new routine to support A6xx opcodes for vector facility
             opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
             switch (opcode2) {
@@ -4202,6 +4281,12 @@ public class pz390 {
                     break;
             }
     } // RPI VF01 end of new routine to support A6xx opcodes for vector facility
+
+
+
+/**
+ * opcodes x'A70' - x'A7F'
+ */
 	private void ins_A7XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ri] & 0x0f;
 		switch (opcode2) {
@@ -4306,6 +4391,12 @@ public class pz390 {
 			break;
 		}
 	}
+
+
+
+/**
+ * opcodes x'B200' - x'B2FF'
+ */
 	private void ins_B2XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_s] & 0xff;
 		switch (opcode2) {
@@ -5169,6 +5260,12 @@ public class pz390 {
             break;
 		}
 	}
+
+
+
+/**
+ * opcodes x'B300' - x'B3FF'
+ */
 	private void ins_B3XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_rre] & 0xff;
 		switch (opcode2) {
@@ -6736,6 +6833,12 @@ public class pz390 {
 			break;
 		}
 	}
+
+
+
+/**
+ * opcodes x'B900' - x'B9FF'
+ */
 	private void ins_B9XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_rre] & 0xff;
 		switch (opcode2) {
@@ -8291,6 +8394,12 @@ public class pz390 {
 	    	     break;		
 		}
 	}
+
+
+
+/**
+ * opcodes x'C00' - x'C0F'
+ */
 	private void ins_C0XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ril] & 0x0f;
 		switch (opcode2) {
@@ -8373,6 +8482,12 @@ public class pz390 {
 			break;
 		}
 	}
+
+
+
+/**
+ * opcodes x'C20' - x'C2F'
+ */
 	private void ins_C2XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ril] & 0x0f; // RPI202
 		switch (opcode2) {
@@ -8463,6 +8578,12 @@ public class pz390 {
 			break;
 		}
 	}
+
+
+
+/**
+ * opcodes x'C40' - x'C4F'
+ */
 	private void ins_C4XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ril] & 0x0f; // RPI202
 		switch (opcode2) {
@@ -8523,6 +8644,12 @@ public class pz390 {
 	         break;
 		}
 	}
+
+
+
+/**
+ * opcodes x'C60' - x'C6F'
+ */
 	private void ins_C6XX(){  // RPI 817
 	     opcode2 = mem_byte[psw_loc+opcode2_offset_ril] & 0x0f;
 	     switch (opcode2){
@@ -8597,6 +8724,12 @@ public class pz390 {
 	         break;
 	     }
 	}
+
+
+
+/**
+ * opcodes x'CC0' - x'CCF'
+ */
 	private void ins_CCXX(){ // RPI 1125
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ril] & 0x0f; 
 		switch (opcode2) {
@@ -8647,6 +8780,12 @@ public class pz390 {
 			break;
 		}
 	}
+
+
+
+/**
+ * opcodes x'C80' - x'C8F'
+ */
 	private void ins_C8XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ssf] & 0x0f; // RPI202 RPI 606
 		switch (opcode2) {
@@ -8698,6 +8837,12 @@ public class pz390 {
 		    break;    
 		}
 	}
+
+
+
+/**
+ * opcodes x'E00' - x'E0F'
+ */
 	private void ins_E0X(){
 		/*
 		 * ASSIST extended I/O instructions RPI 812
@@ -8854,6 +8999,12 @@ public class pz390 {
 			break;
 		}
 	}
+
+
+
+/**
+ * opcodes x'E300' - x'E3FF'
+ */
     private void ins_E3XX(){   // RPI 1207
     	opcode2 = mem_byte[psw_loc + opcode2_offset_rxy] & 0xff;
 		switch (opcode2) {
@@ -9778,6 +9929,12 @@ public class pz390 {
 			break;		
 		}
     }
+
+
+
+/**
+ * opcodes x'E400' - x'E4FF' for Vector Facility
+ */
     private void ins_E4XX_VF(){ // RPI VF01 new routine to support E4xx opcodes for vector facility
             opcode2 = mem_byte[psw_loc + opcode2_offset_vs] & 0xff;
             switch (opcode2) {
@@ -9787,6 +9944,12 @@ public class pz390 {
                     break;
             }
     } // RPI VF01 end of new routine to support E4xx opcodes for vector facility
+
+
+
+/**
+ * opcodes x'E500' - x'E5FF'
+ */
     private void ins_E5XX(){
     	opcode2 = mem_byte[psw_loc + opcode2_offset_sse] & 0xff;
 		switch (opcode2) {
@@ -9910,10 +10073,22 @@ public class pz390 {
             break;
 		}
     }
+
+
+
+/**
+ * opcodes x'E600' - x'E6FF' for Vector Facility
+ */
     private void ins_E6XX(){  // vector instructions RPI 2202
     	opcode2 = mem_byte[psw_loc + opcode2_offset_vrx] & 0xff;
 		ins_setup_vrx(); // D1(B1),I2 RPI 2202
     }
+
+
+
+/**
+ * opcodes x'EB00' - x'EBFF'
+ */
     private void ins_EBXX(){
     	opcode2 = mem_byte[psw_loc + opcode2_offset_rsy] & 0xff;
 		switch (opcode2) {
@@ -10552,6 +10727,12 @@ public class pz390 {
 				break;	
 		}
     }
+
+
+
+/**
+ * opcodes x'EC00' - x'ECFF'
+ */
     private void ins_ECXX(){
     	opcode2 = mem_byte[psw_loc + opcode2_offset_rie] & 0xff;
 		switch (opcode2) {
@@ -10857,6 +11038,12 @@ public class pz390 {
 		}
 		
     }
+
+
+
+/**
+ * opcodes x'ED00' - x'EDFF'
+ */
     private void ins_EDXX(){
     	opcode2 = mem_byte[psw_loc + opcode2_offset_rxe] & 0xff;
 		switch (opcode2) {
@@ -12103,11 +12290,20 @@ public class pz390 {
 	/*
 	 * end of ez390 emulator while switch code
 	 */
+
+
+
 	/*
 	 * ********************************************* instruction setup routines
 	 * ********************************************
 	 */
-	private void ins_setup_dm() { // "DM" 1 DIAGNOSE 83000000
+
+
+
+/**
+ * instruction setup routine for optype DM
+ */
+    private void ins_setup_dm() { // "DM" 1 DIAGNOSE 83000000
 		psw_ins_len = 4;
 		if (tz390.opt_trace) {
 			trace_ins();
@@ -12118,6 +12314,11 @@ public class pz390 {
 		psw_loc = psw_loc + 4;
 	}
 
+
+
+/**
+ * instruction setup routine for optype E
+ */
 	private void ins_setup_e() { // "E" 8 PR oooo
 		psw_ins_len = 2;
 		if (tz390.opt_trace) {
@@ -12129,6 +12330,11 @@ public class pz390 {
 		psw_loc = psw_loc + 2;
 	}
 
+
+
+/**
+ * instruction setup routine for optype I
+ */
 	private void ins_setup_i() { // "I" 1 SVC 00ii
 		if1 = mem_byte[psw_loc + 1] & 0xff;
 		psw_ins_len = 2;
@@ -12142,6 +12348,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 2;
 	}
+
+
+
+/**
+ * instruction setup routine for optype MII
+ */
 	private void ins_setup_mii() { // "mii C5 BPRP r1,i2,i3 oo1222333333 rpi 2202"
 		/*
 		 * fetch if1, if2, if3 and update psw
@@ -12158,6 +12370,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RI
+ */
 	private void ins_setup_ri() { // "RI" 37 IIHH ooroiiii
 		/*
 		 * fetch rf1 and if2
@@ -12175,6 +12393,11 @@ public class pz390 {
 		psw_loc = psw_loc + 4;
 	}
 
+
+
+/**
+ * instruction setup routine for optype RIE
+ */
 	private void ins_setup_rie() { // "RIE" 4 BRXLG oorriiii00oo
 		psw_ins_len = 6;
 		rf1 = mem_byte[psw_loc + 1] & 0xff;
@@ -12191,6 +12414,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RIE2
+ */
 	private void ins_setup_rie2() { // "RIE2" CIT oor0iiiim0oo
 		psw_ins_len = 6;
 		rf1 = (mem_byte[psw_loc + 1] & 0xf0) >> 1;
@@ -12205,6 +12434,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RIE4
+ */
 	private void ins_setup_rie4() { // "RIE4" CGIJ oorm444422oo r1,i2,m3,i4
 		psw_ins_len = 6;
 		mf3 = mem_byte[psw_loc + 1];
@@ -12222,6 +12457,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RIE6
+ */
 	private void ins_setup_rie6() { // "RIE6" CGRJ oorr4444m0oo r1,r2,m3,i4
 		psw_ins_len = 6;
 		rf1 = mem_byte[psw_loc + 1] & 0xff;
@@ -12240,6 +12481,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RIE8
+ */
 	private void ins_setup_rie8() { // "RIE8" RNSBG oo12334455oo r1,r2,i3,i4,i5
 		psw_ins_len = 6;
 		rf1 = mem_byte[psw_loc + 1] & 0xff;
@@ -12260,6 +12507,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RIE9
+ */
 	private void ins_setup_rie9() { // "RIE9" AHIK r1,r3,i2 oo13iiii00oo RPI 1125
 		psw_ins_len = 6;
 		rf1 = mem_byte[psw_loc + 1] & 0xff;
@@ -12273,6 +12526,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RRS1
+ */
 	private void ins_setup_rrs1() { // "RRS1" CGRB oo12dbbbm0oo r1,r2,m3,s4
 		psw_ins_len = 6;
 		rf1 = mem_byte[psw_loc + 1] & 0xff;
@@ -12298,6 +12557,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RRS3
+ */
 	private void ins_setup_rrs3() { // "RRS3" CGIB oormdbbb22oo r1,i2,m3,i4
 		psw_ins_len = 6;
 		mf3 = mem_byte[psw_loc + 1];
@@ -12321,6 +12586,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RIL
+ */
 	private void ins_setup_ril() { // "RIL" 6 BRCL oomollllllll
 		psw_ins_len = 6;
 		rf1 = (mem_byte[psw_loc + 1] & 0xf0) >> 1;
@@ -12336,6 +12607,11 @@ public class pz390 {
 		psw_loc = psw_loc + 6;
 	}
 
+
+
+/**
+ * instruction setup routine for optype RR
+ */
 	private void ins_setup_rr() { // "RR" 60 LR oorr
 		/*
 		 * fetch rf1,rf2 and update psw
@@ -12354,6 +12630,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 2;
 	}
+
+
+
+/**
+ * instruction setup routine for optype IE
+ */
 	private void ins_setup_ie() { // "IE B2FA NIAI I1,I2 oooo0012 rpi 2202"
 		/*
 		 * fetch i1, i2 and update psw
@@ -12369,6 +12651,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 4;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RRE
+ */
 	private void ins_setup_rre() { // "RRE" 185 MSR oooo00rr
 		psw_ins_len = 4;
 		rf1 = mem_byte[psw_loc + 3] & 0xff;
@@ -12385,6 +12673,11 @@ public class pz390 {
 		psw_loc = psw_loc + 4;
 	}
 
+
+
+/**
+ * instruction setup routine for optype RRD
+ */
 	private void ins_setup_rrd() { // RPI 206 "RRF1" 28 MAER oooor0rr 
 		// maps r1,r3,r2 to oooo1032
 		psw_ins_len = 4;
@@ -12403,6 +12696,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 4;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RRFA
+ */
 	private void ins_setup_rrfa() { // "B939=DFLTCC,54,340", // B929 RRFa 54,340 KMA R1,R2,R3 RPI 2202
 		// maps r1,r2,r3 to 3012  
 		psw_ins_len = 4;
@@ -12421,6 +12720,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 4;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RRFB
+ */
 	private void ins_setup_rrfb() { // "B929=KMA,54,340", // B929 RRFb 54,340 KMA R1,M3,R2 RPI 2202
 		// maps r1,m3,r2 to 3012  see rrfe for r1,r3,r2
 		psw_ins_len = 4;
@@ -12439,6 +12744,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 4;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RRFE
+ */
 	private void ins_setup_rrfe() { // RPI 206 "RRFe" 28 FIEBR oooo3012
 		// maps r1,r3,r2 to 3012
 		psw_ins_len = 4;
@@ -12458,6 +12769,11 @@ public class pz390 {
 		psw_loc = psw_loc + 4;
 	}
 
+
+
+/**
+ * instruction setup routine for optype RRF3
+ */
 	private void ins_setup_rrf3() { // RPI 206 "RRF3" 28 DIEBR/DIDBR oooor0rr
 		// maps r1,r3,r2,m4 to oooo3412)
 		psw_ins_len = 4;
@@ -12479,6 +12795,11 @@ public class pz390 {
 		psw_loc = psw_loc + 4;
 	}
 
+
+
+/**
+ * instruction setup routine for optype RRF4
+ */
 	private void ins_setup_rrf4() { // RPI 407 "RRF4" 28 CSDTR oooo0412
 		// maps r1,r2,m4 to 0412
 		psw_ins_len = 4;
@@ -12498,6 +12819,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 4;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RRFc
+ */
 	private void ins_setup_RRFc() { // RPI 817 "RRFe" 28 FIEBR oooo3012
 		// maps r1,r2,m3 to 3012
 		psw_ins_len = 4;
@@ -12517,6 +12844,11 @@ public class pz390 {
 		psw_loc = psw_loc + 4;
 	}
 
+
+
+/**
+ * instruction setup routine for optype RRR
+ */
 	private void ins_setup_rrr() { // RPI 407 "ADTR" oooo3012 (r1,r2,r3
 		psw_ins_len = 4;
 		rf3 = (mem_byte[psw_loc + 2] & 0xf0) >> 1;
@@ -12536,6 +12868,9 @@ public class pz390 {
 		psw_loc = psw_loc + 4;
 	}
 
+/**
+ * instruction setup routine for optype RS
+ */
 	private void ins_setup_rs() { // "RS" 25 oorrbddd
 		/*
 		 * fetch rf1,rf3,bf2,df2 and update psw
@@ -12565,6 +12900,12 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 	}
+
+
+
+/**
+ * instruction setup routine for optype RS for shift instructions
+ */
 	private void ins_setup_rs_shift() { // "RS" 25 SLL oorrbddd RPI 820
 		/*
 		 * fetch rf1,rf3,bf2,df2 and update psw
@@ -12592,6 +12933,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 4;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RSI
+ */
 	private void ins_setup_rsi() { // "RSI" 4 BRXH oorriiii
 		psw_ins_len = 4;
 		rf1 = mem_byte[psw_loc + 1] & 0xff;
@@ -12609,6 +12956,11 @@ public class pz390 {
 		psw_loc = psw_loc + 4;
 	}
 
+
+
+/**
+ * instruction setup routine for optype RSLa
+ */
 	private void ins_setup_rsla() { // "RSLa" 1 TP oor0bddd00oo
 		psw_ins_len = 6;
 		rflen1 = ((mem_byte[psw_loc + 1] & 0xff) >> 4) + 1;
@@ -12628,7 +12980,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
-	
+
+
+
+/**
+ * instruction setup routine for optype RSLb
+ */
 	private void ins_setup_rslb() { // "RSLb" CZDT, CZXT, CDPT, CXPT oollbdddrmoo RPI 2204 
 		psw_ins_len = 6;
 		rflen2 = (mem_byte[psw_loc + 1] & 0xff) + 1;
@@ -12652,6 +13009,11 @@ public class pz390 {
 		psw_loc = psw_loc + 6;
 	}
 
+
+
+/**
+ * instruction setup routine for optype RSY
+ */
 	private void ins_setup_rsy() { // "RSY" 31 LMG oorrbdddhhoo
 		psw_ins_len = 6;
 		rf1 = mem_byte[psw_loc + 1] & 0xff;
@@ -12678,6 +13040,12 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 	}
+
+
+
+/**
+ * instruction setup routine for optype RSY for rotate instructions
+ */
 	private void ins_setup_rsy_shift() { // "RSY" 31 RLL/RLLG oorrbdddhhoo RPI 820
 		psw_ins_len = 6;
 		rf1 = mem_byte[psw_loc + 1] & 0xff;
@@ -12702,6 +13070,11 @@ public class pz390 {
 		psw_loc = psw_loc + 6;
 	}
 
+
+
+/**
+ * instruction setup routine for optype RX
+ */
 	private void ins_setup_rx() { // "RX" 52 L oorxbddd
 		/*
 		 * fetch rf1,xf2,bf2,df2 and update psw
@@ -12733,6 +13106,12 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 	}
+
+
+
+/**
+ * instruction setup routine for optype RXSS
+ */
 	private void ins_setup_rxss() { // "RX" 52 L oorxbddd
 		/*
 		 * fetch rf1,xf1,bf1,df1, bf2, and df2
@@ -12771,6 +13150,11 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * instruction setup routine for optype RXF
+ */
 	private void ins_setup_rxf() { // "RXF" 8 MAE oorxbdddr0oo (note r3 before
 									// r1)
 		psw_ins_len = 6;
@@ -12803,6 +13187,12 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 	}
+
+
+
+/**
+ * instruction setup routine for optype RXF - exception cases
+ */
 	private void ins_setup_rxf_shift() { // "RXF" 8 MAE oorxbdddr0oo (note r3
 											// before // RPI 1015
 		// r1)
@@ -12834,6 +13224,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
+
+
+
+/**
+ * instruction setup routine for optype RXE
+ */
 	private void ins_setup_rxe() { // "RXE" 28 ADB oorxbddd00oo
 		psw_ins_len = 6;
 		rf1 = mem_byte[psw_loc + 1] & 0xff;
@@ -12863,6 +13259,11 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * instruction setup routine for optype RXY
+ */
 	private void ins_setup_rxy() { // "RXY" 76 MLG oorxbdddhhoo
 		psw_ins_len = 6;
 		rf1 = mem_byte[psw_loc + 1] & 0xff;
@@ -12892,6 +13293,11 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * instruction setup routine for optype S
+ */
 	private void ins_setup_s() { // "S" 43 SPM oo00bddd
 		bf2 = mem.getShort(psw_loc + 2) & 0xffff;
 		df2 = bf2 & 0xfff;
@@ -12914,6 +13320,11 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * instruction setup routine for optype S0
+ */
 	private void ins_setup_s0() { // "S" B2F8 TEND oo00----
 		psw_ins_len = 4;
 		if (tz390.opt_trace) {
@@ -12925,6 +13336,11 @@ public class pz390 {
 		psw_loc = psw_loc + 4;
 	}
 
+
+
+/**
+ * instruction setup routine for optype SI
+ */
 	private void ins_setup_si() { // "SI" 9 CLI ooiibddd
 		/*
 		 * fetch bd1,if2
@@ -12950,6 +13366,12 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 	}
+
+
+
+/**
+ * instruction setup routine for optype SIL
+ */
 	private void ins_setup_sil() { // "SIL" MVHHI oooobdddiiii RPI 817
 		/*
 		 * fetch bd1,if2
@@ -12976,6 +13398,11 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * instruction setup routine for optype SIY
+ */
 	private void ins_setup_siy() { // "SIY" 6 TMY ooiibdddhhoo
 		psw_ins_len = 6;
 		if2 = mem_byte[psw_loc + 1];
@@ -12998,6 +13425,12 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 	}
+
+
+
+/**
+ * instruction setup routine for optype SMI
+ */
 	private void ins_setup_smi() { // "smi C7 BPP m1,i2,d3(b3) oom0bddd2222 rpi 2202"
 		/*
 		 * fetch if1, if2, if3 and update psw
@@ -13021,6 +13454,12 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
+
+
+
+/**
+ * instruction setup routine for optype SSP
+ */
 	private void ins_setup_ssp() { // AP SS2 oollbdddbddd
 		/*
 		 * fetch rflen1, rflen2, bd1_loc, and bd2_loc and update psw
@@ -13062,6 +13501,11 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * instruction setup routine for optype SS
+ */
 	private void ins_setup_ss() { // "SS" 32 MVC oollbdddbddd
 		/*
 		 * fetch rflen,bd1_loc, bd2_loc, and update psw
@@ -13101,6 +13545,11 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * instruction setup routine for optype SSE
+ */
 	private void ins_setup_sse() { // "SSE" 5 LASP oooobdddbddd
 		psw_ins_len = 6;
 		bf1 = mem.getShort(psw_loc + 2) & 0xffff;
@@ -13135,6 +13584,12 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 	}
+
+
+
+/**
+ * instruction setup routine for optype SSF
+ */
 	private void ins_setup_ssf() { // "SSF" 32 MVCOS oor0bdddbddd
 		/*
 		 * fetch rf3,bd1_loc, bd2_loc, and update psw
@@ -13175,6 +13630,12 @@ public class pz390 {
 				set_psw_check(psw_pic_addr);
 		}
 	}
+
+
+
+/**
+ * instruction setup routine for optype SSF2
+ */
 	private void ins_setup_ssf2() { // "SSF2" 55 LPD/LPDG oorobdddbddd
 		/*
 		 * fetch rf3,bd1_loc, bd2_loc, and update psw
@@ -13209,6 +13670,12 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 	}
+
+
+
+/**
+ * instruction setup routine for optype VRX
+ */
     private void ins_setup_vrx() { // VRX vector instructions RPI 2202
         /*
          * fetch ??? **!!
@@ -13223,6 +13690,12 @@ public class pz390 {
         psw_loc = psw_loc + 6;
         set_psw_check(psw_pic_oper);  // force S0C1 for all VRX for now RPI 2202
     }
+
+
+
+/**
+ * instruction setup routine for optype VS
+ */
     private void ins_setup_vs() { // RPI VF01 routine added for support of vector instructions
         /*
          * fetch ??? **!!
@@ -13236,6 +13709,12 @@ public class pz390 {
         }
         psw_loc = psw_loc + 4;
     }
+
+
+
+/**
+ * instruction setup routine for optype VSI
+ */
     private void ins_setup_vsi() { // VSI vector instructions RPI 2202
         /*
          * fetch ??? **!!
@@ -13250,6 +13729,12 @@ public class pz390 {
         psw_loc = psw_loc + 6;
         set_psw_check(psw_pic_oper);  // force S0C1 for all VSI for now RPI 2202
     }
+
+
+
+/**
+ * instruction setup routine for optype VRS
+ */
     private void ins_setup_vrs() { // VRS vector instructions RPI 2202
         /*
          * fetch ??? **!!
@@ -13264,10 +13749,16 @@ public class pz390 {
         psw_loc = psw_loc + 6;
         set_psw_check(psw_pic_oper);  // force S0C1 for all VRS for now RPI 2202
     }
+
+
+
+/**
+ * return opcode or ????? for given op1 and op2
+ *
+ * @param ins_loc instruction address
+ * @return opcode mnemonic as a string
+ */
 	public String get_ins_name(int ins_loc) {
-		/*
-		 * return opcode or ????? for given op1 and op2
-		 */
 		tz390.op_code_index = -1; // assume not found RPI 251
 		ins_loc = ins_loc & psw_amode;
 		if (ins_loc >= tot_mem) {
@@ -13339,16 +13830,22 @@ public class pz390 {
 		return ins_name;
 	}
 
+
+
 	/*
 	 * *************************************** instruction support routines
 	 * **************************************
 	 */
+
+
+
+/**
+ * set psw_pic interruption type if pgm mask type interrupt if mask bit
+ * 0, set CC3 and continue. if espie exit defined, exit to it else set
+ * psw_check for exit to abend handler
+ * @param pic_type ???
+ */
 	public void set_psw_check(int pic_type) {
-		/*
-		 * set psw_pic interruption type if pgm mask type interrupt if mask bit
-		 * 0, set CC3 and continue. if espie exit defined, exit to it else set
-		 * psw_check for exit to abend handler
-		 */
 		psw_pic = pic_type;
 		if (psw_pic == psw_pic_exit) {
 			psw_check = true; // normal exit
@@ -13357,15 +13854,19 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * set psw_loc and turn on psw_retry if any of the following conditions found:
+ * <ol>
+ *  <li>If psw_pic has corresponding psw_pgm_mask bit off, continue at next instruction.</li>
+ *  <li>If psw_pic has corresponding bit on in ESPIE PIE mask bits, restart at espie_exit if defined.</li>
+ *  <li>If estae_exit defined, then restart at estae_exit.</li>
+ *  <li>If option test on</li>
+ *  <li>else issue svc_abend for psw_pic code.</li>
+ * </ol>
+ */
 	public void psw_pic_handler() {
-		/*
-		 * set psw_loc and turn on psw_retry if any of the following conditions
-		 * found: 1. If psw_pic has corresponding psw_pgm_mask bit off, continue
-		 * at next instruction. 2. If psw_pic has corresponding bit on in ESPIE
-		 * PIE mask bits, restart at espie_exit if defined. 3. If estae_exit
-		 * defined, then restart at estae_exit. 4. If option test on 4. else
-		 * issue svc_abend for psw_pic code.
-		 */
 		boolean try_espie = false;
 		boolean ignore_pic = false;
 		switch (psw_pic) {
@@ -13486,10 +13987,12 @@ public class pz390 {
 		psw_check = false;
 	}
 
+
+
+/**
+ * initialize zcvt_epie and pass addr to espie exit via r1
+ */
 	private void setup_espie_exit() {
-		/*
-		 * initialize zcvt_epie and pass addr to espie exit via r1
-		 */
 		mem.putInt(epie_id, 0xc5d7c9c5); // id=c'EPIE'
 		mem.putInt(epie_parm, espie_parm[tot_espie - 1]);
 		mem.putShort(epie_psw,(short) 0x07ED); // EC PSW 7=dat,I/O,ext E=key D=EMWP 
@@ -13515,24 +14018,32 @@ public class pz390 {
 			tz390.put_trace("ESPIE EXIT STARTING");
 		}
 	}
+
+
+
+/**
+ * called for ESPIE and ABEND
+ * to update PSA pgm old psw and instr. len
+ * <ul>
+ *  <li>store FLCPOPSW+2=00CCMMMM</li>
+ *  <li>store FLCPOPSW+3=interrupt code</li>
+ *  <li>store FLCPOPSW+4=addr with amode high bit</li>
+ *  <li>store FLCPIILC+0=instruction length</li>
+ * </ul>
+ */
     public void update_psa(){
-    	/*
-    	 * called for ESPIE and ABEND  RPI 1063
-    	 * to update PSA pgm old psw and instr. len
-    	 * store FLCPOPSW+2=00CCMMMM
-    	 * store FLCPOPSW+3=interrupt code
-    	 * store FLCPOPSW+4=addr with amode high bit
-    	 * store FLCPIILC+0=instruction length
-    	 */
     	mem_byte[psa_pgm_old_psw+2]= (byte)(psw_cc_code[psw_cc] << 4 | psw_pgm_mask); // PRI 845 00ccmmmm
 		mem_byte[psa_pgm_old_psw+3]= (byte)psw_pic;
     	mem.putInt(psa_pgm_old_psw + 4, psw_loc); // EC PSW amode bit and 24/31 bit addr 
         mem_byte[psa_psw_ins_len] = (byte) psw_ins_len;
     }
+
+
+
+/**
+ * initialize zcvt_sdwa and pass addr to estae exit via r1
+ */
 	public void setup_estae_exit() { // RPI 636 used by sz390 percolate
-		/*
-		 * initialize zcvt_sdwa and pass addr to estae exit via r1
-		 */
 		mem.putInt(sdwa_parm,estae_parm[tot_estae - 1]); // RPI 845
 		mem.putInt(sdwa_cmp,psw_pic); // RPI 845
 		mem.putShort(sdwa_psw,(short) 0x07ED); // EC PSW 7=dat,I/O,ext E=key D=EMWP RPI 845
@@ -13558,10 +14069,14 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * set psw_amode (24/31/64) based on amode low bit and high bit
+ *
+ * @param amode_bit integer with amode bits.
+ */
 	public void set_psw_amode(int amode_bit) {
-		/*
-		 * set psw_amode based on amode low bit and high bit  // RPI 1506
-		 */
         if((amode_bit & psw_extended_amode64_bit) == 1)       // RPI 1506
           {psw_extended_amode_bit = psw_extended_amode64_on;  // RPI 1506
            psw_amode = psw_amode31;                           // RPI 1506
@@ -13582,13 +14097,17 @@ public class pz390 {
            }                                                  // RPI 1506
     }
 
+
+
+/**
+ * set psw_loc based on psw_amode 
+ * and turn off ex_mode 
+ * and add space if
+ * trace on
+ *
+ * @param addr address
+ */
 	public void set_psw_loc(int addr) {
-		/*
-		 * set psw_loc based on psw_amode 
-		 * and turn off ex_mode 
-		 * and add space if
-		 * trace on
-		 */
 		psw_loc = addr & psw_amode;
 		if (psw_loc >= tot_mem) {
 			set_psw_check(psw_pic_addr);
@@ -13598,10 +14117,17 @@ public class pz390 {
 		}
 		ex_mode = false;
 	}
+
+
+
+/**
+ * return psw_cc dor TM, TMY
+ *
+ * @param mem memory value
+ * @param mask mask value
+ * @return condition code
+ */
     private int get_tm_mem_cc(int mem, int mask){
-    	/*
-    	 * return psw_cc dor TM, TMY
-    	 */
     	mask = mask & 0xff;
     	int bits = mem & mask;
 		if (bits == 0) {
@@ -13612,11 +14138,18 @@ public class pz390 {
 			return psw_cc1;
 		}
     }
+
+
+
+/**
+ * return psw_cc for 
+ * TMHH, THHL, TMLH, TMLL
+ *
+ * @param reg register value
+ * @param mask mask value
+ * @return condition code
+ */
 	private int get_tm_reg_cc(int reg, int mask) {
-		/*
-		 * return psw_cc for 
-		 * TMHH, THHL, TMLH, TMLL
-		 */
 		mask = mask &0xffff; // RPI 844
 		int bits = reg & mask;
 		if (bits == 0) {
@@ -13634,10 +14167,16 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return int shifted left arith and set psw_cc
+ *
+ * @param  int_reg integer value from register
+ * @param  shift_count shift count
+ * @return result value
+ */
 	private int get_sla32(int int_reg, int shift_count) {
-		/*
-		 * return int shifted left arith and set psw_cc
-		 */
 		long long_result = ((long) int_reg) << shift_count;
 		if (int_reg > 0) {
 			if ((long_result & long_sign_bits) != 0) {
@@ -13659,10 +14198,16 @@ public class pz390 {
 		return (int) long_result;
 	}
 
+
+
+/**
+ * return long_reg shifted left arith and set psw_cc
+ *
+ * @param  long_reg long integer value from register
+ * @param  shift_count shift count
+ * @return result value
+ */
 	private long get_sla64(long long_reg, int shift_count) {
-		/*
-		 * return long_reg shifted left arith and set psw_cc
-		 */
 		long long_result = long_reg << shift_count;
 		long shift_out_bits = long_reg >> 63 - shift_count;
 		if (long_reg > 0) {
@@ -13685,40 +14230,51 @@ public class pz390 {
 		return long_result;
 	}
 
+/**
+ * return int shifted right arith and set psw_cc
+ *
+ * @param  int_reg integer value from register
+ * @param  shift_count shift count
+ * @return result value
+ */
 	private int get_sra32(int int_reg, int shift_count) {
-		/*
-		 * return int shifted right arith and set psw_cc
-		 */
 		int int_result = int_reg >> shift_count;
 		psw_cc = get_int_comp_cc(int_result, 0);
 		return int_result;
 	}
 
+
+
+/**
+ * set psw_carry and return cc for logical add as follows:
+ * <ul>
+ *  <li>rv1 == 0 carry == 0 - cc0</li>
+ *  <li>rv1 != 0 carry == 0 - cc1</li>
+ *  <li>rv1 == 0 carry == 1 - cc2</li>
+ *  <li>rv1 != 0 carry == 1 - cc3</li>
+ * </ul>
+ * Notes:
+ * <ol>
+ *  <li>rvw = r1 input</li>
+ *  <li>rv2 = r2 input</li>
+ *  <li>rv1 = result r1</li>
+ * </ol>
+ *
+ * R1 = RW + R2
+ * <ul>
+ *  <li> R1:+ RW:+ R2:+ NC</li>
+ *  <li> R1:+ RW:+ R2:- C</li>
+ *  <li> R1:+ RW:- R2:+ C</li>
+ *  <li> R1:+ RW:- R2:- C</li>
+ *  <li> R1:- RW:+ R2:+ NC</li>
+ *  <li> R1:- RW:+ R2:- NC</li>
+ *  <li> R1:- RW:- R2:+ NC</li>
+ *  <li> R1:- RW:- R2:- C</li>
+ * </ul>
+ *
+ * @return condition code
+ */
 	private int get_int_log_add_cc() {
-		/*
-		 * set psw_carry and return cc for logical add as follows: 
-		 *   rv1 carry
-		 *    0 0 - cc0
-		 *   !0 0 cc1
-		 *    0 1 cc2
-		 *   !0 1 cc3
-		 * Notes: 
-		 *   1. rvw = r1 input 
-		 *   2. rv2 = r2 input 
-		 *   3. rv1 = result r1
-		 * 
-		 *   R1 = RW + R2
-		 *   
-         *R1      RW        R2       RPI 1125 DOC
-         * +       +         +   NC
-         * +       +         -   C
-         * +       -         +   C
-         * +       -         -   C
-         * -       +         +   NC
-         * -       +         -   NC
-         * -       -         +   NC
-         * -       -         -   C
-		 */
 		boolean rv1_carry = false;
 		if (rv1 >= 0) { // RPI 376
 			if (rvw < 0 || rv2 < 0) {
@@ -13740,35 +14296,44 @@ public class pz390 {
 				return psw_cc3;
 			}
 		}
-	}	
+	}
+
+
+
+/**
+ * set psw_carry and return cc for logical add
+ * with signed value in rv2. For negative rv2,
+ * the carry bit may indicate borrow.
+ *
+ * <ul>
+ *  <li>rv1 == 0 carry/borrow == 0 - cc0</li>
+ *  <li>rv1 != 0 carry/borrow == 0 - cc1</li>
+ *  <li>rv1 == 0 carry/borrow == 1 - cc2</li>
+ *  <li>rv1 !- 0 carry/borrow == 1 - cc3</li>
+ * </ul>
+ *
+ * Notes:
+ * <ol>
+ *  <li>rvw = r1 input </li>
+ *  <li>rv2 = r2 input </li>
+ *  <li>rv1 = result r1</li>
+ * </ol>
+ *
+ * R1 = RW + R2
+ * <ul>
+ *  <li>R1:+ RW:+ R2:+ NC
+ *  <li>R1:+ RW:+ R2:- NB
+ *  <li>R1:+ RW:- R2:+ C
+ *  <li>R1:+ RW:- R2:- NB
+ *  <li>R1:- RW:+ R2:+ NC
+ *  <li>R1:- RW:+ R2:- B
+ *  <li>R1:- RW:- R2:+ NC
+ *  <li>R1:- RW:- R2:- NB
+ * </ul>
+ *
+ * @return condition code
+ */
     private int get_int_lsi_add_cc() { // RPI 1125 ALSIH and ALSI
-		/*
-		 * set psw_carry and return cc for logical add
-		 * with signed value in rv2.  For negative rv2,
-		 * the carry bit may indicate borrow.
-		 *  
-		 *   rv1 carry/borrow
-		 *    0  0 - cc0
-		 *   !0  0 cc1
-		 *    0  1 cc2
-		 *   !0  1 cc3
-		 * Notes: 
-		 *   1. rvw = r1 input 
-		 *   2. rv2 = r2 input 
-		 *   3. rv1 = result r1
-		 * 
-		 *   R1 = RW + R2
-		 *   
-         *R1      RW        R2       RPI 1125 DOC
-         * +       +         +   NC
-         * +       +         -   NB
-         * +       -         +   C
-         * +       -         -   NB
-         * -       +         +   NC
-         * -       +         -   B
-         * -       -         +   NC
-         * -       -         -   NB
-		 */
 		boolean rv1_carry = false;
 		if (rv1 >= 0) { // RPI 376
 			if (rvw < 0 && rv2 > 0) {
@@ -13791,34 +14356,44 @@ public class pz390 {
 			}
 		}
     }
+
+
+
+/**
+ * set psw_carry and return cc for logical add
+ * with signed value in rv2.  For negative rv2,
+ * the carry bit may indicate borrow.
+ *
+ * <ul>
+ *  <li>rlv1 == 0 carry/borrow 0 - cc0</li>
+ *  <li>rlv1 != 0 carry/borrow 0 - cc1</li>
+ *  <li>rlv1 == 0 carry/borrow 1 - cc2</li>
+ *  <li>rlv1 != 0 carry/borrow 1 - cc3</li>
+ * </ul>
+ *
+ * Notes:
+ * <ol>
+ *  <li>rlvw = r1 input</li>
+ *  <li>rlv2 = r2 input</li>
+ *  <li>rlv1 = result r1</li>
+ * </ol>
+ * 
+ * R1 = RW + R2
+ *
+ * <ul>
+ *  <li>R1:+ RW:+ R2:+ NC</li>
+ *  <li>R1:+ RW:+ R2:- NB</li>
+ *  <li>R1:+ RW:- R2:+ C</li>
+ *  <li>R1:+ RW:- R2:- NB</li>
+ *  <li>R1:- RW:+ R2:+ NC</li>
+ *  <li>R1:- RW:+ R2:- B</li>
+ *  <li>R1:- RW:- R2:+ NC</li>
+ *  <li>R1:- RW:- R2:- NB</li>
+ * </ul>
+ *
+ * @return condition code
+ */
     private int get_long_lsi_add_cc() { // RPI 1125 ALGSI
-		/*
-		 * set psw_carry and return cc for logical add
-		 * with signed value in rv2.  For negative rv2,
-		 * the carry bit may indicate borrow.
-		 *  
-		 *   rlv1 carry/borrow
-		 *    0  0 - cc0
-		 *   !0  0 cc1
-		 *    0  1 cc2
-		 *   !0  1 cc3
-		 * Notes: 
-		 *   1. rlvw = r1 input 
-		 *   2. rlv2 = r2 input 
-		 *   3. rlv1 = result r1
-		 * 
-		 *   R1 = RW + R2
-		 *   
-         *R1      RW        R2       RPI 1125 DOC
-         * +       +         +   NC
-         * +       +         -   NB
-         * +       -         +   C
-         * +       -         -   NB
-         * -       +         +   NC
-         * -       +         -   B
-         * -       -         +   NC
-         * -       -         -   NB
-		 */
 		boolean rlv1_carry = false;
 		if (rlv1 >= 0) { // RPI 376
 			if (rlvw < 0 && rlv2 > 0) {
@@ -13843,15 +14418,20 @@ public class pz390 {
     }
 	
 
+
+
+/**
+ * set psw_carry and return cc for logical add as follows:
+ * <ul>
+ *  <li> rlv1 == 0 carry == 0 - cc0</li>
+ *  <li> rlv1 != 0 carry == 0 - cc1</li>
+ *  <li> rlv1 == 0 carry == 1 - cc2</li>
+ *  <li> rlv1 != 0 carry == 1 - cc3</li>
+ * </ul>
+ *
+ * @return condition code
+ */
 	private int get_long_log_add_cc() {
-		/*
-		 * set psw_carry and return cc for logical add as follows:
-		 *  rlv1 carry
-		 *   0     0 cc0
-		 *  !0     0 cc1
-		 *   0 1 cc2
-		 *  !0 1 cc3
-		 */
 		boolean rlv1_carry = false;
 		if (rlv1 >= 0) { // RPI 376
 			if (rlvw < 0 || rlv2 < 0) {
@@ -13875,19 +14455,27 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return cc for logical subtract as follows:
+ <ul>
+ * <li>rv1 == 0 borrow == 1 - cc0 (slb only)</li>
+ * <li>rv1 != 0 borrow == 1 - cc1</li>
+ * <li>rv1 == 0 borrow == 0 - cc2</li>
+ * <li>rv1 != 0 borrow == 0 - cc3</li>
+ * </ul>
+ *
+ * Notes:
+ * <ol>
+ *  <li>rvw = r1 input</li>
+ *  <li>rv2 = r2 input</li>
+ *  <li>rv1 = result</li>
+ * </ol>
+ *
+ * @return condition code
+ */
 	private int get_int_log_sub_cc() {
-		/*
-		 * return cc for logical subtract as follows: 
-		 * rv1 borrow 
-		 *   0 1 cc0 (slb only)
-		 *  !0 1 cc1 
-		 *   0 0 cc2 
-		 *  !0 0 cc3 
-		 * Notes:
-		 *  1. rvw = r1 input
-		 *  2. rv2 = r2 input 
-		 *  3. rv1 = result
-		 */
 		boolean rv1_borrow = false;
 		int signs = rvw ^ rv2; // RPI 879
         if (signs >= 0){
@@ -13916,19 +14504,28 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return cc for logical subtract as follows:
+ * <ul>
+ *  <li>rlv borrow 
+ *  <li>rlv == 0 borrow == 1 - cc0 (slb only)</li>
+ *  <li>rlv != 0 borrow == 1 - cc1</li>
+ *  <li>rlv == 0 borrow == 0 - cc2</li>
+ *  <li>rlv != 0 borrow == 0 - cc3</li>
+ * </ul>
+ *
+ * Notes:
+ * <ol>
+ *  <li>rlvw = orig. rlv1</li>
+ *  <li>rlv1 = result</li>
+ *  <li>rlv2 = orig. rlv2</li>
+ * </ol>
+ *
+ * @return condition code
+ */
 	private int get_long_log_sub_cc() {
-		/*
-		 * return cc for logical subtract as follows:
-		 *  rlv borrow 
-		 *    0 1 cc0 (slb only)
-		 *   !0 1 cc1 
-		 *    0 0 cc2 
-		 *   !0 0 cc3
-		 * Notes:
-		 *   1.  rlvw = orig. rlv1
-		 *   2.  rlv1 = result
-		 *   3.  rlv2 = orig. rlv2
-		 */
 		boolean rlv1_borrow = false;
 		long signs = rlvw ^ rlv2; // RPI 879
         if (signs >= 0){
@@ -13956,33 +14553,56 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * return byte array with leading 0 byte followed by data bytes. This
+ * array format is used to initialize BigInteger with logical unsigned
+ * value.<br />
+ * 2022-02-21 dsh issue 300 support unsigned with leading x'00'
+ *
+ * @param data_byte input byte array
+ * @param data_offset offset of data in data_byte array
+ * @param data_len length of data to use
+ * @return byte array
+ */
 	private byte[] get_unsigned_bytes(byte[] data_byte, int data_offset, int data_len) {  // #300
-		/*
-		 * return byte array with leading 0 byte followed by data bytes. This
-		 * array format is used to initialize BigInteger with logical unsigned
-		 * value.  
-		 * 2022-02-21 dsh issue 300 support unsigned with leading x'00'
-		 */
 		byte[] new_byte = new byte[data_len + 1]; // default all 0x00
 		System.arraycopy(data_byte, data_offset, new_byte, 1, data_len); // RPI 411
 		return new_byte;
 	}
+
+
+
+/**
+ * return byte array with signed 2's complement. This
+ * array format is used to initialize BigInteger value.<br />
+ * 2022-02-21 dsh issue 300 fix to support 2s complement negative numbers
+ *
+ * @param data_byte input byte array
+ * @param data_offset offset of data in data_byte array
+ * @param data_len length of data to use
+ * @return byte array
+ */
 	private byte[] get_signed_bytes(byte[] data_byte, int data_offset, int data_len) {  // #300
-		/*
-		 * return byte array with signed 2's complement. This
-		 * array format is used to initialize BigInteger value.  
-		 * 2022-02-21 dsh issue 300 fix to support 2s complement negative numbers
-		 */
 		byte[] new_byte = new byte[data_len];
 		System.arraycopy(data_byte, data_offset, new_byte, 0, data_len); // RPI
 																			// 411
 		return new_byte;
 	}
 
+
+
+/**
+ * copy big integer bytes to work reg with work reg size up to 16
+ *
+ * @param store_bytes byte array to store into
+ * @param store_offset offset in array where to store
+ * @param big_int big-int value to be stored
+ * @param store_length nr of bytes to store
+ */
 	private void fp_bi_to_wreg(byte[] store_bytes,int store_offset,BigInteger big_int, int store_length) {
-		/*
-		 * copy big integer bytes to work reg with work reg size up to 16
-		 */
 		byte[] work_byte = big_int.toByteArray();
 		byte extend_byte = 0;
 		if (work_byte[0] < 0)
@@ -13997,7 +14617,13 @@ public class pz390 {
 					store_bytes, store_offset, store_length);
 		}
 	}
-	private void exec_clcl(){
+
+
+
+/**
+ * execute Compare Characters Long
+ */
+    private void exec_clcl(){
 		fill_char = reg.get(rf2 + 12);
 		bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
 		bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
@@ -14073,6 +14699,12 @@ public class pz390 {
 		reg.putInt(rf2 + 12, (reg.getInt(rf2 + 12) & psw_amode24_high_bits)
 				| (rflen2 - (bd2_loc - bd2_start)));
 	}
+
+
+
+/**
+ * execute Compare Characters Long Extended
+ */
     private void exec_clcle(){
     	fill_char = (byte) bd2_loc;
 		bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
@@ -14147,6 +14779,12 @@ public class pz390 {
 				| bd2_loc);
 		reg.putInt(rf3 + 12, rflen2 - (bd2_loc - bd2_start));
     }
+
+
+
+/**
+ * execute Compare Logical under Mask
+ */
 	private void exec_clm() {
 		/*
 		 * exec clmh or clm using rv1, db2_loc
@@ -14205,6 +14843,11 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * execute Compare Logical STring
+ */
 	private void exec_clst() {
 		/*
 		 * compare strings r0 - ending byte rf1,rf2 - string addresses
@@ -14239,6 +14882,11 @@ public class pz390 {
 		reg.putInt(rf2 + 4, str2_loc + index);
 	}
 
+
+
+/**
+ * execute Compare Until Substring Equal
+ */
 	private void exec_cuse() {
 		/*
 		 * search for matching string at same offset in two fields: r0 = length
@@ -14299,6 +14947,12 @@ public class pz390 {
 			reg.putInt(rf2 + 12, 0);
 		}
 	}
+
+
+
+/**
+ * execute SeaRch STring
+ */
 	private void exec_srst() {
 		/*
 		 * find char in r2 field which ends at r1 char is in r0 cc 1 = char
@@ -14324,6 +14978,11 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * execute STore Characters under Mask
+ */
 	private void exec_stcm() {
 		/*
 		 * exec stcmh, stcmy, or stcm using rv1, db2_loc
@@ -14345,10 +15004,15 @@ public class pz390 {
 			bd2_loc++;
 		}
 	}
+
+
+
+/**
+ * perform TRTE or TRTRE
+ *
+ * @param reversed reversal option
+ */
 	private void exec_trt_ext(boolean reversed){
-		/*
-		 * perform TRTE or TRTRE
-		 */
 		if ((mf1 & 1) != 0){ 
 			// check even/odd arg register pair
 			set_psw_check(psw_pic_spec);
@@ -14471,6 +15135,12 @@ public class pz390 {
 		reg.putInt(rf1+4,bd1_loc);
 		reg.putInt(rf1+12,0);
 	}
+
+
+
+/**
+ * perform UNPKA
+ */
     private void exec_unpka(){
     	if (rflen <= 32) {
 			rflen1 = rflen;
@@ -14521,12 +15191,20 @@ public class pz390 {
 			psw_cc = psw_cc3;
 		}
     }
+
+
+
+/**
+ * exec icmh, icmy, or icm using rv1, db2_loc<br />
+ *
+ * Notes:
+ * <ol>
+ *  <li>psw_cc = 0 all inserted bits 0 or mask 0</li>
+ *  <li>psw_cc = 1 if first inserted bit 1</li>
+ *  <li>psw_cc = 2 if first inserted bit 0 and not all 0</li>
+ * </ol>
+ */
 	private void exec_icm() {
-		/*
-		 * exec icmh, icmy, or icm using rv1, db2_loc Notes: 1. psw_cc =
-		 * allinserted bits 0 or mask 0 2. psw_cc = 1 if first inserted bit 1 3.
-		 * psw_cc = 2 if first inserted bit 0 and not all 0
-		 */
 		psw_cc = psw_cc_equal; // assume all zeros
 		boolean first_insert = true;
 		if ((mf3 & 0x8) != 0) {
@@ -14588,6 +15266,12 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * execute MoVe Characters Long
+ */
     private void exec_mvcl(){
     	bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
 		bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
@@ -14632,6 +15316,12 @@ public class pz390 {
 		reg.putInt(rf2 + 12, (reg.getInt(rf2 + 12) & psw_amode24_high_bits)
 				| (rflen2 - data_len));
     }
+
+
+
+/**
+ * execute MoVe Characters Long Extended
+ */
     private void exec_mvcle(){
     	fill_char = (byte) bd2_loc;
 		bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
@@ -14689,13 +15379,19 @@ public class pz390 {
 				| bd2_loc);
 		reg.putInt(rf3 + 12, rflen2 - data_len);
     }
+
+
+
+/**
+ * move from bd2_loc to bd1_loc
+ * for length rflen<br />
+ *
+ * Notes:
+ * <ol>
+ *  <li>Used by MVC and MVCOS</li>
+ * </ol>
+ */
     private void exec_mvc_rflen(){
-    	/*
-    	 * move from bd2_loc to bd1_loc
-    	 * for length rflen 
-    	 * Notes:
-    	 *   1.  Used by MVC and MVCOS
-    	 */
     	if (bd1_loc + rflen <= bd2_loc || bd2_loc + rflen <= bd1_loc) {
 			System.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc, rflen); // RPI
 																			// 411
@@ -14712,10 +15408,16 @@ public class pz390 {
 			}
 		}
     }
+
+
+
+/**
+ * push psw and regs on Program Call stack
+ *
+ * @param pc_type type of PC
+ * @param link_addr linkage address
+ */
 	private void push_pc_stack(boolean pc_type,int link_addr) {
-		/*
-		 * push psw and regs on PC stack
-		 */
 		if (cur_pc_stk < max_pc_stk) {
 			pc_stk_type_pc[cur_pc_stk] = pc_type;
 			pc_stk_psw_loc[cur_pc_stk] = link_addr;
@@ -14730,10 +15432,12 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * pop psw and regs on PC stack
+ */
 	private void pop_pc_stack() {
-		/*
-		 * pop psw and regs on PC stack
-		 */
 		if (cur_pc_stk > 0) {
 			cur_pc_stk--;
 			cur_pc_stk_reg = cur_pc_stk_reg - reg_len;
@@ -14746,17 +15450,27 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return hex ins plus ins name with 1 space
+ *
+ * @param ins_loc instruction address
+ * @return instruction data in hex with instruction mnemonic appended
+ */
 	public String get_ins_target(int ins_loc) {
-		/*
-		 * return hex ins plus ins name with 1 space
-		 */
 		return get_ins_hex(ins_loc).trim() + " " + get_ins_name(ins_loc);
 	}
 
+
+
+/**
+ * return 2, 4, or 6 byte hex instruction
+ *
+ * @param ins_loc instruction address
+ * @return instruction data in hex
+ */
 	public String get_ins_hex(int ins_loc) {
-		/*
-		 * return 2, 4, or 6 byte hex instruction
-		 */
 		String hex;
 		ins_loc = ins_loc & psw_amode;
 		if (ins_loc >= tot_mem) {
@@ -14773,31 +15487,45 @@ public class pz390 {
 		return hex;
 	}
 
+
+
+/**
+ * Format fp reg into 16 byte hex string after flushing co-reg<br />
+ *
+ * Note:<br />
+ * This trace function slows down fp by adding extra conversions.
+ *
+ * @param reg_index register index
+ * @return hexadecimal string
+ */
 	public String get_fp_long_hex(int reg_index) {
-		/*
-		 * Format fp reg into 16 byte hex string after flushing co-reg Note:
-		 * This trace function slows donw fp by adding extra conversions.
-		 */
 		fp_store_reg(trace_reg, reg_index);
 		String work_hex = Long.toHexString(trace_reg.getLong(reg_index));
 		return ("0000000000000000" + work_hex).substring(work_hex.length())
 				.toUpperCase();
 	}
 
+
+
+/**
+ * Format long into 16 byte hex string
+ *
+ * @param work_long value to convert
+ * @return hexadecimal string
+ */
 	public String get_long_hex(long work_long) {
-		/*
-		 * Format long into 16 byte hex string
-		 */
 		String work_hex = Long.toHexString(work_long);
 		return ("0000000000000000" + work_hex).substring(work_hex.length())
 				.toUpperCase();
 	}
 
+
+
+/**
+ * set opcode1 and opcode2 from psw_loc and then execute setup routine
+ * with trace on to generate formated instruction trace
+ */
 	public void trace_psw() {
-		/*
-		 * set opcode1 and opcode2 from psw_loc and then execute setup routine
-		 * with trace on to generate formated instruction trace
-		 */
 		trace_psw = true;  // RPI 538
 		boolean save_opt_trace = tz390.opt_trace;
 		int save_psw_loc = psw_loc;
@@ -15004,11 +15732,16 @@ public class pz390 {
 		psw_ins_len = save_psw_ins_len;           // RPI 2010
         trace_psw = false;  // RPI 538
     }
+
+
+
+/**
+ * return extended svc trace information including svc function name and
+ * any key parms available such as pgm name or ddname where appropriate
+ *
+ * @return descriptive text
+ */
 	private String trace_svc() { // RPI 312
-		/*
-		 * return extended svc trace information including svc function name and
-		 * any key parms available such as pgm name or ddname where appropriate
-		 */
 		switch (if1) {
 		case 0x01: // WAIT
 			return "WAIT R0=0/COUNT R1=ECB/ECBLIST";
@@ -15145,10 +15878,16 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return psw cc for big int comparison
+ *
+ * @param big_int1 operand1 value
+ * @param big_int2 operand2 value
+ * @return condition code
+ */
 	public int get_big_int_comp_cc(BigInteger big_int1, BigInteger big_int2) { // RPI 1092
-		/*
-		 * return psw cc for big int comp
-		 */
 		switch (big_int1.compareTo(big_int2)) {
 		case -1:
 			return psw_cc_low;
@@ -15162,11 +15901,15 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * check rlv3 = rlv1 + rlv2 for fixed overflow and set psw_cc or gen
+ * fixed exception
+ *
+ * @return condition code
+ */
 	private int get_long_add_cc() {
-		/*
-		 * check rlv3 = rlv1 + rlv2 for fixed overflow and set psw_cc or gen
-		 * fixed exception
-		 */
 		if (rlv1 >= 0) {
 			if (rlv2 > 0) {
 				if (rlv3 < 0) {
@@ -15193,11 +15936,15 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * check rlv3 = rlv1 - rlv2 for fixed overflow and set psw_cc or gen
+ * fixed exception
+ *
+ * @return condition code
+ */
 	private int get_long_sub_cc() {
-		/*
-		 * check rlv3 = rlv1 - rlv2 for fixed overflow and set psw_cc or gen
-		 * fixed exception
-		 */
 		if (rlv1 >= 0) {
 			if (rlv2 < 0) {
 				if (rlv3 < 0) {
@@ -15224,10 +15971,16 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return psw_cc for long compare
+ *
+ * @param long1 operand1
+ * @param long2 operand2
+ * @return condition code
+ */
 	public int get_long_comp_cc(long long1, long long2) {  // RPI 1092
-		/*
-		 * return psw_cc for long compare
-		 */
 		if (long1 == long2) {
 			return psw_cc_equal;
 		} else {
@@ -15239,11 +15992,15 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * check rv3 = rv1 + rv2 for fixed overflow and set psw_cc or gen fixed
+ * exception
+ *
+ * @return condition code
+ */
 	private int get_int_add_cc() {
-		/*
-		 * check rv3 = rv1 + rv2 for fixed overflow and set psw_cc or gen fixed
-		 * exception
-		 */
 		if (rv1 >= 0) {
 			if (rv2 > 0) {
 				if (rv3 < 0) {
@@ -15270,11 +16027,15 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * check rv3 = rv1 - rv2 for fixed overflow and set psw_cc or gen fixed
+ * exception
+ *
+ * @return condition code
+ */
 	private int get_int_sub_cc() {
-		/*
-		 * check rv3 = rv1 - rv2 for fixed overflow and set psw_cc or gen fixed
-		 * exception
-		 */
 		if (rv1 >= 0) {
 			if (rv2 < 0) {
 				if (rv3 < 0) {
@@ -15301,10 +16062,16 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return psw_cc for int compare
+ *
+ * @param int1 operand1
+ * @param int2 operand2
+ * @return condition code
+ */
 	private int get_int_comp_cc(int int1, int int2) {
-		/*
-		 * return psw_cc for int compare
-		 */
 		if (int1 == int2) {
 			return psw_cc_equal;
 		} else {
@@ -15315,11 +16082,14 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * raise ineact exception if
+ * fp_rbdv1 not = fp_rbdv2
+ */
     private void check_bd12_exact(){
-    	/*
-    	 * raise ineact exception if
-    	 * fp_rbdv1 not = fp_rbdv2
-    	 */
 		int comp12 = fp_rbdv1.compareTo(fp_rbdv2);
 	    if (comp12 != 0){
 	    	if (comp12 > 0){
@@ -15330,10 +16100,13 @@ public class pz390 {
 	    	set_psw_check(psw_pic_data);
 	    }
     }
+
+
+
+/**
+ * check for EB overflow or underflow
+ */
 	private void check_eb_mpy() {
-		/*
-		 * check for EB overflow or underflow
-		 */
 		if (fp_rev1 != 0.){ // RPI 808
 			if (Math.abs(fp_rev1) >= fp_eb_max) {
 				fp_dxc = fp_dxc_oe;
@@ -15345,10 +16118,12 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * check for EH overflow or underflow
+ */
 	private void check_eh_mpy() {
-		/*
-		 * check for EH overflow or underflow
-		 */
 		if (fp_rdv1 != 0.){ // RPI 808
 			if (Math.abs(fp_rdv1) >= fp_eh_max) {
 				set_psw_check(psw_pic_fp_ovf);
@@ -15358,10 +16133,12 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * check for DB overflow or underflow
+ */
 	private void check_db_mpy() {
-		/*
-		 * check for DB overflow or underflow
-		 */
 		if (fp_rdv1 != 0.){ // RPI 808
 			if (Math.abs(fp_rdv1) >= fp_db_max) {
 				fp_dxc = fp_dxc_oe;
@@ -15372,10 +16149,13 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * check for DD overflow or underflow
+ */
 	private void check_dd_mpy() { // RPI 820
-		/*
-		 * check for DD overflow or underflow
-		 */
 		if (fp_rbdv1.signum() != 0){
 			if (fp_rbdv1.abs().compareTo(fp_dd_pos_max) >= 0) {
 				fp_dxc = fp_dxc_oe;
@@ -15386,10 +16166,13 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * check for DH overflow or underflow
+ */
 	private void check_dh_mpy() {
-		/*
-		 * check for DH overflow or underflow
-		 */
 		if (fp_rbdv1.signum() != 0.){ // RPI 808 RPI 821
 			if (fp_rbdv1.abs().compareTo(fp_dh_max) >= 0) {  // RPI 821
 				set_psw_check(psw_pic_fp_ovf);
@@ -15399,10 +16182,12 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * check for LB overflow or underflow
+ */
 	private void check_lb_mpy() {
-		/*
-		 * check for LB overflow or underflow
-		 */
 		if (fp_rbdv1.signum() != 0){ // RPI 808
 			if (fp_rbdv1.abs().compareTo(fp_lh_max) >= 0) {
 				fp_dxc = fp_dxc_oe;
@@ -15413,10 +16198,13 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * check for LD overflow or underflow
+ */
 	private void check_ld_mpy() {  // RPI 820
-		/*
-		 * check for LD overflow or underflow
-		 */
 		if (fp_rbdv1.signum() != 0){ // RPI 808
 			if (fp_rbdv1.abs().compareTo(fp_ld_pos_max) >= 0) {
 				fp_dxc = fp_dxc_oe;
@@ -15427,10 +16215,13 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * check for LH overflow or underflow
+ */
 	private void check_lh_mpy() {
-		/*
-		 * check for LH overflow or underflow
-		 */
 		if (fp_rbdv1.signum() != 0){ // RPI 808
 			if (fp_rbdv1.abs().compareTo(fp_lh_max) >= 0) {
 				fp_dxc = fp_dxc_oe;
@@ -15442,10 +16233,12 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * check for EB overflow or underflow
+ */
 	private void check_eb_div() {
-		/*
-		 * check for EB overflow or underflow
-		 */
 		if (fp_rev2 == 0) {
 			if (fp_rev1 >= 0){ // RPI 830
 				fp_reg.putInt(rf1,fp_eb_pos_inf);
@@ -15465,10 +16258,12 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * check for EH overflow or underflow
+ */
 	private void check_eh_div() {
-		/*
-		 * check for EH overflow or underflow
-		 */
 		if (fp_rdv2 == 0) {
 			set_psw_check(psw_pic_fp_div);
 		} else if (fp_rdv1 != 0.){ // RPI 808
@@ -15480,10 +16275,12 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * check for DB overflow or underflow
+ */
 	private void check_db_div() {
-		/*
-		 * check for DB overflow or underflow
-		 */
 		if (fp_rdv2 == 0) {
 			if (fp_rdv1 >= 0){ // RPI 830
 				fp_reg.putLong(rf1,fp_db_pos_inf);
@@ -15502,10 +16299,13 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * check for DDTR overflow or underflow
+ */
 	private void check_dd_div() {  // RPI 820
-		/*
-		 * check for DDTR overflow or underflow
-		 */
 		if (fp_rbdv3.signum() == 0) {
 			if (fp_rbdv2.signum() >= 0){ // RPI 830
 				fp_reg.putLong(rf1,fp_dd_pos_inf);
@@ -15524,10 +16324,13 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * check for DH overflow or underflow
+ */
 	private void check_dh_div() { // RPI 821
-		/*
-		 * check for DH overflow or underflow
-		 */
 		if (fp_rbdv2.signum() == 0) {
 			set_psw_check(psw_pic_fp_div);
 		} else if (fp_rbdv1.signum() != 0){ // RPI 808
@@ -15541,10 +16344,11 @@ public class pz390 {
 	}
 
 
+
+/**
+ * check for LB overflow or underflow
+ */
 	private void check_lb_div() {
-		/*
-		 * check for LB overflow or underflow
-		 */
 		if (fp_rbdv2.signum() == 0) {
 			if (fp_rbdv1.signum() >= 0){ // RPI 830
 				fp_reg.putLong(rf1,fp_lb_pos_inf);
@@ -15565,10 +16369,13 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * check for DXTR overflow or underflow
+ */
 	private void check_ld_div() {  // RPI 820
-		/*
-		 * check for DXTR overflow or underflow
-		 */
 		if (fp_rbdv3.signum() == 0) {
 			if (fp_rbdv2.signum() >= 0){ // RPI 830
 				fp_reg.putLong(rf1,fp_ld_pos_inf);
@@ -15589,10 +16396,13 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * check for LH overflow or underflow
+ */
 	private void check_lh_div() {
-		/*
-		 * check for LH overflow or underflow
-		 */
 		if (fp_rbdv2.signum() == 0) {
 			set_psw_check(psw_pic_fp_div);
 		} else if (fp_rbdv1.signum() != 0){ // RPI 808
@@ -15605,10 +16415,14 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return psw_cc for fp divide to integer
+ *
+ * @return condition code
+ */
 	private int fp_get_di_cc() {
-		/*
-		 * return psw_cc for fp divide to integer
-		 */
 		fp_rdv3 = Math.abs(fp_rdv3);
 		fp_rdv4 = Math.abs(fp_rdv4);
 		if (fp_rdv3 >= fp_db_max) {
@@ -15632,10 +16446,16 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return psw_cc for float compare
+ *
+ * @param eb1 operand1
+ * @param eb2 operand2
+ * @return condition code
+ */
 	private int fp_get_eb_comp_cc(float eb1, float eb2) {
-		/*
-		 * return psw_cc for float compare
-		 */
 		if (fp_signal) {
 			fp_signal = false;
 			if (Math.abs(eb1) >= fp_db_max || Math.abs(eb2) >= fp_eb_max) {
@@ -15658,11 +16478,15 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return psw_cc for eb add/sub result fp_rev1 and raise BFP sig, ovf,
+ * or unf exceptions
+ *
+ * @return condition code
+ */
 	private int fp_get_eb_add_sub_cc() {
-		/*
-		 * return psw_cc for eb add/sub result fp_rev1 and raise BFP sig, ovf,
-		 * or unf exceptions
-		 */
 		if (fp_rev1 == 0) {
 			fp_dxc = fp_dxc_it;
 			set_psw_check(psw_pic_data);
@@ -15690,10 +16514,16 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return psw_cc for DB double compare
+ *
+ * @param db1 operand1
+ * @param db2 operand2
+ * @return condition code
+ */
 	private int fp_get_db_comp_cc(double db1, double db2) {
-		/*
-		 * return psw_cc for DB double compare
-		 */
 		if (fp_signal) {
 			fp_signal = false;
 			if (Math.abs(db1) >= fp_db_max || Math.abs(db2) >= fp_db_max) {
@@ -15715,10 +16545,17 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * return psw_cc for EH double compare
+ *
+ * @param db1 operand1
+ * @param db2 operand2
+ * @return condition code
+ */
 	private int fp_get_eh_comp_cc(double db1, double db2) {
-		/*
-		 * return psw_cc for EH double compare
-		 */
 		if (db1 == db2) {
 			return psw_cc_equal;
 		} else {
@@ -15728,12 +16565,19 @@ public class pz390 {
 				return psw_cc_low;
 			}
 		}
-	}	
+	}
+
+
+
+/**
+ * return psw_cc for DD compare
+ * with or without signal
+ *
+ * @param dd1 operand1
+ * @param dd2 operand2
+ * @return condition code
+ */
 	private int fp_get_dd_comp_cc(BigDecimal dd1, BigDecimal dd2) {
-		/*
-		 * return psw_cc for DD compare
-		 * with or without signal
-		 */		
 		if (fp_signal) {
 			fp_signal = false;
 			if (dd1.abs().compareTo(fp_dd_pos_max) > 0 
@@ -15756,11 +16600,18 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * return psw_cc for LD compare
+ * with or without signal
+ *
+ * @param ld1 operand1
+ * @param ld2 operand2
+ * @return condition code
+ */
 	private int fp_get_ld_comp_cc(BigDecimal ld1, BigDecimal ld2) {
-		/*
-		 * return psw_cc for LD compare
-		 * with or without signal
-		 */
 		if (fp_signal) {
 			fp_signal = false;
 			if (ld1.abs().compareTo(fp_ld_pos_max) > 0 
@@ -15783,11 +16634,16 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * return psw_cc for eh add/sub result fp_rdv1 and raise HFP sig, ovf,
+ * or unf exceptions
+ *
+ * @return condition code
+ */
 	private int fp_get_eh_add_sub_cc() {
-		/*
-		 * return psw_cc for eh add/sub result fp_rdv1 and raise HFP sig, ovf,
-		 * or unf exceptions
-		 */
 		if (fp_rdv1 == 0) {
 			set_psw_check(psw_pic_fp_sig);
 			return psw_cc_equal;
@@ -15810,12 +16666,16 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return psw_cc for dh add/sub result
+ * fp_rbdv1 and raise HFP sig, ovf,
+ * or unf exceptions
+ *
+ * @return condition code
+ */
 	private int fp_get_dh_add_sub_cc() {
-		/*
-		 * return psw_cc for dh add/sub result
-		 *   fp_rbdv1 and raise HFP sig, ovf,
-		 *   or unf exceptions
-		 */
 		if (fp_rbdv1.signum() == 0) {  // RPI 821
 			set_psw_check(psw_pic_fp_sig);
 			return psw_cc_equal;
@@ -15833,12 +16693,16 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return psw_cc for db add/sub
+ * result fp_rdv1 and raise BFP sig, ovf,
+ * or unf exceptions
+ *
+ * @return condition code
+ */
 	private int fp_get_db_add_sub_cc() {
-		/*
-		 * return psw_cc for db add/sub
-		 * result fp_rdv1 and raise BFP sig, ovf,
-		 * or unf exceptions
-		 */
 		if (fp_rdv1 == 0) {
 			fp_dxc = fp_dxc_it;
 			set_psw_check(psw_pic_data);
@@ -15866,10 +16730,16 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return psw_cc for big decimal compare
+ *
+ * @param bd1 operand1
+ * @param bd2 operand2
+ * @return condition code
+ */
 	private int fp_get_lb_comp_cc(BigDecimal bd1, BigDecimal bd2) {
-		/*
-		 * return psw_cc for big decimal compare
-		 */
 		bd1 = bd1.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
 		bd2 = bd2.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
 		if (fp_signal) {
@@ -15897,10 +16767,17 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * return psw_cc for DH big decimal compare
+ *
+ * @param bd1 operand1
+ * @param bd2 operand2
+ * @return condition code
+ */
 	private int fp_get_dh_comp_cc(BigDecimal bd1, BigDecimal bd2) {
-		/*
-		 * return psw_cc for DH big decimal compare
-		 */
 		bd1 = bd1.round(fp_dh_context); // RPI 821 
 		bd2 = bd2.round(fp_dh_context); // RPI 821 
 		int_work = bd1.compareTo(bd2);
@@ -15914,10 +16791,17 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * return psw_cc for LH big decimal compare
+ *
+ * @param bd1 operand1
+ * @param bd2 operand2
+ * @return condition code
+ */
 	private int fp_get_lh_comp_cc(BigDecimal bd1, BigDecimal bd2) {
-		/*
-		 * return psw_cc for LH big decimal compare
-		 */
 		bd1 = bd1.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
 		bd2 = bd2.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
 		int_work = bd1.compareTo(bd2);
@@ -15932,11 +16816,15 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return psw_cc for lh add/sub result fp_rbdv1 * and raise HFP sig,
+ * ovf, or unf exceptions
+ *
+ * @return condition code
+ */
 	private int fp_get_lh_add_sub_cc() {
-		/*
-		 * return psw_cc for lh add/sub result fp_rbdv1 * and raise HFP sig,
-		 * ovf, or unf exceptions
-		 */
 		if (fp_rbdv1.signum() == 0) {
 			set_psw_check(psw_pic_fp_sig);
 			return psw_cc_equal;
@@ -15959,12 +16847,16 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return psw_cc for lb add/sub result fp_rbdv1 
+ * and raise BFP sig, ovf,
+ * or unf exceptions
+ *
+ * @return condition code
+ */
 	private int fp_get_lb_add_sub_cc() {
-		/*
-		 * return psw_cc for lb add/sub result fp_rbdv1 
-		 * and raise BFP sig, ovf,
-		 * or unf exceptions
-		 */
 		fp_rbdv1 = fp_rbdv1.round(fp_lb_rnd_context[fp_bfp_rnd]); // RPI 821 
 		int int_work = fp_rbdv1.signum();
 		if (int_work == 0) {
@@ -15993,12 +16885,17 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * return psw_cc for bd add/sub result fp_rdv1 
+ * and raise sig, ovf,
+ * or unf exceptions
+ *
+ * @return condition code
+ */
 	private int fp_get_dfp_add_sub_cc() {
-		/*
-		 * return psw_cc for bd add/sub result fp_rdv1 
-		 * and raise sig, ovf,
-		 * or unf exceptions
-		 */
 		if (fp_rbdv1.signum() == 0) {
 			return psw_cc_equal;
 		} else {
@@ -16023,10 +16920,17 @@ public class pz390 {
 			}
 		}
 	}
+
+
+
+/**
+ * return psw_cc for integer logical compare
+ *
+ * @param int1 operand1
+ * @param int2 operand2
+ * @return condition code
+ */
 	private int get_int_log_comp_cc(int int1, int int2) {
-		/*
-		 * return psw_cc for integer logical compare
-		 */
 		if (int1 == int2) {
 			return psw_cc_equal;
 		} else {
@@ -16046,10 +16950,16 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return psw_cc for long logical compare
+ *
+ * @param long1 operand1
+ * @param long2 operand2
+ * @return condition code
+ */
 	private int get_long_log_comp_cc(long long1, long long2) {
-		/*
-		 * return psw_cc for long logical compare
-		 */
 		if (long1 == long2) {
 			return psw_cc_equal;
 		} else {
@@ -16069,13 +16979,23 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * get float for EB from fp_reg or mem.
+ * If fp_reg then check for co-reg to avoid conversion.<br />
+ *
+ * Notes:
+ * <ol>
+ *  <li>float is used to support EB only.</li>
+ *  <li>EH is supported using double since exponent (4*0x7f) exceeds EB (0xff).</li>
+ * </ol>
+ *
+ * @param fp_buff byte buffer
+ * @param fp_index index to input data
+ * @return floating point number
+ */
 	public float fp_get_eb_from_eb(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * get float for EB from fp_reg or mem 1. If fp_reg then check for
-		 * co-reg to avoid conversion Notes: 1. float is used to support EB
-		 * only. 2. EH is supported using double since exponent (4*0x7f) exceeds
-		 * EB (0xff).
-		 */
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
@@ -16087,11 +17007,17 @@ public class pz390 {
 		return fp_buff.getFloat(fp_index);
 	}
 
+
+
+/**
+ * get double from EH short hex in fp_reg or mem.
+ * If fp_reg, then check for double co-reg to avoid conversion.
+ *
+ * @param fp_buff byte buffer
+ * @param fp_index index to input data
+ * @return double floating point number
+ */
 	public double fp_get_db_from_eh(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * get double from EH short hex in fp_reg or mem 1. If fp_reg, then
-		 * check for double co-reg to avoid conversion
-		 */
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
@@ -16102,12 +17028,18 @@ public class pz390 {
 		}
 		return fp_eh_reg_to_db(fp_buff.getInt(fp_index));
 	}
-	
+
+
+
+/**
+ * get double from EB short binary in fp_reg or mem. If fp_reg, then
+ * check for float co-reg to avoid conversion
+ *
+ * @param fp_buff buffer holding input data
+ * @param fp_index ???
+ * @return double floating point number
+ */
 	private double fp_get_db_from_eb(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * get double from EB short binary in fp_reg or mem 1. If fp_reg, then
-		 * check for float co-reg to avoid conversion
-		 */
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
@@ -16119,11 +17051,17 @@ public class pz390 {
 		return fp_buff.getFloat(fp_index);
 	}
 
+
+
+/**
+ * get double from DB Long binary in fp_reg or mem. If fp_reg, then
+ * check for float co-reg to avoid conversion.
+ *
+ * @param fp_buff buffer holding input data
+ * @param fp_index ???
+ * @return double floating point number
+ */
 	public double fp_get_db_from_db(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * get double from DB Long binary in fp_reg or mem 1. If fp_reg, then
-		 * check for float co-reg to avoid conversion
-		 */
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
@@ -16135,11 +17073,17 @@ public class pz390 {
 		return fp_buff.getDouble(fp_index);
 	}
 
+
+
+/**
+ * get double from LH ext hex in fp_reg or mem. If fp_reg, then check
+ * for bd co-reg to avoid external conversion
+ *
+ * @param fp_buff buffer holding input data
+ * @param fp_index ???
+ * @return double floating point number
+ */
 	private double fp_get_db_from_lh(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * get double from LH ext hex in fp_reg or mem 1. If fp_reg, then check
-		 * for bd co-reg to avoid external conversion
-		 */
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
@@ -16150,12 +17094,15 @@ public class pz390 {
 		}
 		return fp_lh_to_bd(fp_buff, fp_index).doubleValue();
 	}
+
+
+
+/**
+ * add unnormalized HFP DH
+ * fp_long1 = fp_long1 + fp_long2
+ * and set psw_cc
+ */
     private void fp_add_unnorm_dh(){
-    	/*
-    	 * add unnormalized HFP DH
-    	 * fp_long1 = fp_long1 + fp_long2
-    	 * and set psw_cc
-    	 */
     	
     	if (fp_long1 >= 0){
     		fp_sign1 = 0x00;
@@ -16199,12 +17146,15 @@ public class pz390 {
     		}
     	}
     }
+
+
+
+/**
+ * add unnormalized HFP DH
+ * fp_long1 = fp_long1 + fp_long2
+ * and set psw=cc
+ */
     private void fp_add_unnorm_eh(){
-    	/*
-    	 * add unnormalized HFP DH
-    	 * fp_long1 = fp_long1 + fp_long2
-    	 * and set psw=cc
-    	 */
     	
     	if (fp_int1 >= 0){
     		fp_sign1 = 0x00;
@@ -16250,13 +17200,16 @@ public class pz390 {
     		}
     	}
     }
+
+
+
+/**
+ * multiply fp_long2 and fp_long3 dh
+ * unnormalized and set
+ * fp_big_int1 and 
+ * tz390.fp_exp and tz390.fp_sign high bit
+ */
     private void fp_mpy_unnorm_dh(){
-    	/*
-    	 * multiply fp_long2 and fp_long3 dh
-    	 * unnormalized and set
-    	 * fp_big_int1 and 
-    	 * tz390.fp_exp and tz390.fp_sign high bit
-    	 */
     	tz390.fp_sign = (int)((fp_long1 ^ fp_long2) >>> 32) & int_high_bit;
     	fp_exp2 =(byte)((fp_long2 >>> 56) & 0x7f);
     	fp_exp3 =(byte)((fp_long3 >>> 56) & 0x7f);
@@ -16265,14 +17218,20 @@ public class pz390 {
     	            .multiply(BigInteger.valueOf(fp_long3 & long_dh_man_bits));
     	
     }
+
+
+
+/**
+ * add LH at rf1 to fp_big_int1
+ * unnormalized and update
+ * tz390.fp_sign high bit if change<br />
+ *
+ * Notes:
+ * <ol>
+ *  <li>LH at rf1 stored in fp_big_int2 and fp_exp2 for add</li>
+ * </ol>
+ */
     private void fp_add_bi_unnorm_dh(){
-    	/*
-    	 * add LH at rf1 to fp_big_int1
-    	 * unnormalized and update
-         * tz390.fp_sign high bit if change
-         * Notes:
-         *   1.  LH at rf1 stored in fp_big_int2 and fp_exp2 for add
-    	 */
     	
     	if (tz390.fp_exp > fp_exp2){
     		fp_big_int2 = fp_big_int2.shiftRight((tz390.fp_exp-fp_exp2)*4);
@@ -16294,11 +17253,14 @@ public class pz390 {
     		}
     	}   	
     }
+
+
+
+/**
+ * set fp_big_int2, fp_exp2, fp_sign2
+ * from rf1 LH
+ */
     private void fp_get_bi_unnorm_lh(){
-    	/*
-    	 * set fp_big_int2, fp_exp2, fp_sign2
-    	 * from rf1 LH
-    	 */
     	fp_exp2 = fp_reg.get(rf1);
     	if (fp_exp2 >= 0){
     		fp_sign2 = 0;
@@ -16311,11 +17273,14 @@ public class pz390 {
      	  .shiftLeft(56)
      	  .add(BigInteger.valueOf(fp_reg.getLong(rf1+16) & long_dh_man_bits));
     }
+
+
+
+/**
+ * set fp_big_int2, fp_exp2, fp_sign2
+ * from rf1 DH
+ */
     private void fp_get_bi_unnorm_dh(){
-    	/*
-    	 * set fp_big_int2, fp_exp2, fp_sign2
-    	 * from rf1 DH
-    	 */
     	fp_exp2 = fp_reg.get(rf1);
     	if (fp_exp2 >= 0){
     		fp_sign2 = 0;
@@ -16326,15 +17291,20 @@ public class pz390 {
      	fp_big_int2 = BigInteger
      	  .valueOf(fp_reg.getLong(rf1) & long_dh_man_bits);
     }
+
+
+
+/**
+ * set fp_rbdv1 to square root of fp_rbdv2<br />
+ * 
+ * Notes:
+ * <ol>
+ *  <li>Return 0 for 0 and issue data exception if negative.</li>
+ *  <li>Scale number to within double range to calc estimate to 14 decimal places.</li>
+ *  <li>Use Newton Rapson iteration to reduce error to fp_lxg_context limit.</li>
+ * </ol>
+ */
 	private void fp_get_bd_sqrt() {
-		/*
-		 * set fp_rbdv1 to square root of fp_rbdv2
-		 * 
-		 * Notes: 1. Return 0 for 0 and issue data exception if negative. 2.
-		 * Scale number to within double range to calc estimate to 14 decimal
-		 * places. 2. Use Newton Rapson iteration to reduce error to
-		 * fp_lxg_context limit.
-		 */
 		/*
 		 * First handle 0 and negative values
 		 */
@@ -16375,11 +17345,17 @@ public class pz390 {
 				fp_lb_rnd_context[fp_bfp_rnd]);
 	}
 
+
+
+/**
+ * get big decimal from LH extended hex in fp_reg or mem. If fp_reg,
+ * then check for big dec co-reg to avoid conversion.
+ *
+ * @param fp_buff byte array holding input value
+ * @param fp_index address of input data in fp_buff
+ * @return BigDecimal value
+ */
 	public BigDecimal fp_get_bd_from_lh(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * get big decimal from LH extended hex in fp_reg or mem 1. If fp_reg,
-		 * then check for big dec co-reg to avoid conversion
-		 */
 		int fp_ctl_index = fp_index >> 3;	
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
@@ -16391,11 +17367,17 @@ public class pz390 {
 		return fp_lh_to_bd(fp_buff, fp_index);
 	}
 
+
+
+/**
+ * get big decimal from LH extended binary in fp_reg or mem. If
+ * fp_reg, then check for big dec co-reg to avoid conversion.
+ *
+ * @param fp_buff byte array holding input value
+ * @param fp_index address of input data in fp_buff
+ * @return BigDecimal value
+ */
 	public BigDecimal fp_get_bd_from_lb(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * get big decimal from LH extended binary in fp_reg or mem 1. If
-		 * fp_reg, then check for big dec co-reg to avoid conversion
-		 */
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
@@ -16407,11 +17389,17 @@ public class pz390 {
 		return fp_lb_to_bd(fp_buff, fp_index);
 	}
 
+
+
+/**
+ * get big decimal from ED dpd short in fp_reg or mem 1. If fp_reg, then
+ * check for big dec co-reg to avoid conversion
+ *
+ * @param fp_buff byte array holding input value
+ * @param fp_index address of input data in fp_buff
+ * @return BigDecimal value
+ */
 	public BigDecimal fp_get_bd_from_ed(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * get big decimal from ED dpd short in fp_reg or mem 1. If fp_reg, then
-		 * check for big dec co-reg to avoid conversion
-		 */
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
@@ -16423,11 +17411,17 @@ public class pz390 {
 		return fp_ed_to_bd(fp_buff, fp_index);
 	}
 
+
+
+/**
+ * get big decimal from ED dpd long in fp_reg or mem 1. If fp_reg, then
+ * check for big dec co-reg to avoid conversion
+ *
+ * @param fp_buff byte array holding input value
+ * @param fp_index address of input data in fp_buff
+ * @return BigDecimal value
+ */
 	public BigDecimal fp_get_bd_from_dd(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * get big decimal from ED dpd long in fp_reg or mem 1. If fp_reg, then
-		 * check for big dec co-reg to avoid conversion
-		 */
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
@@ -16439,11 +17433,17 @@ public class pz390 {
 		return fp_dd_to_bd(fp_buff, fp_index);
 	}
 
+
+
+/**
+ * get big decimal from LD dpd extended in fp_reg or mem. If fp_reg,
+ * then check for big dec co-reg to avoid conversion.
+ *
+ * @param fp_buff byte array holding input value
+ * @param fp_index address of input data in fp_buff
+ * @return BigDecimal value
+ */
 	public BigDecimal fp_get_bd_from_ld(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * get big decimal from LD dpd extended in fp_reg or mem 1. If fp_reg,
-		 * then check for big dec co-reg to avoid conversion
-		 */
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
@@ -16455,10 +17455,15 @@ public class pz390 {
 		return fp_ld_to_bd(fp_buff, fp_index);
 	}
 
+
+
+/**
+ * return float from fp_reg
+ *
+ * @param fp_ctl_index probably offset in fp register array (reg nr * 8)
+ * @return float value
+ */
 	private Float fp_ctl_reg_to_eb(int fp_ctl_index) {
-		/*
-		 * return float from fp_reg
-		 */
 		switch (fp_reg_ctl[fp_ctl_index]) {
 		case 1: // fp_ctl_eb
 			return fp_reg_eb[fp_ctl_index];
@@ -16472,10 +17477,15 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return double from fp_reg
+ *
+ * @param fp_ctl_index probably offset in fp register array (reg nr * 8)
+ * @return float value
+ */
 	private Double fp_ctl_reg_to_db(int fp_ctl_index) {
-		/*
-		 * return double from fp_reg
-		 */
 		switch (fp_reg_ctl[fp_ctl_index]) {
 		case 1: // fp_ctl_eb
 			return (double) fp_reg_eb[fp_ctl_index];
@@ -16489,10 +17499,15 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return BigDecimal from fp_reg cache
+ *
+ * @param fp_ctl_index probably offset in fp register array (reg nr * 8)
+ * @return BigDecimal value
+ */
 	private BigDecimal fp_ctl_reg_to_bd(int fp_ctl_index) {
-		/*
-		 * return BigDecimal from fp_reg cache
-		 */
 		switch (fp_reg_ctl[fp_ctl_index]) {
 		case 1: // fp_ctl_eb
 			return BigDecimal.valueOf(fp_reg_eb[fp_ctl_index]);
@@ -16506,12 +17521,17 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * get big decimal from DH long hex in fp_reg or mem.
+ * If fp_reg, then check for big dec co-reg to avoid conversion.
+ *
+ * @param fp_buff buffer holding inout data
+ * @param fp_index probably memory address or register number`
+ * @return BigDecimal value
+ */
 	public BigDecimal fp_get_bd_from_dh(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * get big decimal from DH long hex in fp_reg or mem 
-		 * 1. If fp_reg, then check for big dec 
-		 *    co-reg to avoid conversion
-		 */
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
@@ -16524,18 +17544,30 @@ public class pz390 {
 		return fp_dh_to_bd(fp_buff.getLong(fp_index)); // RPI 821
 	}
 
+
+
+/**
+ * get big decimal from DB long bin in fp_reg or mem. If fp_reg, then
+ * check for big dec co-reg to avoid conversion.
+ *
+ * @param fp_buff buffer holding inout data
+ * @param fp_index probably memory address or register number`
+ * @return BigDecimal value
+ */
 	private BigDecimal fp_get_bd_from_db(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * get big decimal from DB long bin in fp_reg or mem 1. If fp_reg, then
-		 * check for big dec co-reg to avoid conversion
-		 */
 		return new BigDecimal(fp_get_db_from_db(fp_buff, fp_index),
 				fp_db_rnd_context[fp_bfp_rnd]);
 	}
+
+
+
+/**
+ * copy fp reg for LD or LXD  RPI 816
+ *
+ * @param index1 operand 1 register number
+ * @param index2 operand 2 register number
+ */
 	private void fp_copy_reg(int index1,int index2){
-		/*
-		 * copy fp reg for LD or LXD  RPI 816
-		 */
 		fp_reg_ctl[index1]  = fp_reg_ctl[index2];
 		fp_reg_type[index1] = fp_reg_type[index2];
 		switch (fp_reg_ctl[index2]){
@@ -16554,13 +17586,21 @@ public class pz390 {
 			break;
 		}
 	}
+
+
+
+/**
+ * set fpc reg and bfp/dfp rounding
+ * for LFPC, LFAS, and SFASR<br />
+ *
+ * Notes:
+ * <ol>
+ *  <li>LFAS and SFASR signalling not supported for now</li>
+ * </ol>
+ *
+ * @param fpc_reg ??
+ */
     private void set_fpc_reg(int fpc_reg){
-    	/*
-    	 * set fpc reg and bfp/dfp rounding
-    	 * for LFPC, LFAS, and SFASR
-    	 * Notes:
-    	 *   1.  LFAS and SFASR signalling not supported for now
-    	 */
 		fp_fpc_reg = fpc_reg;
 		fp_dxc = (fp_fpc_reg & 0xff00) >>> 8;
 		fp_dfp_rnd = (fp_fpc_reg & fp_dfp_rnd_mask) >> 4;
@@ -16569,14 +17609,24 @@ public class pz390 {
 		fp_bfp_rnd_default = fp_bfp_rnd; // RPI 1125
 		fp_fpc_reg = fp_fpc_reg & 0xffff00ff;
     }
+
+
+
+/**
+ * get bd rounded to integer
+ * from fp_bd_int_rnd[]<br />
+ *
+ * Notes:
+ * <ol>
+ *  <li>For BFP - mode = 0-3</li>
+ *  <li>For DFP - mode - 0-7</li>
+ * </ol>
+ *
+ * @param fp_class floating class
+ * @param rnd_mode rounding mode
+ * @return BigDecimal value
+ */
 	private BigDecimal fp_get_bd_rnd_int(byte fp_class,int rnd_mode) {
-		/*
-		 * get bd rounded to integer
-		 * from fp_bd_int_rnd[]
-		 * Notes:
-		 *   1.  For BFP - mode = 0-3
-		 *   2.  For DFP - mode - 0-7
-		 */
 		rnd_mode = fp_get_rnd_mode(fp_class,rnd_mode);
 		if (fp_bd_int_rem[0].signum() >= 0) {
 			fp_bd_inc = BigDecimal.ONE;
@@ -16643,15 +17693,23 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * return requested rounding mode 0-7
+ * based on explicit rounding mode request
+ * <ul>
+ *  <li>0   - use default for fp_class</li>
+ *  <li>1   - use round near half nzero (bfp only)</li>
+ *  <li>4-7 - maps to 0-3 for bfp</li>
+ *  <li>8-15- maps to 0-8 for dfp</li>
+ * </ul>
+ *
+ * @param fp_class floating class
+ * @param rnd_mode rounding mode
+ * @return integer value
+ */
 	private int fp_get_rnd_mode(byte fp_class,int rnd_mode){
-		/*
-		 * return requested rounding mode 0-7
-		 * based on explicit rounding mode request
-		 *   0   - use default for fp_class
-		 *   1   - use round near half nzero (bfp only)
-		 *   4-7 - maps to 0-3 for bfp
-		 *   8-15- maps to 0-8 for dfp
-		 */
 		if (rnd_mode == 0) {
 			if (fp_class == fp_dfp_class){
 				rnd_mode = fp_dfp_rnd; // current dfp rounding mode
@@ -16676,20 +17734,32 @@ public class pz390 {
 		return rnd_mode;
 	}
 
+
+
+/**
+ * get big decimal from DB long bin in fp_reg or mem. If fp_reg, then
+ * check for big dec co-reg to avoid conversion.
+ *
+ * @param fp_buff buffer holding input data
+ * @param fp_index ???
+ * @return BigDecimal value
+ */
 	private BigDecimal fp_get_bd_from_eb(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * get big decimal from DB long bin in fp_reg or mem 1. If fp_reg, then
-		 * check for big dec co-reg to avoid conversion
-		 */
 		return new BigDecimal(fp_get_eb_from_eb(fp_buff, fp_index),
 				fp_eb_rnd_context[fp_bfp_rnd]);
 	}
 
+
+
+/**
+ * get big decimal from EH short hex in fp_reg or mem. If fp_reg, then
+ * check for big dec co-reg to avoid conversion.
+ *
+ * @param fp_buff buffer holding input data
+ * @param fp_index ???
+ * @return BigDecimal value
+ */
 	private BigDecimal fp_get_bd_from_eh(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * get big decimal from EH short hex in fp_reg or mem 1. If fp_reg, then
-		 * check for big dec co-reg to avoid conversion
-		 */
 		int fp_ctl_index = fp_index >> 3;
 		if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld) {
 			if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd2){
@@ -16701,47 +17771,77 @@ public class pz390 {
 		return fp_eh_to_bd(fp_buff, fp_index);
 	}
 
+
+
+/**
+ * store float co-reg as EB and set type<br />
+ *
+ * Notes:
+ * <ol>
+ *  <li>Only tz390.fp_eb_type uses float co-reg due to exponent range exceeded for tz390.fp_eh_type
+ * </ol>
+ *
+ * @param fp_index index (register number * 8)
+ * @param reg_type register type code
+ * @param reg_value value to store
+ */
 	private void fp_put_eb(int fp_index, byte reg_type, float reg_value) {
-		/*
-		 * store float co-reg as EB and set type Note: 1. Only tz390.fp_eb_type
-		 * uses float co-reg due to exponent range exceeded for tz390.fp_eh_type
-		 */
 		int fp_ctl_index = fp_index >> 3;
 		fp_reset_reg(fp_ctl_index, fp_ctl_eb, reg_type);
 		fp_reg_eb[fp_ctl_index] = reg_value;
 	}
 
+
+
+/**
+ * store db co-reg as EH, DH, or DB and set type (EH used double due to
+ * exponent range of float is too small.
+ *
+ * @param fp_index index (register number * 8)
+ * @param reg_type register type code
+ * @param reg_value value to store
+ */
 	private void fp_put_db(int fp_index, byte reg_type, double reg_value) {
-		/*
-		 * store db co-reg as EH, DH, or DB and set type (EH used double due to
-		 * exponent range of float is too small.
-		 */
 		int fp_ctl_index = fp_index >> 3;
 		fp_reset_reg(fp_ctl_index, fp_ctl_db, reg_type);
 		fp_reg_db[fp_ctl_index] = reg_value;
 	}
 
+
+
+/**
+ * store bd co-reg as DD, DH, LD, LH or LB and set type for reg pair
+ *
+ * @param fp_index index (register number * 8)
+ * @param reg_type register type code
+ * @param reg_value value to store
+ */
 	private void fp_put_bd(int fp_index, byte reg_type, BigDecimal reg_value) {
-		/*
-		 * store bd co-reg as DD, DH, LD, LH or LB and set type for reg pair
-		 */
 		int fp_ctl_index = fp_index >> 3;
 		fp_reset_reg(fp_ctl_index, fp_ctl_bd1, reg_type);
 		fp_reg_bd[fp_ctl_index] = reg_value;
 	}
 
+
+
+/**
+ * Load fp_ctl from fp_reg or fp_ctl Load fp_reg from memory with no
+ * conversion<br />
+ * 
+ * Notes: 
+ * <ol>
+ *  <li>bd1/bd2 co-reg pair being partially replaced is discarded without conversion. </li>
+ *  <li>This function is called recursively when two co-registers of different types are involved.</li>
+ * </ol>
+ *
+ * @param reg_buff_index1 ??
+ * @param reg_type1 ??
+ * @param reg_buff2 ??
+ * @param reg_buff_index2 ??
+ * @param reg_type2 ??
+ */
 	private void fp_load_reg(int reg_buff_index1, byte reg_type1,
 			ByteBuffer reg_buff2, int reg_buff_index2, byte reg_type2) {
-		/*
-		 * Load fp_ctl from fp_reg or fp_ctl Load fp_reg from memory with no
-		 * conversion
-		 * 
-		 * Notes: 
-		 * 1. bd1/bd2 co-reg pair being partially replaced is discarded
-		 *    without conversion. 
-		 * 2. This function is called recursively when two
-		 *    co-registers of different types are involved.
-		 */
 		int fp_ctl_index1 = reg_buff_index1 >>> 3;
 		int fp_ctl_index2 = -1;
 		int fp_reg_ctl2 = fp_ctl_ld;
@@ -16767,11 +17867,19 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * load fp_reg memory without conversion
+ *
+ * @param mem_buff ??
+ * @param reg_buff_index1 ??
+ * @param reg_type1 ??
+ * @param mem_index2 ??
+ * @param mem_type2 ??
+ */
 	private void fp_load_mem(ByteBuffer mem_buff,int reg_buff_index1, byte reg_type1,
 			int mem_index2, byte mem_type2) {
-		/*
-		 * load fp_reg memory without conversion
-		 */
 		fp_reg_ctl[reg_buff_index1 >>> 3] = fp_ctl_ld;
 		switch (mem_type2) {
 		case 0: // tz390.fp_db_type
@@ -16796,12 +17904,20 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * load fp control register from register memory or other fp control
+ * register
+ *
+ * @param fp_ctl_index1 ??
+ * @param reg_type1 ??
+ * @param fp_ctl_type2 ??
+ * @param fp_buff_index2 ??
+ * @param reg_type2 ??
+ */
 	private void fp_load_ctl(int fp_ctl_index1, byte reg_type1,
 			int fp_ctl_type2, int fp_buff_index2, byte reg_type2) {
-		/*
-		 * load fp control register from register memory or other fp control
-		 * register
-		 */
 		int fp_ctl_index2 = fp_buff_index2 >>> 3;
 		switch (fp_ctl_type2) {
 		case 0: // from fp_ctl_ld external register
@@ -16955,11 +18071,19 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * load fp_ctl reg1 from fp_reg2 external format
+ *
+ * @param fp_ctl_index1 ??
+ * @param reg_type1 ??
+ * @param reg_buff2 ??
+ * @param reg_buff_index2 ??
+ * @param reg_type2 ??
+ */
 	private void fp_load_ctl_from_ext_reg(int fp_ctl_index1, byte reg_type1,
 			ByteBuffer reg_buff2, int reg_buff_index2, byte reg_type2) {
-		/*
-		 * load fp_ctl reg1 from fp_reg2 external format
-		 */
 		switch (reg_type2) {
 		case 0: // from tz390.fp_db_type
 			switch (reg_type1) {
@@ -17434,10 +18558,16 @@ public class pz390 {
 		set_psw_check(psw_pic_spec); // should not occur
 	}
 
+
+
+/**
+ * reset register and co-reg to specified type
+ *
+ * @param reg_ctl_index ??
+ * @param ctl_type ??
+ * @param reg_type ??
+ */
 	private void fp_reset_reg(int reg_ctl_index, byte ctl_type, byte reg_type) {
-		/*
-		 * reset register and co-reg to specified type
-		 */
 		if (fp_reg_ctl[reg_ctl_index] == fp_ctl_bd1
 			&& fp_pair_type[fp_reg_type[reg_ctl_index]]) { // RPI 229
 			fp_reg_ctl[reg_ctl_index + 2] = fp_ctl_ld; // cancel replaced bd
@@ -17456,19 +18586,28 @@ public class pz390 {
 			fp_reg_type[reg_ctl_index + 2] = reg_type; // RPI 229
 		}
 	}
+
+
+
+/**
+ * store fp zero in tz390.fp_workreg
+ */
 	private void fp_store_work_zero(){
-		/*
-		 * store fp zero in tz390.fp_workreg
-		 */
 		tz390.fp_work_reg.putLong(0,0);
 		tz390.fp_work_reg.putLong(8,0);		
 	}
+
+
+
+/**
+ * convert co-reg back to fp_reg storage format for use by STE or STD.
+ * If byte buffer is not fp_reg, copy fp_reg to byte buffer if needed
+ * for use in non destructive trace out of regs.
+ *
+ * @param reg_buff register buffer
+ * @param reg_index probably offset in reg_buff (register number * 8)
+ */
 	public void fp_store_reg(ByteBuffer reg_buff, int reg_index) {
-		/*
-		 * convert co-reg back to fp_reg storage format for use by STE or STD.
-		 * If byte buffer is not fp_reg, copy fp_reg to byte buffer if needed
-		 * for use in non destructive trace out of regs.
-		 */
 		int fp_ctl_index = reg_index >> 3;
 		switch (fp_reg_ctl[fp_ctl_index]) {
 		case 0: // fp_ctl_ld
@@ -17594,10 +18733,16 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * convert ED format to big decimal
+ *
+ * @param fp_buff buffer with input data
+ * @param fp_index offset of input data within fp_buff
+ * @return BigDecimal value
+ */
 	private BigDecimal fp_ed_to_bd(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * convert ED format to big decimal
-		 */
 		int ed1 = fp_buff.getInt(fp_index);
 		if (ed1 == 0) {
 			return BigDecimal.ZERO;
@@ -17613,10 +18758,16 @@ public class pz390 {
 		return BigDecimal.valueOf((long) digits).scaleByPowerOfTen(exp);
 	}
 
+
+
+/**
+ * convert DD format to big decimal
+ *
+ * @param fp_buff buffer with input data
+ * @param fp_index offset of input data within fp_buff
+ * @return BigDecimal value
+ */
 	private BigDecimal fp_dd_to_bd(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * convert DD format to big decimal
-		 */
 		long dd1 = fp_buff.getLong(fp_index);
 		if (dd1 == 0) {
 			return BigDecimal.ZERO;
@@ -17643,10 +18794,16 @@ public class pz390 {
 		return BigDecimal.valueOf(digits).scaleByPowerOfTen(exp);
 	}
 
+
+
+/**
+ * convert LD format to big decimal
+ *
+ * @param fp_buff buffer with input data
+ * @param fp_index offset of input data within fp_buff
+ * @return BigDecimal value
+ */
 	private BigDecimal fp_ld_to_bd(ByteBuffer fp_buff, int fp_index) {
-		/*
-		 * convert LD format to big decimal
-		 */
 		long ld1 = fp_buff.getLong(fp_index);
 		long ld2 = 0;
 		if (fp_buff == fp_reg) {
@@ -17689,10 +18846,15 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * convert EH format to double
+ *
+ * @param eh1 input value
+ * @return double float value
+ */
 	private double fp_eh_reg_to_db(int eh1) {
-		/*
-		 * convert EH format to double
-		 */
 		if (eh1 < 0) {
 			long_sign = long_high_bit;
 		} else {
@@ -17709,13 +18871,17 @@ public class pz390 {
 		return work_fp_reg.getDouble(0);
 	}
 
+
+
+/**
+ * convert DH long hex format to
+ * BigDecimal in order to preserve
+ * 56 mantissa bits (double has 52)
+ *
+ * @param dh1 input value
+ * @return BigDecimal float value
+ */
 	private BigDecimal fp_dh_to_bd(long dh1) {  // RPI 821
-		/*
-		 * convert DH long hex format to
-		 * BigDecimal in order to preserve
-		 * 56 mantissa bits (double has 52)
-		 * RPI 821
-		 */
 		int int_exp = (int) (
 			(((dh1 & long_dh_exp_bits) >>> 56) 
 			   - 0x40) << 2) - 56; // RPI 821 
@@ -17733,14 +18899,16 @@ public class pz390 {
 					fp_dhg_context).negate(); // rpi 821 
 		}
 	}
-	
+
+
+
+/** 
+ * shift right or left to align
+ * unnormailized mantissa to db 
+ * normalized format where first 
+ * bit is assumed. 
+ */
     private void align_db_first_bit(){
-    	/* 
-    	 * shift right or left to align
-    	 * unnormailized mantissa to db 
-    	 * normalized format where first 
-    	 * bit is assumed. 
-    	 */
 		if (long_man >= long_db_one_bit){ // RPI 820
 			// shift right to align 1st bit
 			fp_round = 0;
@@ -17760,10 +18928,16 @@ public class pz390 {
 			}
 		}
     }
+
+
+
+/**
+ * convert db float to eh int
+ *
+ * @param db1 input data
+ * @return integer value
+ */
 	public int fp_db_to_eh(double db1) {
-		/*
-		 * convert db float to eh int
-		 */
 		work_fp_reg.putDouble(0, db1);
 		long_work = work_fp_reg.getLong(0);
 		if (long_work == 0) {
@@ -17792,22 +18966,33 @@ public class pz390 {
 		return tz390.fp_sign | (((tz390.fp_exp >> 2) + 0x40) << 24) | int_man;
 	}
 
-	
+
+
+/**
+ * convert EH in fp_reg or mem to big_dec
+ *
+ * @param eh1_buff buffer holding input data
+ * @param eh1_index ??
+ * @return BigDecimal float value
+ */
 	private BigDecimal fp_eh_to_bd(ByteBuffer eh1_buff, int eh1_index) {
-		/*
-		 * convert EH in fp_reg or mem to big_dec
-		 * 
-		 */
 		return new BigDecimal(fp_eh_reg_to_db(eh1_buff.getInt(eh1_index)),
 				fp_eb_rnd_context[fp_bfp_rnd]);
 	}
+
+
+
+/**
+ * convert LH in fp_reg or mem to big_dec<br />
+ * <br />
+ * first copy 112 bit mantissa into 15 byte array with leading 0 byte
+ * and convert to bd1 big decimal with 128 bit precision
+ *
+ * @param lh1_buff buffer holding input data
+ * @param lh1_index ??
+ * @return BigDecimal float value
+ */
 	private BigDecimal fp_lh_to_bd(ByteBuffer lh1_buff, int lh1_index) {
-		/*
-		 * convert LH in fp_reg or mem to big_dec
-		 * 
-		 * first copy 112 bit mantissa into 15 byte array with leading 0 byte
-		 * and convert to bd1 big decimal with 128 bit precision
-		 */
 		if (lh1_buff == fp_reg) { // RPI 229
 			if (!fp_pair_valid[lh1_index >>> 3]) { // RPI 518
 				set_psw_check(psw_pic_spec);
@@ -17853,13 +19038,19 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * convert LB in fp_reg or mem to big_dec<br />
+ * <br />
+ * first get sign bit and 
+ * 15 bit exponent
+ *
+ * @param lb1_buff buffer holding input data
+ * @param lb1_index ??
+ * @return BigDecimal float value
+ */
 	private BigDecimal fp_lb_to_bd(ByteBuffer lb1_buff, int lb1_index) {
-		/*
-		 * convert LB in fp_reg or mem to big_dec
-		 *
-		 * first get sign bit and 
-		 * 15 bit exponent
-		 */
 		int_work = lb1_buff.getShort(lb1_index);
 		/* 
 		 * next copy 112 bit mantissa into
@@ -17919,12 +19110,17 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * store DD, DH, ED, LB, LD, LH  RPI 514, RPI 821 add DH
+ * format in 16 byte fp_work_reg
+ * from big decimal
+ *
+ * @param fp_type type code
+ * @param fp_bd BigDecimal value
+ */
 	public void fp_bd_to_wreg(int fp_type, BigDecimal fp_bd) {
-		/*
-		 * store DD, DH, ED, LB, LD, LH  RPI 514, RPI 821 add DH
-		 * format in 16 byte fp_work_reg
-		 * from big decimal
-		 */
 		if (fp_bd.signum() > 0) {
 			tz390.fp_sign = 0;
 		} else if (fp_bd.signum() < 0) {
@@ -17968,29 +19164,33 @@ public class pz390 {
 			tz390.abort_case(); // RPI 849
 		}
 	}
+
+
+
+/**
+ * convert fp_bd to dh format
+ * in work_reg binary format<br />
+ * <br />
+ ***********************************************************************<br />
+ * <br />
+ * calc tz390.fp_exp and big_dec2 such that:
+ * big_dec1 = big_dec2 * 2 ** tz390.fp_exp<br />
+ * <br />
+ * tz390.fp_exp = log(big_dec1) / log(2)<br />
+ * <br />
+ * Since the exponent of LH/LB values can exceed the range of double,
+ * the log of big_dec1 is calculated using equivalent form
+ * log(x*10*scale) = log(x_man) + scale * log(10)<br />
+ * <br />
+ * tz390.fp_exp must then be offset by the number of bits in the
+ * required mantissa in order to retain significant bits when big_dec2
+ * is converted to big_int format. The exponent is also reduced by 1 for
+ * assumed bit in binary formats plus 1 additional to insure rounding
+ * for irrational values is done by shifting right.
+ *
+ * @param fp_bd BigDecimal value
+ */
 	private void fp_bd_to_dh_wreg(BigDecimal fp_bd) {
-		/*
-		 * convert fp_bd to dh format RPI 821
-		 * in work_reg binary format
-		 */
-		/***********************************************************************
-		 * calc tz390.fp_exp and big_dec2 such that:
-		 * big_dec1 = big_dec2 * 2 ** tz390.fp_exp 
-		 ****************************************
-		 * 
-		 * tz390.fp_exp = log(big_dec1) / log(2)
-		 * 
-		 * Since the exponent of LH/LB values can exceed the range of double,
-		 * the log of big_dec1 is calculated using equivalent form
-		 * log(x*10*scale) = log(x_man) + scale * log(10)
-		 * 
-		 * tz390.fp_exp must then be offset by the number of bits in the
-		 * required mantissa in order to retain significant bits when big_dec2
-		 * is converted to big_int format. The exponent is also reduced by 1 for
-		 * assumed bit in binary formats plus 1 additional to insure rounding
-		 * for irrational values is done by shifting right.
-		 * 
-		 */
 		fp_bd = fp_bd.stripTrailingZeros(); // RPI 821 
 		int work_scale = -fp_bd.scale();
 		double work_man = fp_bd.multiply(
@@ -18058,29 +19258,34 @@ public class pz390 {
 				fp_store_work_zero();
 			}
 	}
+
+
+
+/**
+ * convert fp_bd to lh/lb format
+ * based ib fp_type  
+ * in work_reg binary format<br />
+ * <br />
+ ***********************************************************************<br />
+ * <br />
+ * calc tz390.fp_exp and big_dec2 such that: * big_dec1 = big_dec2 * 2 ** tz390.fp_exp<br />
+ * <br />
+ * tz390.fp_exp = log(big_dec1) / log(2)<br />
+ * <br />
+ * Since the exponent of LH/LB values can exceed the range of double,
+ * the log of big_dec1 is calculated using equivalent form
+ * log(x*10*scale) = log(x_man) + scale * log(10)<br />
+ * <br />
+ * tz390.fp_exp must then be offset by the number of bits in the
+ * required mantissa in order to retain significant bits when big_dec2
+ * is converted to big_int format. The exponent is also reduced by 1 for
+ * assumed bit in binary formats plus 1 additional to insure rounding
+ * for irrational values is done by shifting right.
+ *
+ * @param fp_type floating point type code
+ * @param fp_bd BigDecimal input value
+ */
 	private void fp_bd_to_lx_wreg(int fp_type,BigDecimal fp_bd) {
-		/*
-		 * convert fp_bd to lh/lb format
-		 * based ib fp_type  
-		 * in work_reg binary format
-		 */
-		/***********************************************************************
-		 * calc tz390.fp_exp and big_dec2 such that: * big_dec1 = big_dec2 * 2 **
-		 * tz390.fp_exp * **************************************
-		 * 
-		 * tz390.fp_exp = log(big_dec1) / log(2)
-		 * 
-		 * Since the exponent of LH/LB values can exceed the range of double,
-		 * the log of big_dec1 is calculated using equivalent form
-		 * log(x*10*scale) = log(x_man) + scale * log(10)
-		 * 
-		 * tz390.fp_exp must then be offset by the number of bits in the
-		 * required mantissa in order to retain significant bits when big_dec2
-		 * is converted to big_int format. The exponent is also reduced by 1 for
-		 * assumed bit in binary formats plus 1 additional to insure rounding
-		 * for irrational values is done by shifting right.
-		 * 
-		 */
 		int work_scale = -fp_bd.stripTrailingZeros().scale();
 		double work_man = fp_bd.multiply(
 				BigDecimal.TEN.pow(-work_scale, fp_lxg_context), fp_lxg_context)
@@ -18167,11 +19372,15 @@ public class pz390 {
 			tz390.abort_case(); // RPI 849
 		}
 	}
+
+
+
+/**
+ * store tz390 fp_big_int1 
+ * with tz390.fp_exp and tz390.fp_sign high bit
+ * in tz390 fp_work_reg in LH format
+ */
 	private void fp_put_bi_to_lh_wreg(){
-		/* store tz390 fp_big_int1 
-		 * with tz390.fp_exp and tz390.fp_sign high bit
-		 * in tz390 fp_work_reg in LH format
-		 */
 		tz390.fp_work_reg.put(0, (byte) (tz390.fp_sign | tz390.fp_exp));
 		int bi_bytes = (fp_big_int1.bitLength()+7)/8;
 		fp_store_work_zero();
@@ -18188,11 +19397,20 @@ public class pz390 {
 		tz390.fp_work_reg.put(8, (byte)(tz390.fp_sign | ((tz390.fp_exp-14) & 0x7f))); // RPI 767
 	}
 
+
+
+/**
+ * execute ED or EDMK with store into r1<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>mask must be EBCDIC in both modes</li>
+ *  <li>output translated to ASCII if ascii mode</li>
+ * </ol>
+ *
+ * @param edmk_store boolean to indicate whether or not to store into R1
+ */
 	private void exec_ed_edmk(boolean edmk_store) {
-		/*
-		 * execute ed or edmk with store into r1 Notes: 1. mask must be EBCDIC
-		 * in both modes 2. output translated to ASCII if ascii mode
-		 */
 		psw_cc = psw_cc_equal; // assume last field zero;
 		byte target_byte = ' ';
 		byte source_byte = ' ';
@@ -18260,10 +19478,16 @@ public class pz390 {
 			rflen--;
 		}
 	}
+
+
+
+/**
+ * share code for EX and EXRL
+ *
+ * @param target_addr target address
+ * @param ilc instruction length code
+ */
     private void exec_ex(int target_addr, int ilc){ // RPI 1505
-    	/*
-    	 * share code for EX and EXRL RPI 817
-    	 */
 		if (!ex_mode) {
             ex_psw_ilc = ilc; // RPI 1505
 			ex_psw_return = psw_loc;
@@ -18277,13 +19501,19 @@ public class pz390 {
 			set_psw_check(psw_pic_exec);
 		}
     }
+
+
+
+/**
+ * <ol>
+ *  <li>Return true if ok else false.</li>
+ *  <li>Set pdf_is_big to true or false and set pdf_big_int1 and pdf_big_int2 or pdf_long1 and pdf_long2</li>
+ *  <li>Set pdf_leftmost_zeros to 1st operand number of leftmost zeros.</li>
+ * </ol>
+ *
+ * @return true if successful, false otherwise
+ */
 	public boolean get_pdf_ints() {  // RPI 981, RPI 1092
-		/*
-		 * 1.  Return true if ok else false.  RPI 981
-		 * 2.  Set pdf_is_big to true or false and set pdf_big_int1 and pdf_big_int2
-		 *     or pdf_long1 and pdf_long2
-		 * 3.  Set pdf_leftmost_zeros to 1st operand number of leftmost zeros. RPI 2013
-		 */
 		 pdf_signed = true;       // rpi 2204
 		 pdf_ignore_sign = false; // rpi 2204
 		if (get_pd(mem,bd1_loc, rflen1)) { // RPI 305
@@ -18319,24 +19549,35 @@ public class pz390 {
 		return true;
 	}
 
+
+
+/**
+ * Convert pd field to BigInt or Long
+ * in pdf_big_int or pdf_long.<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>Set true if ok</li>
+ *  <li>Set pd_cc
+ *   <ul>
+ *    <li>0 = ok</li>
+ *    <li>1 = sign invalid</li>
+ *    <li>2 = digit invalid</li>
+ *   </ul>
+ *  </li>
+ *  <li>Raise 0C7 if not TP opcode</li>
+ *  <li>If pdf_signed = false, return positive value including low digit</li>
+ *  <li>if pdf_signed = true and pdf_ignore_sign = true then ignore sign and set positive</li>
+ *  <li>Add support for up to 34 digits using 3 segments (16+16+2)</li>
+ *  <li>Calculate number of leftmost zeros RPI 2013</li>
+ * </ol>
+ *
+ * @param pd_buff byte buffer holding packed decimal input data
+ * @param pdf_loc location of pd field within pd_buff
+ * @param pdf_len length of pd field
+ * @return true if successful, false otherwise
+ */
 	private boolean get_pd(ByteBuffer pd_buff, int pdf_loc, int pdf_len) {
-		/*
-		 * Convert pd field to BigInt or Long
-		 * in pdf_big_int or pdf_long.
-		 * Notes:
-		 *   1.  Set true if ok
-		 *   2.  Set pd_cc 
-		 *       0 = ok
-		 *       1 = sign invalid
-		 *       2 = digit invalid
-		 *   3.  Raise 0C7 if not TP opcode
-		 *   4.  If pdf_signed = false, return positive value including low digit
-		 ^   5.  if pdf_signed = true and pdf_ignore_sign = true then ignore sign and set positive, RPI 2204
-		 *   6.  Add support for up to 34 digits using 3 segments (16+16+2) RPI 2204
-		 *   7.  Calculate number of leftmost zeros RPI 2013
-		 * 
-		 * 
-		 */
 		pdf_is_big = false; // RPI 389
 		pd_cc = psw_cc0;
 		pdf_leftmost_zeros = -1; // RPI 2013
@@ -18470,20 +19711,25 @@ public class pz390 {
 		return true;
 	}
 
+
+
+/**
+ * if pdf_is_big store pdf_big_int value
+ * into pd field and set pd_cc
+ * else store pdf_long into pdf field
+ * and set pd_cc.<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>If pdf_signed is false store unsigned value with low order digit in low nibble, and do not set psw_cc.</li>
+ *  <li>If pdf_trunc, truncate to fit else raise pgm exception.</li>
+ * </ol>
+ *
+ * @param pd_stor byte array to store into
+ * @param pdf_loc location in pd_stor where to store
+ * @param pdf_len pdf_len length of area to store into
+ */
 	private void put_pd(byte[] pd_stor, int pdf_loc, int pdf_len) {
-		/*
-		 * if pdf_is_big store pdf_big_int value
-		 * into pd field and set pd_cc
-		 * else store pdf_long into pdf field
-		 * and set pd_cc.
-		 * Notes:.
-		 *   1.  If pdf_signed is false store
-		 *       unsigned value with low order
-		 *       digit in low nibble, and
-		 *       do not set psw_cc.
-		 *   2.  If pdf_trunc, truncate to fit
-		 *       else raise pgm exception.
-		 */
 		int save_psw_cc = psw_cc;
 		if (pdf_is_big) {
 			pdf_str = pdf_big_int.toString();
@@ -18556,20 +19802,30 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * restore ex target instruction 2nd byte
+ */
 	private void ex_restore() {
-		/*
-		 * restore ex target instruction 2nd byte
-		 */
 		if (!trace_psw){
 			mem_byte[psw_loc + 1] = ex_mod_byte;
 		}
 	}
 
+
+
+/**
+ * Format bytes into hex string
+ *
+ * @param bytes byte array holding input data
+ * @param byte_start address of data to convert
+ * @param byte_length length of data to convert
+ * @param chunk size of each chunk in the output string
+ * @return string of hexadecimal digits
+ */
 	public String bytes_to_hex(ByteBuffer bytes, int byte_start,
 			int byte_length, int chunk) {
-		/*
-		 * Format bytes into hex string
-		 */
 		if (byte_start < 0) {
 			return "";
 		}
@@ -18604,10 +19860,15 @@ public class pz390 {
 		}
 	}
 
+
+
+/**
+ * init tz390
+ *
+ * @param shared_tz390 shared tz390 object
+ * @param shared_sz390 shared sz390 object
+ */
 	public void init_pz390(tz390 shared_tz390, sz390 shared_sz390) {
-		/*
-		 * init tz390
-		 */
 		tz390 = shared_tz390;
 		sz390 = shared_sz390;
 		if (!tz390.opt_init){  // RPI 827
@@ -18623,23 +19884,32 @@ public class pz390 {
 			pdf_zone = 0x30; // zone for UNPK
 		}
 	}
+
+
+
+/**
+ * init gpr regs to x'F4'
+ */
     private void init_gpr(){
-    	/*
-    	 * init gpr regs to x'F4'  RPI 819
-    	 */
     	Arrays.fill(reg_byte, 0, reg_byte.length, fill_reg_char);
     }
+
+
+
+/**
+ * init ar regs to x'F4'
+ */
     private void init_ar(){ // RPI 1055
-    	/*
-    	 * init ar regs to x'F4'  RPI 819
-    	 */
     	Arrays.fill(ar_reg_byte, 0, ar_reg_byte.length, fill_reg_char);
     }
+
+
+
+/**
+ * init fpr regs to x'F5'<br />
+ * init fp constants that use tz390 shared variables
+ */
 	private void init_fpr() {
-		/*
-		 * init fpr regs to x'F5' RPI 819
-		 * init fp constants that use tz390 shared variables
-		 */
 		Arrays.fill(fp_reg_byte, 0, fp_reg_byte.length, fill_reg_char);
 		fp_dh_context = new MathContext(17,RoundingMode.HALF_EVEN); // RPI 821 required for TESTFP1 high/low bit test
 		fp_lh_context = new MathContext(34,RoundingMode.HALF_EVEN); // RPI 821 required for TESTFP1 high/low bit test
@@ -18667,19 +19937,20 @@ public class pz390 {
 	    fp_ld_neg_min = new BigDecimal("-1e-6176",fp_ld_rnd_context[fp_dfp_rnd]);
 	}
 
+
+
+/**
+ * add all opcodes to key index table for use by trace and test options<br />
+ * <br />
+ * Notes:
+ * <ol>
+ *  <li>Verify tz390 and ptz390 trace type tables match</li>
+ *  <li>trace and test do lookup by hex for display</li>
+ *  <li>test break on opcode does lookup by name to get hex code for break</li>
+ *  <li>op_type_index is used by test break on opcode to get opcode2 offset and mask</li>
+ * </ol>
+ */
 	private void init_opcode_keys() {
-		/*
-		 * add all opcodes to key index table for use by trace and test options
-		 * Notes:
-		 * 1. Verify tz390 and ptz390 trace type tables match 
-		 * 2. trace and test do lookup by hex for display 
-		 * 3. test break on opcode does lookup
-		 *    by name to get hex code for break 
-		 * 4. op_type_index is used by test break
-		 *    on opcode to get opcode2 offset
-		 *    and mask
-		 * 
-		 */
 		tz390.init_opcode_name_keys();
 		if (tz390.op_code.length != tz390.op_trace_type.length){                // RPI 1209
 			tz390.abort_error(22,"op code and op trace type tables out of sync "
@@ -18879,27 +20150,36 @@ public class pz390 {
 		tz390.max_key_comp = 0;
 	}
 
+
+
+/**
+ * allocate memory and initialize as follows:
+ * <ol>
+ *  <li>Set cvt pointer at 16</li>
+ *  <li>Set zcvt_ipl_pgm to name of opt_ipl pgm name if any to run via link svc 6</li>
+ *  <li>Set zcvt_user_pgm to name of user initial program to run via link svc</li>
+ *  <li>Set mem_fqe_ptr to point to free queue with all of available memory for use by svc 4 getmain and svc 5 freemain
+ *   <ol>
+ *    <li>MEM(MB) defaults to 1 MB but can be set to any value up to available memory on machine.
+ *        See TEST\TESTMEM1 for test of ABOVE/BELOW GETMAIN using MEM(32) to allocate 16MB below and 16 MB above</li>
+ *    <li>If less than 16 MB allocated 31 bit fqe is set to 0 and RMODE31 requests use memory below the line</li>
+ *   </ol>
+ *  </li>
+ *  <li>Add 16 bytes to physical mem_byte array allocated to allow get_pd to fetch 16 bytes from last byte in memory
+ *      for 1-8 byte packed decimal field</li>
+ * </ol>
+ *
+ * Notes:
+ * <ol>
+ *  <li>The default J2RE maximum memory available is limited by default to small fraction of total
+ *      memory to prevent stalling OS or other J2RE applications running. To
+ *      override default set -Xmx option at startup of J2RE. For example, add
+ *      -Xmx500000000 to z390.bat to allow allocating up to 500 MB but don't
+ *      allocate all of it or other J2RE application such as IE may stall or
+ *      abort.</li>
+ * </ol>
+ */
 	private void init_mem() {
-		/*
-		 * allocate memory and initialize as follows: 1. Set cvt pointer at 16
-		 * 2. Set zcvt_ipl_pgm to name of opt_ipl pgm name if any to run via
-		 * link svc 6. 3. Set zcvt_user_pgm to name of user initial program to
-		 * run via link svc. 4. Set mem_fqe_ptr to point to free queue with all
-		 * of available memory for use by svc 4 getmain and svc 5 freemain. a.
-		 * MEM(MB) defaults to 1 MB but can be set to any value up to available
-		 * memory on machine. See TEST\TESTMEM1 for test of ABOVE/BELOW GETMAIN
-		 * using MEM(32) to allocate 16MB below and 16 MB above. b. If less than
-		 * 16 MB allocated 31 bit fqe is set to 0 and RMODE31 requests use
-		 * memory below the line. 5. Add 16 bytes to physical mem_byte array
-		 * allocated to allow get_pd to fetch 16 bytes from last byte in memory
-		 * for 1-8 byte packed decimal field. Notes: 1. The default J2RE maximum
-		 * memory available is limited by default to small fraction of total
-		 * memory to prevent stalling OS or other J2RE applications running. To
-		 * override default set -Xmx option at startup of J2RE. For example, add
-		 * -Xmx500000000 to z390.bat to allow allocating up to 500 MB but don't
-		 * allocate all of it or other J2RE application such as IE may stall or
-		 * abort.
-		 */
 		tot_mem = tz390.max_mem << 20; // cvt MB to bytes
 		try {
 			mem_byte = new byte[tot_mem + 32];                // RPI 2227 add 16 byte pad // RPI 2204 add 32
@@ -18978,11 +20258,14 @@ public class pz390 {
 		sz390.put_ascii_string(tz390.cur_date(),zcvt_comrg_jobdate,8,' ');
 		sz390.put_ascii_string(tz390.pgm_name,zcvt_comrg_comname,8,' ');
 	}
+
+
+
+/**
+ * trace instruction based on
+ * opcode_type
+ */
 	private void trace_ins(){
-		/*
-		 * trace instruction based on
-		 * opcode_type
-		 */
 		if (tz390.opt_regs) {  // RPI 819move from main instr. loop
 			sz390.dump_gpr(-1);
 		}
@@ -20052,21 +21335,29 @@ break;
 		               + trace_parms;
 		tz390.put_trace(ins_trace_line);  // RPI 689
 	}
+
+
+
+/**
+ * return long from mem.getLong(xbd2_loc)
+ * else return -1 and avoid trap for LA etc.
+ *
+ * @return long value
+ */
 	private long get_long_xbd2(){  // RPI 808
-		/*
-		 * return long from mem.getLong(xbd2_loc)
-		 * else return -1 and avoid trap for LA etc.
-		 */
 		if (xbd2_loc > tot_mem || xbd2_loc < 0){
 			return -1;
 		} else {
 			return mem.getLong(xbd2_loc);
 		}
 	}
+
+
+
+/**
+ * set flags, masks, and rotate
+ */
 	private void rsbg_setup_and_rotate(){
-		/*
-		 * set flags, masks, and rotate
-		 */
 		if (if3 < 0){
 			rsbg_test = true;
 		} else {
@@ -20108,11 +21399,16 @@ break;
     		}
     	}
 	}
+
+
+
+/**
+ * rotate and insert in high or low 32 bits
+ * with optional zeros for non select bits
+ *
+ * @param high indicates high or low half of register
+ */
 	private void risb_rotate_insert_high(boolean high){
-		/*
-		 * rotate and insert in high or low 32 bits
-		 * with optional zeros for non select bits
-		 */
 		/*
 		 * rotate rlv1 left or right 
 		 */
@@ -20163,43 +21459,69 @@ break;
 			reg.putInt(rf1+4,rv1);
 		}
 	}
+
+
+
+/**
+ * rotate long n bits left (0-63)
+ *
+ * @param value value to be rotated
+ * @param n shift amount in bits
+ * @return long result value
+ */
 	private long long_rotate_left(long value,int n ){
-	   /*
-	    * rotate long n bits left (0-63)
-	    */
 	   return (value << n) | (value >>> (64 - n));
 	}
+
+
+
+/**
+ * rotate long right n bits 0-83
+ *
+ * @param value value to be rotated
+ * @param n shift amount in bits
+ * @return long result value
+ */
 	private long long_rotate_right(long value,int n ){
-	   /*
-	    * rotate long right n bits 0-83
-	    */
 	   return (value >>> n) | (value << (64- n));
 	}
+
+
+
+/**
+ * rotate int n bits left (0-31)
+ *
+ * @param value value to be rotated
+ * @param n shift amount in bits
+ * @return integer result value
+ */
 	private int int_rotate_left(int value,int n ){
-		   /*
-		    * rotate int n bits left (0-31)
-		    */
 		   return (value << n) | (value >>> (32 - n));
 	}
+
+
+
+/**
+ * perform floating point operation
+ * <ol>
+ *  <li>If r0 bit 32 is on, 
+ *      check if function supported
+ *      and set r1 rc = 0 else r1 = 3</li>
+ *  <li>if r0 bit 32 zero, perform 
+ *      floating point function:
+ *   <ol>
+ *    <li>bits 33-39 = operation x'01' = convert radix (FP0+2 = FP4+6)</li>
+ *    <li>bits 40-47 = first  operand type</li>
+ *    <li>bits 48-55 = second operand type</li>
+ *    <li>bit  56    = inexact suppression control</li>
+ *    <li>bit  57    = alternate exception action control</li>
+ *    <li>bits 58-59 = target radix dependent controls</li>
+ *    <li>bits 60-63 = rounding method</li>
+ *   </ol>
+ *  </li>
+ * </ol>
+ */
 	private void exec_pfpo(){
-		/*
-		 * perform floating point operation
-		 *  1.  If r0 bit 32 is on, 
-		 *      check if function supported
-		 *      and set r1 rc = 0 else r1 = 3.
-		 *  2.  if r0 bit 32 zero, perform 
-		 *      floating point function:
-		 *      a. bits 33-39 = operation
-		 *         x'01' = convert radix (FP0+2 = FP4+6)
-		 *      b. bits 40-47 = first  operand type
-		 *      c. bits 48-55 = second operand type
-		 *      d. bit  56    = inexact suppression control
-		 *      e. bit  57    = alternate exception action control
-		 *      f. bits 58-59 = target radix dependent controls
-		 *      g. bits 60-63 = rounding method  
-		 *      
-		 *        
-		 */
 		int pfpo_op    = (int)reg.get(r0);
 		int pfpo_type1 = (int)reg.get(r0+1);
 		int pfpo_type2 = (int)reg.get(r0+2);
@@ -20526,20 +21848,28 @@ break;
 	        return;
 		}
 	}
+
+
+
+/**
+ * set risb_zero true if r4 high bit on (bit 24)
+ */
 	private void set_risb_zero(){ // RPI 1164 
-		/*
-		 * set risb_zero true if r4 high bit on (bit 24)
-		 */
 		if ((mem_byte[(psw_loc & psw_amode)+3] & 0x80) != 0){
 			risb_zero = true;
 		} else {
 			risb_zero = false;
 		}
 	}
+
+
+
+/**
+ * route for rre/rrf op type A instr
+ * set alt fp_bfp_rnd if not 0 and
+ * issue S0c4 if alt_fpe_mode for now
+ */
 	private void set_bfp_alt_mode_rr(){
-		// rpi 1125 route for rre/rrf op type A instr
-		// set alt fp_bfp_rnd if not 0 and
-		// issue S0c4 if alt_fpe_mode for now
 		int ins_loc = psw_loc & psw_amode;
 		alt_rnd_mode = mem_byte[ins_loc+2] >>> 4;
 		alt_fpe_mode = mem_byte[ins_loc+2] & 0xf;		
@@ -20550,14 +21880,24 @@ break;
 			   set_psw_check(psw_pic_spec);
 		}
 	}
+
+
+
+/**
+ * rtn for rre/rrf op type A instr.
+ */
 	private void reset_bfp_alt_mode(){
-		// rpi 1125 rtn for rre/rrf op type A instr.
 		fp_bfp_rnd = fp_bfp_rnd_default; // RPI 1125
 	}
+
+
+
+/**
+ * route for rre/rrf op type A instr
+ * set alt fp_dfp_rnd if not 0 and
+ * issue S0c4 if alt_fpe_mode for now
+ */
 	private void set_dfp_alt_mode_rr(){
-		// rpi 1125 route for rre/rrf op type A instr
-		// set alt fp_dfp_rnd if not 0 and
-		// issue S0c4 if alt_fpe_mode for now
 		int ins_loc = psw_loc & psw_amode;
 		alt_rnd_mode = mem_byte[ins_loc+2] >>> 4;
 		alt_fpe_mode = mem_byte[ins_loc+2] & 0xf;		
@@ -20568,19 +21908,29 @@ break;
 			   set_psw_check(psw_pic_spec);
 		}
 	}
+
+
+
+/**
+ * route for rrr op type A instr
+ * set alt fp_dfp_rnd if not 0 and
+ * issue S0c4 if alt_fpe_mode for now
+ */
 	private void set_dfp_alt_mode_rrr(){
-		// rpi 1125 route for rrr op type A instr
-		// set alt fp_dfp_rnd if not 0 and
-		// issue S0c4 if alt_fpe_mode for now
 		int ins_loc = psw_loc & psw_amode;
 		mf4 = mem_byte[ins_loc+2] & 0xf;
 		alt_rnd_mode = mf4;
 		if (alt_rnd_mode != 0){ // RPI 1125
 		   fp_dfp_rnd = alt_rnd_mode;
 		}
-	}	
+	}
+
+
+
+/**
+ * rtn for rrr op type A instr.
+ */
 	private void reset_dfp_alt_mode(){
-		// rpi 1125 rtn for rrr op type A instr.
 		fp_dfp_rnd = fp_dfp_rnd_default; // RPI 1125
 	}
 }

@@ -94,6 +94,8 @@
 * 2019/10/12 dsh prevent LPR, SLA fixed overflow S0C8
 *                after RPI #2009 fix by AK
 * 2022/02/13 afk STIDP now implemented as privileged instruction - prevent S0C2
+* 2026/02/11 Issue 760 Add tests for pz390 changes for DP decimal
+*            divide exception and specification exception
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -114,6 +116,13 @@ ESPIE_EXIT DS  0H
          ST    R0,EPIEPSW+4
          BR    R14
          DROP  R15,R1
+ESPIE_EXIT2 DS  0H                                     #760
+         USING EPIE,R1         Overlay EPIE            #760
+         L     R15,EPIEPARM    R15 -> parm list        #760
+         L     R0,0(,R15)      Return point            #760
+         ST    R0,EPIEPSW+4    Update return PSW       #760
+         BR    R14             Exit                    #760
+         DROP  R1              End EPIE overlay        #760
 ESTAE_EXIT DS  0H
          USING *,R15
          USING SDWA,R1
@@ -128,6 +137,9 @@ PWORK    DS    D
 PWORK16  DS    XL16
 DWORD    DS    D
 PL1      DS    PL1
+PL2      DS    PL2       #760
+ES2PARAM DS    0A        #760  ESPIE_EXIT2 parameter list (1 word)
+ES2P1    DC    A(0)      #760  Return point address
 WORD     DS    F
 BYTE     DS    X
          CNOP  0,16      RPI 844 PREVENT CDS WARNING MESSAGE
@@ -5308,11 +5320,82 @@ SP1      ESPIE RESET
          RT1   CCE
          CP    PWORK+6(2),=P'1'
          RT1   CCE
-         ESPIE SET,ESPIE_EXIT,11,PARAM=DP1
+*        Specification exception tests                         #760
+         ESPIE SET,ESPIE_EXIT2,6,PARAM=ES2PARAM                #760
+         LA    R0,DP6A         Return address                  #760
+         ST    R0,ES2P1        Put in parm area                #760
+         ZAP   PWORK16,=P'1'   Dividend (BigInteger)           #760
+*        Next is flagged by az390                              #760
+*        DP    PWORK16,=PL9'1' Divisor too long                #760
+         ZAP   PWORK16,=PL9'1' Redefine                        #760
+         ORG   *-6             ... ZAP                         #760
+         DC    X'FD'           ... to DP                       #760
+         ORG   ,                                               #760
+         RT1   ABORT                                           #760
+DP6A     DS    0H                                              #760
+         LA    R0,DP6B         Return address                  #760
+         ST    R0,ES2P1        Put in parm area                #760
+         ZAP   PL2,=P'1'                                       #760
+*        Next is flagged by az390                              #760
+*        DP    PL2,=PL2'1'     Divisor too long                #760
+         ZAP   PL2,=PL2'1'     Redefine                        #760
+         ORG   *-6             ... ZAP                         #760
+         DC    X'FD'           ... to DP                       #760
+         ORG   ,                                               #760
+         RT1   ABORT                                           #760
+DP6B     DS    0H                                              #760
+         ESPIE RESET                                           #760
+*        Decimal divide exception tests                        #760
+         ESPIE SET,ESPIE_EXIT2,11,PARAM=ES2PARAM               #760
+         LA    R0,DP11A        Return address                  #760
+         ST    R0,ES2P1        Put in parm area                #760
          ZAP   PWORK,=P'1'
          DP    PWORK,=P'0'
          RT1   ABORT
-DP1      ESPIE RESET
+DP11A    DS    0H                                              #760
+         LA    R0,DP11B        Return address                  #760
+         ST    R0,ES2P1        Put in parm area                #760
+         ZAP   PWORK16,=P'1'                                   #760
+         DP    PWORK16,=P'0'   Dividend (BigInteger)           #760
+         RT1   ABORT                                           #760
+DP11B    DS    0H                                              #760
+         LA    R0,DP11C        Return address                  #760
+         ST    R0,ES2P1        Put in parm area                #760
+         ZAP   PL2,=PL2'020'                                   #760
+         DP    PL2,=PL1'2'     +/+ (int)                       #760
+         RT1   ABORT                                           #760
+DP11C    DS    0H                                              #760
+         LA    R0,DP11D        Return address                  #760
+         ST    R0,ES2P1        Put in parm area                #760
+         ZAP   PWORK,=PL8'020000000000000'                     #760
+         DP    PWORK,=PL1'2'   +/+ (long)                      #760
+         RT1   ABORT                                           #760
+DP11D    DS    0H                                              #760
+         LA    R0,DP11E        Return address                  #760
+         ST    R0,ES2P1        Put in parm area                #760
+         ZAP   PWORK16,=PL16'0200000000000000000000000000000'  #760
+         DP    PWORK16,=PL1'2' +/+ (BigInteger)                #760
+         RT1   ABORT                                           #760
+DP11E    DS    0H                                              #760
+         LA    R0,DP11F        Return address                  #760
+         ST    R0,ES2P1        Put in parm area                #760
+         ZAP   PL2,=PL2'-020'                                  #760
+         DP    PL2,=PL1'2'     -/+ (int)                       #760
+         RT1   ABORT                                           #760
+DP11F    DS    0H                                              #760
+         LA    R0,DP11G        Return address                  #760
+         ST    R0,ES2P1        Put in parm area                #760
+         ZAP   PWORK,=PL8'-020000000000000'                    #760
+         DP    PWORK,=PL1'2'   -/+ (long)                      #760
+         RT1   ABORT                                           #760
+DP11G    DS    0H                                              #760
+         LA    R0,DP11H        Return address                  #760
+         ST    R0,ES2P1        Put in parm area                #760
+         ZAP   PWORK16,=PL16'-0200000000000000000000000000000' #760
+         DP    PWORK16,=PL1'2' -/+ (BigInteger)                #760
+         RT1   ABORT                                           #760
+DP11H    DS    0H                                              #760
+         ESPIE RESET                                           #760
          WTO   'ESPIE FOR PACKED DIVIDE OK'
 * END
          RT1   END

@@ -23,8 +23,15 @@ GitHub page https://github.com/z390development/z390.
 Installation
 ------------
 Unzip this directory and copy it to any drive you like.
-* For Windows users, you can add the bat folder to your Windows path
-* For Linux/MacOS users, you can add the bash folder to your shell path
+* For Windows users, you can add the bat folder to your Windows path.
+* For Linux/MacOS users, you can add the bash folder to your shell path.
+  - Some of the commands in the bash folder have names that conflict
+    with Linux/MacOS function and shell builtin names.
+  - Use the wrapper command "z390w" to invoke z390 commands.
+  - Example: "exec" is a Linux/MacOS shell builtin, so use
+    "z390w exec [options]" in place of "exec [options]".
+  - The wrapper may be used with any command in the z390 bash folder
+    (except itself), whether or not the folder in in the path.
 
 Verification
 ------------
@@ -58,7 +65,7 @@ Run rt\bat\RUNASMTESTS.BAT on Windows | bash/runasmtests on Linux/MacOS
     6. tests\TESTDFP2.MLC - verify DFP assembler data definitions
     7. rt\bat\ZOPCHECK.BAT - verifies all z390 assembler instruction opcodes.
 
-Run rt\bat\RUNCBLTESTS.BAT on Windows | bash/runcbltests on Linux/MacOS
+Run rt\bat\RUNCBLTESTS.BAT on Windows | rt/bash/runcbltests on Linux/MacOS
    to compile, link, and execute sample zcobol regression tests.
 
 Run rt\bat\RUNZPAR.BAT on Windows | bash/runzpar on Linux/MacOS
@@ -69,9 +76,14 @@ You can also run the demos from the z390 GUI command line which you can start by
 running `java -jar z390.jar` or 
 running bat\Z390.BAT on Windows | bash/z390 on Linux/MacOS  
 
-For example, start the GUI and enter the command:
-(Windows)     bat\asmlg demo\hello.mlc
-(Linux/MacOS) bash/asmlg demo/hello.mlc
+For example, start the GUI and enter the command for demo file HELLO.MLC:
+(Windows)     bat\asmlg demo\hello.mlc  (note: caps optional)
+(Linux/MacOS) bash/asmlg demo/HELLO.MLC (note: caps required)
+
+When using the z390 GUI, the leading "bat\" and the leading "bash/"
+in the command may be omitted:
+(Windows)     asmlg demo\hello.mlc  (note: caps optional)
+(Linux/MacOS) asmlg demo/HELLO.MLC  (note: caps required)
 
 More information
 ----------------
