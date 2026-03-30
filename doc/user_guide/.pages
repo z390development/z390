@@ -1,4 +1,5 @@
 nav:
-    - z390
-    - zCOBOL
-    - ...
+  - z390
+  - zCOBOL
+  - zCICS
+  - zVSAM

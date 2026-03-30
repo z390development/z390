@@ -1,11 +1,6 @@
 # zVSAM V2 - Physical structure of the files
 
 This document describes the file structure for implementing zVSAM V2 data sets.
-It contains the following major chapters:
-
-1. [Basic Concepts](#Basic-Concepts)
-2. [File Structure](#File-Structure)
-3. [Block Structures](#Block-Structures)
 
 ## Basic Concepts
 
@@ -96,14 +91,14 @@ filling the block until no space is left. When  remaining free space is insuffic
 that free space remains unallocated (marked in blue). The actual implementation is quite different,
 but we'll leave those details alone for the moment.
 
-![Diagram showing Blocked records of type F](zVSAM_V2_Drawing_Record_Type_F.jpg)
+![Diagram showing Blocked records of type F](img/zVSAM_V2_Drawing_Record_Type_F.jpg)
 
 This holds for all cluster types, except LDS. In an LDS there is no block structure.
 Each block and each record holds 4096 bytes of data.
 
 Below we show an example of records in a LDS:
 
-![Diagram showing records in an LDS](zVSAM_V2_Drawing_Record_Type_LDS.jpg)
+![Diagram showing records in an LDS](img/zVSAM_V2_Drawing_Record_Type_LDS.jpg)
 
 ### Concept of Fixed-length Segmented records stored in blocks
 
@@ -115,7 +110,7 @@ more than two segments may be needed to store the record. The actual implementat
 
 Below we show an example where each record requires three blocks and is therefore split into three segments:
 
-![Diagram showing Blocked records of type FS](zVSAM_V2_Drawing_Record_Type_FS.jpg)
+![Diagram showing Blocked records of type FS](img/zVSAM_V2_Drawing_Record_Type_FS.jpg)
 
 ### Concept of Variable-length records stored in blocks
 
@@ -126,7 +121,7 @@ but we'll leave those details alone for the moment.
 
 Below we show an example showing how various numbers of records might fit into the blocks of the file:
 
-![Diagram showing Blocked records of type V](zVSAM_V2_Drawing_Record_Type_V.jpg)
+![Diagram showing Blocked records of type V](img/zVSAM_V2_Drawing_Record_Type_V.jpg)
 
 ### Concept of Variable-length Segmented records stored in blocks
 
@@ -143,7 +138,7 @@ The actual implementation is quite different, but we'll leave those details alon
 Below we show an example showing how various numbers of records might fit into the blocks of
 the file, or how a single record might occupy multiple blocks of the file:
 
-![Diagram showing Blocked records of type VS](zVSAM_V2_Drawing_Record_Type_VS.jpg)
+![Diagram showing Blocked records of type VS](img/zVSAM_V2_Drawing_Record_Type_VS.jpg)
 
 ## File Structure
 
@@ -204,7 +199,7 @@ The `PFXCTRS@` pointer addresses a separate area that holds various counters.
 This area is expected to move into the catalog dataset in a future release.
 The overall structure of the prefix block would look something like this (areas not to scale):
 
-![Diagram showing layout of a Prefix Block](zVSAM_V2_Drawing_Block_Type_Prefix.jpg)
+![Diagram showing layout of a Prefix Block](img/zVSAM_V2_Drawing_Block_Type_Prefix.jpg)
 
 ### Spacemap Blocks
 
@@ -225,7 +220,7 @@ zVSAM is aware that any block beyond `PFXHXLRA` needs to be created and initiali
 
 Conceptually, the overall structure of a spacemap block would look something like this (areas not to scale):
 
-![Diagram showing layout of a Spacemap Block](zVSAM_V2_Drawing_Block_Type_Spacemap.jpg)
+![Diagram showing layout of a Spacemap Block](img/zVSAM_V2_Drawing_Block_Type_Spacemap.jpg)
 
 ### Data Blocks
 
@@ -313,7 +308,7 @@ The blocks are on the data chain as outlined in the picture below. Please note t
 Each pointer thus originates with the indicated field, and ends at the block it points to.
 The location where the arrows attach has no meaning since it's a block pointer.
 
-![Diagram showing Chained Data Blocks](zVSAM_V2_Drawing_Chain_Data_Blocks.jpg)
+![Diagram showing Chained Data Blocks](img/zVSAM_V2_Drawing_Chain_Data_Blocks.jpg)
 
 *Example 2:* Now suppose we have a cluster with three data blocks, the first block holding two unsegmented records,
 the second block holding the first segment of a record consisting of three segments and the third block holding the first segment
@@ -330,22 +325,22 @@ The picture also shows that the SPX only occurs on the first segment of each seg
 As in the example above, all depicted pointers are block pointers. Each pointer originates with the indicated field,
 and ends at the block it points to. The location where the arrows attach has no meaning since it's a block pointer.
 
-![Diagram showing Chained Segmented Data Blocks](zVSAM_V2_Drawing_Chain_Segmented_Data_Blocks.jpg)
+![Diagram showing Chained Segmented Data Blocks](img/zVSAM_V2_Drawing_Chain_Segmented_Data_Blocks.jpg)
 
 *Example 3:* This example is the same as the example 2 – the only difference being that now all segments go onto the segment chain.
 The SPX resides by itself on the data block and just points to the first segment on the segment chain.
 
-![Diagram showing Chained Data Blocks - alternative design](zVSAM_V2_Drawing_Chain_Data_Blocks_alt.jpg)
+![Diagram showing Chained Data Blocks - alternative design](img/zVSAM_V2_Drawing_Chain_Data_Blocks_alt.jpg)
 
 *Example 4:* This example shows an index of only one block, holding two record pointers.
 
-![Diagram showing a single Index Block](zVSAM_V2_Drawing_Chain_Index_Blocks_1.jpg)
+![Diagram showing a single Index Block](img/zVSAM_V2_Drawing_Chain_Index_Blocks_1.jpg)
 
 *Example 5:* This example shows the index after adding three more record pointers,
 causing the only index block to overflow and split. Now there are two leaf blocks, still on the LVL0 chain,
 and a new root block has been created on the LVL1 chain.
 
-![Diagram showing two Chained Index Blocks](zVSAM_V2_Drawing_Chain_Index_Blocks_2.jpg)
+![Diagram showing two Chained Index Blocks](img/zVSAM_V2_Drawing_Chain_Index_Blocks_2.jpg)
 
 ### Block Footer Structure
 
@@ -616,7 +611,7 @@ Open logic has two major components: the open macro and the actual run-time logi
 #### Open macro logic
 
 The open macro generates an open/close parameter list and/or an SVC 19 instruction to invoke the open routine.
-The syntax of the open macro is given in [OPEN macro](#OPEN-macro)
+The syntax of the open macro is given in [OPEN macro](zVSAM_V2_Design_Interfaces.md#open-macro)
 
 The macro generates the following code:
 
