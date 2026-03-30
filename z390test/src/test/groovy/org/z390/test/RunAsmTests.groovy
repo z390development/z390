@@ -208,6 +208,13 @@ class RunAsmTests extends z390Test {
         assert this.fileData['ERR'].contains("AZ390I field 2 length = 5 must be less than field 1 length = 5"), "Second DP not assembled with expected error"
     }
     @Test
+    void test_IS704() {
+        int rc = this.asm(basePath("rt", "mlc", "IS704"))
+        this.printOutput()
+        assert rc == 12   // Check return code - assembly errors expected
+        assert this.fileData['ERR'].contains("incorrect register"), "KM/KMA/KMC invalid registers not flagged"
+    }
+    @Test
     void test_TESTDC1() {
         int rc = this.asmlg(basePath("rt", "mlc", "TESTDC1"), *options, 'optable(z390)', "SYSOBJ(${basePath("linklib")})")
         this.printOutput()

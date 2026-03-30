@@ -1,0 +1,82 @@
+**********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2026 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, see https://www.gnu.org/licenses.
+**********************************************************************
+* Author - ZH
+* Date   - 25/03/26
+**********************************************************************
+* Issue #704 - KM/KMA/KMC must flag invalid register operands
+*
+* Register constraints for KM and KMC (RRE format):
+*   - R1 and R2 must be even
+*   - R0 is not allowed for R1 or R2
+*
+* Register constraints for KMA (RRFb format):
+*   - R1, R2, and R3 must be even
+*   - R0 is not allowed for R1, R2, or R3
+*   - R3 must not equal R1
+*   - R3 must not equal R2
+**********************************************************************
+IS704    CSECT
+         USING *,15
+         SR    15,15       ZERO RETURN CODE
+         BR    14          RETURN TO CALLER
+*
+* Valid instructions - should NOT produce errors
+*
+         KM    2,4         Valid: both even, non-zero
+         KMC   6,8         Valid: both even, non-zero
+         KMA   2,4,6       Valid: all even, non-zero, R3 unique
+*
+* KM - odd register errors
+*
+         KM    1,4         R1 odd
+         KM    2,3         R2 odd
+*
+* KM - register 0 errors
+*
+         KM    0,4         R1 is zero
+         KM    2,0         R2 is zero
+*
+* KMC - odd register errors
+*
+         KMC   3,6         R1 odd
+         KMC   8,5         R2 odd
+*
+* KMC - register 0 errors
+*
+         KMC   0,2         R1 is zero
+         KMC   4,0         R2 is zero
+*
+* KMA - odd register errors
+*
+         KMA   1,4,6       R1 odd
+         KMA   2,3,6       R2 odd
+         KMA   2,4,5       R3 odd
+*
+* KMA - register 0 errors
+*
+         KMA   0,4,6       R1 is zero
+         KMA   2,0,6       R2 is zero
+         KMA   2,4,0       R3 is zero
+*
+* KMA - R3 same as R1 or R2 errors
+*
+         KMA   2,2,4       R3 = R1  (operand order: R1,R3,R2)
+         KMA   2,4,4       R3 = R2  (operand order: R1,R3,R2)
+*
+         END
