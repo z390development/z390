@@ -1,8 +1,12 @@
 nav:
-    - svc_services.md
-    - program_services.md
-    - storage_services.md
-    - file_services.md
-    - ...
-    - sort.md
-    - assist.md
+  - svc_services.md
+  - program_services.md
+  - storage_services.md
+  - file_services.md
+  - guam_services.md
+  - soa_services.md
+  - structured_program.md
+  - vsam_file_services.md
+  - zpar.md
+  - sort.md
+  - assist.md
