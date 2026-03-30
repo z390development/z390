@@ -16,30 +16,41 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along
 with this program; if not, see <https://www.gnu.org/licenses/>.
 */
-public class zACB
-{/***************************************************************************
-  * 
-  * The zACB object is the Java-level representation of an ACB
-  * The zACB class handles all ACB-based requests: Openn and Close
-  * 
-  * *************************************************** Maintenance
-  * 2016-12-24 initial coding 
-  *****************************************************/
-  private int acb_pointer;
-  private String ddname;
-  private int create_count;
-  private int open_count;
-  private int point_count;
-  private int get_count;
-  private int insert_count;
-  private int update_count;
-  private int erase_count;
-  private int close_count;
-  private int eof_count;
-  private int error_count;
 
-  /* Constructor for new ACB */
-  public zACB(int acb_addr)
+
+
+/***************************************************************************
+ * 
+ * The zACB object is the Java-level representation of an ACB
+ * The zACB class handles all ACB-based requests: Open and Close
+ *
+ */
+public class zACB
+{/* *************************************************** Maintenance
+  * 2016-12-24 initial coding 
+  * 2026-03-23 AFK Fix/Add javadoc comments
+  *****************************************************/
+    /** Pointer to next ACB          */ private int acb_pointer;
+    /** DDname for ACB               */ private String ddname;
+    /** Data Set create count        */ private int create_count;
+    /** Successful open operations   */ private int open_count;
+    /** Successful Point operations  */ private int point_count;
+    /** Successful Get operations    */ private int get_count;
+    /** Successful Insert operations */ private int insert_count;
+    /** Successful Update operations */ private int update_count;
+    /** Successful Erase operations  */ private int erase_count;
+    /** Successful Close operations  */ private int close_count;
+    /** Nr of times EOF reached      */ private int eof_count;
+    /** Nr of errors encountered     */ private int error_count;
+
+
+
+/**
+ * Constructor for new ACB
+ *
+ * @param acb_addr address of ACB in z390 storage to be opened
+ */
+public zACB(int acb_addr)
    {acb_pointer = acb_addr;
     ddname = "";
     create_count = 0;
@@ -55,17 +66,29 @@ public class zACB
     System.out.println("zACB constructed");
     }
 
-  /* Open new ACB */
-  public int Open()
-   {System.out.println("Open invoked");
-    return 0;
-    }
 
-  /* Close ACB */
-  public int Close()
+
+/**
+ * Open new ACB
+ *
+ * @return return code
+ */
+public int Open()
+     {System.out.println("Open invoked");
+      return 0;
+      }
+
+/**
+ * Close ACB
+ *
+ * @return return code
+ */
+public int Close()
    {System.out.println("Close invoked");
     return 0;
     }
 
- /* end of module zACB */
- }
+
+
+/* end of module zACB */
+}
