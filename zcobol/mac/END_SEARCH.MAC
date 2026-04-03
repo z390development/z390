@@ -1,0 +1,100 @@
+         MACRO
+.*********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License
+.* along with this program; if not, see https://www.gnu.org/licenses.
+.*********************************************************************
+.* Author - Zane Hambly                                              *
+.* Date   - 2025/12                                                  *
+.*********************************************************************
+.* 2025/12 ZH: Implement END-SEARCH per FIPS PUB 21-2 (ANSI X3.23-1985)
+.*********************************************************************
+.* END-SEARCH Statement
+.*
+.* Terminates a SEARCH statement and generates:
+.*   1. Jump to END (for successful WHEN match - skip increment)
+.*   2. INCR label and index increment code (advance to next element)
+.*   3. Loop back to TOP for next iteration
+.*   4. AT END label (if not already placed by SEARCH macro)
+.*   5. END label (exit point for completed search)
+.*
+.* Uses IE block tracking to match with corresponding SEARCH:
+.*   IE_TYPE 15 = SEARCH (see ZC_WS.CPY:254)
+.*********************************************************************
+         END_SEARCH
+         COPY  ZC_WS
+.*
+.* Validate we're inside a SEARCH block
+.*
+         AIF   (&IE_LVL LT 1)
+               MNOTE 8,'END-SEARCH WITHOUT MATCHING SEARCH'
+               MEXIT
+         AEND
+         AIF   (&IE_TYPE(&IE_LVL) NE 15)
+               MNOTE 8,'END-SEARCH FOUND BUT CURRENT BLOCK IS NOT SEARCH'
+               MEXIT
+         AEND
+.*
+.* Retrieve SEARCH context saved by SEARCH macro
+.* SRC_N    - Label counter for this SEARCH instance
+.* TBL_NAME - Table name (for documentation/debugging)
+.* IDX_NAME - Index variable to increment
+.* TBL_LEN  - Element length (increment amount)
+.*
+         :&SRC_N SETA &IE_TCNT(&IE_LVL)
+         :&TBL_NAME SETC '&IE_SRC_TBL(&IE_LVL)'
+         :&IDX_NAME SETC '&IE_SRC_IDX(&IE_LVL)'
+         :&TBL_LEN SETA &IE_SRC_LEN(&IE_LVL)
+.*
+.* When a WHEN condition matches and its body executes, control
+.* falls through here. Jump to END to exit the search successfully.
+.*
+         J     PG_SEARCH_&SRC_N._END
+.*
+.* INCR label - target when WHEN condition is false
+.* Increment index to point to next table element and loop back
+.*
+         GEN_LABEL SEARCH_&SRC_N._INCR,SEARCH_INCR
+.*
+.* Advance index to next element
+.* Index is a byte offset: add element length to move to next entry
+.* Example: 10-byte elements, index 0->10->20->30...
+.*
+         L     ZC_R1,&IDX_NAME          Load current index
+         AHI   ZC_R1,&TBL_LEN           Add element length
+         ST    ZC_R1,&IDX_NAME          Store updated index
+.*
+.* Loop back to top for bounds check and next WHEN evaluation
+.*
+         J     PG_SEARCH_&SRC_N._TOP
+.*
+.* AT END label - only generate if SEARCH didn't have AT END clause
+.* If SEARCH had AT END, the label was placed there with user's code
+.* If no AT END clause, we still need the label as a branch target
+.*
+         AIF (NOT &IE_SRC_ATEND(&IE_LVL))
+               GEN_LABEL SEARCH_&SRC_N._ATEND,SEARCH_AT_END
+         AEND
+.*
+.* END label - final exit point for the SEARCH structure
+.* Reached after: successful WHEN match, or AT END processing
+.*
+         GEN_LABEL SEARCH_&SRC_N._END,END_SEARCH
+.*
+.* Pop IE level - SEARCH block complete
+.*
+         :&IE_LVL SETA &IE_LVL-1
+         MEND
