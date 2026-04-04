@@ -24,6 +24,7 @@
 .* 05/18/12 RPI 1217 replace SCALE_F with SCALE_G to avoid F and H ovf
 .* 12/20/25 Issue 718 BRAS needs *+6 instead of literal 3
 .* 01/24/26 Issue 730 MP with invalid length operands causes S0C6
+.* 02/03/26 Issue 759 MULTIPLY verb may generate code for S0C7
 .*********************************************************************
 .* Notes:
 .*  1.  ROUNDED not supported yet.
