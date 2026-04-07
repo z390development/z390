@@ -2212,7 +2212,7 @@ either version 2 of the License, or (at your option) any later version.</p>
 without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 See the GNU General Public License for more details.</p>
 <p>You should have received a copy of the GNU General Public License along with z390;
-if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.</p>
+if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.</p>
 <h2 id="acknowledgements">Acknowledgements</h2>
 <p>z390's purpose is to provide a source-level compatible assembler, linker and run-time execution engine
 for IBM's High-Level Assembler environment. By extension, the zVSAM component described in this document
@@ -2224,7 +2224,7 @@ and is the product of the joint efforts of our team of volunteer developers.</p>
 such as zCobol and zCICS.</p>
 <p>All IBM publications and software we refer to in this document are copyright IBM Corporation with no exception.</p>
 <p>The drawings in this document have been made using the site draw.io.
-As part of the open source for z390 the xml documents describing these drawings are available
+As part of the open source for z390 the xml and jpg documents describing these drawings are available
 with every distribution of z390 that contains this document.</p>
 <h2 id="terminology">Terminology</h2>
 <p>The reader is assumed to have at least some familiarity with IBM VSAM,
@@ -2419,22 +2419,19 @@ inconvenience this may cause.</p>
 <p>We have taken the following measures to facilitate the transition from zVSAM V1 to zVSAM V2:</p>
 <ol>
 <li>We have introduced a new z390 option: ZVSAM which indicates which version of
-   zVSAM you want z390 to use. For maximum compatibility the default is set to enable zVSAM v1.
-   The default will be changed to zVSAM v2 in a future release of z390.
-   The parameter takes the following forms:<ol>
+   zVSAM you want z390 to use.
+   For maximum compatibility the default is set to ZVSAM(1) to enable zVSAM v1.
+   The default will be changed to ZVSAM(2) in a future release of z390.
+   The parameter takes the following forms:</li>
 <li>ZVSAM(0) – zVSAM usage is disallowed</li>
 <li>ZVSAM(1) – zVSAM V1 is enabled, zVSAM V2 is disabled</li>
 <li>ZVSAM(2) – zVSAM V2 is enabled, zVSAM V1 is disabled</li>
-</ol>
-</li>
-<li>To convert your zVSAM V1 clusters to zVSAM V2 you'll have to take the following steps:<ol>
+<li>To convert your zVSAM V1 clusters to zVSAM V2 you'll have to take the following steps:</li>
 <li>unload the existing data from their clusters using REPRO. \
-   For details on how to use Repro, please refer to the "z390_VSAM_User_Guide"</li>
+      For details on how to use REPRO, please refer to the "z390_VSAM_User_Guide"</li>
 <li>reload your data from your unload files, using ZREPRO. \
-   For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"</li>
-</ol>
-</li>
-<li>For zVSAM V1 and zVSAM v2 there are distinct macro libraries.
+      For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"</li>
+<li>For zVSAM V1 and zVSAM V2 there are distinct macro libraries.
    To use the correct zVSAM maclib, specify the correct version in your maclib concatenation.</li>
 </ol>
 
@@ -2496,7 +2493,7 @@ inconvenience this may cause.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.2-7-gd61c2e17"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.2-8-g175a0e7f"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>

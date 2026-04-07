@@ -2028,32 +2028,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#block-header-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Block Header Structure
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#block-footer-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Block Footer Structure
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#prefix-block" class="md-nav__link">
     <span class="md-ellipsis">
       
         Prefix Block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spacemap-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spacemap Blocks
       
     </span>
   </a>
@@ -2083,10 +2072,49 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#spacemap-blocks" class="md-nav__link">
+  <a href="#data-blocks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Spacemap Blocks
+        Data Blocks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#block-structures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Block Structures
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Block Structures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#block-header-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Block Header Structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#block-footer-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Block Footer Structure
       
     </span>
   </a>
@@ -2109,56 +2137,6 @@
     <span class="md-ellipsis">
       
         Segment Prefix (SPX)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#data-blocks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Data Blocks
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Data Blocks">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#data-block-structure-spannedno" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Data Block Structure (SPANNED=NO)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#data-block-structure-spannedyes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Data Block Structure (SPANNED=YES)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#data-block" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Data Block
       
     </span>
   </a>
@@ -2478,6 +2456,7 @@
 
 
 <h1 id="zvsam-v2-physical-structure-of-the-files">zVSAM V2 - Physical structure of the files</h1>
+<p>This document describes the file structure for implementing zVSAM V2 data sets.</p>
 <h2 id="basic-concepts">Basic Concepts</h2>
 <h3 id="files-blocks-records">Files, Blocks, Records</h3>
 <p>The logical unit of access or storage is the record. Yet the unit for any given I/O operation is the block.
@@ -2536,25 +2515,25 @@ comprehensive manner may render your data inaccessible.</p>
 <tbody>
 <tr>
 <td>F</td>
-<td>Fixed. All records have the same length. Records never span a Block boundary</td>
+<td>Fixed. All records have the same length. Records never span a Block boundary.</td>
 </tr>
 <tr>
 <td>FS</td>
-<td>Fixed Spanned. All records have the same length. Records expected to span a Block boundary</td>
+<td>Fixed Spanned. All records have the same length. Records expected to span a Block boundary.</td>
 </tr>
 <tr>
 <td>V</td>
-<td>Variable. Records have varying lengths. Records never span a Block boundary</td>
+<td>Variable. Records have varying lengths. Records never span a Block boundary.</td>
 </tr>
 <tr>
 <td>VS</td>
-<td>Variable Spanned. Records have varying lengths. Records may or may not span a Block boundary</td>
+<td>Variable Spanned. Records have varying lengths. Records may or may not span a Block boundary.</td>
 </tr>
 </tbody>
 </table>
 <p>For ESDS, KSDS, and RRDS all record types are supported.
 For AIX only F and VS record formats are supported: F for unique, and VS for non-unique indexes.</p>
-<p>Supported Record Formats:</p>
+<p>Supported Record Formats per Cluster Type:</p>
 <table>
 <thead>
 <tr>
@@ -2612,7 +2591,7 @@ specific alternate key value. The table of primary keys may vary in length from 
 block size is guaranteed to be large enough to hold the largest possible index record, therefore a record type
 of VS is mandated. When a non-unique index record needs to be split into segments, no primary key value or
 XLRA is ever split; i.e. only an exact number of these reside within a single segment of the record.</p>
-<p>Supported Index-types:</p>
+<p>Supported Index-types per Cluster Type</p>
 <table>
 <thead>
 <tr>
@@ -2649,63 +2628,62 @@ XLRA is ever split; i.e. only an exact number of these reside within a single se
 <p>All zVSAM data is stored in physical files, as defined to the operating system.
 Each component consists of one file. This file is formatted as a zVSAM file, the structure of which is
 explained in the next set of chapters.</p>
-<p><strong>Please note</strong>: the hosting operating system may impose a limit on physical file size and not every host OS
+<p><strong>Please note:</strong> the hosting operating system may impose a limit on physical file size and not every host OS
 supports a physical file spanning a volume boundary of the storage device(s). Therefore, to support clusters
 that exceed the maximum size of a single physical file, in the future we may need to support clusters that
 consist of multiple files.</p>
 <h3 id="structure-of-physical-files">Structure of physical files</h3>
-<p>Every zVSAM file has a block size. The block being the basic unit of I/O. The first block of every file is the
-prefix block, which is always 4096 bytes in size. The prefix block holds information about the cluster, its
-data, and its structure.</p>
-<p>Data in the prefix block are not accessible to user programs. However, selected fields in the prefix block can
-be queried using a SHOWCB ACB= request.</p>
-<p>All Data and Index blocks in the file have a user-defined blocksize (<code>DATABLOCKSIZE=</code> and
-<code>INDEXBLOCKSIZE=</code>). The file is assumed to logically begin with the first block after the prefix block
-There are 5 types of blocks that may occur in zVSAM files:
-1. Prefix block – one for each file, being the first 4096 bytes of every file
-2. Spacemap block – used to manage free space in the file
-3. Data block – used to hold user data, or AIX data records (in an AIX only)
-4. Index block – used to hold index information
-5. ELIX block – used to index segmented (read: large) non-unique AIX records</p>
-<p>Every block has an internal structure consisting of a block header, a list of record s, a block body and a block
-footer. The block header and footer have a fixed structure. The list of record s has a variable length. The
-block body contains record data and/or free space.</p>
-<p>Each of the 5 block types is explained in more detail below</p>
-<h3 id="block-header-structure">Block Header Structure</h3>
-<p>Every block has a block header (<code>ZVSAMHDR</code>). All block headers have the same structure.</p>
-<p><code>BHDRSEQ#</code> is incremented by one every time the block is written out to the file.
-The footer area contains a comparable field: <code>BFTRSEQ#</code>. Together they guard against incomplete writes.</p>
-<p><code>BHDRXLVL</code> indicates the index level. Zero is the leaf level. Index blocks are chained by level. That is, for
-every index level in use there is a pair of pointers in the prefix block (<code>PFXBLVLn</code>/<code>PFXELVLn</code>) that starts and ends
-the chain for that level.</p>
-<p><code>BHDRSELF</code> contains the block's own XLRA. This helps to guard against misdirected reads and/or writes.</p>
-<p><code>BHDRNEXT</code>/<code>BHDRPREV</code> point to the next and previous block on the chain. Which chain this is, depends
-on the <code>BHDRFLAG</code> setting, and, if this is an index block, by the <code>BHDRXLVL</code> value.
-For the prefix block, these two fields are set to foxes.</p>
-<p>Segmented records are a special case. Segments of a segmented record never share their block with other
-data. The block holding the first segment is part of the data chain. A block holding a non-first segment is part
-of the segment chain. A block that holds a record's first segment has an SPX pointing to the block holding
-the next segment. Subsequent segments are retrieved by following the SPXs to the last segment of the record</p>
-<p>The Segment chain starting at <code>PFXBSEGM</code> and ending at <code>PFXESEGM</code> has no role in processing a spanned
-dataset but just provides an extra integrity check.</p>
-<h3 id="block-footer-structure">Block Footer Structure</h3>
-<p>Every block has a block footer <code>zVSAMFTR</code>). All block footers have the same structure.</p>
-<p><code>BFTRSEQ#</code> is incremented by one every time the block is written out to the file.
-The header area contains a comparable field: <code>BHDRSEQ#</code>. Together they guard against incomplete writes.</p>
+<p>Every zVSAM file has a block size. The block being the basic unit of I/O.
+The first block of every file is the prefix block, which is always 4096 bytes in size.
+The prefix block holds information about the cluster, its data, and its structure.</p>
+<p>Data in the prefix block are not accessible to user programs.
+However, selected fields in the prefix block can be queried using a SHOWCB ACB= request.</p>
+<p>All other blocks in the file have a user-defined blocksize. That is, the user defines the blocksize:
+<code>DATABLOCKSIZE=</code> for blocks in a data component and <code>INDEXBLOCKSIZE=</code> for blocks in an index component.
+The file is assumed to logically begin with the first block after the prefix block.</p>
+<p>There are 5 types of blocks that may occur in zVSAM files:</p>
+<ol>
+<li>Prefix block – one for each file, being the first 4096 bytes of every file</li>
+<li>Spacemap block – used to manage free space in the file</li>
+<li>Data block – used to hold user data, or AIX data records (in an AIX only)</li>
+<li>Index block – used to hold index information</li>
+<li>ELIX block – used to index segmented (read: large) non-unique AIX records</li>
+</ol>
+<p>Every block has an internal structure consisting of a block header,
+a list of record pointers, a block body and a block footer.
+The block header and footer have a fixed structure. The list of record pointers
+has a variable length. The block body contains record data and/or free space.</p>
+<p>Each of the 5 block types is explained in more detail below.</p>
 <h3 id="prefix-block">Prefix Block</h3>
-<p>The prefix block (<code>ZVSAMPFX</code>) consists of the first 4096 bytes of every physical file. It contains meta-data
-defining the file and its attributes. It also contains various counters.</p>
+<p>The prefix block (<code>ZVSAMPFX</code>) consists of the first 4096 bytes of every physical file.
+It contains meta-data defining the file and its attributes. It also contains various counters.</p>
 <p>The prefix block consists of a block header immediately followed by the prefix area.
 The prefix block also contains other data fields, these are addressed from the prefix area.
-The prefix block ends with a block footer. A record list is not present on the prefix block.</p>
-<p>There are various fields in the prefix area. These point to fields allocated elsewhere in the prefix block. Their
-exact addresses on the prefix block may vary:
+The prefix block ends with a block footer. A record pointer list is not present on the prefix block.</p>
+<p>There are various pointer fields in the prefix area. These point to fields allocated elsewhere in the prefix block.
+Their exact addresses on the prefix block may vary:
 - <code>PFXDPAT@</code>, <code>PFXDNAM@</code>, <code>PFXXPAT@</code>, <code>PFXXNAM@</code> all point to a halfword-prefixed string.
 - <code>PFXDVOL@</code> and <code>PFXXVOL@</code> contain foxes (future option)</p>
 <p>The Counters area (<code>ZVSAMCTR</code>) directly follows the Prefix area, it is doubleword aligned.
 This area is expected to move into the catalog dataset in a future release.
 The overall structure of the prefix block would look something like this (areas not to scale):</p>
 <p><img alt="Diagram showing layout of a Prefix Block" src="zVSAM_V2_Drawing_Block_Type_Prefix.jpg" /></p>
+<h3 id="spacemap-blocks">Spacemap Blocks</h3>
+<p>Spacemap blocks (<code>ZVSAMMAP</code>) are used to manage available free space in a component.
+Each spacemap block has a size that matches the blocksize of all other blocks
+(except possibly the prefix block) in the component.</p>
+<p>A component will hold as many spacemap blocks as needed to map all of its allocated blocks,
+including all spacemap blocks but excluding the prefix block. Whenever a single spacemap block is not enough,
+the spacemap blocks are chained together by means of the <code>BHDRNEXT</code>/<code>BHDRPREV</code> pointers in the block header area.
+The spacemap chain starts/ends from the prefix block, fields <code>PFXBMAP</code>/<code>PFXEMAP</code>.</p>
+<p>When a single spacemap block suffices, <code>PFXBMAP</code> and <code>PFXEMAP</code> will both point to that block.</p>
+<p>Each spacemap block consists of a block header immediately followed by the spacemap area, which in turn
+is followed directly by the block footer. No free space exists on a spacemap block.
+Thus, the last spacemap block may map blocks that do not exist in the dataset.
+The bit settings for blocks beyond the <code>PFXHXLRA</code> should all be zero to indicate an unallocated block.
+zVSAM is aware that any block beyond <code>PFXHXLRA</code> needs to be created and initialized before it can be allocated.</p>
+<p>Conceptually, the overall structure of a spacemap block would look something like this (areas not to scale):</p>
+<p><img alt="Diagram showing layout of a Spacemap Block" src="zVSAM_V2_Drawing_Block_Type_Spacemap.jpg" /></p>
 <h3 id="prefix-block-chain-summary">Prefix Block chain summary</h3>
 <p>The following table summarizes the way that blocks in the file are chained from the prefix block.
 The prefix block doesn't reside on any chain.</p>
@@ -2963,22 +2941,61 @@ The prefix block doesn't reside on any chain.</p>
 </tr>
 </tbody>
 </table>
-<h3 id="spacemap-blocks">Spacemap Blocks</h3>
-<p>Spacemap blocks (<code>ZVSAMMAP</code>) are used to manage available free space in a component. Each spacemap
-block has a size that matches the blocksize of all other blocks (except possibly the prefix block) in the
-component.</p>
-<p>A component will hold as many spacemap blocks as needed to map all of its allocated blocks, including all
-spacemap blocks but excluding the prefix block. Whenever a single spacemap block is not enough, the
-spacemap blocks are chained together by means of the <code>BHDRNEXT</code>/<code>BHDRPREV</code> pointers in the block header area.
-The spacemap chain starts/ends from the prefix block, fields <code>PFXBMAP</code>/<code>PFXEMAP</code>.</p>
-<p>When a single spacemap block suffices, <code>PFXBMAP</code> and <code>PFXEMAP</code> will both point to that block.</p>
-<p>Each spacemap block consists of a block header immediately followed by the spacemap area, which in turn
-is followed directly by the block footer. No free space exists on a spacemap block. Thus, a spacemap block
-may indicate blocks that do not exist in the dataset. The bit settings for blocks beyond the <code>PFXHXLRA</code>
-should all be zero to indicate an unallocated block. zVSAM is aware that any block beyond <code>PFXHXLRA</code>
-needs to be created and initialized before it can be allocated.</p>
-<p>Conceptually, the overall structure of a spacemap block would look something like this (areas not to scale):</p>
-<p><img alt="Diagram showing layout of a Spacemap Block" src="zVSAM_V2_Drawing_Block_Type_Spacemap.jpg" /></p>
+<h3 id="data-blocks">Data Blocks</h3>
+<h4 id="data-block-structure-spannedno">Data Block Structure (SPANNED=NO)</h4>
+<p>Assume we have a cluster with three data blocks holding records. The blocks are on the data chain as
+outlined in the picture below. Please note that all depicted pointers are block pointers. Each thus originates with the
+indicated field, and ends at the block it points to. The location where the arrows attach has no meaning since
+it's a block pointer.</p>
+<p><img alt="Diagram showing layout of a Data Block Chain" src="zVSAM_V2_Drawing_Chain_Data_Blocks.jpg" /></p>
+<h4 id="data-block-structure-spannedyes">Data Block Structure (SPANNED=YES)</h4>
+<p>Now suppose we have a cluster with three data blocks, the first block holding two unsegmented records, the
+second block holding the first segment of a record consisting of three segments and the third block holding
+the first segment of a record consisting of two segments.</p>
+<p>In the picture we show the data chain as a solid line (as in the picture above), we show the segment chain as a
+dotted line, and we show the SPX s as a fat line.</p>
+<p>The picture shows the prefix area's pointer to start/end block of both the data chain and the segment chain
+It also shows the first and second block pointer on each chain pointing to one another. Same thing for the second and
+third block pointer on each chain.</p>
+<p><img alt="Diagram showing layout of a Segmented Data Block Chain" src="../zVSAM_V2.4_Drawing_Chain_Segmented_Data_Blocks.jpg" /></p>
+<p>All depicted pointers are block pointers.
+Each originates with the indicated field, and ends at the block it points to.
+The location where the arrows attach has no meaning since it's a block pointer.</p>
+<h4 id="data-block">Data Block</h4>
+<p>Each record has an RPTR block, they are created after the Block Header.
+In addition to the offset, the RPTR contains flags to identify the type and status of each record.
+<code>RPTR_END</code> marks the end of records in this block.</p>
+<p>The records are placed in reverse order in the block to consolidate free space at the centre</p>
+<p><img alt="Diagram showing layout of a Data Block" src="../zVSAM_V2.4_Drawing_Block_Type_Data.jpg" /></p>
+<p>It is possible to reserve an amount of freespace at load time which also applies if a block is split.
+It is specified in the catalog as <code>DATAFREESPACE=nn</code>, where nn is a percentage of the available space.
+Only a fixed non-spanned KSDS can specify free space.</p>
+<p>For all types of fixed non-spanned datasets, the available space may not be a multiple of the data record size
+resulting in unusable space. To correct this use <code>DATAADJUST=YES</code> which will calculate an optimal
+blocksize less than the specified one.</p>
+<h2 id="block-structures">Block Structures</h2>
+<h3 id="block-header-structure">Block Header Structure</h3>
+<p>Every block has a block header (<code>ZVSAMHDR</code>).
+All block headers have the same structure.</p>
+<p><code>BHDRSEQ#</code> is incremented by one every time the block is written out to the file.
+The footer area contains a comparable field: <code>BFTRSEQ#</code>. Together they guard against incomplete writes.</p>
+<p><code>BHDRXLVL</code> indicates the index level. Zero is the leaf level. Index blocks are chained by level. That is, for
+every index level in use there is a pair of pointers in the prefix block (<code>PFXBLVLn</code>/<code>PFXELVLn</code>) that starts and ends
+the chain for that level.</p>
+<p><code>BHDRSELF</code> contains the block's own XLRA. This helps to guard against misdirected reads and/or writes.</p>
+<p><code>BHDRNEXT</code>/<code>BHDRPREV</code> point to the next and previous block on the chain. Which chain this is, depends
+on the <code>BHDRFLAG</code> setting, and, if this is an index block, by the <code>BHDRXLVL</code> value.
+For the prefix block, these two fields are set to foxes.</p>
+<p>Segmented records are a special case. Segments of a segmented record never share their block with other
+data. The block holding the first segment is part of the data chain. A block holding a non-first segment is part
+of the segment chain. A block that holds a record's first segment has an SPX pointing to the block holding
+the next segment. Subsequent segments are retrieved by following the SPXs to the last segment of the record</p>
+<p>The Segment chain starting at <code>PFXBSEGM</code> and ending at <code>PFXESEGM</code> has no role in processing a spanned
+dataset but just provides an extra integrity check.</p>
+<h3 id="block-footer-structure">Block Footer Structure</h3>
+<p>Every block has a block footer <code>zVSAMFTR</code>). All block footers have the same structure.</p>
+<p><code>BFTRSEQ#</code> is incremented by one every time the block is written out to the file.
+The header area contains a comparable field: <code>BHDRSEQ#</code>. Together they guard against incomplete writes.</p>
 <h3 id="record-list-structure-rptr">Record List Structure (RPTR)</h3>
 <p>Every block that contains data records contains a record list (<code>ZVSAMRPT</code>). Records are accessible only
 through their Record pointer or RPTR. Every entry in the list corresponds with a single record on the block. The last
@@ -2995,38 +3012,6 @@ compromised and data access will fail. <code>RPTR_MTY</code> indicates an empty 
 <p>All segments begin with a segment prefix (<code>ZVSAMSEG</code>).
 The first segment is on the Data chain and subsequent segments are retrieved via <code>SPXBNEXT</code>.
 The flag <code>SPXSEGCC</code> indicates the first, middle or last segments.</p>
-<h2 id="data-blocks">Data Blocks</h2>
-<h3 id="data-block-structure-spannedno">Data Block Structure (SPANNED=NO)</h3>
-<p>Assume we have a cluster with three data blocks holding records. The blocks are on the data chain as
-outlined in the picture below. Please note that all depicted pointers are block pointers. Each thus originates with the
-indicated field, and ends at the block it points to. The location where the arrows attach has no meaning since
-it's a block pointer.</p>
-<p><img alt="Diagram showing layout of a Data Block Chain" src="zVSAM_V2_Drawing_Chain_Data_Blocks.jpg" /></p>
-<h3 id="data-block-structure-spannedyes">Data Block Structure (SPANNED=YES)</h3>
-<p>Now suppose we have a cluster with three data blocks, the first block holding two unsegmented records, the
-second block holding the first segment of a record consisting of three segments and the third block holding
-the first segment of a record consisting of two segments.</p>
-<p>In the picture we show the data chain as a solid line (as in the picture above), we show the segment chain as a
-dotted line, and we show the SPX s as a fat line.</p>
-<p>The picture shows the prefix area's pointer to start/end block of both the data chain and the segment chain
-It also shows the first and second block pointer on each chain pointing to one another. Same thing for the second and
-third block pointer on each chain.</p>
-<p><img alt="Diagram showing layout of a Segmented Data Block Chain" src="../zVSAM_V2.4_Drawing_Chain_Segmented_Data_Blocks.jpg" /></p>
-<p>All depicted pointers are block pointers.
-Each originates with the indicated field, and ends at the block it points to.
-The location where the arrows attach has no meaning since it's a block pointer.</p>
-<h3 id="data-block">Data Block</h3>
-<p>Each record has an RPTR block, they are created after the Block Header.
-In addition to the offset, the RPTR contains flags to identify the type and status of each record.
-<code>RPTR_END</code> marks the end of records in this block.</p>
-<p>The records are placed in reverse order in the block to consolidate free space at the centre</p>
-<p><img alt="Diagram showing layout of a Data Block" src="../zVSAM_V2.4_Drawing_Block_Type_Data.jpg" /></p>
-<p>It is possible to reserve an amount of freespace at load time which also applies if a block is split.
-It is specified in the catalog as <code>DATAFREESPACE=nn</code>, where nn is a percentage of the available space.
-Only a fixed non-spanned KSDS can specify free space.</p>
-<p>For all types of fixed non-spanned datasets, the available space may not be a multiple of the data record size
-resulting in unusable space. To correct this use <code>DATAADJUST=YES</code> which will calculate an optimal
-blocksize less than the specified one.</p>
 <h2 id="aix-blocks">AIX Blocks</h2>
 <h3 id="aix-block-structure-unique">AIX Block Structure (Unique)</h3>
 <p><img alt="Diagram showing layout of a chain of AIX Data Blocks" src="../zVSAM_V2.4_Drawing_Chain_AIX_Blocks.jpg" /></p>
@@ -3722,7 +3707,7 @@ which are stored on the next blocks.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.2-7-gd61c2e17"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.2-8-g175a0e7f"}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

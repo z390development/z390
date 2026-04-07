@@ -2048,15 +2048,7 @@
 
 <h1 id="zvsam-v2-design-and-logic-manual">zVSAM V2 Design and Logic manual</h1>
 <h2 id="introduction">Introduction</h2>
-<p>This document describes the structure of the zVSAM component of the z390 assembler and emulator.
-It consists of the following parts:</p>
-<ul>
-<li>A description of the structure of the interfaces used</li>
-<li>A description of the structure of the files</li>
-<li>A description of the logical processes that implement ACB-based requests</li>
-<li>A description of the logical processes that implement RPL-based requests</li>
-<li>Addenda</li>
-</ul>
+<p>This document describes the structure of the zVSAM component of the z390 assembler and runtime engine.</p>
 <h2 id="copyright-notice">Copyright Notice</h2>
 <p>This document Copyright 2018-2026 – z390 development team</p>
 <p>z390 is free software; its associated documentation is equally free.
@@ -2076,14 +2068,14 @@ mimic the IBM-provided (and IBM-copyrighted) interfaces as described by IBM in p
 <p>The logic and implementation behind these interfaces, however, was developed independently from IBM
 and is the product of the joint efforts of our team of volunteer developers.</p>
 <p>Source-level compatibility is a primary goal not only for z390 and zVSAM, but also for other z390 components
-such as zCOBOL and zCICS.</p>
+such as zCobol and zCICS.</p>
 <p>All IBM publications and software we refer to in this document are copyright IBM Corporation with no exception.</p>
-<p>The drawings in this document have been made using the draw.io software.
+<p>The drawings in this document have been made using the site draw.io.
 As part of the open source for z390 the xml and jpg documents describing these drawings are available
-with every distribution of z390 that contains this document</p>
+with every distribution of z390 that contains this document.</p>
 <h2 id="terminology">Terminology</h2>
 <p>The reader is assumed to have at least some familiarity with IBM VSAM,
-to the extent that most of the following acronyms and terms are understood:</p>
+to the extent that the following acronyms and terms are understood:</p>
 <table>
 <thead>
 <tr>
@@ -2102,7 +2094,7 @@ to the extent that most of the following acronyms and terms are understood:</p>
 </tr>
 <tr>
 <td>CBMR</td>
-<td>Control Block Modification Request (zVSAM)</td>
+<td>Control Block Modification Request</td>
 </tr>
 <tr>
 <td>CI</td>
@@ -2130,7 +2122,7 @@ to the extent that most of the following acronyms and terms are understood:</p>
 </tr>
 <tr>
 <td>RBA</td>
-<td>Relative Byte Address (See note here)</td>
+<td>Relative Byte Address</td>
 </tr>
 <tr>
 <td>RDW</td>
@@ -2138,7 +2130,7 @@ to the extent that most of the following acronyms and terms are understood:</p>
 </tr>
 <tr>
 <td>RLF</td>
-<td>Record Length Field – (zVSAM)</td>
+<td>Record Length Field</td>
 </tr>
 <tr>
 <td>RPL</td>
@@ -2154,7 +2146,7 @@ to the extent that most of the following acronyms and terms are understood:</p>
 </tr>
 <tr>
 <td>SPX</td>
-<td>Segment Prefix (zVSAM)</td>
+<td>Segment Prefix</td>
 </tr>
 <tr>
 <td>VSAM</td>
@@ -2162,11 +2154,11 @@ to the extent that most of the following acronyms and terms are understood:</p>
 </tr>
 <tr>
 <td>XRBA</td>
-<td>Extended Relative Byte Address (See note here)</td>
+<td>Extended Relative Byte Address</td>
 </tr>
 <tr>
 <td>XLRA</td>
-<td>Extended Logical Record Address (zVSAM)</td>
+<td>Extended Logical Record Address</td>
 </tr>
 <tr>
 <td>zACB</td>
@@ -2187,8 +2179,8 @@ The XRBA is held in block-relative form, ie. the first record in each block is c
 BHDRSELF/256*PFXBLKSZ
 Each subsequent record has its length added to this value according to the RPTR sequence and not the
 physical sequence (which is reversed). For variable records the length includes the RLF but not any SPX
-In this document we also use the following terms. The ones that are used by IBM as well, are intended to
-have the same meaning they do in IBM manuals</p>
+In this document we also use the following terms.
+The ones that are used by IBM as well, are intended to have the same meaning they do in IBM manuals.</p>
 <table>
 <thead>
 <tr>
@@ -2219,11 +2211,11 @@ have the same meaning they do in IBM manuals</p>
 </tr>
 <tr>
 <td>Foxes</td>
-<td>a value consisting of all high-values i.e. a value of all X'FF' bytes.</td>
+<td>a value consisting of all high-values i.e. a value of all X'FF' bytes</td>
 </tr>
 <tr>
 <td>List</td>
-<td>a structure holding items that are linked together by s</td>
+<td>a structure holding items that are linked together by pointers</td>
 </tr>
 <tr>
 <td>Segment</td>
@@ -2266,7 +2258,7 @@ This has the following consequences:</p>
    On rare occasions you may need an additional base register when porting your program either way.</li>
 <li>As a rule of thumb, a program using VSAM can be ported to z390 and should be able to assemble,
    link and run without modification – provided it uses only the VSAM features and options that zVSAM supports.
-   And provided the program does not run out of addressability due to different control block lengths</li>
+   And provided the program does not run out of addressability due to different control block lengths.</li>
 </ol>
 <h3 id="zvsam-v2-compatibility-with-zvsam-v1">zVSAM V2 compatibility with zVSAM V1</h3>
 <p>The user of z390's zVSAM component should be aware that zVSAM V2 as described in this document
@@ -2275,19 +2267,20 @@ inconvenience this may cause.</p>
 <p>We have taken the following measures to facilitate the transition from zVSAM V1 to zVSAM V2:</p>
 <ol>
 <li>We have introduced a new z390 option: ZVSAM which indicates which version of
-   zVSAM you want z390 to use. It takes the following forms:
+   zVSAM you want z390 to use.
+   It takes the following forms:
    For maximum compatibility the default is set to ZVSAM(1).
-   The default will be changed to ZVSAM(2) in a future release of z390</li>
+   The default will be changed to ZVSAM(2) in a future release of z390.</li>
 <li>ZVSAM(0) – zVSAM usage is disallowed</li>
 <li>ZVSAM(1) – zVSAM V1 is enabled, zVSAM V2 is disabled</li>
 <li>ZVSAM(2) – zVSAM V2 is enabled, zVSAM V1 is disabled</li>
 <li>To convert your zVSAM V1 clusters to zVSAM V2 you'll have to take the following steps:</li>
-<li>unload the existing data from their clusters using REPRO \
+<li>unload the existing data from their clusters using REPRO. \
       For details on how to use REPRO, please refer to the "z390_VSAM_User_Guide"</li>
-<li>reload your data from your unload files, using ZREPRO \
+<li>reload your data from your unload files, using ZREPRO. \
       For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"</li>
 <li>For zVSAM V1 and zVSAM V2 there are distinct macro libraries, MACVSAM1 and MACVSAM2.
-   To use the correct zVSAM maclib, specify the correct version in your maclib concatenation</li>
+   To use the correct zVSAM maclib, specify the correct version in your maclib concatenation.</li>
 <li>If a program is to run with ZVSAM(2), then all submodules that contain an OPEN macro must be
    re-assembled using MACVSAM2, even those that only use QSAM.</li>
 </ol>
@@ -2350,7 +2343,7 @@ inconvenience this may cause.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.2-7-gd61c2e17"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.2-8-g175a0e7f"}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
