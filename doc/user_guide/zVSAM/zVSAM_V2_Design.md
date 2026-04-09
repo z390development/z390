@@ -18,7 +18,7 @@ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with z390;
-if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
 
 ## Acknowledgements
 
@@ -36,7 +36,7 @@ such as zCobol and zCICS.
 All IBM publications and software we refer to in this document are copyright IBM Corporation with no exception.
 
 The drawings in this document have been made using the site draw.io.
-As part of the open source for z390 the xml documents describing these drawings are available
+As part of the open source for z390 the xml and jpg documents describing these drawings are available
 with every distribution of z390 that contains this document.
 
 ## Terminology
@@ -44,31 +44,31 @@ with every distribution of z390 that contains this document.
 The reader is assumed to have at least some familiarity with IBM VSAM,
 to the extent that the following acronyms and terms are understood:
 
-| Acronym | Meaning                                             |
-|---------|-----------------------------------------------------|
-| ACB     | Access Control Block                                |
-| AIX     | Alternate IndeX                                     |
-| CBMR    | Control Block Modification Request                  |
-| CI      | Control Interval                                    |
-| ESDS    | Entry Sequenced Data Set                            |
-| EXLST   | Exit List                                           |
-| IBM     | International Business Machines Corp., USA          |
-| KSDS    | Key Sequenced Data Set                              |
-| LDS     | Linear Data Set                                     |
-| Path    | Access to a base cluster, usually through an AIX    |
-| RBA     | Relative Byte Address                               |
-| RDW     | Record Descriptor Word in IBM-defined format        |
-| RLF     | Record Length Field – z390 equivalent of RDW        |
-| RPL     | Request Parameter List                              |
-| RRDS    | Relative Record Data Set                            |
-| RRN     | Relative Record Number                              |
-| SPX     | Segment Prefix                                      |
-| VSAM    | Virtual Storage Access Method                       |
-| XRBA    | Extended Relative Byte Address                      |
-| XLRA    | Extended Logical Record Address                     |
-| zACB    | z390 equivalent of the ACB                          |
-| zEXLST  | z390 equivalent of the EXLST                        |
-| zRPL    | z390 equivalent of the RPL                          |
+| Acronym | Meaning                                                             |
+|---------|---------------------------------------------------------------------|
+| ACB     | Access Control Block                                                |
+| AIX     | Alternate IndeX                                                     |
+| CBMR    | Control Block Modification Request                                  |
+| CI      | Control Interval                                                    |
+| ESDS    | Entry Sequenced Data Set                                            |
+| EXLST   | Exit List                                                           |
+| IBM     | International Business Machines Corp., USA                          |
+| KSDS    | Key Sequenced Data Set                                              |
+| LDS     | Linear Data Set                                                     |
+| Path    | Access to a base cluster, usually through an AIX                    |
+| RBA     | Relative Byte Address                                               |
+| RDW     | Record Descriptor Word in IBM-defined format                        |
+| RLF     | Record Length Field – z390 equivalent of RDW                        |
+| RPL     | Request Parameter List                                              |
+| RRDS    | Relative Record Data Set                                            |
+| RRN     | Relative Record Number                                              |
+| SPX     | Segment Prefix                                                      |
+| VSAM    | Virtual Storage Access Method                                       |
+| XRBA    | Extended Relative Byte Address                                      |
+| XLRA    | Extended Logical Record Address                                     |
+| zACB    | z390 equivalent of the ACB                                          |
+| zEXLST  | z390 equivalent of the EXLST                                        |
+| zRPL    | z390 equivalent of the RPL                                          |
 
 In this document we also use the following terms.
 The ones that are used by IBM as well, are intended to have the same meaning they do in IBM manuals.
@@ -121,16 +121,17 @@ inconvenience this may cause.
 We have taken the following measures to facilitate the transition from zVSAM V1 to zVSAM V2:
 
 1. We have introduced a new z390 option: ZVSAM which indicates which version of
-   zVSAM you want z390 to use. For maximum compatibility the default is set to enable zVSAM v1.
-   The default will be changed to zVSAM v2 in a future release of z390.
+   zVSAM you want z390 to use.
+   For maximum compatibility the default is set to ZVSAM(1) to enable zVSAM v1.
+   The default will be changed to ZVSAM(2) in a future release of z390.
    The parameter takes the following forms:
-    1. ZVSAM(0) – zVSAM usage is disallowed
-    2. ZVSAM(1) – zVSAM V1 is enabled, zVSAM V2 is disabled
-    3. ZVSAM(2) – zVSAM V2 is enabled, zVSAM V1 is disabled
+   1. ZVSAM(0) – zVSAM usage is disallowed
+   2. ZVSAM(1) – zVSAM V1 is enabled, zVSAM V2 is disabled
+   3. ZVSAM(2) – zVSAM V2 is enabled, zVSAM V1 is disabled
 2. To convert your zVSAM V1 clusters to zVSAM V2 you'll have to take the following steps:
-    1. unload the existing data from their clusters using REPRO. \
-       For details on how to use Repro, please refer to the "z390_VSAM_User_Guide"
-    2. reload your data from your unload files, using ZREPRO. \
-       For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"
-3. For zVSAM V1 and zVSAM v2 there are distinct macro libraries.
+   1. unload the existing data from their clusters using REPRO. \
+      For details on how to use REPRO, please refer to the "z390_VSAM_User_Guide"
+   2. reload your data from your unload files, using ZREPRO. \
+      For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"
+3. For zVSAM V1 and zVSAM V2 there are distinct macro libraries.
    To use the correct zVSAM maclib, specify the correct version in your maclib concatenation.
