@@ -14,7 +14,7 @@
 .* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 .* GNU General Public License for more details.
 .*
-.* You should have received a copy of the GNU General Public License 
+.* You should have received a copy of the GNU General Public License
 .* along with this program; if not, see https://www.gnu.org/licenses.
 .*********************************************************************
 .* Author - Don Higgins                                              *
@@ -22,13 +22,21 @@
 .*********************************************************************
 .* 04/09/08 initial coding for global WHEN
 .* 10/06/08 ZSTRMAC
-.* 01/27/12 DSH RPI 1181 SUPPORT MULT TRUE/FALSE COND TESTS 
+.* 01/27/12 DSH RPI 1181 SUPPORT MULT TRUE/FALSE COND TESTS
 .* 03/07/12 DSH RPI 1182 GEN BASE FOR INDEX AFTER EACH LABEL
+.* 2025/12 ZH: Add SEARCH WHEN support per FIPS PUB 21-2
 .*********************************************************************
-         WHEN  &VAL  
+         WHEN  &VAL
          COPY  ZC_WS
          AIF   (&IE_LVL LT 1)
-               MNOTE 8,'WHEN MISSING EVALUATE'
+               MNOTE 8,'WHEN MISSING EVALUATE OR SEARCH'
+               MEXIT
+         AEND
+         AIF   (&IE_TYPE(&IE_LVL) EQ 15)
+.*
+.* SEARCH WHEN - Format: WHEN field = value
+.*
+               ACALL SEARCH_WHEN
                MEXIT
          AEND
          AIF   (&IE_TYPE(&IE_LVL) NE 2)
@@ -36,7 +44,7 @@
                MEXIT
          AEND
          :&IE_WHEN(&IE_LVL) SETA &IE_WHEN(&IE_LVL)+1
-         AIF   (&IE_WHEN(&IE_LVL) GT 1 AND N'&SYSLIST EQ 1) RPI 1181                
+         AIF   (&IE_WHEN(&IE_LVL) GT 1 AND N'&SYSLIST EQ 1) RPI 1181
                GEN_B EVAL&IE_EVAL(&IE_LVL)._END
          AEND
          GEN_LABEL EVAL&IE_EVAL(&IE_LVL)._WHEN&IE_WHEN(&IE_lVL),WHEN
@@ -56,6 +64,128 @@
                    GEN_BC   ZC_NE,EVAL&IE_EVAL(&IE_LVL)._WHEN&NEXT_WHEN
                AEND
          AEND
+         MEXIT
+.*
+.*********************************************************************
+.* SEARCH WHEN HANDLER
+.* Called when WHEN appears inside a SEARCH block (IE_TYPE=15)
+.*
+.* Syntax: WHEN field1 operator field2
+.* Example: WHEN TABLE-KEY(IDX) = SEARCH-ARG
+.*
+.* Generates comparison code and conditional branch:
+.*   - If condition TRUE:  fall through to imperative statement
+.*   - If condition FALSE: branch to INCR (try next element)
+.*
+.* Uses GET_PARM_FIELD (from ZCGETFLD) to parse field operands
+.*********************************************************************
+         AENTRY SEARCH_WHEN
+.*
+.* Increment WHEN counter for this SEARCH and get label numbers
+.* SRC_WHEN_N - Which WHEN clause this is (1, 2, 3...)
+.* SRC_N      - SEARCH label counter for generating unique labels
+.*
+         :&IE_SRC_WHEN(&IE_LVL) SETA &IE_SRC_WHEN(&IE_LVL)+1
+         :&SRC_WHEN_N SETA &IE_SRC_WHEN(&IE_LVL)
+         :&SRC_N SETA &IE_TCNT(&IE_LVL)
+.*
+.* First WHEN needs jump to END for AT END clause fall-through
+.* This handles the case where AT END body falls through to WHEN1
+.*
+         AIF (&SRC_WHEN_N EQ 1)
+               J     PG_SEARCH_&SRC_N._END
+         AEND
+.*
+.* Generate label for this WHEN clause
+.*
+         GEN_LABEL SEARCH_&SRC_N._WHEN&SRC_WHEN_N,SEARCH_WHEN
+.*
+.* Parse first operand (left side of comparison)
+.* GET_PARM_FIELD parses field name and optional subscripts
+.*
+.* Input variables for GET_PARM_FIELD:
+.*   PARM_IX   - Index into SYSLIST to start parsing
+.*   FIELD_SS1 - Flag for subscript handling
+.*   FIELD_REG - Register to use for address calculation
+.*
+.* Output variables from GET_PARM_FIELD:
+.*   FIELD_NAME - Parsed field name
+.*   FIELD_IX   - Symbol table index (0 if not found)
+.*
+         :&PARM_IX SETA 1
+         :&FIELD_SS1 SETB 0
+         :&FIELD_REG SETC 'ZC_R2'
+         ACALL GET_PARM_FIELD
+         :&SRC_FLD1 SETC '&FIELD_NAME'
+         :&SRC_FLD1_IX SETA &FIELD_IX
+         AIF (&SRC_FLD1_IX EQ 0)
+               MNOTE 8,'SEARCH WHEN FIELD1 NOT FOUND - &SRC_FLD1'
+               MEXIT
+         AEND
+.*
+.* Get the comparison operator (=, <, >, etc.)
+.* PARM_IX was advanced by GET_PARM_FIELD, now points to operator
+.*
+         :&OPER SETC '&SYSLIST(&PARM_IX)'
+         :&PARM_IX SETA &PARM_IX+1
+.*
+.* Parse second operand (right side of comparison)
+.* Can be a field name or a literal value
+.*
+         :&FIELD_SS1 SETB 0
+         :&FIELD_REG SETC 'ZC_R3'
+         ACALL GET_PARM_FIELD
+         :&SRC_FLD2 SETC '&FIELD_NAME'
+         :&SRC_FLD2_IX SETA &FIELD_IX
+.*
+.* Map COBOL operator to condition code for FALSE branch
+.*
+.* We branch to INCR when condition is FALSE (try next element)
+.* So we need the INVERSE condition code:
+.*   COBOL "="  -> branch on NOT EQUAL (ZC_NE)
+.*   COBOL "<"  -> branch on GREATER OR EQUAL (ZC_GE)
+.*   COBOL ">"  -> branch on LESS OR EQUAL (ZC_LE)
+.*   etc.
+.*
+         :&SRC_CCT SETC ''
+         AIF ('&OPER' EQ '=' OR '&OPER' EQ 'EQUAL')
+               :&SRC_CCT SETC 'ZC_NE'
+         AELSEIF ('&OPER' EQ '<' OR '&OPER' EQ 'LESS')
+               :&SRC_CCT SETC 'ZC_GE'
+         AELSEIF ('&OPER' EQ '>' OR '&OPER' EQ 'GREATER')
+               :&SRC_CCT SETC 'ZC_LE'
+         AELSEIF ('&OPER' EQ '<=' OR '&OPER' EQ 'LE')
+               :&SRC_CCT SETC 'ZC_H'
+         AELSEIF ('&OPER' EQ '>=' OR '&OPER' EQ 'GE')
+               :&SRC_CCT SETC 'ZC_L'
+         AELSEIF ('&OPER' EQ 'NOT')
+               :&SRC_CCT SETC 'ZC_EQ'
+         AELSE
+               MNOTE 8,'SEARCH WHEN INVALID OPERATOR - &OPER'
+               MEXIT
+         AEND
+.*
+.* Generate the actual field comparison code
+.* GEN_COMP compares two fields and sets condition code
+.* Parameters: field1_name, field1_sym_ix, field2_name, field2_sym_ix
+.* If field2_sym_ix is 0, field2 is treated as a literal
+.*
+         AIF (&SRC_FLD2_IX GT 0)
+               GEN_COMP &SRC_FLD1,&SRC_FLD1_IX,&SRC_FLD2,&SRC_FLD2_IX
+         AELSE
+               GEN_COMP &SRC_FLD1,&SRC_FLD1_IX,&SRC_FLD2,0
+         AEND
+.*
+.* Branch based on comparison result
+.* If condition FALSE: branch to INCR to try next table element
+.* If condition TRUE:  fall through to imperative statement
+.*
+         BRC   &SRC_CCT,PG_SEARCH_&SRC_N._INCR
+.*
+.* After imperative statement executes, control reaches END_SEARCH
+.* which jumps to END (search successful, exit loop)
+.*
+         AEND
 .*
 .* EVAL CONDITION FOR EVAL TRUE OR FALSE
 .*
@@ -73,16 +203,16 @@
          GEN_COMP &SYSLIST(1),&V1_IX,&SYSLIST(3),&V2_IX  RPI 1182
          :&PARM SETC '&SYSLIST(2)'
          ACALL SET_CCT
-         :&NEXT_WHEN SETA  &IE_WHEN(&IE_LVL)+1                
+         :&NEXT_WHEN SETA  &IE_WHEN(&IE_LVL)+1
          AEND
 .*
-.* SET CCT IF RELATION FOUND ELSE CCT NULL 
+.* SET CCT IF RELATION FOUND ELSE CCT NULL
 .*
          AENTRY SET_CCT
          :&CCT SETC ''     ASSUME RELATION NOT FOUND
                AIF   ('&PARM' EQ '='                                   X
-                      OR '&PARM' EQ 'EQUAL'                            X            
-                      OR '&PARM' EQ 'EQUALS')            
+                      OR '&PARM' EQ 'EQUAL'                            X
+                      OR '&PARM' EQ 'EQUALS')
                    :&CCT    SETC 'ZC_NE'
                AELSEIF ('&PARM' EQ '<'                                 X
                         OR '&PARM' EQ 'LESS')
@@ -99,4 +229,5 @@
                     MEXIT
                AEND
          AEND
+         COPY ZCGETFLD
          MEND
