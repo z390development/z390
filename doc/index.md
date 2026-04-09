@@ -16,7 +16,7 @@ hide:
 * QSAM/VSAM compatible file processing
 * TN3270 compatible data streams
 * CICS(r) compatible transaction processor
-* GPLv2 licensed
+* Open source, Java-based, GPLv2 licensed
 
 Ideal for a number of use cases:
 
