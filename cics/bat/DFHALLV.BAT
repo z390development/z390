@@ -1,5 +1,5 @@
 @if /I "%1" == "tron" (echo on) else (echo off)
-rem demo hello world demo
+rem Create all zVSAM clusters for use with zCICS
 
 setlocal
 if /I "%1" == "tron" (set z_TraceMode=tron
@@ -135,12 +135,15 @@ rem RUN REPRO TO DUMP AIX02 VIA PATH
 SET INFILE=%CICSPATH%\Z390CAT1.AIXNAME
 SET OUTFILE=%CICSPATH%\MYAIX02.TXT
 CALL bat\EZ390 %z_TraceMode% LINKLIB\REPRO        || GOTO WRONG
+
+set z_ReturnCode=0
 GOTO return
 
 :WRONG_ASM
 echo %0 error while building program %PROGRAM% - see log and listings for details
 set z_ReturnCode=8
 goto return
+
 :WRONG
 echo %0 error while REPRO-ing %INFILE% to %OUTFILE% - see log and listings for details
 set z_ReturnCode=8
