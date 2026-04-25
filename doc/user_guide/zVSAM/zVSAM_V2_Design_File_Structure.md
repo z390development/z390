@@ -1,33 +1,31 @@
 # zVSAM V2 - Physical structure of the files
 
 This document describes the file structure for implementing zVSAM V2 data sets.
-It contains the following major chapters:
-
-1. [Basic Concepts](#Basic-Concepts)
-2. [File Structure](#File-Structure)
-3. [Block Structures](#Block-Structures)
 
 ## Basic Concepts
 
 ### Files, Blocks, Records
 
 The logical unit of access or storage is the record. Yet the unit for any given I/O operation is the block.
-Block sizes may vary from 512 bytes to 16MB. Each block holds up to 255 records. For any given cluster component,
-choosing an appropriate block size is important. Block size can greatly affect not only performance,
-but also both internal and external storage consumption.
+Block sizes may vary from 512 bytes to 16MB. Each block holds up to 255 records. For any given cluster
+component, choosing an appropriate block size is important. Block size can greatly affect not only
+performance, but also both internal and external storage consumption.
 
-A cluster consists of one or more files that belong together and should be managed together. Whether you take a backup, perform a restore,
-or perform other administrative tasks, the files that make up a cluster should be managed alike. When creating a backup copy of a cluster
-or restoring a cluster, make sure no other processes try to access the data at the same time.
+A cluster consists of one or more files that belong together and should be managed together. Whether you
+take a backup, perform a restore, or perform other administrative tasks, the files that make up a cluster should
+be managed alike. When creating a backup copy of a cluster or restoring a cluster, make sure no other
+processes try to access the data at the same time.
 
-zVSAM implements a number of checks and balances to prevent inadvertent access to data that may have been compromised.
-Names and locations of files are managed. Tampering with files or file attributes may render the cluster unusable.
+zVSAM implements a number of checks and balances to prevent inadvertent access to data that may have
+been compromised. Names and locations of files are managed. Tampering with files or file attributes may
+render the cluster unusable.
 
-As a result, it is not possible to rename a zVSAM cluster or file. Unload and reload your cluster in order to move the data
-or to assign a different name to cluster or file.
+As a result, it is not possible to rename a zVSAM cluster or file. Unload and reload your cluster in order to
+move the data or to assign a different name to cluster or file.
 
-Just like files in a cluster belong together and should be managed together, clusters in a sphere are logically connected and should be managed together.
-Again, failing to manage the files in a correct and comprehensive manner may render your data inaccessible.
+Just like files in a cluster belong together and should be managed together, clusters in a sphere are logically
+connected and should be managed together. Again, failing to manage the files in a correct and
+comprehensive manner may render your data inaccessible.
 
 ### Cluster types and Cluster Components
 
@@ -43,12 +41,12 @@ Each cluster consists of a data component and an index component as follows:
 
 ### Record Formats
 
-In zVSAM we recognize and support the following record formats:
+In zVSAM we support the following record formats:
 
 | Format | Properties                                                                                    |
 |--------|-----------------------------------------------------------------------------------------------|
-| F      | Fixed. All records have the same length Records never span a Block boundary.                  |
-| FS     | Fixed Spanned. All records have the same length. Records may span a Block boundary.           |
+| F      | Fixed. All records have the same length. Records never span a Block boundary.                 |
+| FS     | Fixed Spanned. All records have the same length. Records expected to span a Block boundary.   |
 | V      | Variable. Records have varying lengths. Records never span a Block boundary.                  |
 | VS     | Variable Spanned. Records have varying lengths. Records may or may not span a Block boundary. |
 
@@ -66,17 +64,17 @@ Supported Record Formats per Cluster Type:
 | AIX - unique     | Y   | N   | N   | N   |
 | AIX - non-unique | N   | N   | N   | Y   |
 
-* \* denotes a zVSAM extension *
+\* zVSAM extension
 
 For a unique AIX each record holds an alternate key value plus the primary key (KSDS) or XLRA (ESDS)
 of the associated record in the cluster's data component. This fixed configuration dictates a record type of F.
 
-For a non-unique AIX each record holds an alternate key value and as many primary keys (KSDS) or XLRAs (ESDS)
-of associated records in the cluster's data component as there are records holding that specific alternate key value.
-The table of primary keys may vary in length from 1 to very large numbers. No block size is guaranteed to be large enough
-to hold the largest possible index record, therefore a record type of VS is mandated.
-When a non-unique index record needs to be split into segments, no primary key value or XLRA is ever split;
-i.e. only an exact number of these reside within a single segment of the record.
+For a non-unique AIX each record holds an alternate key value and as many primary keys (KSDS) or
+XLRAs (ESDS) of associated records in the cluster's data component as there are records holding that
+specific alternate key value. The table of primary keys may vary in length from 1 to very large numbers. No
+block size is guaranteed to be large enough to hold the largest possible index record, therefore a record type
+of VS is mandated. When a non-unique index record needs to be split into segments, no primary key value or
+XLRA is ever split; i.e. only an exact number of these reside within a single segment of the record.
 
 Supported Index-types per Cluster Type
 
@@ -87,7 +85,7 @@ Supported Index-types per Cluster Type
 | RRDS         | Y\*              | N            | N                |
 | LDS          | N                | N            | N                |
 
-* \* denotes a zVSAM extension *
+\* zVSAM extension
 
 ### Concept of Fixed-length records stored in blocks
 
@@ -96,14 +94,14 @@ filling the block until no space is left. When  remaining free space is insuffic
 that free space remains unallocated (marked in blue). The actual implementation is quite different,
 but we'll leave those details alone for the moment.
 
-![Diagram showing Blocked records of type F](zVSAM_V2_Drawing_Record_Type_F.jpg)
+![Diagram showing Blocked records of type F](img/zVSAM_V2_Drawing_Record_Type_F.jpg)
 
 This holds for all cluster types, except LDS. In an LDS there is no block structure.
 Each block and each record holds 4096 bytes of data.
 
 Below we show an example of records in a LDS:
 
-![Diagram showing records in an LDS](zVSAM_V2_Drawing_Record_Type_LDS.jpg)
+![Diagram showing records in an LDS](img/zVSAM_V2_Drawing_Record_Type_LDS.jpg)
 
 ### Concept of Fixed-length Segmented records stored in blocks
 
@@ -115,7 +113,7 @@ more than two segments may be needed to store the record. The actual implementat
 
 Below we show an example where each record requires three blocks and is therefore split into three segments:
 
-![Diagram showing Blocked records of type FS](zVSAM_V2_Drawing_Record_Type_FS.jpg)
+![Diagram showing Blocked records of type FS](img/zVSAM_V2_Drawing_Record_Type_FS.jpg)
 
 ### Concept of Variable-length records stored in blocks
 
@@ -126,7 +124,7 @@ but we'll leave those details alone for the moment.
 
 Below we show an example showing how various numbers of records might fit into the blocks of the file:
 
-![Diagram showing Blocked records of type V](zVSAM_V2_Drawing_Record_Type_V.jpg)
+![Diagram showing Blocked records of type V](img/zVSAM_V2_Drawing_Record_Type_V.jpg)
 
 ### Concept of Variable-length Segmented records stored in blocks
 
@@ -143,41 +141,43 @@ The actual implementation is quite different, but we'll leave those details alon
 Below we show an example showing how various numbers of records might fit into the blocks of
 the file, or how a single record might occupy multiple blocks of the file:
 
-![Diagram showing Blocked records of type VS](zVSAM_V2_Drawing_Record_Type_VS.jpg)
+![Diagram showing Blocked records of type VS](img/zVSAM_V2_Drawing_Record_Type_VS.jpg)
 
 ## File Structure
 
-All zVSAM data is stored in physical files, as defined to the operating system. Each component consists of one file.
-This file is formatted as a zVSAM file. The structure of which is explained in the next set of chapters.
+All zVSAM data is stored in physical files, as defined to the operating system.
+Each component consists of one file. This file is formatted as a zVSAM file, the structure of which is
+explained in the next set of chapters.
 
-*Please note:* the hosting operating system may impose a limit on physical file size and not every host OS supports a physical file
-spanning a volume boundary of the storage device(s). Therefore, to support clusters that exceed the maximum size of a single physical file,
-in the future we may need to support clusters that consist of multiple files.
+**Please note:** the hosting operating system may impose a limit on physical file size and not every host OS
+supports a physical file spanning a volume boundary of the storage device(s). Therefore, to support clusters
+that exceed the maximum size of a single physical file, in the future we may need to support clusters that
+consist of multiple files.
 
 ### Structure of physical files
 
 Every zVSAM file has a block size. The block being the basic unit of I/O.
-The first block of every file is the prefix block, which  is always 4096 bytes in size.
+The first block of every file is the prefix block, which is always 4096 bytes in size.
 The prefix block holds information about the cluster, its data, and its structure.
 
 Data in the prefix block are not accessible to user programs.
-However, selected fields in the prefix block can be queried using a SHOWCB ACB request.
+However, selected fields in the prefix block can be queried using a SHOWCB ACB= request.
 
-All other blocks in the file have a user-defined blocksize. That is, the user defines the blocksize.
+All other blocks in the file have a user-defined blocksize. That is, the user defines the blocksize:
 All blocks in the file are created with that size, except the prefix block which is always 4096 bytes,
-irrespective of the size of the other blocks in the file. The file is assumed to logically begin with
-the first block after the prefix block.
+irrespective of the size of the other blocks in the file.
+The file is assumed to logically begin with the first block after the prefix block.
 
 There are 6 types of blocks that may occur in zVSAM files:
 
-1) Prefix block – one for each file, being the first 4096 bytes of every file
-2) Spacemap block – used to manage free space in the file
-3) Data block – used to hold user data, or AIX data records (in an AIX only)
-4) Index block – used to hold index information
-5) ELIX block – used to index segmented (read: large) non-unique AIX records
-6) Raw block – used to hold a block's worth of LDS data
+1. Prefix block – one for each file, being the first 4096 bytes of every file
+2. Spacemap block – used to manage free space in the file
+3. Data block – used to hold user data, or AIX data records (in an AIX only)
+4. Index block – used to hold index information
+5. ELIX block – used to index segmented (read: large) non-unique AIX records
+6. Raw block – used to hold a block's worth of LDS data
 
-Every block, except a raw block, has an internal structure, consisting of a block header,
+Every block, except a raw block, has an internal structure consisting of a block header,
 a list of record pointers (data and index blocks only), a block body and a block footer.
 The block header and footer have a fixed structure. The list of record pointers, if present,
 has a variable length. The block body contains record data and/or free space.
@@ -188,28 +188,29 @@ Each of the 6 block types is explained in more detail below.
 
 ### Prefix Block
 
-The prefix block consists of the first 4096 bytes of every physical file.
+The prefix block (`ZVSAMPFX`) consists of the first 4096 bytes of every physical file.
 It contains meta-data defining the file and its attributes. It also contains various counters.
 
-The prefix block consists of a block header immediately followed by the prefix area described below.
+The prefix block consists of a block header immediately followed by the prefix area.
 The prefix block also contains other data fields, these are addressed from the prefix area.
 The prefix block ends with a block footer. A record pointer list is not present on the prefix block.
 
 There are various pointer fields in the prefix area. These point to fields allocated elsewhere in the prefix block.
-Their exact addresses on the prefix block may vary.
-
-The `PFXDVOL@`, `PFXDPAT@`, `PFXDNAM@` pointers and the `PFXXVOL@`, `PFXXPAT@`, `PFXXNAM@` all point to a halfword-prefixed string.
+Their exact addresses on the prefix block may vary:
+- `PFXDPAT@`, `PFXDNAM@`, `PFXXPAT@`, `PFXXNAM@` all point to a halfword-prefixed string.
+- `PFXDVOL@` and `PFXXVOL@` contain foxes (future option)
 
 The `PFXCTRS@` pointer addresses a separate area that holds various counters.
 This area is expected to move into the catalog dataset in a future release.
 The overall structure of the prefix block would look something like this (areas not to scale):
 
-![Diagram showing layout of a Prefix Block](zVSAM_V2_Drawing_Block_Type_Prefix.jpg)
+![Diagram showing layout of a Prefix Block](img/zVSAM_V2_Drawing_Block_Type_Prefix.jpg)
 
 ### Spacemap Blocks
 
-Spacemap blocks are used to manage available free space in a component.
-Each spacemap block has a size that matches the blocksize of all other blocks (except possibly the prefix block) in the component.
+Spacemap blocks (`ZVSAMMAP`) are used to manage available free space in a component.
+Each spacemap block has a size that matches the blocksize of all other blocks
+(except possibly the prefix block) in the component.
 
 A component will hold as many spacemap blocks as needed to map all of its allocated blocks,
 including all spacemap blocks but excluding the prefix block. Whenever a single spacemap block is not enough,
@@ -218,14 +219,15 @@ The spacemap chain starts/ends from the prefix block, fields `PFXBMAP`/`PFXEMAP`
 
 When a single spacemap block suffices, `PFXBMAP` and `PFXEMAP` will both point to that block.
 
-Each spacemap block consists of a block header immediately followed by the spacemap area, which in turn is followed
-directly by the block footer. No free space exists on a spacemap block. Thus, the last spacemap block may map blocks
-that do not exist in the dataset. The bit settings for blocks beyond the `PFXHXLRA` should all be zero to indicate an unallocated block.
+Each spacemap block consists of a block header immediately followed by the spacemap area, which in turn
+is followed directly by the block footer. No free space exists on a spacemap block.
+Thus, the last spacemap block may map blocks that do not exist in the dataset.
+The bit settings for blocks beyond the `PFXHXLRA` should all be zero to indicate an unallocated block.
 zVSAM is aware that any block beyond `PFXHXLRA` needs to be created and initialized before it can be allocated.
 
 Conceptually, the overall structure of a spacemap block would look something like this (areas not to scale):
 
-![Diagram showing layout of a Spacemap Block](zVSAM_V2_Drawing_Block_Type_Spacemap.jpg)
+![Diagram showing layout of a Spacemap Block](img/zVSAM_V2_Drawing_Block_Type_Spacemap.jpg)
 
 ### Data Blocks
 
@@ -247,8 +249,10 @@ Conceptually, the overall structure of a spacemap block would look something lik
 
 ### Block Header Structure
 
-Every block (except raw blocks) has a block header. All block headers have the same structure.
-It is formatted as follows:
+Every block (except raw blocks) has a block header (`ZVSAMHDR`).
+All block headers have the same structure.
+
+Block Headers are formatted as follows:
 
 | Label    | Offset | Field type | Function                              |
 |----------|--------|------------|---------------------------------------|
@@ -313,7 +317,7 @@ The blocks are on the data chain as outlined in the picture below. Please note t
 Each pointer thus originates with the indicated field, and ends at the block it points to.
 The location where the arrows attach has no meaning since it's a block pointer.
 
-![Diagram showing Chained Data Blocks](zVSAM_V2_Drawing_Chain_Data_Blocks.jpg)
+![Diagram showing Chained Data Blocks](img/zVSAM_V2_Drawing_Chain_Data_Blocks.jpg)
 
 *Example 2:* Now suppose we have a cluster with three data blocks, the first block holding two unsegmented records,
 the second block holding the first segment of a record consisting of three segments and the third block holding the first segment
@@ -330,22 +334,22 @@ The picture also shows that the SPX only occurs on the first segment of each seg
 As in the example above, all depicted pointers are block pointers. Each pointer originates with the indicated field,
 and ends at the block it points to. The location where the arrows attach has no meaning since it's a block pointer.
 
-![Diagram showing Chained Segmented Data Blocks](zVSAM_V2_Drawing_Chain_Segmented_Data_Blocks.jpg)
+![Diagram showing Chained Segmented Data Blocks](img/zVSAM_V2_Drawing_Chain_Segmented_Data_Blocks.jpg)
 
 *Example 3:* This example is the same as the example 2 – the only difference being that now all segments go onto the segment chain.
 The SPX resides by itself on the data block and just points to the first segment on the segment chain.
 
-![Diagram showing Chained Data Blocks - alternative design](zVSAM_V2_Drawing_Chain_Data_Blocks_alt.jpg)
+![Diagram showing Chained Data Blocks - alternative design](img/zVSAM_V2_Drawing_Chain_Data_Blocks_alt.jpg)
 
 *Example 4:* This example shows an index of only one block, holding two record pointers.
 
-![Diagram showing a single Index Block](zVSAM_V2_Drawing_Chain_Index_Blocks_1.jpg)
+![Diagram showing a single Index Block](img/zVSAM_V2_Drawing_Chain_Index_Blocks_1.jpg)
 
 *Example 5:* This example shows the index after adding three more record pointers,
 causing the only index block to overflow and split. Now there are two leaf blocks, still on the LVL0 chain,
 and a new root block has been created on the LVL1 chain.
 
-![Diagram showing two Chained Index Blocks](zVSAM_V2_Drawing_Chain_Index_Blocks_2.jpg)
+![Diagram showing two Chained Index Blocks](img/zVSAM_V2_Drawing_Chain_Index_Blocks_2.jpg)
 
 ### Block Footer Structure
 
@@ -586,117 +590,3 @@ The bits in the `MAPBITS` array are encoded as follows:
 ### Fixed-Segmented Record Structure
 
 ### Variable-Segmented Record Structure
-
-## Logical processes for ACB-based requests
-
-### ACB
-
-### GENCB ACB
-
-### MODCB ACB
-
-### SHOWCB ACB
-
-### TESTCB ACB
-
-### EXLST
-
-### GENCB EXLST
-
-### MODCB EXLST
-
-### SHOWCB EXLST
-
-### TESTCB EXLST
-
-### Open
-
-Open logic has two major components: the open macro and the actual run-time logic to execute a request to open a file or a number of files.
-
-#### Open macro logic
-
-The open macro generates an open/close parameter list and/or an SVC 19 instruction to invoke the open routine.
-The syntax of the open macro is given in [OPEN macro](#OPEN-macro)
-
-The macro generates the following code:
-
-| MF variant | Generated Code                                                                                                                          |
-|------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| MF=L       | Open/close parameter list data only                                                                                                     |
-| MF=E       | 1) Code to modify/populate the open/close parameter list at the indicated address, which may be a relocatable constant or a (register). |
-|            | 2) Code to invoke the open routine with R1 pointing to the open/close parameter list.                                                   |
-| MF omitted | 1) Open/close parameter list data (inline)                                                                                              |
-|            | 2) Code to invoke the open routine with R1 pointing to the open/close parameter list.                                                   |
-
-When constructing the open/close parameter list, the end-of-list indicator of the last entry is set.
-
-Open/close parameter list entries have two different formats. The one being used depends on the current addressing mode as indicated in the &MODE parameter.
-
-- When &MODE=24 then each entry is one fullword on a fullword boundary.
-- When &MODE=31 then each entry is two fullwords on a fullword boundary.
-
-| Label    | Offset | Field type | Function                        |
-|----------|--------|------------|---------------------------------|
-| OCPL     |        | DSECT      | Open/Close Parameter List       |
-| OC24     | X'000' | XL4        | Entry for &MODE=24              |
-| OC24OPT  | X'000' | XL1        | Option byte (ignored for ACB)   |
-| OC24_EOL |        | =X'80'     | End-of-list indicator           |
-| OC24DCB  | X'001' | AL3        | Pointer to DCB or ACB           |
-|          |        |            |                                 |
-| OC31     | X'000' | XL8        | Entry for &MODE=31              |
-| OC31OPT  | X'000' | XL1        | Option byte (ignored for ACB)   |
-| OC31_EOL |        | =X'80'     | End-of-list indicator           |
-| OC31NULL | X'001' | XL3        | Reserved, should contain zeroes |
-| OC31DCB  | X'004' | AL4        | Pointer to DCB or ACB           |
-
-To invoke the open execution logic SVC 19 (X'13') is used.
-The type of parameter list is indicated as follows:
-- if R1 is zero, then R0 contains a pointer to a list of OC31 entries
-- otherwise R1 contains a pointer to a list of OC24 entries.
-
-#### Open execution logic
-
-Open execution logic is implemented as a Java routine.
-
-This logic consists of the following elements:
-
-| Action                                      | Details                                                                |
-|---------------------------------------------|------------------------------------------------------------------------|
-| determine type of parameter list            | The list consists solely of OC31 entries, addressed by R0, if R1 = 0.  |
-|                                             | The list consists solely of OC24 entries, addressed by R1, if R1 <> 0. |
-| loop over all entries in the parameter list | End-of-list is indicated in the option byte of the entry               |
-| - check pointer: ACB or DCB                 | First byte = X'A0' => ACB V1                                           |
-|                                             | First four bytes = C'zACB' => assume ACB                               |
-|                                             | Otherwise => Assume DCB                                                |
-| - if DCB invoke DCB open routine            |                                                                        |
-| - if ACB validate ACB                       | `ACBID` <> X'A0' => Error                                              |
-|                                             | `ACBSTYP` <> X'10' => Error                                            |
-|                                             | `ACBVER` <> X'02' => Error                                             |
-| - if ACB valid invoke VSAM open routine     |                                                                        |
-| - next entry or end-of-loop                 | If bit 0 of OCPL entry is on, terminate loop                           |
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
