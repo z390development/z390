@@ -44,7 +44,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -54,7 +54,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -64,7 +64,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -74,7 +74,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -84,7 +84,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -94,7 +94,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -104,7 +104,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -114,7 +114,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -124,7 +124,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -134,7 +134,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -144,7 +144,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -154,7 +154,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -164,7 +164,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -174,7 +174,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -184,7 +184,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -194,7 +194,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -204,7 +204,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -214,7 +214,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -224,7 +224,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -234,7 +234,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -244,7 +244,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -254,7 +254,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -264,7 +264,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -274,7 +274,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -284,7 +284,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -294,7 +294,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -304,7 +304,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -314,7 +314,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -324,7 +324,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -334,7 +334,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -344,7 +344,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -354,7 +354,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -364,7 +364,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -374,7 +374,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -384,7 +384,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -394,7 +394,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -404,7 +404,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -414,7 +414,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -424,7 +424,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -434,7 +434,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -444,7 +444,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -454,7 +454,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -464,7 +464,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -474,7 +474,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -484,7 +484,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -494,7 +494,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -504,7 +504,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -514,7 +514,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -524,7 +524,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -534,7 +534,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -544,7 +544,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -554,7 +554,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -564,7 +564,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -574,7 +574,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -584,7 +584,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -594,7 +594,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -604,7 +604,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -614,7 +614,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -624,7 +624,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -634,7 +634,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -644,7 +644,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -654,7 +654,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -664,7 +664,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -674,7 +674,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -684,7 +684,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -694,7 +694,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -704,7 +704,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -714,7 +714,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -724,7 +724,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -734,7 +734,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -744,7 +744,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -754,7 +754,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -767,7 +767,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -780,7 +780,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -793,7 +793,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -806,7 +806,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -819,7 +819,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -861,7 +861,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -878,7 +878,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -895,7 +895,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -912,7 +912,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -929,7 +929,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -946,7 +946,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII NOTIME
+$z_unref ${progpath}/UNREF ASCII NOTIME
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -964,7 +964,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII NOTIME
+$z_unref ${progpath}/UNREF ASCII NOTIME
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -977,7 +977,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -990,7 +990,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1003,7 +1003,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1016,7 +1016,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1029,7 +1029,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1042,7 +1042,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1055,7 +1055,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1068,7 +1068,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1081,7 +1081,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1094,7 +1094,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1107,7 +1107,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1120,7 +1120,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1133,7 +1133,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1146,7 +1146,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1159,7 +1159,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1172,7 +1172,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1185,7 +1185,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1198,7 +1198,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1211,7 +1211,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1224,7 +1224,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1237,7 +1237,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1250,7 +1250,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1263,7 +1263,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1276,7 +1276,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1289,7 +1289,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1302,7 +1302,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1315,7 +1315,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1328,7 +1328,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1341,7 +1341,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1354,7 +1354,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1367,7 +1367,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1380,7 +1380,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1395,7 +1395,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1408,7 +1408,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1421,7 +1421,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1436,7 +1436,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1449,7 +1449,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1462,7 +1462,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1475,7 +1475,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1488,7 +1488,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1504,7 +1504,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1519,7 +1519,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1539,7 +1539,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 #if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1552,7 +1552,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 #if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1565,7 +1565,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 #if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1578,7 +1578,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 #if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1591,7 +1591,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 #if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1604,7 +1604,7 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1617,7 +1617,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 #if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1630,7 +1630,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 #if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1643,7 +1643,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 #if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1656,7 +1656,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 #if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1669,7 +1669,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 #if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1682,7 +1682,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 #if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1695,7 +1695,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 #if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
@@ -1708,7 +1708,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 #if [ $rc -ne 0 ]; then wrong; fi
 export PRNFILE=${cicspath}/${program}.PRN
 export URFFILE=${cicspath}/${program}.URF
-bash/ez390 ${progpath}/UNREF ASCII
+$z_unref ${progpath}/UNREF ASCII
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
