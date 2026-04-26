@@ -72,6 +72,7 @@ The standard zCICS tests are documented in `cics\seq\SEQDOC.TXT`.
 2.2 `LOCAL_TERMINALS=0`
 2.3 No `INITIAL_TRANSID=`
 2.4 `TRACE_LOCALS=NO`
+2.5 To prevent a MAXQUE overflow add a MAXQUE argument to the invocation command. E.g. `cics\bat\Z390RT.BAT MAXQUE(256000)`
 3. The regression test will run and shut down if item 1 above has been done.
    It will use the SEQInnnn files as input and creates a single `SEQO0001.TXT` file as output.
    The output streams are also sent to the Sequential terminal.
@@ -81,6 +82,8 @@ The current configuration abends U0444. This is a secondary symptom following a 
 indicating a length error of some kind. The problem seems to be triggered from SEQI0017.
 This problem will need to be investigated and resolved before we can validate test results using
 the comparator process described below.
+
+This problem is covered by issue 784 in the github repository.
 
 ### Running the comparator
 
