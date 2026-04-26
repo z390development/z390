@@ -12,6 +12,18 @@ function wrong {
 }
 
 ####################
+# UNREF behavior
+####################
+
+# enable/disable UNREF steps (default: disabled)
+if [[ "${1,,}" == "unref" ]]; then
+    z_unref='bash/ez390'
+    shift
+else
+    z_unref=':'
+fi
+
+####################
 # paths
 ####################
 
@@ -1178,6 +1190,19 @@ rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
 
 program=TESTVSM3
+bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+bash/lz390 ${cicspath}/${program}
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+export PRNFILE=${cicspath}/${program}.PRN
+export URFFILE=${cicspath}/${program}.URF
+bash/ez390 ${progpath}/UNREF ASCII
+rc=$?
+if [ $rc -ne 0 ]; then wrong; fi
+
+program=TESTVSM4
 bash/mz390 ${cicspath}/${program} CICS NOPROLOG $sysmac $syscpy
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
