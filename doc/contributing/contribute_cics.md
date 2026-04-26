@@ -76,6 +76,12 @@ The standard zCICS tests are documented in `cics\seq\SEQDOC.TXT`.
    It will use the SEQInnnn files as input and creates a single `SEQO0001.TXT` file as output.
    The output streams are also sent to the Sequential terminal.
 
+**Status Note:**
+The current configuration abends U0444. This is a secondary symptom following a zCICS AEIV abend
+indicating a length error of some kind. The problem seems to be triggered from SEQI0017.
+This problem will need to be investigated and resolved before we can validate test results using
+the comparator process described below.
+
 ### Running the comparator
 
 1. Run `cics\bat\Z390CMPG.BAT`
