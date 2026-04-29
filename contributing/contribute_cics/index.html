@@ -2106,11 +2106,18 @@ The standard zCICS tests are documented in <code>cics\seq\SEQDOC.TXT</code>.</p>
     This adjusts other INI parms:
 2.2 <code>LOCAL_TERMINALS=0</code>
 2.3 No <code>INITIAL_TRANSID=</code>
-2.4 <code>TRACE_LOCALS=NO</code></li>
+2.4 <code>TRACE_LOCALS=NO</code>
+2.5 To prevent a MAXQUE overflow add a MAXQUE argument to the invocation command. E.g. <code>cics\bat\Z390RT.BAT MAXQUE(256000)</code></li>
 <li>The regression test will run and shut down if item 1 above has been done.
    It will use the SEQInnnn files as input and creates a single <code>SEQO0001.TXT</code> file as output.
    The output streams are also sent to the Sequential terminal.</li>
 </ol>
+<p><strong>Status Note:</strong>
+The current configuration abends U0444. This is a secondary symptom following a zCICS AEIV abend
+indicating a length error of some kind. The problem seems to be triggered from SEQI0017.
+This problem will need to be investigated and resolved before we can validate test results using
+the comparator process described below.</p>
+<p>This problem is covered by issue 784 in the github repository.</p>
 <h3 id="running-the-comparator">Running the comparator</h3>
 <ol>
 <li>Run <code>cics\bat\Z390CMPG.BAT</code>
@@ -2194,7 +2201,7 @@ The output file <code>SEQCOMP.TXT</code> will contain an error message and a ful
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.2-13-g049c2a46"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.2-14-g872bc7f5"}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
