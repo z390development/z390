@@ -25,8 +25,12 @@ Ideal for a number of use cases:
 
 [Get started](getting_started/install.md){ .md-button .md-button--primary }
 
+## Team
 
----
-IBM, CICS, z/OS and z/VSE are trademarks of IBM Corp., registered in the U.S. 
-and other countries. The use of IBM Trademarks complies with the Fair use 
+[Team members and Contributors](contributing/contributors.md)
+
+## Trademarks
+
+IBM, CICS, VSAM, z/OS and z/VSE are trademarks of IBM Corp., registered in the U.S.
+and other countries. The use of IBM Trademarks complies with the Fair use
 guidelines for use and reference of IBM trademarks.
