@@ -791,7 +791,7 @@ private class section_definition                                                
 /**
  * <ol>
  * <li>write line to MLC file</li>
- * <li>if LABEL macros for PROCEDURE DIVISION section and paraggraph names,
+ * <li>if LABEL macros for PROCEDURE DIVISION section and paragraph names,
  *     write to CPY file concatenated in front of MLC to preload all
  *     label definitions for compile.</li>
  * </ol>
