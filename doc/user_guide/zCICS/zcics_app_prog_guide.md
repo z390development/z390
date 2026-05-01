@@ -17,44 +17,51 @@ this will be a frequent instruction.
 
 The current zCICS environment and all test programs can be re-assembled using
 DFHALL.BAT. The test VSAM catalog and files can be rebuilt using DFHALLV.BAT.
-Assembly notes
 
-The `CICS` option must be used when executing `mz390` command.
+## Assembly notes
 
-PROLOG and EPILOG are defaults.
+The `CICS` option must be used when compiling or assembling zCics programs.
+`PROLOG` and `EPILOG` are associated defaults.
 
-NOEPILOG is supported but not fully tested, testing and correct usage is scheduled
+`NOEPILOG` option is supported but not fully tested; testing and correct usage is scheduled
 for a future release of zCICS.
 
-PROLOG inserts the following:
+`PROLOG` inserts the following:
 
-DFHEISTG
-:  Define the prefix areas of the Dynamic Storage Area (DSA).
-
-DFHEIEND
-:  Replaces the END statement and defines the end of the DSA.
-
-DFHEIENT
-:  Replaces the first CSECT statement
-:  Establish linkage and base registers
-:  GETMAIN the DSA
-:  Establish addressability to the EIB and TCTTE
-:  Some COMMAREA management
+* DFHEISTG
+  - Define the prefix areas of the Dynamic Storage Area (DSA).
+* DFHEIEND
+  - Replaces the END statement and defines the end of the DSA.
+* DFHEIENT
+  - Replaces the first CSECT statement
+  - Establish linkage and base registers
+  - GETMAIN the DSA
+  - Establish addressability to the EIB and TCTTE
+  - Some COMMAREA management
 
 ## Other macros
 
-* DFHEIBLK - EIB DSECT
-* DFHPCT - Transaction definition
-* DFHFCT – File definitions and options
-* EXEC - Converts EXEC CICS statements into a unique macro call with a parameter list
-* DFHREGS – A synonym for EQUREGS
+* DFHEIBLK
+  - EIB DSECT
+* DFHPCT
+  - Transaction definition
+* DFHFCT
+  – File definitions and options
+* EXEC
+  - Converts EXEC CICS statements into a unique macro call with a parameter list
+* DFHREGS
+  – A synonym for EQUREGS
 
 ## Copy books
 
-* DFHAID - Standard CICS equates for AID keys
-* DFHBMSCA - Mapping support equates
-* DFHPCTUS - User transaction codes
-* DFHFCTUS - User file definitions
+* DFHAID
+  - Standard CICS equates for AID keys
+* DFHBMSCA
+  - Mapping support equates
+* DFHPCTUS
+  - User transaction codes
+* DFHFCTUS
+  - User file definitions
 
 Inclusion of the macro DFHREGS/EQUREGS is mandatory.
 
@@ -72,23 +79,22 @@ Inclusion of the macro DFHREGS/EQUREGS is mandatory.
 ### Multiple base registers (assembler only)
 
 The standard entry for a CICS program is as follows:
-e.g. DFHEISTG DSECT
 
 ``` hlasm
+         DFHEISTG
 MYFIELD  DS    CL100 demo user field
 ......
-MYPROG   CSECT
+MYPROG   DFHEIENT
 ```
 
-This standard method with the PROLOG option (default) will generate a single code
+This standard method with the `PROLOG` option (default) will generate a single code
 base of R12 and a single DSA base of R13.
 
 If you want to extend the code base and/or the DSA base registers, convert your
 code in line with the sample given and include the `NOPROLOG` option in mz390 command.
 
-e.g. DFHEISTG
-
 ```hlasm
+         DFHEISTG
 MYFIELD  DS    CL100 demo user field
 ......
 MYPROG   DFHEIENT CODEREG=(R8,R5),DATAREG=(R13,R6,R7)
@@ -98,13 +104,14 @@ MYPROG   DFHEIENT CODEREG=(R8,R5),DATAREG=(R13,R6,R7)
     You cannot override the first DATAREG value, it will always be R13.
     i.e. if you code `DATAREG=(R6,R7)` you will get `DATAREG=(R13,R7)`.
 
-There is no cross-checking for register conflicts.
+!!! Note
+    There is no cross-checking for register conflicts.
 
 ## Assembler EXEC CICS command syntax
 
-There is no formal definition of an EXEC CICS command in any IBM CICS(r) Manual.
+There is no formal definition of an EXEC CICS command in any IBM Manual.
 
-These assembler syntaxes are currently supported.
+The following assembler syntaxes are currently supported:
 
 ### In-line space separated
 ```hlasm
@@ -153,7 +160,9 @@ e.g. `EXEC CICS WRITEQ TS`
 See the [zCICS VSAM Guide]() for guidance in the setup of a VSAM environment.
 
 This document also contains extensions to the VSAM facilities currently available.
+
 ## Basic Mapping Support
+
 The `EXEC CICS` commands `RECEIVE MAP`, `SEND MAP` and `SEND CONTROL` are documented
 here.
 
@@ -166,8 +175,8 @@ EXEC CICS command format follows the rules for COBOL.
 
 Each command must end END-EXEC (a following dot may affect the logic).
 
-Parameters like `SET()` which address imported structures may use the ADDRESS
-OF special register.
+Parameters like `SET()` which address imported structures may use the
+`ADDRESS OF` special register.
 
 `LENGTH`, `FLENGTH` and `KEYLENGTH` which would normally allow a numeric option
 may use the `LENGTH OF` special register.
@@ -177,7 +186,7 @@ may use the `LENGTH OF` special register.
 You can add `NOEDF` to any `EXEC CICS` command if you wish that command to be
 excluded from a CEDF session.
 
-You can add `NOEDF` to the mz390 command if you wish all CEDF intercepts in that
+You can add `NOEDF` option to the compile or assembly command if you wish all CEDF intercepts in that
 program excluded.
 
 ## Command reference - General Commands
