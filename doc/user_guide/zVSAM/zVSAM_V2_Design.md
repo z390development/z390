@@ -79,6 +79,7 @@ The ones that are used by IBM as well, are intended to have the same meaning the
 | Block     | zVSAM equivalent of a Control Interval - the unit of I/O operations       |
 | Cluster   | a set of files that logically belong together                             |
 | Component | either a data component or an index component of a cluster                |
+| Element   | a primary key or XRBA in an AIX record                                    |
 | File      | a single file as seen by the hosting operating system                     |
 | Foxes     | a value consisting of all high-values i.e. a value of all X'FF' bytes     |
 | List      | a structure holding items that are linked together by pointers            |
@@ -103,7 +104,7 @@ This has the following consequences:
 1. IBM VSAM documentation with regards to macros and interfaces applies to zVSAM
    with the exception of parameters and options not supported by zVSAM.
    Where zVSAM differs in behaviour this is noted in this document.
-   Please refer to the macro descriptions in section II for details.
+   Please refer to the macro descriptions in [the Interfaces section](zVSAM_V2_Design_Interfaces.md) for details.
 2. Control Blocks (such as ACB, RPL and some others) are not compatible.
    zVSAM has its own structures. A side effect of this may be that a program's
    assembled object code may be different in size than on your IBM operating system.
