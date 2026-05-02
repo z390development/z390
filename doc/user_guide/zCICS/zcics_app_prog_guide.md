@@ -486,17 +486,17 @@ _label_ must point to a 2-byte hex value.
 
 The parameters TERMINAL, WAIT, DEFAULT and TEXT are discarded.
 
-#### Errors
-
-* BAD PARM
-* FROM IS MANDATORY
-* LENGTH IS MANDATORY
-
 #### Conditions (RESP/RESP2)
 
 * INVREQ/0 - Attempt to execute this in a non-terminal attached task.
   This is not documented in the IBM CICS(r) Manuals.
 * LENGERR/E1
+
+#### Errors
+
+* BAD PARM
+* FROM IS MANDATORY
+* LENGTH IS MANDATORY
 
 ### SEND CONTROL
 
@@ -518,15 +518,15 @@ name     EXEC  CICS SEND CONTROL
 * SEND CONTROL CURSOR ERASEAUP means erase all input fields
   and don't move the cursor.
 
+#### Conditions (RESP/RESP2)
+
+* INVREQ/0 - Attempt to execute this in a non-terminal attached task. This is not documented in the IBM CICS(r) Manual.
+
 #### Errors
 
 * BAD PARM
 * CURSOR POSITION AND SYMBOLIC CURSOR SPECIFIED
 * ERASE AND ERASEAUP SPECIFIED
-
-#### Conditions (RESP/RESP2)
-
-* INVREQ/0 - Attempt to execute this in a non-terminal attached task. This is not documented in the IBM CICS(r) Manual.
 
 ## Command reference - File control
 
