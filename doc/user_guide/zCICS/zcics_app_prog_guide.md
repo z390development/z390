@@ -193,12 +193,12 @@ program excluded.
 
 ### HANDLE AID
 
-```hlasm
-name     EXEC  CICS HANDLE AID key(label) key
-```
+| Name     | Operation      | Operands                  |
+|----------|----------------|---------------------------|
+| name     | EXEC CICS      | HANDLE AID key(label) key |
 
 !!! Warning
-    The following parameters are not supported.
+    The following parameters are not supported:
 
     * CLRPARTN
     * LIGHTPEN
@@ -232,6 +232,7 @@ INDGOPA1 DC    A(GOPA1)
 
 !!! Info
     There is a current limit of 30 AIDs.
+    More can be created if needed.
 
 #### Errors
 
