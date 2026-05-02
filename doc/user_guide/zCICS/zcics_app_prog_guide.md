@@ -100,12 +100,12 @@ MYFIELD  DS    CL100 demo user field
 MYPROG   DFHEIENT CODEREG=(R8,R5),DATAREG=(R13,R6,R7)
 ```
 
-[!NOTE]
-    You cannot override the first DATAREG value, it will always be R13.
-    i.e. if you code `DATAREG=(R6,R7)` you will get `DATAREG=(R13,R7)`.
+> [!NOTE]
+> You cannot override the first DATAREG value, it will always be R13.
+> i.e. if you code `DATAREG=(R6,R7)` you will get `DATAREG=(R13,R7)`.
 
-[!NOTE]
-    There is no cross-checking for register conflicts.
+> [!NOTE]
+> There is no cross-checking for register conflicts.
 
 ## Assembler EXEC CICS command syntax
 
