@@ -193,9 +193,9 @@ program excluded.
 
 ### HANDLE AID
 
-| Name     | Operation      | Operands                  |
-|----------|----------------|---------------------------|
-| name     | EXEC CICS      | HANDLE AID key(label) key |
+``` hlasm
+name     EXEC CICS HANDLE AID key(label) key
+```
 
 > [!WARNING]
 > The following parameters are not supported:
@@ -243,9 +243,9 @@ INDGOPA1 DC    A(GOPA1)
 
 ### HANDLE CONDITION
 
-| Name     | Operation      | Operands                                    |
-|----------|----------------|---------------------------------------------|
-| name     | EXEC CICS      | HANDLE CONDITION condition(label) condition |
+``` hlasm
+name     EXEC CICS HANDLE CONDITION condition(label) condition
+```
 
 #### Parameters
 
@@ -285,9 +285,9 @@ ISEOF    DS    0H
 
 ### IGNORE CONDITION
 
-| Name     | Operation      | Operands                                    |
-|----------|----------------|---------------------------------------------|
-| name     | EXEC CICS      | IGNORE CONDITION condition                  |
+``` hlasm
+name     EXEC CICS IGNORE CONDITION condition
+```
 
 > [!Warning]
 > Ignoring an error may lead to unpredictable abends.
@@ -317,9 +317,9 @@ The EXEC CICS command treated as never existed.
 
 ### POP HANDLE
 
-| Name     | Operation      | Operands                                    |
-|----------|----------------|---------------------------------------------|
-| name     | EXEC CICS      | POP HANDLE                                  |
+``` hlasm
+name     EXEC CICS POP HANDLE
+```
 
 For the HANDLE ABEND, a POP is the equivalent of a `HANDLE ABEND RESET`.
 
@@ -334,9 +334,9 @@ For the HANDLE ABEND, a POP is the equivalent of a `HANDLE ABEND RESET`.
 
 ### PUSH HANDLE
 
-| Name     | Operation      | Operands                                    |
-|----------|----------------|---------------------------------------------|
-| name     | EXEC CICS      | PUSH HANDLE                                 |
+``` hlasm
+name     EXEC CICS PUSH HANDLE
+```
 
 For the HANDLE ABEND, a PUSH is the equivalent of a `HANDLE ABEND CANCEL`.
 
@@ -347,12 +347,12 @@ For the HANDLE ABEND, a PUSH is the equivalent of a `HANDLE ABEND CANCEL`.
 
 ### ADDRESS
 
-| Name     | Operation      | Operands                                    |
-|----------|----------------|---------------------------------------------|
-| name     | EXEC CICS      | ADDRESS,                                  X |
-|          |                | COMMAREA(label),                          X |
-|          |                | CWA(label),                               X |
-|          |                | EIB(label)                                  |
+``` hlasm
+name     EXEC CICS ADDRESS,                                            X
+                   COMMAREA(label),                                    X
+                   CWA(label),                                         X
+                   EIB(label)                                           
+```
 
 CWA has a different implementation in zCICS.
 
@@ -364,9 +364,9 @@ See [CWA Management in zCICS Diagnosis Reference]() for more information.
 
 ### ASSIGN
 
-| Name     | Operation      | Operands                                    |
-|----------|----------------|---------------------------------------------|
-| name     | EXEC CICS      | ASSIGN                                      |
+``` hlasm
+name     EXEC CICS ASSIGN
+```
 
 The following parameters are not supported:
 
@@ -430,12 +430,12 @@ The following parameters are not supported:
 
 ### RECEIVE 
 
-| Name     | Operation      | Operands                                    |
-|----------|----------------|---------------------------------------------|
-| name     | EXEC CICS      | RECEIVE                                   X |
-|          |                | INTO(label)                               X |
-|          |                | LENGTH(label)                             X |
-|          |                | NOHANDLE                                    |
+``` hlasm
+name     EXEC CICS RECEIVE                                             X
+                   INTO(label)                                         X
+                   LENGTH(label)                                       X
+                   NOHANDLE                                             
+```
 
 #### Parameters
 
@@ -457,12 +457,11 @@ The following parameters are not supported:
 
 ### SEND
 
-| Name     | Operation      | Operands                                    |
-|----------|----------------|---------------------------------------------|
-| name     | EXEC CICS      | SEND                                      X |
-|          |                | FROM(label)                               X |
-|          |                | LENGTH()                                    |
-
+``` hlasm
+name     EXEC CICS SEND                                                X
+                   FROM(label)                                         X
+                   LENGTH()                                             
+```
 
 #### Parameters
 
@@ -501,26 +500,25 @@ The parameters TERMINAL, WAIT, DEFAULT and TEXT are discarded.
 ### SEND CONTROL
 
 ```hlasm
-name     EXEC  CICS SEND CONTROL
-                    CURSOR/CURSOR()
-                    ERASE/ERASEAUP
-                    ALARM
-                    FREEKB
-                    FRSET
+name     EXEC CICS SEND CONTROL                                        X
+                   CURSOR/CURSOR()                                     X
+                   ERASE/ERASEAUP                                      X
+                   ALARM                                               X
+                   FREEKB                                              X
+                   FRSET                                               
 ```
+
 #### Parameters
 
 * TERMINAL and WAIT are accepted and discarded.
 * ACCUM and SET are not supported.
 * CURSOR() refers to the 24x80 screen.
 * CURSOR is not documented.
-* SEND CONTROL CURSOR ERASEAUP means erase all input fields
-  and don't move the cursor.
+* SEND CONTROL CURSOR ERASEAUP means erase all input fields and don't move the cursor.
 
 #### Conditions (RESP/RESP2)
 
-* INVREQ/0 - Attempt to execute this in a non-terminal attached task.
-  This is not documented in the IBM CICS(r) Manual.
+* INVREQ/0 - Attempt to execute this in a non-terminal attached task. This is not documented in the IBM CICS(r) Manual.
 
 #### Errors
 
@@ -530,17 +528,39 @@ name     EXEC  CICS SEND CONTROL
 
 ## Command reference - File control
 
+The following notes apply to all File Control operations:
+- READ
+- STARTBR
+- READNEXT
+- READPREV
+- ENDBR
+- RESETBR
+
+> [!NOTE]
+> FLENGTH and XRBA are extensions; do not use these parameters if the
+> source code is likely to be ported back to a mainframe environment.
+
+> [!NOTE]
+> RBA access to a KSDS is not supported.
+
+> [!NOTE]
+> DATASET is supported for legacy applications. It is noted that this parameter no longer appears in the Manuals.
+
+> [!NOTE]
+> When conditions are raised as a result of a VSAM error, the RPL feedback codes
+> (2nd and 4th bytes) are placed in EIBRCODE +1 and +2.
+
 ### READ 
 
 ```hlasm
-name     EXEC  CICS READ
-                    FILE()/DATASET()
-                    INTO()/SET()
-                    LENGTH()/FLENGTH()
-                    RIDFLD()
-                    RBA/XRBA/RRN/GENERIC
-                    GTEQ/EQUAL
-                    KEYLENGTH()
+name     EXEC CICS READ                                                X
+                   FILE()/DATASET()                                    X
+                   INTO()/SET()                                        X
+                   LENGTH()/FLENGTH()                                  X
+                   RIDFLD()                                            X
+                   RBA/XRBA/RRN/GENERIC                                X
+                   GTEQ/EQUAL                                          X
+                   KEYLENGTH()                                         
 ```
 
 #### Parameters
@@ -548,50 +568,41 @@ name     EXEC  CICS READ
 ##### LENGTH
 
 * Can be specified as a constant, literal or label.
-    * constant must not exceed 32767.
-    * A literal or label must be 2 bytes and must not exceed 32767.
+* constant must not exceed 32767.
+* A literal or label must be 2 bytes and must not exceed 32767.
 
 ##### FLENGTH
 
 * Can be specified as a constant, literal or label.
-    * A constant must not exceed 2G-1.
-    * A literal or label must be 4 bytes and must not exceed 2G-1.
+* A constant must not exceed 2G-1.
+* A literal or label must be 4 bytes and must not exceed 2G-1.
 
-!!! Info
-    **LENGTH/FLENGTH**:
-
-    * If SET is specified, LENGTH/FLENGTH are ignored and LENGERR
-      cannot occur.
-    * If INTO is specified and LENGTH/FLENGTH are not, then the implied
-      length of INTO is used. This may raise the LENGERR condition if the
-      data length is larger.
-    * If LENGTH/FLENGTH is numeric then it specifies the maximum data
-      length that can be received. LENGERR can be raised if the data length
-      is larger.
-    * If LENGTH/FLENGTH is a label then it specifies the maximum data
-      length that can be received. LENGERR can be raised if the data length
-      is larger. The true data length is returned in label.
+> [!INFO]
+> **LENGTH/FLENGTH notes**:
+> * If SET is specified, LENGTH/FLENGTH are ignored and LENGERR cannot occur.
+> * If INTO is specified and LENGTH/FLENGTH are not, then the implied length of INTO is used.
+>   This may raise the LENGERR condition if the data length is larger.
+> * If LENGTH/FLENGTH is numeric then it specifies the maximum data length that can be received.
+>   LENGERR can be raised if the data length is larger.
+> * If LENGTH/FLENGTH is a label then it specifies the maximum data length that can be received.
+>   LENGERR can be raised if the data length is larger. The true data length is returned in label.
 
 ##### KEYLENGTH
 
 * Can be specified as a constant or label.
-    * A constant must not exceed 32767.
-    * A label must be 2 bytes and must not exceed 32767.
+* A constant must not exceed 32767.
+* A label must be 2 bytes and must not exceed 32767.
 * Keylengths greater than 128 are ignored.
 * The parameter is ignored for ESDS and RRDS.
 * KEYLENGTH and GENERIC must be paired.
-* If KEYLENGTH is zero by constant or label then parameters are
-  changed internally:
-    ```
-    GENERIC/EQUAL or GENERIC/GTEQ
-    Becomes 
-    KEYLENGTH(1) Key=X'00' GENERIC GTEQ
-    ```
-##### RBA 
+* If KEYLENGTH is zero by constant or label then parameters are changed internally:
+  `GENERIC/EQUAL` or `GENERIC/GTEQ` becomes `KEYLENGTH(1) Key=X'00' GENERIC GTEQ`
+
+##### RBA
 
 RIDFLD has a 4-byte RBA
 
-##### XRBA 
+##### XRBA
 
 RIDFLD has an 8-byte RBA
 
@@ -605,8 +616,20 @@ The parameter is ignored for ESDS and RRDS.
 
 ##### GENERIC
 
-KEYLENGTH must be specified.
-The parameter is ignored for ESDS and RRDS.
+* KEYLENGTH must be specified.
+* The parameter is ignored for ESDS and RRDS.
+
+#### Conditions (RESP/RESP2)
+
+* FILENOTFOUND/1
+* DISABLED/50
+* ILLOGIC/110
+* INVREQ/20
+* INVREQ/25
+* INVREQ/42
+* LENGERR/E1
+* NOTFND/80
+* NOTOPEN/60
 
 #### Errors
 
@@ -625,39 +648,16 @@ The parameter is ignored for ESDS and RRDS.
 * KEYLENGTH REQUIRES GENERIC
 * RIDFLD IS MANDATORY
 
-#### Conditions (RESP/RESP2)
-
-* FILENOTFOUND/1
-* DISABLED/50
-* ILLOGIC/110
-* INVREQ/20
-* INVREQ/25
-* INVREQ/42
-* LENGERR/E1
-* NOTFND/80
-* NOTOPEN/60
-
-!!! Note
-    FLENGTH and XRBA are extensions; do not use these parameters if the
-    source code is likely to be ported back to a mainframe environment.
-    RBA access to a KSDS is not supported.
-    
-    DATASET is supported for legacy applications. It is noted that this parameter
-    no longer appears in the IBM CICS(r) Manuals.
-    
-    When conditions are raised as a result of a VSAM error, the RPL feedback codes
-    (2nd and 4th bytes) are placed in EIBRCODE +1 and +2.
-
 ### STARTBR 
 
 ```hlasm
-name     EXEC  CICS STARTBR
-                    FILE()/DATASET()
-                    RIDFLD()
-                    REQID()
-                    RBA/XRBA/RRN/GENERIC
-                    GTEQ/EQUAL
-                    KEYLENGTH()
+name     EXEC CICS STARTBR                                             X
+                   FILE()/DATASET()                                    X
+                   RIDFLD()                                            X
+                   REQID()                                             X
+                   RBA/XRBA/RRN/GENERIC                                X
+                   GTEQ/EQUAL                                          X
+                   KEYLENGTH()                                         
 ```
 
 #### Parameters
@@ -665,37 +665,33 @@ name     EXEC  CICS STARTBR
 ##### REQID
 
 * Can be specified as a constant, literal or label.
-    * A constant must not exceed 32767.
-    * A literal or label must be 2 bytes and must not exceed 32767.
+* A constant must not exceed 32767.
+* A literal or label must be 2 bytes and must not exceed 32767.
 * If omitted, zero is assumed.
 
-##### RBA 
+##### RBA
 
 RIDFLD has a 4-byte RBA
 
-##### XRBA 
+##### XRBA
 
 RIDFLD has an 8-byte RBA
 
-##### RRN 
+##### RRN
 
 RIDFLD has a 4-byte relative record number
 
 ##### KEYLENGTH
 
 * Can be specified as a constant or label.
-    * A constant must not exceed 32767.
-    * A label must be 2 bytes and must not exceed 32767.
-    * Keylengths greater than 128 are ignored.
+* A constant must not exceed 32767.
+* A label must be 2 bytes and must not exceed 32767.
+* Keylengths greater than 128 are ignored.
 * The parameter is ignored for ESDS and RRDS.
 * KEYLENGTH and GENERIC must be paired.
-* If KEYLENGTH is zero by constant or label then parameters are
-  changed internally:
-    ```
-      GENERIC/EQUAL or GENERIC/GTEQ
-      Becomes 
-      KEYLENGTH(1) Key=X'00' GENERIC GTEQ
-    ```
+* If KEYLENGTH is zero by constant or label then parameters are changed internally:
+  `GENERIC/EQUAL` or `GENERIC/GTEQ` becomes `KEYLENGTH(1) Key=X'00' GENERIC GTEQ`
+
 ##### GTEQ/EQUAL
 
 The parameter is ignored for ESDS and RRDS.
@@ -718,8 +714,8 @@ The parameter is ignored for ESDS and RRDS.
 * NOTFND/80
 * NOTOPEN/60
 
-!!! Note 
-    NOTFND cannot occur for an ESDS or RRDS
+> [!NOTE]
+> NOTFND cannot occur for an ESDS or RRDS
 
 #### Errors
 
@@ -738,14 +734,14 @@ The parameter is ignored for ESDS and RRDS.
 ### READNEXT 
 
 ```
-name     EXEC  CICS READNEXT
-                    FILE()/DATASET()
-                    INTO()/SET()
-                    LENGTH()/FLENGTH()
-                    RIDFLD()
-                    REQID()
-                    RBA/XRBA/RRN
-                    KEYLENGTH()
+name     EXEC CICS READNEXT                                            X
+                   FILE()/DATASET()                                    X
+                   INTO()/SET()                                        X
+                   LENGTH()/FLENGTH()                                  X
+                   RIDFLD()                                            X
+                   REQID()                                             X
+                   RBA/XRBA/RRN                                        X
+                   KEYLENGTH()                                         
 ```
 
 #### Parameters
@@ -753,79 +749,53 @@ name     EXEC  CICS READNEXT
 ##### LENGTH
 
 * Can be specified as a constant, literal or label.
-    * A constant must not exceed 32767.
-    * A literal or label must be 2 bytes and must not exceed 32767.
+* A constant must not exceed 32767.
+* A literal or label must be 2 bytes and must not exceed 32767.
 
 ##### FLENGTH
 * Can be specified as a constant, literal or label.
-    * A constant must not exceed 2G-1.
-    * A literal or label must be 4 bytes and must not exceed 2G-1.
+* A constant must not exceed 2G-1.
+* A literal or label must be 4 bytes and must not exceed 2G-1.
 
-
-!!! Info
-    **LENGTH/FLENGTH**
-
-    If either is not a label then:
-
-    * If INTO is specified, then the length received is the implied length of
-      INTO. This may raise the LENGERR condition if the data length is
-      larger.
-    * If SET is specified, the complete record is returned and LENGERR
-      cannot occur.
-
-    If either is a label then:
-    
-    * If INTO or SET is specified, then it specifies the maximum data
-      length that can be received. LENGERR can be raised if the data
-      length is larger. The true data length is returned in label.
+> [!NOTE]
+> **LENGTH/FLENGTH Notes:**
+> If either is not a label then:
+> * If INTO is specified, then the length received is the implied length of INTO.
+>   This may raise the LENGERR condition if the data length is larger.
+> * If SET is specified, the complete record is returned and LENGERR cannot occur.
+> 
+> If either is a label then:
+> * If INTO or SET is specified, then it specifies the maximum data length that can be received.
+>   LENGERR can be raised if the data length is larger. The true data length is returned in label.
 
 ##### REQID
 
 * Can be specified as a constant, literal or label.
-    * A constant must not exceed 32767.
-    * A literal or label must be 2 bytes and must not exceed 32767.
+* A constant must not exceed 32767.
+* A literal or label must be 2 bytes and must not exceed 32767.
 * If omitted, zero is assumed.
 
-##### RBA 
+##### RBA
 
 RIDFLD has a 4-byte RBA
 
-##### XRBA 
+##### XRBA
 
 RIDFLD has an 8-byte RBA
 
-##### RRN 
+##### RRN
 
 RIDFLD has a 4-byte relative record number
 
 ##### KEYLENGTH
 
 * Can be specified as a constant or label.
-    * A constant must not exceed 32767.
-    * A label must be 2 bytes and must not exceed 32767.
+* A constant must not exceed 32767.
+* A label must be 2 bytes and must not exceed 32767.
 * Keylengths greater than 128 are ignored.
 * The parameter is ignored for ESDS and RRDS.
-* If KEYLENGTH is zero by constant or label then parameters are
-  changed internally:
-    ```
-    GENERIC/EQUAL or GENERIC/GTEQ
-    Becomes 
-    KEYLENGTH(1) Key=X'00' GENERIC GTEQ
-    ```
-
-#### Errors
-
-* BAD PARM
-* BOTH FILE AND DATASET ARE SPECIFIED
-* BOTH INTO AND SET ARE SPECIFIED
-* BOTH LENGTH AND FLENGTH ARE SPECIFIED
-* BOTH RBA AND XRBA ARE SPECIFIED
-* BOTH RRN AND (X)RBA ARE SPECIFIED
-* FILE OR DATASET MUST BE SPECIFIED
-* INTO OR SET MUST BE SPECIFIED
-* INVALID FILE OR DATASET
-* RIDFLD IS MANDATORY
-* THIS TYPE OF INTO REQUIRES LENGTH/FLENGTH
+* If KEYLENGTH is zero by constant or label then parameters are changed internally:
+  `GENERIC/EQUAL` or `GENERIC/GTEQ` becomes `KEYLENGTH(1) Key=X'00' GENERIC GTEQ`
 
 #### Conditions (RESP/RESP2)
 
@@ -841,6 +811,20 @@ RIDFLD has a 4-byte relative record number
 * LENGERR/E1
 * NOTFND/80
 * NOTOPEN/60
+
+#### Errors
+
+* BAD PARM
+* BOTH FILE AND DATASET ARE SPECIFIED
+* BOTH INTO AND SET ARE SPECIFIED
+* BOTH LENGTH AND FLENGTH ARE SPECIFIED
+* BOTH RBA AND XRBA ARE SPECIFIED
+* BOTH RRN AND (X)RBA ARE SPECIFIED
+* FILE OR DATASET MUST BE SPECIFIED
+* INTO OR SET MUST BE SPECIFIED
+* INVALID FILE OR DATASET
+* RIDFLD IS MANDATORY
+* THIS TYPE OF INTO REQUIRES LENGTH/FLENGTH
 
 ### READPREV 
 ```hlasm
