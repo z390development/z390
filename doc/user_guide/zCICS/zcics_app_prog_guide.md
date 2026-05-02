@@ -577,7 +577,9 @@ name     EXEC CICS READ                                                X
 * A constant must not exceed 2G-1.
 * A literal or label must be 4 bytes and must not exceed 2G-1.
 
-**LENGTH/FLENGTH notes**:
+> [!NOTE]
+> **LENGTH/FLENGTH notes:**
+
 * If SET is specified, LENGTH/FLENGTH are ignored and LENGERR cannot occur.
 * If INTO is specified and LENGTH/FLENGTH are not, then the implied length of INTO is used.
   * This may raise the LENGERR condition if the data length is larger.
@@ -756,7 +758,9 @@ name     EXEC CICS READNEXT                                            X
 * A constant must not exceed 2G-1.
 * A literal or label must be 4 bytes and must not exceed 2G-1.
 
-**LENGTH/FLENGTH Notes:**
+> [!NOTE]
+> LENGTH/FLENGTH Notes:
+
 * If either is not a label then:
   * If INTO is specified, then the length received is the implied length of INTO.
     * This may raise the LENGERR condition if the data length is larger.
