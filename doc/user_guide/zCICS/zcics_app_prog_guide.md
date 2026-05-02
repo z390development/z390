@@ -244,7 +244,7 @@ INDGOPA1 DC    A(GOPA1)
 ### HANDLE CONDITION
 
 ```hlasm
-name     EXEC CICS HANDLE CONDITION condition(label) condition
+name     EXEC  CICS HANDLE CONDITION condition(label) condition
 ```
 
 #### Parameters
@@ -417,14 +417,14 @@ The following parameters are not supported:
 > does exceed 32K, then ASSIGN CWALENG() will return an
 > incorrect value.
 
-#### Errors
-
-* BAD PARM
-
 #### Conditions (RESP/RESP2)
 
 * INVREQ/2
 * INVREQ/5
+
+#### Errors
+
+* BAD PARM
 
 ## Command reference - Terminal Control
 
@@ -441,8 +441,14 @@ name     EXEC  CICS RECEIVE
 
 * INTO(label) and LENGTH(label) are mandatory.
 * LENGTH must point to a 2-byte field.
-* Although MAXLENGTH is not implemented yet, there is an internal maximum length set to the implied length of the INTO label.
+* Although MAXLENGTH is not implemented yet, there is an internal
+  maximum length set to the implied length of the INTO label.
 * NOHANDLE is optional.
+
+#### Conditions (RESP/RESP2)
+
+* NOTALLOC/0
+* LENGERR/0
 
 #### Errors
 
@@ -450,17 +456,12 @@ name     EXEC  CICS RECEIVE
 * BOTH INTO AND LENGTH ARE REQUIRED
 * LENGTH ERROR
 
-#### Conditions (RESP/RESP2)
-
-* NOTALLOC/0
-* LENGERR/0
-
 ### SEND
 
 ```hlasm
-name     EXEC CICS SEND                                                X
-                   FROM(label)                                         X
-                   LENGTH()                                             
+name     EXEC  CICS SEND
+                    FROM(label)
+                    LENGTH()
 ```
 
 #### Parameters
@@ -500,12 +501,12 @@ The parameters TERMINAL, WAIT, DEFAULT and TEXT are discarded.
 ### SEND CONTROL
 
 ```hlasm
-name     EXEC CICS SEND CONTROL                                        X
-                   CURSOR/CURSOR()                                     X
-                   ERASE/ERASEAUP                                      X
-                   ALARM                                               X
-                   FREEKB                                              X
-                   FRSET                                               
+name     EXEC  CICS SEND CONTROL
+                    CURSOR/CURSOR()
+                    ERASE/ERASEAUP
+                    ALARM
+                    FREEKB
+                    FRSET
 ```
 
 #### Parameters
@@ -514,7 +515,8 @@ name     EXEC CICS SEND CONTROL                                        X
 * ACCUM and SET are not supported.
 * CURSOR() refers to the 24x80 screen.
 * CURSOR is not documented.
-* SEND CONTROL CURSOR ERASEAUP means erase all input fields and don't move the cursor.
+* SEND CONTROL CURSOR ERASEAUP means erase all input fields
+  and don't move the cursor.
 
 #### Errors
 
