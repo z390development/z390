@@ -759,15 +759,14 @@ name     EXEC CICS READNEXT                                            X
 * A literal or label must be 4 bytes and must not exceed 2G-1.
 
 > [!NOTE]
-> LENGTH/FLENGTH Notes:
-
-* If either is not a label then:
-  * If INTO is specified, then the length received is the implied length of INTO.
-    * This may raise the LENGERR condition if the data length is larger.
-  * If SET is specified, the complete record is returned and LENGERR cannot occur.
-* If either is a label then:
-  * If INTO or SET is specified, then it specifies the maximum data length that can be received.
-    * LENGERR can be raised if the data length is larger. The true data length is returned in label.
+> ** LENGTH/FLENGTH Notes:**
+> * If either is not a label then:
+>   * If INTO is specified, then the length received is the implied length of INTO.
+>     * This may raise the LENGERR condition if the data length is larger.
+>   * If SET is specified, the complete record is returned and LENGERR cannot occur.
+> * If either is a label then:
+>   * If INTO or SET is specified, then it specifies the maximum data length that can be received.
+>     * LENGERR can be raised if the data length is larger. The true data length is returned in label.
 
 ##### REQID
 
