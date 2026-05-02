@@ -194,7 +194,7 @@ program excluded.
 ### HANDLE AID
 
 ```hlasm
-name     EXEC CICS HANDLE AID key(label) key
+name     EXEC  CICS HANDLE AID key(label) key
 ```
 
 > [!WARNING]
@@ -286,7 +286,7 @@ ISEOF    DS    0H
 ### IGNORE CONDITION
 
 ```hlasm
-name     EXEC CICS IGNORE CONDITION condition
+name     EXEC  CICS IGNORE CONDITION condition
 ```
 
 > [!WARNING]
@@ -323,19 +323,19 @@ name     EXEC  CICS POP HANDLE
 
 For the HANDLE ABEND, a POP is the equivalent of a `HANDLE ABEND RESET`.
 
-#### Conditions (RESP/RESP2)
-
-* INVREQ/0
-
 #### Errors
 
 * BAD PARM
 * POP TYPE NOT RECOGNISED
 
+#### Conditions (RESP/RESP2)
+
+* INVREQ/0
+
 ### PUSH HANDLE
 
 ```hlasm
-name     EXEC CICS PUSH HANDLE
+name     EXEC  CICS PUSH HANDLE
 ```
 
 For the HANDLE ABEND, a PUSH is the equivalent of a `HANDLE ABEND CANCEL`.
@@ -365,7 +365,7 @@ See [CWA Management in zCICS Diagnosis Reference]() for more information.
 ### ASSIGN
 
 ```hlasm
-name     EXEC CICS  ASSIGN
+name     EXEC  CICS ASSIGN
 ```
 
 The following parameters are not supported:
@@ -417,14 +417,14 @@ The following parameters are not supported:
 > does exceed 32K, then ASSIGN CWALENG() will return an
 > incorrect value.
 
+#### Errors
+
+* BAD PARM
+
 #### Conditions (RESP/RESP2)
 
 * INVREQ/2
 * INVREQ/5
-
-#### Errors
-
-* BAD PARM
 
 ## Command reference - Terminal Control
 
@@ -444,16 +444,16 @@ name     EXEC  CICS RECEIVE
 * Although MAXLENGTH is not implemented yet, there is an internal maximum length set to the implied length of the INTO label.
 * NOHANDLE is optional.
 
-#### Conditions (RESP/RESP2)
-
-* NOTALLOC/0
-* LENGERR/0
-
 #### Errors
 
 * BAD PARM
 * BOTH INTO AND LENGTH ARE REQUIRED
 * LENGTH ERROR
+
+#### Conditions (RESP/RESP2)
+
+* NOTALLOC/0
+* LENGERR/0
 
 ### SEND
 
@@ -485,17 +485,17 @@ _label_ must point to a 2-byte hex value.
 
 The parameters TERMINAL, WAIT, DEFAULT and TEXT are discarded.
 
-#### Conditions (RESP/RESP2)
-
-* INVREQ/0 - Attempt to execute this in a non-terminal attached task.
-  This is not documented in the IBM CICS(r) Manuals.
-* LENGERR/E1
-
 #### Errors
 
 * BAD PARM
 * FROM IS MANDATORY
 * LENGTH IS MANDATORY
+
+#### Conditions (RESP/RESP2)
+
+* INVREQ/0 - Attempt to execute this in a non-terminal attached task.
+  This is not documented in the IBM CICS(r) Manuals.
+* LENGERR/E1
 
 ### SEND CONTROL
 
@@ -516,15 +516,15 @@ name     EXEC CICS SEND CONTROL                                        X
 * CURSOR is not documented.
 * SEND CONTROL CURSOR ERASEAUP means erase all input fields and don't move the cursor.
 
-#### Conditions (RESP/RESP2)
-
-* INVREQ/0 - Attempt to execute this in a non-terminal attached task. This is not documented in the IBM CICS(r) Manual.
-
 #### Errors
 
 * BAD PARM
 * CURSOR POSITION AND SYMBOLIC CURSOR SPECIFIED
 * ERASE AND ERASEAUP SPECIFIED
+
+#### Conditions (RESP/RESP2)
+
+* INVREQ/0 - Attempt to execute this in a non-terminal attached task. This is not documented in the IBM CICS(r) Manual.
 
 ## Command reference - File control
 
@@ -550,7 +550,7 @@ The following notes apply to all File Control operations:
 > When conditions are raised as a result of a VSAM error, the RPL feedback codes
 > (2nd and 4th bytes) are placed in EIBRCODE +1 and +2.
 
-### READ 
+### READ
 
 ```hlasm
 name     EXEC CICS READ                                                X
@@ -606,7 +606,7 @@ RIDFLD has a 4-byte RBA
 
 RIDFLD has an 8-byte RBA
 
-##### RRN 
+##### RRN
 
 RIDFLD has a 4-byte relative record number
 
@@ -618,18 +618,6 @@ The parameter is ignored for ESDS and RRDS.
 
 * KEYLENGTH must be specified.
 * The parameter is ignored for ESDS and RRDS.
-
-#### Conditions (RESP/RESP2)
-
-* FILENOTFOUND/1
-* DISABLED/50
-* ILLOGIC/110
-* INVREQ/20
-* INVREQ/25
-* INVREQ/42
-* LENGERR/E1
-* NOTFND/80
-* NOTOPEN/60
 
 #### Errors
 
@@ -647,6 +635,18 @@ The parameter is ignored for ESDS and RRDS.
 * INVALID FILE OR DATASET
 * KEYLENGTH REQUIRES GENERIC
 * RIDFLD IS MANDATORY
+
+#### Conditions (RESP/RESP2)
+
+* FILENOTFOUND/1
+* DISABLED/50
+* ILLOGIC/110
+* INVREQ/20
+* INVREQ/25
+* INVREQ/42
+* LENGERR/E1
+* NOTFND/80
+* NOTOPEN/60
 
 ### STARTBR
 
@@ -690,7 +690,7 @@ RIDFLD has a 4-byte relative record number
 * The parameter is ignored for ESDS and RRDS.
 * KEYLENGTH and GENERIC must be paired.
 * If KEYLENGTH is zero by constant or label then parameters are changed internally:
-  `GENERIC/EQUAL` or `GENERIC/GTEQ` becomes `KEYLENGTH(1) Key=X'00' GENERIC GTEQ`
+  * `GENERIC/EQUAL` or `GENERIC/GTEQ` becomes `KEYLENGTH(1) Key=X'00' GENERIC GTEQ`
 
 ##### GTEQ/EQUAL
 
@@ -701,6 +701,20 @@ The parameter is ignored for ESDS and RRDS.
 KEYLENGTH must be specified.
 
 The parameter is ignored for ESDS and RRDS.
+
+#### Errors
+
+* BAD PARM
+* BOTH FILE AND DATASET ARE SPECIFIED
+* BOTH GTEQ AND EQUAL ARE SPECIFIED
+* BOTH RBA AND XRBA ARE SPECIFIED
+* BOTH RRN AND (X)RBA ARE SPECIFIED
+* FILE OR DATASET MUST BE SPECIFIED
+* GENERIC CANNOT BE SPECIFIED WITH RRN OR (X)RBA
+* GENERIC REQUIRES KEYLENGTH
+* INVALID FILE OR DATASET
+* KEYLENGTH REQUIRES GENERIC
+* RIDFLD IS MANDATORY
 
 #### Conditions (RESP/RESP2)
 
@@ -716,20 +730,6 @@ The parameter is ignored for ESDS and RRDS.
 
 > [!NOTE]
 > NOTFND cannot occur for an ESDS or RRDS
-
-#### Errors
-
-* BAD PARM
-* BOTH FILE AND DATASET ARE SPECIFIED
-* BOTH GTEQ AND EQUAL ARE SPECIFIED
-* BOTH RBA AND XRBA ARE SPECIFIED
-* BOTH RRN AND (X)RBA ARE SPECIFIED
-* FILE OR DATASET MUST BE SPECIFIED
-* GENERIC CANNOT BE SPECIFIED WITH RRN OR (X)RBA
-* GENERIC REQUIRES KEYLENGTH
-* INVALID FILE OR DATASET
-* KEYLENGTH REQUIRES GENERIC
-* RIDFLD IS MANDATORY
 
 ### READNEXT
 
@@ -796,6 +796,20 @@ RIDFLD has a 4-byte relative record number
 * If KEYLENGTH is zero by constant or label then parameters are changed internally:
   * `GENERIC/EQUAL` or `GENERIC/GTEQ` becomes `KEYLENGTH(1) Key=X'00' GENERIC GTEQ`
 
+#### Errors
+
+* BAD PARM
+* BOTH FILE AND DATASET ARE SPECIFIED
+* BOTH INTO AND SET ARE SPECIFIED
+* BOTH LENGTH AND FLENGTH ARE SPECIFIED
+* BOTH RBA AND XRBA ARE SPECIFIED
+* BOTH RRN AND (X)RBA ARE SPECIFIED
+* FILE OR DATASET MUST BE SPECIFIED
+* INTO OR SET MUST BE SPECIFIED
+* INVALID FILE OR DATASET
+* RIDFLD IS MANDATORY
+* THIS TYPE OF INTO REQUIRES LENGTH/FLENGTH
+
 #### Conditions (RESP/RESP2)
 
 * DISABLED/50
@@ -810,20 +824,6 @@ RIDFLD has a 4-byte relative record number
 * LENGERR/E1
 * NOTFND/80
 * NOTOPEN/60
-
-#### Errors
-
-* BAD PARM
-* BOTH FILE AND DATASET ARE SPECIFIED
-* BOTH INTO AND SET ARE SPECIFIED
-* BOTH LENGTH AND FLENGTH ARE SPECIFIED
-* BOTH RBA AND XRBA ARE SPECIFIED
-* BOTH RRN AND (X)RBA ARE SPECIFIED
-* FILE OR DATASET MUST BE SPECIFIED
-* INTO OR SET MUST BE SPECIFIED
-* INVALID FILE OR DATASET
-* RIDFLD IS MANDATORY
-* THIS TYPE OF INTO REQUIRES LENGTH/FLENGTH
 
 ### READPREV
 
@@ -889,6 +889,20 @@ RIDFLD has a 4-byte relative record number
 * The parameter is ignored for ESDS and RRDS.
 * If KEYLENGTH is specified, the value must be equal to the keylength defined for the file.
 
+#### Errors
+
+* BAD PARM
+* BOTH FILE AND DATASET ARE SPECIFIED
+* BOTH INTO AND SET ARE SPECIFIED
+* BOTH LENGTH AND FLENGTH ARE SPECIFIED
+* BOTH RBA AND XRBA ARE SPECIFIED
+* BOTH RRN AND (X)RBA ARE SPECIFIED
+* FILE OR DATASET MUST BE SPECIFIED
+* INTO OR SET MUST BE SPECIFIED
+* INVALID FILE OR DATASET
+* RIDFLD IS MANDATORY
+* THIS TYPE OF INTO REQUIRES LENGTH/FLENGTH
+
 #### Conditions (RESP/RESP2)
 
 * DISABLED/50
@@ -906,20 +920,6 @@ RIDFLD has a 4-byte relative record number
 > [!NOTE]
 > ENDFILE can occur when a READPREV attempts to read past
 > the beginning of the file.
-
-#### Errors
-
-* BAD PARM
-* BOTH FILE AND DATASET ARE SPECIFIED
-* BOTH INTO AND SET ARE SPECIFIED
-* BOTH LENGTH AND FLENGTH ARE SPECIFIED
-* BOTH RBA AND XRBA ARE SPECIFIED
-* BOTH RRN AND (X)RBA ARE SPECIFIED
-* FILE OR DATASET MUST BE SPECIFIED
-* INTO OR SET MUST BE SPECIFIED
-* INVALID FILE OR DATASET
-* RIDFLD IS MANDATORY
-* THIS TYPE OF INTO REQUIRES LENGTH/FLENGTH
 
 ### ENDBR
 
@@ -942,6 +942,13 @@ name     EXEC  CICS ENDBR                                             X
 > * In real CICS, ENDBR cannot cause a file to open, but it will in zCICS.
 > * The ENDBR command will be invalid, and may result in a transaction abend.
 
+#### Errors
+
+* BAD PARM
+* BOTH FILE AND DATASET ARE SPECIFIED
+* FILE OR DATASET MUST BE SPECIFIED
+* INVALID FILE OR DATASET
+
 #### Conditions (RESP/RESP2)
 
 * DISABLED/50
@@ -950,13 +957,6 @@ name     EXEC  CICS ENDBR                                             X
 * INVREQ/20
 * INVREQ/35
 * NOTOPEN/60
-
-#### Errors
-
-* BAD PARM
-* BOTH FILE AND DATASET ARE SPECIFIED
-* FILE OR DATASET MUST BE SPECIFIED
-* INVALID FILE OR DATASET
 
 ### RESETBR
 
@@ -1016,6 +1016,20 @@ The parameter is ignored for ESDS and RRDS.
 > * In real CICS, RESETBR cannot cause a file to open, but it will in zCICS.
 > * The RESETBR command will be invalid, and may result in a transaction abend.
 
+#### Errors
+
+* BAD PARM
+* BOTH FILE AND DATASET ARE SPECIFIED
+* BOTH GTEQ AND EQUAL ARE SPECIFIED
+* BOTH RBA AND XRBA ARE SPECIFIED
+* BOTH RRN AND (X)RBA ARE SPECIFIED
+* FILE OR DATASET MUST BE SPECIFIED
+* GENERIC CANNOT BE SPECIFIED WITH RRN OR (X)RBA
+* GENERIC REQUIRES KEYLENGTH
+* INVALID FILE OR DATASET
+* KEYLENGTH REQUIRES GENERIC
+* RIDFLD IS MANDATORY
+
 #### Conditions (RESP/RESP2)
 
 * DISABLED/50
@@ -1030,20 +1044,6 @@ The parameter is ignored for ESDS and RRDS.
 
 > [!NOTE]
 > NOTFND cannot occur for an ESDS or RRDS.
-
-#### Errors
-
-* BAD PARM
-* BOTH FILE AND DATASET ARE SPECIFIED
-* BOTH GTEQ AND EQUAL ARE SPECIFIED
-* BOTH RBA AND XRBA ARE SPECIFIED
-* BOTH RRN AND (X)RBA ARE SPECIFIED
-* FILE OR DATASET MUST BE SPECIFIED
-* GENERIC CANNOT BE SPECIFIED WITH RRN OR (X)RBA
-* GENERIC REQUIRES KEYLENGTH
-* INVALID FILE OR DATASET
-* KEYLENGTH REQUIRES GENERIC
-* RIDFLD IS MANDATORY
 
 ## Command reference - Storage Control
 
@@ -1063,15 +1063,15 @@ _label_ may only be an indirect reference to the address.
 
 Must be specified as a permitted general register value.
 
-#### Conditions (RESP/RESP2)
-
-* INVREQ/1
-
 #### Errors
 
 * BAD PARM
 * BOTH DATA AND DATAPOINTER ARE SPECIFIED
 * DATA OR DATAPOINTER MUST BE SPECIFIED
+
+#### Conditions (RESP/RESP2)
+
+* INVREQ/1
 
 ### GETMAIN
 
@@ -1131,7 +1131,7 @@ This note applies to all Temporary Storage Control commands:
 * READQ
 * WRITEQ
 
-### DELETEQ 
+### DELETEQ
 
 ```hlasm
 name     EXEC CICS DELETEQ TS                                          X
@@ -1162,11 +1162,6 @@ QNAME may be specified as:
 
 Only label or literal may be used to specify a QNAME with hex characters.
 
-#### Conditions (RESP/RESP2)
-
-* INVREQ/0
-* QIDERR/0
-
 #### Errors
 
 * BAD PARM
@@ -1174,6 +1169,11 @@ Only label or literal may be used to specify a QNAME with hex characters.
 * DELETEQ TYPE NOT RECOGNIZED
 * INVALID QUEUE OR QNAME
 * QUEUE OR QNAME MUST BE SPECIFIED
+
+#### Conditions (RESP/RESP2)
+
+* INVREQ/0
+* QIDERR/0
 
 ### READQ
 
@@ -1229,13 +1229,6 @@ Only label or literal may be used to specify a QNAME with hex characters.
 * May be specified as ITEM(value) or ITEM(label)
 * _label_ must point to a 2-byte hex value.
 
-#### Conditions (RESP/RESP2)
-
-* INVREQ/0
-* LENGERR/0
-* ITEMERR/0
-* QIDERR/0
-
 #### Errors
 
 * BAD PARM
@@ -1249,6 +1242,13 @@ Only label or literal may be used to specify a QNAME with hex characters.
 * QUEUE OR QNAME MUST BE SPECIFIED
 * READQ TYPE NOT RECOGNIZED
 * SET REQUIRES LENGTH
+
+#### Conditions (RESP/RESP2)
+
+* INVREQ/0
+* LENGERR/0
+* ITEMERR/0
+* QIDERR/0
 
 ### WRITEQ
 
@@ -1322,13 +1322,6 @@ _label_ may take three forms:
 > without REWRITE and becomes NUMITEMS. ITEM must be a
 > label in this case.
 
-#### Conditions (RESP/RESP2)
-
-* INVREQ/0
-* LENGERR/0
-* ITEMERR/0
-* QIDERR/0
-
 #### Errors
 
 * BAD PARM
@@ -1343,6 +1336,13 @@ _label_ may take three forms:
 * QUEUE OR QNAME MUST BE SPECIFIED
 * REWRITE REQUIRES ITEM
 * WRITEQ TYPE NOT RECOGNIZED
+
+#### Conditions (RESP/RESP2)
+
+* INVREQ/0
+* LENGERR/0
+* ITEMERR/0
+* QIDERR/0
 
 ## Command reference - Program Control
 
@@ -1451,15 +1451,6 @@ A warning MNOTE is issued.
 * LENGTH can be omitted. When it is, the implied length of the COMMAREA is used.
 * LENGTH is mandatory when COMMAREA is an indirect reference.
 
-#### Conditions (RESP/RESP2)
-
-* CHANNELERR/1
-* PGMIDERR/3
-
-#### Warning
-
-* CHANNEL and COMMAREA specified
-
 #### Errors
 
 * BAD PARM
@@ -1468,6 +1459,15 @@ A warning MNOTE is issued.
 * PROGRAM IS MISSING
 * LENGTH IS MANDATORY FOR INDIRECT COMMAREA
 * LENGTH WITHOUT COMMAREA
+
+#### Warning
+
+* CHANNEL and COMMAREA specified
+
+#### Conditions (RESP/RESP2)
+
+* CHANNELERR/1
+* PGMIDERR/3
 
 ### LOAD
 
@@ -1514,16 +1514,16 @@ not an executable program.
 > [!NOTE]
 > At task end the LOADed module is not RELEASEd.
 
-#### Conditions (RESP/RESP2)
-
-* PGMIDERR/3
-
 #### Errors
 
 * BAD PARM
 * INVALID PROGRAM
 * LENGTH AND FLENGTH SPECIFIED
 * PROGRAM IS MISSING
+
+#### Conditions (RESP/RESP2)
+
+* PGMIDERR/3
 
 ### RELEASE
 
@@ -1541,16 +1541,16 @@ Releases a previously loaded module.
 * Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
 * label must point to an 8-byte field.
 
-#### Conditions (RESP/RESP2)
-
-* INVREQ/5
-* INVREQ/6
-
 #### Errors
 
 * BAD PARM
 * INVALID PROGRAM
 * PROGRAM IS MISSING
+
+#### Conditions (RESP/RESP2)
+
+* INVREQ/5
+* INVREQ/6
 
 ### RETURN
 
@@ -1592,18 +1592,6 @@ _label_ may take three forms:
 * LENGTH can be omitted. When it is, the implied length of the COMMAREA is used.
   * LENGTH is mandatory when COMMAREA is an indirect reference.
 
-#### Conditions (RESP/RESP2)
-
-See the section on [IGNORE CONDITION](#ignore-condition) for these conditions.
-
-* CHANNELERR/1
-* INVREQ/1 
-* INVREQ/2 
-
-#### Warning
-
-* CHANNEL and COMMAREA specified
-
 #### Errors
 
 * BAD PARM
@@ -1613,6 +1601,18 @@ See the section on [IGNORE CONDITION](#ignore-condition) for these conditions.
 * TRANSID IS MISSING
 * LENGTH IS MANDATORY FOR INDIRECT COMMAREA
 * LENGTH WITHOUT COMMAREA
+
+#### Warning
+
+* CHANNEL and COMMAREA specified
+
+#### Conditions (RESP/RESP2)
+
+See the section on [IGNORE CONDITION](#ignore-condition) for these conditions.
+
+* CHANNELERR/1
+* INVREQ/1 
+* INVREQ/2 
 
 ### XCTL
 
@@ -1661,15 +1661,6 @@ Return is to the last linker.
 * LENGTH can be omitted. When it is, the implied length of the COMMAREA is used.
   * LENGTH is mandatory when COMMAREA is an indirect reference.
 
-#### Conditions (RESP/RESP2)
-
-* CHANNELERR/1 
-* PGMIDERR/3
-
-#### Warning
-
-* CHANNEL and COMMAREA specified
-
 #### Errors
 
 * BAD PARM
@@ -1678,6 +1669,15 @@ Return is to the last linker.
 * PROGRAM IS MISSING
 * LENGTH IS MANDATORY FOR INDIRECT COMMAREA
 * LENGTH WITHOUT COMMAREA
+
+#### Warning
+
+* CHANNEL and COMMAREA specified
+
+#### Conditions (RESP/RESP2)
+
+* CHANNELERR/1 
+* PGMIDERR/3
 
 ## Command reference - Interval control
 
