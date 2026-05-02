@@ -577,7 +577,7 @@ name     EXEC CICS READ                                                X
 * A constant must not exceed 2G-1.
 * A literal or label must be 4 bytes and must not exceed 2G-1.
 
-> [!INFO]
+> [!NOTE]
 > **LENGTH/FLENGTH notes:**
 > * If SET is specified, LENGTH/FLENGTH are ignored and LENGERR cannot occur.
 > * If INTO is specified and LENGTH/FLENGTH are not, then the implied length of INTO is used.
@@ -757,7 +757,7 @@ name     EXEC CICS READNEXT                                            X
 * A constant must not exceed 2G-1.
 * A literal or label must be 4 bytes and must not exceed 2G-1.
 
-> [!INFO]
+> [!NOTE]
 > ** LENGTH/FLENGTH Notes:**
 > * If either is not a label then:
 >   * If INTO is specified, then the length received is the implied length of INTO.
@@ -851,7 +851,7 @@ name     EXEC CICS READPREV                                            X
 * A constant must not exceed 2G-1.
 * A literal or label must be 4 bytes and must not exceed 2G-1.
 
-> [!INFO]
+> [!NOTE]
 > **LENGTH/FLENGTH Notes:**
 > * If either is not a label then:
 >   * If INTO is specified, then the length received is the implied length of INTO.
@@ -934,22 +934,13 @@ name     EXEC  CICS ENDBR                                             X
 ##### REQID
 
 * Can be specified as a constant, literal or label.
-    * A constant must not exceed 32767.
-    * A literal or label must be 2 bytes and must not exceed 32767.
+* A constant must not exceed 32767.
+* A literal or label must be 2 bytes and must not exceed 32767.
 * If omitted, zero is assumed.
 
-!!! Note
-    In real CICS, ENDBR cannot cause a file to open, but it will in zCICS.
-
-    The ENDBR command will be invalid, and may result in a transaction
-    abend.
-
-#### Errors
-
-* BAD PARM
-* BOTH FILE AND DATASET ARE SPECIFIED
-* FILE OR DATASET MUST BE SPECIFIED
-* INVALID FILE OR DATASET
+> [!NOTE]
+> In real CICS, ENDBR cannot cause a file to open, but it will in zCICS.
+> The ENDBR command will be invalid, and may result in a transaction abend.
 
 #### Conditions (RESP/RESP2)
 
@@ -960,53 +951,56 @@ name     EXEC  CICS ENDBR                                             X
 * INVREQ/35
 * NOTOPEN/60
 
+#### Errors
+
+* BAD PARM
+* BOTH FILE AND DATASET ARE SPECIFIED
+* FILE OR DATASET MUST BE SPECIFIED
+* INVALID FILE OR DATASET
 
 ### RESETBR 
+
 ```hlasm
-name     EXEC  CICS RESETBR
-                    FILE()/DATASET()
-                    RIDFLD()
-                    REQID()
-                    RBA/XRBA/RRN/GENERIC
-                    GTEQ/EQUAL
-                    KEYLENGTH()
+name     EXEC CICS RESETBR                                            X
+                   FILE()/DATASET()                                   X
+                   RIDFLD()                                           X
+                   REQID()                                            X
+                   RBA/XRBA/RRN/GENERIC                               X
+                   GTEQ/EQUAL                                         X
+                   KEYLENGTH()                                        
 ```
+
 #### Parameters
 
 ##### REQID
 
 * Can be specified as a constant, literal or label.
-    * A constant must not exceed 32767.
-    * A literal or label must be 2 bytes and must not exceed 32767.
+* A constant must not exceed 32767.
+* A literal or label must be 2 bytes and must not exceed 32767.
 * If omitted, zero is assumed.
 
-##### RBA 
+##### RBA
 
 RIDFLD has a 4-byte RBA
 
-##### XRBA 
+##### XRBA
 
 RIDFLD has an 8-byte RBA
 
-##### RRN 
+##### RRN
 
 RIDFLD has a 4-byte relative record number
 
 ##### KEYLENGTH
 
 * Can be specified as a constant or label.
-    * A constant must not exceed 32767.
-    * A label must be 2 bytes and must not exceed 32767.
+* A constant must not exceed 32767.
+* A label must be 2 bytes and must not exceed 32767.
 * Keylengths greater than 128 are ignored.
 * The parameter is ignored for ESDS and RRDS.
 * KEYLENGTH and GENERIC must be paired.
-* If KEYLENGTH is zero by constant or label then parameters are
-  changed internally:
-    ```
-    GENERIC/EQUAL or GENERIC/GTEQ
-    Becomes 
-    KEYLENGTH(1) Key=X'00' GENERIC GTEQ
-    ```
+* If KEYLENGTH is zero by constant or label then parameters are changed internally:
+  * `GENERIC/EQUAL` or `GENERIC/GTEQ` becomes `KEYLENGTH(1) Key=X'00' GENERIC GTEQ`
 
 ##### GTEQ/EQUAL
 
@@ -1018,10 +1012,24 @@ KEYLENGTH must be specified.
 
 The parameter is ignored for ESDS and RRDS.
 
-!!! Note 
-    In real CICS, RESETBR cannot cause a file to open, but it will in
-    zCICS. The RESETBR command will be invalid, and may result in a
-    transaction abend.
+> [!NOTE]
+> In real CICS, RESETBR cannot cause a file to open, but it will in
+> zCICS. The RESETBR command will be invalid, and may result in a transaction abend.
+
+#### Conditions (RESP/RESP2)
+
+* DISABLED/50
+* FILENOTFOUND/1
+* ILLOGIC/110
+* INVREQ/20
+* INVREQ/25
+* INVREQ/36
+* INVREQ/42
+* NOTFND/80
+* NOTOPEN/60
+
+> [!NOTE]
+> NOTFND cannot occur for an ESDS or RRDS.
 
 #### Errors
 
@@ -1036,21 +1044,6 @@ The parameter is ignored for ESDS and RRDS.
 * INVALID FILE OR DATASET
 * KEYLENGTH REQUIRES GENERIC
 * RIDFLD IS MANDATORY
-
-#### Conditions (RESP/RESP2)
-
-* DISABLED/50
-* FILENOTFOUND/1
-* ILLOGIC/110
-* INVREQ/20
-* INVREQ/25
-* INVREQ/36
-* INVREQ/42
-* NOTFND/80
-* NOTOPEN/60
-
-!!! Note
-    NOTFND cannot occur for an ESDS or RRDS
 
 ## Command reference - Storage Control
 
