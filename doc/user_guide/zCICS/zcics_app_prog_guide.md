@@ -577,15 +577,14 @@ name     EXEC CICS READ                                                X
 * A constant must not exceed 2G-1.
 * A literal or label must be 4 bytes and must not exceed 2G-1.
 
-> [!INFO]
-> **LENGTH/FLENGTH notes**:
-> * If SET is specified, LENGTH/FLENGTH are ignored and LENGERR cannot occur.
-> * If INTO is specified and LENGTH/FLENGTH are not, then the implied length of INTO is used.
->   This may raise the LENGERR condition if the data length is larger.
-> * If LENGTH/FLENGTH is numeric then it specifies the maximum data length that can be received.
->   LENGERR can be raised if the data length is larger.
-> * If LENGTH/FLENGTH is a label then it specifies the maximum data length that can be received.
->   LENGERR can be raised if the data length is larger. The true data length is returned in label.
+**LENGTH/FLENGTH notes**:
+* If SET is specified, LENGTH/FLENGTH are ignored and LENGERR cannot occur.
+* If INTO is specified and LENGTH/FLENGTH are not, then the implied length of INTO is used.
+  * This may raise the LENGERR condition if the data length is larger.
+* If LENGTH/FLENGTH is numeric then it specifies the maximum data length that can be received.
+  * LENGERR can be raised if the data length is larger.
+* If LENGTH/FLENGTH is a label then it specifies the maximum data length that can be received.
+  * LENGERR can be raised if the data length is larger. The true data length is returned in label.
 
 ##### KEYLENGTH
 
@@ -596,7 +595,7 @@ name     EXEC CICS READ                                                X
 * The parameter is ignored for ESDS and RRDS.
 * KEYLENGTH and GENERIC must be paired.
 * If KEYLENGTH is zero by constant or label then parameters are changed internally:
-  `GENERIC/EQUAL` or `GENERIC/GTEQ` becomes `KEYLENGTH(1) Key=X'00' GENERIC GTEQ`
+  * `GENERIC/EQUAL` or `GENERIC/GTEQ` becomes `KEYLENGTH(1) Key=X'00' GENERIC GTEQ`
 
 ##### RBA
 
@@ -757,16 +756,14 @@ name     EXEC CICS READNEXT                                            X
 * A constant must not exceed 2G-1.
 * A literal or label must be 4 bytes and must not exceed 2G-1.
 
-> [!NOTE]
-> **LENGTH/FLENGTH Notes:**
-> If either is not a label then:
-> * If INTO is specified, then the length received is the implied length of INTO.
->   This may raise the LENGERR condition if the data length is larger.
-> * If SET is specified, the complete record is returned and LENGERR cannot occur.
-> 
-> If either is a label then:
-> * If INTO or SET is specified, then it specifies the maximum data length that can be received.
->   LENGERR can be raised if the data length is larger. The true data length is returned in label.
+**LENGTH/FLENGTH Notes:**
+* If either is not a label then:
+  * If INTO is specified, then the length received is the implied length of INTO.
+    * This may raise the LENGERR condition if the data length is larger.
+  * If SET is specified, the complete record is returned and LENGERR cannot occur.
+* If either is a label then:
+  * If INTO or SET is specified, then it specifies the maximum data length that can be received.
+    * LENGERR can be raised if the data length is larger. The true data length is returned in label.
 
 ##### REQID
 
