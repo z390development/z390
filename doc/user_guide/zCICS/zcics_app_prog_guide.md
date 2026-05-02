@@ -577,7 +577,7 @@ name     EXEC CICS READ                                                X
 * A constant must not exceed 2G-1.
 * A literal or label must be 4 bytes and must not exceed 2G-1.
 
-> [!NOTE]
+> [!INFO]
 > **LENGTH/FLENGTH notes:**
 > * If SET is specified, LENGTH/FLENGTH are ignored and LENGERR cannot occur.
 > * If INTO is specified and LENGTH/FLENGTH are not, then the implied length of INTO is used.
@@ -757,7 +757,7 @@ name     EXEC CICS READNEXT                                            X
 * A constant must not exceed 2G-1.
 * A literal or label must be 4 bytes and must not exceed 2G-1.
 
-> [!NOTE]
+> [!INFO]
 > ** LENGTH/FLENGTH Notes:**
 > * If either is not a label then:
 >   * If INTO is specified, then the length received is the implied length of INTO.
@@ -794,7 +794,7 @@ RIDFLD has a 4-byte relative record number
 * Keylengths greater than 128 are ignored.
 * The parameter is ignored for ESDS and RRDS.
 * If KEYLENGTH is zero by constant or label then parameters are changed internally:
-  `GENERIC/EQUAL` or `GENERIC/GTEQ` becomes `KEYLENGTH(1) Key=X'00' GENERIC GTEQ`
+  * `GENERIC/EQUAL` or `GENERIC/GTEQ` becomes `KEYLENGTH(1) Key=X'00' GENERIC GTEQ`
 
 #### Conditions (RESP/RESP2)
 
@@ -825,90 +825,69 @@ RIDFLD has a 4-byte relative record number
 * RIDFLD IS MANDATORY
 * THIS TYPE OF INTO REQUIRES LENGTH/FLENGTH
 
-### READPREV 
+### READPREV
+
 ```hlasm
-name     EXEC  CICS READPREV
-                    FILE()/DATASET()
-                    INTO()/SET()
-                    LENGTH()/FLENGTH()
-                    RIDFLD()
-                    REQID()
-                    RBA/XRBA/RRN
-                    KEYLENGTH()
+name     EXEC CICS READPREV                                            X
+                   FILE()/DATASET()                                    X
+                   INTO()/SET()                                        X
+                   LENGTH()/FLENGTH()                                  X
+                   RIDFLD()                                            X
+                   REQID()                                             X
+                   RBA/XRBA/RRN                                        X
+                   KEYLENGTH()                                         
 ```
 #### Parameters
 
 ##### LENGTH
 
 * Can be specified as a constant, literal or label.
-    * A constant must not exceed 32767.
-    * A literal or label must be 2 bytes and must not exceed 32767.
+* A constant must not exceed 32767.
+* A literal or label must be 2 bytes and must not exceed 32767.
 
 ##### FLENGTH
 
 * Can be specified as a constant, literal or label.
-    * A constant must not exceed 2G-1.
-    * A literal or label must be 4 bytes and must not exceed 2G-1.
+* A constant must not exceed 2G-1.
+* A literal or label must be 4 bytes and must not exceed 2G-1.
 
-!!! Info
-    **LENGTH/FLENGTH**
-
-    If either is not a label then:
-
-    * If INTO is specified, then the length received is the implied length of
-      INTO. This may raise the LENGERR condition if the data length is
-      larger.
-    * If SET is specified, the complete record is returned and LENGERR
-      cannot occur.
-    
-    If either is a label then:
-    
-    * If INTO or SET is specified, then it specifies the maximum data
-      length that can be received. LENGERR can be raised if the data
-      length is larger. The true data length is returned in label.
+> [!INFO]
+> **LENGTH/FLENGTH Notes:**
+> * If either is not a label then:
+>   * If INTO is specified, then the length received is the implied length of INTO.
+>     * This may raise the LENGERR condition if the data length is larger.
+>   * If SET is specified, the complete record is returned and LENGERR cannot occur.
+> * If either is a label then:
+>   * If INTO or SET is specified, then it specifies the maximum data length that can be received.
+>     * LENGERR can be raised if the data length is larger. The true data length is returned in label.
 
 ##### REQID
 
 * Can be specified as a constant, literal or label.
-    * A constant must not exceed 32767.
-    * A literal or label must be 2 bytes and must not exceed 32767.
+* A constant must not exceed 32767.
+* A literal or label must be 2 bytes and must not exceed 32767.
 * If omitted, zero is assumed.
 
-##### RBA 
+##### RBA
 
 RIDFLD has a 4-byte RBA
 
-##### XRBA 
+##### XRBA
 
 RIDFLD has an 8-byte RBA
 
-##### RRN 
+##### RRN
 
 RIDFLD has a 4-byte relative record number
 
 ##### KEYLENGTH
 
 * Can be specified as a constant or label.
-    * A constant must not exceed 32767.
-    * A label must be 2 bytes and must not exceed 32767.
+* A constant must not exceed 32767.
+* A label must be 2 bytes and must not exceed 32767.
 * Keylengths greater than 128 are ignored.
 * The parameter is ignored for ESDS and RRDS.
-* If KEYLENGTH is specified, the value must be equal to the keylength
-  defined for the file.
-
-#### Errors
-
-* BAD PARM
-* BOTH FILE AND DATASET ARE SPECIFIED
-* BOTH INTO AND SET ARE SPECIFIED
-* BOTH LENGTH AND FLENGTH ARE SPECIFIED
-* BOTH RBA AND XRBA ARE SPECIFIED
-* BOTH RRN AND (X)RBA ARE SPECIFIED
-* FILE OR DATASET MUST BE SPECIFIED
-* INTO OR SET MUST BE SPECIFIED
-* INVALID FILE OR DATASET
-* RIDFLD IS MANDATORY
-* THIS TYPE OF INTO REQUIRES LENGTH/FLENGTH
+* If KEYLENGTH is specified, the value must be equal to the keylength defined for the file.
 
 #### Conditions (RESP/RESP2)
 
@@ -924,9 +903,23 @@ RIDFLD has a 4-byte relative record number
 * NOTFND/80
 * NOTOPEN/60
 
-!!! Note
-    ENDFILE can occur when a READPREV attempts to read past
-    the beginning of the file.
+> [!NOTE]
+> ENDFILE can occur when a READPREV attempts to read past
+> the beginning of the file.
+
+#### Errors
+
+* BAD PARM
+* BOTH FILE AND DATASET ARE SPECIFIED
+* BOTH INTO AND SET ARE SPECIFIED
+* BOTH LENGTH AND FLENGTH ARE SPECIFIED
+* BOTH RBA AND XRBA ARE SPECIFIED
+* BOTH RRN AND (X)RBA ARE SPECIFIED
+* FILE OR DATASET MUST BE SPECIFIED
+* INTO OR SET MUST BE SPECIFIED
+* INVALID FILE OR DATASET
+* RIDFLD IS MANDATORY
+* THIS TYPE OF INTO REQUIRES LENGTH/FLENGTH
 
 ### ENDBR
 
