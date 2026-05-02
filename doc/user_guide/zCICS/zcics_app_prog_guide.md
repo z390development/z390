@@ -100,11 +100,11 @@ MYFIELD  DS    CL100 demo user field
 MYPROG   DFHEIENT CODEREG=(R8,R5),DATAREG=(R13,R6,R7)
 ```
 
-!!! Note
+[!NOTE]
     You cannot override the first DATAREG value, it will always be R13.
     i.e. if you code `DATAREG=(R6,R7)` you will get `DATAREG=(R13,R7)`.
 
-!!! Note
+[!NOTE]
     There is no cross-checking for register conflicts.
 
 ## Assembler EXEC CICS command syntax
@@ -197,7 +197,7 @@ program excluded.
 |----------|----------------|---------------------------|
 | name     | EXEC CICS      | HANDLE AID key(label) key |
 
-!!! Warning
+[!WARNING]
     The following parameters are not supported:
 
     * CLRPARTN
@@ -205,7 +205,7 @@ program excluded.
     * OPERID
     * TRIGGER
 
-!!! Note
+[!NOTE]
     ANYKEY (no label) clears all settings for CLEAR, PA and PF keys.
 
 #### Parameters
@@ -230,7 +230,7 @@ GOPA1    DS    0H
 INDGOPA1 DC    A(GOPA1)
 ```
 
-!!! Info
+[!NOTE]
     There is a current limit of 30 AIDs.
     More can be created if needed.
 
