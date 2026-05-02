@@ -102,7 +102,7 @@ MYPROG   DFHEIENT CODEREG=(R8,R5),DATAREG=(R13,R6,R7)
 
 > [!NOTE]
 > You cannot override the first DATAREG value, it will always be R13.
-> i.e. if you code `DATAREG=(R6,R7)` you will get `DATAREG=(R13,R7)`.
+> I.e. if you code `DATAREG=(R6,R7)` you will get `DATAREG=(R13,R7)`.
 
 > [!NOTE]
 > There is no cross-checking for register conflicts.
@@ -197,16 +197,15 @@ program excluded.
 |----------|----------------|---------------------------|
 | name     | EXEC CICS      | HANDLE AID key(label) key |
 
-[!WARNING]
-    The following parameters are not supported:
+> [!WARNING]
+> The following parameters are not supported:
+> - CLRPARTN
+> - LIGHTPEN
+> - OPERID
+> - TRIGGER
 
-    * CLRPARTN
-    * LIGHTPEN
-    * OPERID
-    * TRIGGER
-
-[!NOTE]
-    ANYKEY (no label) clears all settings for CLEAR, PA and PF keys.
+> [!NOTE]
+> ANYKEY (no label) clears all settings for CLEAR, PA and PF keys.
 
 #### Parameters
 
@@ -230,9 +229,9 @@ GOPA1    DS    0H
 INDGOPA1 DC    A(GOPA1)
 ```
 
-[!NOTE]
-    There is a current limit of 30 AIDs.
-    More can be created if needed.
+> [!NOTE]
+> There is a current limit of 30 AIDs.
+> More can be created if needed.
 
 #### Errors
 
@@ -244,9 +243,9 @@ INDGOPA1 DC    A(GOPA1)
 
 ### HANDLE CONDITION
 
-```hlasm
-name     EXEC  CICS HANDLE CONDITION condition(label) condition
-```
+| Name     | Operation      | Operands                                    |
+|----------|----------------|---------------------------------------------|
+| name     | EXEC CICS      | HANDLE CONDITION condition(label) condition |
 
 #### Parameters
 
@@ -270,9 +269,12 @@ _label_ may take three forms:
 ISEOF    DS    0H
 ```
 
-!!! Note
-    There is a current limit of 30 conditions.
-    `DSIDERR` is supported as a synonym to `FILENOTFOUND`.
+> [!NOTE]
+> There is a current limit of 30 conditions.
+> More can be created if needed.
+
+> [!NOTE]
+> `DSIDERR` is supported as a synonym to `FILENOTFOUND`.
 
 #### Errors
 
@@ -283,24 +285,27 @@ ISEOF    DS    0H
 
 ### IGNORE CONDITION
 
-```hlasm
-name     EXEC  CICS IGNORE CONDITION condition
-```
+| Name     | Operation      | Operands                                    |
+|----------|----------------|---------------------------------------------|
+| name     | EXEC CICS      | IGNORE CONDITION condition                  |
 
-!!! Warning
-    Ignoring an error may lead to unpredictable abends.
-    There is a current limit of 30 conditions.
+> [!Warning]
+> Ignoring an error may lead to unpredictable abends.
+> There is a current limit of 30 conditions.
 
 #### Parameters
 
 INVREQ, PGMIDERR or ERROR by default.
-
 The EXEC CICS command treated as never existed.
-INVREQ on EXEC CICS RETURN will abend the task ASRA as z390 cannot ignore a RETURN.
 
-LENGERR or ERROR by default...
-NOHANDLE and any outstanding HANDLE AID will not invoke this condition.
-DSIDERR is supported as a synonym to FILENOTFOUND.
+> [!NOTE]
+> INVREQ on EXEC CICS RETURN will abend the task ASRA as z390 cannot ignore a RETURN.
+
+> [!NOTE]
+> For LENGERR or ERROR by default NOHANDLE and any outstanding HANDLE AID will not invoke this condition.
+
+> [!NOTE]
+> DSIDERR is supported as a synonym to FILENOTFOUND.
 
 #### Errors
 
@@ -312,11 +317,11 @@ DSIDERR is supported as a synonym to FILENOTFOUND.
 
 ### POP HANDLE
 
-```hlasm
-name     EXEC  CICS POP HANDLE
-```
+| Name     | Operation      | Operands                                    |
+|----------|----------------|---------------------------------------------|
+| name     | EXEC CICS      | POP HANDLE                                  |
 
-For the HANDLE ABEND, a POP is the equivalent of a HANDLE ABEND RESET.
+For the HANDLE ABEND, a POP is the equivalent of a `HANDLE ABEND RESET`.
 
 #### Errors
 
@@ -329,9 +334,9 @@ For the HANDLE ABEND, a POP is the equivalent of a HANDLE ABEND RESET.
 
 ### PUSH HANDLE
 
-```hlasm
-name     EXEC  CICS PUSH HANDLE
-```
+| Name     | Operation      | Operands                                    |
+|----------|----------------|---------------------------------------------|
+| name     | EXEC CICS      | PUSH HANDLE                                 |
 
 For the HANDLE ABEND, a PUSH is the equivalent of a `HANDLE ABEND CANCEL`.
 
@@ -342,12 +347,12 @@ For the HANDLE ABEND, a PUSH is the equivalent of a `HANDLE ABEND CANCEL`.
 
 ### ADDRESS
 
-```hlasm
-name     EXEC  CICS ADDRESS                                           X
-                    COMMAREA(label)                                   X
-                    CWA(label)                                        X
-                    EIB(label)
-```
+| Name     | Operation      | Operands                                    |
+|----------|----------------|---------------------------------------------|
+| name     | EXEC CICS      | ADDRESS,                                  X |
+|          |                | COMMAREA(label),                          X |
+|          |                | CWA(label),                               X |
+|          |                | EIB(label)                                  |
 
 CWA has a different implementation in zCICS.
 
@@ -359,27 +364,63 @@ See [CWA Management in zCICS Diagnosis Reference]() for more information.
 
 ### ASSIGN
 
-```hlasm
-name     EXEC  CICS ASSIGN
-```
+| Name     | Operation      | Operands                                    |
+|----------|----------------|---------------------------------------------|
+| name     | EXEC CICS      | ASSIGN                                      |
 
 The following parameters are not supported:
 
-ACTIVITY,ACTIVITYID,ALTSCRNHT,ALTSCRNWD,APPLID,ASRAINTRPT,ASRAKEY,ASRASPC,ASRASTG,BRIDGE,
-DELIMITER,DESTCOUNT,DESTID,DESTIDLENG,GCHARS,GCODES,INITPARM,INITPARMLEN,INPARTN,
-LDCMNEM,LDCNUM,NETNAME,NUMTAB,OPCLASS,OPERKEYS,OPID,OPSECURITY,ORGABCODE,PAGENUM,
-PARTNPAGE,PARTNPAGE,PRINSYSID,PROCESS,PROCESSTYPE,QNAME,SIGDATA,STATIONID,SYSID,
-TELLERID,USERID,USERNAME
+* ACTIVITY
+* ACTIVITYID
+* ALTSCRNHT
+* ALTSCRNWD
+* APPLID
+* ASRAINTRPT
+* ASRAKEY
+* ASRASPC
+* ASRASTG
+* BRIDGE
+* DELIMITER
+* DESTCOUNT
+* DESTID
+* DESTIDLENG
+* GCHARS
+* GCODES
+* INITPARM
+* INITPARMLEN
+* INPARTN
+* LDCMNEM
+* LDCNUM
+* NETNAME
+* NUMTAB
+* OPCLASS
+* OPERKEYS
+* OPID
+* OPSECURITY
+* ORGABCODE
+* PAGENUM
+* PARTNPAGE
+* PARTNPAGE
+* PRINSYSID
+* PROCESS
+* PROCESSTYPE
+* QNAME
+* SIGDATA
+* STATIONID
+* SYSID
+* TELLERID
+* USERID
+* USERNAME
 
-!!! Note 
-    zCICS allows a CWA size greater than 32K. If the CWA
-    does exceed 32K, then ASSIGN CWALENG() will return an
-    incorrect value.
+> [!NOTE]
+> zCICS allows a CWA size greater than 32K. If the CWA
+> does exceed 32K, then ASSIGN CWALENG() will return an
+> incorrect value.
 
 #### Conditions (RESP/RESP2)
 
 * INVREQ/2
-* INVREQ/5 
+* INVREQ/5
 
 #### Errors
 
@@ -389,19 +430,18 @@ TELLERID,USERID,USERNAME
 
 ### RECEIVE 
 
-```hlasm
-name     EXEC  CICS RECEIVE                                           X
-                    INTO(label)                                       X
-                    LENGTH(label)                                     X
-                    NOHANDLE
-```
+| Name     | Operation      | Operands                                    |
+|----------|----------------|---------------------------------------------|
+| name     | EXEC CICS      | RECEIVE                                   X |
+|          |                | INTO(label)                               X |
+|          |                | LENGTH(label)                             X |
+|          |                | NOHANDLE                                    |
 
 #### Parameters
 
 * INTO(label) and LENGTH(label) are mandatory.
 * LENGTH must point to a 2-byte field.
-* Although MAXLENGTH is not implemented yet, there is an internal 
-  maximum length set to the implied length of the INTO label.
+* Although MAXLENGTH is not implemented yet, there is an internal maximum length set to the implied length of the INTO label.
 * NOHANDLE is optional.
 
 #### Conditions (RESP/RESP2)
@@ -417,27 +457,32 @@ name     EXEC  CICS RECEIVE                                           X
 
 ### SEND
 
-```hlasm
-name     EXEC  CICS SEND
-                    FROM(label)
-                    LENGTH()
-```
+| Name     | Operation      | Operands                                    |
+|----------|----------------|---------------------------------------------|
+| name     | EXEC CICS      | SEND                                      X |
+|          |                | FROM(label)                               X |
+|          |                | LENGTH()                                    |
+
 
 #### Parameters
 
-FROM(label) is mandatory.
+##### FROM
 
-_label_ must point to a 2-byte hex value.
+FROM(label) is mandatory.
 
 _label_ may take three forms:
 
-  * Direct reference
-  * Indirect reference
-  * Adcon literal
+* Direct reference
+* Indirect reference
+* Adcon literal
+
+##### LENGTH
 
 LENGTH can be specified as LENGTH(value) or LENGTH(label) 
 
 LENGTH(value) supports the use of the length attribute.
+
+_label_ must point to a 2-byte hex value.
 
 The parameters TERMINAL, WAIT, DEFAULT and TEXT are discarded.
 
