@@ -80,7 +80,7 @@ Inclusion of the macro DFHREGS/EQUREGS is mandatory.
 
 The standard entry for a CICS program is as follows:
 
-``` hlasm
+```hlasm
          DFHEISTG
 MYFIELD  DS    CL100 demo user field
 ......
@@ -193,7 +193,7 @@ program excluded.
 
 ### HANDLE AID
 
-``` hlasm
+```hlasm
 name     EXEC CICS HANDLE AID key(label) key
 ```
 
@@ -243,7 +243,7 @@ INDGOPA1 DC    A(GOPA1)
 
 ### HANDLE CONDITION
 
-``` hlasm
+```hlasm
 name     EXEC CICS HANDLE CONDITION condition(label) condition
 ```
 
@@ -285,7 +285,7 @@ ISEOF    DS    0H
 
 ### IGNORE CONDITION
 
-``` hlasm
+```hlasm
 name     EXEC CICS IGNORE CONDITION condition
 ```
 
@@ -317,8 +317,8 @@ The EXEC CICS command treated as never existed.
 
 ### POP HANDLE
 
-``` hlasm
-name     EXEC CICS POP HANDLE
+```hlasm
+name     EXEC  CICS POP HANDLE
 ```
 
 For the HANDLE ABEND, a POP is the equivalent of a `HANDLE ABEND RESET`.
@@ -334,7 +334,7 @@ For the HANDLE ABEND, a POP is the equivalent of a `HANDLE ABEND RESET`.
 
 ### PUSH HANDLE
 
-``` hlasm
+```hlasm
 name     EXEC CICS PUSH HANDLE
 ```
 
@@ -347,11 +347,11 @@ For the HANDLE ABEND, a PUSH is the equivalent of a `HANDLE ABEND CANCEL`.
 
 ### ADDRESS
 
-``` hlasm
-name     EXEC CICS ADDRESS,                                            X
-                   COMMAREA(label),                                    X
-                   CWA(label),                                         X
-                   EIB(label)                                           
+```hlasm
+name     EXEC  CICS ADDRESS
+                    COMMAREA(label)
+                    CWA(label)
+                    EIB(label)
 ```
 
 CWA has a different implementation in zCICS.
@@ -364,8 +364,8 @@ See [CWA Management in zCICS Diagnosis Reference]() for more information.
 
 ### ASSIGN
 
-``` hlasm
-name     EXEC CICS ASSIGN
+```hlasm
+name     EXEC CICS  ASSIGN
 ```
 
 The following parameters are not supported:
@@ -430,11 +430,11 @@ The following parameters are not supported:
 
 ### RECEIVE 
 
-``` hlasm
-name     EXEC CICS RECEIVE                                             X
-                   INTO(label)                                         X
-                   LENGTH(label)                                       X
-                   NOHANDLE                                             
+```hlasm
+name     EXEC  CICS RECEIVE
+                    INTO(label)
+                    LENGTH(label)
+                    NOHANDLE
 ```
 
 #### Parameters
@@ -457,7 +457,7 @@ name     EXEC CICS RECEIVE                                             X
 
 ### SEND
 
-``` hlasm
+```hlasm
 name     EXEC CICS SEND                                                X
                    FROM(label)                                         X
                    LENGTH()                                             
@@ -1795,7 +1795,7 @@ Refer to IBM CICS(r) Application Programming reference for available parameters.
 
 ### START
 
-``` hlasm
+```hlasm
 name     EXEC  CICS START
                     TRANSID()
                     INTERVAL()/TIME()
