@@ -579,14 +579,13 @@ name     EXEC CICS READ                                                X
 
 > [!NOTE]
 > **LENGTH/FLENGTH notes:**
-
-* If SET is specified, LENGTH/FLENGTH are ignored and LENGERR cannot occur.
-* If INTO is specified and LENGTH/FLENGTH are not, then the implied length of INTO is used.
-  * This may raise the LENGERR condition if the data length is larger.
-* If LENGTH/FLENGTH is numeric then it specifies the maximum data length that can be received.
-  * LENGERR can be raised if the data length is larger.
-* If LENGTH/FLENGTH is a label then it specifies the maximum data length that can be received.
-  * LENGERR can be raised if the data length is larger. The true data length is returned in label.
+> * If SET is specified, LENGTH/FLENGTH are ignored and LENGERR cannot occur.
+> * If INTO is specified and LENGTH/FLENGTH are not, then the implied length of INTO is used.
+>   * This may raise the LENGERR condition if the data length is larger.
+> * If LENGTH/FLENGTH is numeric then it specifies the maximum data length that can be received.
+>   * LENGERR can be raised if the data length is larger.
+> * If LENGTH/FLENGTH is a label then it specifies the maximum data length that can be received.
+>   * LENGERR can be raised if the data length is larger. The true data length is returned in label.
 
 ##### KEYLENGTH
 
