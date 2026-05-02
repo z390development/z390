@@ -1134,129 +1134,8 @@ This note applies to all Temporary Storage Control commands:
 ### DELETEQ 
 
 ```hlasm
-name     EXEC  CICS DELETEQ TS
-                    QUEUE()/QNAME()
-```
-
-#### Parameters
-
-The parameters MAIN and AUXILIARY are accepted and discarded.
-
-##### QUEUE 
-
-`QUEUE` may be specified as:
-
-* A quoted string which must not exceed 8 bytes.
-* A label which points to an 8-byte field.
-* A literal not exceeding 8 bytes.
-
-Only label or literal may be used to specify a QUEUE with hex characters.
-
-##### QNAME
-
-`QNAME` may be specified as:
-
-* A quoted string which must not exceed 16 bytes.
-* A label which points to a 16-byte field.
-* A literal not exceeding 16 bytes.
-
-Only label or literal may be used to specify a QNAME with hex characters.
-
-#### Errors
-
-* BAD PARM
-* BOTH QUEUE AND QNAME ARE SPECIFIED
-* DELETEQ TYPE NOT RECOGNIZED
-* INVALID QUEUE OR QNAME
-* QUEUE OR QNAME MUST BE SPECIFIED
-
-#### Conditions (RESP/RESP2)
-
-* INVREQ/0
-* QIDERR/0
-
-### READQ
-
-```hlasm
-name     EXEC  CICS READQ TS
-                    QUEUE()/QNAME()
-                    INTO()/SET()
-                    LENGTH()/FLENGTH()
-                    NUMITEMS()
-                    ITEM()/NEXT
-```
-
-#### Parameters
-
-The parameters MAIN and AUXILIARY are accepted and discarded.
-
-##### QUEUE
-
-`QUEUE` may be specified as:
-
-* A quoted string which must not exceed 8 bytes.
-* A label which points to an 8-byte field.
-* A literal not exceeding 8 bytes.
-
-Only label or literal may be used to specify a QUEUE with hex characters.
-
-##### QNAME
-
-QNAME may be specified as:
-
-* A quoted string which must not exceed 16 bytes.
-* A label which points to a 16-byte field.
-* A literal not exceeding 16 bytes.
-
-Only label or literal may be used to specify a QNAME with hex characters.
-
-##### LENGTH
-
-* May be specified as LENGTH(value) or LENGTH(label)
-    * LENGTH(value) supports the use of the length attribute.
-    * label must point to a 2-byte hex value.
-
-##### FLENGTH
-
-* Can be specified as a constant, literal or label.
-    * A constant must not exceed 2G-1.
-    * A literal or label must be 4 bytes and must not exceed 2G-1.
-* LENGTH/FLENGTH can be omitted. When they are, the implied length
-  of INTO is used. LENGTH/FLENGTH is mandatory when SET is used.
-  ITEM
-* May be specified as ITEM(value) or ITEM(label)
-    * _label_ must point to a 2-byte hex value.
-
-#### Errors
-
-* BAD PARM
-* BOTH INTO AND SET ARE SPECIFIED
-* BOTH ITEM AND NEXT ARE SPECIFIED
-* BOTH LENGTH AND FLENGTH ARE SPECIFIED
-* BOTH QUEUE AND QNAME ARE SPECIFIED
-* INTO OR SET MUST BE SPECIFIED
-* INVALID QUEUE OR QNAME
-* ITEM OR NEXT MUST BE SPECIFIED
-* QUEUE OR QNAME MUST BE SPECIFIED
-* READQ TYPE NOT RECOGNIZED
-* SET REQUIRES LENGTH
-
-#### Conditions (RESP/RESP2)
-
-* INVREQ/0
-* LENGERR/0
-* ITEMERR/0
-* QIDERR/0
-
-### WRITEQ
-```hlasm
-name     EXEC  CICS WRITEQ TS
-                    QUEUE()/QNAME()
-                    FROM()
-                    LENGTH()/FLENGTH()
-                    NUMITEMS()
-                    ITEM()
-                    REWRITE
+name     EXEC CICS DELETEQ TS                                          X
+                   QUEUE()/QNAME()
 ```
 
 #### Parameters
@@ -1283,7 +1162,131 @@ QNAME may be specified as:
 
 Only label or literal may be used to specify a QNAME with hex characters.
 
-##### FROM 
+#### Conditions (RESP/RESP2)
+
+* INVREQ/0
+* QIDERR/0
+
+#### Errors
+
+* BAD PARM
+* BOTH QUEUE AND QNAME ARE SPECIFIED
+* DELETEQ TYPE NOT RECOGNIZED
+* INVALID QUEUE OR QNAME
+* QUEUE OR QNAME MUST BE SPECIFIED
+
+### READQ
+
+```hlasm
+name     EXEC CICS READQ TS                                            X
+                   QUEUE()/QNAME()                                     X
+                   INTO()/SET()                                        X
+                   LENGTH()/FLENGTH()                                  X
+                   NUMITEMS()                                          X
+                   ITEM()/NEXT                                         
+```
+
+#### Parameters
+
+The parameters MAIN and AUXILIARY are accepted and discarded.
+
+##### QUEUE
+
+QUEUE may be specified as:
+
+* A quoted string which must not exceed 8 bytes.
+* A label which points to an 8-byte field.
+* A literal not exceeding 8 bytes.
+
+Only label or literal may be used to specify a QUEUE with hex characters.
+
+##### QNAME
+
+QNAME may be specified as:
+
+* A quoted string which must not exceed 16 bytes.
+* A label which points to a 16-byte field.
+* A literal not exceeding 16 bytes.
+
+Only label or literal may be used to specify a QNAME with hex characters.
+
+##### LENGTH
+
+* May be specified as LENGTH(value) or LENGTH(label)
+* LENGTH(value) supports the use of the length attribute.
+* label must point to a 2-byte hex value.
+
+##### FLENGTH
+
+* Can be specified as a constant, literal or label.
+* A constant must not exceed 2G-1.
+* A literal or label must be 4 bytes and must not exceed 2G-1.
+* LENGTH/FLENGTH can be omitted. When they are, the implied length of INTO is used.
+  * LENGTH/FLENGTH is mandatory when SET is used.
+
+##### ITEM
+
+* May be specified as ITEM(value) or ITEM(label)
+* _label_ must point to a 2-byte hex value.
+
+#### Conditions (RESP/RESP2)
+
+* INVREQ/0
+* LENGERR/0
+* ITEMERR/0
+* QIDERR/0
+
+#### Errors
+
+* BAD PARM
+* BOTH INTO AND SET ARE SPECIFIED
+* BOTH ITEM AND NEXT ARE SPECIFIED
+* BOTH LENGTH AND FLENGTH ARE SPECIFIED
+* BOTH QUEUE AND QNAME ARE SPECIFIED
+* INTO OR SET MUST BE SPECIFIED
+* INVALID QUEUE OR QNAME
+* ITEM OR NEXT MUST BE SPECIFIED
+* QUEUE OR QNAME MUST BE SPECIFIED
+* READQ TYPE NOT RECOGNIZED
+* SET REQUIRES LENGTH
+
+### WRITEQ
+
+```hlasm
+name     EXEC CICS WRITEQ TS                                           X
+                   QUEUE()/QNAME()                                     X
+                   FROM()                                              X
+                   LENGTH()/FLENGTH()                                  X
+                   NUMITEMS()                                          X
+                   ITEM()                                              X
+                   REWRITE                                             
+```
+
+#### Parameters
+
+The parameters MAIN and AUXILIARY are accepted and discarded.
+
+##### QUEUE
+
+QUEUE may be specified as:
+
+* A quoted string which must not exceed 8 bytes.
+* A label which points to an 8-byte field.
+* A literal not exceeding 8 bytes.
+
+Only label or literal may be used to specify a QUEUE with hex characters.
+
+##### QNAME
+
+QNAME may be specified as:
+
+* A quoted string which must not exceed 16 bytes.
+* A label which points to a 16-byte field.
+* A literal not exceeding 16 bytes.
+
+Only label or literal may be used to specify a QNAME with hex characters.
+
+##### FROM
 
 `FROM(label)` is mandatory.
 
@@ -1296,16 +1299,16 @@ _label_ may take three forms:
 ##### LENGTH
 
 * May be specified as LENGTH(value) or LENGTH(label)
-    * LENGTH(value) supports the use of the length attribute.
-    * label must point to a 2-byte hex value.
+* LENGTH(value) supports the use of the length attribute.
+* label must point to a 2-byte hex value.
 * LENGTH can be omitted. When they are, the implied length of FROM is used. 
 * LENGTH is mandatory when FROM is an indirect reference.
 
 ##### FLENGTH
 
 * Can be specified as a constant, literal or label.
-    * A constant must not exceed 2G-1.
-    * A literal or label must be 4 bytes and must not exceed 2G-1.
+* A constant must not exceed 2G-1.
+* A literal or label must be 4 bytes and must not exceed 2G-1.
 * FLENGTH can be omitted. When they are, the implied length of FROM is used. 
 * FLENGTH is mandatory when FROM is an indirect reference.
 
@@ -1314,10 +1317,17 @@ _label_ may take three forms:
 * May be specified as ITEM(value) or ITEM(label)
 * label must point to a 2-byte hex value.
 
-!!! Info
-    For compatibility with old releases of CICS, ITEM is accepted
-    without REWRITE and becomes NUMITEMS. ITEM must be a
-    label in this case.
+> [!INFO]
+> For compatibility with old releases of CICS, ITEM is accepted
+> without REWRITE and becomes NUMITEMS. ITEM must be a
+> label in this case.
+
+#### Conditions (RESP/RESP2)
+
+* INVREQ/0
+* LENGERR/0
+* ITEMERR/0
+* QIDERR/0
 
 #### Errors
 
@@ -1334,22 +1344,17 @@ _label_ may take three forms:
 * REWRITE REQUIRES ITEM
 * WRITEQ TYPE NOT RECOGNIZED
 
-#### Conditions (RESP/RESP2)
-
-* INVREQ/0
-* LENGERR/0
-* ITEMERR/0
-* QIDERR/0
-
 ## Command reference - Program Control
 
-### ABEND 
+### ABEND
+
 ```hlasm
-name     EXEC  CICS ABEND
-                    ABCODE()
-                    CANCEL
-                    NODUMP
+name     EXEC CICS ABEND                                              X
+                   ABCODE()                                           X
+                   CANCEL                                             X
+                   NODUMP                                             
 ```
+
 #### Parameters
 
 ##### ABCODE
@@ -1363,13 +1368,13 @@ name     EXEC  CICS ABEND
 * ABCODE IS INVALID
 * BAD PARM
 
-
 ### HANDLE ABEND 
+
 ```hlasm
-name     EXEC  CICS HANDLE ABEND CANCEL
-name     EXEC  CICS HANDLE ABEND RESET
-name     EXEC  CICS HANDLE ABEND LABEL(label)
-name     EXEC  CICS HANDLE ABEND PROGRAM()
+name     EXEC CICS HANDLE ABEND CANCEL
+name     EXEC CICS HANDLE ABEND RESET
+name     EXEC CICS HANDLE ABEND LABEL(label)
+name     EXEC CICS HANDLE ABEND PROGRAM()
 ```
 
 #### Parameters
@@ -1385,14 +1390,15 @@ _label_ may take three forms:
 ##### PROGRAM 
 
 * Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
-    * _label_ must point to an 8-byte field.
-* Any received COMMAREA when the EXEC CICS HANDLE ABEND is
-  issued is passed to the handling program when an abend occurs.
+* _label_ must point to an 8-byte field.
 
-!!! Note 
-    When an XCTL is executed, any HANDLE ABEND LABEL at the
-    current logical level is cleared as the current program is no longer in
-    use. HANDLE ABEND PROGRAMs are not cleared.
+Any received COMMAREA when the EXEC CICS HANDLE ABEND is
+issued is passed to the handling program when an abend occurs.
+
+> [!NOTE]
+> When an XCTL is executed, any HANDLE ABEND LABEL at the
+> current logical level is cleared as the current program is no longer in
+> use. HANDLE ABEND PROGRAMs are not cleared.
 
 #### Errors
 
@@ -1402,14 +1408,14 @@ _label_ may take three forms:
 * NO PARAMETERS SPECIFIED 
 * PARMS MISSING OR TOO MANY PARMS
 
+### LINK
 
-### LINK 
 ```hlasm
-name     EXEC  CICS LINK
-                    PROGRAM()
-                    COMMAREA(label)
-                    LENGTH()
-                    CHANNEL()
+name     EXEC CICS LINK                                                X
+                   PROGRAM()                                           X
+                   COMMAREA(label)                                     X
+                   LENGTH()                                            X
+                   CHANNEL()                                           
 ```
 
 Executes another CICS program.
@@ -1426,24 +1432,33 @@ A warning MNOTE is issued.
 
 * PROGRAM is mandatory
 * Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
-    * label must point to an 8-byte field.
+* label must point to an 8-byte field.
 
 ##### COMMAREA
+
 * COMMAREA(label) is optional
 * If COMMAREA is present, the address/length are passed.
 * label may take three forms:
-    * Direct reference
-    * Indirect reference
-    * Adcon literal
+  * Direct reference
+  * Indirect reference
+  * Adcon literal
 
 ##### LENGTH
 
 * Can be specified as LENGTH(value) or LENGTH(label)
-    * LENGTH(value) supports the use of the length attribute.
-    * label must point to a 2-byte hex value.
-* LENGTH can be omitted. When it is, the implied length of the
-  COMMAREA is used. LENGTH is mandatory when COMMAREA is an
-  indirect reference.
+* LENGTH(value) supports the use of the length attribute.
+* label must point to a 2-byte hex value.
+* LENGTH can be omitted. When it is, the implied length of the COMMAREA is used.
+* LENGTH is mandatory when COMMAREA is an indirect reference.
+
+#### Conditions (RESP/RESP2)
+
+* CHANNELERR/1
+* PGMIDERR/3
+
+#### Warning
+
+* CHANNEL and COMMAREA specified
 
 #### Errors
 
@@ -1454,22 +1469,14 @@ A warning MNOTE is issued.
 * LENGTH IS MANDATORY FOR INDIRECT COMMAREA
 * LENGTH WITHOUT COMMAREA
 
-#### Warning
-
-* CHANNEL and COMMAREA specified
-
-#### Conditions (RESP/RESP2)
-
-* CHANNELERR/1
-* PGMIDERR/3
-
 ### LOAD
+
 ```hlasm
-name     EXEC  CICS LOAD
-                    PROGRAM()
-                    ENTRY()/SET()
-                    LENGTH(label)
-                    FLENGTH(label)
+name     EXEC CICS LOAD                                                X
+                   PROGRAM()                                           X
+                   ENTRY()/SET()                                       X
+                   LENGTH(label)                                       X
+                   FLENGTH(label)                                      X
 ```
 
 Loads a module.
@@ -1483,14 +1490,14 @@ not an executable program.
 
 * PROGRAM is mandatory
 * Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
-    * label must point to an 8-byte field.
+* label must point to an 8-byte field.
 * At present, only modules with a suffix of .390 may be LOADed.
 
 ##### ENTRY/SET
 
 * ENTRY and SET are optional
 * Must be specified as a permitted general register value.
-    * Both are equivalent in zCICS.
+* Both are equivalent in zCICS.
 
 ##### LENGTH
 
@@ -1504,8 +1511,12 @@ not an executable program.
 * FLENGTH(label) is the only format.
 * label must point to a 4-byte field.
 
-!!! Note 
-    At task end the LOADed module is not RELEASEd.
+> [!NOTE]
+> At task end the LOADed module is not RELEASEd.
+
+#### Conditions (RESP/RESP2)
+
+* PGMIDERR/3
 
 #### Errors
 
@@ -1514,11 +1525,8 @@ not an executable program.
 * LENGTH AND FLENGTH SPECIFIED
 * PROGRAM IS MISSING
 
-#### Conditions (RESP/RESP2)
+### RELEASE
 
-* PGMIDERR/3
-
-### RELEASE 
 ```hlasm
 name     EXEC  CICS RELEASE
                     PROGRAM()
@@ -1531,7 +1539,12 @@ Releases a previously loaded module.
 
 * PROGRAM is mandatory
 * Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
-    * label must point to an 8-byte field.
+* label must point to an 8-byte field.
+
+#### Conditions (RESP/RESP2)
+
+* INVREQ/5
+* INVREQ/6
 
 #### Errors
 
@@ -1539,20 +1552,15 @@ Releases a previously loaded module.
 * INVALID PROGRAM
 * PROGRAM IS MISSING
 
-#### Conditions (RESP/RESP2)
-
-* INVREQ/5
-* INVREQ/6
-
-
 ### RETURN
+
 ```hlasm
-name     EXEC  CICS RETURN
-                    TRANSID()
-                    COMMAREA(label)
-                    LENGTH()
-                    CHANNEL()
-                    IMMEDIATE
+name     EXEC CICS RETURN
+                   TRANSID()
+                   COMMAREA(label)
+                   LENGTH()
+                   CHANNEL()
+                   IMMEDIATE
 ```
 Returns to the last caller.
 
@@ -1564,7 +1572,7 @@ In zCICS both CHANNEL and COMMAREA may be specified. A warning MNOTE is issued.
 
 * Optional, but when COMMAREA is specified, TRANSID is mandatory.
 * Can be specified as TRANSID('xxxx') or TRANSID(label)
-    * _label_ must point to a 4-byte field.
+* _label_ must point to a 4-byte field.
 
 ##### COMMAREA
 
@@ -1572,18 +1580,29 @@ COMMAREA(label) is optional
 
 _label_ may take three forms:
 
-    * Direct reference
-    * Indirect reference
-    * Adcon literal
+* Direct reference
+* Indirect reference
+* Adcon literal
 
 ##### LENGTH
 
 * Can be specified as LENGTH(value) or LENGTH(label)
 * LENGTH(value) supports the use of the length attribute.
-    * _label_ must point to a 2-byte hex value.
-* LENGTH can be omitted. When it is, the implied length of the
-  COMMAREA is used. LENGTH is mandatory when COMMAREA is an 
-  indirect reference.
+* _label_ must point to a 2-byte hex value.
+* LENGTH can be omitted. When it is, the implied length of the COMMAREA is used.
+  * LENGTH is mandatory when COMMAREA is an indirect reference.
+
+#### Conditions (RESP/RESP2)
+
+See the section on [IGNORE CONDITION](#ignore-condition) for these conditions.
+
+* CHANNELERR/1
+* INVREQ/1 
+* INVREQ/2 
+
+#### Warning
+
+* CHANNEL and COMMAREA specified
 
 #### Errors
 
@@ -1595,25 +1614,14 @@ _label_ may take three forms:
 * LENGTH IS MANDATORY FOR INDIRECT COMMAREA
 * LENGTH WITHOUT COMMAREA
 
-#### Warning
+### XCTL
 
-* CHANNEL and COMMAREA specified
-
-#### Conditions (RESP/RESP2)
-
-See the section on [IGNORE CONDITION](#ignore-condition) for these conditions.
-
-* CHANNELERR/1
-* INVREQ/1 
-* INVREQ/2 
-
-### XCTL 
 ```hlasm
-name     EXEC  CICS XCTL
-                    PROGRAM()
-                    COMMAREA(label)
-                    LENGTH()
-                    CHANNEL()
+name     EXEC  CICS XCTL                                              X
+                    PROGRAM()                                         X
+                    COMMAREA(label)                                   X
+                    LENGTH()                                          X
+                    CHANNEL()                                         
 ```
 
 Executes another CICS program.
@@ -1635,24 +1643,32 @@ Return is to the last linker.
 
 * PROGRAM is mandatory
 * Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
-    * label must point to an 8-byte field.
+  * label must point to an 8-byte field.
 
 ##### COMMAREA
 
 * COMMAREA(label) is optional
 * label may take three forms:
-    * Direct reference
-    * Indirect reference
-    * Adcon literal
+  * Direct reference
+  * Indirect reference
+  * Adcon literal
 
 ##### LENGTH
 
 * Can be specified as LENGTH(value) or LENGTH(label)
-    * LENGTH(value) supports the use of the length attribute.
-    * label must point to a 2-byte hex value.
-* LENGTH can be omitted. When it is, the implied length of the
-  COMMAREA is used. LENGTH is mandatory when COMMAREA is an
-  indirect reference.
+  * LENGTH(value) supports the use of the length attribute.
+  * label must point to a 2-byte hex value.
+* LENGTH can be omitted. When it is, the implied length of the COMMAREA is used.
+  * LENGTH is mandatory when COMMAREA is an indirect reference.
+
+#### Conditions (RESP/RESP2)
+
+* CHANNELERR/1 
+* PGMIDERR/3
+
+#### Warning
+
+* CHANNEL and COMMAREA specified
 
 #### Errors
 
@@ -1662,15 +1678,6 @@ Return is to the last linker.
 * PROGRAM IS MISSING
 * LENGTH IS MANDATORY FOR INDIRECT COMMAREA
 * LENGTH WITHOUT COMMAREA
-
-#### Warning
-
-* CHANNEL and COMMAREA specified
-
-#### Conditions (RESP/RESP2)
-
-* CHANNELERR/1 
-* PGMIDERR/3
 
 ## Command reference - Interval control
 
