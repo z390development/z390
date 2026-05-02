@@ -520,7 +520,8 @@ name     EXEC  CICS SEND CONTROL
 
 #### Conditions (RESP/RESP2)
 
-* INVREQ/0 - Attempt to execute this in a non-terminal attached task. This is not documented in the IBM CICS(r) Manual.
+* INVREQ/0 - Attempt to execute this in a non-terminal attached task.
+  This is not documented in the IBM CICS(r) Manual.
 
 #### Errors
 
@@ -555,14 +556,14 @@ The following notes apply to all File Control operations:
 ### READ
 
 ```hlasm
-name     EXEC CICS READ                                                X
-                   FILE()/DATASET()                                    X
-                   INTO()/SET()                                        X
-                   LENGTH()/FLENGTH()                                  X
-                   RIDFLD()                                            X
-                   RBA/XRBA/RRN/GENERIC                                X
-                   GTEQ/EQUAL                                          X
-                   KEYLENGTH()                                         
+name     EXEC  CICS READ
+                    FILE()/DATASET()
+                    INTO()/SET()
+                    LENGTH()/FLENGTH()
+                    RIDFLD()
+                    RBA/XRBA/RRN/GENERIC
+                    GTEQ/EQUAL
+                    KEYLENGTH()
 ```
 
 #### Parameters
@@ -570,14 +571,14 @@ name     EXEC CICS READ                                                X
 ##### LENGTH
 
 * Can be specified as a constant, literal or label.
-* constant must not exceed 32767.
-* A literal or label must be 2 bytes and must not exceed 32767.
+  * constant must not exceed 32767.
+  * A literal or label must be 2 bytes and must not exceed 32767.
 
 ##### FLENGTH
 
 * Can be specified as a constant, literal or label.
-* A constant must not exceed 2G-1.
-* A literal or label must be 4 bytes and must not exceed 2G-1.
+  * A constant must not exceed 2G-1.
+  * A literal or label must be 4 bytes and must not exceed 2G-1.
 
 > [!NOTE]
 > **LENGTH/FLENGTH notes:**
@@ -592,8 +593,8 @@ name     EXEC CICS READ                                                X
 ##### KEYLENGTH
 
 * Can be specified as a constant or label.
-* A constant must not exceed 32767.
-* A label must be 2 bytes and must not exceed 32767.
+  * A constant must not exceed 32767.
+  * A label must be 2 bytes and must not exceed 32767.
 * Keylengths greater than 128 are ignored.
 * The parameter is ignored for ESDS and RRDS.
 * KEYLENGTH and GENERIC must be paired.
@@ -653,13 +654,13 @@ The parameter is ignored for ESDS and RRDS.
 ### STARTBR
 
 ```hlasm
-name     EXEC CICS STARTBR                                             X
-                   FILE()/DATASET()                                    X
-                   RIDFLD()                                            X
-                   REQID()                                             X
-                   RBA/XRBA/RRN/GENERIC                                X
-                   GTEQ/EQUAL                                          X
-                   KEYLENGTH()                                         
+name     EXEC  CICS STARTBR
+                    FILE()/DATASET()
+                    RIDFLD()
+                    REQID()
+                    RBA/XRBA/RRN/GENERIC
+                    GTEQ/EQUAL
+                    KEYLENGTH()
 ```
 
 #### Parameters
@@ -667,8 +668,8 @@ name     EXEC CICS STARTBR                                             X
 ##### REQID
 
 * Can be specified as a constant, literal or label.
-* A constant must not exceed 32767.
-* A literal or label must be 2 bytes and must not exceed 32767.
+  * A constant must not exceed 32767.
+  * A literal or label must be 2 bytes and must not exceed 32767.
 * If omitted, zero is assumed.
 
 ##### RBA
@@ -686,8 +687,8 @@ RIDFLD has a 4-byte relative record number
 ##### KEYLENGTH
 
 * Can be specified as a constant or label.
-* A constant must not exceed 32767.
-* A label must be 2 bytes and must not exceed 32767.
+  * A constant must not exceed 32767.
+  * A label must be 2 bytes and must not exceed 32767.
 * Keylengths greater than 128 are ignored.
 * The parameter is ignored for ESDS and RRDS.
 * KEYLENGTH and GENERIC must be paired.
@@ -704,20 +705,6 @@ KEYLENGTH must be specified.
 
 The parameter is ignored for ESDS and RRDS.
 
-#### Errors
-
-* BAD PARM
-* BOTH FILE AND DATASET ARE SPECIFIED
-* BOTH GTEQ AND EQUAL ARE SPECIFIED
-* BOTH RBA AND XRBA ARE SPECIFIED
-* BOTH RRN AND (X)RBA ARE SPECIFIED
-* FILE OR DATASET MUST BE SPECIFIED
-* GENERIC CANNOT BE SPECIFIED WITH RRN OR (X)RBA
-* GENERIC REQUIRES KEYLENGTH
-* INVALID FILE OR DATASET
-* KEYLENGTH REQUIRES GENERIC
-* RIDFLD IS MANDATORY
-
 #### Conditions (RESP/RESP2)
 
 * DISABLED/50
@@ -733,17 +720,31 @@ The parameter is ignored for ESDS and RRDS.
 > [!NOTE]
 > NOTFND cannot occur for an ESDS or RRDS
 
+#### Errors
+
+* BAD PARM
+* BOTH FILE AND DATASET ARE SPECIFIED
+* BOTH GTEQ AND EQUAL ARE SPECIFIED
+* BOTH RBA AND XRBA ARE SPECIFIED
+* BOTH RRN AND (X)RBA ARE SPECIFIED
+* FILE OR DATASET MUST BE SPECIFIED
+* GENERIC CANNOT BE SPECIFIED WITH RRN OR (X)RBA
+* GENERIC REQUIRES KEYLENGTH
+* INVALID FILE OR DATASET
+* KEYLENGTH REQUIRES GENERIC
+* RIDFLD IS MANDATORY
+
 ### READNEXT
 
 ```
-name     EXEC CICS READNEXT                                            X
-                   FILE()/DATASET()                                    X
-                   INTO()/SET()                                        X
-                   LENGTH()/FLENGTH()                                  X
-                   RIDFLD()                                            X
-                   REQID()                                             X
-                   RBA/XRBA/RRN                                        X
-                   KEYLENGTH()                                         
+name     EXEC  CICS READNEXT
+                    FILE()/DATASET()
+                    INTO()/SET()
+                    LENGTH()/FLENGTH()
+                    RIDFLD()
+                    REQID()
+                    RBA/XRBA/RRN
+                    KEYLENGTH()
 ```
 
 #### Parameters
@@ -751,13 +752,13 @@ name     EXEC CICS READNEXT                                            X
 ##### LENGTH
 
 * Can be specified as a constant, literal or label.
-* A constant must not exceed 32767.
-* A literal or label must be 2 bytes and must not exceed 32767.
+  * A constant must not exceed 32767.
+  * A literal or label must be 2 bytes and must not exceed 32767.
 
 ##### FLENGTH
 * Can be specified as a constant, literal or label.
-* A constant must not exceed 2G-1.
-* A literal or label must be 4 bytes and must not exceed 2G-1.
+  * A constant must not exceed 2G-1.
+  * A literal or label must be 4 bytes and must not exceed 2G-1.
 
 > [!NOTE]
 > ** LENGTH/FLENGTH Notes:**
@@ -772,8 +773,8 @@ name     EXEC CICS READNEXT                                            X
 ##### REQID
 
 * Can be specified as a constant, literal or label.
-* A constant must not exceed 32767.
-* A literal or label must be 2 bytes and must not exceed 32767.
+  * A constant must not exceed 32767.
+  * A literal or label must be 2 bytes and must not exceed 32767.
 * If omitted, zero is assumed.
 
 ##### RBA
@@ -791,8 +792,8 @@ RIDFLD has a 4-byte relative record number
 ##### KEYLENGTH
 
 * Can be specified as a constant or label.
-* A constant must not exceed 32767.
-* A label must be 2 bytes and must not exceed 32767.
+  * A constant must not exceed 32767.
+  * A label must be 2 bytes and must not exceed 32767.
 * Keylengths greater than 128 are ignored.
 * The parameter is ignored for ESDS and RRDS.
 * If KEYLENGTH is zero by constant or label then parameters are changed internally:
@@ -830,28 +831,28 @@ RIDFLD has a 4-byte relative record number
 ### READPREV
 
 ```hlasm
-name     EXEC CICS READPREV                                            X
-                   FILE()/DATASET()                                    X
-                   INTO()/SET()                                        X
-                   LENGTH()/FLENGTH()                                  X
-                   RIDFLD()                                            X
-                   REQID()                                             X
-                   RBA/XRBA/RRN                                        X
-                   KEYLENGTH()                                         
+name     EXEC  CICS READPREV
+                    FILE()/DATASET()
+                    INTO()/SET()
+                    LENGTH()/FLENGTH()
+                    RIDFLD()
+                    REQID()
+                    RBA/XRBA/RRN
+                    KEYLENGTH()
 ```
 #### Parameters
 
 ##### LENGTH
 
 * Can be specified as a constant, literal or label.
-* A constant must not exceed 32767.
-* A literal or label must be 2 bytes and must not exceed 32767.
+  * A constant must not exceed 32767.
+  * A literal or label must be 2 bytes and must not exceed 32767.
 
 ##### FLENGTH
 
 * Can be specified as a constant, literal or label.
-* A constant must not exceed 2G-1.
-* A literal or label must be 4 bytes and must not exceed 2G-1.
+  * A constant must not exceed 2G-1.
+  * A literal or label must be 4 bytes and must not exceed 2G-1.
 
 > [!NOTE]
 > **LENGTH/FLENGTH Notes:**
@@ -866,8 +867,8 @@ name     EXEC CICS READPREV                                            X
 ##### REQID
 
 * Can be specified as a constant, literal or label.
-* A constant must not exceed 32767.
-* A literal or label must be 2 bytes and must not exceed 32767.
+  * A constant must not exceed 32767.
+  * A literal or label must be 2 bytes and must not exceed 32767.
 * If omitted, zero is assumed.
 
 ##### RBA
@@ -885,11 +886,12 @@ RIDFLD has a 4-byte relative record number
 ##### KEYLENGTH
 
 * Can be specified as a constant or label.
-* A constant must not exceed 32767.
-* A label must be 2 bytes and must not exceed 32767.
+  * A constant must not exceed 32767.
+  * A label must be 2 bytes and must not exceed 32767.
 * Keylengths greater than 128 are ignored.
 * The parameter is ignored for ESDS and RRDS.
-* If KEYLENGTH is specified, the value must be equal to the keylength defined for the file.
+* If KEYLENGTH is specified, the value must be equal to the keylength
+  defined for the file.
 
 #### Errors
 
@@ -926,8 +928,8 @@ RIDFLD has a 4-byte relative record number
 ### ENDBR
 
 ```hlasm
-name     EXEC  CICS ENDBR                                             X
-                    FILE()/DATASET()                                  X
+name     EXEC  CICS ENDBR
+                    FILE()/DATASET()
                     REQID()
 ```
 
@@ -936,8 +938,8 @@ name     EXEC  CICS ENDBR                                             X
 ##### REQID
 
 * Can be specified as a constant, literal or label.
-* A constant must not exceed 32767.
-* A literal or label must be 2 bytes and must not exceed 32767.
+  * A constant must not exceed 32767.
+  * A literal or label must be 2 bytes and must not exceed 32767.
 * If omitted, zero is assumed.
 
 > [!NOTE]
@@ -963,13 +965,13 @@ name     EXEC  CICS ENDBR                                             X
 ### RESETBR
 
 ```hlasm
-name     EXEC CICS RESETBR                                            X
-                   FILE()/DATASET()                                   X
-                   RIDFLD()                                           X
-                   REQID()                                            X
-                   RBA/XRBA/RRN/GENERIC                               X
-                   GTEQ/EQUAL                                         X
-                   KEYLENGTH()                                        
+name     EXEC  CICS RESETBR
+                    FILE()/DATASET()
+                    RIDFLD()
+                    REQID()
+                    RBA/XRBA/RRN/GENERIC
+                    GTEQ/EQUAL
+                    KEYLENGTH()
 ```
 
 #### Parameters
@@ -977,8 +979,8 @@ name     EXEC CICS RESETBR                                            X
 ##### REQID
 
 * Can be specified as a constant, literal or label.
-* A constant must not exceed 32767.
-* A literal or label must be 2 bytes and must not exceed 32767.
+  * A constant must not exceed 32767.
+  * A literal or label must be 2 bytes and must not exceed 32767.
 * If omitted, zero is assumed.
 
 ##### RBA
@@ -996,8 +998,8 @@ RIDFLD has a 4-byte relative record number
 ##### KEYLENGTH
 
 * Can be specified as a constant or label.
-* A constant must not exceed 32767.
-* A label must be 2 bytes and must not exceed 32767.
+  * A constant must not exceed 32767.
+  * A label must be 2 bytes and must not exceed 32767.
 * Keylengths greater than 128 are ignored.
 * The parameter is ignored for ESDS and RRDS.
 * KEYLENGTH and GENERIC must be paired.
@@ -1052,8 +1054,8 @@ The parameter is ignored for ESDS and RRDS.
 ### FREEMAIN
 
 ```hlasm
-name     EXEC  CICS FREEMAIN                                          X
-                    DATA()/DATAPOINTER()                              X
+name     EXEC  CICS FREEMAIN
+                    DATA()/DATAPOINTER()
                     DATA(label)
 ```
 
@@ -1078,9 +1080,9 @@ Must be specified as a permitted general register value.
 ### GETMAIN
 
 ```hlasm
-name     EXEC  CICS GETMAIN                                           X
-                    SET()                                             X
-                    LENGTH()/FLENGTH()                                X
+name     EXEC  CICS GETMAIN
+                    SET()
+                    LENGTH()/FLENGTH()
                     INITIMG()
 ```
 
@@ -1094,14 +1096,14 @@ name     EXEC  CICS GETMAIN                                           X
 ##### LENGTH
 
 * Can be specified as a constant, literal or label.
-* A constant must not exceed 32767.
-* A literal or label must be 2 bytes and must not exceed 32767.
+  * A constant must not exceed 32767.
+  * A literal or label must be 2 bytes and must not exceed 32767.
 
 ##### FLENGTH
 
 * Can be specified as a constant, literal or label.
-* A constant must not exceed 2G-1.
-* A literal or label must be 4 bytes and must not exceed 2G-1.
+  * A constant must not exceed 2G-1.
+  * A literal or label must be 4 bytes and must not exceed 2G-1.
 
 ##### INITIMG
 
@@ -1136,8 +1138,8 @@ This note applies to all Temporary Storage Control commands:
 ### DELETEQ
 
 ```hlasm
-name     EXEC CICS DELETEQ TS                                          X
-                   QUEUE()/QNAME()
+name     EXEC  CICS DELETEQ TS
+                    QUEUE()/QNAME()
 ```
 
 #### Parameters
@@ -1180,12 +1182,12 @@ Only label or literal may be used to specify a QNAME with hex characters.
 ### READQ
 
 ```hlasm
-name     EXEC CICS READQ TS                                            X
-                   QUEUE()/QNAME()                                     X
-                   INTO()/SET()                                        X
-                   LENGTH()/FLENGTH()                                  X
-                   NUMITEMS()                                          X
-                   ITEM()/NEXT                                         
+name     EXEC  CICS READQ TS
+                    QUEUE()/QNAME()
+                    INTO()/SET()
+                    LENGTH()/FLENGTH()
+                    NUMITEMS()
+                    ITEM()/NEXT
 ```
 
 #### Parameters
@@ -1215,14 +1217,14 @@ Only label or literal may be used to specify a QNAME with hex characters.
 ##### LENGTH
 
 * May be specified as LENGTH(value) or LENGTH(label)
-* LENGTH(value) supports the use of the length attribute.
-* label must point to a 2-byte hex value.
+  * LENGTH(value) supports the use of the length attribute.
+  * label must point to a 2-byte hex value.
 
 ##### FLENGTH
 
 * Can be specified as a constant, literal or label.
-* A constant must not exceed 2G-1.
-* A literal or label must be 4 bytes and must not exceed 2G-1.
+  * A constant must not exceed 2G-1.
+  * A literal or label must be 4 bytes and must not exceed 2G-1.
 * LENGTH/FLENGTH can be omitted. When they are, the implied length of INTO is used.
   * LENGTH/FLENGTH is mandatory when SET is used.
 
@@ -1255,13 +1257,13 @@ Only label or literal may be used to specify a QNAME with hex characters.
 ### WRITEQ
 
 ```hlasm
-name     EXEC CICS WRITEQ TS                                           X
-                   QUEUE()/QNAME()                                     X
-                   FROM()                                              X
-                   LENGTH()/FLENGTH()                                  X
-                   NUMITEMS()                                          X
-                   ITEM()                                              X
-                   REWRITE                                             
+name     EXEC  CICS WRITEQ TS
+                    QUEUE()/QNAME()
+                    FROM()
+                    LENGTH()/FLENGTH()
+                    NUMITEMS()
+                    ITEM()
+                    REWRITE
 ```
 
 #### Parameters
@@ -1301,16 +1303,16 @@ _label_ may take three forms:
 ##### LENGTH
 
 * May be specified as LENGTH(value) or LENGTH(label)
-* LENGTH(value) supports the use of the length attribute.
-* label must point to a 2-byte hex value.
-* LENGTH can be omitted. When they are, the implied length of FROM is used. 
+  * LENGTH(value) supports the use of the length attribute.
+  * label must point to a 2-byte hex value.
+* LENGTH can be omitted. When they are, the implied length of FROM is used.
 * LENGTH is mandatory when FROM is an indirect reference.
 
 ##### FLENGTH
 
 * Can be specified as a constant, literal or label.
-* A constant must not exceed 2G-1.
-* A literal or label must be 4 bytes and must not exceed 2G-1.
+  * A constant must not exceed 2G-1.
+  * A literal or label must be 4 bytes and must not exceed 2G-1.
 * FLENGTH can be omitted. When they are, the implied length of FROM is used. 
 * FLENGTH is mandatory when FROM is an indirect reference.
 
@@ -1351,10 +1353,10 @@ _label_ may take three forms:
 ### ABEND
 
 ```hlasm
-name     EXEC CICS ABEND                                              X
-                   ABCODE()                                           X
-                   CANCEL                                             X
-                   NODUMP                                             
+name     EXEC  CICS ABEND
+                    ABCODE()
+                    CANCEL
+                    NODUMP
 ```
 
 #### Parameters
@@ -1373,10 +1375,10 @@ name     EXEC CICS ABEND                                              X
 ### HANDLE ABEND 
 
 ```hlasm
-name     EXEC CICS HANDLE ABEND CANCEL
-name     EXEC CICS HANDLE ABEND RESET
-name     EXEC CICS HANDLE ABEND LABEL(label)
-name     EXEC CICS HANDLE ABEND PROGRAM()
+name     EXEC  CICS HANDLE ABEND CANCEL
+name     EXEC  CICS HANDLE ABEND RESET
+name     EXEC  CICS HANDLE ABEND LABEL(label)
+name     EXEC  CICS HANDLE ABEND PROGRAM()
 ```
 
 #### Parameters
@@ -1392,7 +1394,7 @@ _label_ may take three forms:
 ##### PROGRAM 
 
 * Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
-* _label_ must point to an 8-byte field.
+  * _label_ must point to an 8-byte field.
 
 Any received COMMAREA when the EXEC CICS HANDLE ABEND is
 issued is passed to the handling program when an abend occurs.
@@ -1413,11 +1415,11 @@ issued is passed to the handling program when an abend occurs.
 ### LINK
 
 ```hlasm
-name     EXEC CICS LINK                                                X
-                   PROGRAM()                                           X
-                   COMMAREA(label)                                     X
-                   LENGTH()                                            X
-                   CHANNEL()                                           
+name     EXEC  CICS LINK
+                    PROGRAM()
+                    COMMAREA(label)
+                    LENGTH()
+                    CHANNEL()
 ```
 
 Executes another CICS program.
@@ -1434,7 +1436,7 @@ A warning MNOTE is issued.
 
 * PROGRAM is mandatory
 * Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
-* label must point to an 8-byte field.
+  * label must point to an 8-byte field.
 
 ##### COMMAREA
 
@@ -1448,8 +1450,8 @@ A warning MNOTE is issued.
 ##### LENGTH
 
 * Can be specified as LENGTH(value) or LENGTH(label)
-* LENGTH(value) supports the use of the length attribute.
-* label must point to a 2-byte hex value.
+  * LENGTH(value) supports the use of the length attribute.
+  * label must point to a 2-byte hex value.
 * LENGTH can be omitted. When it is, the implied length of the COMMAREA is used.
 * LENGTH is mandatory when COMMAREA is an indirect reference.
 
@@ -1474,11 +1476,11 @@ A warning MNOTE is issued.
 ### LOAD
 
 ```hlasm
-name     EXEC CICS LOAD                                                X
-                   PROGRAM()                                           X
-                   ENTRY()/SET()                                       X
-                   LENGTH(label)                                       X
-                   FLENGTH(label)                                      X
+name     EXEC  CICS LOAD
+                    PROGRAM()
+                    ENTRY()/SET()
+                    LENGTH(label)
+                    FLENGTH(label)
 ```
 
 Loads a module.
@@ -1492,7 +1494,7 @@ not an executable program.
 
 * PROGRAM is mandatory
 * Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
-* label must point to an 8-byte field.
+  * label must point to an 8-byte field.
 * At present, only modules with a suffix of .390 may be LOADed.
 
 ##### ENTRY/SET
@@ -1541,7 +1543,7 @@ Releases a previously loaded module.
 
 * PROGRAM is mandatory
 * Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
-* label must point to an 8-byte field.
+  * label must point to an 8-byte field.
 
 #### Errors
 
@@ -1557,12 +1559,12 @@ Releases a previously loaded module.
 ### RETURN
 
 ```hlasm
-name     EXEC CICS RETURN
-                   TRANSID()
-                   COMMAREA(label)
-                   LENGTH()
-                   CHANNEL()
-                   IMMEDIATE
+name     EXEC  CICS RETURN
+                    TRANSID()
+                    COMMAREA(label)
+                    LENGTH()
+                    CHANNEL()
+                    IMMEDIATE
 ```
 Returns to the last caller.
 
@@ -1574,7 +1576,7 @@ In zCICS both CHANNEL and COMMAREA may be specified. A warning MNOTE is issued.
 
 * Optional, but when COMMAREA is specified, TRANSID is mandatory.
 * Can be specified as TRANSID('xxxx') or TRANSID(label)
-* _label_ must point to a 4-byte field.
+  * _label_ must point to a 4-byte field.
 
 ##### COMMAREA
 
@@ -1590,7 +1592,7 @@ _label_ may take three forms:
 
 * Can be specified as LENGTH(value) or LENGTH(label)
 * LENGTH(value) supports the use of the length attribute.
-* _label_ must point to a 2-byte hex value.
+  * _label_ must point to a 2-byte hex value.
 * LENGTH can be omitted. When it is, the implied length of the COMMAREA is used.
   * LENGTH is mandatory when COMMAREA is an indirect reference.
 
@@ -1619,11 +1621,11 @@ See the section on [IGNORE CONDITION](#ignore-condition) for these conditions.
 ### XCTL
 
 ```hlasm
-name     EXEC  CICS XCTL                                              X
-                    PROGRAM()                                         X
-                    COMMAREA(label)                                   X
-                    LENGTH()                                          X
-                    CHANNEL()                                         
+name     EXEC  CICS XCTL
+                    PROGRAM()
+                    COMMAREA(label)
+                    LENGTH()
+                    CHANNEL()
 ```
 
 Executes another CICS program.
