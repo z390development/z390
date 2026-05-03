@@ -1,4 +1,3 @@
-
 # zCICS Application Programming Guide
 
 ## Introduction
@@ -83,7 +82,7 @@ The standard entry for a CICS program is as follows:
 ```hlasm
          DFHEISTG
 MYFIELD  DS    CL100 demo user field
-......
+         ...
 MYPROG   DFHEIENT
 ```
 
@@ -96,7 +95,7 @@ code in line with the sample given and include the `NOPROLOG` option in mz390 co
 ```hlasm
          DFHEISTG
 MYFIELD  DS    CL100 demo user field
-......
+         ...
 MYPROG   DFHEIENT CODEREG=(R8,R5),DATAREG=(R13,R6,R7)
 ```
 
@@ -150,7 +149,7 @@ _name_ is supported and optional.
 
 `EXEC CICS` is expected, `EXECUTE CICS` is not currently supported.
 
-`subfunction` is optional and depends on the function but must follow function, 
+`subfunction` is optional and depends on the function but must follow function,
 e.g. `EXEC CICS WRITEQ TS`
 
 `parm()` without spacing and `parm ()` with spacing are allowed.
@@ -189,6 +188,95 @@ excluded from a CEDF session.
 You can add `NOEDF` option to the compile or assembly command if you wish all CEDF intercepts in that
 program excluded.
 
+## Command reference - Overview
+
+This overview lists all EXEC CICS commands supported by zCICS.
+
+### General commands (02)
+
+* [HANDLE AID](#handle-aid)
+* HANDLE CONDITION
+* IGNORE CONDITION
+* POP HANDLE
+* PUSH HANDLE
+* ADDRESS
+* ASSIGN
+
+### Terminal Control (04)
+
+* RECEIVE
+* SEND
+* SEND CONTROL
+
+### File Control (06)
+
+* READ
+* STARTBR
+* READNEXT
+* READPREV
+* ENDBR
+* RESETBR
+
+### Storage Control (08)
+
+* FREEMAIN
+* GETMAIN
+
+### Temporary Storage Control (0A)
+
+* DELETEQ
+* READQ
+* WRITEQ
+
+### Program Control (0E)
+
+* ABEND
+* HANDLE ABEND
+* LINK
+* LOAD
+* RELEASE
+* RETURN
+* XCTL
+
+### Interval Control (10 and 4A)
+
+* ASKTIME
+* DELAY
+* FORMATTIME
+* START
+* RETRIEVE
+* CANCEL
+
+### Task Control (12)
+
+* ENQ
+* DEQ
+
+### BMS (18)
+
+* RECEIVE MAP
+* SEND MAP
+* SEND CONTROL
+
+### Dump Control (1C)
+
+* DUMP
+
+### System (4C)
+
+* INQUIRE FILE
+* SET FILE
+
+### Channels and Containers (34 and 96)
+
+* GET
+* PUT
+* DELETE
+* MOVE
+* STARTBROWSE
+* GETNEXT
+* ENDBROWSE
+
 ## Command reference - General Commands
 
 ### HANDLE AID
@@ -223,9 +311,9 @@ _label_ may take three forms:
 
 ```hlasm
          EXEC  CICS HANDLE AID PA1(GOPA1) PA2(INDGOPA1) PA3(=A(GOPA1))
-......
+         ...
 GOPA1    DS    0H
-......
+         ...
 INDGOPA1 DC    A(GOPA1)
 ```
 
@@ -265,7 +353,7 @@ _label_ may take three forms:
 
 ```hlasm
          EXEC  CICS HANDLE CONDITION EOF(ISEOF)
-......
+         ...
 ISEOF    DS    0H
 ```
 
@@ -428,7 +516,7 @@ The following parameters are not supported:
 
 ## Command reference - Terminal Control
 
-### RECEIVE 
+### RECEIVE
 
 ```hlasm
 name     EXEC  CICS RECEIVE
@@ -478,7 +566,7 @@ _label_ may take three forms:
 
 ##### LENGTH
 
-LENGTH can be specified as LENGTH(value) or LENGTH(label) 
+LENGTH can be specified as LENGTH(value) or LENGTH(label)
 
 LENGTH(value) supports the use of the length attribute.
 
@@ -1088,7 +1176,7 @@ name     EXEC  CICS GETMAIN
 
 #### Parameters
 
-##### SET 
+##### SET
 
 * SET is mandatory
 * Must be specified as a permitted general register value.
@@ -1313,7 +1401,7 @@ _label_ may take three forms:
 * Can be specified as a constant, literal or label.
   * A constant must not exceed 2G-1.
   * A literal or label must be 4 bytes and must not exceed 2G-1.
-* FLENGTH can be omitted. When they are, the implied length of FROM is used. 
+* FLENGTH can be omitted. When they are, the implied length of FROM is used.
 * FLENGTH is mandatory when FROM is an indirect reference.
 
 ##### ITEM
@@ -1321,7 +1409,7 @@ _label_ may take three forms:
 * May be specified as ITEM(value) or ITEM(label)
 * label must point to a 2-byte hex value.
 
-> [!INFO]
+> [!NOTE]
 > For compatibility with old releases of CICS, ITEM is accepted
 > without REWRITE and becomes NUMITEMS. ITEM must be a
 > label in this case.
@@ -1372,7 +1460,7 @@ name     EXEC  CICS ABEND
 * ABCODE IS INVALID
 * BAD PARM
 
-### HANDLE ABEND 
+### HANDLE ABEND
 
 ```hlasm
 name     EXEC  CICS HANDLE ABEND CANCEL
@@ -1391,7 +1479,7 @@ _label_ may take three forms:
 * Indirect reference
 * Adcon literal
 
-##### PROGRAM 
+##### PROGRAM
 
 * Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
   * _label_ must point to an 8-byte field.
@@ -1409,7 +1497,7 @@ issued is passed to the handling program when an abend occurs.
 * BAD PARM
 * HANDLE TYPE NOT RECOGNISED
 * INVALID PROGRAM
-* NO PARAMETERS SPECIFIED 
+* NO PARAMETERS SPECIFIED
 * PARMS MISSING OR TOO MANY PARMS
 
 ### LINK
@@ -1615,8 +1703,8 @@ _label_ may take three forms:
 See the section on [IGNORE CONDITION](#ignore-condition) for these conditions.
 
 * CHANNELERR/1
-* INVREQ/1 
-* INVREQ/2 
+* INVREQ/1
+* INVREQ/2
 
 ### XCTL
 
@@ -1680,18 +1768,19 @@ Return is to the last linker.
 
 #### Conditions (RESP/RESP2)
 
-* CHANNELERR/1 
+* CHANNELERR/1
 * PGMIDERR/3
 
 ## Command reference - Interval control
 
-!!! Note
-    FLENGTH is an extension; do not use this parameter if the source code is 
-    likely to be ported back to a mainframe environment.
+> [!NOTE]
+> FLENGTH is an extension; do not use this parameter if the source code is
+> likely to be ported back to a mainframe environment.
 
-### ASKTIME 
+### ASKTIME
+
 ```hlasm
-name     EXEC  CICS ASKTIME                                           X
+name     EXEC  CICS ASKTIME
                     ABSTIME()
 ```
 
@@ -1699,8 +1788,7 @@ name     EXEC  CICS ASKTIME                                           X
 
 * BAD PARM
 
-
-### DELAY 
+### DELAY
 
 ```hlasm
 name     EXEC  CICS DELAY
@@ -1714,34 +1802,37 @@ name     EXEC  CICS DELAY
 ```
 
 #### Parameters
+
 ##### INTERVAL
 
 * Can be specified as INTERVAL(s) through to INTERVAL(hhmmss).
-    * `INTERVAL(234)` means wait for 2 minutes 34 seconds.
+  * `INTERVAL(234)` means wait for 2 minutes 34 seconds.
 * INTERVAL(label) is also permitted (extension).
-    * _label_ must point to a 6-byte character field with leading character zeros
-      as needed.
-      ```hlasm
-      name     EXEC  CICS DELAY
-                          INTERVAL(MYTIME)
-      ......
-      MYTIME DC C'000234'
-      ```
+  * _label_ must point to a 6-byte character field with leading character zeros as needed.
+
+```hlasm
+name     EXEC  CICS DELAY
+                    INTERVAL(MYTIME)
+         ...
+MYTIME   DC    C'000234'
+```
+
 ##### TIME
 
 * Can be specified as TIME(s) through to TIME(hhmmss).
-    * `TIME(234)` means resume the task at 2 minutes 34 seconds after
-      midnight. Expiration time rules apply; see the IBM CICS(r) Application
-      Programming Guide.
+  * `TIME(234)` means resume the task at 2 minutes 34 seconds after
+    midnight. Expiration time rules apply; see the IBM CICS(r) Application
+    Programming Guide.
 * TIME(label) is also permitted (extension).
-    * label must point to a 6-byte character field with leading character zeros
-      as needed.
-      ```hlasm
-      name     EXEC  CICS DELAY
-                          TIME(MYTIME)
-      ......
-      MYTIME   DC    C'000234'
-      ```
+  * label must point to a 6-byte character field with leading character zeros as needed.
+
+```hlasm
+name     EXEC  CICS DELAY
+                    TIME(MYTIME)
+         ...
+MYTIME   DC    C'000234'
+```
+
 ##### FOR HOURS() MINUTES() SECONDS()
 
 * FOR is an alternative to INTERVAL.
@@ -1752,7 +1843,7 @@ name     EXEC  CICS DELAY
 * UNTIL is an alternative to TIME.
 * HOURS/MINUTES/SECONDS must be numeric values.
 * The result from the parameters is a time-of-day.
-    * `UNTIL SECONDS(10000)` means resume the task at 02:46:40.
+  * `UNTIL SECONDS(10000)` means resume the task at 02:46:40.
 * Expiration time rules apply; see the IBM CICS(r) Application Programming Guide.
 * If no parameters are specified, then DELAY INTERVAL(0) is assumed.
 
@@ -1774,8 +1865,7 @@ name     EXEC  CICS DELAY
 * INVREQ/5
 * INVREQ/6
 
-
-### FORMATTIME 
+### FORMATTIME
 
 ```hlasm
 name     EXEC  CICS FORMATTIME
@@ -1783,16 +1873,18 @@ name     EXEC  CICS FORMATTIME
 
 Refer to IBM CICS(r) Application Programming reference for available parameters.
 
-!!! Note
-    * STRINGFORMAT is discarded as there is only one option.
-    * DATESEP(label) and TIMESEP(label) are added as extensions.
-      Only the first byte is used.
-    * DATESTRING returns the following 25-byte string.
-      "Mon, 17 Dec 2007 10:20:30". The time zone (e.g. GMT) is not returned.
+> [!NOTE]
+> * STRINGFORMAT is discarded as there is only one option.
+> * DATESEP(label) and TIMESEP(label) are added as extensions.
+>   Only the first byte is used.
+> * DATESTRING returns the following 25-byte string:
+>   "Mon, 17 Dec 2007 10:20:30". The time zone (e.g. GMT) is not returned.
+
 #### Errors
 
 * ABSTIME IS MANDATORY
 * BAD PARM
+
 #### Conditions (RESP/RESP2)
 
 * INVREQ/1
@@ -1817,16 +1909,16 @@ name     EXEC  CICS START
                     SECONDS()
 ```
 
-!!! Warning
-    * USERID is not supported.
+> [!WARNING]
+> USERID is not supported.
 
 #### Parameters
 
 * In zCICS both CHANNEL and other parms may be specified.
-    * A warning MNOTE is issued.
+  * A warning MNOTE is issued.
 * INTERVAL and TIME follow the same syntax and rules as for DELAY.
-* AFTER and AT follow the same syntax and rules as FOR and UNTIL in
-  DELAY above.
+* AFTER and AT follow the same syntax and rules as FOR and UNTIL in DELAY above.
+
 #### Errors
 
 * AFTER/AT SPECIFIED, BUT NO TIME PARAMETERS
@@ -1864,7 +1956,6 @@ name     EXEC  CICS START
 * TERMIDERR
 * TRANSIDERR
 
-
 ### RETRIEVE
 
 ```hlasm
@@ -1876,8 +1967,8 @@ name     EXEC  CICS RETRIEVE
                     QUEUE()
 ```
 
-!!! Warning
-    WAIT is not supported.
+> [!WARNING]
+> WAIT is not supported.
 
 #### Errors
 
@@ -1898,15 +1989,15 @@ name     EXEC  CICS RETRIEVE
 * ENVDEFERR
 * LENGERR
 
-### CANCEL 
+### CANCEL
 
 ```hlasm
 name     EXEC  CICS CANCEL
                     REQID()
 ```
 
-!!! Warning
-    TRANSID is not supported.
+> [!WARNING]
+> TRANSID is not supported.
 
 #### Errors
 
@@ -1942,16 +2033,16 @@ name     EXEC  CICS ENQ
 * BAD PARM
 * RESOURCE IS MANDATORY
 
-!!! Warning
-    ENQ on address may not work in zCICS
-    but the command will be processed.
+> [!WARNING]
+> ENQ on address may not work in zCICS
+> but the command will be processed.
 
 #### Conditions (RESP/RESP2)
 
 * ENQBUSY
 * LENGERR/1
 
-### DEQ 
+### DEQ
 
 ```hlasm
 name     EXEC  CICS DEQ
@@ -1977,7 +2068,7 @@ name     EXEC  CICS DEQ
 
 ## Command reference - BMS
 
-### RECEIVE 
+### RECEIVE MAP
 
 ```hlasm
 name     EXEC  CICS RECEIVE MAP()
@@ -1987,20 +2078,18 @@ name     EXEC  CICS RECEIVE MAP()
 
 #### Parameters
 
-!!! Warning
-    * TERMINAL and ASIS are accepted and discarded.
-    * SET, FROM and LENGTH are not supported.
+> [!WARNING]
+> * TERMINAL and ASIS are accepted and discarded.
+> * SET, FROM and LENGTH are not supported.
 
 ##### MAP
 
-* MAP can be a quoted string, maximum 7 characters or a label pointing to a
-  7-byte field.
+* MAP can be a quoted string, maximum 7 characters or a label pointing to a 7-byte field.
 * If MAP is a label, then INTO is mandatory.
-    * The map structure will not be cleared before the mapping takes
-      place.
+  * The map structure will not be cleared before the mapping takes place.
 * If MAP is a string, then INTO is optional.
-    * If INTO is omitted, the default is map.I
-    * The map structure will be cleared before the mapping takes place.
+  * If INTO is omitted, the default is map.
+  * The map structure will be cleared before the mapping takes place.
 
 ##### MAPSET
 
@@ -2020,13 +2109,13 @@ If MAPSET is omitted, then the MAPname is used.
 
 #### Conditions (RESP/RESP2)
 
-!!! Note 
-    EIBRESP2 is an extension for MAPFAIL; 
-    please see the [zCICS BMS Guide]() for more information.
+> [!NOTE]
+> EIBRESP2 is an extension for MAPFAIL;
+> please see the [zCICS BMS Guide]() for more information.
 
-    Many of the conditions can arise through a mismatch of map and
-    structure. Typically a map is re-assembled but the programs using it
-    are not.
+Many of the conditions can arise through a mismatch of map and
+structure. Typically a map is re-assembled but the programs using it
+are not.
 
 * INVMPSZ/0
 * MAPFAIL/1 The map cannot be found in the mapset.
@@ -2039,13 +2128,13 @@ If MAPSET is omitted, then the MAPname is used.
   LENGTH= parameter.
 * MAPFAIL/7 There has been a mismatch between the physical map and
   the DSECT.
-* MAPFAIL/8 
-    * Data to be processed by PICIN is over 31 digits.
-    * Data is not numeric after being PACKed.
-    * Data length is greater than the edit pattern allows.
+* MAPFAIL/8
+  * Data to be processed by PICIN is over 31 digits.
+  * Data is not numeric after being PACKed.
+  * Data length is greater than the edit pattern allows.
 * INVREQ/0
 
-### SEND
+### SEND MAP
 
 ```hlasm
 name     EXEC  CICS SEND MAP()
@@ -2060,11 +2149,12 @@ name     EXEC  CICS SEND MAP()
                     FRSET
                     SET()
 ```
+
 #### Parameters
 
-!!! Warning
-    * TERMINAL and WAIT are accepted and discarded.
-    * ACCUM is not supported.
+> [!WARNING]
+> * TERMINAL and WAIT are accepted and discarded.
+> * ACCUM is not supported.
 
 ##### MAP
 
@@ -2072,12 +2162,12 @@ name     EXEC  CICS SEND MAP()
   7-byte field.
 * If MAP is a label, then FROM is mandatory.
 * If MAP is a string, then FROM and/or LENGTH are optional.
-    * If FROM is omitted, the default is map.O
-    * If LENGTH is omitted, the default is map.L
+  * If FROM is omitted, the default is map.
+  * If LENGTH is omitted, the default is map.
 
 ##### LENGTH
 
-* LENGTH is supported but the value used is always that of the structure length. 
+* LENGTH is supported but the value used is always that of the structure length.
 * Can be specified as LENGTH(value) or LENGTH(label)
 * LENGTH(value) supports the use of the length attribute.
 * _label_ must point to a 2-byte hex value.
@@ -2092,8 +2182,8 @@ name     EXEC  CICS SEND MAP()
 
 SET() is currently intended to be an internal parameter.
 
-!!! Warning
-    SET does not conform to the standard used for BMS PAGING.
+> [!WARNING]
+> SET does not conform to the standard used for BMS PAGING.
 
 #### Errors
 
@@ -2109,26 +2199,26 @@ SET() is currently intended to be an internal parameter.
 
 #### Conditions (RESP/RESP2)
 
-!!! Note 
-    EIBRESP2 is an extension for MAPFAIL
-    See [zCICS BMS Guide]() for more information.
+> [!NOTE]
+> EIBRESP2 is an extension for MAPFAIL
+> See [zCICS BMS Guide]() for more information.
 
 * INVMPSZ/0
 * MAPFAIL/1 The map cannot be found in the mapset.
-* MAPFAIL/8 
-    * Data to be processed by PICOUT is over 31 digits.
-    * Data is not numeric after being PACKed.
-    * Data length is greater than the edit pattern allows.
+* MAPFAIL/8
+  * Data to be processed by PICOUT is over 31 digits.
+  * Data is not numeric after being PACKed.
+  * Data length is greater than the edit pattern allows.
 * MAPFAIL/9 Override field or colour attribute is invalid
 * INVREQ/0
-    * Attempt to execute this in a non-terminal attached task.
-      This is not documented in the IBM CICS(r) Manuals.
+  * Attempt to execute this in a non-terminal attached task.
+    This is not documented in the IBM CICS(r) Manuals.
 
 ### SEND CONTROL CURSOR/CURSOR() ERASE/ERASEAUP ALARM FREEKB FRSET
 
 ## Command reference - Dump Control
 
-### DUMP 
+### DUMP
 
 ```hlasm
 name     EXEC  CICS DUMP
@@ -2146,41 +2236,41 @@ name     EXEC  CICS DUMP
 
 * TRANSACTION is mandatory.
 * DUMPCODE is mandatory and can be a constant or label.
-    * _label_ must point to a 4-byte field.
-    * No syntax checking is done.
+  * _label_ must point to a 4-byte field.
+  * No syntax checking is done.
 
 ##### COMPLETE
 
 * If there are no storage area parameters then COMPLETE is the default.
-* Produces a SNAP dump ID=997,TEXT='DUMP dddd COMPLETE'
+* Produces a SNAP dump `ID=997,TEXT='DUMP dddd COMPLETE'`
 * If there are storage area parameters and COMPLETE is not specified,
   only the storage areas are dumped.
 
 ##### FROM() LENGTH()/FLENGTH()
 
-Produces a SNAP dump ID=997,TEXT='DUMP dddd AREA'
+Produces a SNAP dump `ID=997,TEXT='DUMP dddd AREA'`
 
 ##### LENGTH
 
 * Can be specified as a constant or label.
-    * A constant must not exceed 32767.
-    * A label must be 2 bytes and must not exceed 32767.
+  * A constant must not exceed 32767.
+  * A label must be 2 bytes and must not exceed 32767.
 
 ##### FLENGTH
 
 * Can be specified as a constant or label.
-    * A constant must not exceed 2G-1.
-    * A label must be 4 bytes and must not exceed 2G-1.
+  * A constant must not exceed 2G-1.
+  * A label must be 4 bytes and must not exceed 2G-1.
 
 ##### SEGMENTLIST/LENGTHLIST/NUMSEGMENTS
 
-Produces multiple SNAP dumps ID=997,TEXT='DUMP dddd SEGMENT nnn'
+Produces multiple SNAP dumps `ID=997,TEXT='DUMP dddd SEGMENT nnn'`
 
 ##### NUMSEGMENTS
 
 * Can be specified as a constant or label.
-    * A constant must not exceed 2G-1.
-    * A label must be 4 bytes and must not exceed 2G-1.
+  * A constant must not exceed 2G-1.
+  * A label must be 4 bytes and must not exceed 2G-1.
 
 #### Errors
 
@@ -2191,7 +2281,7 @@ Produces multiple SNAP dumps ID=997,TEXT='DUMP dddd SEGMENT nnn'
 * LENGTH OR FLENGTH REQUIRES FROM
 * LENGTH OR FLENGTH MUST BE SPECIFIED
 * SEGMENTLIST, LENGTHLIST AND NUMSEGMENTS MUST ALL BE SPECIFIED OR ALL ABSENT
-* TRANSACTION MUST BE SPECIFIED 
+* TRANSACTION MUST BE SPECIFIED
 
 ## Command reference - Inquire
 
@@ -2227,7 +2317,7 @@ The following parameters are supported:
 * UPDATE
 * BASEDSNAME()
 * DSNAME()
- 
+
 The length of data returned is the implied length of the data
 area to a maximum of 128 bytes.
 
@@ -2250,6 +2340,7 @@ area to a maximum of 128 bytes.
 ```hlasm
 name     EXEC  CICS SET FILE()/DATASET() ...
 ```
+
 #### Parameters
 
 The following parameters are supported:
@@ -2306,7 +2397,7 @@ The following parameters are supported:
 
 ## Command reference - Channel and containers
 
-### GET 
+### GET
 
 ```hlasm
 name     EXEC  CICS GET
@@ -2321,11 +2412,11 @@ name     EXEC  CICS GET
 
 * BAD PARM
 * BOTH INTO AND SET SPECIFIED
-* CONTAINER IS MANDATORY 
+* CONTAINER IS MANDATORY
 * INTO AND NODATA SPECIFIED
 * INTO OR SET OR NODATA IS REQUIRED
 * INVALID CHANNEL
-* INVALID CONTAINER 
+* INVALID CONTAINER
 * NODATA REQUIRES FLENGTH
 * SET AND NODATA SPECIFIED
 * SET OR NODATA REQUIRES FLENGTH AS LABEL
@@ -2335,9 +2426,9 @@ name     EXEC  CICS GET
 
 * CHANNELERR/2
 * INVREQ/4
-* LENGERR/11 
+* LENGERR/11
 
-### PUT 
+### PUT
 
 ```hlasm
 name     EXEC  CICS PUT
@@ -2349,22 +2440,23 @@ name     EXEC  CICS PUT
 #### Errors
 
 * BAD PARM
-* CONTAINER IS MANDATORY 
+* CONTAINER IS MANDATORY
 * FLENGTH IS MANDATORY FOR INDIRECT FROM
 * FLENGTH WITHOUT FROM
 * FROM IS MANDATORY
 * INVALID CHANNEL
-* INVALID CONTAINER 
+* INVALID CONTAINER
 
 #### Conditions (RESP/RESP2)
 
 * CHANNELERR/1
 * CONTAINERERR/18
 * INVREQ/4
-* LENGERR/1 
+* LENGERR/1
 
 
-### DELETE 
+### DELETE
+
 ```hlasm
 name     EXEC  CICS DELETE
                     CONTAINER()
@@ -2374,9 +2466,9 @@ name     EXEC  CICS DELETE
 #### Errors
 
 * BAD PARM
-* CONTAINER IS MANDATORY 
+* CONTAINER IS MANDATORY
 * INVALID CHANNEL
-* INVALID CONTAINER 
+* INVALID CONTAINER
 
 #### Conditions (RESP/RESP2)
 
@@ -2396,21 +2488,21 @@ name     EXEC  CICS MOVE
 #### Errors
 
 * BAD PARM
-* CONTAINER AND/OR AS ARE MISSING 
+* CONTAINER AND/OR AS ARE MISSING
 * INVALID AS
 * INVALID CHANNEL
-* INVALID CONTAINER 
+* INVALID CONTAINER
 * INVALID TOCHANNEL
 
 #### Conditions (RESP/RESP2)
 
 * CHANNELERR/1
-* CHANNELERR/2 
+* CHANNELERR/2
 * CONTAINERERR/10
-* CONTAINERERR/18 
+* CONTAINERERR/18
 * INVREQ/4
 
-### STARTBROWSE 
+### STARTBROWSE
 
 ```hlasm
 name     EXEC  CICS STARTBROWSE
@@ -2422,16 +2514,16 @@ name     EXEC  CICS STARTBROWSE
 #### Errors
 
 * BAD PARM
-* INVALID CHANNEL 
+* INVALID CHANNEL
 * BROWSETOKEN IS MANDATORY
-* STARTBROWSE TYPE NOT RECOGNISED 
- 
+* STARTBROWSE TYPE NOT RECOGNISED
+
 #### Conditions (RESP/RESP2)
 
- * ACTIVITYERR/2 
- * CHANNELERR/2 
+ * ACTIVITYERR/2
+ * CHANNELERR/2
 
-### GETNEXT 
+### GETNEXT
 
 ```hlasm
 name     EXEC  CICS GETNEXT
@@ -2443,15 +2535,14 @@ name     EXEC  CICS GETNEXT
 
 * BAD PARM
 * BROWSETOKEN IS MANDATORY
-* CONTAINER IS MANDATORY 
- 
+* CONTAINER IS MANDATORY
+
 #### Conditions (RESP/RESP2)
 
-* END/2 
-* TOKENERR/3 
+* END/2
+* TOKENERR/3
 
-
-### ENDBROWSE 
+### ENDBROWSE
 
 ```hlasm
 name     EXEC  CICS ENDBROWSE
@@ -2462,8 +2553,8 @@ name     EXEC  CICS ENDBROWSE
 
 * BAD PARM
 * BROWSETOKEN IS MANDATORY
-* ENDBROWSE TYPE NOT RECOGNISED 
+* ENDBROWSE TYPE NOT RECOGNISED
 
 #### Condition (RESP/RESP2)
 
-* TOKENERR/3 
+* TOKENERR/3
