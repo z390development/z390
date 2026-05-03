@@ -1,0 +1,16 @@
+/* Increase the size of Java icon in the footer */
+.md-social {
+  display: flex;
+  align-items: center;
+}
+
+.md-social__link {
+  font-size: 1.8rem;
+  height: 1.8rem;
+  display: inline-flex;
+  align-self: center;
+}
+
+.md-social__link svg {
+  max-height: 100%;
+}
