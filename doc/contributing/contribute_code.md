@@ -74,6 +74,9 @@ the bldjar script.
         
     `bash> bash/bldjar`
 
+The published Java API documentation is available on GitHub Pages at
+[JavaDocs](../javadoc/index.html).
+
 ## Test the jar
 
 gradle info: https://docs.gradle.org/current/userguide/userguide.html
