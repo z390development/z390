@@ -42,8 +42,10 @@
                      END_SUBTRACT
                AELSEIF (&IE_TYPE(&IE_LVL) EQ 13)  RPI 1012             
                      END_MULTIPLY
-               AELSEIF (&IE_TYPE(&IE_LVL) EQ 14)  RPI 1012             
+               AELSEIF (&IE_TYPE(&IE_LVL) EQ 14)  RPI 1012
                      END_DIVIDE
+               AELSEIF (&IE_TYPE(&IE_LVL) EQ 15)
+                     END_RETURN
                AELSE
                      MNOTE 8,'PERIOD UNKNOWN LEVEL TYPE - &IE_TYPE(&IE_X
                LVL)'

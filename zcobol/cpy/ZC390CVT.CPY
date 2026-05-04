@@ -36,6 +36,7 @@
 .*   6.  Added MVC to ZC390NUC.MLC init routine to set ZCVT_PVTMAXDL   
 .*   7.  Updated DISPLAY.MLC to use ZCVT_PVTMAXDL vs MAXBUFF EQU.   
 .* 01/25/12 DSH RPI 1181 CORRECT ZCVT_HIGH_VALUES TO X'FF'
+.* 01/24/26 Issue 730 MP with invalid length operands causes S0C6
 .*********************************************************************
 .* ZC390LIB loaded during init of zcobol program and R8 set to entry
 .*  DSECT AND COPY IN ZCOBOL\Z390\GEN_ID.MAC
@@ -107,6 +108,23 @@ ZCVT_PWORK3    DS PL16       DIV QUOTIENT
 ZCVT_PWORK4    DS PL16       DIV REMAINDER
 ZCVT_NDDX      DS XL16       DIV DIVIDEND HOLD AREA
 ZCVT_WORKAREA  DS XL256      GEN_INSPECT PARMS, GEN_EDIT WORK, ETC.
+         ORG   ZCVT_WORKAREA           Redefine for MP work fields #730
+* We're not using all available digit positions - that's to have   #730
+* room for carrying overflow digits after adding partial sums      #730
+ZCVT_SRC2      DS PL8                  Source digits  1- 5         #730
+ZCVT_SRC1      DS PL8                  Source digits  6-18         #730
+ZCVT_SRC0      DS PL8                  Source digits 19-31         #730
+ZCVT_TGT2      DS PL8                  Target digits  1 -5         #730
+ZCVT_TGT1      DS PL8                  Target digits  6-18         #730
+ZCVT_TGT0      DS PL8                  Target digits 19-31         #730
+ZCVT_RESX      DS PL16                 Result field / work field   #730
+ZCVT_RES4      DS PL8                  Result digits 'tenKs'       #730
+ZCVT_RES3      DS PL8                  Result digits 'thousands'   #730
+ZCVT_RES2      DS PL8                  Result digits 'hundreds'    #730
+ZCVT_RES1      DS PL8                  Result digits 'tens'        #730
+ZCVT_RES0      DS PL8                  Result digits 'units'       #730
+ZCVT_PZERO     DS PL8                  Preloaded with packed 0     #730
+          ORG   ,                      Reset to end                #730
 *
 * END OF ZC390CVT
 *

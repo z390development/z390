@@ -41,6 +41,10 @@ exit /b %z_ReturnCode%
 :help
 echo .
 echo the EXEC.BAT procedure is intended to execute a single program
+echo if the progam was compiled from zCobol source, it will load ZC390LIB.390
+echo For zCobol programs, always add option SYS390(+zcobol\lib)
+echo and make sure your ZC390LIB.390 file exists.
+echo You can run bat\BLDLIB to (re-)create ZC390LIB.390 if needed.
 echo .
 :retry
 set z_file=

@@ -1,4 +1,5 @@
 nav:
-    - install.md
-    - quickstart.md
-    - ...
+  - install.md
+  - quickstart.md
+  - learning.md
+  - macro_index.md

@@ -19,7 +19,7 @@ a growing demand for tools such as zCOBOL to help seamlessly bridge legacy
 and modern IT solutions.
 
 Current jobs available include writing COBOL verb macros for currently unsupported
-verbs including SORT, MERGE. Optimizing the code generation macros
+verbs. Optimizing the code generation macros
 to produce more efficient code and optional code based on
 [zCOBOL options](../user_guide/zCOBOL/zCOBOL_options.md) such as
 TRUNC, R64, etc. In addition, major effort is still required to covert the
