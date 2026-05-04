@@ -48,7 +48,6 @@ import java.util.regex.Pattern;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.Timer;
-;@SuppressWarnings("unchecked")
 
 /**
  * sz390 is the SVC component of z390 which handles SVC calls and associated functions
@@ -56,6 +55,7 @@ import javax.swing.Timer;
  * Note: javadoc does not recognize this comment as a valid javadoc comment.
  *       the problem disappears when removing the SuppressWarnings directive above.
  */
+@SuppressWarnings("unchecked")
 public class sz390 implements Runnable {
    /****************************************************
     * Maintenance
