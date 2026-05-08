@@ -3,7 +3,7 @@
        AUTHOR.        JAMES FRANCIS CRAY.
       *
       * THIS PROGRAM CALCULATES YOUZPI FOR YOU
-      * YOUZPI FROM 4(1 - 1/3 + 1/5 - 1/7 …ETC.)
+      * YOUZPI FROM 4(1 - 1/3 + 1/5 - 1/7 ETC.)
       *
       * 2022-03-17 Abe Kornelis: this program incurs S0C7 when run
       *                          Quite likely a compiler bug

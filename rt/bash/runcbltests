@@ -71,6 +71,7 @@ bash/cblclg zcobol/tests/DB101A01 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/NC106A01 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTREPL $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/YOUZPI1 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/YOUZPI2 $1 $2 $3 $4 $5 $6 $7 $8 $9
 export INFILE=zcobol/tests/SORTASC.TF1
 export OUTFILE=zcobol/tests/SORTASC.OUT
 bash/cblclg zcobol/tests/SORTASC $1 $2 $3 $4 $5 $6 $7 $8 $9
