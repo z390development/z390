@@ -5,6 +5,10 @@ on:
       - main
       - doc/**
 
+env:
+  JAVA_DISTRIBUTION: temurin
+  JAVA_VERSION: 21
+
 jobs:
   deploy:
     name: Deploy docs
@@ -21,7 +25,12 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
+      - uses: actions/setup-java@v3
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
       - run: pip install -r doc/requirements.txt
+      - run: bash/bldjavadoc doc/javadoc
       - run: mkdocs gh-deploy --force
         env:
           Z390_VERSION: ${{ steps.version.outputs.version }}
