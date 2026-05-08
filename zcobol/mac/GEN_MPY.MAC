@@ -1138,7 +1138,7 @@
          L     ZC_R0,&N_SOURCE  
          CVD   ZC_R0,ZCVT_PWORK
          GEN_MP &N_TARGET,&L_TARGET,&P_TARGET,                         X #792
-               ZCVT_PWORK,L'ZCVT_PWORK,&P_SOURCE,&ONSIZE                 #792
+               ZCVT_PWORK,8,&P_SOURCE,&ONSIZE         8=L'ZCVT_PWORK     #792
                AWHEN C'G'
          LG    ZC_R0,&N_SOURCE
          CVDG  ZC_R0,ZCVT_PWORK1
@@ -1148,7 +1148,7 @@
          LH    ZC_R0,&N_SOURCE   
          CVD   ZC_R0,ZCVT_PWORK
          GEN_MP &N_TARGET,&L_TARGET,&P_TARGET,                         X #792
-               ZCVT_PWORK,L'ZCVT_PWORK,&P_SOURCE,&ONSIZE                 #792
+               ZCVT_PWORK,8,&P_SOURCE,&ONSIZE         8=L'ZCVT_PWORK     #792
                AWHEN C'P'
          GEN_MP &N_TARGET,&L_TARGET,&P_TARGET,                         X #792
                &N_SOURCE,&L_SOURCE,&P_SOURCE,&ONSIZE                     #792

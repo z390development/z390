@@ -25,12 +25,17 @@
 .*********************************************************************
 .* Notes:
 .*  1.  ROUNDED not supported yet.
+.*  2.  When &TGTLEN is specified as a length attribute reference
+.*      or any other value that SETA cannot evaluate to a numeric value
+.*      then a length of zero is assumed and unexpected results may
+.*      occur. To avoid: specify length as a numeric constant.
 .*********************************************************************
         GEN_MP &TGTNAM,&TGTLEN,&TGTPIC,&SRCNAM,&SRCLEN,&SRCPIC,&ONSIZE
 .*
 .* &TGTNAM = name of target field
 .* &TGTLEN = length of target field
 .*           target field is operand1 and result field.
+.*           the length must be a number, not a length attribute
 .* &TGTPIC = picture string of target field.
 .* &SRCNAM = name of source field
 .* &SRCLEN = length of source field
