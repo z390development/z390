@@ -25,13 +25,13 @@
 .* 05/06/26 Issue 792 Cobol test program YOUZPI2 incurs S0C7 on MP
 .*          Need to extend the interface to pass picture string
 .*********************************************************************
-         ZC_PIC_DIGITS &IX,&PIC_STRING
+         ZC_PIC_DIGITS &IX,&PIC_STRING                                  #792
          COPY  ZC_WS
-         AIF    ('&PIC_STRING' EQ '')
-               :&PIC SETC '&SYM_PIC(&IX)'
-         AELSE
-               :&PIC SETC '&PIC_STRING'
-         AEND
+         AIF    ('&PIC_STRING' EQ '')                                   #792
+               :&PIC SETC '&SYM_PIC(&IX)'                               #792
+         AELSE                                                          #792
+               :&PIC SETC '&PIC_STRING'                                 #792
+         AEND                                                           #792
          :&PIC_DIGITS SETA 0
          :&I SETA 1
          AWHILE (&I LE K'&PIC)

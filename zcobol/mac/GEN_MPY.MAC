@@ -71,7 +71,7 @@
              :&L_SOURCE SETA  &TMP_LEN(&NS_IX)        RPI 1202
              :&S_SOURCE SETB  &TMP_SIGN(&NS_IX)       RPI 1202
              :&T_SOURCE SETC '&TMP_TYPE(&NS_IX)'      RPI 1202
-             :&P_SOURCE SETC ''                       #792 **!!
+             :&P_SOURCE SETC ''                       #792
              :&D_SOURCE SETA  &TMP_PIC_DEC(&NS_IX)    RPI 1211
              AIF ('&T_SOURCE' EQ 'P')
                  :&N_SOURCE SETC '&N_SOURCE.(&L_SOURCE)'
