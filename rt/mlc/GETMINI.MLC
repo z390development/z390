@@ -1,0 +1,37 @@
+*
+* Test GETMAIN - register format on z/OS allows
+* subpool in high byte of register. z390 uses a
+* the full register for length - subpools not supported.
+*
+
+R0       EQU   0
+R1       EQU   1
+R2       EQU   2
+R3       EQU   3
+R4       EQU   4
+R5       EQU   5
+R6       EQU   6
+R7       EQU   7
+R8       EQU   8
+R9       EQU   9
+R10      EQU   10
+R11      EQU   11
+R12      EQU   12
+R13      EQU   13
+R14      EQU   14
+R15      EQU   15
+MAIN     CSECT
+         STM   R14,R12,12(R13)         SAVE ALL REGISTERS
+         USING MAIN,R15                SET UP ADDRESSABILITY
+*
+         LA    R2,X'50'
+         ICM   R2,B'1000',=X'07'
+         GETMAIN R,LV=(2)
+         DROP  R15                     No longer valid as a base
+*
+         LM    R14,R12,12(R13)
+         SLR   R15,R15
+         BR    R14                     RETURN FROM MODULE
+*
+         LTORG ,
+         END

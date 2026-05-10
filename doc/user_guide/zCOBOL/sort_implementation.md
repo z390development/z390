@@ -1,18 +1,13 @@
 # zCOBOL SORT
 
-Zane Hambly, December 2025. Per FIPS PUB 21-2, Section XI.
-
----
-
-`SORT.MAC` has said `MNOTE 8,'SORT NOT SUPPORTED YET'` since November 2008.
-Seventeen years is a long time to leave records unsorted. The stub has been
-replaced with a working implementation that parses the COBOL SORT statement
+zCOBOL provides support for the COBOL SORT statement
 and generates HLASM targeting the existing z390 ZSORT infrastructure
 (SVC X'A1').
 
 Both USING/GIVING and INPUT/OUTPUT PROCEDURE forms are supported.
-Multi-key sorts with mixed ASCENDING/DESCENDING work. MERGE does not,
-but Rome wasn't built in a day and neither was COBOL.
+Multi-key sorts with mixed ASCENDING/DESCENDING work. 
+
+MERGE is not currently supported.
 
 ## How It Works
 

@@ -1,42 +1,6 @@
 # zVSAM V2 - Addenda
 
 This document describes Macro parameters and control blocks used in the zVSAM V2 implementation.
-It contains the following major chapters:
-
-1. [API for ACB-based interfaces](#API-for-ACB-based-interfaces)
-    1. [ACB macro parameters](#ACB-macro-parameters)
-    2. [GENCB ACB macro parameters](#GENCB-ACB-macro-parameters)
-    3. [MODCB ACB macro parameters](#MODCB-ACB-macro-parameters)
-    4. [SHOWCB ACB macro parameters](#SHOWCB-ACB-macro-parameters)
-    5. [TESTCB ACB macro parameters](#TESTCB-ACB-macro-parameters)
-    6. [EXLST macro parameters](#EXLST-macro-parameters)
-    7. [GENCB EXLST macro parameters](#GENCB-EXLST-macro-parameters)
-    8. [MODCB EXLST macro parameters](#MODCB-EXLST-macro-parameters)
-    9. [SHOWCB EXLST macro parameters](#SHOWCB-EXLST-macro-parameters)
-   10. [TESTCB EXLST macro parameters](#TESTCB-EXLST-macro-parameters)
-   11. [OPEN macro parameters](#OPEN-macro-parameters)
-   12. [CLOSE macro parameters](#CLOSE-macro-parameters)
-   13. [zACB description](#zACB-description)
-   14. [zEXLST description](#zEXLST-description)
-   15. [CBMR description](#CBMR-description)
-   16. [CBMR description – body for ACB](#CBMR-description-–-body-for-ACB)
-   17. [CBMR description – body for EXLST](#CBMR-description-–-body-for-EXLST)
-2. [RPL-based interfaces](#RPL-based-interfaces)
-    1. [RPL macro parameters](#RPL-macro-parameters)
-    2. [GENCB RPL macro parameters](#GENCB-RPL-macro-parameters)
-    3. [MODCB RPL macro parameters](#MODCB-RPL-macro-parameters)
-    4. [SHOWCB RPL macro parameters](#SHOWCB-RPL-macro-parameters)
-    5. [TESTCB RPL macro parameters](#TESTCB-RPL-macro-parameters)
-    6. [POINT macro parameters](#POINT-macro-parameters)
-    7. [GET macro parameters](#GET-macro-parameters)
-    8. [PUT macro parameters](#PUT-macro-parameters)
-    9. [ERASE macro parameters](#ERASE-macro-parameters)
-   10. [CHECK macro parameters](#CHECK-macro-parameters)
-   11. [ENDREQ macro parameters](#ENDREQ-macro-parameters)
-   12. [VERIFY macro parameters](#VERIFY-macro-parameters)
-   13. [zRPL description](#zRPL-description)
-   14. [CBMR description – body for RPL](#CBMR-description-–-body-for-RPL)
-3. [List of changes](#List-of-changes)
 
 ## API for ACB-based interfaces
 
@@ -553,10 +517,10 @@ Remarks:
 
 ### CBMR description – body for ACB
 
-The CBMR header is described in the addenda, [CBMR description](#CBMR-description).
+The CBMR header is described in the addenda, [CBMR description](#cbmr-description).
 
 The CBMR tail for ACB is applicable only when the CBMR header's CBMRACB bit is on.
-It's length is determined by the `CBMRVRBS` fields in the CBMR header. This is always a multiple of 4
+Its length is determined by the `CBMRVRBS` fields in the CBMR header. This is always a multiple of 4
 to allow word alignment of the tail area that directly follows the body section.
 Any unused/unneeded verb bytes should be set to zero, indicating a no-operation.
 
@@ -712,7 +676,7 @@ Additional notes:
 
 ### CBMR description – body for EXLST
 
-The CBMR header is described in the addenda, [CBMR description](#CBMR-description).
+The CBMR header is described in the addenda, [CBMR description](#cbmr-description).
 
 The CBMR tail for EXLST is applicable only when the CBMR header's `CBMRXLST` bit is on.
 It's length is determined by the `CBMRVRBS` fields in the CBMR header.
@@ -1015,7 +979,7 @@ Review notes:
 
 ### CBMR description – body for RPL
 
-The CBMR header is described in the addenda, [CBMR description](#CBMR-description).
+The CBMR header is described in the addenda, [CBMR description](#cbmr-description).
 
 The CBMR tail for RPL is applicable only when the CBMR header's `CBMRRPL` bit is on.
 Its length is determined by the `CBMRVRBS` fields in the CBMR header.

@@ -51,10 +51,3 @@ More details regarding NIST validation can be found in the [zCOBOL user guide](.
 | RC=8 MNOTE support warning        | 19      | 151      | Warning for unsupported items pending implementation |
 | RC=16 At least 1 error message    | 249     | 160      | Error messages from mz390 or az390 macro assembler   |
 
-## Implementation Documentation
-
-The following documents describe recent COBOL statement implementations in detail,
-including normative references to [FIPS PUB 21-2](https://nvlpubs.nist.gov/nistpubs/Legacy/FIPS/fipspub21-2.pdf) (ANSI X3.23-1985):
-
-- [REPLACE Statement](./replace_implementation.md) - Compiler-directing text substitution per FIPS PUB 21-2 Section XII
-- [SORT Statement](./sort_implementation.md) - Sort-Merge module implementation per FIPS PUB 21-2 Section XI

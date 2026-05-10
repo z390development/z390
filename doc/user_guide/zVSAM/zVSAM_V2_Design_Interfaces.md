@@ -1,11 +1,6 @@
 # zVSAM V2 - API for Assembler and zCobol programs
 
 This document describes the macro interfaces for working with zVSAM V2 data sets.
-It contains the following major chapters:
-
-1. [ACB-based interfaces](#ACB-based-interfaces)
-2. [RPL-based interfaces](#RPL-based-interfaces)
-3. [Catalog management](#Catalog-management)
 
 ## ACB-based interfaces
 

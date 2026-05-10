@@ -39,7 +39,7 @@
 .*
          COPY  ZC_WS
 .*
-.* First take analyze the source and target field specs
+.* First analyze the source and target field specs
 .* to construct the proper source code for referencing them.
 &TGTREF  SETC  '&TGTNAM.(&TGTLEN.)'    Assume field(length)
 &I       SETA  ('&TGTNAM' INDEX '(')   More than just a field name?

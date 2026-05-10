@@ -1,19 +1,6 @@
 # zVSAM V2 - Logical processes for ACB-based requests
 
 This document describes the logical processes for ACB-based requests to be implemented in zVSAM V2.
-It contains the following major chapters:
-
-1. [ACB](#ACB)
-2. [GENCB ACB](#GENCB-ACB)
-3. [MODCB ACB](#MODCB-ACB)
-4. [SHOWCB ACB](#SHOWCB-ACB)
-5. [TESTCB ACB](#TESTCB-ACB)
-6. [EXLST](#EXLST)
-7. [GENCB EXLST](#GENCB-EXLST)
-8. [MODCB EXLST](#MODCB-EXLST)
-9. [SHOWCB EXLST](#SHOWCB-EXLST)
-10. [TESTCB EXLST](#TESTCB-EXLST)
-11. [Open](#Open)
 
 ## ACB
 
@@ -42,7 +29,7 @@ Open logic has two major components: the open macro and the actual run-time logi
 ### Open macro logic
 
 The open macro generates an open/close parameter list and/or an SVC 19 instruction to invoke the open routine.
-The syntax of the open macro is given in [OPEN macro](zVSAM_V2_Design_Interfaces.md#OPEN-macro)
+The syntax of the open macro is given in [OPEN macro](zVSAM_V2_Design_Interfaces.md#open-macro).
 
 The macro generates the following code:
 

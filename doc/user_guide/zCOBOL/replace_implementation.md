@@ -1,19 +1,11 @@
 # zCOBOL REPLACE Statement Implementation
 
-**Author:** Zane Hambly  
-**Date:** December 2025  
-**Standard:** FIPS PUB 21-2 (ANSI X3.23-1985, ISO 1989-1985)
-
----
-
 ## Abstract
 
 This document describes the implementation of the COBOL REPLACE compiler-directing 
-statement in z390 zCOBOL, closing a 16-year TODO item (stub created 08/18/2009). 
+statement in z390 zCOBOL. 
 The implementation strictly follows the Federal Information Processing Standards 
 Publication 21-2.
-
----
 
 ## Normative Reference
 
@@ -168,8 +160,4 @@ This implementation follows the COBOL 85 standard specification. Key compliance 
 
 4. **z390 Portable Mainframe Assembler and Emulator**. z390 Assembler LLC.
    - src/zc390.java - COBOL to HLASM translator
-
----
-
-*Document version: 1.0 | Last updated: December 2025*
 

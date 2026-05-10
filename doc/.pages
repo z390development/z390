@@ -1,0 +1,6 @@
+nav:
+  - Home: index.md
+  - Getting Started: getting_started
+  - User Guide: user_guide
+  - Reference: reference
+  - Contributing: contributing
