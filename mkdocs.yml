@@ -1,5 +1,6 @@
 site_name: z390
 site_author: z390 Development team
+site_url: https://z390development.github.io/z390/
 copyright: "&copy; 2026 z390 Assembler LLC. All rights reserved"
 repo_name: z390development/z390
 repo_url: https://github.com/z390development/z390
@@ -51,3 +52,9 @@ markdown_extensions:
 extra:
   version: !ENV [Z390_VERSION, 'Undefined']
   repo: !ENV [GITHUB_REPOSITORY, 'z390development/z390']
+  social:
+    - icon: fontawesome/brands/java
+      link: /z390/javadoc/index.html
+
+extra_css:
+  - stylesheets/extra.css
