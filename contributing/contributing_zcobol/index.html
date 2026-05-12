@@ -1958,6 +1958,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#caveat-for-developers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Caveat for developers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#nist-ansi-1985-test-suite-results" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2039,6 +2050,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#caveat-for-developers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Caveat for developers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#nist-ansi-1985-test-suite-results" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2096,6 +2118,18 @@ the zCOBOL regression tests (zCOBOL_Demos_and_Regression_Tests.htm)
 written in zCOBOL which verify that zCOBOL statements
 produce the expected results. And finally there is a need to develop documentation
 on the zCOBOL project as it evolves.</p>
+<h2 id="caveat-for-developers">Caveat for developers</h2>
+<p>When assembling a zCobol program, various zCobol macros expand differently when <code>TRACE</code>
+option is specified. The generated load module is larger and during execution 
+offsets may be different, compared to an assembly without <code>TRACE</code> option.</p>
+<p>In cases where these differences cause problems, first compile/assemble the program
+without <code>TRACE</code> option, then use either the <code>DEBUG.BAT</code> or the <code>debug</code> bash script
+with the <code>TRACE</code> option to create a trace of the program without reassembling the code.</p>
+<p><strong>Note:</strong> the CBLCLG.BAT script provides the path to the zCobol runtime
+library <code>sys390(+%z_HomeDir%zcobol\lib)</code>. Likewise, the cblclg bash script
+provides the equivalent option <code>sys390(+'$zdir'/zcobol/lib)</code>
+When using <code>DEBUG.BAT</code> or the <code>debug</code> bash script you'll have to provide the
+matching option for your environment. And please, don't forget the <code>+</code> sign.</p>
 <h2 id="nist-ansi-1985-test-suite-results">NIST ANSI 1985 Test Suite Results</h2>
 <p>v1.5.00a came from RPI 1001 for conditional 88 support, RPI 1002 SET and index
 support, and RPI 1012 miscellaneous syntax error corrections. Once some of the
@@ -2224,7 +2258,7 @@ download for the NIST test suite for zCOBOL.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.2-17-g60f704ae"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.2-18-g3f0af13d"}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
