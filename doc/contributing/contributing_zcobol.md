@@ -31,6 +31,22 @@ written in zCOBOL which verify that zCOBOL statements
 produce the expected results. And finally there is a need to develop documentation
 on the zCOBOL project as it evolves.
 
+## Caveat for developers
+
+When assembling a zCobol program, various zCobol macros expand differently when `TRACE`
+option is specified. The generated load module is larger and during execution 
+offsets may be different, compared to an assembly without `TRACE` option.
+
+In cases where these differences cause problems, first compile/assemble the program
+without `TRACE` option, then use either the `DEBUG.BAT` or the `debug` bash script
+with the `TRACE` option to create a trace of the program without reassembling the code.
+
+**Note:** the CBLCLG.BAT script provides the path to the zCobol runtime
+library `sys390(+%z_HomeDir%zcobol\lib)`. Likewise, the cblclg bash script
+provides the equivalent option `sys390(+'$zdir'/zcobol/lib)`
+When using `DEBUG.BAT` or the `debug` bash script you'll have to provide the
+matching option for your environment. And please, don't forget the `+` sign.
+
 ## NIST ANSI 1985 Test Suite Results
 
 v1.5.00a came from RPI 1001 for conditional 88 support, RPI 1002 SET and index
