@@ -71,6 +71,7 @@ call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTFUN1 %1 %2 %3 %4 %5 %6 %7 %8 %9 |
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTINT1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTMPY1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTMPY2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTRMD1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\CM101M01 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\CM101M02 %1 %2 %3 %4 %5 %6 %7 %8 %9
      if %ERRORLEVEL% NEQ 8 goto error
