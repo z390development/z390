@@ -239,6 +239,7 @@ rt/test/save/ZSTRMAC2.[mM][lL][cC]
 **/*.[xX][lL][sS]
 **/*.[xX][lL][sS][xX]
 **/*.[xX][mM][lL]
+!src/**/*.[xX][mM][lL]
 
 # Backup and junk files
 macold/
