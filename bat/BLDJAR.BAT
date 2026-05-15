@@ -44,7 +44,7 @@ for /f "tokens=1,2,3 delims=." %%a in ("%z_ver%") do (
     set z_minor=%%b
     set z_patch=%%c
 )
-if %z_major% LSS 9 (set jvopt=-source 8 -target 8) else (set jvopt=--release 8)
+set jvopt=-Xlint:unchecked -Xlint:deprecation
 if /I %z_dbg% EQU Debug (set jvopt=%jvopt% -g -d .) else (set jvopt=%jvopt% -g:none -d .)
 
 rem compile z390 java sources to class vm object code

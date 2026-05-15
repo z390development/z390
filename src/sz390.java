@@ -54,7 +54,6 @@ import javax.swing.Timer;
  * sz390 is the SVC component of z390 which handles SVC calls and associated functions
  *
  */
-@SuppressWarnings("unchecked")
 public class sz390 implements Runnable {
    /****************************************************
     * Maintenance

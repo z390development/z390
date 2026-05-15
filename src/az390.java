@@ -1360,7 +1360,6 @@ private void init_push_pop(){
 /**
  * initialize arrays using tz390.opt_max???
  */
-@SuppressWarnings("unchecked")
 private void init_arrays(){
 	/*
 	 * opt_maxcall - maximum call/push/using
