@@ -6,20 +6,20 @@ set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script
 cd ..               # go to root
 
-bash/asml guam/demo/DEMOAPL1  sysmac(mac) syscpy(mac+zcobol/lib)
-bash/asml guam/demo/DEMOGUI1  sysmac(mac) syscpy(mac+zcobol/lib)
-bash/asml guam/demo/DEMOGUI2  sysmac(mac) syscpy(mac+zcobol/lib)
-bash/asml guam/demo/DEMOGUI3  sysmac(mac) syscpy(mac+zcobol/lib)
-bash/asml guam/demo/DEMOGUI4  sysmac(mac) syscpy(mac+zcobol/lib)
-bash/asml guam/demo/DEMOGUI5  sysmac(mac) syscpy(mac+zcobol/lib)
-bash/asml guam/demo/DEMOGUI6  sysmac(mac) syscpy(mac+zcobol/lib)
-bash/asml guam/demo/HELLO1    sysmac(mac) syscpy(mac+zcobol/lib)
-bash/asml guam/demo/HELLO2    sysmac(mac) syscpy(mac+zcobol/lib)
-bash/asml guam/demo/HELLO3    sysmac(mac) syscpy(mac+zcobol/lib)
-bash/asml guam/test/AID       sysmac(mac) syscpy(mac+zcobol/lib)
-bash/asml guam/test/TESTGP1   sysmac(mac) syscpy(mac+zcobol/lib)
-bash/asml guam/test/TESTGP2   sysmac(mac) syscpy(mac+zcobol/lib)
-bash/asml guam/test/TESTGP3   sysmac(mac) syscpy(mac+zcobol/lib)
-bash/asml guam/test/TESTGP4   sysmac(mac) syscpy(mac+zcobol/lib)
-# sh/asml guam/test/TESTGUI6  sysmac(mac+cics) syscpy(mac+zcobol/lib+cics)
-bash/asml guam/test/TGUAM     sysmac(mac) syscpy(mac+zcobol/lib)
+bash/asml guam/demo/DEMOAPL1  "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+bash/asml guam/demo/DEMOGUI1  "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+bash/asml guam/demo/DEMOGUI2  "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+bash/asml guam/demo/DEMOGUI3  "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+bash/asml guam/demo/DEMOGUI4  "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+bash/asml guam/demo/DEMOGUI5  "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+bash/asml guam/demo/DEMOGUI6  "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+bash/asml guam/demo/HELLO1    "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+bash/asml guam/demo/HELLO2    "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+bash/asml guam/demo/HELLO3    "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+bash/asml guam/test/AID       "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+bash/asml guam/test/TESTGP1   "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+bash/asml guam/test/TESTGP2   "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+bash/asml guam/test/TESTGP3   "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+bash/asml guam/test/TESTGP4   "sysmac(mac)" "syscpy(mac+zcobol/lib)"
+# sh/asml guam/test/TESTGUI6  "sysmac(mac+"cics)" "syscpy(mac+zcobol/lib+cics)"
+bash/asml guam/test/TGUAM     "sysmac(mac)" "syscpy(mac+zcobol/lib)"
