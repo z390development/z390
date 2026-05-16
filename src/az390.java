@@ -20,8 +20,6 @@ with this program; if not, see <https://www.gnu.org/licenses/>.
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
