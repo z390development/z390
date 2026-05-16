@@ -61,6 +61,18 @@ This build procedure invokes the full regression testing script.
 Build and regression testing both can take quite some time.
 Luckily, you do not need to do this very often.
 
+### Update the code
+
+#### Code Style
+
+The project has not adopted any specific code style. The best guidance that can be 
+provided is to follow the existing style of code that already exists.
+
+#### Javadocs
+
+For Java code, ensure that any changes add or update the Javadocs comments
+so that the generated Javadocs are maintained.
+
 ### Rebuild the JAR
 
 You can just recompile the JAR without running the full build job by running
@@ -73,6 +85,9 @@ the bldjar script.
 === "MacOS/Unix"
         
     `bash> bash/bldjar`
+
+The published Java API documentation is available on GitHub Pages at
+[JavaDocs](../javadoc/index.html).
 
 ## Test the jar
 
@@ -257,7 +272,7 @@ and create your own version under the GNU 2 license conditions.
 The following preamble should be applied to all programs
 
     z390 - Mainframe assembler emulator and run-time engine
-    Copyright (C) 2021 z390 Assembler LLC
+    Copyright (C) 20xx z390 Assembler LLC
 
     This file is part of z390.
     z390 is free software; you can redistribute it and/or modify
@@ -279,7 +294,7 @@ The following preamble should be applied to all programs
          MACRO
 .**********************************************************************
 .* z390 - Mainframe assembler emulator and run-time engine
-.* Copyright (C) 2021 z390 Assembler LLC
+.* Copyright (C) 20xx z390 Assembler LLC
 .*
 .* This file is part of z390.
 .*

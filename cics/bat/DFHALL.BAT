@@ -1,5 +1,5 @@
 @if /I "%1" == "tron" (echo on) else (echo off)
-rem demo hello world demo
+rem Assemble all zCICS programs. Specify `unref` as an argument to run UNREF utility after each assembly
 
 setlocal
 if /I "%1" == "tron" (set z_TraceMode=tron
@@ -686,6 +686,13 @@ SET PRNFILE=%CICSPATH%\%PROGRAM%.PRN
 SET URFFILE=%CICSPATH%\%PROGRAM%.URF
 %z_unref% bat\EZ390 %z_TraceMode% %PROGPATH%\UNREF ASCII || GOTO WRONG
 
+SET PROGRAM=TESTVSM4
+CALL bat\MZ390 %z_TraceMode% %CICSPATH%\%PROGRAM% CICS NOPROLOG SYSMAC(%CICSPATH%+MAC) SYSCPY(%CICSPATH%+MAC) || GOTO WRONG
+CALL bat\LZ390 %CICSPATH%\%PROGRAM% || GOTO WRONG
+SET PRNFILE=%CICSPATH%\%PROGRAM%.PRN
+SET URFFILE=%CICSPATH%\%PROGRAM%.URF
+%z_unref% bat\EZ390 %z_TraceMode% %PROGPATH%\UNREF ASCII || GOTO WRONG
+
 SET PROGRAM=TESTCIC1
 CALL bat\MZ390 %z_TraceMode% %CICSPATH%\%PROGRAM% CICS SYSMAC(%CICSPATH%+MAC) SYSCPY(%CICSPATH%+MAC) || GOTO WRONG
 CALL bat\LZ390 %CICSPATH%\%PROGRAM% || GOTO WRONG
@@ -933,7 +940,9 @@ SET PRNFILE=%CICSPATH%\%PROGRAM%.PRN
 SET URFFILE=%CICSPATH%\%PROGRAM%.URF
 %z_unref% bat\EZ390 %z_TraceMode% %PROGPATH%\UNREF ASCII %1 %2 || GOTO WRONG
 
+set z_ReturnCode=0
 GOTO return
+
 :WRONG
 echo %0 error while building program %PROGRAM% - see log and listings for details
 set z_ReturnCode=8
