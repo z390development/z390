@@ -22,10 +22,16 @@
 .*********************************************************************
 .* 01/26/09 initial coding to set &PIC_DIGITS from &SYM_PIC(&IX)
 .* 04/06/11 RPI FIX SETA STRING FOR HLASM COMP.
+.* 05/06/26 Issue 792 Cobol test program YOUZPI2 incurs S0C7 on MP
+.*          Need to extend the interface to pass picture string
 .*********************************************************************
-         ZC_PIC_DIGITS &IX
+         ZC_PIC_DIGITS &IX,&PIC_STRING                                  #792
          COPY  ZC_WS
-         :&PIC SETC '&SYM_PIC(&IX)'
+         AIF    ('&PIC_STRING' EQ '')                                   #792
+               :&PIC SETC '&SYM_PIC(&IX)'                               #792
+         AELSE                                                          #792
+               :&PIC SETC '&PIC_STRING'                                 #792
+         AEND                                                           #792
          :&PIC_DIGITS SETA 0
          :&I SETA 1
          AWHILE (&I LE K'&PIC)
