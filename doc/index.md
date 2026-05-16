@@ -17,6 +17,7 @@ hide:
 * TN3270 compatible data streams
 * CICS(r) compatible transaction processor
 * GPLv2 licensed
+* Works with Java 8+
 
 Ideal for a number of use cases:
 
