@@ -33,6 +33,7 @@
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 03/28/26 Issue #773 Getmain issue with subpool nr
 .*********************************************************************
 &N       GETMAIN &TYPE,     TYPE OF REQUEST R,RC,RU ELSE UNSUPP ERROR  X
                &A=,         ADDR TO STORE ADDR                         X
@@ -123,6 +124,7 @@
          AGO  .LOC
 .LVREG   ANOP
          ZOPTLR 1,&LV(1)
+         RISBG  1,1,40,128+63   Clear the top 8 bits of R1 #773
 .LOC     ANOP
          AIF  ('&LOC' EQ '').OPTIONS
          AIF  ('&LOC' EQ 'ANY').SETABOVE

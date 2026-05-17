@@ -1,20 +1,6 @@
 # zVSAM V2 - Logical processes for RPL-based requests
 
 This document describes the logical processes for RPL-based requests to be implemented in zVSAM V2.
-It contains the following major chapters:
-
-1. [RPL macro](#RPL-macro)
-2. [GENCB RPL macro](#GENCB-RPL-macro)
-3. [MODCB RPL macro](#MODCB-RPL-macro)
-4. [SHOWCB RPL macro](#SHOWCB-RPL-macro)
-5. [TESTCB RPl macro](#TESTCB-RPl-macro)
-6. [POINT macro](#POINT-macro)
-7. [GET macro](#GET-macro)
-8. [PUT macro](#PUT-macro)
-9. [ERASE macro](#ERASE-macro)
-10. [CHECK macro](#CHECK-macro)
-11. [ENDREQ macro](#ENDREQ-macro)
-12. [VERIFY macro](#VERIFY-macro)
 
 ## RPL macro
 

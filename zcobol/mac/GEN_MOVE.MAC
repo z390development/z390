@@ -55,6 +55,7 @@
 .* 04/14/12 RPI 1202 use D2A to retrieve neg &NT_IX and &NS_IX
 .* 04/20/12 RPI 1211 scale value if pic_dec values different
 .* 2024/07/03 #509 correct length in &N_TARGET substring extraction
+.* 2026/05/12 #789 Allow variable length in reference modification
 .*********************************************************************
          GEN_MOVE &T_NAME,&T_IX,&S_NAME,&S_IX 
          COPY  ZC_WS
@@ -2015,7 +2016,13 @@
                    :&FIELD_OFF SETA D2A('&N_TARGET'(1,&I-1)) RPI 1139
                    :&J SETA ('&N_TARGET' INDEX ',')
                    AIF (&J GT &I+1)
-                       :&FIELD_LEN SETA D2A('&N_TARGET'(&I+1,&J-&I-1)) #509
+                       :&FIELD_LEN_SPEC SETC '&N_TARGET'(&I+1,&J-&I-1)  #789
+                       ANOP , Convert var.length spec to numeric        #789
+                       ANOP , Force 0 if var.length is a variable       #789
+                       AIF ('&FIELD_LEN_SPEC'(1,1) LT '0') var.length?  #789
+                           :&FIELD_LEN_SPEC SETC '0'                    #789
+                       AEND                                             #789
+                       :&FIELD_LEN SETA D2A('&FIELD_LEN_SPEC')     #509 #789
                        :&FIELD_REG SETC '&N_TARGET'(&J+1,K'&N_TARGET-&JX
                -1)
                        :&N_TARGET SETC '&N_TARGET'(1,&I).'&N_TARGET'(&JX

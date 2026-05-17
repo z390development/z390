@@ -42,6 +42,7 @@ call bat\exec  %z_TraceMode% rt\mlc\T714A    trace noinit                       
 call bat\exec  %z_TraceMode% rt\mlc\T714A    trace noinit noloadhigh mem(32)                  || goto error
 call bat\exec  %z_TraceMode% rt\mlc\T714A    trace noinit mem(32)                             || goto error
 
+call bat\asmlg %z_TraceMode% rt\mlc\GETMINI  trace sysmac(mac) noloadhigh optable(z390)       || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC1  trace sysmac(mac) noloadhigh optable(z390)       || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTASC1 trace sysmac(mac) noloadhigh optable(z390) ASCII || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTDC2  trace sysmac(mac) noloadhigh optable(z390)       || goto error

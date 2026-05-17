@@ -1,0 +1,40 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36" version="29.6.1">
+  <diagram id="c8972deb-752f-9fd1-c0f5-ecf008ad8a40" name="Page-1">
+    <mxGraphModel dx="1426" dy="744" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="rmX_oQpN7KPN3C6fKqRl-45" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Block 1" vertex="1">
+          <mxGeometry height="40" width="80" x="70" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="tIbdqlbK2QeNMplUZl8l-45" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#1ba1e2;fontColor=#ffffff;strokeColor=#006EAF;" value="Unusable Free Space" vertex="1">
+          <mxGeometry height="40" width="80" x="150" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="tIbdqlbK2QeNMplUZl8l-47" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Slot 7&lt;br&gt;Record" vertex="1">
+          <mxGeometry height="40" width="60" x="230" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="GJszpPur4dtM_N9M61ib-6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Slot 6&lt;div&gt;Record&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="60" x="290" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="GJszpPur4dtM_N9M61ib-9" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Slot 5&lt;div&gt;Record&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="60" x="350" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="GJszpPur4dtM_N9M61ib-10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Slot 4&lt;div&gt;(empty)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="60" x="410" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="GJszpPur4dtM_N9M61ib-11" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Slot 3&lt;div&gt;(empty)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="60" x="470" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="GJszpPur4dtM_N9M61ib-12" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Slot 2&lt;div&gt;(empty)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="60" x="530" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="GJszpPur4dtM_N9M61ib-13" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Slot 1&lt;div&gt;Record&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="60" x="590" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="GJszpPur4dtM_N9M61ib-14" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Slot 0&lt;div&gt;Record&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="60" x="650" y="120" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

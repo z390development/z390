@@ -49,6 +49,7 @@
 .* 03/27/12 RPI 1182 add &RMD_VLEN flag and &RMD_REG for len if vlen
 .* 04/25/12 RPI 1211 add TMP_PIC_DEC for scaling ZC_CALC 
 .* 05/05/12 RPI 1211 add &BASE_MIN_RANGE to ensure block base coverage
+.* 05/12/26 #789     Allow variable length in reference modification
 .*********************************************************************
 .*
 .* PGM NAME AND ZCOBOL VERSION CHECKED BY ZC390NUC IN ZC390LIB.390
@@ -140,6 +141,9 @@
          GBLA &LBASE_LRU          LEAST RECENTLY USED LK DYNAMIC BASE
 .*
 .* GET PARM FIELD (ZCGETFLD.CPY) TO GET QUAL. SUBSC. FIELD NAME/ADDR
+.*     RMOD/RMD = Reference Modification as in FLD(2:6) or FLD(12:2)    #789
+.*     first number is position (1-based, not offset)                   #789
+.*     second number is optional and indicates length                   #789
 .*  
          GBLA  &PARM_IX                INPUT/UPDATE PARM INDEX
          GBLC  &FIELD_REG              INPUT REG FOR SUBSC/RMOD FLD ADR
