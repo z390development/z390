@@ -49,15 +49,15 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.swing.JTextArea;
 
 
-public  class  tz390 {
-   /*    
-   tz390 is the shared table component of z390.
 
-    ****************************************************
+/**
+ * tz390 is the shared table component of z390.
+ */
+public  class  tz390 {
+   /****************************************************
     * Maintenance
     ****************************************************
     * 12/13/05 copied from ez390.java and modified
@@ -347,6 +347,7 @@ public  class  tz390 {
     * 2025-05-30 AFK #631 Improve opcode table definitions
     * 2025-08-08 AFK #661 Add z17 instructions to opcode tables
     * 2025-10-11 AFK #656 Change architecture level constants to an enum
+    * 2025-02-15 AFK      Fix/Add javadoc comments
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -356,894 +357,966 @@ public  class  tz390 {
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
     // String version    = "V1.7.07";  //dsh + afk
-    String version = getVersion();
-	String dcb_id_ver = "DCBV1001";  //dsh
-	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
+    /** variable      */ String version = getVersion();
+    /** variable      */ String dcb_id_ver = "DCBV1001";  //dsh
+    /** variable      */ byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
 	 * global options 
 	 */ 
-	String java_vendor  = System.getProperty("java.vendor");  // RPI 1175
-	String java_version = System.getProperty("java.version"); // RPI 1175
-	String  os_name = ""; // RPI 1080
-	byte    z390_os_type  = 0;      // 1=win,2=Linux  RPI 499
-	byte    z390_os_win   = 1;
-	byte    z390_os_linux = 2;
-	String  z390_font    = "Monospaced";  // RPI 509 was Courier
-	boolean timeout = false; // RPI 1094
-	boolean z390_abort   = false;  // global abort request
-	boolean tz390_recursive_abort = false; // RPI 935
-	String  invalid_options = "";  // RPI 742
-	boolean opt_align    = true;   // align data fields by type if not explicit RPI 1073
-	boolean opt_allow    = false;  // allow extensions such as no quotes for SETC var
-    boolean opt_amode24  = false;  // link to run amode24
-    boolean opt_amode31  = true;   // link to run amode31
-    boolean opt_ascii    = false; // use ascii vs ebcdic
-    boolean opt_asm      = true;  // run az390 assembler as mz390 subtask  RPI 415
-    boolean opt_assist   = false; // enable assembly and emulation of ASSIST instructions
-    boolean opt_autolink = true;  // search SYSOBJ for missing externals
-    boolean opt_bal      = false; // generate bal source output from mz390 RPI 415
-    boolean opt_bs2000   = false; // Seimens BS2000 asm compatibility
-    boolean opt_cics     = false; // exec cics program honoring prolog,epilog
-    boolean opt_codepage = false; // use ascii and ebcdic codepages specified CODEPAG(ascii,ebcdic,LIST)
-    boolean opt_comment  = true;  // generate source comments for zocobol RPI 986
-    boolean opt_con      = true;  // log msgs to console
-    boolean force_nocon  = false; // override option con RPI 755
-    boolean opt_dump     = false; // only indicative dump on abend unless on
-    boolean opt_edf      = true; // option for zCICS RPI 1027 renamed EDF RPI 1123
-    boolean opt_epilog   = true;  // if cics, insert DFHEIRET
-    boolean opt_errsum   = false; // just list critical errors and summary on ERR file and console 
-    boolean opt_extend   = true;  // allow up to 31 digits for P and Z in zocobl RPI 986
-    boolean opt_guam     = false; // use gz390 GUAM GUI access method interface
-    boolean opt_init     = true;  // init regs to x'F4", mem to x'F5'
-    String  codepage     = "CODEPAGE(ISO-8859-1+IBM1047)";  // default z/OS compatible
-    String  opt_float    = "DECIMAL"; // zcobol FLOAT-? type D=DFP,B=BFP,H=HFP
-    
-    String  opt_ipl      = "";    // program to execute at startup
-    String  opt_install_loc = ""; // optional install location for source debugging
-    boolean opt_list     = true;  // generate LOG file
-    boolean opt_listcall = true;  // list macro calls
-    boolean opt_listuse  = true;  // list usage at USING and DROP
-    boolean opt_loadhigh = true;  // load pgms and alloc storage from top down
-    String  opt_machine  = "";    // No machine specified RPI 1209A
-    String  opt_machine_optable = ""; // optable associated with specified machine option #503
-    boolean opt_mcall    = false; // list MCALL and MEXIT on PRN // RPI 511
-    boolean opt_mod      = false;  // generate raw code output from lz390 with sfx .MOD
-    boolean opt_obj      = true;  // generate binary MVS compatible OBJ file RPI 694
-    boolean opt_objhex   = false; // generate ascii hex obj records (lz390 accepts bin or hex)
-    String  opt_optable  = "*DFLT"; // default optable depends on z390/HLASM mode as indicated by allow option RPI 1209A
-    String  opt_optable_list = "NOLIST"; // do not to list instructions RPI 1209A
-    String  opt_optable_optable = ""; // effective optable associated with specified optable option #503
-    int     opt_optable_optb_nr = ArchLevel.ARCH_DFLT.getValue() ; // nr associated with effective optable #554 #631 #656
-    String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
-    boolean opt_pc       = true;  // generate macro pseudo code
-    boolean opt_pcopt    = true;  // optimize pc code for speed
-    boolean opt_pdsmem8  = false; // check for copy/mac names > 8 // RPI 11
-    boolean opt_printall = false; // force default PRINT GEN and ignore PRINT options RPI 1127
-    String  opt_profile  = "";    // include PROFILE(COPYBOOK) as first MLC statement
-    boolean opt_prolog   = true;  // if cics, insert DFHEIBLK and DFHEIENT
-    boolean opt_protect  = true;  // prevent PSA mods by user
-    boolean opt_r64      = true;  // allow 64 bit register instructions RPI 986
-    boolean opt_reformat = false; // reformat BAL statements 
-    boolean opt_regs     = false; // show registers on trace
-    boolean opt_rmode24  = true;  // link to load below line
-    boolean opt_rmode31  = false; // link to load above line
-    boolean opt_stats    = false;  // show statistics on STA file
-    String  opt_sysparm  = "";    // user parm string for mz390  
-    boolean opt_test     = false; // invoke interactive test cmds
-    boolean opt_thread   = true;  // continuous PRN location counter RPI 1186
-    boolean opt_time     = true;  // abend 422 if out of time TIME (sec)
-    boolean opt_timing   = true;  // display current date, time, rate
-    boolean opt_trace    = false; // trace pz390 instructions to LOG
-    boolean opt_tracea   = false; // trace az390
-    boolean opt_traceall = false; // trace all details
-    boolean opt_tracec   = false; // trace copybooks for tracep // RPI 862
-    boolean opt_traceg   = false; // trace memory FQE updates to LOG
-    boolean opt_tracei   = false; // trace AINSERT RPI 1157
-    boolean opt_tracel   = false; // trace lz390
-    boolean opt_tracem   = false; // trace mz390
-    boolean opt_tracep   = false; // trace pseudo code
-    boolean opt_traceq   = false; // trace QSAM file I/O
-    boolean opt_traces   = false; // trace MLC source and errors on concole for mz390 // RPI 882    
-    boolean opt_tracet   = false; // trace TCPIO and TGET/TPUT data I/O
-    boolean opt_tracev   = false; // trace VSAM file I/O
-    boolean opt_trap     = true;  // trap exceptions as 0C5
-    boolean opt_trunc    = false; // zcobol TRUNC option default NOTRUNC RPI 986
-    boolean opt_ts       = false; // time-stamp logs RPI 662
-    boolean opt_vcb      = true;  // vsam cache operational
-    boolean opt_vector   = false; // vector mode RPI VF01
-    int     opt_vsectsize= 64;    // vector section size RPI VF01
-    int     opt_vpartsums= 16;    // vector partial sums number RPI VF01
-    boolean opt_warn     = true;  // issue zcobol warnings RPI 986
-    boolean opt_writenonprintable  = false; // write non-printable characters in PRN, BAL, PCH files #451
-    boolean opt_xref     = true;  // cross reference symbols
-    boolean opt_zstrmac  = true;  // allow ZSTRMAC extensions
-    int     opt_zvsam    = 1;     // Default to Don's zVSAM implementation RPI 1598 RPI 2226
-    boolean max_cmd_queue_exceeded = false;  // RPI 731
-    String  cmd_parms = ""; // all options from command
-    int     cmd_parms_len = 34; // RPI 755
-    int     max_cmd_parms_line = 78; // RPI 755
-    String  test_ddname = "";
-    char    z390_amode31 = 'T';
-    char    z390_rmode31 = 'F';
-    int opt_chkmac   = 0; // RPI 747 0-none,1-labels, 2-labels and src after MEND
-    int opt_chksrc   = 1; // RPI 747 0-none,1-MLC only,2-all, 3-seq 73-80 and char past 80
-    int opt_maxcall  = 50;
-    int opt_maxdisplay = 80; // RPI 1118 max display line length for zcobol
-    int opt_maxesd   = 1000;
-    int opt_maxfile = 1000;     // RPI 707 max concourrent files open
-    int opt_maxgbl  = 100000;   // RPI 284
-    int opt_maxlcl  = 100000;   
-    int opt_maxline = 400000;  // issue #343 increased from 200000 to 400000
-    int opt_maxlog  = 1000000; // RPI 731
-    int opt_maxparm = 10000;
-    int opt_maxpass = 2;       // RPI 920 maximum az390 passes for nested symbol refs
-    int opt_maxpc   = 50000;  // RPI 439 pseudo code working set
-    int opt_maxque  = 1000;   // RPI 731 max CMD output queue
-    int opt_maxrld  = 10000;
-    int opt_maxsym  = 50000;
-    int opt_mnote   = 0; // RPI 1142 (0 all, 1 az only, 2 mz only)
+    /** variable      */ String java_vendor  = System.getProperty("java.vendor");  // RPI 1175
+    /** variable      */ String java_version = System.getProperty("java.version"); // RPI 1175
+    /** variable      */ String  os_name = ""; // RPI 1080
+    /** variable      */ byte    z390_os_type  = 0;      // 1=win,2=Linux  RPI 499
+    /** variable      */ byte    z390_os_win   = 1;
+    /** variable      */ byte    z390_os_linux = 2;
+    /** variable      */ String  z390_font    = "Monospaced";  // RPI 509 was Courier
+    /** variable      */ boolean timeout = false; // RPI 1094
+    /** variable      */ boolean z390_abort   = false;  // global abort request
+    /** variable      */ boolean tz390_recursive_abort = false; // RPI 935
+    /** variable      */ String  invalid_options = "";  // RPI 742
+    /** variable      */ boolean opt_align    = true;   // align data fields by type if not explicit RPI 1073
+    /** variable      */ boolean opt_allow    = false;  // allow extensions such as no quotes for SETC var
+    /** variable      */ boolean opt_amode24  = false;  // link to run amode24
+    /** variable      */ boolean opt_amode31  = true;   // link to run amode31
+    /** variable      */ boolean opt_ascii    = false; // use ascii vs ebcdic
+    /** variable      */ boolean opt_asm      = true;  // run az390 assembler as mz390 subtask  RPI 415
+    /** variable      */ boolean opt_assist   = false; // enable assembly and emulation of ASSIST instructions
+    /** variable      */ boolean opt_autolink = true;  // search SYSOBJ for missing externals
+    /** variable      */ boolean opt_bal      = false; // generate bal source output from mz390 RPI 415
+    /** variable      */ boolean opt_bs2000   = false; // Seimens BS2000 asm compatibility
+    /** variable      */ boolean opt_cics     = false; // exec cics program honoring prolog,epilog
+    /** variable      */ boolean opt_codepage = false; // use ascii and ebcdic codepages specified CODEPAG(ascii,ebcdic,LIST)
+    /** variable      */ boolean opt_comment  = true;  // generate source comments for zocobol RPI 986
+    /** variable      */ boolean opt_con      = true;  // log msgs to console
+    /** variable      */ boolean force_nocon  = false; // override option con RPI 755
+    /** variable      */ boolean opt_dump     = false; // only indicative dump on abend unless on
+    /** variable      */ boolean opt_edf      = true; // option for zCICS RPI 1027 renamed EDF RPI 1123
+    /** variable      */ boolean opt_epilog   = true;  // if cics, insert DFHEIRET
+    /** variable      */ boolean opt_errsum   = false; // just list critical errors and summary on ERR file and console 
+    /** variable      */ boolean opt_extend   = true;  // allow up to 31 digits for P and Z in zocobl RPI 986
+    /** variable      */ boolean opt_guam     = false; // use gz390 GUAM GUI access method interface
+    /** variable      */ boolean opt_init     = true;  // init regs to x'F4", mem to x'F5'
+    /** variable      */ String  codepage     = "CODEPAGE(ISO-8859-1+IBM1047)";  // default z/OS compatible
+    /** variable      */ String  opt_float    = "DECIMAL"; // zcobol FLOAT-? type D=DFP,B=BFP,H=HFP
+
+    /** variable      */ String  opt_ipl      = "";    // program to execute at startup
+    /** variable      */ String  opt_install_loc = ""; // optional install location for source debugging
+    /** variable      */ boolean opt_list     = true;  // generate LOG file
+    /** variable      */ boolean opt_listcall = true;  // list macro calls
+    /** variable      */ boolean opt_listuse  = true;  // list usage at USING and DROP
+    /** variable      */ boolean opt_loadhigh = true;  // load pgms and alloc storage from top down
+    /** variable      */ String  opt_machine  = "";    // No machine specified RPI 1209A
+    /** variable      */ String  opt_machine_optable = ""; // optable associated with specified machine option #503
+    /** variable      */ boolean opt_mcall    = false; // list MCALL and MEXIT on PRN // RPI 511
+    /** variable      */ boolean opt_mod      = false;  // generate raw code output from lz390 with sfx .MOD
+    /** variable      */ boolean opt_obj      = true;  // generate binary MVS compatible OBJ file RPI 694
+    /** variable      */ boolean opt_objhex   = false; // generate ascii hex obj records (lz390 accepts bin or hex)
+    /** variable      */ String  opt_optable  = "*DFLT"; // default optable depends on z390/HLASM mode as indicated by allow option RPI 1209A
+    /** variable      */ String  opt_optable_list = "NOLIST"; // do not to list instructions RPI 1209A
+    /** variable      */ String  opt_optable_optable = ""; // effective optable associated with specified optable option #503
+    /** variable      */ int     opt_optable_optb_nr = ArchLevel.ARCH_DFLT.getValue() ; // nr associated with effective optable #554 #631 #656
+    /** variable      */ String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
+    /** variable      */ boolean opt_pc       = true;  // generate macro pseudo code
+    /** variable      */ boolean opt_pcopt    = true;  // optimize pc code for speed
+    /** variable      */ boolean opt_pdsmem8  = false; // check for copy/mac names > 8 // RPI 11
+    /** variable      */ boolean opt_printall = false; // force default PRINT GEN and ignore PRINT options RPI 1127
+    /** variable      */ String  opt_profile  = "";    // include PROFILE(COPYBOOK) as first MLC statement
+    /** variable      */ boolean opt_prolog   = true;  // if cics, insert DFHEIBLK and DFHEIENT
+    /** variable      */ boolean opt_protect  = true;  // prevent PSA mods by user
+    /** variable      */ boolean opt_r64      = true;  // allow 64 bit register instructions RPI 986
+    /** variable      */ boolean opt_reformat = false; // reformat BAL statements 
+    /** variable      */ boolean opt_regs     = false; // show registers on trace
+    /** variable      */ boolean opt_rmode24  = true;  // link to load below line
+    /** variable      */ boolean opt_rmode31  = false; // link to load above line
+    /** variable      */ boolean opt_stats    = false;  // show statistics on STA file
+    /** variable      */ String  opt_sysparm  = "";    // user parm string for mz390  
+    /** variable      */ boolean opt_test     = false; // invoke interactive test cmds
+    /** variable      */ boolean opt_thread   = true;  // continuous PRN location counter RPI 1186
+    /** variable      */ boolean opt_time     = true;  // abend 422 if out of time TIME (sec)
+    /** variable      */ boolean opt_timing   = true;  // display current date, time, rate
+    /** variable      */ boolean opt_trace    = false; // trace pz390 instructions to LOG
+    /** variable      */ boolean opt_tracea   = false; // trace az390
+    /** variable      */ boolean opt_traceall = false; // trace all details
+    /** variable      */ boolean opt_tracec   = false; // trace copybooks for tracep // RPI 862
+    /** variable      */ boolean opt_traceg   = false; // trace memory FQE updates to LOG
+    /** variable      */ boolean opt_tracei   = false; // trace AINSERT RPI 1157
+    /** variable      */ boolean opt_tracel   = false; // trace lz390
+    /** variable      */ boolean opt_tracem   = false; // trace mz390
+    /** variable      */ boolean opt_tracep   = false; // trace pseudo code
+    /** variable      */ boolean opt_traceq   = false; // trace QSAM file I/O
+    /** variable      */ boolean opt_traces   = false; // trace MLC source and errors on concole for mz390 // RPI 882    
+    /** variable      */ boolean opt_tracet   = false; // trace TCPIO and TGET/TPUT data I/O
+    /** variable      */ boolean opt_tracev   = false; // trace VSAM file I/O
+    /** variable      */ boolean opt_trap     = true;  // trap exceptions as 0C5
+    /** variable      */ boolean opt_trunc    = false; // zcobol TRUNC option default NOTRUNC RPI 986
+    /** variable      */ boolean opt_ts       = false; // time-stamp logs RPI 662
+    /** variable      */ boolean opt_vcb      = true;  // vsam cache operational
+    /** variable      */ boolean opt_vector   = false; // vector mode RPI VF01
+    /** variable      */ int     opt_vsectsize= 64;    // vector section size RPI VF01
+    /** variable      */ int     opt_vpartsums= 16;    // vector partial sums number RPI VF01
+    /** variable      */ boolean opt_warn     = true;  // issue zcobol warnings RPI 986
+    /** variable      */ boolean opt_writenonprintable  = false; // write non-printable characters in PRN, BAL, PCH files #451
+    /** variable      */ boolean opt_xref     = true;  // cross reference symbols
+    /** variable      */ boolean opt_zstrmac  = true;  // allow ZSTRMAC extensions
+    /** variable      */ int     opt_zvsam    = 1;     // Default to Don's zVSAM implementation RPI 1598 RPI 2226
+    /** variable      */ boolean max_cmd_queue_exceeded = false;  // RPI 731
+    /** variable      */ String  cmd_parms = ""; // all options from command
+    /** variable      */ int     cmd_parms_len = 34; // RPI 755
+    /** variable      */ int     max_cmd_parms_line = 78; // RPI 755
+    /** variable      */ String  test_ddname = "";
+    /** variable      */ char    z390_amode31 = 'T';
+    /** variable      */ char    z390_rmode31 = 'F';
+    /** variable      */ int opt_chkmac   = 0; // RPI 747 0-none,1-labels, 2-labels and src after MEND
+    /** variable      */ int opt_chksrc   = 1; // RPI 747 0-none,1-MLC only,2-all, 3-seq 73-80 and char past 80
+    /** variable      */ int opt_maxcall  = 50;
+    /** variable      */ int opt_maxdisplay = 80; // RPI 1118 max display line length for zcobol
+    /** variable      */ int opt_maxesd   = 1000;
+    /** variable      */ int opt_maxfile = 1000;     // RPI 707 max concourrent files open
+    /** variable      */ int opt_maxgbl  = 100000;   // RPI 284
+    /** variable      */ int opt_maxlcl  = 100000;   
+    /** variable      */ int opt_maxline = 400000;  // issue #343 increased from 200000 to 400000
+    /** variable      */ int opt_maxlog  = 1000000; // RPI 731
+    /** variable      */ int opt_maxparm = 10000;
+    /** variable      */ int opt_maxpass = 2;       // RPI 920 maximum az390 passes for nested symbol refs
+    /** variable      */ int opt_maxpc   = 50000;  // RPI 439 pseudo code working set
+    /** variable      */ int opt_maxque  = 1000;   // RPI 731 max CMD output queue
+    /** variable      */ int opt_maxrld  = 10000;
+    /** variable      */ int opt_maxsym  = 50000;
+    /** variable      */ int opt_mnote   = 0; // RPI 1142 (0 all, 1 az only, 2 mz only)
+
+
+
     /*
      * Windows and Linux variables
      */
-    String z390_acrobat = null; // RPI 500
-    String z390_browser = null; // RPI 500
-    String z390_command = null; // RPI 500
-    String z390_procdir = null;
-    String z390_editor  = null; // RPI 500
+    /** variable      */ String z390_acrobat = null; // RPI 500
+    /** variable      */ String z390_browser = null; // RPI 500
+    /** variable      */ String z390_command = null; // RPI 500
+    /** variable      */ String z390_procdir = null;
+    /** variable      */ String z390_editor  = null; // RPI 500
+
+
+
     /*
-	 * global limits with option overrides
-	 */
-	int    max_mnote_warning = 4;       // mnote limit for warnings (rc=4 vs rc=16) RPI 415
-    int    max_errors        = 100;     // ERR(100) max errors before abort
-    int    max_main_width  = 800;
-    int    max_main_height = 600;
-    int    min_main_width  = 150;
-    int    min_main_height = 150;
-	int    max_line_len = 80;           // RPI 264
-	long   max_file_size = 50 << 20;    // max file output 
-	int    max_rba_size = 0x7fffffff;   // max vsam RBA vs XRBA RPI 706
-	long   max_time_seconds  = 15;      // TIME(15)max elapsed time - override time(sec)
-	int    monitor_wait = 300;          // fix interval in milliseconds
-    int    max_mem           = 1;       // MEM(1)  MB memory default (see mem(mb) override)
-    String trace_options = "";
+     * global limits with option overrides
+     */
+    /** variable      */ int    max_mnote_warning = 4;       // mnote limit for warnings (rc=4 vs rc=16) RPI 415
+    /** variable      */ int    max_errors        = 100;     // ERR(100) max errors before abort
+    /** variable      */ int    max_main_width  = 800;
+    /** variable      */ int    max_main_height = 600;
+    /** variable      */ int    min_main_width  = 150;
+    /** variable      */ int    min_main_height = 150;
+    /** variable      */ int    max_line_len = 80;           // RPI 264
+    /** variable      */ long   max_file_size = 50 << 20;    // max file output 
+    /** variable      */ int    max_rba_size = 0x7fffffff;   // max vsam RBA vs XRBA RPI 706
+    /** variable      */ long   max_time_seconds  = 15;      // TIME(15)max elapsed time - override time(sec)
+    /** variable      */ int    monitor_wait = 300;          // fix interval in milliseconds
+    /** variable      */ int    max_mem           = 1;       // MEM(1)  MB memory default (see mem(mb) override)
+    /** variable      */ String trace_options = "";
     /*
+
+
+
      * shared date and time formats
      */
-	SimpleDateFormat sdf_MMddyy = new SimpleDateFormat("MM/dd/yy");
-	SimpleDateFormat sdf_HHmmss = new SimpleDateFormat("HH:mm:ss");
+    /** variable      */ SimpleDateFormat sdf_MMddyy = new SimpleDateFormat("MM/dd/yy");
+    /** variable      */ SimpleDateFormat sdf_HHmmss = new SimpleDateFormat("HH:mm:ss");
+
+
+
     /*
-	 * shared pgm dir, name, type and associated dirs
-	 */
-	String pgm_name = null; // from first parm else abort
-	String pgm_type = null; // from first parm override if mlc else def.
-	String file_dir;        // dir for _name RPI 700
-	String file_type;       // type for find_file_name
-	String ada_type = ".ADA"; // ADATA type (not supported yet)
-	String bal_type = ".BAL"; // basic assembler output from mz390, input to az390
-	String cpy_type = ".CPY"; // copybook source for mz390
-    String dat_type = ".DAT"; // AREAD default input for mz390
-	String err_type = ".ERR"; // step error and rc log
-    String log_type = ".LOG"; // log for z390, ez390, sz390, pz390
-	String lkd_type = ".LKD"; // linker commands INCLUDE, ENTRY, ALIAS, NAME RPI 735
-    String lst_type = ".LST"; // linker list file
-	Boolean lkd_ignore = false; // RPI 735 ignore LKD if explicit .OBJ
-	String mac_type = ".MAC"; // macro source
-    String mlc_type = ".MLC"; // macro assembler source program
-    String mod_type = ".MOD"; // load module file with no header, trailer,RLDs, and no rounding RPI 883
-    String obj_type = ".OBJ"; // relocatable object code for az390 and lz390
-    String opt_type = ".OPT"; // @file option file with one option per line plus comments 
-    String pch_type = ".PCH"; // punch output from mz390
-    String prn_type = ".PRN"; // assembly listing for az390
-    String sta_type = ".STA"; // statistics mod file for option stats(filename) RPI 737
-    String tra_type = ".TRA"; // az390 trace file
-    String tre_type = ".TRE"; // ez390 trace file
-    String trl_type = ".TRL"; // lz390 trace file
-    String trm_type = ".TRM"; // mz390 trace file
-    String z390_type = ".390"; // z390 executable load module for lz390 and ez390
-    String dir_390 = null; // SYS390() load module
-    String dir_bal = null; // SYSBAL() az390 source input
-    String dir_cpy = null; // SYSCPY() mz390 copybook lib defaults to dir_mac RPI 742
-	String dir_cur = null; // default current dir
-    String dir_dat = null; // SYSDAT() mz390 AREAD extended option
-    String dir_err = null; // SYSERR() ?z390 systerm error file directory
-    String dir_log = null; // SYSLOG() ez390 log // RPI 243
-    String dir_lst = null; // SYSLST() lz390 listing 
-    String dir_mac = null; // SYSMAC() mz390 macro lib
-    String dir_mlc = null; // SYSMLC() mz390 source input
-    String dir_pch = null; // SYSPCH() mz390 punch output dir
-	String dir_pgm = null; // from first parm else dir_cur
-    String dir_prn = null; // SYSPRN() az390 listing
-    String dir_obj = null; // SYSOBJ() lz390 object lib
-    String dir_opt = null; // SYSOPT() OPT options @file path defaults to dir_mac RPI 742
-    String dir_trc = null; // SYSTRC() trace file directory
-    int max_opsyn = 1000; 
-    int tot_opsyn = 0;
-    int opsyn_index = -1;
-    String[]  opsyn_new_name = new String[max_opsyn];
-    String[]  opsyn_old_name = new String[max_opsyn];
-    int cur_bal_line_num    = 0; // bal starting line number
-    int prev_bal_cont_lines = 0; // bal continue lines for prev bal
-    int bal_ictl_start =  1; // RPI 728 reformated to std by mz390
-    int bal_ictl_end   = 71; // RPI 728
-    int bal_ictl_cont  = 16; // RPI 728
-    int bal_ictl_cont_tot = 56; // RPI 728
+     * shared pgm dir, name, type and associated dirs
+     */
+    /** variable      */ String pgm_name = null; // from first parm else abort
+    /** variable      */ String pgm_type = null; // from first parm override if mlc else def.
+    /** variable      */ String file_dir;        // dir for _name RPI 700
+    /** variable      */ String file_type;       // type for find_file_name
+    /** variable      */ String ada_type = ".ADA"; // ADATA type (not supported yet)
+    /** variable      */ String bal_type = ".BAL"; // basic assembler output from mz390, input to az390
+    /** variable      */ String cpy_type = ".CPY"; // copybook source for mz390
+    /** variable      */ String dat_type = ".DAT"; // AREAD default input for mz390
+    /** variable      */ String err_type = ".ERR"; // step error and rc log
+    /** variable      */ String log_type = ".LOG"; // log for z390, ez390, sz390, pz390
+    /** variable      */ String lkd_type = ".LKD"; // linker commands INCLUDE, ENTRY, ALIAS, NAME RPI 735
+    /** variable      */ String lst_type = ".LST"; // linker list file
+    /** variable      */ Boolean lkd_ignore = false; // RPI 735 ignore LKD if explicit .OBJ
+    /** variable      */ String mac_type = ".MAC"; // macro source
+    /** variable      */ String mlc_type = ".MLC"; // macro assembler source program
+    /** variable      */ String mod_type = ".MOD"; // load module file with no header, trailer,RLDs, and no rounding RPI 883
+    /** variable      */ String obj_type = ".OBJ"; // relocatable object code for az390 and lz390
+    /** variable      */ String opt_type = ".OPT"; // @file option file with one option per line plus comments 
+    /** variable      */ String pch_type = ".PCH"; // punch output from mz390
+    /** variable      */ String prn_type = ".PRN"; // assembly listing for az390
+    /** variable      */ String sta_type = ".STA"; // statistics mod file for option stats(filename) RPI 737
+    /** variable      */ String tra_type = ".TRA"; // az390 trace file
+    /** variable      */ String tre_type = ".TRE"; // ez390 trace file
+    /** variable      */ String trl_type = ".TRL"; // lz390 trace file
+    /** variable      */ String trm_type = ".TRM"; // mz390 trace file
+    /** variable      */ String z390_type = ".390"; // z390 executable load module for lz390 and ez390
+    /** variable      */ String dir_390 = null; // SYS390() load module
+    /** variable      */ String dir_bal = null; // SYSBAL() az390 source input
+    /** variable      */ String dir_cpy = null; // SYSCPY() mz390 copybook lib defaults to dir_mac RPI 742
+    /** variable      */ String dir_cur = null; // default current dir
+    /** variable      */ String dir_dat = null; // SYSDAT() mz390 AREAD extended option
+    /** variable      */ String dir_err = null; // SYSERR() ?z390 systerm error file directory
+    /** variable      */ String dir_log = null; // SYSLOG() ez390 log // RPI 243
+    /** variable      */ String dir_lst = null; // SYSLST() lz390 listing 
+    /** variable      */ String dir_mac = null; // SYSMAC() mz390 macro lib
+    /** variable      */ String dir_mlc = null; // SYSMLC() mz390 source input
+    /** variable      */ String dir_pch = null; // SYSPCH() mz390 punch output dir
+    /** variable      */ String dir_pgm = null; // from first parm else dir_cur
+    /** variable      */ String dir_prn = null; // SYSPRN() az390 listing
+    /** variable      */ String dir_obj = null; // SYSOBJ() lz390 object lib
+    /** variable      */ String dir_opt = null; // SYSOPT() OPT options @file path defaults to dir_mac RPI 742
+    /** variable      */ String dir_trc = null; // SYSTRC() trace file directory
+    /** variable      */ int max_opsyn = 1000; 
+    /** variable      */ int tot_opsyn = 0;
+    /** variable      */ int opsyn_index = -1;
+    /** variable      */ String[]  opsyn_new_name = new String[max_opsyn];
+    /** variable      */ String[]  opsyn_old_name = new String[max_opsyn];
+    /** variable      */ int cur_bal_line_num    = 0; // bal starting line number
+    /** variable      */ int prev_bal_cont_lines = 0; // bal continue lines for prev bal
+    /** variable      */ int bal_ictl_start =  1; // RPI 728 reformated to std by mz390
+    /** variable      */ int bal_ictl_end   = 71; // RPI 728
+    /** variable      */ int bal_ictl_cont  = 16; // RPI 728
+    /** variable      */ int bal_ictl_cont_tot = 56; // RPI 728
+
+
+
     /*
      * shared SYSTERM error file
      */
-    long   systerm_start = 0; // start time
-    String systerm_sec   = ""; // systerm elapsed seconds
-    String systerm_mem   = " MB"; // RPI 797 MB if 
-    String systerm_file_name      = null;
-    RandomAccessFile systerm_file = null;
-    String systerm_prefix = "";   // pgm_name plus space
-    int    systerm_io     = 0;    // total file io count
-    long systerm_ins    = 0;    // ez390 instruction count
-    String started_msg = "";
-    String ended_msg   = "";
-    String stats_file_name      = null;
-    RandomAccessFile stats_file = null;
+    /** variable      */ long   systerm_start = 0; // start time
+    /** variable      */ String systerm_sec   = ""; // systerm elapsed seconds
+    /** variable      */ String systerm_mem   = " MB"; // RPI 797 MB if 
+    /** variable      */ String systerm_file_name      = null;
+    /** variable      */ RandomAccessFile systerm_file = null;
+    /** variable      */ String systerm_prefix = "";   // pgm_name plus space
+    /** variable      */ int    systerm_io     = 0;    // total file io count
+    /** variable      */ long systerm_ins    = 0;    // ez390 instruction count
+    /** variable      */ String started_msg = "";
+    /** variable      */ String ended_msg   = "";
+    /** variable      */ String stats_file_name      = null;
+    /** variable      */ RandomAccessFile stats_file = null;
+
+
+
     /*
      * log, trace file used by mz390, az390, lz390, ez390
      */
-    String         log_file_name = ""; // RPI 755
-    String         trace_file_name = null;
-	File           trace_file = null;
-	BufferedWriter trace_file_buff = null;
-    int tot_log_msg  = 0; // RPI 731
-    int tot_log_text = 0; // RPI 731
-    boolean log_text_added = false; // RPI 731
+    /** variable      */ String         log_file_name = ""; // RPI 755
+    /** variable      */ String         trace_file_name = null;
+    /** variable      */ File           trace_file = null;
+    /** variable      */ BufferedWriter trace_file_buff = null;
+    /** variable      */ int tot_log_msg  = 0; // RPI 731
+    /** variable      */ int tot_log_text = 0; // RPI 731
+    /** variable      */ boolean log_text_added = false; // RPI 731
+
+
+
     /*
-	 * timestamp data for TS optional trace timestamps
-	 * The first 23 characters are standard ODBC SQL Timestamp
-	 * to start of previous micro-second.  The last 6 digits
-	 * are the nanoseconds from last micro-second to current time.
-	 */
-    long   ts_nano_start = 0; // RPI 662 nanotime at startup
-    long   ts_nano_now = 0;   // RPI 662 nanotime now
-    long   ts_mic_start = 0;  // RPI 662 cur time in mics at startup
-    long   ts_mic_dif   = 0;  // RPI 662 mics from startup to now
-    long   ts_mic_now   = 0;  // RPI 662 cur time in mics   
-    String ts_nano_digits;    // RPI 662 last 6 digit nanos within mic
+     * timestamp data for TS optional trace timestamps
+     * The first 23 characters are standard ODBC SQL Timestamp
+     * to start of previous micro-second.  The last 6 digits
+     * are the nanoseconds from last micro-second to current time.
+     */
+    /** variable      */ long   ts_nano_start = 0; // RPI 662 nanotime at startup
+    /** variable      */ long   ts_nano_now = 0;   // RPI 662 nanotime now
+    /** variable      */ long   ts_mic_start = 0;  // RPI 662 cur time in mics at startup
+    /** variable      */ long   ts_mic_dif   = 0;  // RPI 662 mics from startup to now
+    /** variable      */ long   ts_mic_now   = 0;  // RPI 662 cur time in mics   
+    /** variable      */ String ts_nano_digits;    // RPI 662 last 6 digit nanos within mic
+
+
+
     /*
      * shared parm parsing for comma delimited continue
      * statement parsing to find comma used by 
      * both mz390 and az390.
      */
-    Pattern find_non_space_pattern = null;
-    Pattern find_bslash  = null; // RPI 1080
-    Matcher match_bslash = null; // RPI 1080
-    Pattern find_slash   = null; // RPI 1080
-    Matcher match_slash  = null; // RPI 1080
-    Pattern find_dash    = null; // RPI 1080
-    Matcher match_dash   = null; // RPI 1080
-    Pattern find_squote  = null; // RPI 1080
-    Matcher match_squote = null; // RPI 1080
-    Pattern find_dsquote  = null; // RPI 1080
-    Matcher match_dsquote = null; // RPI 1080
-    Pattern find_dquote  = null; // RPI 1080
-    Matcher match_dquote = null; // RPI 1080
-    Pattern find_ddquote  = null; // RPI 1080
-    Matcher match_ddquote = null; // RPI 1080
-    Pattern find_amp     = null; // RPI 1080
-    Matcher match_amp    = null; // RPI 1080
-    Pattern find_damp     = null; // RPI 1080
-    Matcher match_damp    = null; // RPI 1080
-    Matcher find_parm_match = null; // RPI 1080
-    Pattern parm_pattern = null;
-    Matcher parm_match = null;
-    boolean split_first = true; // first line of statement
-    boolean split_cont  = false; // continuation line of statement
-    boolean split_comment = false;
-    boolean exec_line = false; // RPI 905
-    String  split_label = null;
-    String  split_op    = null;
-    int     split_op_index = -1; // opcode index else -1
-    int     split_op_type  = -1; // opcode type index else -1
-    String  split_parms = null;
-    int     split_parms_index = -1;  // line index to parms else -1
-    int     split_level = 0;
-    String  split_quote_text = null;
-    boolean split_quote = false;
-    boolean split_quote_last = false; // last char of prev continue is quote RPI 463
+    /** variable      */ Pattern find_non_space_pattern = null;
+    /** variable      */ Pattern find_bslash  = null; // RPI 1080
+    /** variable      */ Matcher match_bslash = null; // RPI 1080
+    /** variable      */ Pattern find_slash   = null; // RPI 1080
+    /** variable      */ Matcher match_slash  = null; // RPI 1080
+    /** variable      */ Pattern find_dash    = null; // RPI 1080
+    /** variable      */ Matcher match_dash   = null; // RPI 1080
+    /** variable      */ Pattern find_squote  = null; // RPI 1080
+    /** variable      */ Matcher match_squote = null; // RPI 1080
+    /** variable      */ Pattern find_dsquote  = null; // RPI 1080
+    /** variable      */ Matcher match_dsquote = null; // RPI 1080
+    /** variable      */ Pattern find_dquote  = null; // RPI 1080
+    /** variable      */ Matcher match_dquote = null; // RPI 1080
+    /** variable      */ Pattern find_ddquote  = null; // RPI 1080
+    /** variable      */ Matcher match_ddquote = null; // RPI 1080
+    /** variable      */ Pattern find_amp     = null; // RPI 1080
+    /** variable      */ Matcher match_amp    = null; // RPI 1080
+    /** variable      */ Pattern find_damp     = null; // RPI 1080
+    /** variable      */ Matcher match_damp    = null; // RPI 1080
+    /** variable      */ Matcher find_parm_match = null; // RPI 1080
+    /** variable      */ Pattern parm_pattern = null;
+    /** variable      */ Matcher parm_match = null;
+    /** variable      */ boolean split_first = true; // first line of statement
+    /** variable      */ boolean split_cont  = false; // continuation line of statement
+    /** variable      */ boolean split_comment = false;
+    /** variable      */ boolean exec_line = false; // RPI 905
+    /** variable      */ String  split_label = null;
+    /** variable      */ String  split_op    = null;
+    /** variable      */ int     split_op_index = -1; // opcode index else -1
+    /** variable      */ int     split_op_type  = -1; // opcode type index else -1
+    /** variable      */ String  split_parms = null;
+    /** variable      */ int     split_parms_index = -1;  // line index to parms else -1
+    /** variable      */ int     split_level = 0;
+    /** variable      */ String  split_quote_text = null;
+    /** variable      */ boolean split_quote = false;
+    /** variable      */ boolean split_quote_last = false; // last char of prev continue is quote RPI 463
+
+
+
     /*
      * pad_spaces char table for padding
      * starts at 4096 and expands as required
      */
-    int    pad_spaces_len = 0;
-    char[] pad_spaces = null;
-	/*
-	 * dup operator buffer
-	 */
-	int dup_char_len = 0;
-	char[] dup_char = null; 
+    /** variable      */ int    pad_spaces_len = 0;
+    /** variable      */ char[] pad_spaces = null;
+
+
+
+    /*
+     * dup operator buffer
+     */
+    /** variable      */ int dup_char_len = 0;
+    /** variable      */ char[] dup_char = null;
+
+
+
     /*
      * ASCII and EBCDIC printable character tables
      */
-	    String ascii_min_char =  // RPI 1069
-	      " 01234567890" // blank and didgits
-	    + "ABCDEFGHIJKLMNOPQRSTUVWXYZ" // uppercase
-	    + "abcdefghijklmnopqrstuvwxyz" // lower case
-	    + "@#$" // additional leading symbol characters
-	    + "&'()*+-./:=_"; // mimimum zscii special char // RPI 1529
-        String newline = System.getProperty("line.separator"); // RPI 500
-        char   alarm_bell = 0x07;          // ascii bell char for system.out alarm
-        int    sdt_char_int = 0; // RPI 192 shared character sdt
-        String ascii_table = 
-        "................" + //00
-        "................" + //10
-        " !" + '"' + "#$%&'()*+,-./" + //20 with "
-        "0123456789:;<=>?" + //30
-        "@ABCDEFGHIJKLMNO" + //40
-        "PQRSTUVWXYZ[\\]^_" + //50
-        "`abcdefghijklmno" + //60
-        "pqrstuvwxyz{|}~." + //70
-        "................" + //80
-        "................" + //90
-        "................" + //A0
-        "................" + //B0
-        "................" + //C0
-        "................" + //D0
-        "................" + //E0
-        "................";  //F0
-        String ascii_dump_table = ascii_table; // for dump storage prt char portion
-        String ebcdic_table =
-        "................" + //00
-        "................" + //10
-        "................" + //20
-        "................" + //30
-        " ...........<(+|" + //40
-        "&.........!$*);." + //50
-        "-/.........,%_>?" + //60
-        ".........`:#@'=" + '"' + //70 with "
-        ".abcdefghi......" + //80
-        ".jklmnopqr......" + //90
-        ".~stuvwxyz......" + //A0
-        "^.........[]...." + //B0
-        "{ABCDEFGHI......" + //C0
-        "}JKLMNOPQR......" + //D0
-        "\\.STUVWXYZ......" + //E0 with \
-        "0123456789......";   //F0
-        String ebcdic_dump_table = ebcdic_table; // for dump storage prt char portion
-        byte[] ascii_to_ebcdic = new byte[256];
-        String ascii_to_ebcdic_hex = 
-                        "00010203372D2E2F1605250B0C0D0E0F" + //00 ................ 
-                        "101112003C3D322618193F2722003500" + //10 ................ 
-                        "405A7F7B5B6C507D4D5D5C4E6B604B61" + //20  !"#$%&'()*+,-./ 
-                        "F0F1F2F3F4F5F6F7F8F97A5E4C7E6E6F" + //30 0123456789:;<=>? 
-                        "7CC1C2C3C4C5C6C7C8C9D1D2D3D4D5D6" + //40 @ABCDEFGHIJKLMNO  
-                        "D7D8D9E2E3E4E5E6E7E8E9ADE0BD5F6D" + //50 PQRSTUVWXYZ.\.._  
-                        "79818283848586878889919293949596" + //60 `abcdefghijklmno 
-                        "979899A2A3A4A5A6A7A8A98B4F9BA107" + //70 pqrstuvwxyz.|.~. 
-                        "00010203372D2E2F1605250B0C0D0E0F" + //80 ................  
-                        "101112003C3D322618193F2722003500" + //90 ................ 
-                        "405A7F7B5B6C507D4D5D5C4E6B604B61" + //A0  !"#$%&'()*+,-./ 
-                        "F0F1F2F3F4F5F6F7F8F97A5E4C7E6E6F" + //B0 0123456789:;<=>? 
-                        "7CC1C2C3C4C5C6C7C8C9D1D2D3D4D5D6" + //C0 @ABCDEFGHIJKLMNO 
-                        "D7D8D9E2E3E4E5E6E7E8E9ADE0BD5F6D" + //D0 PQRSTUVWXYZ.\.._ 
-                        "79818283848586878889919293949596" + //E0 `abcdefghijklmno 
-                        "979899A2A3A4A5A6A7A8A98B4F9BA107"   //F0 pqrstuvwxyz.|.~. 
-        ;
-        byte[] ebcdic_to_ascii = new byte[256];
-        String ebcdic_to_ascii_hex = 
-                        "000102030009007F0000000B0C0D0E0F" + //00 ................ 
-                        "10111200000008001819000000000000" + //10 ................ 
-                        "00001C00000A171B0000000000050607" + //20 ................ 
-                        "00001600001E0004000000001415001A" + //30 ................ 
-                        "20000000000000000000002E3C282B7C" + //40  ...........<(+| 
-                        "2600000000000000000021242A293B5E" + //50 &.........!$*);^ 
-                        "2D2F0000000000000000002C255F3E3F" + //60 -/.........,%_>? 
-                        "000000000000000000603A2340273D22" + //70 .........`:#@'=" 
-                        "00616263646566676869007B00000000" + //80 .abcdefghi.{.... 
-                        "006A6B6C6D6E6F707172007D00000000" + //90 .jklmnopqr.}.... 
-                        "007E737475767778797A0000005B0000" + //A0 .~stuvwxyz...[.. 
-                        "000000000000000000000000005D0000" + //B0 .............].. 
-                        "00414243444546474849000000000000" + //C0 .ABCDEFGHI...... 
-                        "004A4B4C4D4E4F505152000000000000" + //D0 .JKLMNOPQR...... 
-                        "5C00535455565758595A000000000000" + //E0 \.STUVWXYZ...... 
-                        "30313233343536373839000000000000";  //F0 0123456789......  
+    /** variable      */ String ascii_min_char =  // RPI 1069
+                           " 01234567890" // blank and digits
+                         + "ABCDEFGHIJKLMNOPQRSTUVWXYZ" // uppercase
+                         + "abcdefghijklmnopqrstuvwxyz" // lower case
+                         + "@#$" // additional leading symbol characters
+                         + "&'()*+-./:=_"; // mimimum zscii special char // RPI 1529
+    /** variable      */ String newline = System.getProperty("line.separator"); // RPI 500
+    /** variable      */ char   alarm_bell = 0x07;          // ascii bell char for system.out alarm
+    /** variable      */ int    sdt_char_int = 0; // RPI 192 shared character sdt
+    /** variable      */ String ascii_table = 
+                         "................" + //00
+                         "................" + //10
+                         " !" + '"' + "#$%&'()*+,-./" + //20 with "
+                         "0123456789:;<=>?" + //30
+                         "@ABCDEFGHIJKLMNO" + //40
+                         "PQRSTUVWXYZ[\\]^_" + //50
+                         "`abcdefghijklmno" + //60
+                         "pqrstuvwxyz{|}~." + //70
+                         "................" + //80
+                         "................" + //90
+                         "................" + //A0
+                         "................" + //B0
+                         "................" + //C0
+                         "................" + //D0
+                         "................" + //E0
+                         "................";  //F0
+    /** variable      */ String ascii_dump_table = ascii_table; // for dump storage prt char portion
+    /** variable      */ String ebcdic_table =
+                         "................" + //00
+                         "................" + //10
+                         "................" + //20
+                         "................" + //30
+                         " ...........<(+|" + //40
+                         "&.........!$*);." + //50
+                         "-/.........,%_>?" + //60
+                         ".........`:#@'=" + '"' + //70 with "
+                         ".abcdefghi......" + //80
+                         ".jklmnopqr......" + //90
+                         ".~stuvwxyz......" + //A0
+                         "^.........[]...." + //B0
+                         "{ABCDEFGHI......" + //C0
+                         "}JKLMNOPQR......" + //D0
+                         "\\.STUVWXYZ......" + //E0 with \
+                         "0123456789......";   //F0
+    /** variable      */ String ebcdic_dump_table = ebcdic_table; // for dump storage prt char portion
+    /** variable      */ byte[] ascii_to_ebcdic = new byte[256];
+    /** variable      */ String ascii_to_ebcdic_hex = 
+                         "00010203372D2E2F1605250B0C0D0E0F" + //00 ................ 
+                         "101112003C3D322618193F2722003500" + //10 ................ 
+                         "405A7F7B5B6C507D4D5D5C4E6B604B61" + //20  !"#$%&'()*+,-./ 
+                         "F0F1F2F3F4F5F6F7F8F97A5E4C7E6E6F" + //30 0123456789:;<=>? 
+                         "7CC1C2C3C4C5C6C7C8C9D1D2D3D4D5D6" + //40 @ABCDEFGHIJKLMNO  
+                         "D7D8D9E2E3E4E5E6E7E8E9ADE0BD5F6D" + //50 PQRSTUVWXYZ.\.._  
+                         "79818283848586878889919293949596" + //60 `abcdefghijklmno 
+                         "979899A2A3A4A5A6A7A8A98B4F9BA107" + //70 pqrstuvwxyz.|.~. 
+                         "00010203372D2E2F1605250B0C0D0E0F" + //80 ................  
+                         "101112003C3D322618193F2722003500" + //90 ................ 
+                         "405A7F7B5B6C507D4D5D5C4E6B604B61" + //A0  !"#$%&'()*+,-./ 
+                         "F0F1F2F3F4F5F6F7F8F97A5E4C7E6E6F" + //B0 0123456789:;<=>? 
+                         "7CC1C2C3C4C5C6C7C8C9D1D2D3D4D5D6" + //C0 @ABCDEFGHIJKLMNO 
+                         "D7D8D9E2E3E4E5E6E7E8E9ADE0BD5F6D" + //D0 PQRSTUVWXYZ.\.._ 
+                         "79818283848586878889919293949596" + //E0 `abcdefghijklmno 
+                         "979899A2A3A4A5A6A7A8A98B4F9BA107";  //F0 pqrstuvwxyz.|.~. 
+    /** variable      */ byte[] ebcdic_to_ascii = new byte[256];
+    /** variable      */ String ebcdic_to_ascii_hex = 
+                         "000102030009007F0000000B0C0D0E0F" + //00 ................ 
+                         "10111200000008001819000000000000" + //10 ................ 
+                         "00001C00000A171B0000000000050607" + //20 ................ 
+                         "00001600001E0004000000001415001A" + //30 ................ 
+                         "20000000000000000000002E3C282B7C" + //40  ...........<(+| 
+                         "2600000000000000000021242A293B5E" + //50 &.........!$*);^ 
+                         "2D2F0000000000000000002C255F3E3F" + //60 -/.........,%_>? 
+                         "000000000000000000603A2340273D22" + //70 .........`:#@'=" 
+                         "00616263646566676869007B00000000" + //80 .abcdefghi.{.... 
+                         "006A6B6C6D6E6F707172007D00000000" + //90 .jklmnopqr.}.... 
+                         "007E737475767778797A0000005B0000" + //A0 .~stuvwxyz...[.. 
+                         "000000000000000000000000005D0000" + //B0 .............].. 
+                         "00414243444546474849000000000000" + //C0 .ABCDEFGHI...... 
+                         "004A4B4C4D4E4F505152000000000000" + //D0 .JKLMNOPQR...... 
+                         "5C00535455565758595A000000000000" + //E0 \.STUVWXYZ...... 
+                         "30313233343536373839000000000000";  //F0 0123456789......  
 
-        // Printable ASCII table and printable EBCIC table; for SNAP/dump output
-         
-        String prtAscii =  " !\"#$%&'()*+,-./"  // 20-2F
-                          +"0123456789:;<=>?"   // 30-3F
-                          +"@ABCDEFGHIJKLMNO"   // 40-4F
-                          +"PQRSTUVWXYZ[\\]^_"  // 50-5F includes 5B=[, 5D=], 5E=^
-                          +"`abcdefghijklmno"   // 60-6F includes 60=`
-                          +"pqrstuvwxyz{|}~"    // 70-7E includes 7E=~
-                        ;
-
-        // IBM1947 and IBM037 common values; omit cent sign, caret, and not sign
-        String prtEbcdic =  " "            // 40
-                           +".<(+!"        // 4B-4F; omit 4A=cent sign
-                           +"&"            // 50
-                           +"!$*);"        // 5A-5E; omit 5F=caret or not sign
-                           +"-/"           // 60-61
-                           +",%_>?"        // 6B-6F
-                           +":#@'="+"\""   // 7A-7F
-                           +"abcdefghi"    // 81-89
-                           +"jklmnopqr"    // 91-99
-                           +"~stuvwxyz"    // A2-A9  omit B0=not sign or caret
-                           +"{ABCDEFGHI"   // C0-C9
-                           +"}JKLMNOPQR"   // D0-D9
-                           +"\\"           // E0
-                           +"STUVWXYZ"     // E2-E9
-                           +"0123456789"   // F0-F9
+    /** Printable ASCII table and printable EBCIC table; for SNAP/dump output */
+                         String prtAscii =  " !\"#$%&'()*+,-./"  // 20-2F
+                         +"0123456789:;<=>?"   // 30-3F
+                         +"@ABCDEFGHIJKLMNO"   // 40-4F
+                         +"PQRSTUVWXYZ[\\]^_"  // 50-5F includes 5B=[, 5D=], 5E=^
+                         +"`abcdefghijklmno"   // 60-6F includes 60=`
+                         +"pqrstuvwxyz{|}~";   // 70-7E includes 7E=~
+    /** IBM1947 and IBM037 common values; omit cent sign, caret, and not sign */
+                         String prtEbcdic =  " "            // 40
+                         +".<(+!"        // 4B-4F; omit 4A=cent sign
+                         +"&"            // 50
+                         +"!$*);"        // 5A-5E; omit 5F=caret or not sign
+                         +"-/"           // 60-61
+                         +",%_>?"        // 6B-6F
+                         +":#@'="+"\""   // 7A-7F
+                         +"abcdefghi"    // 81-89
+                         +"jklmnopqr"    // 91-99
+                         +"~stuvwxyz"    // A2-A9  omit B0=not sign or caret
+                         +"{ABCDEFGHI"   // C0-C9
+                         +"}JKLMNOPQR"   // D0-D9
+                         +"\\"           // E0
+                         +"STUVWXYZ"     // E2-E9
+                         +"0123456789"   // F0-F9
                          ;
-        /*
-           Begin document IBM1047 and IBM037 tables
-        // IBM1047 codepage values
-        String prt_IBM1047    = " "            // 40
-                               +".<(+!"        // 4B-4F; omit 4A=cent sign
-                               +"&"            // 50
-                               +"!$*);^"       // 5A-5F; 5F=caret
-                               +"-/"           // 60-61
-                               +",%_>?"        // 6B-6F
-                               +":#@'="+"\""   // 7A-7F
-                               +"abcdefghi"    // 81-89
-                               +"jklmnopqr"    // 91-99
-                               +"~stuvwxyz"    // A2-A9  omit B0=not sign
-                               +"{ABCDEFGHI"   // C0-C9
-                               +"}JKLMNOPQR"   // D0-D9
-                               +"\\"           // E0
-                               +"STUVWXYZ"     // E2-E9
-                               +"0123456789"   // F0-F9
-                             ;
-        // IBM037 codepage values
-        String prt_IBM037     = " "            // 40
-                               +".<(+!"        // 4B-4F; omit 4A=cent sign
-                               +"&"            // 50
-                               +"!$*);¬"       // 5A-5F; 5F=not sign
-                               +"-/"           // 60-61
-                               +",%_>?"        // 6B-6F
-                               +":#@'="+"\""   // 7A-7F
-                               +"abcdefghi"    // 81-89
-                               +"jklmnopqr"    // 91-99
-                               +"~stuvwxyz"    // A2-A9  omit B0=caret
-                               +"{ABCDEFGHI"   // C0-C9
-                               +"}JKLMNOPQR"   // D0-D9
-                               +"\\"           // E0
-                               +"STUVWXYZ"     // E2-E9
-                               +"0123456789"   // F0-F9
-                             ;
-           End   document IBM1947 and IBM037 tables
-        */
 
-  /*
-   * CODEPAGE(ascii,ebcdic,LIST) option data 
-   */
-        String default_charset_name = Charset.defaultCharset().name();
-        String ascii_charset_name = "";
-        String ebcdic_charset_name = "";
-        boolean list_charset_map = false;
-		String test_ascii;
-		String test_ebcdic;
-		char   test_char;
-		byte[] init_charset_bytes = new byte[256];
-  /*
-   * Floating Point shared types and attributes
-   * for use by az390 for constants and pz390 instructions
-   */
-        /*
-         * fp conversion from big decimal to LH/LB
-         * variables copied from AZ390 routine 
-         * developed earlier to convert string to
-         * floating point constants (moved for RPI 407
-         */
-        byte fp_type    = 0;
-        byte fp_db_type = 0; // BFP long - double
-        byte fp_dd_type = 1; // DFP long - big dec
-        byte fp_dh_type = 2; // HFP long - big dec
-        byte fp_eb_type = 3; // BFP short - float
-        byte fp_ed_type = 4; // DFP short - big dec
-        byte fp_eh_type = 5; // HFP short - double
-        byte fp_lb_type = 6; // BFP extended - big dec
-        byte fp_ld_type = 7; // DFP extended - big dec
-        byte fp_lh_type = 8; // HFP extended - big dec
-        byte fp_lq_type = 9; // LQ quad word
-        byte fp_db_digits = 15;
-        byte fp_dd_digits = 16;
-        byte fp_dh_digits = 15;   
-        byte fp_eb_digits = 7;
-        byte fp_ed_digits = 7;
-        byte fp_eh_digits = 7;   // RPI 821
-        byte fp_lb_digits = 34;
-        byte fp_ld_digits = 34;
-        byte fp_lh_digits = 32; // RPI 821  
-        byte fp_guard_digits = 4; // RPI 1124        
-        /*
-         * follow fp_work_reg used to format
-         * edl types to binary storage formats
-         */
-        byte[]     fp_work_reg_byte = (byte[])Array.newInstance(byte.class,17); // 1 extra guard byte ignored
-        ByteBuffer fp_work_reg = ByteBuffer.wrap(fp_work_reg_byte,0,17);  
-        /*
-         * Note:  The following big decimal precision
-         *        array used in both az390 and ez390
-         *        should be maintained consistently
-         *        as it is used for rounding 
-         *        during conversions between types.
-         */
-        int[]  fp_precision = {
-        		fp_db_digits+fp_guard_digits,
-        		fp_dd_digits,  // RPI 790 
-        		fp_dh_digits+fp_guard_digits,
-        		fp_eb_digits+fp_guard_digits,
-        		fp_ed_digits,  // RPI 790 
-        		fp_eh_digits+fp_guard_digits,
-        		fp_lb_digits+fp_guard_digits,
-        		fp_ld_digits,  // RPI 790 
-        		fp_lh_digits+fp_guard_digits,
-        		fp_lh_digits+fp_guard_digits  // rpi 1108 lq 
-        		}; 
-        int[]  fp_digits_max  = {0,16,0,0,7,0,0,34,0,0};
-        int[]  fp_sign_bit    = {0x800,0x20,0x80,0x100,0x20,0x80,0x8000,0x20,0x80,0X80}; // RPI 407
-        int[]  fp_one_bit_adj = {2,-1,2,2,-1,1,2,-1,1,1}; // RPI 407 RPI 821 from 1 to 2 
-        int[]  fp_exp_bias    = {0x3ff,398,0x40,0x7f,101,0x40,0x3fff,6176,0x40,0X40}; // RPI 407
-        int[]  fp_exp_max     = {0x7ff,0x3ff,0x7f,0xff,0xff,0x7f,0x7fff,0x3fff,0x7f,0X7F}; // RPI 407
-        int[]  fp_man_bits = {52,-1,56,23,-1,24,112,-1,112,112}; 
-  /*
-   * DFP Decimal Floating Point shared tables
-   */
-        int fp_sign = 0;
-        int fp_exp   = 0; // scale * log10/log2
-        String dfp_digits = null;
-    	int    dfp_dec_index = 0;  // RPI 786
-    	int    dfp_exp_index = 0;  // RPI 786
-    	int    dfp_exp = 0;        // RPI 786
-    	int    dfp_scf = 0;        // RPI 786
-    	int    dfp_preferred_exp = -2; // RPI 786
-        byte[] dfp_work = new byte[16];
-   /* 
-   * dfp_exp_bcd_to_cf5 returns CF5 5 bit 
-   * combination field using index made up of 
-   * high 2 bits of bias exponent
-   * plus 4 bit BCDnibble for first digit. 
-   */
-        byte[] dfp_exp_bcd_to_cf5 = { // RPI 407 indexed by high 2 bits of exp + fisrt digit
-    			0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0,0,0,0,0,0, //0d
-    			0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x1A,0x1B,0,0,0,0,0,0, //1d
-    			0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x1C,0x1D,0,0,0,0,0,0, //2d
-    	  };
-        /*
-         * dfp_bcd_to_dpd returns 10 bit densely
-         * packed decimal indexed by 3 digit value 0-999
-         */
-      	  int[] dfp_bcd_to_dpd = {
-      	      0x000,0x001,0x002,0x003,0x004,0x005,0x006,0x007,0x008,0x009,
-      	      0x010,0x011,0x012,0x013,0x014,0x015,0x016,0x017,0x018,0x019,
-      	      0x020,0x021,0x022,0x023,0x024,0x025,0x026,0x027,0x028,0x029,
-      	      0x030,0x031,0x032,0x033,0x034,0x035,0x036,0x037,0x038,0x039,
-      	      0x040,0x041,0x042,0x043,0x044,0x045,0x046,0x047,0x048,0x049,
-      	      0x050,0x051,0x052,0x053,0x054,0x055,0x056,0x057,0x058,0x059,
-      	      0x060,0x061,0x062,0x063,0x064,0x065,0x066,0x067,0x068,0x069,
-      	      0x070,0x071,0x072,0x073,0x074,0x075,0x076,0x077,0x078,0x079,
-      	      0x00A,0x00B,0x02A,0x02B,0x04A,0x04B,0x06A,0x06B,0x04E,0x04F,
-      	      0x01A,0x01B,0x03A,0x03B,0x05A,0x05B,0x07A,0x07B,0x05E,0x05F,
-      	      0x080,0x081,0x082,0x083,0x084,0x085,0x086,0x087,0x088,0x089,
-      	      0x090,0x091,0x092,0x093,0x094,0x095,0x096,0x097,0x098,0x099,
-      	      0x0A0,0x0A1,0x0A2,0x0A3,0x0A4,0x0A5,0x0A6,0x0A7,0x0A8,0x0A9,
-      	      0x0B0,0x0B1,0x0B2,0x0B3,0x0B4,0x0B5,0x0B6,0x0B7,0x0B8,0x0B9,
-      	      0x0C0,0x0C1,0x0C2,0x0C3,0x0C4,0x0C5,0x0C6,0x0C7,0x0C8,0x0C9,
-      	      0x0D0,0x0D1,0x0D2,0x0D3,0x0D4,0x0D5,0x0D6,0x0D7,0x0D8,0x0D9,
-      	      0x0E0,0x0E1,0x0E2,0x0E3,0x0E4,0x0E5,0x0E6,0x0E7,0x0E8,0x0E9,
-      	      0x0F0,0x0F1,0x0F2,0x0F3,0x0F4,0x0F5,0x0F6,0x0F7,0x0F8,0x0F9,
-      	      0x08A,0x08B,0x0AA,0x0AB,0x0CA,0x0CB,0x0EA,0x0EB,0x0CE,0x0CF,
-      	      0x09A,0x09B,0x0BA,0x0BB,0x0DA,0x0DB,0x0FA,0x0FB,0x0DE,0x0DF,
-      	      0x100,0x101,0x102,0x103,0x104,0x105,0x106,0x107,0x108,0x109,
-      	      0x110,0x111,0x112,0x113,0x114,0x115,0x116,0x117,0x118,0x119,
-      	      0x120,0x121,0x122,0x123,0x124,0x125,0x126,0x127,0x128,0x129,
-      	      0x130,0x131,0x132,0x133,0x134,0x135,0x136,0x137,0x138,0x139,
-      	      0x140,0x141,0x142,0x143,0x144,0x145,0x146,0x147,0x148,0x149,
-      	      0x150,0x151,0x152,0x153,0x154,0x155,0x156,0x157,0x158,0x159,
-      	      0x160,0x161,0x162,0x163,0x164,0x165,0x166,0x167,0x168,0x169,
-      	      0x170,0x171,0x172,0x173,0x174,0x175,0x176,0x177,0x178,0x179,
-      	      0x10A,0x10B,0x12A,0x12B,0x14A,0x14B,0x16A,0x16B,0x14E,0x14F,
-      	      0x11A,0x11B,0x13A,0x13B,0x15A,0x15B,0x17A,0x17B,0x15E,0x15F,
-      	      0x180,0x181,0x182,0x183,0x184,0x185,0x186,0x187,0x188,0x189,
-      	      0x190,0x191,0x192,0x193,0x194,0x195,0x196,0x197,0x198,0x199,
-      	      0x1A0,0x1A1,0x1A2,0x1A3,0x1A4,0x1A5,0x1A6,0x1A7,0x1A8,0x1A9,
-      	      0x1B0,0x1B1,0x1B2,0x1B3,0x1B4,0x1B5,0x1B6,0x1B7,0x1B8,0x1B9,
-      	      0x1C0,0x1C1,0x1C2,0x1C3,0x1C4,0x1C5,0x1C6,0x1C7,0x1C8,0x1C9,
-      	      0x1D0,0x1D1,0x1D2,0x1D3,0x1D4,0x1D5,0x1D6,0x1D7,0x1D8,0x1D9,
-      	      0x1E0,0x1E1,0x1E2,0x1E3,0x1E4,0x1E5,0x1E6,0x1E7,0x1E8,0x1E9,
-      	      0x1F0,0x1F1,0x1F2,0x1F3,0x1F4,0x1F5,0x1F6,0x1F7,0x1F8,0x1F9,
-      	      0x18A,0x18B,0x1AA,0x1AB,0x1CA,0x1CB,0x1EA,0x1EB,0x1CE,0x1CF,
-      	      0x19A,0x19B,0x1BA,0x1BB,0x1DA,0x1DB,0x1FA,0x1FB,0x1DE,0x1DF,
-      	      0x200,0x201,0x202,0x203,0x204,0x205,0x206,0x207,0x208,0x209,
-      	      0x210,0x211,0x212,0x213,0x214,0x215,0x216,0x217,0x218,0x219,
-      	      0x220,0x221,0x222,0x223,0x224,0x225,0x226,0x227,0x228,0x229,
-      	      0x230,0x231,0x232,0x233,0x234,0x235,0x236,0x237,0x238,0x239,
-      	      0x240,0x241,0x242,0x243,0x244,0x245,0x246,0x247,0x248,0x249,
-      	      0x250,0x251,0x252,0x253,0x254,0x255,0x256,0x257,0x258,0x259,
-      	      0x260,0x261,0x262,0x263,0x264,0x265,0x266,0x267,0x268,0x269,
-      	      0x270,0x271,0x272,0x273,0x274,0x275,0x276,0x277,0x278,0x279,
-      	      0x20A,0x20B,0x22A,0x22B,0x24A,0x24B,0x26A,0x26B,0x24E,0x24F,
-      	      0x21A,0x21B,0x23A,0x23B,0x25A,0x25B,0x27A,0x27B,0x25E,0x25F,
-      	      0x280,0x281,0x282,0x283,0x284,0x285,0x286,0x287,0x288,0x289,
-      	      0x290,0x291,0x292,0x293,0x294,0x295,0x296,0x297,0x298,0x299,
-      	      0x2A0,0x2A1,0x2A2,0x2A3,0x2A4,0x2A5,0x2A6,0x2A7,0x2A8,0x2A9,
-      	      0x2B0,0x2B1,0x2B2,0x2B3,0x2B4,0x2B5,0x2B6,0x2B7,0x2B8,0x2B9,
-      	      0x2C0,0x2C1,0x2C2,0x2C3,0x2C4,0x2C5,0x2C6,0x2C7,0x2C8,0x2C9,
-      	      0x2D0,0x2D1,0x2D2,0x2D3,0x2D4,0x2D5,0x2D6,0x2D7,0x2D8,0x2D9,
-      	      0x2E0,0x2E1,0x2E2,0x2E3,0x2E4,0x2E5,0x2E6,0x2E7,0x2E8,0x2E9,
-      	      0x2F0,0x2F1,0x2F2,0x2F3,0x2F4,0x2F5,0x2F6,0x2F7,0x2F8,0x2F9,
-      	      0x28A,0x28B,0x2AA,0x2AB,0x2CA,0x2CB,0x2EA,0x2EB,0x2CE,0x2CF,
-      	      0x29A,0x29B,0x2BA,0x2BB,0x2DA,0x2DB,0x2FA,0x2FB,0x2DE,0x2DF,
-      	      0x300,0x301,0x302,0x303,0x304,0x305,0x306,0x307,0x308,0x309,
-      	      0x310,0x311,0x312,0x313,0x314,0x315,0x316,0x317,0x318,0x319,
-      	      0x320,0x321,0x322,0x323,0x324,0x325,0x326,0x327,0x328,0x329,
-      	      0x330,0x331,0x332,0x333,0x334,0x335,0x336,0x337,0x338,0x339,
-      	      0x340,0x341,0x342,0x343,0x344,0x345,0x346,0x347,0x348,0x349,
-      	      0x350,0x351,0x352,0x353,0x354,0x355,0x356,0x357,0x358,0x359,
-      	      0x360,0x361,0x362,0x363,0x364,0x365,0x366,0x367,0x368,0x369,
-      	      0x370,0x371,0x372,0x373,0x374,0x375,0x376,0x377,0x378,0x379,
-      	      0x30A,0x30B,0x32A,0x32B,0x34A,0x34B,0x36A,0x36B,0x34E,0x34F,
-      	      0x31A,0x31B,0x33A,0x33B,0x35A,0x35B,0x37A,0x37B,0x35E,0x35F,
-      	      0x380,0x381,0x382,0x383,0x384,0x385,0x386,0x387,0x388,0x389,
-      	      0x390,0x391,0x392,0x393,0x394,0x395,0x396,0x397,0x398,0x399,
-      	      0x3A0,0x3A1,0x3A2,0x3A3,0x3A4,0x3A5,0x3A6,0x3A7,0x3A8,0x3A9,
-      	      0x3B0,0x3B1,0x3B2,0x3B3,0x3B4,0x3B5,0x3B6,0x3B7,0x3B8,0x3B9,
-      	      0x3C0,0x3C1,0x3C2,0x3C3,0x3C4,0x3C5,0x3C6,0x3C7,0x3C8,0x3C9,
-      	      0x3D0,0x3D1,0x3D2,0x3D3,0x3D4,0x3D5,0x3D6,0x3D7,0x3D8,0x3D9,
-      	      0x3E0,0x3E1,0x3E2,0x3E3,0x3E4,0x3E5,0x3E6,0x3E7,0x3E8,0x3E9,
-      	      0x3F0,0x3F1,0x3F2,0x3F3,0x3F4,0x3F5,0x3F6,0x3F7,0x3F8,0x3F9,
-      	      0x38A,0x38B,0x3AA,0x3AB,0x3CA,0x3CB,0x3EA,0x3EB,0x3CE,0x3CF,
-      	      0x39A,0x39B,0x3BA,0x3BB,0x3DA,0x3DB,0x3FA,0x3FB,0x3DE,0x3DF,
-      	      0x00C,0x00D,0x10C,0x10D,0x20C,0x20D,0x30C,0x30D,0x02E,0x02F,
-      	      0x01C,0x01D,0x11C,0x11D,0x21C,0x21D,0x31C,0x31D,0x03E,0x03F,
-      	      0x02C,0x02D,0x12C,0x12D,0x22C,0x22D,0x32C,0x32D,0x12E,0x12F,
-      	      0x03C,0x03D,0x13C,0x13D,0x23C,0x23D,0x33C,0x33D,0x13E,0x13F,
-      	      0x04C,0x04D,0x14C,0x14D,0x24C,0x24D,0x34C,0x34D,0x22E,0x22F,
-      	      0x05C,0x05D,0x15C,0x15D,0x25C,0x25D,0x35C,0x35D,0x23E,0x23F,
-      	      0x06C,0x06D,0x16C,0x16D,0x26C,0x26D,0x36C,0x36D,0x32E,0x32F,
-      	      0x07C,0x07D,0x17C,0x17D,0x27C,0x27D,0x37C,0x37D,0x33E,0x33F,
-      	      0x00E,0x00F,0x10E,0x10F,0x20E,0x20F,0x30E,0x30F,0x06E,0x06F,
-      	      0x01E,0x01F,0x11E,0x11F,0x21E,0x21F,0x31E,0x31F,0x07E,0x07F,
-      	      0x08C,0x08D,0x18C,0x18D,0x28C,0x28D,0x38C,0x38D,0x0AE,0x0AF,
-      	      0x09C,0x09D,0x19C,0x19D,0x29C,0x29D,0x39C,0x39D,0x0BE,0x0BF,
-      	      0x0AC,0x0AD,0x1AC,0x1AD,0x2AC,0x2AD,0x3AC,0x3AD,0x1AE,0x1AF,
-      	      0x0BC,0x0BD,0x1BC,0x1BD,0x2BC,0x2BD,0x3BC,0x3BD,0x1BE,0x1BF,
-      	      0x0CC,0x0CD,0x1CC,0x1CD,0x2CC,0x2CD,0x3CC,0x3CD,0x2AE,0x2AF,
-      	      0x0DC,0x0DD,0x1DC,0x1DD,0x2DC,0x2DD,0x3DC,0x3DD,0x2BE,0x2BF,
-      	      0x0EC,0x0ED,0x1EC,0x1ED,0x2EC,0x2ED,0x3EC,0x3ED,0x3AE,0x3AF,
-      	      0x0FC,0x0FD,0x1FC,0x1FD,0x2FC,0x2FD,0x3FC,0x3FD,0x3BE,0x3BF,
-      	      0x08E,0x08F,0x18E,0x18F,0x28E,0x28F,0x38E,0x38F,0x0EE,0x0EF,
-      	      0x09E,0x09F,0x19E,0x19F,0x29E,0x29F,0x39E,0x39F,0x0FE,0x0FF,                                                  
-      	     };
-      	  /*
-      	   * dfp_cf5_to_exp2 returns 2 high bits of
-      	   * biased exponent indexed by 5 bit combined field
-      	   */
-          int[] dfp_cf5_to_exp2 = {
-        		     0,0,0,0,0,0,0,0,  // 0- 7 = 0
-		             1,1,1,1,1,1,1,1,  // 8-15 = 1
-		             2,2,2,2,2,2,2,2,  //16-23 = 2
-		             0,0,              //24-25 = 0
-		             1,1,              //26-27 = 1
-		             2,2,             //28-29 = 2
-		             3,               //30 infinity  RPI 536
-		             4};              //31 NaN      RPI 536
-          /*
-           * dfp_cf5_to_bcd returns decimal digit 0-9
-           * indexed by 5 bit combination field value
-           */
-             long[] dfp_cf5_to_bcd = { //cf5 value
-            		 0,1,2,3,4,5,6,7,  //00-07
-            		 0,1,2,3,4,5,6,7,  //08-0F
-            		 0,1,2,3,4,5,6,7,  //10-17
-            		 8,9,              //18-19
-            		 8,9,              //1A-1B
-            		 8,9               //1C-1D
-             };
-      	  /*
-      	   * dfp_dpd_to_bcd returns 3 digit decimal
-      	   * value 0-999 using 10 bit densely packed
-      	   * decimal index value.
-      	   * Notes:
-      	   *   1. Redundent values in (...)
-      	   *   2. Java interprets leading 08 as
-      	   *      octal number like 0x is hex so
-      	   *      any leading 0's should be removed,
-      	   */
-          long[] dfp_dpd_to_bcd = {
-        		  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 80, 81,800,801,880,881,    // 00
-        		 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 90, 91,810,811,890,891,    // 01
-        		 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 82, 83,820,821,808,809,    // 02
-        		 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 92, 93,830,831,818,819,    // 03
-        		 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 84, 85,840,841, 88, 89,    // 04
-        		 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 94, 95,850,851, 98, 99,    // 05
-        		 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 86, 87,860,861,888,889,    // 06
-        		 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 96, 97,870,871,898,899,    // 07
-        		100,101,102,103,104,105,106,107,108,109,180,181,900,901,980,981,    // 08
-        		110,111,112,113,114,115,116,117,118,119,190,191,910,911,990,991,    // 09
-        		120,121,122,123,124,125,126,127,128,129,182,183,920,921,908,909,    // 0A
-        		130,131,132,133,134,135,136,137,138,139,192,193,930,931,918,919,    // 0B
-        		140,141,142,143,144,145,146,147,148,149,184,185,940,941,188,189,    // 0C
-        		150,151,152,153,154,155,156,157,158,159,194,195,950,951,198,199,    // 0D
-        		160,161,162,163,164,165,166,167,168,169,186,187,960,961,988,989,    // 0E
-        		170,171,172,173,174,175,176,177,178,179,196,197,970,971,998,999,    // 0F
-        		200,201,202,203,204,205,206,207,208,209,280,281,802,803,882,883,    // 10
-        		210,211,212,213,214,215,216,217,218,219,290,291,812,813,892,893,    // 11
-        		220,221,222,223,224,225,226,227,228,229,282,283,822,823,828,829,    // 12
-        		230,231,232,233,234,235,236,237,238,239,292,293,832,833,838,839,    // 13
-        		240,241,242,243,244,245,246,247,248,249,284,285,842,843,288,289,    // 14
-        		250,251,252,253,254,255,256,257,258,259,294,295,852,853,298,299,    // 15
-        		260,261,262,263,264,265,266,267,268,269,286,287,862,863,(888),(889),// 16
-        		270,271,272,273,274,275,276,277,278,279,296,297,872,873,(898),(899),// 17
-        		300,301,302,303,304,305,306,307,308,309,380,381,902,903,982,983,    // 18
-        		310,311,312,313,314,315,316,317,318,319,390,391,912,913,992,993,    // 19
-        		320,321,322,323,324,325,326,327,328,329,382,383,922,923,928,929,    // 1A
-        		330,331,332,333,334,335,336,337,338,339,392,393,932,933,938,939,    // 1B
-        		340,341,342,343,344,345,346,347,348,349,384,385,942,943,388,389,    // 1C
-        		350,351,352,353,354,355,356,357,358,359,394,395,952,953,398,399,    // 1D
-        		360,361,362,363,364,365,366,367,368,369,386,387,962,963,(988),(989),// 1E
-        		370,371,372,373,374,375,376,377,378,379,396,397,972,973,(998),(999),// 1F
-        		400,401,402,403,404,405,406,407,408,409,480,481,804,805,884,885,    // 20
-        		410,411,412,413,414,415,416,417,418,419,490,491,814,815,894,895,    // 21
-        		420,421,422,423,424,425,426,427,428,429,482,483,824,825,848,849,    // 22
-        		430,431,432,433,434,435,436,437,438,439,492,493,834,835,858,859,    // 23
-        		440,441,442,443,444,445,446,447,448,449,484,485,844,845,488,489,    // 24
-        		450,451,452,453,454,455,456,457,458,459,494,495,854,855,498,499,    // 25
-        		460,461,462,463,464,465,466,467,468,469,486,487,864,865,(888),(889),// 26
-        		470,471,472,473,474,475,476,477,478,479,496,497,874,875,(898),(899),// 27
-        		500,501,502,503,504,505,506,507,508,509,580,581,904,905,984,985,    // 28
-        		510,511,512,513,514,515,516,517,518,519,590,591,914,915,994,995,    // 29
-        		520,521,522,523,524,525,526,527,528,529,582,583,924,925,948,949,    // 2A
-        		530,531,532,533,534,535,536,537,538,539,592,593,934,935,958,959,    // 2B
-        		540,541,542,543,544,545,546,547,548,549,584,585,944,945,588,589,    // 2C
-        		550,551,552,553,554,555,556,557,558,559,594,595,954,955,598,599,    // 2D
-        		560,561,562,563,564,565,566,567,568,569,586,587,964,965,(988),(989),// 2E
-        		570,571,572,573,574,575,576,577,578,579,596,597,974,975,(998),(999),// 2F
-        		600,601,602,603,604,605,606,607,608,609,680,681,806,807,886,887,    // 30
-        		610,611,612,613,614,615,616,617,618,619,690,691,816,817,896,897,    // 31
-        		620,621,622,623,624,625,626,627,628,629,682,683,826,827,868,869,    // 32
-        		630,631,632,633,634,635,636,637,638,639,692,693,836,837,878,879,    // 33
-        		640,641,642,643,644,645,646,647,648,649,684,685,846,847,688,689,    // 34
-        		650,651,652,653,654,655,656,657,658,659,694,695,856,857,698,699,    // 35
-        		660,661,662,663,664,665,666,667,668,669,686,687,866,867,(888),(889),// 36
-        		670,671,672,673,674,675,676,677,678,679,696,697,876,877,(898),(899),// 37
-        		700,701,702,703,704,705,706,707,708,709,780,781,906,907,986,987,    // 38
-        		710,711,712,713,714,715,716,717,718,719,790,791,916,917,996,997,    // 39
-        		720,721,722,723,724,725,726,727,728,729,782,783,926,927,968,969,    // 3A
-        		730,731,732,733,734,735,736,737,738,739,792,793,936,937,978,979,    // 3B
-        		740,741,742,743,744,745,746,747,748,749,784,785,946,947,788,789,    // 3C
-        		750,751,752,753,754,755,756,757,758,759,794,795,956,957,798,799,    // 3D
-        		760,761,762,763,764,765,766,767,768,769,786,787,966,967,(988),(989),// 3E
-        		770,771,772,773,774,775,776,777,778,779,796,797,976,977,(998),(999),// 3F
-        		};
-  /*                                                      // #503
-   * MACHINE and OPTABLE options                          // #503
-   *                                                      // #503
-   * Logic in method init_option_tables() will analyze    // #503
-   * table machine_optable_equivalence and split its      // #503
-   * content into the tables machine_option_id and        // #503
-   * machines_optable.                                    // #503
-   * The same goes for table optable_optable_equivalence  // #503
-   * which is split into the tables optable_option_id and // #503
-   * optables_optable                                     // #503
-   * Additionally, the optables are assigned a sequence   // #554
-   * number for internal identification and processing    // #554
-   *                                                      // #503
-   */                                                     // #503
-    int[]    optable_option_nr = null;                    // #554
-    String[] optable_option_id = null;                    // #503
-    String[] optables_optable = null; // optable's optable// #503
 
-    static final String[] optable_optable_equivalence =   // #503 #631
-       {""+Integer.toString(ArchLevel.ARCH_360_20.getValue())+":360-20=360-20", // #543 #554 #656
-        ""+Integer.toString(ArchLevel.ARCH_DOS.getValue())   +":DOS=DOS",       // #503 #554 #656
-        ""+Integer.toString(ArchLevel.ARCH_370.getValue())   +":370=370",       // #503 #554 #656
-        ""+Integer.toString(ArchLevel.ARCH_XA.getValue())    +":XA=XA",         // #503 #554 #656
-        ""+Integer.toString(ArchLevel.ARCH_ESA.getValue())   +":ESA=ESA",       // #503 #554 #656
-        ""+Integer.toString(ArchLevel.ARCH_ZOP.getValue())   +":ZOP=ZOP",       // #503 #554 #656
-        ""+Integer.toString(ArchLevel.ARCH_ZOP.getValue())   +":ZS1=ZOP",       // #503 #554 #656
-        ""+Integer.toString(ArchLevel.ARCH_YOP.getValue())   +":YOP=YOP",       // #503 #554 #656
-        ""+Integer.toString(ArchLevel.ARCH_YOP.getValue())   +":ZS2=YOP",       // #503 #554 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z9 .getValue())   +":Z9=Z9",         // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z9 .getValue())   +":ZS3=Z9",        // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z10.getValue())   +":Z10=Z10",       // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z10.getValue())   +":ZS4=Z10",       // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z11.getValue())   +":Z11=Z11",       // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z11.getValue())   +":ZS5=Z11",       // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z12.getValue())   +":Z12=Z12",       // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z12.getValue())   +":ZS6=Z12",       // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z13.getValue())   +":Z13=Z13",       // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z13.getValue())   +":ZS7=Z13",       // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z14.getValue())   +":Z14=Z14",       // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z14.getValue())   +":ZS8=Z14",       // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z15.getValue())   +":Z15=Z15",       // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z15.getValue())   +":ZS9=Z15",       // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z16.getValue())   +":Z16=Z16",       // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z16.getValue())   +":ZSA=Z16",       // #503 #554 #631 #656
-        ""+Integer.toString(ArchLevel.ARCH_Z17.getValue())   +":Z17=Z17",       // #661           #656
-        ""+Integer.toString(ArchLevel.ARCH_Z17.getValue())   +":ZSB=Z17",       // #661           #656
-        ""+Integer.toString(ArchLevel.ARCH_UNI.getValue())   +":UNI=UNI",       // #503 #554      #656
-        ""+Integer.toString(ArchLevel.ARCH_Z390.getValue())  +":z390=z390",     // #503 #554      #656
-        ""+Integer.toString(ArchLevel.ARCH_DFLT.getValue())  +":DFLT=DFLT",     // #503 #554 #631 #656
-        };                                                // #503
-    int[]    machine_option_nr = null;                    // #568
-    String[] machine_option_id = null;                    // #503
-    String[] machines_optable = null; // machine's optable// #503
-    static final String[] machine_optable_equivalence =   // #503 #631
-       {"S360-20=360-20",                                 // #543
-        "S370=370",                                       // #503
-        "S370XA=XA",                                      // #503
-        "ARCH-0=XA",                                      // #503
-        "S390=ESA",                                       // #503
-        "S390E=ESA",                                      // #503
-        "S370ESA=ESA",                                    // #503
-        "ARCH-1=ESA",                                     // #503
-        "ARCH-2=ESA",                                     // #503
-        "ARCH-3=ESA",                                     // #503
-        "ARCH-4=ESA",                                     // #503
-        "zSeries=ZOP",                                    // #503
-        "ZS=ZOP",                                         // #503
-        "z900=ZOP",                                       // #503
-        "z800=ZOP",                                       // #503
-        "ARCH-5=ZOP",                                     // #503
-        "zSeries-1=ZOP",                                  // #503
-        "ZS-1=ZOP",                                       // #503
-        "z990=YOP",                                       // #503
-        "z890=YOP",                                       // #503
-        "ARCH-6=YOP",                                     // #503
-        "zSeries-2=YOP",                                  // #503
-        "ZS-2=YOP",                                       // #503
-        "z9=Z9",                                          // #503
-        "ARCH-7=Z9",                                      // #503
-        "zSeries-3=Z9",                                   // #503
-        "ZS-3=Z9",                                        // #503
-        "z10=Z10",                                        // #503
-        "ARCH-8=Z10",                                     // #503
-        "zSeries-4=Z10",                                  // #503
-        "ZS-4=Z10",                                       // #503
-        "z11=Z11",                                        // #503
-        "z196=Z11",                                       // #503
-        "z114=Z11",                                       // #503
-        "ARCH-9=Z11",                                     // #503
-        "zSeries-5=Z11",                                  // #503
-        "ZS-5=Z11",                                       // #503
-        "z12=Z12",                                        // #503
-        "zEC12=Z12",                                      // #503
-        "zBC12=Z12",                                      // #503
-        "ARCH-10=Z12",                                    // #503
-        "zSeries-6=Z12",                                  // #503
-        "ZS-6=Z12",                                       // #503
-        "z13=Z13",                                        // #503
-        "ARCH-11=Z13",                                    // #503
-        "zSeries-7=Z13",                                  // #503
-        "ZS-7=Z13",                                       // #503
-        "z14=Z14",                                        // #503
-        "ARCH-12=Z14",                                    // #503
-        "zSeries-8=Z14",                                  // #503
-        "ZS-8=Z14",                                       // #503
-        "z15=Z15",                                        // #503
-        "ARCH-13=Z15",                                    // #503
-        "zSeries-9=Z15",                                  // #503
-        "ZS-9=Z15",                                       // #503
-        "z16=Z16",                                        // #503
-        "ARCH-14=Z16",                                    // #503
-        "zSeries-10=Z16",                                 // #503
-        "ZS-10=Z16",                                      // #503
-        "z17=Z17",                                        // #661
-        "ARCH-15=Z17",                                    // #661
-        "zSeries-11=Z17",                                 // #661
-        "ZS-11=Z17",                                      // #661
-        "z390=z390",                                      // #503
-        };                                                // #503
+
+    /* Begin document IBM1047 and IBM037 tables
+    // IBM1047 codepage values
+                         String prt_IBM1047    = " "            // 40
+                         +".<(+!"        // 4B-4F; omit 4A=cent sign
+                         +"&"            // 50
+                         +"!$*);^"       // 5A-5F; 5F=caret
+                         +"-/"           // 60-61
+                         +",%_>?"        // 6B-6F
+                         +":#@'="+"\""   // 7A-7F
+                         +"abcdefghi"    // 81-89
+                         +"jklmnopqr"    // 91-99
+                         +"~stuvwxyz"    // A2-A9  omit B0=not sign
+                         +"{ABCDEFGHI"   // C0-C9
+                         +"}JKLMNOPQR"   // D0-D9
+                         +"\\"           // E0
+                         +"STUVWXYZ"     // E2-E9
+                         +"0123456789"   // F0-F9
+                         ;
+    // IBM037 codepage values
+                         String prt_IBM037     = " "            // 40
+                         +".<(+!"        // 4B-4F; omit 4A=cent sign
+                         +"&"            // 50
+                         +"!$*);¬"       // 5A-5F; 5F=not sign
+                         +"-/"           // 60-61
+                         +",%_>?"        // 6B-6F
+                         +":#@'="+"\""   // 7A-7F
+                         +"abcdefghi"    // 81-89
+                         +"jklmnopqr"    // 91-99
+                         +"~stuvwxyz"    // A2-A9  omit B0=caret
+                         +"{ABCDEFGHI"   // C0-C9
+                         +"}JKLMNOPQR"   // D0-D9
+                         +"\\"           // E0
+                         +"STUVWXYZ"     // E2-E9
+                         +"0123456789"   // F0-F9
+                         ;
+    // End   document IBM1947 and IBM037 tables */
+
+
+
+   /*
+    * CODEPAGE(ascii,ebcdic,LIST) option data 
+    */
+    /** variable      */ String default_charset_name = Charset.defaultCharset().name();
+    /** variable      */ String ascii_charset_name = "";
+    /** variable      */ String ebcdic_charset_name = "";
+    /** variable      */ boolean list_charset_map = false;
+    /** variable      */ String test_ascii;
+    /** variable      */ String test_ebcdic;
+    /** variable      */ char   test_char;
+    /** variable      */ byte[] init_charset_bytes = new byte[256];
+
+
+
+   /*
+    * Floating Point shared types and attributes
+    * for use by az390 for constants and pz390 instructions
+    *
+    * fp conversion from big decimal to LH/LB
+    * variables copied from AZ390 routine 
+    * developed earlier to convert string to
+    * floating point constants (moved for RPI 407
+    */
+    /** variable      */ byte fp_type    = 0;
+    /** variable      */ byte fp_db_type = 0; // BFP long - double
+    /** variable      */ byte fp_dd_type = 1; // DFP long - big dec
+    /** variable      */ byte fp_dh_type = 2; // HFP long - big dec
+    /** variable      */ byte fp_eb_type = 3; // BFP short - float
+    /** variable      */ byte fp_ed_type = 4; // DFP short - big dec
+    /** variable      */ byte fp_eh_type = 5; // HFP short - double
+    /** variable      */ byte fp_lb_type = 6; // BFP extended - big dec
+    /** variable      */ byte fp_ld_type = 7; // DFP extended - big dec
+    /** variable      */ byte fp_lh_type = 8; // HFP extended - big dec
+    /** variable      */ byte fp_lq_type = 9; // LQ quad word
+    /** variable      */ byte fp_db_digits = 15;
+    /** variable      */ byte fp_dd_digits = 16;
+    /** variable      */ byte fp_dh_digits = 15;   
+    /** variable      */ byte fp_eb_digits = 7;
+    /** variable      */ byte fp_ed_digits = 7;
+    /** variable      */ byte fp_eh_digits = 7;   // RPI 821
+    /** variable      */ byte fp_lb_digits = 34;
+    /** variable      */ byte fp_ld_digits = 34;
+    /** variable      */ byte fp_lh_digits = 32; // RPI 821  
+    /** variable      */ byte fp_guard_digits = 4; // RPI 1124
+
+
+
+   /*
+    * follow fp_work_reg used to format
+    * edl types to binary storage formats
+    */
+    /** variable      */ byte[]     fp_work_reg_byte = (byte[])Array.newInstance(byte.class,17); // 1 extra guard byte ignored
+    /** variable      */ ByteBuffer fp_work_reg = ByteBuffer.wrap(fp_work_reg_byte,0,17);
+
+
+
+   /**
+    * Note:  The fp_precision big decimal precision
+    *        array is used in both az390 and ez390.
+    *        Should be maintained consistently
+    *        as it is used for rounding 
+    *        during conversions between types.
+    */                   int[]  fp_precision = {
+                                fp_db_digits+fp_guard_digits,
+                                fp_dd_digits,  // RPI 790 
+                                fp_dh_digits+fp_guard_digits,
+                                fp_eb_digits+fp_guard_digits,
+                                fp_ed_digits,  // RPI 790 
+                                fp_eh_digits+fp_guard_digits,
+                                fp_lb_digits+fp_guard_digits,
+                                fp_ld_digits,  // RPI 790 
+                                fp_lh_digits+fp_guard_digits,
+                                fp_lh_digits+fp_guard_digits  // rpi 1108 lq 
+                                };
+    /** variable      */ int[]  fp_digits_max  = {0,16,0,0,7,0,0,34,0,0};
+    /** variable      */ int[]  fp_sign_bit    = {0x800,0x20,0x80,0x100,0x20,0x80,0x8000,0x20,0x80,0X80}; // RPI 407
+    /** variable      */ int[]  fp_one_bit_adj = {2,-1,2,2,-1,1,2,-1,1,1}; // RPI 407 RPI 821 from 1 to 2 
+    /** variable      */ int[]  fp_exp_bias    = {0x3ff,398,0x40,0x7f,101,0x40,0x3fff,6176,0x40,0X40}; // RPI 407
+    /** variable      */ int[]  fp_exp_max     = {0x7ff,0x3ff,0x7f,0xff,0xff,0x7f,0x7fff,0x3fff,0x7f,0X7F}; // RPI 407
+    /** variable      */ int[]  fp_man_bits    = {52,-1,56,23,-1,24,112,-1,112,112};
+
+
+
+   /*
+    * DFP Decimal Floating Point shared tables
+    */
+    /** variable      */ int fp_sign = 0;
+    /** variable      */ int fp_exp   = 0; // scale * log10/log2
+    /** variable      */ String dfp_digits = null;
+    /** variable      */ int    dfp_dec_index = 0;  // RPI 786
+    /** variable      */ int    dfp_exp_index = 0;  // RPI 786
+    /** variable      */ int    dfp_exp = 0;        // RPI 786
+    /** variable      */ int    dfp_scf = 0;        // RPI 786
+    /** variable      */ int    dfp_preferred_exp = -2; // RPI 786
+    /** variable      */ byte[] dfp_work = new byte[16];
+
+
+
+   /**
+    * dfp_exp_bcd_to_cf5 returns CF5 5 bit 
+    * combination field using index made up of
+    * high 2 bits of bias exponent
+    * plus 4 bit BCDnibble for first digit.
+    */                   byte[] dfp_exp_bcd_to_cf5 = { // RPI 407 indexed by high 2 bits of exp + fisrt digit
+                                0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0,0,0,0,0,0, //0d
+                                0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x1A,0x1B,0,0,0,0,0,0, //1d
+                                0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x1C,0x1D,0,0,0,0,0,0, //2d
+                                };
+
+
+
+   /**
+    * dfp_bcd_to_dpd returns 10 bit densely
+    * packed decimal indexed by 3 digit value 0-999
+    */                   int[] dfp_bcd_to_dpd = {
+                               0x000,0x001,0x002,0x003,0x004,0x005,0x006,0x007,0x008,0x009,
+                               0x010,0x011,0x012,0x013,0x014,0x015,0x016,0x017,0x018,0x019,
+                               0x020,0x021,0x022,0x023,0x024,0x025,0x026,0x027,0x028,0x029,
+                               0x030,0x031,0x032,0x033,0x034,0x035,0x036,0x037,0x038,0x039,
+                               0x040,0x041,0x042,0x043,0x044,0x045,0x046,0x047,0x048,0x049,
+                               0x050,0x051,0x052,0x053,0x054,0x055,0x056,0x057,0x058,0x059,
+                               0x060,0x061,0x062,0x063,0x064,0x065,0x066,0x067,0x068,0x069,
+                               0x070,0x071,0x072,0x073,0x074,0x075,0x076,0x077,0x078,0x079,
+                               0x00A,0x00B,0x02A,0x02B,0x04A,0x04B,0x06A,0x06B,0x04E,0x04F,
+                               0x01A,0x01B,0x03A,0x03B,0x05A,0x05B,0x07A,0x07B,0x05E,0x05F,
+                               0x080,0x081,0x082,0x083,0x084,0x085,0x086,0x087,0x088,0x089,
+                               0x090,0x091,0x092,0x093,0x094,0x095,0x096,0x097,0x098,0x099,
+                               0x0A0,0x0A1,0x0A2,0x0A3,0x0A4,0x0A5,0x0A6,0x0A7,0x0A8,0x0A9,
+                               0x0B0,0x0B1,0x0B2,0x0B3,0x0B4,0x0B5,0x0B6,0x0B7,0x0B8,0x0B9,
+                               0x0C0,0x0C1,0x0C2,0x0C3,0x0C4,0x0C5,0x0C6,0x0C7,0x0C8,0x0C9,
+                               0x0D0,0x0D1,0x0D2,0x0D3,0x0D4,0x0D5,0x0D6,0x0D7,0x0D8,0x0D9,
+                               0x0E0,0x0E1,0x0E2,0x0E3,0x0E4,0x0E5,0x0E6,0x0E7,0x0E8,0x0E9,
+                               0x0F0,0x0F1,0x0F2,0x0F3,0x0F4,0x0F5,0x0F6,0x0F7,0x0F8,0x0F9,
+                               0x08A,0x08B,0x0AA,0x0AB,0x0CA,0x0CB,0x0EA,0x0EB,0x0CE,0x0CF,
+                               0x09A,0x09B,0x0BA,0x0BB,0x0DA,0x0DB,0x0FA,0x0FB,0x0DE,0x0DF,
+                               0x100,0x101,0x102,0x103,0x104,0x105,0x106,0x107,0x108,0x109,
+                               0x110,0x111,0x112,0x113,0x114,0x115,0x116,0x117,0x118,0x119,
+                               0x120,0x121,0x122,0x123,0x124,0x125,0x126,0x127,0x128,0x129,
+                               0x130,0x131,0x132,0x133,0x134,0x135,0x136,0x137,0x138,0x139,
+                               0x140,0x141,0x142,0x143,0x144,0x145,0x146,0x147,0x148,0x149,
+                               0x150,0x151,0x152,0x153,0x154,0x155,0x156,0x157,0x158,0x159,
+                               0x160,0x161,0x162,0x163,0x164,0x165,0x166,0x167,0x168,0x169,
+                               0x170,0x171,0x172,0x173,0x174,0x175,0x176,0x177,0x178,0x179,
+                               0x10A,0x10B,0x12A,0x12B,0x14A,0x14B,0x16A,0x16B,0x14E,0x14F,
+                               0x11A,0x11B,0x13A,0x13B,0x15A,0x15B,0x17A,0x17B,0x15E,0x15F,
+                               0x180,0x181,0x182,0x183,0x184,0x185,0x186,0x187,0x188,0x189,
+                               0x190,0x191,0x192,0x193,0x194,0x195,0x196,0x197,0x198,0x199,
+                               0x1A0,0x1A1,0x1A2,0x1A3,0x1A4,0x1A5,0x1A6,0x1A7,0x1A8,0x1A9,
+                               0x1B0,0x1B1,0x1B2,0x1B3,0x1B4,0x1B5,0x1B6,0x1B7,0x1B8,0x1B9,
+                               0x1C0,0x1C1,0x1C2,0x1C3,0x1C4,0x1C5,0x1C6,0x1C7,0x1C8,0x1C9,
+                               0x1D0,0x1D1,0x1D2,0x1D3,0x1D4,0x1D5,0x1D6,0x1D7,0x1D8,0x1D9,
+                               0x1E0,0x1E1,0x1E2,0x1E3,0x1E4,0x1E5,0x1E6,0x1E7,0x1E8,0x1E9,
+                               0x1F0,0x1F1,0x1F2,0x1F3,0x1F4,0x1F5,0x1F6,0x1F7,0x1F8,0x1F9,
+                               0x18A,0x18B,0x1AA,0x1AB,0x1CA,0x1CB,0x1EA,0x1EB,0x1CE,0x1CF,
+                               0x19A,0x19B,0x1BA,0x1BB,0x1DA,0x1DB,0x1FA,0x1FB,0x1DE,0x1DF,
+                               0x200,0x201,0x202,0x203,0x204,0x205,0x206,0x207,0x208,0x209,
+                               0x210,0x211,0x212,0x213,0x214,0x215,0x216,0x217,0x218,0x219,
+                               0x220,0x221,0x222,0x223,0x224,0x225,0x226,0x227,0x228,0x229,
+                               0x230,0x231,0x232,0x233,0x234,0x235,0x236,0x237,0x238,0x239,
+                               0x240,0x241,0x242,0x243,0x244,0x245,0x246,0x247,0x248,0x249,
+                               0x250,0x251,0x252,0x253,0x254,0x255,0x256,0x257,0x258,0x259,
+                               0x260,0x261,0x262,0x263,0x264,0x265,0x266,0x267,0x268,0x269,
+                               0x270,0x271,0x272,0x273,0x274,0x275,0x276,0x277,0x278,0x279,
+                               0x20A,0x20B,0x22A,0x22B,0x24A,0x24B,0x26A,0x26B,0x24E,0x24F,
+                               0x21A,0x21B,0x23A,0x23B,0x25A,0x25B,0x27A,0x27B,0x25E,0x25F,
+                               0x280,0x281,0x282,0x283,0x284,0x285,0x286,0x287,0x288,0x289,
+                               0x290,0x291,0x292,0x293,0x294,0x295,0x296,0x297,0x298,0x299,
+                               0x2A0,0x2A1,0x2A2,0x2A3,0x2A4,0x2A5,0x2A6,0x2A7,0x2A8,0x2A9,
+                               0x2B0,0x2B1,0x2B2,0x2B3,0x2B4,0x2B5,0x2B6,0x2B7,0x2B8,0x2B9,
+                               0x2C0,0x2C1,0x2C2,0x2C3,0x2C4,0x2C5,0x2C6,0x2C7,0x2C8,0x2C9,
+                               0x2D0,0x2D1,0x2D2,0x2D3,0x2D4,0x2D5,0x2D6,0x2D7,0x2D8,0x2D9,
+                               0x2E0,0x2E1,0x2E2,0x2E3,0x2E4,0x2E5,0x2E6,0x2E7,0x2E8,0x2E9,
+                               0x2F0,0x2F1,0x2F2,0x2F3,0x2F4,0x2F5,0x2F6,0x2F7,0x2F8,0x2F9,
+                               0x28A,0x28B,0x2AA,0x2AB,0x2CA,0x2CB,0x2EA,0x2EB,0x2CE,0x2CF,
+                               0x29A,0x29B,0x2BA,0x2BB,0x2DA,0x2DB,0x2FA,0x2FB,0x2DE,0x2DF,
+                               0x300,0x301,0x302,0x303,0x304,0x305,0x306,0x307,0x308,0x309,
+                               0x310,0x311,0x312,0x313,0x314,0x315,0x316,0x317,0x318,0x319,
+                               0x320,0x321,0x322,0x323,0x324,0x325,0x326,0x327,0x328,0x329,
+                               0x330,0x331,0x332,0x333,0x334,0x335,0x336,0x337,0x338,0x339,
+                               0x340,0x341,0x342,0x343,0x344,0x345,0x346,0x347,0x348,0x349,
+                               0x350,0x351,0x352,0x353,0x354,0x355,0x356,0x357,0x358,0x359,
+                               0x360,0x361,0x362,0x363,0x364,0x365,0x366,0x367,0x368,0x369,
+                               0x370,0x371,0x372,0x373,0x374,0x375,0x376,0x377,0x378,0x379,
+                               0x30A,0x30B,0x32A,0x32B,0x34A,0x34B,0x36A,0x36B,0x34E,0x34F,
+                               0x31A,0x31B,0x33A,0x33B,0x35A,0x35B,0x37A,0x37B,0x35E,0x35F,
+                               0x380,0x381,0x382,0x383,0x384,0x385,0x386,0x387,0x388,0x389,
+                               0x390,0x391,0x392,0x393,0x394,0x395,0x396,0x397,0x398,0x399,
+                               0x3A0,0x3A1,0x3A2,0x3A3,0x3A4,0x3A5,0x3A6,0x3A7,0x3A8,0x3A9,
+                               0x3B0,0x3B1,0x3B2,0x3B3,0x3B4,0x3B5,0x3B6,0x3B7,0x3B8,0x3B9,
+                               0x3C0,0x3C1,0x3C2,0x3C3,0x3C4,0x3C5,0x3C6,0x3C7,0x3C8,0x3C9,
+                               0x3D0,0x3D1,0x3D2,0x3D3,0x3D4,0x3D5,0x3D6,0x3D7,0x3D8,0x3D9,
+                               0x3E0,0x3E1,0x3E2,0x3E3,0x3E4,0x3E5,0x3E6,0x3E7,0x3E8,0x3E9,
+                               0x3F0,0x3F1,0x3F2,0x3F3,0x3F4,0x3F5,0x3F6,0x3F7,0x3F8,0x3F9,
+                               0x38A,0x38B,0x3AA,0x3AB,0x3CA,0x3CB,0x3EA,0x3EB,0x3CE,0x3CF,
+                               0x39A,0x39B,0x3BA,0x3BB,0x3DA,0x3DB,0x3FA,0x3FB,0x3DE,0x3DF,
+                               0x00C,0x00D,0x10C,0x10D,0x20C,0x20D,0x30C,0x30D,0x02E,0x02F,
+                               0x01C,0x01D,0x11C,0x11D,0x21C,0x21D,0x31C,0x31D,0x03E,0x03F,
+                               0x02C,0x02D,0x12C,0x12D,0x22C,0x22D,0x32C,0x32D,0x12E,0x12F,
+                               0x03C,0x03D,0x13C,0x13D,0x23C,0x23D,0x33C,0x33D,0x13E,0x13F,
+                               0x04C,0x04D,0x14C,0x14D,0x24C,0x24D,0x34C,0x34D,0x22E,0x22F,
+                               0x05C,0x05D,0x15C,0x15D,0x25C,0x25D,0x35C,0x35D,0x23E,0x23F,
+                               0x06C,0x06D,0x16C,0x16D,0x26C,0x26D,0x36C,0x36D,0x32E,0x32F,
+                               0x07C,0x07D,0x17C,0x17D,0x27C,0x27D,0x37C,0x37D,0x33E,0x33F,
+                               0x00E,0x00F,0x10E,0x10F,0x20E,0x20F,0x30E,0x30F,0x06E,0x06F,
+                               0x01E,0x01F,0x11E,0x11F,0x21E,0x21F,0x31E,0x31F,0x07E,0x07F,
+                               0x08C,0x08D,0x18C,0x18D,0x28C,0x28D,0x38C,0x38D,0x0AE,0x0AF,
+                               0x09C,0x09D,0x19C,0x19D,0x29C,0x29D,0x39C,0x39D,0x0BE,0x0BF,
+                               0x0AC,0x0AD,0x1AC,0x1AD,0x2AC,0x2AD,0x3AC,0x3AD,0x1AE,0x1AF,
+                               0x0BC,0x0BD,0x1BC,0x1BD,0x2BC,0x2BD,0x3BC,0x3BD,0x1BE,0x1BF,
+                               0x0CC,0x0CD,0x1CC,0x1CD,0x2CC,0x2CD,0x3CC,0x3CD,0x2AE,0x2AF,
+                               0x0DC,0x0DD,0x1DC,0x1DD,0x2DC,0x2DD,0x3DC,0x3DD,0x2BE,0x2BF,
+                               0x0EC,0x0ED,0x1EC,0x1ED,0x2EC,0x2ED,0x3EC,0x3ED,0x3AE,0x3AF,
+                               0x0FC,0x0FD,0x1FC,0x1FD,0x2FC,0x2FD,0x3FC,0x3FD,0x3BE,0x3BF,
+                               0x08E,0x08F,0x18E,0x18F,0x28E,0x28F,0x38E,0x38F,0x0EE,0x0EF,
+                               0x09E,0x09F,0x19E,0x19F,0x29E,0x29F,0x39E,0x39F,0x0FE,0x0FF,
+                               };
+
+
+
+   /**
+    * dfp_cf5_to_exp2 returns 2 high bits of
+    * biased exponent indexed by 5 bit combined field
+    */                   int[] dfp_cf5_to_exp2 = {
+                               0,0,0,0,0,0,0,0,  // 0- 7 = 0
+                               1,1,1,1,1,1,1,1,  // 8-15 = 1
+                               2,2,2,2,2,2,2,2,  //16-23 = 2
+                               0,0,              //24-25 = 0
+                               1,1,              //26-27 = 1
+                               2,2,             //28-29 = 2
+                               3,               //30 infinity  RPI 536
+                               4};              //31 NaN      RPI 536
+
+
+
+   /**
+    * dfp_cf5_to_bcd returns decimal digit 0-9
+    * indexed by 5 bit combination field value
+    */                   long[] dfp_cf5_to_bcd = { //cf5 value
+                                0,1,2,3,4,5,6,7,  //00-07
+                                0,1,2,3,4,5,6,7,  //08-0F
+                                0,1,2,3,4,5,6,7,  //10-17
+                                8,9,              //18-19
+                                8,9,              //1A-1B
+                                8,9               //1C-1D
+                                };
+
+
+
+   /**
+    * dfp_dpd_to_bcd returns 3 digit decimal
+    * value 0-999 using 10 bit densely packed
+    * decimal index value.
+    * Notes:
+    * <ol>
+    *  <li>Redundent values in (...)</li>
+    *  <li>Java interprets leading 08 as octal number like 0x is hex so any leading 0's should be removed</li>
+    * </ol>
+    */                   long[] dfp_dpd_to_bcd = {
+                                  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 80, 81,800,801,880,881,    // 00
+                                 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 90, 91,810,811,890,891,    // 01
+                                 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 82, 83,820,821,808,809,    // 02
+                                 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 92, 93,830,831,818,819,    // 03
+                                 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 84, 85,840,841, 88, 89,    // 04
+                                 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 94, 95,850,851, 98, 99,    // 05
+                                 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 86, 87,860,861,888,889,    // 06
+                                 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 96, 97,870,871,898,899,    // 07
+                                100,101,102,103,104,105,106,107,108,109,180,181,900,901,980,981,    // 08
+                                110,111,112,113,114,115,116,117,118,119,190,191,910,911,990,991,    // 09
+                                120,121,122,123,124,125,126,127,128,129,182,183,920,921,908,909,    // 0A
+                                130,131,132,133,134,135,136,137,138,139,192,193,930,931,918,919,    // 0B
+                                140,141,142,143,144,145,146,147,148,149,184,185,940,941,188,189,    // 0C
+                                150,151,152,153,154,155,156,157,158,159,194,195,950,951,198,199,    // 0D
+                                160,161,162,163,164,165,166,167,168,169,186,187,960,961,988,989,    // 0E
+                                170,171,172,173,174,175,176,177,178,179,196,197,970,971,998,999,    // 0F
+                                200,201,202,203,204,205,206,207,208,209,280,281,802,803,882,883,    // 10
+                                210,211,212,213,214,215,216,217,218,219,290,291,812,813,892,893,    // 11
+                                220,221,222,223,224,225,226,227,228,229,282,283,822,823,828,829,    // 12
+                                230,231,232,233,234,235,236,237,238,239,292,293,832,833,838,839,    // 13
+                                240,241,242,243,244,245,246,247,248,249,284,285,842,843,288,289,    // 14
+                                250,251,252,253,254,255,256,257,258,259,294,295,852,853,298,299,    // 15
+                                260,261,262,263,264,265,266,267,268,269,286,287,862,863,(888),(889),// 16
+                                270,271,272,273,274,275,276,277,278,279,296,297,872,873,(898),(899),// 17
+                                300,301,302,303,304,305,306,307,308,309,380,381,902,903,982,983,    // 18
+                                310,311,312,313,314,315,316,317,318,319,390,391,912,913,992,993,    // 19
+                                320,321,322,323,324,325,326,327,328,329,382,383,922,923,928,929,    // 1A
+                                330,331,332,333,334,335,336,337,338,339,392,393,932,933,938,939,    // 1B
+                                340,341,342,343,344,345,346,347,348,349,384,385,942,943,388,389,    // 1C
+                                350,351,352,353,354,355,356,357,358,359,394,395,952,953,398,399,    // 1D
+                                360,361,362,363,364,365,366,367,368,369,386,387,962,963,(988),(989),// 1E
+                                370,371,372,373,374,375,376,377,378,379,396,397,972,973,(998),(999),// 1F
+                                400,401,402,403,404,405,406,407,408,409,480,481,804,805,884,885,    // 20
+                                410,411,412,413,414,415,416,417,418,419,490,491,814,815,894,895,    // 21
+                                420,421,422,423,424,425,426,427,428,429,482,483,824,825,848,849,    // 22
+                                430,431,432,433,434,435,436,437,438,439,492,493,834,835,858,859,    // 23
+                                440,441,442,443,444,445,446,447,448,449,484,485,844,845,488,489,    // 24
+                                450,451,452,453,454,455,456,457,458,459,494,495,854,855,498,499,    // 25
+                                460,461,462,463,464,465,466,467,468,469,486,487,864,865,(888),(889),// 26
+                                470,471,472,473,474,475,476,477,478,479,496,497,874,875,(898),(899),// 27
+                                500,501,502,503,504,505,506,507,508,509,580,581,904,905,984,985,    // 28
+                                510,511,512,513,514,515,516,517,518,519,590,591,914,915,994,995,    // 29
+                                520,521,522,523,524,525,526,527,528,529,582,583,924,925,948,949,    // 2A
+                                530,531,532,533,534,535,536,537,538,539,592,593,934,935,958,959,    // 2B
+                                540,541,542,543,544,545,546,547,548,549,584,585,944,945,588,589,    // 2C
+                                550,551,552,553,554,555,556,557,558,559,594,595,954,955,598,599,    // 2D
+                                560,561,562,563,564,565,566,567,568,569,586,587,964,965,(988),(989),// 2E
+                                570,571,572,573,574,575,576,577,578,579,596,597,974,975,(998),(999),// 2F
+                                600,601,602,603,604,605,606,607,608,609,680,681,806,807,886,887,    // 30
+                                610,611,612,613,614,615,616,617,618,619,690,691,816,817,896,897,    // 31
+                                620,621,622,623,624,625,626,627,628,629,682,683,826,827,868,869,    // 32
+                                630,631,632,633,634,635,636,637,638,639,692,693,836,837,878,879,    // 33
+                                640,641,642,643,644,645,646,647,648,649,684,685,846,847,688,689,    // 34
+                                650,651,652,653,654,655,656,657,658,659,694,695,856,857,698,699,    // 35
+                                660,661,662,663,664,665,666,667,668,669,686,687,866,867,(888),(889),// 36
+                                670,671,672,673,674,675,676,677,678,679,696,697,876,877,(898),(899),// 37
+                                700,701,702,703,704,705,706,707,708,709,780,781,906,907,986,987,    // 38
+                                710,711,712,713,714,715,716,717,718,719,790,791,916,917,996,997,    // 39
+                                720,721,722,723,724,725,726,727,728,729,782,783,926,927,968,969,    // 3A
+                                730,731,732,733,734,735,736,737,738,739,792,793,936,937,978,979,    // 3B
+                                740,741,742,743,744,745,746,747,748,749,784,785,946,947,788,789,    // 3C
+                                750,751,752,753,754,755,756,757,758,759,794,795,956,957,798,799,    // 3D
+                                760,761,762,763,764,765,766,767,768,769,786,787,966,967,(988),(989),// 3E
+                                770,771,772,773,774,775,776,777,778,779,796,797,976,977,(998),(999),// 3F
+                                };
+
+
+
+   /*                                                      // #503
+    * MACHINE and OPTABLE options                          // #503
+    *                                                      // #503
+    * Logic in method init_option_tables() will analyze    // #503
+    * table machine_optable_equivalence and split its      // #503
+    * content into the tables machine_option_id and        // #503
+    * machines_optable.                                    // #503
+    * The same goes for table optable_optable_equivalence  // #503
+    * which is split into the tables optable_option_id and // #503
+    * optables_optable                                     // #503
+    * Additionally, the optables are assigned a sequence   // #554
+    * number for internal identification and processing    // #554
+    *                                                      // #503
+    */                                                     // #503
+    /** variable      */ int[]    optable_option_nr = null;                    // #554
+    /** variable      */ String[] optable_option_id = null;                    // #503
+    /** variable      */ String[] optables_optable = null; // optable's optable// #503
+
+    /** 
+     * variable optable_optable_equivalence defines the primary optables and the secondaries.
+     * The secondaries are connected to a primary (which is named after the = sign.
+     * The primaries are defined by specifying the same identifier before and after the = sign.
+     * The numeric values used internally are defined in ArchLevel.java
+     */                  static final String[] optable_optable_equivalence =   // #503 #631
+                                     {""+Integer.toString(ArchLevel.ARCH_360_20.getValue())+":360-20=360-20", // #543 #554 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_DOS.getValue())   +":DOS=DOS",       // #503 #554 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_370.getValue())   +":370=370",       // #503 #554 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_XA.getValue())    +":XA=XA",         // #503 #554 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_ESA.getValue())   +":ESA=ESA",       // #503 #554 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_ZOP.getValue())   +":ZOP=ZOP",       // #503 #554 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_ZOP.getValue())   +":ZS1=ZOP",       // #503 #554 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_YOP.getValue())   +":YOP=YOP",       // #503 #554 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_YOP.getValue())   +":ZS2=YOP",       // #503 #554 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z9 .getValue())   +":Z9=Z9",         // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z9 .getValue())   +":ZS3=Z9",        // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z10.getValue())   +":Z10=Z10",       // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z10.getValue())   +":ZS4=Z10",       // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z11.getValue())   +":Z11=Z11",       // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z11.getValue())   +":ZS5=Z11",       // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z12.getValue())   +":Z12=Z12",       // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z12.getValue())   +":ZS6=Z12",       // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z13.getValue())   +":Z13=Z13",       // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z13.getValue())   +":ZS7=Z13",       // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z14.getValue())   +":Z14=Z14",       // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z14.getValue())   +":ZS8=Z14",       // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z15.getValue())   +":Z15=Z15",       // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z15.getValue())   +":ZS9=Z15",       // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z16.getValue())   +":Z16=Z16",       // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z16.getValue())   +":ZSA=Z16",       // #503 #554 #631 #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z17.getValue())   +":Z17=Z17",       // #661           #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z17.getValue())   +":ZSB=Z17",       // #661           #656
+                                      ""+Integer.toString(ArchLevel.ARCH_UNI.getValue())   +":UNI=UNI",       // #503 #554      #656
+                                      ""+Integer.toString(ArchLevel.ARCH_Z390.getValue())  +":z390=z390",     // #503 #554      #656
+                                      ""+Integer.toString(ArchLevel.ARCH_DFLT.getValue())  +":DFLT=DFLT",     // #503 #554 #631 #656
+                                      };                                                // #503
+
+
+
+    /** variable      */ int[]    machine_option_nr = null;                    // #568
+    /** variable      */ String[] machine_option_id = null;                    // #503
+    /** variable      */ String[] machines_optable = null; // machine's optable// #503
+    /** 
+     * variable machine_optable_equivalence defines all allowable values for the MACHINE option
+     * and equates each MACHINE option to its equivalent primary OPTABLE option.
+     * The equivalence defintions use the logical names, as defined in optable_optable_equivalence.
+     * The internal optable codes are restricted to the ArchLevel.java module.
+     */                  static final String[] machine_optable_equivalence =   // #503 #631
+                                     {"S360-20=360-20",                        // #543
+                                      "S370=370",                              // #503
+                                      "S370XA=XA",                             // #503
+                                      "ARCH-0=XA",                             // #503
+                                      "S390=ESA",                              // #503
+                                      "S390E=ESA",                             // #503
+                                      "S370ESA=ESA",                           // #503
+                                      "ARCH-1=ESA",                            // #503
+                                      "ARCH-2=ESA",                            // #503
+                                      "ARCH-3=ESA",                            // #503
+                                      "ARCH-4=ESA",                            // #503
+                                      "zSeries=ZOP",                           // #503
+                                      "ZS=ZOP",                                // #503
+                                      "z900=ZOP",                              // #503
+                                      "z800=ZOP",                              // #503
+                                      "ARCH-5=ZOP",                            // #503
+                                      "zSeries-1=ZOP",                         // #503
+                                      "ZS-1=ZOP",                              // #503
+                                      "z990=YOP",                              // #503
+                                      "z890=YOP",                              // #503
+                                      "ARCH-6=YOP",                            // #503
+                                      "zSeries-2=YOP",                         // #503
+                                      "ZS-2=YOP",                              // #503
+                                      "z9=Z9",                                 // #503
+                                      "ARCH-7=Z9",                             // #503
+                                      "zSeries-3=Z9",                          // #503
+                                      "ZS-3=Z9",                               // #503
+                                      "z10=Z10",                               // #503
+                                      "ARCH-8=Z10",                            // #503
+                                      "zSeries-4=Z10",                         // #503
+                                      "ZS-4=Z10",                              // #503
+                                      "z11=Z11",                               // #503
+                                      "z196=Z11",                              // #503
+                                      "z114=Z11",                              // #503
+                                      "ARCH-9=Z11",                            // #503
+                                      "zSeries-5=Z11",                         // #503
+                                      "ZS-5=Z11",                              // #503
+                                      "z12=Z12",                               // #503
+                                      "zEC12=Z12",                             // #503
+                                      "zBC12=Z12",                             // #503
+                                      "ARCH-10=Z12",                           // #503
+                                      "zSeries-6=Z12",                         // #503
+                                      "ZS-6=Z12",                              // #503
+                                      "z13=Z13",                               // #503
+                                      "ARCH-11=Z13",                           // #503
+                                      "zSeries-7=Z13",                         // #503
+                                      "ZS-7=Z13",                              // #503
+                                      "z14=Z14",                               // #503
+                                      "ARCH-12=Z14",                           // #503
+                                      "zSeries-8=Z14",                         // #503
+                                      "ZS-8=Z14",                              // #503
+                                      "z15=Z15",                               // #503
+                                      "ARCH-13=Z15",                           // #503
+                                      "zSeries-9=Z15",                         // #503
+                                      "ZS-9=Z15",                              // #503
+                                      "z16=Z16",                               // #503
+                                      "ARCH-14=Z16",                           // #503
+                                      "zSeries-10=Z16",                        // #503
+                                      "ZS-10=Z16",                             // #503
+                                      "z17=Z17",                               // #661
+                                      "ARCH-15=Z17",                           // #661
+                                      "zSeries-11=Z17",                        // #661
+                                      "ZS-11=Z17",                             // #661
+                                      "z390=z390",                             // #503
+                                      };                                       // #503
+
+
+
   /*
    * opcode tables for trace
    */
-    String[] op_type_name = null; // See process_opcodes() RPI 1209G
-    int[]    op_type_len = null; // See process_opcodes() RPI 1209G
-    String[] op_type_src_format = null; // See process_opcodes() RPI 1209G
-    String[] op_type_obj_format = null; // See process_opcodes() RPI 1209G
-    String[] op_name  = null; // See process_opcodes() RPI 1209
-    String[] op_type_oattribute = null; // See process_opcodes() (#485)
+    /** variable      */ String[] op_type_name = null; // See process_opcodes() RPI 1209G
+    /** variable      */ int[]    op_type_len = null; // See process_opcodes() RPI 1209G
+    /** variable      */ String[] op_type_src_format = null; // See process_opcodes() RPI 1209G
+    /** variable      */ String[] op_type_obj_format = null; // See process_opcodes() RPI 1209G
+    /** variable      */ String[] op_name  = null; // See process_opcodes() RPI 1209
+    /** variable      */ String[] op_type_oattribute = null; // See process_opcodes() (#485)
 
-    int    max_op_type_offset = 0; // Content inserted dynamically. See process_opcodes() RPI 1209G
-    static final int max_ins_type = 100; // RPI 315 #631
-    static final int max_asm_type = 200; //         #631
-    static final int max_mac_type = 300; //         #631
+    /** variable      */ int    max_op_type_offset = 0; // Content inserted dynamically. See process_opcodes() RPI 1209G
+    /** variable      */ static final int max_ins_type = 100; // RPI 315 #631
+    /** variable      */ static final int max_asm_type = 200; //         #631
+    /** variable      */ static final int max_mac_type = 300; //         #631
+
     //  When adding new opcode case: // RPI 407 type 35 for CSDTR etc
     //  1.  Increase the above max.  // no longer relevant // RPI 1209G
     //  2.  Change above op_type_len table which must match // no longer relevant // RPI 1209G
@@ -1253,22 +1326,28 @@ public  class  tz390 {
     //  4.  Change pz390 op_type_offset and op_type_mask if new primary opcode
     //  5.  Change pz390 trace_psw routine to add new case formats
     //  int[]    op_type = // Static content removed, content now generated RPI 1209
-    int[]    op_type = null; // See process_opcodes() RPI 1209
-    int      op_code_index = -1;
-    //String[] op_code = // Static content removed, content now generated RPI 1209
-    String[] op_code = null; // See process_opcodes() RPI 1209
-    int      op_code_count = 0;       // RPI 1209A
-    int      op_directives_count = 0; // RPI 1209A
-    //int[]  op_trace_type = // Moved here from pz390; static content removed, content now generated RPI 1209
-    int[]    op_trace_type = null; // See process_opcodes() RPI 1209
-//
-// The opcode_formats table below defines all opcode formats and their lengths
-// The format of the definitions is as follows:
-// formatname[$variant],length:operand_list[,object_format]
-// - formatname can be suffixed with a $-sign followed by an internal identifier to differentiate between variants
-// - length is the length of the instruction in bytes
-// - operand_list is the list of operands as listed in the overview of supported opcodes
-// - instruction_format is a representation of the format of the object code
+    /** variable      */ int[]    op_type = null; // See process_opcodes() RPI 1209
+    /** variable      */ int      op_code_index = -1;
+                         //String[] op_code = // Static content removed, content now generated RPI 1209
+    /** variable      */ String[] op_code = null; // See process_opcodes() RPI 1209
+    /** variable      */ int      op_code_count = 0;       // RPI 1209A
+    /** variable      */ int      op_directives_count = 0; // RPI 1209A
+                         //int[]  op_trace_type = // Moved here from pz390; static content removed, content now generated RPI 1209
+    /** variable      */ int[]    op_trace_type = null; // See process_opcodes() RPI 1209
+
+
+
+   /**
+    * The opcode_formats table defines all opcode formats and their lengths.
+    * The format of the definitions is as follows:<br />
+    * formatname[$variant],length:operand_list[,object_format]<br />
+    * <ul>
+    *  <li>formatname can be suffixed with a $-sign followed by an internal identifier to differentiate between variants</li>
+    *  <li>length is the length of the instruction in bytes</li>
+    *  <li>operand_list is the list of operands as listed in the overview of supported opcodes</li>
+    *  <li>instruction_format is a representation of the format of the object code</li>
+    * </ul>
+    */
     static final String[] opcode_formats = // Table added for RPI 1209G #631
         {"*,0:comment",        // 0 comment place holder
          "E,2:oooo",           // 1 PR
@@ -1355,62 +1434,71 @@ public  class  tz390 {
          "VRR,6:001200340xoo", // 82
          "VRV,6:0012bddd3xoo", // 83
          };
-//
-// The op_tables below define all instructions. The format of the definitions is as follows:
-// opcode=mnemonic,op_type,op_trace_type[;overrides]                                                                                                                   #485
-// opcode   defines the opcode in hexadecimal,           character m may be used to denote the mask position   for extended mnemonics                                  #485
-// mnemonic defines the mnemonic assigned to the opcode, character m may be used to denote the mask characters for extended mnemonics                                  #485
-// op_type is used during assembly; see process_bal_op() in az390
-// op_trace_type is used during tracing: see trace_ins() in pz390
-// optional ;overrides specifies up to two overrides as follows:                                                                                                       #485
-//           if a lowercase m is     used to specify a set of extended mnemonics, x=mnem    can be specified to assign a mnemonic that deviates from the pattern       #485
-//           if a lowercase m is     used to specify a set of extended mnemonics, *Short    can be specified to limit the number of generated mnemonics                #485
-//           if a lowercase m is not used to specify a set of extended mnemonics, *Extended can be specified to indicate the entry defines an extended mnemonic        #485
-// Remark 1: opcode and op_trace_type are entered as -- for assembler directives
-// Remark 2: mnemonic may contain a ?, meaning that the next character in the mnemonic is optional,
-//           hence the mnemonic exists in two variants:
-//           the basic form (without the question mark) and the Alternate form with the optional character present
-// Remark 3: Extended (masked) instructions are generated according to the schema described in table opcode_masks
-//           Extended instructions are recognized by a lower case 'm' in both the opcode and mnemonic
-//           For extended instructions the definition is extended with ;maskval=mnemon which may occur 0, 1, or 2 times.
-//           Alternate syntax is ;*Short which will generate only H, L, E, NH, NL, NE rather than the full set
-//           This syntax allows us to override the default mnemonics for generated instructions.
-//           Omission of mnemon in the override implies that no  mnemonic exists for that mask.
-// Example1: definition of assembler directive AIF: "--=AIF,203,--"                                                                                                    #485
-// Example2: definition of instruction CLC:         "D5=CLC,17,170"     --> opcode D5,  mnemonic CLC,  opcode type 17 (see table opcode_formats above), trace type 170 #485
-// Example3: definition of instruction BC:          "47=BC,5,50"        --> opcode 47,  mnemonic BC,   opcode type  5 (see table opcode_formats above), trace type  50 #485
-// Example4: definition of B, BE, BNZ, etc:         "47m=Bm,6,60;0=NOP" --> opcode 47m, ext.mnemonics, opcode type  6 (see table opcode_formats above), trace type  60 #485
-//                                                                          generated extended mnemonics are Bx, BNx except for mask=0 mnemonic NOP is forced          #485
-// Example5: definition of instruction JLC:         "C04=JLC,33,330;*Extended"      --> opcode C04, ext.mnemonic JLC, opcode type 33 (see table opcode_formats above), trace type 330 #485
-// Example6: definition of BROL, BRNZL, etc:        "C04m=BRmL,33,330;F=BRUL;0="    --> opcode C04m, ext.mnemonics, opcode type 33,                     trace type 330 #485
-//                                                                          generated extended mnemonics are BRxL, BRNxL except for mask=F ext.mnemonic BRUL is forced #485
-//                                                                                                                          and for mask=0 no mnemonic is defined      #485
-// Example7: definition of JLO, JLNZ, etc:          "C04m=JLm,33,330;F=JLU;0=JLNOP" --> opcode C04m, ext.mnemonics, opcode type 33,                     trace type 330 #485
-//                                                                          generated extended mnemonics are JLx, JLNx   except for mask=F ext.mnemonic JLU   is forced#485
-//                                                                                                                          and for mask=0 ext.mnemonic JLNOP is forced#485
-// Example8: definition of CGRTE, CGRTNH, etc:      "B960m=CGRTm,40,151;*Short"     --> opcode B960m,ext.mnemonics, opcode type 40,                     trace type 151 #485
-//                                                                          generated extended mnemonics are CGRTx, CGRTNx, only for x in {H, L, E}                    #485
-//
-// The above holds for non-vector instructions. For vector instructions different masking for extended mnemonics and their opcodes apply.                              #495
-// This applies only to instructions introduced with z15 - defined in op_table_z15 and later.                                                                          #495
-//           but not to the old and discontinued vector instructions defined in op_table_vector                                                                        #495
-// opcode=mnemonic,op_type,op_trace_type[;overrides]                                                                                                                   #495
-// opcode   defines the opcode in hexadecimal,           character e/f may be used to denote the element size / floating point format position for extended mnemonics  #495
-// mnemonic defines the mnemonic assigned to the opcode, character e/f may be used to denote the element size / floating point format position for extended mnemonics  #495
-// op_type is used during assembly; see process_bal_op() in az390                                                                                                      #495
-// op_trace_type is used during tracing: see trace_ins() in pz390                                                                                                      #495
-// optional ;overrides specifies up to two overrides as follows:                                                                                                       #495
-//           if a lowercase e is used to specify a set of extended mnemonics, e=xxx can be specified to indicate which element size values are valid                   #495
-//           if a lowercase f is used to specify a set of extended mnemonics, f=xxx can be specified to indicate which floating point format values are valid          #495
-//           if a lowercase e/f is not used to specify a set of extended mnemonics, *Extended can be specified to indicate the entry defines an extended mnemonic      #495
-//
-     static final String[] op_table_start = // Table added for RPI 1209A #631
+
+
+
+    //
+    // The op_tables below define all instructions. The format of the definitions is as follows:
+    // opcode=mnemonic,op_type,op_trace_type[;overrides]                                                                                                                   #485
+    // opcode   defines the opcode in hexadecimal,           character m may be used to denote the mask position   for extended mnemonics                                  #485
+    // mnemonic defines the mnemonic assigned to the opcode, character m may be used to denote the mask characters for extended mnemonics                                  #485
+    // op_type is used during assembly; see process_bal_op() in az390
+    // op_trace_type is used during tracing: see trace_ins() in pz390
+    // optional ;overrides specifies up to two overrides as follows:                                                                                                       #485
+    //           if a lowercase m is     used to specify a set of extended mnemonics, x=mnem    can be specified to assign a mnemonic that deviates from the pattern       #485
+    //           if a lowercase m is     used to specify a set of extended mnemonics, *Short    can be specified to limit the number of generated mnemonics                #485
+    //           if a lowercase m is not used to specify a set of extended mnemonics, *Extended can be specified to indicate the entry defines an extended mnemonic        #485
+    // Remark 1: opcode and op_trace_type are entered as -- for assembler directives
+    // Remark 2: mnemonic may contain a ?, meaning that the next character in the mnemonic is optional,
+    //           hence the mnemonic exists in two variants:
+    //           the basic form (without the question mark) and the Alternate form with the optional character present
+    // Remark 3: Extended (masked) instructions are generated according to the schema described in table opcode_masks
+    //           Extended instructions are recognized by a lower case 'm' in both the opcode and mnemonic
+    //           For extended instructions the definition is extended with ;maskval=mnemon which may occur 0, 1, or 2 times.
+    //           Alternate syntax is ;*Short which will generate only H, L, E, NH, NL, NE rather than the full set
+    //           This syntax allows us to override the default mnemonics for generated instructions.
+    //           Omission of mnemon in the override implies that no  mnemonic exists for that mask.
+    // Example1: definition of assembler directive AIF: "--=AIF,203,--"                                                                                                    #485
+    // Example2: definition of instruction CLC:         "D5=CLC,17,170"     --> opcode D5,  mnemonic CLC,  opcode type 17 (see table opcode_formats above), trace type 170 #485
+    // Example3: definition of instruction BC:          "47=BC,5,50"        --> opcode 47,  mnemonic BC,   opcode type  5 (see table opcode_formats above), trace type  50 #485
+    // Example4: definition of B, BE, BNZ, etc:         "47m=Bm,6,60;0=NOP" --> opcode 47m, ext.mnemonics, opcode type  6 (see table opcode_formats above), trace type  60 #485
+    //                                                                          generated extended mnemonics are Bx, BNx except for mask=0 mnemonic NOP is forced          #485
+    // Example5: definition of instruction JLC:         "C04=JLC,33,330;*Extended"      --> opcode C04, ext.mnemonic JLC, opcode type 33 (see table opcode_formats above), trace type 330 #485
+    // Example6: definition of BROL, BRNZL, etc:        "C04m=BRmL,33,330;F=BRUL;0="    --> opcode C04m, ext.mnemonics, opcode type 33,                     trace type 330 #485
+    //                                                                          generated extended mnemonics are BRxL, BRNxL except for mask=F ext.mnemonic BRUL is forced #485
+    //                                                                                                                          and for mask=0 no mnemonic is defined      #485
+    // Example7: definition of JLO, JLNZ, etc:          "C04m=JLm,33,330;F=JLU;0=JLNOP" --> opcode C04m, ext.mnemonics, opcode type 33,                     trace type 330 #485
+    //                                                                          generated extended mnemonics are JLx, JLNx   except for mask=F ext.mnemonic JLU   is forced#485
+    //                                                                                                                          and for mask=0 ext.mnemonic JLNOP is forced#485
+    // Example8: definition of CGRTE, CGRTNH, etc:      "B960m=CGRTm,40,151;*Short"     --> opcode B960m,ext.mnemonics, opcode type 40,                     trace type 151 #485
+    //                                                                          generated extended mnemonics are CGRTx, CGRTNx, only for x in {H, L, E}                    #485
+    //
+    // The above holds for non-vector instructions. For vector instructions different masking for extended mnemonics and their opcodes apply.                              #495
+    // This applies only to instructions introduced with z15 - defined in op_table_z15 and later.                                                                          #495
+    //           but not to the old and discontinued vector instructions defined in op_table_vector                                                                        #495
+    // opcode=mnemonic,op_type,op_trace_type[;overrides]                                                                                                                   #495
+    // opcode   defines the opcode in hexadecimal,           character e/f may be used to denote the element size / floating point format position for extended mnemonics  #495
+    // mnemonic defines the mnemonic assigned to the opcode, character e/f may be used to denote the element size / floating point format position for extended mnemonics  #495
+    // op_type is used during assembly; see process_bal_op() in az390                                                                                                      #495
+    // op_trace_type is used during tracing: see trace_ins() in pz390                                                                                                      #495
+    // optional ;overrides specifies up to two overrides as follows:                                                                                                       #495
+    //           if a lowercase e is used to specify a set of extended mnemonics, e=xxx can be specified to indicate which element size values are valid                   #495
+    //           if a lowercase f is used to specify a set of extended mnemonics, f=xxx can be specified to indicate which floating point format values are valid          #495
+    //           if a lowercase e/f is not used to specify a set of extended mnemonics, *Extended can be specified to indicate the entry defines an extended mnemonic      #495
+    //
+   /**
+    * Table with initial opcode - valid for all optables
+    */
+    static final String[] op_table_start = // Table added for RPI 1209A #631
         {"??=*,0,00",            //     00 comments
          };
-     // Following table has the instructions that are supported for both DOS and the S360/20     // #543
-     // as defined in publication A26-5847-3 IBM System 360 Model 20 Functional Characteristics  // #631
-     //        and in publication A22-6821-7 IBM System 360 Principles of Operation              // #631
-     static final String[] op_table_360_20 =  // Instructions shared with optable(DOS)         #543 #631
+
+   /**
+    * table op_table_360_20 has the instructions that are supported for both DOS and the S360/20
+    * as defined in publication A26-5847-3 IBM System 360 Model 20 Functional Characteristics
+    *        and in publication A22-6821-7 IBM System 360 Principles of Operation
+    */
+    static final String[] op_table_360_20 =  // Instructions shared with optable(DOS)         #543 #631
         {"07=BCR,RR-m,30",       //    120 "07"    "BCR"      "RR"    2 // Extended mnemonics not supported for S360/20 RPI 1209N #543
          "07m=BmR,RR-mx,30;0=NOPR", //     "07m"   "BmR, NOPR" "BRX"  3 // RPI 1209N #543 Note: S360/20 only defined NOPR and BR we do all extended mnemonics!
          "1A=AR,RR,20",          //    450 "1A"    "AR"       "RR"    2 // RPI 1209N #543
@@ -1443,12 +1531,15 @@ public  class  tz390 {
          "FC=MP,26,260",         //   7120 "FC"    "MP"       "SS2"  26 //           #543
          "FD=DP,26,260",         //   7130 "FD"    "DP"       "SS2"  26 //           #543
          };                         // #543                                          #543
-     // Following table defines five instructions unique to the S360/20              #543
-     //                     and two that share syntax (but not semantics) with 370   #543
-     //                     The difference in semantics make for their definition    #543
-     //                     here, which is okay since S360/20 and 370 cannot be      #543
-     //                     combined.                                                #543
-     static final String[] op_table_360_20_only =   // Instructions defined for S360/20 only    #543 #631
+
+   /**
+    * table op_table_360_20_only defines five instructions unique to the S360/20
+    * and two that share syntax (but not semantics) with 370
+    * The difference in semantics make for their definition
+    * here, which is okay since S360/20 and 370 cannot be
+    * combined.
+    */
+    static final String[] op_table_360_20_only =   // Instructions defined for S360/20 only    #543 #631
         {"0D=BASR,RR,20",           // shared with 370 (semantics differ)            #543
          "4D=BAS,5,50",             // shared with 370 (semantics differ)            #543
          "81=SPSW,11,110",          // S360/20 only                                  #543
@@ -1457,14 +1548,19 @@ public  class  tz390 {
          "9B=CIO,11,110",           // S360/20 only - format may not be correct      #543
          "D0=XIO,17,170",           // S360/20 only - format may not be correct      #543
          };                         //                                               #543
-     // Following table has the directives that are supported for both DOS and the S360/20     #543
-     // Incompatibilites:                                                #543
-     // 1. GBLx/LCLx not supported for S360/20                           #543
-     //    difference is encoded in variable names! see S360/20 docs     #543
-     // 2. Syntax may be shared between optable(DOS) and optable(360-20) #543
-     //    but semantics may differ. We implement semantics for DOS      #543
-     //    even when optable(360-20) or machine(S360-20) is specified    #543
-     static final String[]   op_table_360_20_directives = // Directives shared with optable(DOS)            #543 #631
+
+   /**
+    * table op_table_360_20_directives has the directives that are supported for both DOS and the S360/20<br />
+    * Incompatibilites:
+    * <ol>
+    *  <li>GBLx/LCLx not supported for S360/20:
+    *      difference is encoded in variable names! see S360/20 docs</li>
+    *  <li>Syntax may be shared between optable(DOS) and optable(360-20)
+    *      but semantics may differ. We implement semantics for DOS
+    *      even when optable(360-20) or machine(S360-20) is specified</li>
+    * </ol>
+    */
+    static final String[]   op_table_360_20_directives = // Directives shared with optable(DOS)            #543 #631
         {"--=AGO,202,--",        //   7610         "AGO"            202  #543
          "--=AGOB,226,--",       //   7820         "AGOB"           226  #543
          "--=AIF,203,--",        //   7620         "AIF"            203  #543
@@ -1498,18 +1594,26 @@ public  class  tz390 {
          "--=TITLE,131,--",      //   7440         "TITLE"          131  #543
          "--=USING,124,--",      //   7370         "USING"          124  #543
          };             //                                               #543
-     // Following table defines two directives unique to the S360/20     #543
-     // Incompatibilites:                                                #543
-     // 1. DCCW aligns on halfword, but we align on Fullword             #543
-     // 2. XFR is not the same as ENTRY, yet we process it as such       #543
-     static final String[]   op_table_360_20_only_directives = // Directives defined for S360/20 only #543 #631
+
+   /** 
+    * table op_table_360_20_only_directives defines two directives unique to the S360/20<br />
+    * Incompatibilites:
+    * <ol>
+    *  <li>DCCW aligns on halfword, but we align on Fullword</li>
+    *  <li>XFR is not the same as ENTRY, yet we process it as such</li>
+    * </ol>
+    */
+    static final String[]   op_table_360_20_only_directives = // Directives defined for S360/20 only #543 #631
         {"--=DCCW,101,--",       //                                 101  #543
          "--=XFR,114,--",        //                                 114  #543
          };             //                                               #543
-     // op_table_DOS below contains the instructions NOT shared with S360/20.              #543
-     // as defined in publication A26-5847-3 IBM System 360 Model 20 Functional Characteristics  // #631
-     //        and in publication A22-6821-7 IBM System 360 Principles of Operation              // #631
-     static final String[]   op_table_DOS =   // Table added for RPI 1209A #631
+
+   /** 
+    * op_table_DOS contains the instructions NOT shared with S360/20.
+    * as defined in publication A26-5847-3 IBM System 360 Model 20 Functional Characteristics
+    *        and in publication A22-6821-7 IBM System 360 Principles of Operation
+    */
+    static final String[]   op_table_DOS =   // Table added for RPI 1209A #631
         {"04=SPM,RR-n,20",       //     90 "04"    "SPM"      "RR"    2 // RPI 1209N
          "05=BALR,RR,20",        //    100 "05"    "BALR"     "RR"    2 // RPI 1209N
          "06=BCTR,RR,20",        //    110 "06"    "BCTR"     "RR"    2 // RPI 1209N
@@ -1650,9 +1754,12 @@ public  class  tz390 {
          "E8=MVCIN,17,170",      //   6170 "E8"    "MVCIN"    "SS"   17
          "F0=SRP,29,290",        //   7040 "F0"    "SRP"      "SS5"  29
          };
-     // op_table_DOS below contains the instructions valid from S360-S370    #543
-     // as defined in publication GA22-7000-4 IBM System 370 Principles of Operation // #631
-     static final String[]   op_table_DOS_370 =                                      //   #543 #631
+
+   /**
+    * op_table_DOS_370 contains the instructions valid from S360-S370
+    * as defined in publication GA22-7000-4 IBM System 370 Principles of Operation
+    */
+    static final String[]   op_table_DOS_370 =                                      //   #543 #631
         {"08=SSK,RR,20",         //    100 "08"    "SSK"      "RR"    2 // RPI 1209N #500 #543
          "09=ISK,RR,20",         //    100 "09"    "ISK"      "RR"    2 // RPI 1209N #500 #543
          "84=WRD,SI,110",        //        "84"    "WRD"      "SI"   11 #500 #543
@@ -1667,8 +1774,11 @@ public  class  tz390 {
          "B203=STIDC,64,640",    //        "B203"  "STIDC"    "S"    64 #500 #543
          "B213=RRB,64,640",      //        "B213"  "RRB"      "S"    64 #500 #543
          };                                                               // #543
-     // op_table_DOS_directives below contains the directives NOT shared with S360/20.     #543
-     static final String[]   op_table_DOS_directives = // Table added for RPI 1209A #631
+
+   /**
+    * op_table_DOS_directives contains the directives NOT shared with S360/20
+    */
+    static final String[]   op_table_DOS_directives = // Table added for RPI 1209A #631
         {"--=ACTR,201,--",       //   7600         "ACTR"           201  
          "--=CCW,101,--",        //   7140         "CCW"            101  
          "--=CNOP,133,--",       //   7460         "CNOP"           133  
@@ -1683,15 +1793,18 @@ public  class  tz390 {
          "--=PUNCH,223,--",      //   7570         "PUNCH"          223  
          "--=WXTRN,120,--",      //   7330         "WXTRN"          120  
          };
-     // op_table_vector below contains the instructions for the old vector facility               // #631
-     // as defined in publication SA22-7125-3 ESA370 Vector Operations                            // #631
-     //        and in publication SA22-7207-00 ESA390 Vector Operations                           // #631
-     // The (optional) vector facility was available in addition to the 370 and 390 architectures // #631
-     // In z390 the old vector facility can be used with z/Architecture opcode tables up to       // #631
-     // SA22-7832-09 zArchitecture Principles of Operation (aka z12)                              // #631
-     // With the z13 SA22-7832-10 zArchitecture Principles of Operation the new vector facility   // #631
-     //              was introduced and the old vector facility cannot be forward anymore         // #631
-     static final String[]   op_table_vector =   // Table added for RPI 1209A #631
+
+   /**
+    * op_table_vector contains the instructions for the old vector facility
+    * as defined in publication SA22-7125-3 ESA370 Vector Operations
+    *        and in publication SA22-7207-00 ESA390 Vector Operations<br />
+    * The (optional) vector facility was available in addition to the 370 and 390 architectures
+    * In z390 the old vector facility can be used with z/Architecture opcode tables up to
+    * SA22-7832-09 zArchitecture Principles of Operation (aka z12)<br />
+    * With the z13 SA22-7832-10 zArchitecture Principles of Operation the new vector facility
+    *              was introduced and the old vector facility could not be carried forward anymore
+    */
+    static final String[]   op_table_vector =   // Table added for RPI 1209A #631
         {"A400=VAE,VST,600",     //        "A400"  "VAE"      "VST" 60
          "A401=VSE,VST,600",     //        "A401"  "VSE"      "VST" 60
          "A402=VME,VST,600",     //        "A402"  "VME"      "VST" 60
@@ -1884,9 +1997,12 @@ public  class  tz390 {
          "E425=VSLL,RSEv,630",   //        "E425"  "VSLL"     "RSE" 63
          "E428=VLBIX,RSEv,630",  //        "E428"  "VLBIX"    "RSE" 63
          };
-     // op_table_370 below contains the instructions valid from S370                 // #631
-     // as defined in publication GA22-7000-4 IBM System 370 Principles of Operation // #631
-     static final String[]   op_table_370 =   // Table added for RPI 1209A #631
+
+   /**
+    * op_table_370 contains the instructions valid from S370
+    * as defined in publication GA22-7000-4 IBM System 370 Principles of Operation
+    */
+    static final String[]   op_table_370 =   // Table added for RPI 1209A #631
         {"0D=BASR,RR,20",        //    320 "0D"    "BASR"     "RR"    2 // RPI 1209N
          "4D=BAS,5,50",          //   1150 "4D"    "BAS"      "RX"    5
          "AE=SIGP,10,100",       //   2540 "AE"    "SIGP"     "RS"   10
@@ -1912,13 +2028,21 @@ public  class  tz390 {
          "E500=LASP,19,190",     //   6120 "E500"  "LASP"     "SSE"  19
          "E501=TPROT,19,190",    //   6130 "E501"  "TPROT"    "SSE"  19
          };
-     static final String[]   op_table_370_only = // Instructions for optable 370 only   #543 #631
+
+   /**
+    * Instruction definitions for optable 370 only
+    */
+    static final String[]   op_table_370_only = // Instructions for optable 370 only   #543 #631
         {"9C02=RIO,7,70",        //        "9C02"  "RIO"      "S"     7 // #543
          "9F01=CLRCH,7,70",      //        "9F01"  "CLRCH"    "S"     7 // #543
          "B200=CONCS,7,70",      //        "B200"  "CONCS"    "S"     7 // #543
          "B201=DISCS,7,70",      //        "B201"  "DISCS"    "S"     7 // #543
          };                                                             // #543
-     static final String[]   op_table_370_directives = // Table added for RPI 1209A #631
+
+   /**
+    * Directives valid from optable 370
+    */
+    static final String[]   op_table_370_directives = // Table added for RPI 1209A #631
         {"--=ACONTROL,147,--",   //   7595         "ACONTROL"       147 /RPI 368
          "--=ADATA,132,--",      //   7450         "ADATA"          132
          "--=AEJECT,125,--",     //   7380         "AEJECT"         125
@@ -1945,9 +2069,12 @@ public  class  tz390 {
          "--=SETCF,219,--",      //   7780         "SETCF"          219
          "--=XATTR,121,--",      //   7340         "XATTR"          121
          };
-     // op_table_XA below contains the instructions valid from S370-XA               // #631
-     // as defined in publication (unknown)                                          // #631
-     static final String[]   op_table_XA =    // Table added for RPI 1209A #631
+
+   /**
+    * op_table_XA contains the instructions valid from S370-XA
+    * as defined in publication (IBM publication code unknown)
+    */
+    static final String[]   op_table_XA =    // Table added for RPI 1209A #631
         {"0102=UPT,1,10",        //     20 "0102"  "UPT"      "E"     1
          "0B=BSM,RR,20",         //    300 "0B"    "BSM"      "RR"    2 // RPI 1209N
          "0C=BASSM,RR,20",       //    310 "0C"    "BASSM"    "RR"    2 // RPI 1209N
@@ -1972,9 +2099,12 @@ public  class  tz390 {
          "B244=SQDR,14,142",     //   3030 "B244"  "SQDR"     "RRE"  14
          "B245=SQER,14,142",     //   3040 "B245"  "SQER"     "RRE"  14
          };
-     // op_table_ESA below contains the instructions valid from S390          // #631
-     // as defined in publication SA22-7201-08 ESA390 Principles of Operation // #631
-     static final String[]   op_table_ESA =   // Table added for RPI 1209A #631
+
+   /**
+    * op_table_ESA contains the instructions valid from S390
+    * as defined in publication SA22-7201-08 ESA390 Principles of Operation
+    */
+    static final String[]   op_table_ESA =   // Table added for RPI 1209A #631
         {"0101=PR,1,10",         //     10 "0101"  "PR"       "E"     1
          "0107=SCKPF,1,10",      //     30 "0107"  "SCKPF"    "E"     1
          "010B=TAM,1,10",        //     40 "010B"  "TAM"      "E"     1
@@ -2184,21 +2314,32 @@ public  class  tz390 {
          "ED37=MEE,24,240",      //   6950 "ED37"  "MEE"      "RXE"  24
          "EE=PLO,27,270",        //   7020 "EE"    "PLO"      "SS3"  27
          };
+
+   /**
+    * Opcodes valid for ESA only
+    */
      static final String[]   op_table_ESA_only =   // Table added for RPI 1209A      #554 #631
         {"C04=JLC,16,330",       //   5180 "C04"   "BRCL"     "RIL"  16 #554
          "C004=JLNOP,16,330",    //   5180 "C04"   "BRCL"     "RIL"  16 #554
          };                                                          // #554
-     // Instructions PGIN and PGOUT were introduced with the ESA architecture #561
-     // But HLASM has never supported these instructions                      #561
-     // See Jonathan Scott's contribution to the ASSEMBLER-LIST 2024-04-06    #561
-     static final String[]   op_table_ESA_allow =   // Instructions defined for ESA but never supported by HLASM #561 #631
+
+   /**
+    * Instructions PGIN and PGOUT were introduced with the ESA architecture.
+    * But HLASM has never supported these instructions
+    * See Jonathan Scott's contribution to the ASSEMBLER-LIST 2024-04-06
+    * z390 supports assembly (but not execution) of these instructions in allow mode only.
+    */
+    static final String[]   op_table_ESA_allow =   // Instructions defined for ESA but never supported by HLASM #561 #631
         {"B22E=PGIN,14,140",     //   2860 "B22E"  "PGIN"     "RRE"  14 #561
          "B22F=PGOUT,14,140",    //   2870 "B22F"  "PGOUT"    "RRE"  14 #561
          };                                                          // #561
-     // op_table_ZOP below contains the instructions valid from z Architecture       // #631
-     // as defined in publication SA22-7832-00 zArchitecture Principles of Operation // #631
-     //           and publication SA22-7832-01 zArchitecture Principles of Operation // #631
-     static final String[]   op_table_ZOP =   // Table added for RPI 1209A #631
+
+   /**
+    * op_table_ZOP contains the instructions valid from z Architecture
+    * as defined in publication SA22-7832-00 zArchitecture Principles of Operation
+    *           and publication SA22-7832-01 zArchitecture Principles of Operation
+    */
+    static final String[]   op_table_ZOP =   // Table added for RPI 1209A #631
         {"010E=SAM64,1,10",      //     70 "010E"  "SAM64"    "E"     1
          "A50=IIHH,73,730",      //   1820 "A50"   "IIHH"     "RI"   12 // RPI 1522
          "A51=IIHL,73,730",      //   1830 "A51"   "IIHL"     "RI"   12 // RPI 1522
@@ -2358,10 +2499,13 @@ public  class  tz390 {
          "EC45=JXLEG,23,230;*Extended",    //   6610 "EC45"  "JXLEG"    "RIE"  23 #485
          "EF=LMD,28,280",        //   7030 "EF"    "LMD"      "SS4"  28
          };
-     // op_table_YOP below contains the instructions valid from z Architecture       // #631
-     // as defined in publication SA22-7832-02 zArchitecture Principles of Operation // #631
-     //           and publication SA22-7832-03 zArchitecture Principles of Operation // #631
-     static final String[]   op_table_YOP =   // Table added for RPI 1209A #631
+
+   /**
+    * op_table_YOP contains the instructions valid from z Architecture
+    * as defined in publication SA22-7832-02 zArchitecture Principles of Operation
+    *           and publication SA22-7832-03 zArchitecture Principles of Operation
+    */
+    static final String[]   op_table_YOP =   // Table added for RPI 1209A #631
         {"B2A6=CU21,14,140",     //   3350 "B2A6"  "CU21"     "RRE"  14
          "B2A7=CU12,14,140",     //   3370 "B2A7"  "CU12"     "RRE"  14
          "B32E=MAER,15,150",     //   3760 "B32E"  "MAER"     "RRF1" 15
@@ -2432,15 +2576,22 @@ public  class  tz390 {
          "ED66=STEY,18,180",     //   7000 "ED66"  "STEY"     "RXY"  18
          "ED67=STDY,18,180",     //   7010 "ED67"  "STDY"     "RXY"  18
          };
+
+   /**
+    * Opcode definitions valid for YOP thru Z16; with the advent of z17 the definitions changed
+    */
      static final String[]   op_table_YOP_Z16 = // These definitions are valid for YOP thru Z16 // #661
          {                                                                           // #661
          "B93E=KIMD,14,144",     //   4810 "B93E"  "KIMD"     "RRE"  14
          "B93F=KLMD,14,144",     //   4820 "B93F"  "KLMD"     "RRE"  14
          };                               //                                         // #661
-     // op_table_Z9 below contains the instructions valid from z Architecture        // #631
-     // as defined in publication SA22-7832-04 zArchitecture Principles of Operation // #631
-     //           and publication SA22-7832-05 zArchitecture Principles of Operation // #631
-     static final String[]   op_table_Z9 =    // Table added for RPI 1209A                        // #631
+
+   /**
+    * op_table_Z9 contains the instructions valid from z Architecture
+    * as defined in publication SA22-7832-04 zArchitecture Principles of Operation
+    *           and publication SA22-7832-05 zArchitecture Principles of Operation
+    */
+    static final String[]   op_table_Z9 =    // Table added for RPI 1209A                        // #631
         {"0104=PTFF,1,10",       //        "0104"  "PTFF"     "E"     1 Z9-1
          "010A=PFPO,1,10",       //     40 "010A"  "PFPO"     "E"     1  RPI 1013
          "B27C=STCKF,7,70",      //        "B27C"  "STCKF"    "S"     7 Z9-2
@@ -2559,10 +2710,13 @@ public  class  tz390 {
          "ED58=TDCXT,24,241",    //                "TDCXT"    "RXE"  24 DFP 53
          "ED59=TDGXT,24,241",    //                "TDGXT"    "RXE"  24 DFP 54
          };
-     // op_table_Z10 below contains the instructions valid from z Architecture       // #631
-     // as defined in publication SA22-7832-06 zArchitecture Principles of Operation // #631
-     //           and publication SA22-7832-07 zArchitecture Principles of Operation // #631
-     static final String[]   op_table_Z10 =   // Table added for RPI 1209A                           #631
+
+   /**
+    * op_table_Z10 contains the instructions valid from z Architecture
+    * as defined in publication SA22-7832-06 zArchitecture Principles of Operation
+    *           and publication SA22-7832-07 zArchitecture Principles of Operation
+    */
+    static final String[]   op_table_Z10 =   // Table added for RPI 1209A                           #631
         {"B280=LPP,7,70",   // S,LPP,D1(B1)   RPI 2221
          "B284=LCCTL,7,70", // S,LCCTL,D1(B1) RPI 2221
          "B285=LPCTL,7,70", // S,LPCTL,D1(B1) RPI 2221
@@ -2681,9 +2835,12 @@ public  class  tz390 {
          "ECFF=CLIB,47,381",     //   1060 "ECFF"  "CLIB"     "RRS3" 47 RPI 817 #485
          "ECFFm=CLIBm,48,381;*Short;F=", //   "ECFFm" "CLIBm"    "RRS4" 48      #485
          };
-     // op_table_Z11 below contains the instructions valid from z Architecture       // #631
-     // as defined in publication SA22-7832-08 zArchitecture Principles of Operation // #631
-     static final String[]   op_table_Z11 =   // table added for Principles of operation SA22-7832-08 #612 #631
+
+   /**
+    * op_table_Z11 contains the instructions valid from z Architecture
+    * as defined in publication SA22-7832-08 zArchitecture Principles of Operation
+    */
+    static final String[]   op_table_Z11 =   // table added for Principles of operation SA22-7832-08 #612 #631
          {
          "B2B8=SRNMB,7,70",      //   3392 "B2B8"  "SRNMB"    "S"     7 RPI 1125
          "B344=LEDBRA,53,142",   //   3860 "B344"  "LEDBRA"   "RRE"  53 RPI 1125
@@ -2836,6 +2993,10 @@ public  class  tz390 {
          "ECDA=ALHSIK,57,420",   //        "ECDA"  "ALHSIK"   "RIE9" 57 RPI 1125 Z196
          "ECDB=ALGHSIK,57,430",  //        "ECDB"  "ALGHSIK"  "RIE9" 57 RPI 1125 Z196
          };
+
+   /**
+    * Opcode definitions valid for ZS5 and ZS6. ZS7 ff have a broader definition.
+    */
      static final String[]   op_table_Z11_Z12 = // These definitions are valid for ZS5 and ZS6, ZS7 ff have a broader definition. #612 #631
          {
          "B9E2m=LOCGRm,39,141;*Short",    //  B9E2 RRF LOGGRH R1,R2   RPI 2202        #485 #612
@@ -2845,9 +3006,12 @@ public  class  tz390 {
          "EBF2m=LOCm,56,209;*Short;F=",   // "EBF2"   "LOC"   "RSY2" 56 RPI 1125 Z196 #485 #612
          "EBF3m=STOCm,56,209;*Short;F=",  // "EBF3"   "STOC"  "RSY2" 56 RPI 1125 Z196 #485 #612
          };                               //                                               #612
-     // op_table_Z12 below contains the instructions valid from z Architecture       // #631
-     // as defined in publication SA22-7832-09 zArchitecture Principles of Operation // #631
-     static final String[]   op_table_Z12 =            // #613 #631
+
+   /**
+    * op_table_Z12 contains the instructions valid from z Architecture
+    * as defined in publication SA22-7832-09 zArchitecture Principles of Operation
+    */
+    static final String[]   op_table_Z12 =            // #613 #631
          {                                // #613
          "B2E8=PPA,40,151", // B2E8 RRFc 40,151 PPA R1,R2,M3 2202
          "B2EC=ETND,14,140", //  "B2EC RRE 14,140 ETND R1 RPI 2202
@@ -2877,9 +3041,12 @@ public  class  tz390 {
          "EDAA=CDZT,22,230",   // EDAA  RSLb CDZT   R1,D2(l2,B2),M3 RPI 2202
          "EDAB=CXZT,22,230",   // EDAB  RSLb CXZT   R1,D2(l2,B2),M3 RPI 2202
          };                               //                                               #613
-     // op_table_Z13 below contains the instructions valid from z Architecture       // #631
-     // as defined in publication SA22-7832-10 zArchitecture Principles of Operation // #631
-     static final String[]   op_table_Z13 =              // #614                                     #631
+
+   /**
+    * op_table_Z13 contains the instructions valid from z Architecture
+    * as defined in publication SA22-7832-10 zArchitecture Principles of Operation
+    */
+    static final String[]   op_table_Z13 =              // #614                                     #631
          {                                  // #614
          "B9E0=LOCFHR,39,153",              // B9E0  RRF  LOCFHR  R1,R2             RPI 2202
          "B9E0m=LOCFHRm,39,153;0=;F=",      // B9E0  RRF  LOCFHR  R1,R2             RPI 2202      #485
@@ -3192,9 +3359,12 @@ public  class  tz390 {
          "EDAE=CDPT,22,230",                // EDAE  RSLb CDPT    R1,D2(l2,B2),M3   RPI 2202
          "EDAF=CXPT,22,230",                // EDAF  RSLb CXPT    R1,D2(l2,B2),M3   RPI 2202
          };                                 // #614
-     // op_table_Z14 below contains the instructions valid from z Architecture       // #631
-     // as defined in publication SA22-7832-11 zArchitecture Principles of Operation // #631
-     static final String[]   op_table_Z14 =              // #614 #631
+
+   /**
+    * op_table_Z14 contains the instructions valid from z Architecture
+    * as defined in publication SA22-7832-11 zArchitecture Principles of Operation
+    */
+    static final String[]   op_table_Z14 =              // #614 #631
          {                                  // #614
          "B929=KMA,54,340",                 // B929  RRFb KMA     R1,M3,R2          RPI 2202
          "B93C=PRNO,14,144",                // B93C  RRE  PRNO    R1,R2             RPI 2202
@@ -3313,18 +3483,29 @@ public  class  tz390 {
          "E7EFf0=VFMAXfB,82,781;f=23",      // E7EF  VRSc VFMAX   V1,V2,V3,M4,M5,M6 RPI 2202 #495      #615
          "E7EFf8=WFMAXfB,82,781;f=234",     // E7EF  VRSc VFMAX   V1,V2,V3,M4,M5,M6 RPI 2202 #495      #615
          };                                 // #614
-     static final String[]   op_table_Z14_only =         // #616 #631
+
+   /**
+    * Opcode definitions for z14 only
+    */
+    static final String[]   op_table_Z14_only =         // #616 #631
         {                                   // #616
          "E650=VCVB,82,779",                // E650  VRRi VCVB    R1,V2,M3,M4       RPI 2202 #615
          "E652=VCVBG,82,779",               // E652  VRRi VCVBG   R1,V2,M3,M4       RPI 2202 #615
          };                                 // #616
+
+   /**
+    * Opcode definition for z14 through z16
+    */
      static final String[]   op_table_Z14_Z16 =         // #661
         {                                   // #661
          "E65F=VTP,82,784",                 // E65F  VRRg VTP     V1                RPI 2202 #615
          };                                 // #661
-     // op_table_Z15 below contains the instructions valid from z Architecture       // #631
-     // as defined in publication SA22-7832-12 zArchitecture Principles of Operation // #631
-     static final String[]   op_table_Z15 =   //  dsh table added for RPI 2202 #631
+
+   /**
+    * op_table_Z15 contains the instructions valid from z Architecture
+    * as defined in publication SA22-7832-12 zArchitecture Principles of Operation
+    */
+    static final String[]   op_table_Z15 =   //  dsh table added for RPI 2202 #631
         {
          "B938=SORTL,14,144",               //       RRE  SORTL   R1,R2             RPI 2221
          "B939=DFLTCC,36,360",              // B929  RRFa DFLTCC  R1,R2,R3          RPI 2202
@@ -3390,9 +3571,12 @@ public  class  tz390 {
          "E7C3f=VCfFB,82,774;f=2;2=VCEFB",  // E7C3  VRRa VCFPS   V1,V2,M3,M4,M5    RPI 2202 #495 #616
          "E7C3f8=WCfFB,82,774;f=2;2=WCEFB", // E7C3  VRRa VCFPS   V1,V2,M3,M4,M5    RPI 2202 #495 #616
          };
-     // op_table_Z16 below contains the instructions valid from z Architecture       // #631
-     // as defined in publication SA22-7832-13 zArchitecture Principles of Operation // #631
-     static final String[] op_table_Z16 =                 // #503 #631
+
+   /**
+    * op_table_Z16 contains the instructions valid from z Architecture
+    * as defined in publication SA22-7832-13 zArchitecture Principles of Operation
+    */
+    static final String[] op_table_Z16 =                 // #503 #631
         {"B200=LBEAR,7,70",                  // #503
          "B201=STBEAR,7,70",                 // #503
          "B28F=QPACI,7,70",                  // #503
@@ -3422,9 +3606,12 @@ public  class  tz390 {
          "EC5D$3132=SLLHL,52,400;*Extended", // #503
          "EC5D$3132=SRLHL,52,400;*Extended", // #503
          };                                  // #503
-     // op_table_Z17 below contains the instructions valid from z Architecture       // #661
-     // as defined in publication SA22-7832-14 zArchitecture Principles of Operation // #661
-     static final String[] op_table_Z17 =    // #661
+
+   /**
+    * op_table_Z17 contains the instructions valid from z Architecture
+    * as defined in publication SA22-7832-14 zArchitecture Principles of Operation
+    */
+    static final String[] op_table_Z17 =    // #661
         {"A5F=LLGHI,73,730",                 // #661
          "B93E=KIMD,14,140", // Add <M3>     // #661
          "B93F=KLMD,14,140", // Add <M3>     // #661
@@ -3500,6 +3687,10 @@ public  class  tz390 {
          "E7FFe=VMXe,82,738;e=4",            // #661
          "EB16=PFCR,20,205",                 // #661
          };                                  // #661
+
+   /**
+    * Opcode defintitions for ASSIST extension
+    */
      static final String[]   op_table_ASSIST = // Table added for RPI 1209A #631
         {"52=XDECO,37,50",       //   1193 "52"    "XDECO"    "RX"   37 RPI 812
          "53=XDECI,37,50",       //   1196 "53"    "XDECI"    "RX"   37 RPI 812
@@ -3513,18 +3704,34 @@ public  class  tz390 {
          "E0A=XGET,38,171",      //   5375 "E0A"   "XGET"     "RXSS" 38 RPI 812
          "E0C=XPUT,38,171",      //   5375 "E0C"   "XPUT"     "RXSS" 38 RPI 812
          };
-     static final String[]   op_table_z390 =  // Table added for RPI 1209 #631
+
+   /**
+    * Opcode defintitions for z390 extensions (not supported by HLASM)
+    */
+    static final String[]   op_table_z390 =  // Table added for RPI 1209 #631
         {"83=DIAGNOSE,10,100",     // RPI 2213 ADD DIAGNOSE/DIAG RS
          "83=DIAG,10,100",         // RPI 2213 ADD DIAGNOSE/DIAG RS
          "EB17=STCCTM,20,202",     // LPP/CPU Measurement Facility RPI 2225 2226 #661
          };
-     static final String[]   op_table_DFLT_directives = // Split directives from opcodes            #533 #631
+
+   /**
+    * z390-specific assembler directive - not available with HLASM, and only with DFLT opcode table in z390
+    */
+    static final String[]   op_table_DFLT_directives = // Split directives from opcodes            #533 #631
         {"--=ACALLPRM,228,--",   //   "ACALLPRM" resets ACALL parms just before AENTRY #533
          };                                                                         // #533
-     static final String[]   op_table_z390_directives = // Split directives from opcodes            #533 #631
+
+   /**
+    * z390-specific assembler directive - not available with HLASM
+    */
+   static final String[]   op_table_z390_directives = // Split directives from opcodes            #533 #631
         {"--=,122,--",           //   7350         ""               122                #533
          };                                                                         // #533
-     static final String[]   opcode_masks = { // Table added for RPI 1209 #631
+
+   /**
+    * opcode masks - the full set
+    */
+    static final String[]   opcode_masks = { // Table added for RPI 1209 #631
                "F=",             // Always
                "0=N",            // Never
                "2=H",            // High
@@ -3542,7 +3749,11 @@ public  class  tz390 {
                "7=NZ",           // Not Zero
                "E=NO",           // Not Odd / Not Ones
                };
-     static final String[]   opcode_masks_short = { // Table added for RPI 1209 #631
+
+   /**
+    * opcode masks - the short set for instructions that do not support the full set
+    */
+    static final String[]   opcode_masks_short = { // Table added for RPI 1209 #631
                "F=",             // Always  // rpi 2202 support base opcode for short extended mnemonic ops
                "2=H",            // High
                "4=L",            // Low
@@ -3551,44 +3762,57 @@ public  class  tz390 {
                "A=NL",           // Not Low
                "6=NE",           // Not Equal
                };
-       String[] mask_opcode   = null; // See process_opcodes() RPI 1209
-       String[] mask_mnemonic = null; // See process_opcodes() RPI 1209
-      /*
-       * key search table data
-       */
-      int last_key_op = 0;
-      int key_not_found = 1;
-      int key_found = 2;
-      int max_key_root = 4000;
-      int max_key_tab = 50000;
-      int tot_key_tab = max_key_root+1;
-      int tot_key = 0;
-      char   key_type = '?';
-      String key_text = null;
-      int key_index = 0;
-      int key_index_last = 0;
-      int key_hash = 0;
-      int tot_key_search = 0;
-      int tot_key_comp  = 0;
-      int avg_key_comp  = 0;
-      int cur_key_comp = 0;
-      int max_key_comp = 0;
-      char[]    key_tab_type  = (char[])Array.newInstance(char.class,max_key_tab);
-      String[]  key_tab_key   = new String[max_key_tab];
-      int[]     key_tab_hash  = (int[])Array.newInstance(int.class,max_key_tab);
-      int[]     key_tab_index = (int[])Array.newInstance(int.class,max_key_tab);
-      int[]     key_tab_low   = (int[])Array.newInstance(int.class,max_key_tab);
-      int[]     key_tab_high  = (int[])Array.newInstance(int.class,max_key_tab);
-      // dk RPI 1606
-      HashMap<String, String> optfilenames = new HashMap<String, String>(); // dk RPI 1606
-      String prevoptfilename = ""; // dk RPI 1606
+
+    /** variable      */ String[] mask_opcode   = null; // See process_opcodes() RPI 1209
+    /** variable      */ String[] mask_mnemonic = null; // See process_opcodes() RPI 1209
 
 
 
-	/**
-	 * initialize shared data and tables
-	 */
+   /*
+    * key search table data
+    */
+    /** variable      */ int last_key_op = 0;
+    /** variable      */ int key_not_found = 1;
+    /** variable      */ int key_found = 2;
+    /** variable      */ int max_key_root = 4000;
+    /** variable      */ int max_key_tab = 50000;
+    /** variable      */ int tot_key_tab = max_key_root+1;
+    /** variable      */ int tot_key = 0;
+    /** variable      */ char   key_type = '?';
+    /** variable      */ String key_text = null;
+    /** variable      */ int key_index = 0;
+    /** variable      */ int key_index_last = 0;
+    /** variable      */ int key_hash = 0;
+    /** variable      */ int tot_key_search = 0;
+    /** variable      */ int tot_key_comp  = 0;
+    /** variable      */ int avg_key_comp  = 0;
+    /** variable      */ int cur_key_comp = 0;
+    /** variable      */ int max_key_comp = 0;
+    /** variable      */ char[]    key_tab_type  = (char[])Array.newInstance(char.class,max_key_tab);
+    /** variable      */ String[]  key_tab_key   = new String[max_key_tab];
+    /** variable      */ int[]     key_tab_hash  = (int[])Array.newInstance(int.class,max_key_tab);
+    /** variable      */ int[]     key_tab_index = (int[])Array.newInstance(int.class,max_key_tab);
+    /** variable      */ int[]     key_tab_low   = (int[])Array.newInstance(int.class,max_key_tab);
+    /** variable      */ int[]     key_tab_high  = (int[])Array.newInstance(int.class,max_key_tab);
 
+    // dk RPI 1606
+    /** variable      */ HashMap<String, String> optfilenames = new HashMap<String, String>(); // dk RPI 1606
+    /** variable      */ String prevoptfilename = ""; // dk RPI 1606
+
+
+
+/**
+ * Dummy constructor - no initialization needed
+ */
+public tz390()
+       {// dummy constructor - no initialization needed.
+        }
+
+
+
+/**
+ * initialize shared data and tables
+ */
 public void init_tz390(){
 	dir_cur = System.getProperty("user.dir") + File.separator; // RPI 499 drop upper case
 	ts_nano_start = System.nanoTime();          // RPI 662
@@ -3601,10 +3825,10 @@ public void init_tz390(){
 
 
 
-    /**
-     * Valid options for MACHINE and OPTABLE are stored as id=value pairs
-     * This routine sets up the translation tables we need
-     */
+/**
+ * Valid options for MACHINE and OPTABLE are stored as id=value pairs
+ * This routine sets up the translation tables we need
+ */
 public void init_option_tables()                                                                         // #503
    {int     index, index2;                                                                               // #503
     int     i;                                                                                           // #503
@@ -3699,7 +3923,6 @@ public void init_option_tables()                                                
  * The content of the arrays is determined by the assembler options OPTABLE/MACHINE
  * </pre>
  */
-
 public void create_opcodes()  // Routine added for RPI 1209
    {int     index, index2;
     int     i, j;
@@ -3977,6 +4200,11 @@ public void create_opcodes()  // Routine added for RPI 1209
 
 
 
+/**
+ * process a single table of opcode definitions
+ *
+ * @param op_tables[] a single table of opcode definitions
+ */
 public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
    {int     index, index2;
     int     i, j;
@@ -4369,10 +4597,9 @@ public void process_opcodes(String op_tables[])  // Routine added for RPI 1209A
 
 
 
-   /**
-    * init opcodes 
-    */
-
+/**
+ * init opcodes 
+ */
 private void init_opcodes(){
 	if (op_name.length != op_type.length){
 		abort_error(1,"opcode tables out of sync - aborting");
@@ -4399,10 +4626,9 @@ private void init_opcodes(){
 
 
 
-	/**
-	 * init patterns for use by opcode and options routines
-	 */
-
+/**
+ * init patterns for use by opcode and options routines
+ */
 private void init_pat(){
     /*
      * find_non_space_pattern tokens:
@@ -4537,10 +4763,9 @@ private void init_pat(){
 
 
 
-	/**
-	 * init os type RPI 1080
-	 */
-
+/**
+ * init os type
+ */
 private void init_os_type(){
 	String os_name = System.getProperty("os.name"); 
 	if  (os_name.substring(0,3).equals("Win")){
@@ -4553,10 +4778,9 @@ private void init_os_type(){
 
 
 
-	/**
-	 * init os dependant utilities RPI 1080
-	 */
-
+/**
+ * init os dependant utilities
+ */
 private void init_os_util(){
 	z390_acrobat = System.getenv("Z390ACROBAT");;   // RPI 510
 	z390_browser = System.getenv("Z390BROWSER");;   // RPI 510
@@ -4615,29 +4839,29 @@ private void init_os_util(){
 
 
 
-    /**
-     * parse and set options
-     * <p>
-     * Notes:
-     * <ol>
-     * <li> These use () vs = because bat removes =
-     *     <ul>
-     *     <li> syslog(ddname) </li>
-     *     <li> sys390(ddname) </li>
-     *     <li> systerm(filename) </li>
-     *     <li> test(ddname) </li>
-     *     <li> time(seconds) </li>
-     *     </ul> </li>
-     * <li> Add options check for consistency
-     *      <ul>
-     *      <li> NOASM - requires chkmac(0) - RPI 1053 </li>
-     *      </ul> </li>
-     * </ol>
-     * @param args - argument string
-     * @param pgm_type - type of program
-     */
+/**
+ * parse and set options
+ * <p>
+ * Notes:
+ * <ol>
+ * <li> These use () vs = because bat removes =
+ *     <ul>
+ *     <li> syslog(ddname) </li>
+ *     <li> sys390(ddname) </li>
+ *     <li> systerm(filename) </li>
+ *     <li> test(ddname) </li>
+ *     <li> time(seconds) </li>
+ *     </ul> </li>
+ * <li> Add options check for consistency
+ *      <ul>
+ *      <li> NOASM - requires chkmac(0) - RPI 1053 </li>
+ *      </ul> </li>
+ * </ol>
+ *
+ * @param args - argument string
+ * @param pgm_type - type of program
+ */
 public void init_options(String[] args,String pgm_type){
-
     if  (args.length >= 1){
     	if (!set_pgm_dir_name_type(args[0],pgm_type)){
     		abort_error(4,"invalid input file option - " + args[0]);
@@ -4693,10 +4917,9 @@ public void init_options(String[] args,String pgm_type){
 
 
 
-        /**
-         * check options for consistency
-         */
-
+/**
+ * check options for consistency
+ */
 private void check_options(){
     if (!opt_asm){
             if(opt_chkmac != 0){
@@ -4753,13 +4976,13 @@ private void check_options(){
 
 
 
-	/**
-	 * process option from command line or
-	 * from @file optionsfile line.
-	 * @param opt_file_name - String - name of options file
-	 * @param opt_file_line - int - line nr within options file
-	 * @param token - String
-	 */
+/**
+ * process option from command line or
+ * from @file optionsfile line.
+ * @param opt_file_name - String - name of options file
+ * @param opt_file_line - int - line nr within options file
+ * @param token - String
+ */
 private void process_option(String opt_file_name,int opt_file_line,String token){
   try {
 	if (cmd_parms_len + token.length() + 1 > max_cmd_parms_line){
@@ -5429,11 +5652,12 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
 
 
 
-    /**
-     * set trace options (called by init and 
-     * by mz390 when SYSTRACE is updated.
-     * @param trace_options - trace options
-     */
+/**
+ * set trace options (called by init and 
+ * by mz390 when SYSTRACE is updated.
+ *
+ * @param trace_options - trace options
+ */
 public  void set_trace_options(String trace_options){
 
 	opt_traceall = false;
@@ -5499,31 +5723,32 @@ public  void set_trace_options(String trace_options){
 
 
 
-    /**
-     * collect invalid options for single error
-     * @param opt_file_name - String name of options file
-     * @param opt_file_line - int - nr of line in error
-     * @param option - String - option having an error
-     */
+/**
+ * collect invalid options for single error
+ *
+ * @param opt_file_name - String name of options file
+ * @param opt_file_line - int - nr of line in error
+ * @param option - String - option having an error
+ */
 private void add_invalid_option(String opt_file_name,int opt_file_line,String option){
-
 	invalid_options = invalid_options + " " + option; // RPI 880
 	System.out.println("TZ390E invalid option=" + option + "  (" + opt_file_name + "/" + opt_file_line + ")");
 }
 
 
 
-    /**
-     * process option file as follows:
-     * <ol>
-     * <li> Default suffix .OPT </li>
-     * <li> Uses SYSOPT path which defaults to program path </li>
-     * <li> Comments starting with * to end of line </li>
-     * <li> @file option can be nested. </li>
-     * </ol>
-     * @param file_name - String - name of the file to process
-     * @param required - boolean
-     */
+/**
+ * process option file as follows:
+ * <ol>
+ * <li> Default suffix .OPT </li>
+ * <li> Uses SYSOPT path which defaults to program path </li>
+ * <li> Comments starting with * to end of line </li>
+ * <li> @file option can be nested. </li>
+ * </ol>
+ *
+ * @param file_name - String - name of the file to process
+ * @param required - boolean
+ */
 private void process_options_file(String file_name,boolean required){ // RPI 1156
 
     String opt_file_name = find_file_name(dir_opt,file_name,opt_type,dir_cur); // rpi 880
@@ -5569,11 +5794,12 @@ private void process_options_file(String file_name,boolean required){ // RPI 115
 
 
 
-    /**
-     * open systerm file and sta statistics file
-     * positions to add to end of existing files.
-     * @param z390_pgm - program name (used to determine default output file names)
-     */
+/**
+ * open systerm file and sta statistics file
+ * positions to add to end of existing files.
+ *
+ * @param z390_pgm - program name (used to determine default output file names)
+ */
 public void open_systerm(String z390_pgm){
 
 	systerm_prefix = left_justify(pgm_name,9) + " " + z390_pgm + " ";
@@ -5635,10 +5861,11 @@ public void open_systerm(String z390_pgm){
 
 
 
-    /**
-     * log error to systerm file
-     * @param msg - message text
-     */
+/**
+ * log error to systerm file
+ *
+ * @param msg - message text
+ */
 public synchronized void put_systerm(String msg){ // RPI 397
 
 	if (systerm_file != null){ // rpi 935
@@ -5655,10 +5882,10 @@ public synchronized void put_systerm(String msg){ // RPI 397
 
 
 
-    /**
-     * mod stat record on stats.sta file
-     * @param msg - message text
-     */
+/**
+ * mod stat record on stats.sta file
+ * @param msg - message text
+ */
 public synchronized void put_stat_line(String msg){ // RPI 397
 
 	if (stats_file != null){ // RPI 935
@@ -5674,10 +5901,10 @@ public synchronized void put_stat_line(String msg){ // RPI 397
 
 
 
-    /**
-     * close systerm error file if open
-     * @param rc - return code
-     */
+/**
+ * close systerm error file if open
+ * @param rc - return code
+ */
 public synchronized void close_systerm(int rc){ // RPI 397
 
      if (systerm_file != null){
@@ -5716,11 +5943,11 @@ public synchronized void close_systerm(int rc){ // RPI 397
 
 
 
-    /**
-     * set ended_msg for use by mz390, az390,
-     * lz390, and ez390.
-     * @param rc - return code
-     */
+/**
+ * set ended_msg for use by mz390, az390,
+ * lz390, and ez390.
+ * @param rc - return code
+ */
 public void set_ended_msg(int rc){
 
 	if (ended_msg.length() > 0){ // RPI 837
@@ -5744,9 +5971,9 @@ public void set_ended_msg(int rc){
 
 
 
-    /**
-     * close trace file if open RPI 484
-     */
+/**
+ * close trace file if open RPI 484
+ */
 public void close_trace_file(){
 
      if (trace_file_buff != null){
@@ -5760,10 +5987,10 @@ public void close_trace_file(){
 
 
 
-    /**
-     * return max memory usage by J2SE in MB
-     * @return integer
-     */
+/**
+ * return max memory usage by J2SE in MB
+ * @return integer
+ */
 public int get_mem_usage(){
 
 	long mem_tot = 0;
@@ -5776,12 +6003,12 @@ public int get_mem_usage(){
 
 
 
-    /**
-     * return shortest file name possible
-     * with quotes if LSN
-     * @param file_name - name of the file
-     * @return file_name - short name of the file
-     */
+/**
+ * return shortest file name possible
+ * with quotes if LSN
+ * @param file_name - name of the file
+ * @return file_name - short name of the file
+ */
 private String get_short_file_name(String file_name){
 
 	if (file_name.length() > dir_cur.length()
@@ -5802,12 +6029,12 @@ private String get_short_file_name(String file_name){
 
 
 
-    /**
-     * display options error on system out
-     * and exit with rc 16.
-     * @param error - error code
-     * @param msg - message text
-     */
+/**
+ * display options error on system out
+ * and exit with rc 16.
+ * @param error - error code
+ * @param msg - message text
+ */
 public synchronized void abort_error(int error,String msg){ // RPI 397
 
 	if (tz390_recursive_abort){ // RPI 935
@@ -5828,9 +6055,9 @@ public synchronized void abort_error(int error,String msg){ // RPI 397
 
 
 
-    /**
-     * init ascii/ebcdic conversion tables
-     */
+/**
+ * init ascii/ebcdic conversion tables
+ */
 private void init_ascii_ebcdic(){
 
     int index = 0;
@@ -5843,60 +6070,60 @@ private void init_ascii_ebcdic(){
 
 
 
-    /**
-     * return user_key_index for user_key else -1
-     * and set following for possible add_key_index:
-     * <ol>
-     * <li> key_text = user_key </li>
-     * <li> key_hash = hash code for key </li>
-     * <li> key_index_last = last search entry </li>
-     * </ol>
-     * Notes:
-     * <ol>
-     * <li> Usage by mz390
-     *      <ol>
-     *      <li> "A:" - ago gbla table pointer </li>
-     *      <li> "C:" - copy file found  RPI 970 </li>
-     *      <li> "F:" - macro and copybook files </li>
-     *      <li> "G:" - global set variables </li>
-     *      <li> "M:" - loaded macros </li>
-     *      <li> "O:" - opcode table (init_opcode_name_keys) </li>
-     *      <li> "R:" - opcode and macro opsyn </li>
-     *      <li> "S:" - ordinary symbols </li>
-     *      <li> "X:" - executable macro command </li>
-     *      <li> "Z:" - ZSTRMAC opcodes and apm names RPI 902 </li>
-     *      </ol> </li>
-     * <li> Usage by az390
-     *      <ol>
-     *      <li> "L:" - literals </li>
-     *      <li> "O:" - opcode table (init_opcode_name_keys) </li>
-     *      <li> "R:" - opcode opsyn </li>
-     *      <li> "S:" - ordinary symbols </li>
-     *      <li> "U:" - USING labels </li>
-     *      <li> "V:" - extrn symbol </li>
-     *      </ol> </li>
-     * <li> Usage by lz390
-     *      <ol>
-     *      <li> "G:" - global ESD's </li>
-     *      </ol> </li>
-     * <li> Usage by ez390
-     *      <ol>
-     *      <li> "H:" - opcodes by hex key </li>
-     *      <li> "H:BR:" - branch opocodes by hex key </li>
-     *      <li> "O:" - opcodes by name (init_opcode_name_keys) </li>
-     *      <li> "P:" - CDE program name lookup </li>
-     *      <li> "R:" - OPSYN opcode/macro substitution </li>
-     *      </ol> </li>
-     * <li> See find_lcl_key_index in mz390 with
-     *       local key types KBPL
-     * <li> Optimize by using separate user_key_type char
-     *       to avoid extra string concat and avoid string compare if not 
-     *       desired type.  RPI 409 (all calls changed)
-     * </ol>
-     * @param user_key_type - type of item to search for
-     * @param user_key - name or label of item to search for
-     * @return integer - index of item if found, -1 otherwise
-     */
+/**
+ * return user_key_index for user_key else -1
+ * and set following for possible add_key_index:
+ * <ol>
+ * <li> key_text = user_key </li>
+ * <li> key_hash = hash code for key </li>
+ * <li> key_index_last = last search entry </li>
+ * </ol>
+ * Notes:
+ * <ol>
+ * <li> Usage by mz390
+ *      <ol>
+ *      <li> "A:" - ago gbla table pointer </li>
+ *      <li> "C:" - copy file found  RPI 970 </li>
+ *      <li> "F:" - macro and copybook files </li>
+ *      <li> "G:" - global set variables </li>
+ *      <li> "M:" - loaded macros </li>
+ *      <li> "O:" - opcode table (init_opcode_name_keys) </li>
+ *      <li> "R:" - opcode and macro opsyn </li>
+ *      <li> "S:" - ordinary symbols </li>
+ *      <li> "X:" - executable macro command </li>
+ *      <li> "Z:" - ZSTRMAC opcodes and apm names RPI 902 </li>
+ *      </ol> </li>
+ * <li> Usage by az390
+ *      <ol>
+ *      <li> "L:" - literals </li>
+ *      <li> "O:" - opcode table (init_opcode_name_keys) </li>
+ *      <li> "R:" - opcode opsyn </li>
+ *      <li> "S:" - ordinary symbols </li>
+ *      <li> "U:" - USING labels </li>
+ *      <li> "V:" - extrn symbol </li>
+ *      </ol> </li>
+ * <li> Usage by lz390
+ *      <ol>
+ *      <li> "G:" - global ESD's </li>
+ *      </ol> </li>
+ * <li> Usage by ez390
+ *      <ol>
+ *      <li> "H:" - opcodes by hex key </li>
+ *      <li> "H:BR:" - branch opocodes by hex key </li>
+ *      <li> "O:" - opcodes by name (init_opcode_name_keys) </li>
+ *      <li> "P:" - CDE program name lookup </li>
+ *      <li> "R:" - OPSYN opcode/macro substitution </li>
+ *      </ol> </li>
+ * <li> See find_lcl_key_index in mz390 with
+ *       local key types KBPL
+ * <li> Optimize by using separate user_key_type char
+ *       to avoid extra string concat and avoid string compare if not 
+ *       desired type.  RPI 409 (all calls changed)
+ * </ol>
+ * @param user_key_type - type of item to search for
+ * @param user_key - name or label of item to search for
+ * @return integer - index of item if found, -1 otherwise
+ */
 public int find_key_index(char user_key_type,String user_key){
 
 	tot_key_search++;
@@ -5938,13 +6165,13 @@ public int find_key_index(char user_key_type,String user_key){
 
 
 
-    /**
-     * add user_index entry based on
-     * key_text, key_hash, and key_index_last
-     * set by prior find_key_index
-     * @param user_index - 
-     * @return boolean - true if success, false on failure
-     */
+/**
+ * add user_index entry based on
+ * key_text, key_hash, and key_index_last
+ * set by prior find_key_index
+ * @param user_index - 
+ * @return boolean - true if success, false on failure
+ */
 public boolean add_key_index(int user_index){
 
 	if (last_key_op != key_not_found){
@@ -5975,11 +6202,11 @@ public boolean add_key_index(int user_index){
 
 
 
-    /**
-     * update previously found key index
-     * @param user_key - 
-     * @return boolean  -true if update okay, false if update not possible
-     */
+/**
+ * update previously found key index
+ * @param user_key - 
+ * @return boolean  -true if update okay, false if update not possible
+ */
 public boolean update_key_index(int user_key){
 
 	if (last_key_op != key_found){
@@ -5991,20 +6218,20 @@ public boolean update_key_index(int user_key){
 
 
 
-    /**
-     * <ol>
-     * <li> Strip long spacey name quotes if found from path and file. </li>
-     * <li> Replace . and ..\ with current directory  RPI 866 </li>
-     * <li> Check for overriding path in filename and ignore default path RPI 866 </li>
-     * <li> Check for overriding filename in path and ignore default filename RPI 866 </li>
-     * <li> Add directory, name, and/or type if not specified   </li>
-     * <li> Replace \ with / if Linux </li>
-     * </ol>
-     * @param file_dir - relative or absolute path
-     * @param file_name - file name
-     * @param file_type - file type
-     * @return string - complete path and file name
-     */
+/**
+ * <ol>
+ * <li> Strip quotes if found from path and file.</li>
+ * <li> Replace . and ..\ with current directory</li>
+ * <li> Check for overriding path in filename and ignore default path</li>
+ * <li> Check for overriding filename in path and ignore default filename</li>
+ * <li> Add directory, name, and/or type if not specified</li>
+ * <li> Replace \ with / if Linux</li>
+ * </ol>
+ * @param file_dir - relative or absolute path
+ * @param file_name - file name
+ * @param file_type - file type
+ * @return string - complete path and file name
+ */
 public String get_file_name(String file_dir,String file_name,String file_type){
 
 	        if (file_dir == null 
@@ -6074,16 +6301,15 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 
 
 
-    /**
-     * <ol>
-     * <li> Replace \ with / if Linux else / with | </li>
-     * <li> Replace ..\ or ../ with parent path </li>
-     * <li> Remove embedded ./ or .\ </li>
-     * </ol>
-     * @param name - full path and file name
-     * @return string - corrected path and file name
-     */
-
+/**
+ * <ol>
+ * <li> Replace \ with / if Linux else / with | </li>
+ * <li> Replace ..\ or ../ with parent path </li>
+ * <li> Remove embedded ./ or .\ </li>
+ * </ol>
+ * @param name - full path and file name
+ * @return string - corrected path and file name
+ */
 public String fix_file_separators(String name){
     if (z390_os_type == z390_os_linux){ // RPI 532 file separator fix
     	name = find_bslash.matcher(name).replaceAll("/");  // RPI 1080
@@ -6128,25 +6354,25 @@ public String fix_file_separators(String name){
 
 
 
-    /**
-     * search for existing file in one or more dirs
-     * and return file name or null if not found
-     * <p>
-     * Note:
-     * <ol>
-     * <li> The separator for multiple files may be ; or +
-     *      (plus sign) versus semi-colon is used in BAT parms 
-     *      to avoid conflict with Windows BAT parsing. </li>
-     * <li> If file_name has type, use it.
-     *      else if directory path has *.type use
-     *      the type instead of default file_type. </li>
-     * </ol>
-     * @param parm_dir_list - list of paths
-     * @param file_name - file name (may include file type)
-     * @param file_type_def - default file type
-     * @param dir_cur - current path
-     * @return string - path to file if found, null otherwise
-     */
+/**
+ * search for existing file in one or more dirs
+ * and return file name or null if not found
+ * <p>
+ * Note:
+ * <ol>
+ * <li> The separator for multiple files may be ; or +
+ *      (plus sign) versus semi-colon is used in BAT parms 
+ *      to avoid conflict with Windows BAT parsing. </li>
+ * <li> If file_name has type, use it.
+ *      else if directory path has *.type use
+ *      the type instead of default file_type. </li>
+ * </ol>
+ * @param parm_dir_list - list of paths
+ * @param file_name - file name (may include file type)
+ * @param file_type_def - default file type
+ * @param dir_cur - current path
+ * @return string - path to file if found, null otherwise
+ */
 public String find_file_name(String parm_dir_list, String file_name, String file_type_def, String dir_cur){
 
 	boolean explicit_type = false;
@@ -6223,11 +6449,11 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 
 
 
-    /**
-     * exec command as separate task
-     * @param cmd - command string to be executed
-     * @return boolean - true if command executed successfully, false otherwise
-     */
+/**
+ * exec command as separate task
+ * @param cmd - command string to be executed
+ * @return boolean - true if command executed successfully, false otherwise
+ */
 public boolean exec_cmd(String cmd){
 
            try {
@@ -6240,10 +6466,10 @@ public boolean exec_cmd(String cmd){
 
 
 
-    /**
-     * add all opcodes to key index table
-     * @return boolean - true if method executed successfully, false otherwise
-     */
+/**
+ * add all opcodes to key index table
+ * @return boolean - true if method executed successfully, false otherwise
+ */
 public boolean init_opcode_name_keys(){
 
 	int index = 0;
@@ -6286,18 +6512,18 @@ public boolean init_opcode_name_keys(){
 
 
 
-    /**
-     * set pgm_dir, pgm_name, pgm_type from parm 
-     * <p>
-     * Notes:
-     * <ol>
-     * <li> Only allow file type override for MLC. </li>
-     * <li> Set lkd_ignore true if explicit .OBJ found RPI 735 </li>
-     * </ol>
-     * @param file_name - file name
-     * @param file_type - file type
-     * @return boolean
-     */
+/**
+ * set pgm_dir, pgm_name, pgm_type from parm 
+ * <p>
+ * Notes:
+ * <ol>
+ * <li> Only allow file type override for MLC. </li>
+ * <li> Set lkd_ignore true if explicit .OBJ found RPI 735 </li>
+ * </ol>
+ * @param file_name - file name
+ * @param file_type - file type
+ * @return boolean
+ */
 public boolean set_pgm_dir_name_type(String file_name,String file_type){
 
 	lkd_ignore = false;
@@ -6343,10 +6569,10 @@ public boolean set_pgm_dir_name_type(String file_name,String file_type){
 
 
 
-    /**
-     * reset op_code key table indexes changed
-     * by opsyn during previous pass if any.
-     */
+/**
+ * reset op_code key table indexes changed
+ * by opsyn during previous pass if any.
+ */
 public void reset_opsyn(){
 
 	int index = 0;
@@ -6358,27 +6584,27 @@ public void reset_opsyn(){
 
 
 
-    /**
-     * Update opsyn table as follows:
-     * <ol>
-     * <li> Add new alias name for opcode </li>
-     * <li> Add null entry to cancel opcode  // RPI 306 </li>
-     * <li> Restore opcode to previous alias
-     *      and remove any cancel entry.  // RPI 404 </li>
-     * </ol>
-     * Notes:
-     * <ol>
-     * <li> Indexes pointing to new name entries
-     *      in opsyn table are only added once. </li>
-     * <li> az390 uses reset_opsyn() to reset old = new
-     *      for multiple passes so opcodes prior to first
-     *      OPSYN statement will map to std. opcode. mz390
-     *      only makes one pass so its not an issue. </li>
-     * </ol>
-     * @param new_name - new mnemonic
-     * @param old_name - old mnemonic
-     * @return boolean - true if successful, false otherwise
-     */
+/**
+ * Update opsyn table as follows:
+ * <ol>
+ * <li> Add new alias name for opcode </li>
+ * <li> Add null entry to cancel opcode  // RPI 306 </li>
+ * <li> Restore opcode to previous alias
+ *      and remove any cancel entry.  // RPI 404 </li>
+ * </ol>
+ * Notes:
+ * <ol>
+ * <li> Indexes pointing to new name entries
+ *      in opsyn table are only added once. </li>
+ * <li> az390 uses reset_opsyn() to reset old = new
+ *      for multiple passes so opcodes prior to first
+ *      OPSYN statement will map to std. opcode. mz390
+ *      only makes one pass so its not an issue. </li>
+ * </ol>
+ * @param new_name - new mnemonic
+ * @param old_name - old mnemonic
+ * @return boolean - true if successful, false otherwise
+ */
 public boolean update_opsyn(String new_name,String old_name){
 
 	int index = -1;
@@ -6425,12 +6651,12 @@ public boolean update_opsyn(String new_name,String old_name){
 
 
 
-    /**
-     * Format int into 1-16 hex digit string
-     * @param work_int - integer value to convert into hex
-     * @param req_hex_digits - nr of hex digits to produce
-     * @return string - hex representation, or null of conversion failed
-     */
+/**
+ * Format int into 1-16 hex digit string
+ * @param work_int - integer value to convert into hex
+ * @param req_hex_digits - nr of hex digits to produce
+ * @return string - hex representation, or null of conversion failed
+ */
 public String get_hex(int work_int,int req_hex_digits) {
 
    	    String work_hex = Integer.toHexString(work_int);
@@ -6445,12 +6671,12 @@ public String get_hex(int work_int,int req_hex_digits) {
 
 
 
-    /**
-     * Format long into 1-16 hex digit string
-     * @param work_long - integer value to convert into hex
-     * @param req_hex_digits - nr of hex digits to produce
-     * @return string - hex representation, or null of conversion failed
-     */
+/**
+ * Format long into 1-16 hex digit string
+ * @param work_long - integer value to convert into hex
+ * @param req_hex_digits - nr of hex digits to produce
+ * @return string - hex representation, or null of conversion failed
+ */
 public String get_long_hex(long work_long,int req_hex_digits) {
    	    String work_hex = Long.toHexString(work_long);
    	    if (req_hex_digits <= 16) {
@@ -6462,20 +6688,20 @@ public String get_long_hex(long work_long,int req_hex_digits) {
 
 
 
-    /**
-     * set sdt_char_int to
-     * value of character string else false
-     * <ul>
-     * <li> C'....' EBCDIC/ASCII (rep ''|&amp;&amp; with'|&amp;) </li>
-     * <li> C"...." ASCII        (rep ""|''|&amp;&amp; with "|'|&amp;) </li>
-     * <li> C!....! EBCDIC       (rep !!|''|&amp;&amp; with !|'|&amp;) </li>
-     * <li> CA'...' ASCII </li>
-     * <li> CE'...' EBCDIC </li>
-     * </ul>
-     * Note: sdt = self-defining term
-     * @param sdt - self-defining term
-     * @return boolean - true if successful, false otherwise
-     */
+/**
+ * set sdt_char_int to
+ * value of character string else false
+ * <ul>
+ * <li> C'....' EBCDIC/ASCII (rep ''|&amp;&amp; with'|&amp;) </li>
+ * <li> C"...." ASCII        (rep ""|''|&amp;&amp; with "|'|&amp;) </li>
+ * <li> C!....! EBCDIC       (rep !!|''|&amp;&amp; with !|'|&amp;) </li>
+ * <li> CA'...' ASCII </li>
+ * <li> CE'...' EBCDIC </li>
+ * </ul>
+ * Note: sdt = self-defining term
+ * @param sdt - self-defining term
+ * @return boolean - true if successful, false otherwise
+ */
 public boolean get_sdt_char_int(String sdt){
 
 	   boolean ebcdic = true;
@@ -6532,12 +6758,12 @@ public boolean get_sdt_char_int(String sdt){
 
 
 
-    /**
-     * Verify ascii source code and
-     * length &lt;= 80 if not * in col 1.
-     * @param temp_line - string to be validated
-     * @return boolean - true if input is a valid Ascii source line, false otherwise
-     */
+/**
+ * Verify ascii source code and
+ * length &lt;= 80 if not * in col 1.
+ * @param temp_line - string to be validated
+ * @return boolean - true if input is a valid Ascii source line, false otherwise
+ */
 public boolean verify_ascii_source(String temp_line){
 
 	if (temp_line.length() > max_line_len){ // RPI 437
@@ -6559,13 +6785,13 @@ public boolean verify_ascii_source(String temp_line){
 
 
 
-    /**
-     * return text left justified in field
-     * if field larger than text
-     * @param text - input text
-     * @param padded_len - desired string length
-     * @return string - input string with appended blanks to fill up to requested length
-     */
+/**
+ * return text left justified in field
+ * if field larger than text
+ * @param text - input text
+ * @param padded_len - desired string length
+ * @return string - input string with appended blanks to fill up to requested length
+ */
 public String left_justify(String text,int padded_len){
 
 	if (text == null){
@@ -6581,11 +6807,11 @@ public String left_justify(String text,int padded_len){
 
 
 
-    /**
-     * return n space characters
-     * @param n - nr of spaces to return
-     * @return string - consisting of requested nr of spaces
-     */
+/**
+ * return n space characters
+ * @param n - nr of spaces to return
+ * @return string - consisting of requested nr of spaces
+ */
 public String pad_spaces(int n){ // RPI 902
 
 	if (n > pad_spaces_len){
@@ -6596,13 +6822,13 @@ public String pad_spaces(int n){ // RPI 902
 
 
 
-    /**
-     * return text right justified in field
-     * if field larger than text
-     * @param text - input text to be padded
-     * @param padded_len - length of desired output string
-     * @return String - input text prefixed with blanks to right-align to requested length
-     */
+/**
+ * return text right justified in field
+ * if field larger than text
+ * @param text - input text to be padded
+ * @param padded_len - length of desired output string
+ * @return String - input text prefixed with blanks to right-align to requested length
+ */
 public String right_justify(String text,int padded_len){
 
 	int pad_len = padded_len - text.length();
@@ -6615,11 +6841,11 @@ public String right_justify(String text,int padded_len){
 
 
 
-    /**
-     * initialize new pad_spaces byte array
-     * used by left and right justify
-     * @param new_pad_len - 
-     */
+/**
+ * initialize new pad_spaces byte array
+ * used by left and right justify
+ * @param new_pad_len - 
+ */
 private void init_pad_spaces(int new_pad_len){
 
 	pad_spaces_len = new_pad_len;
@@ -6632,13 +6858,13 @@ private void init_pad_spaces(int new_pad_len){
 
 
 
-    /*
-     * return string with text dupicated
-     * dup_count times
-     * @param text - input text to be duplicated
-     * @param dup_count - nr of duplications to produce
-     * @return String - duplicated input text
-     */
+/**
+ * return string with text duplicated
+ * dup_count times
+ * @param text - input text to be duplicated
+ * @param dup_count - nr of duplications to produce
+ * @return String - duplicated input text
+ */
 public String get_dup_string(String text,int dup_count){
 
 	if (dup_count <= 0){
@@ -6667,13 +6893,13 @@ public String get_dup_string(String text,int dup_count){
 
 
 
-    /**
-     * remove trailing spaces from non-continued
-     * source line
-     * @param line - input source line
-     * @param max_text - max nr of chacters to be used
-     * @return String - usabel section of input with trailing spaces removed
-     */
+/**
+ * remove trailing spaces from non-continued
+ * source line
+ * @param line - input source line
+ * @param max_text - max nr of chacters to be used
+ * @return String - usabel section of input with trailing spaces removed
+ */
 public String trim_trailing_spaces(String line,int max_text){ // RPI 437
 
 	if (max_text > 0 && line.length() > max_text){
@@ -6685,27 +6911,27 @@ public String trim_trailing_spaces(String line,int max_text){ // RPI 437
 
 
 
-    /**
-     * Trim line to comma delimiter or end of line
-     * recognizing whether line is continuation of 
-     * quoted string or not.
-     * <p>
-     * Notes:
-     * <ol>
-     * <li> Allow ", " to appear in quotes
-     *      which may be split across lines. </li>
-     * <li> Allow spaces within (...) on macro
-     *      statements but not opcodes </li>
-     * <li> Handle quoted string continued on one
-     *      or more continuation lines. RPI 463. </li>
-     * <li> Remove leading spaces from continuations. </li>
-     * </ol>
-     * @param line - source line
-     * @param first_line - true if first line of statement
-     * @param ictl_end - ICTL-defined end column
-     * @param ictl_cont -  ICTL-defined continue column
-     * @return String - modified source line
-     */
+/**
+ * Trim line to comma delimiter or end of line
+ * recognizing whether line is continuation of 
+ * quoted string or not.
+ * <p>
+ * Notes:
+ * <ol>
+ * <li> Allow ", " to appear in quotes
+ *      which may be split across lines. </li>
+ * <li> Allow spaces within (...) on macro
+ *      statements but not opcodes </li>
+ * <li> Handle quoted string continued on one
+ *      or more continuation lines. RPI 463. </li>
+ * <li> Remove leading spaces from continuations. </li>
+ * </ol>
+ * @param line - source line
+ * @param first_line - true if first line of statement
+ * @param ictl_end - ICTL-defined end column
+ * @param ictl_cont -  ICTL-defined continue column
+ * @return String - modified source line
+ */
 public String trim_continue(String line, boolean first_line,int ictl_end,int ictl_cont){
 
 	int index;
@@ -6836,18 +7062,18 @@ public String trim_continue(String line, boolean first_line,int ictl_end,int ict
 
 
 
-    /**
-     * split line into 3 strings:
-     * <ol>
-     * <li> split_label
-     * <li> split_op
-     * <li> split_parms 
-     * </ol>
-     * using precompiled patterm  RPI 313
-     * <p>
-     * Note: fields are null if none
-     * @param line - input source line
-     */
+/**
+ * split line into 3 strings:
+ * <ol>
+ * <li> split_label
+ * <li> split_op
+ * <li> split_parms 
+ * </ol>
+ * using precompiled patterm  RPI 313
+ * <p>
+ * Note: fields are null if none
+ * @param line - input source line
+ */
 public void split_line(String line){  // RPI 313
 	split_label = null;
 	split_op    = null;
@@ -6874,11 +7100,11 @@ public void split_line(String line){  // RPI 313
 
 
 
-    /**
-     * return first directory in list
-     * @param dirs - list of directories
-     * @return String - first directry from the list
-     */
+/**
+ * return first directory in list
+ * @param dirs - list of directories
+ * @return String - first directry from the list
+ */
 public String get_first_dir(String dirs){
 
 	    String first_dir;
@@ -6899,10 +7125,10 @@ public String get_first_dir(String dirs){
 
 
 
-    /**
-     * open trace file if trace options on for M, A, L, E
-     * @param text - message to be written to trace file
-     */
+/**
+ * open trace file if trace options on for M, A, L, E
+ * @param text - message to be written to trace file
+ */
 public void put_trace(String text){
 
 	if (text != null 
@@ -6937,14 +7163,14 @@ public void put_trace(String text){
 
 
 
-    /**
-     * <ol>
-     * <li> increment cur_bal_line_num by 1 plus
-     *      previous continuations. </li>
-     * <li> Set number of continuation lines for next call. </li>
-     * </ol>
-     * @param text_line - current surce statement ??
-     */
+/**
+ * <ol>
+ * <li> increment cur_bal_line_num by 1 plus
+ *      previous continuations. </li>
+ * <li> Set number of continuation lines for next call. </li>
+ * </ol>
+ * @param text_line - current surce statement ??
+ */
 public void inc_cur_bal_line_num(String text_line){
 
     	if (text_line == null)return;
@@ -6958,31 +7184,31 @@ public void inc_cur_bal_line_num(String text_line){
 
 
 
-    /**
-     * return unique BAL line id consisting of:  // RPI 549
-     * <ol>
-     * <li> FID file id number (See list of files in stats at end of BAL) </li>
-     * <li> FLN file Line number within file </li>
-     * <li> GSN Generated statement number for BAL line </li>
-     * <li> Type code:
-     *      <ol>
-     *      <li> ' ' main source code </li>
-     *      <li> '+' generated macro code </li>
-     *      <li> '=' included copybook code </li>
-     *      </ol>  </li>
-     * </ol>
-     * Notes:
-     * <ol>
-     * <li> If FLN is 0 only GSN is returned for az standalone mode. </li>
-     * <li> If GSN is 0 only (FID/FLN) is returned for mz trace. </li>
-     * </ol>
-     * @param file_num - file id (open sequence number)
-     * @param file_line_num - line number within file
-     * @param bal_line_num - assembler assigned line number
-     * @param mac_gen - true if line was generted from a macro
-     * @param line_type - line type
-     * @return String - string representation of complete line id
-     */
+/**
+ * return unique BAL line id consisting of:  // RPI 549
+ * <ol>
+ * <li> FID file id number (See list of files in stats at end of BAL) </li>
+ * <li> FLN file Line number within file </li>
+ * <li> GSN Generated statement number for BAL line </li>
+ * <li> Type code:
+ *      <ol>
+ *      <li> ' ' main source code </li>
+ *      <li> '+' generated macro code </li>
+ *      <li> '=' included copybook code </li>
+ *      </ol>  </li>
+ * </ol>
+ * Notes:
+ * <ol>
+ * <li> If FLN is 0 only GSN is returned for az standalone mode. </li>
+ * <li> If GSN is 0 only (FID/FLN) is returned for mz trace. </li>
+ * </ol>
+ * @param file_num - file id (open sequence number)
+ * @param file_line_num - line number within file
+ * @param bal_line_num - assembler assigned line number
+ * @param mac_gen - true if line was generted from a macro
+ * @param line_type - line type
+ * @return String - string representation of complete line id
+ */
 public String get_cur_bal_line_id(int file_num, int file_line_num, int bal_line_num, boolean mac_gen, char line_type){
 
     	if (file_line_num == 0){
@@ -7006,11 +7232,11 @@ public String get_cur_bal_line_id(int file_num, int file_line_num, int bal_line_
 
 
 
-    /**
-     * Return the directory containing the jar file 
-     * (Contributed by Martin Ward)
-     * @return String - path to executing jar file
-     */
+/**
+ * Return the directory containing the jar file 
+ * (Contributed by Martin Ward)
+ * @return String - path to executing jar file
+ */
 public String jar_file_dir(){
 
      	StringBuffer path = new StringBuffer(System.getProperty("java.class.path"));
@@ -7021,19 +7247,19 @@ public String jar_file_dir(){
 
 
 
-    /**
-     * store binary DD,ED, or LD format
-     * in fp_work_reg.  Return true if value within range.
-     * <p>
-     * Notes:
-     * <ol>
-     * <li> Set DFP exponent to explicit decimal point
-     *      else preferred exponent is 0. </li>
-     * </ol>
-     * @param dfp_type - type of decimal floating point data
-     * @param dfp_bd - address of floating point field in base-displacement format
-     * @return Boolean - true if data within range, false otherwise
-     */
+/**
+ * store binary DD,ED, or LD format
+ * in fp_work_reg.  Return true if value within range.
+ * <p>
+ * Notes:
+ * <ol>
+ * <li> Set DFP exponent to explicit decimal point
+ *      else preferred exponent is 0. </li>
+ * </ol>
+ * @param dfp_type - type of decimal floating point data
+ * @param dfp_bd - address of floating point field in base-displacement format
+ * @return Boolean - true if data within range, false otherwise
+ */
 public boolean fp_get_dfp_bin(int dfp_type,BigDecimal dfp_bd){
 
     	/*
@@ -7140,16 +7366,16 @@ public boolean fp_get_dfp_bin(int dfp_type,BigDecimal dfp_bd){
 
 
 
-    /**
-     * return long with 1 to 6 DPD densly packed decimal triplets.
-     * Each triplet consists of 10 bits representing 3 decial digits
-     *
-     * @param tot_digits - int - not used (could be a bug, might coincide with dfp_digits??)
-     * @param digit_offset - int - offset into source string of digits
-     * @param digit_count - int - nr of digits to convert
-     * @return long - holding converted dfp value
-     *
-     */
+/**
+ * return long with 1 to 6 DPD densly packed decimal triplets.
+ * Each triplet consists of 10 bits representing 3 decial digits
+ *
+ * @param tot_digits - int - not used (could be a bug, might coincide with dfp_digits??)
+ * @param digit_offset - int - offset into source string of digits
+ * @param digit_count - int - nr of digits to convert
+ * @return long - holding converted dfp value
+ *
+ */
 private long get_dfp_ccf_digits(int tot_digits,int digit_offset, int digit_count){
 
     	long dfp_bits = 0;
@@ -7164,17 +7390,17 @@ private long get_dfp_ccf_digits(int tot_digits,int digit_offset, int digit_count
 
 
 
-    /**
-     * return current JDBC time stamp string 
-     * with 9 digit fractional nanosecond forrmat:
-     * yyyy-mm-dd hh:mm:ss.nnnnnnnnn (29 characters)
-     * <p> 
-     * Note: only the first 3 millisecond digits are
-     * returned by current JDBC TimeStamp constructor so
-     * System.nanotime() method is used to add 
-     * remaining 6 digits of nanosecond fraction.
-     * @return Timestamp - current timestamp
-     */
+/**
+ * return current JDBC time stamp string 
+ * with 9 digit fractional nanosecond forrmat:
+ * yyyy-mm-dd hh:mm:ss.nnnnnnnnn (29 characters)
+ * <p> 
+ * Note: only the first 3 millisecond digits are
+ * returned by current JDBC TimeStamp constructor so
+ * System.nanotime() method is used to add 
+ * remaining 6 digits of nanosecond fraction.
+ * @return Timestamp - current timestamp
+ */
 public String get_timestamp(){  // RPI 662
 
     	ts_nano_now    = System.nanoTime();
@@ -7188,9 +7414,9 @@ public String get_timestamp(){  // RPI 662
 
 
 
-    /**
-     * set max_main_height and max_main_width
-     */
+/**
+ * set max_main_height and max_main_width
+ */
 public void get_window_size(){
         int start_bar_height = 36; //windows start bar
         try {
@@ -7204,23 +7430,22 @@ public void get_window_size(){
 
 
 
-    /**
-     * turn on ERRSUM option either
-     * by user request or
-     * if missing COPY or MACRO error
-     * detected during pass 1 of az390.
-     * Notes:
-     * <ol>
-     * <li> ASM required </li>
-     * <li> Any error limit can prevent finding
-     *      all the missing copybooks and macros
-     *      due to pre-mature abort on error limit.
-     *      There may still be additional nesting missing
-     *      macros and copybooks requiring multiple
-     *      passes after including missing files listed. </li>
-     * </ol>
-     */
-
+/**
+ * turn on ERRSUM option either
+ * by user request or
+ * if missing COPY or MACRO error
+ * detected during pass 1 of az390.
+ * Notes:
+ * <ol>
+ * <li> ASM required </li>
+ * <li> Any error limit can prevent finding
+ *      all the missing copybooks and macros
+ *      due to pre-mature abort on error limit.
+ *      There may still be additional nesting missing
+ *      macros and copybooks requiring multiple
+ *      passes after including missing files listed. </li>
+ * </ol>
+ */
 public void init_errsum(){
     	if (opt_asm){
     		opt_errsum = true;
@@ -7232,11 +7457,11 @@ public void init_errsum(){
 
 
 
-    /**
-     * return printable ascii char from byte RPI 947
-     * @param mem_byte - byte value to be converted
-     * @return char - ascii character representation for byte value
-     */
+/**
+ * return printable ascii char from byte RPI 947
+ * @param mem_byte - byte value to be converted
+ * @return char - ascii character representation for byte value
+ */
 public char ascii_printable_char(int mem_byte){
 
 		if (opt_ascii){
@@ -7248,12 +7473,12 @@ public char ascii_printable_char(int mem_byte){
 
 
 
-    /**
-     * return printable ascii string from string that
-     * may have non-printable ascii codes RPI 938
-     * @param text - raw iput string
-     * @return String - printable ascii text
-     */
+/**
+ * return printable ascii string from string that
+ * may have non-printable ascii codes RPI 938
+ * @param text - raw iput string
+ * @return String - printable ascii text
+ */
 public String ascii_printable_string(String text){
 
     	int index = 0;
@@ -7267,13 +7492,13 @@ public String ascii_printable_string(String text){
 
 
 
-    /**
-     * return printable ascii string from byte array RPI 947
-     * @param byte_array - virtual memory byte array
-     * @param addr - start address of string in byte array
-     * @param len - length of string in byte array
-     * @return String - ascii representation of string from virtual memory
-     */
+/**
+ * return printable ascii string from byte array RPI 947
+ * @param byte_array - virtual memory byte array
+ * @param addr - start address of string in byte array
+ * @param len - length of string in byte array
+ * @return String - ascii representation of string from virtual memory
+ */
 public String get_ascii_printable_string(byte[] byte_array, int addr, int len){
 
     	int index = 0;
@@ -7291,16 +7516,16 @@ public String get_ascii_printable_string(byte[] byte_array, int addr, int len){
 
 
 
-    /**
-     * Return printable ascii string from byte array.
-     * <p>
-     * Restricted set of ascii characters used for "printable char"
-     * portion of dump output.
-     * @param byte_array virtual memory byte array
-     * @param addr start address of string in byte array
-     * @param len length of string
-     * @return printable ascii string string from byte array
-     */
+/**
+ * Return printable ascii string from byte array.
+ * <p>
+ * Restricted set of ascii characters used for "printable char"
+ * portion of dump output.
+ * @param byte_array virtual memory byte array
+ * @param addr start address of string in byte array
+ * @param len length of string
+ * @return printable ascii string string from byte array
+ */
 public String get_ascii_dump_printable_string(byte[] byte_array, int addr, int len){
 
     	int index = 0;
@@ -7317,16 +7542,16 @@ public String get_ascii_dump_printable_string(byte[] byte_array, int addr, int l
 
 
 
-    /**
-     * return ascii variable length string
-     * delimited by null or double quotes which
-     * are stripped off along with leading or trailing
-     * spaces.
-     * @param byte_array - virtual memory byte array
-     * @param mem_addr - start address of string in byte array
-     * @param max_len - maximum length of sting
-     * @return String - ascii representation of string from virtual memory
-     */
+/**
+ * return ascii variable length string
+ * delimited by null or double quotes which
+ * are stripped off along with leading or trailing
+ * spaces.
+ * @param byte_array - virtual memory byte array
+ * @param mem_addr - start address of string in byte array
+ * @param max_len - maximum length of sting
+ * @return String - ascii representation of string from virtual memory
+ */
 public String get_ascii_var_string(byte[] byte_array,int mem_addr,int max_len){
 
     	String text = "";
@@ -7356,13 +7581,13 @@ public String get_ascii_var_string(byte[] byte_array,int mem_addr,int max_len){
 
 
 
-    /**
-     * append msg to visible log textarea
-     * and reduce size by 50% when it exceeds
-     * opt_maxlog byte limit.
-     * @param log_text - TextArea where message is to be displayed
-     * @param msg - message to display
-     */
+/**
+ * append msg to visible log textarea
+ * and reduce size by 50% when it exceeds
+ * opt_maxlog byte limit.
+ * @param log_text - TextArea where message is to be displayed
+ * @param msg - message to display
+ */
 public void log_text_append(JTextArea log_text, String msg){
 
     	   tot_log_msg++;
@@ -7377,10 +7602,10 @@ public void log_text_append(JTextArea log_text, String msg){
 
 
 
-    /**
-     * sleep for 1 monitor wait interval
-     * @param mills - nr of milliseconds to wait
-     */
+/**
+ * sleep for 1 monitor wait interval
+ * @param mills - nr of milliseconds to wait
+ */
 public void sleep_now(long mills){
     	try {
     		Thread.sleep(mills);
@@ -7393,14 +7618,14 @@ public void sleep_now(long mills){
 
 
 
-    /**
-     * if new path starts with +, concat with existing path
-     * else replace existing path option.
-     *
-     * @param old_path - String holding current path concatenation
-     * @param new_path - String holding new path specification
-     * @return String - holding result path
-     */
+/**
+ * if new path starts with +, concat with existing path
+ * else replace existing path option.
+ *
+ * @param old_path - String holding current path concatenation
+ * @param new_path - String holding new path specification
+ * @return String - holding result path
+ */
 private String set_path_option(String old_path,String new_path){
 
 		if (new_path.charAt(0) == '+'){
@@ -7412,10 +7637,10 @@ private String set_path_option(String old_path,String new_path){
 
 
 
-    /**
-     * list final value of all changed 
-     * options on stats file
-     */
+/**
+ * list final value of all changed 
+ * options on stats file
+ */
 public void put_stat_final_options(){
 
 		/*
@@ -7830,12 +8055,12 @@ public void put_stat_final_options(){
 
 
 
-    /**
-     * add final option value to final_option
-     * formatted string.
-     *
-     * @param token - String holding option to be reported
-     */
+/**
+ * add final option value to final_option
+ * formatted string.
+ *
+ * @param token - String holding option to be reported
+ */
 private void add_final_opt(String token){
 
 		while (token.length() > max_cmd_parms_line - 2){
@@ -7849,25 +8074,23 @@ private void add_final_opt(String token){
 
 
 
-    /**
-     * abort case with invalide index
-     * RPI 849 used by pz390, mz390
-     */
+/**
+ * abort case with invalide index
+ * RPI 849 used by pz390, mz390
+ */
 public synchronized void abort_case(){ // RPI 646
-
 		abort_error(22,"internal error - invalid case index");
 	}
 
 
 
-    /**
-     * return MM/DD/YY 
-     * or constant if notiming
-     *      
-     * @return String - current date, unless notiming is in effect
-     */
+/**
+ * return MM/DD/YY 
+ * or constant if notiming
+ *      
+ * @return String - current date, unless notiming is in effect
+ */
 public String cur_date(){
-
 		if (opt_timing){
 			return sdf_MMddyy.format(new Date());
 		} else {
@@ -7877,12 +8100,12 @@ public String cur_date(){
 
 
 
-    /**
-     * return HH:MM:SS with or without space 
-     * or 0 length string if notiming
-     * @param space_pad - whether or not to add a trailing space
-     * @return String - current time, unless notiming is in effect
-     */
+/**
+ * return HH:MM:SS with or without space 
+ * or 0 length string if notiming
+ * @param space_pad - whether or not to add a trailing space
+ * @return String - current time, unless notiming is in effect
+ */
 public String cur_time(boolean space_pad){
 
 		if (opt_timing){
@@ -7898,20 +8121,20 @@ public String cur_time(boolean space_pad){
 
 
 
-    /**
-     * initialize ascii and ebcdic translate tables 
-     * using specified Unicode codepages. If list is on display
-     * mapping between ascii Unicode table and the corresponding
-     * ascii and ebcdic byte values in hex and list available ascii
-     * and ebcdic charset codepages. If either of the names are
-     * not valid, a list of the current ascii default and all
-     * available Charset codepages will be listed. The two
-     * codepages will be verified to have the required minimum
-     * ebcdic code mapping for z390 assembler A-Z,a-z,0-9,@#$,
-     * blank, and &amp;'()*+-./:=_. Any characters that have mapping // RPI 1529
-     * will attempt to print otherwise they will appear as periods.
-     * @param codepage_parm - name of codepage
-     */
+/**
+ * initialize ascii and ebcdic translate tables 
+ * using specified Unicode codepages. If list is on display
+ * mapping between ascii Unicode table and the corresponding
+ * ascii and ebcdic byte values in hex and list available ascii
+ * and ebcdic charset codepages. If either of the names are
+ * not valid, a list of the current ascii default and all
+ * available Charset codepages will be listed. The two
+ * codepages will be verified to have the required minimum
+ * ebcdic code mapping for z390 assembler A-Z,a-z,0-9,@#$,
+ * blank, and &amp;'()*+-./:=_. Any characters that have mapping // RPI 1529
+ * will attempt to print otherwise they will appear as periods.
+ * @param codepage_parm - name of codepage
+ */
 public void init_codepage(String codepage_parm){
 
 		// init hardcoded ascii/ebcdic tables if no codepage
@@ -7993,19 +8216,19 @@ public void init_codepage(String codepage_parm){
 
 
 
-    /**
-     * Some Charsets have errors not fixed by Oracle. Fix them here.
-     * <p>
-     * List of Charsets requiring changes.
-     * <p>
-     * 1. IBM037
-     *
-     * @param charset     the 256 character string of characters
-     *                    that might need fixing
-     * @param charsetName the name of the Charset
-     * @return the fixed 256 character string of characters;
-     *         the original string if no fix is needed
-     */
+   /**
+    * Some Charsets have errors not fixed by Oracle. Fix them here.
+    * <p>
+    * List of Charsets requiring changes.
+    * <p>
+    * 1. IBM037
+    *
+    * @param charset     the 256 character string of characters
+    *                    that might need fixing
+    * @param charsetName the name of the Charset
+    * @return the fixed 256 character string of characters;
+    *         the original string if no fix is needed
+    */
     private String fixCharset(String charset, String charsetName)
     {
         String s;
@@ -8021,22 +8244,27 @@ public void init_codepage(String codepage_parm){
         }
         return s;
     }
+
+
+
     //****************************************************************
     // Begin common BufferedReader/BufferedWriter code using Charsets
     //****************************************************************
 
-    /**
-     * Gets a BufferedReader for a file using specified Charset name.
-     * <p>No Charset is used if {@code charsetName} is null or the empty string.
-     *
-     * @param file        existing File object
-     * @param charsetName the name of the Charset to use. If null or empty string,
-                          no Charset is used.
-     * @return the BufferedReader
-     * @throws FileNotFoundException if {@code file} does not exist.
-     * @throws UnsupportedEncodingException if {@code charsetName} encoding
-     *         is not supported
-     */
+
+
+   /**
+    * Gets a BufferedReader for a file using specified Charset name.
+    * <p>No Charset is used if {@code charsetName} is null or the empty string.
+    *
+    * @param file        existing File object
+    * @param charsetName the name of the Charset to use. If null or empty string,
+                         no Charset is used.
+    * @return the BufferedReader
+    * @throws FileNotFoundException if {@code file} does not exist.
+    * @throws UnsupportedEncodingException if {@code charsetName} encoding
+    *         is not supported
+    */
     public BufferedReader getReaderForCharset(File file, String charsetName)
             throws FileNotFoundException, UnsupportedEncodingException
     {
@@ -8053,39 +8281,43 @@ public void init_codepage(String codepage_parm){
         }
         return br;
     }
-    
-    /**
-     * Gets a BufferedReader for a file using the default Charset name.
-     * <p>The default Charset name is in variable {@code ascii_charset_name}.
-     * It is possible that the default Charset name is the empty string.
-     *
-     * @param file existing file object
-     * @return the BufferedReader
-     * @throws Exception if an error occurs creating the BufferedReader
-     * @see getReaderForCharset
-     *
-     */
+
+
+
+   /**
+    * Gets a BufferedReader for a file using the default Charset name.<br />
+    * The default Charset name is in variable {@code ascii_charset_name}.
+    * It is possible that the default Charset name is the empty string.
+    *
+    * @param file existing file object
+    * @return the BufferedReader
+    * @throws Exception if an error occurs creating the BufferedReader
+    * @see getReaderForCharset
+    *
+    */
     public BufferedReader getReaderForDefaultCharset(File file)
             throws Exception
     {
         return getReaderForCharset(file, ascii_charset_name);
     }
 
-    /**
-     * Gets a BufferedWriter for a file using specified Charset name.
-     * <p>No Charset is used if {@code charsetName} is null or the empty string.
-     *
-     * @param file        existing File object for the BufferedWriter
-     * @param charsetName the name of the Charset to use. If null or empty string,
-                          no Charset is used.
-     * @return the BufferedWriter
-     * @throws IOException (FileWriter) if {@code file} exists but
-     *         is a directory; does not exist but cannot be created;
-     *         or cannot be opened for any other reason
-     * @throws FileNotFoundException if {@code file} does not exist.
-     * @throws UnsupportedEncodingException if {@code charsetName} encoding
-     *         is not supported.
-     */
+
+
+   /**
+    * Gets a BufferedWriter for a file using specified Charset name.<br />
+    * No Charset is used if {@code charsetName} is null or the empty string.
+    *
+    * @param file        existing File object for the BufferedWriter
+    * @param charsetName the name of the Charset to use. If null or empty string,
+                         no Charset is used.
+    * @return the BufferedWriter
+    * @throws IOException (FileWriter) if {@code file} exists but
+    *         is a directory; does not exist but cannot be created;
+    *         or cannot be opened for any other reason
+    * @throws FileNotFoundException if {@code file} does not exist.
+    * @throws UnsupportedEncodingException if {@code charsetName} encoding
+    *         is not supported.
+    */
     public BufferedWriter getWriterForCharset(File file, String charsetName)
             throws FileNotFoundException, UnsupportedEncodingException, IOException
     {
@@ -8102,30 +8334,35 @@ public void init_codepage(String codepage_parm){
         }
         return bw;
     }
-    
-    /**
-     * Gets a BufferedWriter for a file using the default Charset name.
-     * <p>The default Charset name is in variable {@code ascii_charset_name}.
-     *
-     * @param file  existing File object for the BUfferedWriter
-     * @throws Exception if an error occurs creating the BufferedWriter
-     * @see getWriterForCharset
-     * @return BufferedWriter handle
-     */
+
+
+
+   /**
+    * Gets a BufferedWriter for a file using the default Charset name.
+    * <p>The default Charset name is in variable {@code ascii_charset_name}.
+    *
+    * @param file  existing File object for the BUfferedWriter
+    * @throws Exception if an error occurs creating the BufferedWriter
+    * @see getWriterForCharset
+    * @return BufferedWriter handle
+    */
     public BufferedWriter getWriterForDefaultCharset(File file)
             throws Exception
     {
         return getWriterForCharset(file, ascii_charset_name);
     }
 
+
+
     //****************************************************************
     // End   common BufferedReader/BufferedWriter code using Charsets
     //****************************************************************
 
+
+
     //****************************************************************
     // Begin code to replace non-printable characters with '.'
     //****************************************************************
-
     /*
      * Methods:
      *
@@ -8136,20 +8373,22 @@ public void init_codepage(String codepage_parm){
      *   private String replaceNonPrintableDumpChars
      */
 
-    /**
-     * Determines whether a character is a printable character.
-     * <p>
-     * Returns {@code true} if the character is printable and
-     * {@code false} if the character is non-printable. The
-     * determination is done using the Charset whose name is the
-     * charsetName argument. If {@code charsetName} is not one of
-     * the checked names, US-ASCII is used.
-     *
-     * @param  c           character to check
-     * @param  charsetName the name of the charset to use for check
-     * @return             {@code true} if the character is printable
-     *                     and {@code false} if the character is non-printable.
-     */
+
+
+   /**
+    * Determines whether a character is a printable character.
+    * <br />
+    * Returns {@code true} if the character is printable and
+    * {@code false} if the character is non-printable. The
+    * determination is done using the Charset whose name is the
+    * charsetName argument. If {@code charsetName} is not one of
+    * the checked names, US-ASCII is used.
+    *
+    * @param  c           character to check
+    * @param  charsetName the name of the charset to use for check
+    * @return             {@code true} if the character is printable
+    *                     and {@code false} if the character is non-printable.
+    */
     private boolean isPrintableChar(char c, String charsetName)
     {
         if (charsetName.equalsIgnoreCase("ISO-8859-1")) {
@@ -8161,14 +8400,16 @@ public void init_codepage(String codepage_parm){
             return isPrintableChar_US_ASCII(c);
         }
     }
-    
-    /**
-     * Replaces non-printable characters with '.'.
-     *
-     * @param text string of characters
-     * @param prtChar string of all printable characters allowed in dumps
-     * @return the input string with non-printable characters changed to '.'
-     */
+
+
+
+   /**
+    * Replaces non-printable characters with '.'.
+    *
+    * @param text string of characters
+    * @param prtChar string of all printable characters allowed in dumps
+    * @return the input string with non-printable characters changed to '.'
+    */
     private String replaceNonPrintableDumpChars(String text, String prtChar)
     {
         StringBuilder sb = new StringBuilder(text);
@@ -8182,19 +8423,21 @@ public void init_codepage(String codepage_parm){
         }
         return sb.toString();
     }
-    
-    /**
-     * Returns a string that is the input text with non-printable
-     * characters replaced by '.'. The text argument is a string
-     * containing possible non-printable characters. The charsetName
-     * argument contains the name of the Charset used for the text
-     * argument. If no Charset was used, an empty string, "", must be used.
-     * <p>
-     * @param  text         string containing possible non-printable characters
-     * @param  charsetName  name of the Charset to use for the string; "" if none
-     * @return              the input string with all non-printable characters
-     *                      replaced by '.'.
-     */
+
+
+
+   /**
+    * Returns a string that is the input text with non-printable
+    * characters replaced by '.'. The text argument is a string
+    * containing possible non-printable characters. The charsetName
+    * argument contains the name of the Charset used for the text
+    * argument. If no Charset was used, an empty string, "", must be used.
+    * <br />
+    * @param  text         string containing possible non-printable characters
+    * @param  charsetName  name of the Charset to use for the string; "" if none
+    * @return              the input string with all non-printable characters
+    *                      replaced by '.'.
+    */
     public String replaceNonPrintableChars(String text, String charsetName)
     {
         StringBuilder sb = new StringBuilder(text);
@@ -8211,44 +8454,51 @@ public void init_codepage(String codepage_parm){
         return (npCount == 0 ? text : sb.toString());
     }
 
-    /**
-     * Determines whether a character is a printable character
-     * when using the ISO-8859-1 Charset.
-     *
-     * @param  c  character to check
-     * @return {@code true} if printable, {@code false} if non-printable.
-     */
+
+
+   /**
+    * Determines whether a character is a printable character
+    * when using the ISO-8859-1 Charset.
+    *
+    * @param  c  character to check
+    * @return {@code true} if printable, {@code false} if non-printable.
+    */
     private boolean isPrintableChar_ISO_8859_1(char c)
     {
         int i = c;
         return ( (i < 0x20) || ( (i >= 0x7F) && (i <= 0x9F) ) ) ? false : true;
     }
-    /**
-     * Determines whether a character is a printable character
-     * when using the US-ASCII Charset.
-     *
-     * @param    c  character to check
-     * @return  {@code true} if printable, {@code false} if non-printable.
-     */
+
+
+
+   /**
+    * Determines whether a character is a printable character
+    * when using the US-ASCII Charset.
+    *
+    * @param    c  character to check
+    * @return  {@code true} if printable, {@code false} if non-printable.
+    */
     private boolean isPrintableChar_US_ASCII(char c)
     {
         int i = c;
         return ( (i < 0x20) || (i >= 0x7F) ) ? false : true;
     }
-    
+
+
+
     //****************************************************************
     // End   code to replace non-printable characters with '.'
     //****************************************************************
 
 
 
-    /**
-     * <ol>
-     * <li> copy test tables to live tables</li>
-     * <li> initialize translate tables</li>
-     * <li> initialize printable character table</li>
-     * </ol>
-     */
+/**
+ * <ol>
+ * <li> copy test tables to live tables</li>
+ * <li> initialize translate tables</li>
+ * <li> initialize printable character table</li>
+ * </ol>
+ */
 private void init_charset_tables(){
 
 		// copy charsets
@@ -8302,10 +8552,10 @@ private void init_charset_tables(){
 
 
 
-    /**
-     * report codepage parm error
-     * @param msg String message text
-     */
+/**
+ * report codepage parm error
+ * @param msg String message text
+ */
 private void report_codepage_error(String msg){
 
 		put_systerm("CODEPAGE option error - " + msg);
@@ -8319,9 +8569,9 @@ private void report_codepage_error(String msg){
 
 
 
-    /**
-     * list unicode, char, ascii hex, ebcdic hex
-     */
+/**
+ * list unicode, char, ascii hex, ebcdic hex
+ */
 private void list_ebcdic_ascii_unicode(){
 
 		put_systerm("hex-ebcdic/hex-ascii/print-char/unicode listing");
@@ -8338,10 +8588,11 @@ private void list_ebcdic_ascii_unicode(){
 
 
 
-    /**
-     * @param index for codepoint
-     * @return text index,hex-ebcdic,hex-ascii,char,U+hex
-     */
+/**
+ * map text function
+ * @param index for codepoint
+ * @return text index,hex-ebcdic,hex-ascii,char,U+hex
+ */
 private String map_text(int index){
 
    		 String codepoint = "000"+Integer.toHexString(test_ascii.codePointAt(index));
@@ -8366,9 +8617,9 @@ private String map_text(int index){
 
 
 
-    /**
-     * list available character sets to systerm file
-     */
+/**
+ * list available character sets to systerm file
+ */
 private void list_available_charsets(){
 		put_systerm("available ascii and ebcdic charset codepages");
 		int tot_charset = 0;
@@ -8400,24 +8651,24 @@ private void list_available_charsets(){
 
 
 
-    /**
-     * return true if test_ascii charset
-     * meets the following  tests:
-     * <ol>
-     * <li> Length 256 </li>
-     * <li> hex char
-     *      <ul>
-     *      <li> 20  space </li>
-     *      <li> 30  zero </li>
-     *      <li> 39  nine </li>
-     *      <li> 41  A </li>
-     *      <li> 5A  Z </li>
-     *      <li> 61  a </li>
-     *      <li> 7A  z </li>
-     *      </ul> </li>
-     * </ol>
-     * @return boolean - to indicate whether or not coditions are met
-     */
+/**
+ * return true if test_ascii charset
+ * meets the following  tests:
+ * <ol>
+ * <li> Length 256 </li>
+ * <li> hex char
+ *      <ul>
+ *      <li> 20  space </li>
+ *      <li> 30  zero </li>
+ *      <li> 39  nine </li>
+ *      <li> 41  A </li>
+ *      <li> 5A  Z </li>
+ *      <li> 61  a </li>
+ *      <li> 7A  z </li>
+ *      </ul> </li>
+ * </ol>
+ * @return boolean - to indicate whether or not coditions are met
+ */
 private boolean check_test_ascii(){
 		if (test_ascii.length() != 256
 				|| test_ascii.charAt(0x30) != '0'
@@ -8451,12 +8702,12 @@ private boolean check_test_ascii(){
 
 
 
-    /**
-     * return true if test_ebcdic charset
-     * meets minimum character requirements
-     *
-     * @return Boolean - indicating success (true) or failure (false)
-     */
+/**
+ * return true if test_ebcdic charset
+ * meets minimum character requirements
+ *
+ * @return Boolean - indicating success (true) or failure (false)
+ */
 private boolean check_test_ebcdic(){
 
 		if (test_ebcdic.length() != 256
@@ -8491,10 +8742,10 @@ private boolean check_test_ebcdic(){
 
 
 
-    /**
-     * list ascii to ebcdic and ebcdic to aascii
-     * conversion tables in hex for debugging
-     */
+/**
+ * list ascii to ebcdic and ebcdic to aascii
+ * conversion tables in hex for debugging
+ */
 public void list_hex_ascii_ebcdic(){
 
 		put_systerm("hex ascii Charset - " + ascii_charset_name);
@@ -8548,12 +8799,12 @@ public void list_hex_ascii_ebcdic(){
 
 
 
-    /**
-     * load ebcdic_charset_name as alternate
-     * source for system defiend ebcdic_charset_name
-     *
-     * @return Boolean - indicates success (true) or failure (false)
-     */
+/**
+ * load ebcdic_charset_name as alternate
+ * source for system defiend ebcdic_charset_name
+ *
+ * @return Boolean - indicates success (true) or failure (false)
+ */
 private boolean load_ebcdic_charset_hex_file(){
 
 		try {
@@ -8593,11 +8844,11 @@ private boolean load_ebcdic_charset_hex_file(){
 
 
 
-    /**
-     * verify version is from known vendor 
-     * and version is 1.6+
-     * @return boolean - always returns true
-     */
+/**
+ * verify version is from known vendor 
+ * and version is 1.6+
+ * @return boolean - always returns true
+ */
 public boolean check_java_version(){
 
 	    if (1 != 0)return true; // force ok to test open jdk by 2020/08/11
@@ -8613,6 +8864,13 @@ public boolean check_java_version(){
 		return true;
 }
 
+
+
+/**
+ * get version number as a string value
+ *
+ * @return version number (as a string)
+ */
 public String getVersion() {
 
     String result;
@@ -8643,6 +8901,6 @@ public String getVersion() {
     }
     
     return result.trim();
-
 }
+
 }

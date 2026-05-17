@@ -29,38 +29,34 @@ import java.util.regex.Pattern;
 import javax.swing.JTextArea;
 
 
+
+/**
+ * zc390 is the component of z390 used to translate
+ * COBOL source programs (.CBL) to
+ * z390 assembler source programs (.MLC).
+ *
+ * It does the following:
+ * <ol>
+ *  <li>read source ascii cobol from parm1 with CBL default file type.</li>
+ *  <li>parse space delimited COBOL into comma delimited z390 macro assembler source statements using MLC default file type.
+ *   <ol>
+ *    <li>New macro for each new COBOL verb.</li>
+ *    <li>labels with dashes converted to underscores.</li>
+ *    <li>Continuation of words and literals handled.</li>
+ *    <li>Periods and commas allowed within parms which are then enclosed in single quotes to avoid conflict with macro assembler parm parsing.</li>
+ *    <li>Open/close () put in single quotes to avoid conflict with macro assembler parm parsing.</li>
+ *    <li>Literals with single or double quotes allowed with double single/double quotes enclosed.</li>
+ *    <li>Single '" wrapped in opposite type quotes.</li>
+ *    <li>Single () wrapped in single quotes.</li>
+ *    <li>Single . generates PERIOD verb in Procedure Division.</li>
+ *    <li>Generate DATA END, PROCEDURE END,and END.</li>
+ *    <li>Treat verbs as parms within EXEC to END-EXEC.</li>
+ *   </ol>
+ *  </li>
+ * </ol>
+ */
 public class zc390{
-	/*
-    zc390 is the component of z390 used to translate
-    COBOL source programs (.CBL) to
-    z390 assembler source programs (.MLC).
-    
-    zcoboljava is a COBOL source translator
-    which does the following
-      1. read source ascii cobol from parm1
-         with CBL default file type.
-      2. parse space delimited COBOL into
-         comma delimited z390 macro assembler
-         source statements using MLC default file type.
-         a.  New macro for each new COBOL verb.
-         b.  labels with dashes converted to underscores.     
-         c.  Continuation of words and literals
-             handled. 
-         d.  Periods and commas allowed within parms which
-             are then enclosed in single quotes to avoid
-             conflict with macro assembler parm parsing.
-         e.  Open/close () put in single quotes to avoid 
-             conflict with macro assembler parm parsing.
-         f.  Literals with single or double quotes allowed
-             with double single/double quotes inclosed.
-         g.  Single '" wrapped in
-             opposite type quotes.  
-         h.  Single () wrapped in single quotes.
-         i.  Single . generates PERIOD vero in Proc. Div. 
-         j.  Generate DATA END, PROCEDURE END,and END  
-         k.  Treat verbs as parms within EXEC to END-EXEC.
-             
-    ****************************************************
+   /****************************************************
     * Maintenance
     ****************************************************
     * 04/06/08 initial coding
@@ -84,7 +80,7 @@ public class zc390{
     * 07/24/09 RPI 1062 support lower case, DISPLAY verb only in Proc. Div.
     * 07/29/09 RPI 1062 fix mult split lines followed by tokens
     * 07/31/09 RPI 1062 fix continued ""..." or ''...' (see NC215A ALPHABET)
-    * 08/02/09 RPI 1062 fix "."".' to '.".'. ".'." to '.''.', and & to &&
+    * 08/02/09 RPI 1062 fix "."".' to '.".'. ".'." to '.''.', and single ampersand to double amp.
     * 08/03/09 RPI 1062 support special names verbs
     * 08/06/09 RPI 1062 wrote LABEL macros to pgm_ZC_LABELS.CPY
     *          and generate COPY after ZCOBOL macro call to init SN/PG counts
@@ -108,189 +104,209 @@ public class zc390{
     * 2025-07-08 #655 afk zCobol fails on number in INSTALLATION paragraph of Identification division
     * 2026-01-01 #728 afk zCobol fails on multiple programs within a single source file
     * 2026-01-10 #742 zh  Implement COBOL REPLACE statement per FIPS PUB 21-2
+    * 2026-03-08 AFK Fix/Add javadoc comments
     ****************************************************
     *                                         last RPI *
 	****************************************************
 	*/
 	/*
 	 * Global variables
-	 */    
-	int    zc390_rc = 0; // return code 
-    tz390  tz390;        // shared z390 routines   
-	int    tot_cbl = 0;  // total CBL lines read
-	int    tot_mlc  = 0; // total MLC lines written
-	int    tot_lab  = 0; // total LABEL lines for SN/PG labels
-	int    tot_err  = 0; // total errors
+	 */
+    /** variable      */ int    zc390_rc = 0; // return code 
+    /** variable      */ tz390  tz390;        // shared z390 routines   
+    /** variable      */ int    tot_cbl = 0;  // total CBL lines read
+    /** variable      */ int    tot_mlc  = 0; // total MLC lines written
+    /** variable      */ int    tot_lab  = 0; // total LABEL lines for SN/PG labels
+    /** variable      */ int    tot_err  = 0; // total errors
+
 	/*
 	 * COBOL CBL input file variables
 	 */
-	String  zc_line_id  = "";     // RPI 1086
-	String  zc_line_num = "";    // RPI 1086
-	String  zc_line = null;      // logical line with continuations added
-	String  zc_line_lookahead;   // lookahead rec for non split lit continuations
-	String  zc_file_name = null;
-	boolean zc_comment = true; 
-	boolean zc_comment_copy = false; // RPI 1062 comment COPY except for ZC_LABELS.CPY
-	boolean zc_pg_comment_mode = false;
-	boolean zc_cics = false;
-	boolean zc_extend = true;
-	boolean zc_trunc  = false;
-	boolean linkage_sect = false;
-	boolean request_dfheiblk = false;
-	boolean request_dfhcommarea = false;
-	boolean request_proc = false;
-	boolean request_data_end = false;  // RPI 1086
-	boolean dfheiblk = false;
-	boolean dfheiblk_loading = false;
-	boolean dfhcommarea = false;
-	boolean zc_eof = false;
-	boolean zc_comment_pending = false;
-	int zc_comment_cnt = 0;
-	int pic_token_cnt = 0; // tokens since pic mode turned on
-	boolean pic_mode = false;
-	boolean value_mode = false; // RPI 1126
-	boolean exec_mode = false;
-	String[] exec_parm = new String[256];
-	int exec_parm_index = 0;
-	boolean data_div  = false;
-	boolean allow_verb = false;
-	boolean skip_period = false;
-	String  zc_comment_line;
+    /** variable      */ String  zc_line_id  = "";     // RPI 1086
+    /** variable      */ String  zc_line_num = "";    // RPI 1086
+    /** logical line with continuations added         */  String  zc_line = null;
+    /** lookahead rec for non split lit continuations */ String  zc_line_lookahead;
+    /** variable      */ String  zc_file_name = null;
+    /** variable      */ boolean zc_comment = true; 
+    /** comment COPY except for ZC_LABELS.CPY         */ boolean zc_comment_copy = false; // RPI 1062
+    /** variable      */ boolean zc_pg_comment_mode = false;
+    /** variable      */ boolean zc_cics = false;
+    /** variable      */ boolean zc_extend = true;
+    /** variable      */ boolean zc_trunc  = false;
+    /** variable      */ boolean linkage_sect = false;
+    /** variable      */ boolean request_dfheiblk = false;
+    /** variable      */ boolean request_dfhcommarea = false;
+    /** variable      */ boolean request_proc = false;
+    /** variable      */ boolean request_data_end = false;  // RPI 1086
+    /** variable      */ boolean dfheiblk = false;
+    /** variable      */ boolean dfheiblk_loading = false;
+    /** variable      */ boolean dfhcommarea = false;
+    /** variable      */ boolean zc_eof = false;
+    /** variable      */ boolean zc_comment_pending = false;
+    /** variable      */ int zc_comment_cnt = 0;
+    /** tokens since pic mode turned on */ int pic_token_cnt = 0;
+    /** variable      */ boolean pic_mode = false;
+    /** variable      */ boolean value_mode = false; // RPI 1126
+    /** variable      */ boolean exec_mode = false;
+    /** variable      */ String[] exec_parm = new String[256];
+    /** variable      */ int exec_parm_index = 0;
+    /** variable      */ boolean data_div  = false;
+    /** variable      */ boolean allow_verb = false;
+    /** variable      */ boolean skip_period = false;
+    /** variable      */ String  zc_comment_line;
+
 	/*
 	 * MLC meta macro assembler output file variables
 	 */
-	String mlc_file_name = null;
-	File   mlc_file = null;
-	BufferedWriter mlc_file_buff = null;
-	String lab_file_name = null; // RPI 1062 LABEL macros for section/paragraph
-	String lab_file_dir  = null; // RPI 1080 remove dir from COPY statement to support LSN
-	File   lab_file = null;
-	BufferedWriter lab_file_buff = null;
+    /** variable      */ String mlc_file_name = null;
+    /** variable      */ File   mlc_file = null;
+    /** variable      */ BufferedWriter mlc_file_buff = null;
+    /** LABEL macros for section/paragraph            */ String lab_file_name = null; // RPI 1062
+    /** remove dir from COPY statement to support LSN */ String lab_file_dir  = null; // RPI 1080
+    /** variable      */ File   lab_file = null;
+    /** variable      */ BufferedWriter lab_file_buff = null;
+
 	/*
 	 * Nested COPY file input variables
 	 */
-	String zc_copy_file_name = null;
-	String zc_copy_member = null;
-	String zc_copy_ddname = null;
-	String cpz_type = ".CPZ";
-    int     tot_cpz_file_name = 0;
-    String[] cpz_file_name = null;
-	int cur_zc_file = 0; // 0 is primary CBL input
-	File[] zc_file                = null;
-	BufferedReader[] zc_file_buff = null;
-	boolean  zc_copy_trailer = false;
-	int      zc_copy_rep_ix  = 1;
-	int      cur_rep_ix      = 0;
-	String[] zc_copy_line         = null; // RPI 1062 has trailing line after COPY .
-	int[]    zc_copy_line_ix      = null; // RPI 1062 next token on  line index
-	int[]    zc_copy_rep_fst_ix   = null; // RPI 1062 next token on  line index
-	int[]    zc_copy_rep_lst_ix   = null; // RPI 1062 next token on  line index
-	String[] zc_copy_rep_lit1     = null; // RPI 1062 replacing lit1
-	String[] zc_copy_rep_lit2     = null; // RPI 1062 replacing lit2
+    /** variable      */ String zc_copy_file_name = null;
+    /** variable      */ String zc_copy_member = null;
+    /** variable      */ String zc_copy_ddname = null;
+    /** variable      */ String cpz_type = ".CPZ";
+    /** variable      */ int     tot_cpz_file_name = 0;
+    /** variable      */ String[] cpz_file_name = null;
+    /** 0 is primary CBL input */ int cur_zc_file = 0;
+    /** variable      */ File[] zc_file                = null;
+    /** variable      */ BufferedReader[] zc_file_buff = null;
+    /** variable      */ boolean  zc_copy_trailer = false;
+    /** variable      */ int      zc_copy_rep_ix  = 1;
+    /** variable      */ int      cur_rep_ix      = 0;
+    /** has trailing line after COPY . */ String[] zc_copy_line         = null; // RPI 1062 
+    /** next token on  line index      */ int[]    zc_copy_line_ix      = null; // RPI 1062 
+    /** next token on  line index      */ int[]    zc_copy_rep_fst_ix   = null; // RPI 1062 
+    /** next token on  line index      */ int[]    zc_copy_rep_lst_ix   = null; // RPI 1062 
+    /** replacing lit1                 */ String[] zc_copy_rep_lit1     = null; // RPI 1062 
+    /** replacing lit2                 */ String[] zc_copy_rep_lit2     = null; // RPI 1062 
+
     /*
      * REPLACE statement global variables #742
      * Implements FIPS PUB 21-2 Section XII Chapter 3
      */
-	boolean  zc_replace_active    = false; // Is REPLACE currently active?
-	int      zc_replace_count     = 0;     // Number of active replacement pairs
-	String[] zc_replace_lit1      = null;  // Pseudo-text to find
-	String[] zc_replace_lit2      = null;  // Replacement pseudo-text
+    /** Is REPLACE currently active?       */ boolean  zc_replace_active    = false;
+    /** Number of active replacement pairs */ int      zc_replace_count     = 0;     // 
+    /** Pseudo-text to find                */ String[] zc_replace_lit1      = null;  // 
+    /** Replacement pseudo-text            */ String[] zc_replace_lit2      = null;  // 
+
     /*
      * zcob token variables
      */
-	int     zc_token_count = 0;
-	int     zc_token_line_cnt = 0;
-	int     zc_prev_line_cnt = 0;
-	int     zc_next_line_cnt = 0;
-	boolean zc_flush_cont_token = false;
-	String  zc_prev_token = null;
-	String  zc_next_token = null;
-	int     zc_next_index = 0;
-	int     zc_prev_index = 0;
-	char    zc_prev_area  = 'A';
-	char    zc_next_area  = 'A';
-	boolean zc_prev_first = true;
-	boolean zc_next_first;
-	boolean zc_token_first = true;
-	String  zc_token   = null;   // next token or null at eof
-	int     zc_token_index = 0;
-	Pattern zc_name_pattern = null;    // RPI 1062 validate names
-	Pattern zc_data_token_pattern = null;   // parsing regular expression pattern
-	Pattern zc_proc_token_pattern = null; // RPI 1182
-	Matcher zc_name_match    = null;   // data name patrern matching
-	Matcher zc_token_match   = null;   // token pattern matching class
-	int     zc_match_offset  = 0;      // offset to start of matcher
-	char    zc_token_area = 'A'; // token area A  8-11 or B 12 or greater
-	boolean zc_split_lit = false; // literal split across lines
-	char    zc_split_char = '\'';  // literal sq or dq RPI 1062
-	boolean zc_proc_div = false; // PRODECUDE DIV started
-	String proc_using_parms = null;
-	String mlc_lab = null;
-	String mlc_op  = null;
-	String mlc_parms = "";
-	int mlc_parm_cnt = 0; // mlc parm count 
-	int zc_level = 0; // parm (...) level used to allow verbs in DFHRESP/DFHVALUE etc.
+    /** variable      */ int     zc_token_count = 0;
+    /** variable      */ int     zc_token_line_cnt = 0;
+    /** variable      */ int     zc_prev_line_cnt = 0;
+    /** variable      */ int     zc_next_line_cnt = 0;
+    /** variable      */ boolean zc_flush_cont_token = false;
+    /** variable      */ String  zc_prev_token = null;
+    /** variable      */ String  zc_next_token = null;
+    /** variable      */ int     zc_next_index = 0;
+    /** variable      */ int     zc_prev_index = 0;
+    /** variable      */ char    zc_prev_area  = 'A';
+    /** variable      */ char    zc_next_area  = 'A';
+    /** variable      */ boolean zc_prev_first = true;
+    /** variable      */ boolean zc_next_first;
+    /** variable      */ boolean zc_token_first = true;
+    /** next token or null at eof                                     */ String  zc_token   = null;
+    /** variable                                                      */ int     zc_token_index = 0;
+    /** validate names                                                */ Pattern zc_name_pattern = null;    // RPI 1062
+    /** parsing regular expression pattern                            */ Pattern zc_data_token_pattern = null;
+    /** variable                                                      */ Pattern zc_proc_token_pattern = null; // RPI 1182
+    /** data name patrern matching                                    */ Matcher zc_name_match    = null;
+    /** token pattern matching class                                  */ Matcher zc_token_match   = null;
+    /** offset to start of matcher                                    */ int     zc_match_offset  = 0;
+    /** token area A  8-11 or B 12 or greater                         */ char    zc_token_area = 'A';
+    /** literal split across lines                                    */ boolean zc_split_lit = false;
+    /** literal single quotes or double quotes                        */ char    zc_split_char = '\'';  // RPI 1062
+    /** PRODECUDE DIV started                                         */ boolean zc_proc_div = false;
+    /** variable                                                      */ String proc_using_parms = null;
+    /** variable                                                      */ String mlc_lab = null;
+    /** variable                                                      */ String mlc_op  = null;
+    /** variable                                                      */ String mlc_parms = "";
+    /** mlc parm count                                                */ int mlc_parm_cnt = 0;
+    /** parm (...) level used to allow verbs in DFHRESP/DFHVALUE etc. */ int zc_level = 0;
+
 	/*
 	 * working storage global data
 	 */
-	int ws_item_lvl = 0;
-	int ws_lvl_index = 0;
-	int[] ws_lvl = new int[50];
-	String[] ws_indent = new String[50];
-    /*                                                                  // #655
-     * Additional data for division/section sequence checking           // #655
-     */                                                                 // #655
-    String  sc_current_token = null;                                    // #655
-    char    sc_current_area = ' ';                                      // #655
-    String  sc_previous_token = null;                                   // #655
-    char    sc_previous_area = ' ';                                     // #655
-    section_definition sc_section_definition;                           // #655
-    String  sc_current_division  = null;                                // #655
-    String  sc_current_section   = null;                                // #655
-    String  sc_current_paragraph = null;                                // #655
-    boolean sc_change_flag = false;                                     // #655
-    String  sc_current_combination = "";                                // #655
-    String  sc_new_combination     = null;                              // #655
-    int     sc_current_index       = -1;        // -1 = none            // #655
-    int     sc_new_index           = -1;        // -1 = none            // #655
-    /* Following table lists valid combinations of division name,       // #655
-     * section name, and paragraph name. Procedure division accepts     // #655
-     * any section/paragraph, as indicated by an asterisk.              // #655
-     * Names are validated AFTER translating all dashes to underscores! // #655
-     * The list is based ion the Cobol 2023 standard                    // #655
-     * and has no relation with what z390 supports (or not)             // #655
-     */                                                                 // #655
-    static final String[] PROGRAM_SECTIONS =                            // #655
-            {"01=IDENTIFICATION..",                                     // #655
-             "02=IDENTIFICATION..PROGRAM_ID",                           // #655
-             // Sequence 3 paragraphs can appear in any order           // #655
-             "03=IDENTIFICATION..AUTHOR(comment)",                      // #655
-             "03=IDENTIFICATION..INSTALLATION(comment)",                // #655
-             "03=IDENTIFICATION..DATE_WRITTEN(comment)",                // #655
-             "03=IDENTIFICATION..DATE_COMPILED(comment)",               // #655
-             "03=IDENTIFICATION..SECURITY(comment)",                    // #655
-             "04=ENVIRONMENT..",                                        // #655
-             "05=ENVIRONMENT.CONFIGURATION.",                           // #655
-             "06=ENVIRONMENT.CONFIGURATION.SOURCE_COMPUTER(comment)",   // #655
-             "07=ENVIRONMENT.CONFIGURATION.OBJECT_COMPUTER(comment)",   // #655
-             "08=ENVIRONMENT.CONFIGURATION.SPECIAL_NAMES",              // #655
-             "09=ENVIRONMENT.CONFIGURATION.REPOSITORY(comment)",        // #655
-             "10=ENVIRONMENT.INPUT_OUTPUT.",                            // #655
-             "11=ENVIRONMENT.INPUT_OUTPUT.FILE_CONTROL",                // #655
-             "12=ENVIRONMENT.INPUT_OUTPUT.I_O_CONTROL",                 // #655
-             "13=DATA..",                                               // #655
-             "14=DATA.FILE.*",                                          // #655
-             "15=DATA.WORKING_STORAGE.*",                               // #655
-             "16=DATA.LOCAL_STORAGE.*",                                 // #655
-             "17=DATA.LINKAGE.*",                                       // #655
-             "18=DATA.REPORT.*",                                        // #655
-             "19=DATA.COMMUNICATION.*",                                 // #655
-             "20=PROCEDURE.*.*"                                         // #655
-             };                                                         // #655
-    static section_definition[] program_sections = null;                // #655
+    /** variable      */ int ws_item_lvl = 0;
+    /** variable      */ int ws_lvl_index = 0;
+    /** variable      */ int[] ws_lvl = new int[50];
+    /** variable      */ String[] ws_indent = new String[50];
+
+    /*                                                                                       // #655
+     * Additional data for division/section sequence checking                                // #655
+     */                                                                                      // #655
+    /** variable      */ String  sc_current_token = null;                                    // #655
+    /** variable      */ char    sc_current_area = ' ';                                      // #655
+    /** variable      */ String  sc_previous_token = null;                                   // #655
+    /** variable      */ char    sc_previous_area = ' ';                                     // #655
+    /** variable      */ section_definition sc_section_definition;                           // #655
+    /** variable      */ String  sc_current_division  = null;                                // #655
+    /** variable      */ String  sc_current_section   = null;                                // #655
+    /** variable      */ String  sc_current_paragraph = null;                                // #655
+    /** variable      */ boolean sc_change_flag = false;                                     // #655
+    /** variable      */ String  sc_current_combination = "";                                // #655
+    /** variable      */ String  sc_new_combination     = null;                              // #655
+    /** variable      */ int     sc_current_index       = -1;        // -1 = none            // #655
+    /** variable      */ int     sc_new_index           = -1;        // -1 = none            // #655
+
+    /* Following table lists valid combinations of division name,                            // #655
+     * section name, and paragraph name. Procedure division accepts                          // #655
+     * any section/paragraph, as indicated by an asterisk.                                   // #655
+     * Names are validated AFTER translating all dashes to underscores!                      // #655
+     * The list is based ion the Cobol 2023 standard                                         // #655
+     * and has no relation with what z390 supports (or not)                                  // #655
+     */                                                                                      // #655
+    /** Table of pre-defined sections, source format */                                      // #655
+                         static final String[] PROGRAM_SECTIONS =                            // #655
+            {"01=IDENTIFICATION..",                                                          // #655
+             "02=IDENTIFICATION..PROGRAM_ID",                                                // #655
+             // Sequence 3 paragraphs can appear in any order                                // #655
+             "03=IDENTIFICATION..AUTHOR(comment)",                                           // #655
+             "03=IDENTIFICATION..INSTALLATION(comment)",                                     // #655
+             "03=IDENTIFICATION..DATE_WRITTEN(comment)",                                     // #655
+             "03=IDENTIFICATION..DATE_COMPILED(comment)",                                    // #655
+             "03=IDENTIFICATION..SECURITY(comment)",                                         // #655
+             "04=ENVIRONMENT..",                                                             // #655
+             "05=ENVIRONMENT.CONFIGURATION.",                                                // #655
+             "06=ENVIRONMENT.CONFIGURATION.SOURCE_COMPUTER(comment)",                        // #655
+             "07=ENVIRONMENT.CONFIGURATION.OBJECT_COMPUTER(comment)",                        // #655
+             "08=ENVIRONMENT.CONFIGURATION.SPECIAL_NAMES",                                   // #655
+             "09=ENVIRONMENT.CONFIGURATION.REPOSITORY(comment)",                             // #655
+             "10=ENVIRONMENT.INPUT_OUTPUT.",                                                 // #655
+             "11=ENVIRONMENT.INPUT_OUTPUT.FILE_CONTROL",                                     // #655
+             "12=ENVIRONMENT.INPUT_OUTPUT.I_O_CONTROL",                                      // #655
+             "13=DATA..",                                                                    // #655
+             "14=DATA.FILE.*",                                                               // #655
+             "15=DATA.WORKING_STORAGE.*",                                                    // #655
+             "16=DATA.LOCAL_STORAGE.*",                                                      // #655
+             "17=DATA.LINKAGE.*",                                                            // #655
+             "18=DATA.REPORT.*",                                                             // #655
+             "19=DATA.COMMUNICATION.*",                                                      // #655
+             "20=PROCEDURE.*.*"                                                              // #655
+             };                                                                              // #655
+    /** Table of pre-defined sections, object format */                                      // #655
+                         static section_definition[] program_sections = null;                // #655
     /*
      * end of global data
      */
+
+
+
+/**
+ * Dummy constructor - no initialization needed
+ */
+public zc390()
+       {// dummy constructor - no initialization needed.
+        }
 
 
 
@@ -298,7 +314,13 @@ public class zc390{
  * Custom exception                                                                                                        // #655
  */                                                                                                                        // #655
 class zCobolException extends Exception                                                                                    // #655
-   {public zCobolException(String msg)                                                                                     // #655
+   {                                                                                                                       // #655
+    /**                                                                                                                    // #655
+     * Constructor                                                                                                         // #655
+     *                                                                                                                     // #655
+     * @param msg exception message text                                                                                   // #655
+     */                                                                                                                    // #655
+    public zCobolException(String msg)                                                                                     // #655
        {super(msg);                                                                                                        // #655
         }
     }
@@ -309,19 +331,22 @@ class zCobolException extends Exception                                         
  * Define the divisions, sections, and paragraphs with their properties                                                    // #655
  */                                                                                                                        // #655
 private class section_definition                                                                                           // #655
-   {String        division_name;                                                                                           // #655
-    String        section_name;                                                                                            // #655
-    String        paragraph_name;                                                                                          // #655
-    String        full_name;                                                                                               // #655
-    int           sequence_id;                                                                                             // #655
-    boolean       is_comment;                                                                                              // #655
-    boolean       is_free_format;                                                                                          // #655
-    boolean       is_defined;                                                                                              // #655
+   {/** division name                         */ String        division_name;                                              // #655
+    /** section name                          */ String        section_name;                                               // #655
+    /** paragraph name                        */ String        paragraph_name;                                             // #655
+    /** full name: division.section.paragraph */ String        full_name;                                                  // #655
+    /** identifier                            */ int           sequence_id;                                                // #655
+    /** true if section is comment-only       */ boolean       is_comment;                                                 // #655
+    /** true if section is free-format text   */ boolean       is_free_format;                                             // #655
+    /** true if section is defined            */ boolean       is_defined;                                                 // #655
                                                                                                                            // #655
     /**                                                                                                                    // #655
      * Constructor                                                                                                         // #655
      *                                                                                                                     // #655
      * This constructor takes a definition string and decomposes it to construct the data for a new instance               // #655
+     *                                                                                                                     // #655
+     * @param section_specification source variant of section definition                                                   // #655
+     * @throws zCobolException if there is an issue with the source definition                                             // #655
      */                                                                                                                    // #655
     section_definition(String section_specification) throws zCobolException                                                // #655
        {int    my_sequence_id     = 0;                                                                                     // #655
@@ -425,6 +450,10 @@ private class section_definition                                                
      *                                                                                                                     // #655
      * This constructor takes an explicit division, section, and paragraph to create a default instance.                   // #655
      * The caller is to invoke the find_index method to validate the instance against the defined combinations.            // #655
+     *                                                                                                                     // #655
+     * @param my_division_name division name                                                                               // #655
+     * @param my_section_name section name                                                                                 // #655
+     * @param my_paragraph_name paragraph name                                                                             // #655
      */                                                                                                                    // #655
     section_definition(String my_division_name, String my_section_name, String my_paragraph_name)                          // #655
        {// Set class properties                                                                                            // #655
@@ -448,6 +477,8 @@ private class section_definition                                                
      *              Paragraph name                                                                                         // #655
      *          program_sections (implicit)                                                                                // #655
      * Output:  index nr if section_definition entry was found. -1 if not found.                                           // #655
+     *                                                                                                                     // #655
+     * @return index of section definition; -1 if not found                                                                // #655
      */                                                                                                                    // #655
     int find_index()                                                                                                       // #655
        {boolean flag_div, flag_sec, flag_par;              // partial result flags                                         // #655
@@ -475,6 +506,8 @@ private class section_definition                                                
      * is_comment                                                                                                          // #655
      * Input:   --                                                                                                         // #655
      * Output:  boolean is_comment property of the class instance                                                          // #655
+     *                                                                                                                     // #655
+     * @return true if the section is a comment-only section; false otherwise                                              // #655
      */                                                                                                                    // #655
     boolean is_comment()                                                                                                   // #655
        {return is_comment;                                                                                                 // #655
@@ -483,20 +516,26 @@ private class section_definition                                                
 
 
 
-
-
+/**
+ * start instance of zcobol class
+ *
+ * @param argv argument list
+ */
 	public static void main(String argv[]) {
-	      /*
-	       * start instance of zcobol class
-	       */
 		  zc390 pgm = new zc390();
 	      pgm.translate_cbl_to_mlc(argv,null);
 	}
+
+
+
+/**
+ * translate cobol (CBL) to 
+ * z390 macro assembler (.MLC)
+ *
+ * @param args argument list
+ * @param log_text optional log buffer
+ */
 	private void translate_cbl_to_mlc(String[] args,JTextArea log_text) {
-	    /*
-		 * translate cobol (CBL) to 
-		 * z390 macro assembler (.MLC)
-		 */
 		init_zc390(args);
 		if (tz390.opt_trap){ // RPI 1058
             try {
@@ -508,11 +547,14 @@ private class section_definition                                                
             process_cbl();
 		}
 	}
+
+
+
+/**
+ * process cbl to mlc with or 
+ * without trap exception handler
+ */
 	private void process_cbl(){
-    /*
-     * process cbl to mlc with or 
-     * without trap exception handler
-     */
 		get_zc_token();
 		while (zc_token != null){
 			process_zc_token();
@@ -524,13 +566,20 @@ private class section_definition                                                
 		}
 		term_zc();
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>Display zcobol version</li>
+ *  <li>Compile regular expression pattern</li>
+ *  <li>Open CBL and MLC files</li>
+ *  <li>Create section/paragraph definitions</li>
+ * </ol>
+ *
+ * @param args argument string
+ */
 	private void init_zc390(String[] args) {
-		/*
-		 * 1.  Display zcobol version
-		 * 2.  Compile regular expression pattern
-		 * 3.  Open CBL and MLC files
-         * 4.  Create section/paragraph definitions                                  // #655
-		 */
 		tz390 = new tz390();
 		tz390.init_tz390();   // RPI 1080
 		tz390.init_tz390();   // RPI 1080
@@ -683,14 +732,17 @@ private class section_definition                                                
        {abort_error("zcobol section definition errror - " + e.toString());                    // #655
         }                                                                                     // #655
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>Add PROCEDURE END and END to mlc meta file.</li>
+ *  <li>Display statistics.</li>
+ *  <li>Exit</li>
+ * </ol>
+ */
 	private void term_zc(){
-		/*
-		 * 1.  Add PROCEDURE END and END
-		 *     to mlc meta file.
-		 * 2.  Display statistics.
-		 * 3.  Exit
-		 * 
-		 */
 		put_mlc_line(" ","PROCEDURE","END");
 		put_mlc_line(" ","END","");
 		try {
@@ -716,11 +768,14 @@ private class section_definition                                                
   		tz390.close_systerm(zc390_rc);
         System.exit(zc390_rc);
 	}
+
+
+
+/**
+ * display zc390 version, timestamp,
+ * and copyright on statstics file
+ */
 	private void put_copyright(){
-		   /*
-		    * display zc390 version, timestamp,
-		    * and copyright on statstics file
-		    */
 		   	if  (tz390.opt_stats){
 				tz390.put_stat_line("Copyright (c) 2021 z390 Assembler LLC");
 				tz390.put_stat_line("z390 comes with ABSOLUTELY NO WARRANTY;");   
@@ -730,19 +785,27 @@ private class section_definition                                                
 		   	    tz390.put_stat_line("options = " + tz390.cmd_parms);
 		   	}
 	       }
+
+
+
+/**
+ * <ol>
+ * <li>write line to MLC file</li>
+ * <li>if LABEL macros for PROCEDURE DIVISION section and paragraph names,
+ *     write to CPY file concatenated in front of MLC to preload all
+ *     label definitions for compile.</li>
+ * </ol>
+ *
+ * Notes:
+ * <ol>
+ *  <li>If first char is " and not data_div assume comment-entry and make comment line</li>
+ * </ol>
+ *
+ * @param put_lab label
+ * @param put_op operation (macro or instruction mnemonic)
+ * @param put_parms parameters for operation
+ */
 	private void put_mlc_line(String put_lab,String put_op,String put_parms){
-		/*
-		 * 1.  write line to MLC file
-		 * 2.  if LABEL macros for PROCEDURE DIVISION
-		 *     section and paraggraph names,
-		 *     write to CPY file concatenated 
-		 *     in front of MLC to preload all
-		 *     label definitions for compile.
-		 * 
-		 * Notes:
-		 *   1.  If first char is " and not data_div
-		 *       assume comment-entry and make comment line
-		 */
 		String put_line;
 		if (put_lab.charAt(0) == '*'){
 			put_line = put_lab;
@@ -763,10 +826,16 @@ private class section_definition                                                
         put_text_rec(mlc_file_buff,put_line);
         tot_mlc++;
 ;	}
+
+
+
+/**
+ * write text record to MLC or CPY file
+ *
+ * @param file_buff ooutput file
+ * @param text record to be written
+ */
 	private void put_text_rec(BufferedWriter file_buff,String text){
-		/* 
-		 * write text record to MLC or CPY file
-		 */
 		if (file_buff == null) return;   // #518
 		try {
 			if (text.length() >=72){
@@ -785,10 +854,15 @@ private class section_definition                                                
 			abort_error("write MLC file error - " + e.toString());
 		}
 	}
+
+
+
+/**
+ * display error and terminate
+ *
+ * @param msg error message to display
+ */
 	private void abort_error(String msg){
-		/*
-		 * display error and terminate
-		 */
         tot_err++;
 		zc390_rc = 16;
 		msg = "ZC390E abort " + msg + " on line " + tot_cbl;
@@ -798,10 +872,15 @@ private class section_definition                                                
 		tz390.close_systerm(zc390_rc);
 		System.exit(zc390_rc);
 	}
+
+
+
+/**
+ * display error and continue
+ *
+ * @param msg error message to display
+ */
 	private void log_error(String msg){
-		/*
-		 * display error and terminate
-		 */
         tot_err++;
         if (zc390_rc < 12){
         	zc390_rc = 12;
@@ -811,23 +890,26 @@ private class section_definition                                                
 		tz390.put_systerm(msg);
 		put_mlc_line("* " + msg,"","");
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>Set zc_token to next logical cobol token including continued literal token</li>
+ *  <li>split across 1 or more lines and non-literal tokens continued at next non-blank char on continuation line.</li>
+ *  <li>Set to null at end of file.</li>
+ *  <li>Set zc_token_area to A for token starting in col 8-11.</li>
+ *  <li>Set zc_token_area to B for token starting in 12-72.</li>
+ *  <li>If token not in quotes, make upper-case.</li>
+ *  <li>If quotes:
+ *   <ol>
+ *    <li>Convert single ampersand to double ampersand</li>
+ *    <li>If orig ", convert "" to ", ' to ''</li>
+ *   </ol>
+ *  </li>
+ * </ol>
+ */
 	private void get_zc_token(){
-		/*
-		 * 1.  Set zc_token to next logical 
-		 *     cobol token including continued literal token
-		 *     split across 1 or more lines and non-literal
-		 *     tokens continued at next non-blank char on
-		 *     continuation line.
-		 * 3   Set to null at end of file.
-		 * 4.  Set zc_token_area to A for token
-		 *     starting in col 8-11.
-		 * 5.  Set zc_token_area to B for token
-		 *     starting in 12-72.
-		 * 4.  If token not in quotes, make upper-case.
-		 * 5.  If quotes
-		 *     a.  Convert & to &&
-		 *     b.  If orig ", convert "" to ", ' to ''
-		 */
 		int index;
 		if (zc_next_token == null || zc_flush_cont_token){
 			zc_flush_cont_token = false;
@@ -966,12 +1048,17 @@ private class section_definition                                                
 		zc_token_line_cnt = zc_prev_line_cnt;
 		return;
 	}
+
+
+
+/**
+ * <ul>
+ *  <li>replace single ampersand with double ampersand</li>
+ *  <li>replace "" with "</li>
+ *  <li>replace ' with '' if split_char = "</li>
+ * </ul>
+ */
 	private void rep_amp_sq_dq(){
-		/*
-		 * replace & with &&
-		 * replace "" with "
-		 * replace ' with '' if split_char = "
-		 */
 		zc_prev_token = tz390.find_amp.matcher(zc_prev_token).replaceAll("&&"); // RPI 1080
 		if (zc_split_char == '"'){
 			zc_prev_token = tz390.find_squote.matcher(zc_prev_token.substring(1,zc_prev_token.length()-1)).replaceAll("''"); // RPI 1080
@@ -979,21 +1066,27 @@ private class section_definition                                                
 			zc_prev_token = tz390.find_ddquote.matcher(zc_prev_token).replaceAll("\""); // RPI 1080
 		}
 	}
+
+
+
+/**
+ * move next token to prev token
+ */
 	private void next_to_prev(){
-		/*
-		 * move next token to prev token
-		 */
 		zc_prev_token = zc_next_token;
 		zc_prev_index = zc_next_index;
 		zc_prev_area  = zc_next_area;
 		zc_prev_first = zc_next_first;
 		zc_prev_line_cnt = zc_next_line_cnt;
 	}
+
+
+
+/**
+ * get next token from CBL file
+ * and set pending CBL comment line
+ */
 	private void set_next_token(){
-		/*
-		 * get next token from CBL file
-		 * and set pending CBL comment line
-		 */
 		if (zc_line != null){
 			if (zc_next_token != null){
 				find_next_token();
@@ -1069,10 +1162,13 @@ private class section_definition                                                
 			}
 		}
 	}
+
+
+
+/**
+ * put zc_line as comment on MLC
+ */
 	private void put_mlc_comment(){
-		/*
-		 * put zc_line as comment on MLC
-		 */
 		if (zc_comment_pending){
 			put_mlc_line(zc_comment_line,"","");
 		}
@@ -1080,14 +1176,19 @@ private class section_definition                                                
 		zc_comment_line = "*" + zc_line;
 		zc_line = null;
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>read next CBL file line</li>
+ *  <li>set cbl_eof if end of file</li>
+ *  <li>write each line as comment on MLC</li>
+ *  <li>ignore lines with less than 8 characters and blank lines</li>
+ *  <li>ignore comment lines with non-space in 7</li>
+ * </ol>
+ */
 	private void get_zc_line(){
-			/*
-			 * 1.  read next CBL file line
-			 * 2.  set cbl_eof if end of file
-			 * 3.  write each line as comment on MLC
-			 * 4.  ignore lines < 8 or blank
-			 * 5.  ignore comment lines with non-space in 7
-			 */			
 		get_next_zc_line();
 		boolean zc_line_blank = true;
 		while (zc_line != null && zc_line_blank) {
@@ -1106,10 +1207,15 @@ private class section_definition                                                
 			return;
 		}
 	}
+
+
+
+/**
+ * display CBL as comments if ZC_COMMENT
+ *
+ * @param text comment text
+ */
 	private void zc_cbl_comment(String text){
-		/*
-		 * display CBL as comments if ZC_COMMENT
-		 */
 		if (text != null 
 			&& zc_comment // request to gen CBL comments
 			&& (text.length() < 7 
@@ -1122,10 +1228,13 @@ private class section_definition                                                
 			zc_comment_cnt = tot_cbl;
 		}
 	}
+
+
+
+/**
+ * get next zc_line from nested copy files
+ */
 	private void get_next_zc_line(){
-		/*
-		 * get next zc_line from nested copy files
-		 */
 		if (request_dfheiblk){
 			request_dfheiblk = false;
 			zc_line = "         COPY DFHEIBLK."; // RPI 1062
@@ -1191,11 +1300,14 @@ private class section_definition                                                
 				zc_line = zc_line.substring(0,72);
 			}
 	}
+
+
+
+/**
+ * read next zc_line with concatenated
+ * non split lit continuations
+ */
 	private void get_zc_read_cont(){
-		/*
-		 * read next zc_line with concatenated
-		 * non split lit continuations
-		 */
 		try {
     	    zc_line = zc_file_buff[cur_zc_file].readLine();
     	    zc_cbl_comment(zc_line);
@@ -1237,22 +1349,28 @@ private class section_definition                                                
 			zc_line = null;
 		}
 	}
+
+
+
+/**
+ * write pending CBL line comment
+ * if pending
+ */
 	private void flush_comment_line(){
-		/*
-		 * write pending CBL line comment
-		 * if pending
-		 */
 		if (zc_comment_pending
 			&& zc_comment_cnt <= zc_token_line_cnt){
 			put_mlc_line(zc_comment_line,"","");
 			zc_comment_pending = false;
 		}
 	}
+
+
+
+/**
+ * find next token in zc_line
+ * else set zc_line = null
+ */
 	private void find_next_token(){
-		/*
-		 * find next token in zc_line
-		 * else set zc_line = null
-		 */
 		if (!zc_token_match.find()){
 			zc_line = null;
 		} else {
@@ -1310,20 +1428,30 @@ private class section_definition                                                
 			}
 		}
 	}
+
+
+
+/**
+ * process zc_token
+ * <ol>
+ *  <li>If token length > 1 and not literal
+ *   <ol>
+ *    <li>replace - with _ and if ., included</li>
+ *    <li>wrap in single quotes.</li>
+ *   </ol>
+ *  </li>
+ *  <li>Single char processing:
+ *   <ol>
+ *    <li>Flush line at . and gen PERIOD if Proc. div. else ignore period.</li>
+ *    <li>Ignore commas.</li>
+ *    <li>If '" wrap in opposite quotes</li>
+ *    <li>If () wrap in single quotes. </li>
+ *    <li>comma or semicolon ignored</li>
+ *   </ol>
+ *  </li>
+ * </ol>
+ */
 	private void process_zc_token(){
-		/*
-		 * process zc_token
-		 *   1.  If token length > 1 and not literal
-		 *       replace - with _ and if ., included
-		 *       wrap in single quotes.
-		 *   2.  Single char processing
-		 *       a.  Flush line at . and gen PERIOD if Proc. div.
-		 *           else ignore period.
-		 *       b.  Ignore commas.
-		 *       c.  If '" wrap in opposite quotes
-		 *       d.  If () wrap in single quotes. 
-		 *       e.  comma or semicolon ignored         
-		 */
 
          boolean skip_period_flag = false;                                    // #655
 
@@ -1543,11 +1671,14 @@ private class section_definition                                                
 			}
 		}
 	}
+
+
+
+/**
+ * gen DATA END after any cics generated COPY
+ * for DFHEIBLK or DFHCOMMAREA
+ */
 	private void gen_data_end(){
-		/*
-		 * gen DATA END after any cics generated COPY
-		 * for DFHEIBLK or DFHCOMMAREA
-		 */
 		put_mlc_line(" ","DATA","END");	
 		if (request_proc){
 			request_proc = false;
@@ -1560,19 +1691,27 @@ private class section_definition                                                
 		zc_proc_div = true;
 		skip_period = true;
 	}
+
+
+
+/**
+ * set zc_line_id and zc_line_num
+ */
 	private void set_zc_line_id_num(){
-		/*
-		 * set zc_line_id and zc_line_num
-		 */
 		zc_line_id = zc_line.substring(0,7);  // RPI 1086
 		zc_line_num = tz390.right_justify("" + tot_cbl,6); // RPI 1086
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>insert DFHEIBLK and DFHCOMMAREA parms</li>
+ *  <li>add any user parms after above.</li>
+ *  <li>flush through period.</li>
+ * </ol>
+ */
 	private void set_proc_using_parms(){
-		/*
-		 * 1.  insert DFHEIBLK and DFHCOMMAREA parms
-		 * 2.  add any user parms after above.
-		 * 3.  flush through period.
-		 */
 		proc_using_parms = "";
 		get_zc_token(); 
 		while (!zc_token.equals(".")){
@@ -1586,16 +1725,16 @@ private class section_definition                                                
 			get_zc_token();
 		}
 	}
+
+
+
+/**
+ * <ol>
+ *  <li>If new level # less than current level #, decrement group level #.</li>
+ *  <li>Generate new WS verb with level # as first parm indented to current group level.</li>
+ * </ol>
+ */
 	private void new_ws_line(){
-		/*
-		 * 1.  If new level # less than
-		 *     current level #, 
-		 *     decrement group level #.
-		 * 2.  Generate new WS verb with
-		 *     level # as first parm
-		 *     indented to current group level.
-		 * 
-		 */
 		int ws_item_lvl = 0;
 		try {
 			ws_item_lvl = Integer.valueOf(zc_token);
@@ -1642,32 +1781,45 @@ private class section_definition                                                
 			dfhcommarea = true;
 		}
 	}
+
+
+
+/**
+ * write pending mlc line
+ * and start new line
+ * and reset parm count
+ *
+ * @param new_lab label
+ * @param new_op operation - macro or instruction mnemonic
+ * @param new_parms parameters for operation
+ */
     private void new_mlc_line(String new_lab, String new_op, String new_parms){
-    	/*
-    	 * write pending mlc line
-    	 * and start new line
-    	 * and reset parm count
-    	 */
         flush_last_mlc_line();
 		mlc_lab   = new_lab;
 		mlc_op    = new_op;
 		mlc_parms = new_parms;
 		mlc_parm_cnt = 0;
     }
+
+
+
+/**
+ * write pending mlc_line if any
+ */
     private void flush_last_mlc_line(){
-    	/*
-    	 * write pending mlc_line if any
-    	 */
     	if (mlc_op != null){
             put_zc_line();  // RPI 1086
     		put_mlc_line(mlc_lab,mlc_op,mlc_parms);
     	}
     	mlc_op = null;
     }
+
+
+
+/**
+ * put zcobol call source comment 
+ */
     private void put_zc_line(){
-    	/*
-    	 * put zcobol call source comment 
-    	 */
 		if (zc_proc_div){ 
     		if (zc_comment
     			&& !mlc_op.equals("PERIOD")
@@ -1677,12 +1829,20 @@ private class section_definition                                                
     		}
     	}
     }
+
+
+
+/**
+ * add token parm to mlc_line<br />
+ *
+ * Notes:
+ * <ol>
+ *  <li>If exec_mode and parm,</li>
+ * </ol>
+ *
+ * @param token token to be created
+ */
     private void add_mlc_parm(String token){
-    	/*
-    	 * add token parm to mlc_line
-    	 * Notes:
-    	 *   1.  If exec_mode and parm,
-    	 */
     	if (mlc_parm_cnt == 0) {
 			mlc_parms = zc_token;
 		} else if (!exec_mode){
@@ -1698,11 +1858,14 @@ private class section_definition                                                
 		}
     	mlc_parm_cnt++;
     }
+
+
+
+/**
+ * generate EXEC call with parm(value)
+ * parameters combined
+ */
     private void gen_exec_stmt(){
-    	/*
-    	 * generate EXEC call with parm(value)
-    	 * parameters combined
-    	 */
     	int index = 0;
     	while (index < exec_parm_index){
 			if (exec_parm[index].equals("'('")){
@@ -1735,11 +1898,15 @@ private class section_definition                                                
     	exec_mode = false;
     	exec_parm_index = 0;
     }
+
+
+
+/**
+ * determine if zc_token is a known COBOL verb
+ *
+ * @return true if current token is a valid verb; false otherwise
+ */
 	private boolean find_verb(){
-		/*
-		 * return true if zc_token
-		 * is a known COBOL verb
-		 */
 		if (allow_verb){
 			allow_verb = false;
 			return false;
@@ -1932,16 +2099,20 @@ private class section_definition                                                
 		}
 		return false;  // UNDEFINED WORD
 	}
+
+
+
+/**
+ * expand copy which may appear
+ * in the middle of sentence with
+ * the following options:
+ * <ol>
+ *  <li>COPY member (uses SYSCPY paths for dir search)</li>
+ *  <li>COPY member OF/IN library (ddname of dir)</li>
+ *  <li>COPY ... REPLACING lit1 BY lit2</li>
+ * </ol>
+ */
 	private void process_copy(){
-		/*
-		 * expand copy which may appear
-		 * in the middle of sentence with
-		 * the following options:
-		 * 1.  COPY member (uses SYSCPY paths for dir search)
-		 * 2.  COPY member OF/IN library (ddname of dir)
-		 * 3.  COPY ... REPLACING lit1 BY lit2
-		 *
-		 */
 		int parm = 0; // count and check  parms to period
 		zc_copy_member = null;
 		zc_copy_ddname = null;
@@ -2074,21 +2245,31 @@ private class section_definition                                                
 		}
 		set_next_token(); // RPI 1062 get next token from copy file
 	}
+
+
+
+/**
+ * terminate COPY with error and 
+ * dec cur_zc_file and flush line
+ *
+ * @param msg error message text
+ */
 	private void copy_error(String msg){
-		/*
-		 * terminate COPY with error and 
-	 	* dec cur_zc_file and flush line
-	 	*/
 		log_error(msg + "\r" + zc_line);
 		zc_line = null;
 		zc_copy_trailer = false;
 	}
+
+
+
+/**
+ * <pre>
+ * Process REPLACE statement per FIPS PUB 21-2 Section XII Chapter 3 #742
+ * Format 1: REPLACE {==pseudo-text-1== BY ==pseudo-text-2==}...
+ * Format 2: REPLACE OFF
+ * </pre>
+ */
 	private void process_replace(){  // #742
-		/*
-		 * Process REPLACE statement per FIPS PUB 21-2 Section XII Chapter 3 #742
-		 * Format 1: REPLACE {==pseudo-text-1== BY ==pseudo-text-2==}...
-		 * Format 2: REPLACE OFF
-		 */
 		set_next_token();
 		
 		// Check for REPLACE OFF
@@ -2188,10 +2369,13 @@ private class section_definition                                                
 			}
 		}
 	}
+
+
+
+/**
+ * add cpz file for stats list  RPI 1042
+ */
 	private void add_cpz_file(){
-        /*
-         * add cpz file for stats list  RPI 1042
-         */
         if (!tz390.opt_stats){
                 return;
         }

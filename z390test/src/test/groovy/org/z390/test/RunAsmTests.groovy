@@ -208,6 +208,12 @@ class RunAsmTests extends z390Test {
         assert this.fileData['ERR'].contains("AZ390I field 2 length = 5 must be less than field 1 length = 5"), "Second DP not assembled with expected error"
     }
     @Test
+    void test_GETMINI() {
+        int rc = this.asmlg(basePath("rt", "mlc", "GETMINI"), *options, 'optable(z390)', "SYSOBJ(${basePath("linklib")})")
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
     void test_TESTDC1() {
         int rc = this.asmlg(basePath("rt", "mlc", "TESTDC1"), *options, 'optable(z390)', "SYSOBJ(${basePath("linklib")})")
         this.printOutput()

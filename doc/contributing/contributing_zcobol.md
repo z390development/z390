@@ -31,6 +31,22 @@ written in zCOBOL which verify that zCOBOL statements
 produce the expected results. And finally there is a need to develop documentation
 on the zCOBOL project as it evolves.
 
+## Caveat for developers
+
+When assembling a zCobol program, various zCobol macros expand differently when `TRACE`
+option is specified. The generated load module is larger and during execution 
+offsets may be different, compared to an assembly without `TRACE` option.
+
+In cases where these differences cause problems, first compile/assemble the program
+without `TRACE` option, then use either the `DEBUG.BAT` or the `debug` bash script
+with the `TRACE` option to create a trace of the program without reassembling the code.
+
+**Note:** the CBLCLG.BAT script provides the path to the zCobol runtime
+library `sys390(+%z_HomeDir%zcobol\lib)`. Likewise, the cblclg bash script
+provides the equivalent option `sys390(+'$zdir'/zcobol/lib)`
+When using `DEBUG.BAT` or the `debug` bash script you'll have to provide the
+matching option for your environment. And please, don't forget the `+` sign.
+
 ## NIST ANSI 1985 Test Suite Results
 
 v1.5.00a came from RPI 1001 for conditional 88 support, RPI 1002 SET and index
@@ -51,10 +67,3 @@ More details regarding NIST validation can be found in the [zCOBOL user guide](.
 | RC=8 MNOTE support warning        | 19      | 151      | Warning for unsupported items pending implementation |
 | RC=16 At least 1 error message    | 249     | 160      | Error messages from mz390 or az390 macro assembler   |
 
-## Implementation Documentation
-
-The following documents describe recent COBOL statement implementations in detail,
-including normative references to [FIPS PUB 21-2](https://nvlpubs.nist.gov/nistpubs/Legacy/FIPS/fipspub21-2.pdf) (ANSI X3.23-1985):
-
-- [REPLACE Statement](./replace_implementation.md) - Compiler-directing text substitution per FIPS PUB 21-2 Section XII
-- [SORT Statement](./sort_implementation.md) - Sort-Merge module implementation per FIPS PUB 21-2 Section XI
