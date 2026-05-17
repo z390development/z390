@@ -99,7 +99,7 @@
          AEND                          Parameter loop                   #808
 .* AFTER ADVANCING                                                      #808
          AIF      ('&ADV' NE '' AND &AFTER) Advance after?              #808
-                  MNOTE 8,'AFTER ADVANCING not yet implemented: &ADV'   #808
+                  ADVANCING &ADV                                        #808
          AEND                                                           #808
 .* FROM clause                                                          #808
          AIF   ('&FROM' NE '')                                          #808
@@ -120,7 +120,7 @@
          GEN_WRITE &RECORD
 .* BEFORE ADVANCING                                                     #808
          AIF      ('&ADV' NE '' AND NOT &AFTER) Advance before?         #808
-                  MNOTE 8,'BEFORE ADVANCING not yet implemented: &ADV'  #808
+                  ADVANCING &ADV                                        #808
          AEND                                                           #808
 .* AT END-OF-PAGE                                                       #808
          AIF      ('&EOP' NE '')     AT EOP clause ?                    #808
