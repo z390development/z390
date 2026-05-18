@@ -48,7 +48,7 @@
 .*
 .* Local variables:
 .*   &SRC_NAME/&SRC_IX   - Source field name and symbol table index
-.*   &DELIM/&DELIM_IX    - Delimiter (default 'SIZE', index 0 for literals)
+.*   &DELIM/&DELIM_IX    - Delimiter (default SIZE, 0 for literal)
 .*   &TGT_NAME/&TGT_IX   - Target field name and symbol table index
 .*   &PTR_NAME/&PTR_IX   - Pointer field (optional)
 .*   &STATE              - Current parser state

@@ -105,7 +105,7 @@
          AIF   ('&SYSLIST(&PARM_IX)' EQ '').DONE
 .*
 .* Check for statement terminators
-.* ON OVERFLOW / NOT ON OVERFLOW not yet implemented - warn and stop parsing
+.* ON OVERFLOW / NOT ON OVERFLOW not yet implemented - warn and stop
 .*
          AIF   ('&SYSLIST(&PARM_IX)' NE 'ON').CK_NOT
          MNOTE 4,'UNSTRING - ON OVERFLOW not yet supported'
