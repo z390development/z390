@@ -65,7 +65,7 @@
          :&HAS_AT_END SETB 0
 .*
 .* Scan remaining parameters looking for AT END and VARYING keywords
-.* VARYING is parsed but not yet fully implemented (uses table's own index)
+.* VARYING is parsed but not yet implemented (uses table's own index)
 .*
          AWHILE (&I LE &NP)
                AIF ('&SYSLIST(&I)' EQ 'AT')
@@ -132,7 +132,7 @@
 .* IE_TYPE  - Block type identifier (15 = SEARCH, see ZC_WS.CPY:254)
 .* IE_TCNT  - Label counter for unique label generation
 .*
-.* IE_SRC_* variables store SEARCH context for use by WHEN and END_SEARCH:
+.* IE_SRC_* variables hold SEARCH context for WHEN and END_SEARCH:
 .*   IE_SRC_TBL   - Table name being searched
 .*   IE_SRC_IDX   - Index variable name
 .*   IE_SRC_MAX   - Maximum OCCURS count
@@ -167,7 +167,7 @@
 .*
          :&MAX_IDX SETA &TBL_LEN*(&TBL_MAX-1)
          L     ZC_R1,&IDX_NAME          Load current index value
-         LARL  ZC_R14,=F'&MAX_IDX'      Load address of max index constant
+         LARL  ZC_R14,=F'&MAX_IDX'      Load max index addr
          C     ZC_R1,0(ZC_R14)          Compare current to max
          JH    PG_SEARCH_&SRC_LAB._ATEND  If higher, table exhausted
 .*

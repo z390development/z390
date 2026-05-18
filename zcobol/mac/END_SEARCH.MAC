@@ -44,7 +44,7 @@
                MEXIT
          AEND
          AIF   (&IE_TYPE(&IE_LVL) NE 15)
-               MNOTE 8,'END-SEARCH FOUND BUT CURRENT BLOCK IS NOT SEARCH'
+               MNOTE 8,'END-SEARCH NOT IN A SEARCH BLOCK'
                MEXIT
          AEND
 .*
