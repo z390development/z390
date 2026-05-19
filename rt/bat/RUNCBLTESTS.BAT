@@ -53,6 +53,7 @@ set INFILE=
 set OUTFILE=
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTSIX1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTSIX2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTSRCH %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTSUB1 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTSUB2 %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\CBLCLG %z_TraceMode% zcobol\tests\TESTTRC1 %1 %2 %3 %4 %5 %6 %7 %8 %9 TRUNC       || goto error
