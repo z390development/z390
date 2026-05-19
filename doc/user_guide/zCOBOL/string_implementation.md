@@ -25,13 +25,13 @@ This implementation conforms to:
 
 The following sections of FIPS PUB 21-2 were consulted:
 
-| Section | Title | Page Reference |
-|---------|-------|----------------|
-| VI-6.25 | The STRING Statement | **VI-131** to VI-133 |
-| VI-6.25.1 | Function | VI-131 |
-| VI-6.25.2 | General Format | VI-131 |
-| VI-6.25.3 | Syntax Rules | VI-131 |
-| VI-6.25.4 | General Rules | VI-132 |
+| Section   | Title                | Page Reference       |
+|-----------|----------------------|----------------------|
+| VI-6.25   | The STRING Statement | **VI-131** to VI-133 |
+| VI-6.25.1 | Function             | VI-131               |
+| VI-6.25.2 | General Format       | VI-131               |
+| VI-6.25.3 | Syntax Rules         | VI-131               |
+| VI-6.25.4 | General Rules        | VI-132               |
 
 The standard document was obtained from NIST archives and verified against the
 official specification text.
@@ -51,15 +51,15 @@ This copies the entire contents of the source field into the target field, start
 
 ### Files Created/Modified
 
-| File | Type | Description |
-|------|------|-------------|
-| `zcobol/lib/STRING.MLC` | New | Runtime library routine |
-| `zcobol/mac/STRING.MAC` | Modified | COBOL statement parser |
-| `zcobol/mac/GEN_STRING.MAC` | New | Code generator (simplified) |
-| `zcobol/lib/ZC390CVT.CPY` | Modified | Added ZCVT_STRING entry |
-| `zcobol/cpy/ZC390CVT.CPY` | Modified | Added ZCVT_STRING entry |
-| `bat/BLDCBLLIB.BAT` | Modified | Include STRING in library build |
-| `zcobol/test/TESTSTR1.CBL` | New | Test program |
+| File                        | Type     | Description                     |
+|-----------------------------|----------|---------------------------------|
+| `zcobol/lib/STRING.MLC`     | New      | Runtime library routine         |
+| `zcobol/mac/STRING.MAC`     | Modified | COBOL statement parser          |
+| `zcobol/mac/GEN_STRING.MAC` | New      | Code generator (simplified)     |
+| `zcobol/lib/ZC390CVT.CPY`   | Modified | Added ZCVT_STRING entry         |
+| `zcobol/cpy/ZC390CVT.CPY`   | Modified | Added ZCVT_STRING entry         |
+| `bat/BLDCBLLIB.BAT`         | Modified | Include STRING in library build |
+| `zcobol/test/TESTSTR1.CBL`  | New      | Test program                    |
 
 ---
 
@@ -75,16 +75,16 @@ The runtime (`STRING.MLC`) uses **MVCL** for the copy operation rather than EX/M
 
 Parameters are passed via `ZCVT_WORKAREA`:
 
-| Offset | Content | Description |
-|--------|---------|-------------|
-| 0 | A(source) | Address of source field |
-| 4 | L'source | Length of source field |
-| 8 | A(delimiter) | Address of delimiter (0 if SIZE) |
-| 12 | L'delimiter | Length of delimiter (0 if SIZE) |
-| 16 | A(target) | Address of target field |
-| 20 | L'target | Length of target field |
-| 24 | A(pointer) | Address of pointer field (0 if none) |
-| 28 | flags | Reserved |
+| Offset | Content      | Description                          |
+|--------|--------------|--------------------------------------|
+| 0      | A(source)    | Address of source field              |
+| 4      | L'source     | Length of source field               |
+| 8      | A(delimiter) | Address of delimiter (0 if SIZE)     |
+| 12     | L'delimiter  | Length of delimiter (0 if SIZE)      |
+| 16     | A(target)    | Address of target field              |
+| 20     | L'target     | Length of target field               |
+| 24     | A(pointer)   | Address of pointer field (0 if none) |
+| 28     | flags        | Reserved                             |
 
 ### Return Values
 
@@ -97,15 +97,15 @@ Parameters are passed via `ZCVT_WORKAREA`:
 
 ### STRING Statement
 
-| Feature | Priority | Complexity | Notes |
-|---------|----------|------------|-------|
-| Multiple source fields | Medium | Medium | Loop through sources |
-| DELIMITED BY literal | Medium | Easy | e.g., `DELIMITED BY SPACE` |
-| DELIMITED BY identifier | Low | Easy | Use field value as delimiter |
-| WITH POINTER clause | Medium | Easy | Placeholder exists |
-| ON OVERFLOW clause | Medium | Medium | Conditional branching |
-| NOT ON OVERFLOW clause | Low | Medium | Conditional branching |
-| END-STRING scope | Low | Easy | Already handled by parser |
+| Feature                 | Priority | Complexity | Notes                        |
+|-------------------------|----------|------------|------------------------------|
+| Multiple source fields  | Medium   | Medium     | Loop through sources         |
+| DELIMITED BY literal    | Medium   | Easy       | e.g., `DELIMITED BY SPACE`   |
+| DELIMITED BY identifier | Low      | Easy       | Use field value as delimiter |
+| WITH POINTER clause     | Medium   | Easy       | Placeholder exists           |
+| ON OVERFLOW clause      | Medium   | Medium     | Conditional branching        |
+| NOT ON OVERFLOW clause  | Low      | Medium     | Conditional branching        |
+| END-STRING scope        | Low      | Easy       | Already handled by parser    |
 
 ### UNSTRING Statement
 
@@ -123,15 +123,15 @@ UNSTRING source-field
     [END-UNSTRING]
 ```
 
-| Feature | Complexity | Reason |
-|---------|------------|--------|
-| Basic UNSTRING | High | Requires delimiter scanning algorithm |
-| Multiple delimiters | High | OR logic with multiple patterns |
-| ALL keyword | Medium | Treat consecutive delimiters as one |
-| DELIMITER IN | Medium | Store matched delimiter |
-| COUNT IN | Medium | Store character count |
-| TALLYING IN | Medium | Count fields filled |
-| Multiple outputs | High | Variable number of target fields |
+| Feature             | Complexity | Reason                                |
+|---------------------|------------|---------------------------------------|
+| Basic UNSTRING      | High       | Requires delimiter scanning algorithm |
+| Multiple delimiters | High       | OR logic with multiple patterns       |
+| ALL keyword         | Medium     | Treat consecutive delimiters as one   |
+| DELIMITER IN        | Medium     | Store matched delimiter               |
+| COUNT IN            | Medium     | Store character count                 |
+| TALLYING IN         | Medium     | Count fields filled                   |
+| Multiple outputs    | High       | Variable number of target fields      |
 
 **Estimated effort:** 8+ hours for full implementation
 
@@ -185,9 +185,9 @@ bat\CBLCLG.BAT zcobol\test\TESTSTR1
 
 ## Changelog
 
-| Version | Date | Author | Description |
-|---------|------|--------|-------------|
-| 1.0 | December 2025 | Zane Hambly | Initial implementation of basic STRING with DELIMITED BY SIZE |
+| Version | Date          | Author      | Description                                                   |
+|---------|---------------|-------------|---------------------------------------------------------------|
+| 1.0     | December 2025 | Zane Hambly | Initial implementation of basic STRING with DELIMITED BY SIZE |
 
 ---
 

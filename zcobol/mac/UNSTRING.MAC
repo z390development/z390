@@ -302,7 +302,7 @@
          LA    ZC_R1,ZCVT_WORKAREA
 .*
 .* Parameter block layout for UNSTRING runtime
-.* See DSECT in zcobol/cpy/ZCUNSPLD.CPY for named field mappings.
+.* See ZCUNSPL macro (zcobol/mac/ZCUNSPL.MAC) for named field mappings.
 .* Offset 0:   ZCUNS_SRC_ADDR  - Address of source field
 .* Offset 4:   ZCUNS_SRC_LEN   - Length of source field
 .* Offset 8:   ZCUNS_DLM_ADDR  - Address of delimiter (0 if none)

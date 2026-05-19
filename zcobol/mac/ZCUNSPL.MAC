@@ -1,3 +1,4 @@
+         MACRO
 .*********************************************************************
 .* z390 - Mainframe assembler emulator and run-time engine
 .* Copyright (C) 2026 z390 Assembler LLC
@@ -19,13 +20,14 @@
 .* Author - ZH
 .* Date   - 29/03/26
 .*********************************************************************
-.* DSECT for UNSTRING statement parameter block at ZCVT_WORKAREA
+.* DSECT for UNSTRING statement parameter block at ZCVT_WORKAREA.
 .*
 .* Built by UNSTRING.MAC, consumed by ZCVT_UNSTRING runtime routine.
 .* Overlays ZCVT_WORKAREA (256 bytes available, variable length).
 .* Target fields are appended as address/length pairs starting at
 .* offset 32, up to the ZCVT_WORKAREA limit.
 .*********************************************************************
+         ZCUNSPL
 ZCUNSPL  DSECT
 ZCUNS_SRC_ADDR  DS A       Address of source field
 ZCUNS_SRC_LEN   DS F       Length of source field
@@ -38,3 +40,4 @@ ZCUNS_TAL_ADDR  DS A       Address of tallying field (0 = none)
 ZCUNS_TGT1_ADDR DS A       Address of first target
 ZCUNS_TGT1_LEN  DS F       Length of first target
 ZCUNSPL_LEN     EQU *-ZCUNSPL
+         MEND
