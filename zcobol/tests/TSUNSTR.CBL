@@ -138,6 +138,7 @@
                DISPLAY 'TSUNSTR - ALL TESTS PASSED'
            ELSE
                DISPLAY 'TSUNSTR - SOME TESTS FAILED'
+               MOVE 8 TO RETURN-CODE
            END-IF.
 
            STOP RUN.

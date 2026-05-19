@@ -59,5 +59,6 @@
            IF FAIL-COUNT = 0
                DISPLAY 'TESTSTR2 - ALL TESTS PASSED'
            ELSE
-               DISPLAY 'TESTSTR2 - SOME TESTS FAILED'.
+               DISPLAY 'TESTSTR2 - SOME TESTS FAILED'
+               MOVE 8 TO RETURN-CODE.
            STOP RUN.
