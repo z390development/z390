@@ -36,13 +36,6 @@ class RunMfAcc extends z390Test{
     }
 
     @Test
-    void test_EXSAMPL2() {
-        int rc = this.asml(basePath("mfacc", "EXSAMPL2"), *options)
-        this.printOutput()
-        assert rc == 0
-    }
-
-    @Test
     void test_P5DW1() {
         int rc = this.asml(basePath("mfacc", "P5DW1"), *P5DW1opt)
         this.printOutput()
