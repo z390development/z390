@@ -90,6 +90,8 @@ WACURB   DS    F                       * Current number (Base)
 WAPRIMX  DS    X                       * Current prime (excess)
 WADBLX   DS    X                       * Double of WAPRIMB (excess)
 WACURX   DS    X                       * Current number (excess)
+WAPRLAST DS    X                       * X'FF' for last page
+WAPRASA  DS    CL1                     * ASA character-for EBCDIC only
 WAPRLINE DS    CL(#CPL)                * Line buffer
 WAPRCRLF DS    CL2                     * Room for CRLF if ASCII
          DS    0D
@@ -892,7 +894,7 @@ INRPTOPN DS    0H
 
 *
 ** Allocate and init page buffer
-         LH    R10,=AL2(#LPP*(#CPL+1)) * Nr of bytes for a page
+         LH    R10,=AL2(#LPP*#CPL)     * Nr of bytes for a page
          ST    R10,WAPAGSZ             * Save buffer size
          GETMAIN R,LV=(R10),LOC=ABOVE  * Acquire page buffer
          LR    R10,R1                  * Set ptr to first line
@@ -1052,10 +1054,10 @@ CPYCOL00 DS    0H
          BCTR  R3,R0                   * -1 for EXecute
 *
 * Will this column fit on the current page?
-        LH     R15,WAPAGOFF            * Get current offset in line
-        LA     R15,0(R3,R15)           * Point last char after move
-        CH     R15,=AL2(#CPL)          * Will fit on line?
-        BH     CPYCOLPP                * No: go print page first
+         LH    R15,WAPAGOFF            * Get current offset in line
+         LA    R15,0(R3,R15)           * Point last char after move
+         CH    R15,=AL2(#CPL)          * Will fit on line?
+         BNL   CPYCOLPP                * No: go print page first
 *
 * Copy all valid entries
          L     R4,WACOLBUF             * Point first entry source
@@ -1113,17 +1115,34 @@ WRTPAG   DS    0H
 ** Data is in EBCDIC - if ASCII requested: translate
 WRTPAGLP DS    0H                      * Loop over all lines
          MVC   WAPRLINE,0(R4)          * Copy line content
-         CLI   WACHARS,C'A'            * Ascii requested?
-         BNE   WRTPUT
+         CLI   WACHARS,C'E'            * Ebcdoc requested?
+         BE    WRTPUTE                 * Yes: go handle
          TR    WAPRLINE,EBC2ASC        * Change to ASCII
          MVC   WAPRCRLF,=X'0D0A'       * Add carriage return+linefeed
-
-WRTPUT   DS    0H
-         PUT   WASYSOUT,WAPRLINE       * Write the line
+         CH    R5,=H'1'                * Last line of page?
+         BNE   WRTPUTA                 * Nope: just a line
+* On last line of page, use page eject instead of line feed
+* Except when we're printing the last page
+         CLI   WAPRLAST,X'FF'          * Last page?
+         BE    WRTPUTA                 * Yes, use CRLF
+         MVC   WAPRCRLF,=X'0D0C'       * Add carriage return+page eject
+WRTPUTA  DS    0H
+         PUT   WASYSOUT,WAPRLINE       * Write ascii line
          LA    R4,#CPL(,R4)            * Point next line on page
+         BCT   R5,WRTPAGLP             * Advance to next line
+         B     WRTDONE
+
+*
+** WAPRASA starts out blank, resets to '1' after page completes
+**         and needs to be reset to blank after each line.
+WRTPUTE  DS    0H
+         PUT   WASYSOUT,WAPRASA        * Write ASA + ebcdic line
+         LA    R4,#CPL(,R4)            * Point next line on page
+         MVI   WAPRASA,C' '            * Reset page eject
          BCT   R5,WRTPAGLP             * Advance to next line
 *
 ** Re-init buffer with spaces
+WRTDONE  DC    0H
          L     R0,WAPAGBUF             * Point start of buffer
          L     R1,WAPAGSZ              * Destination length
          XR    R14,R14                 * Source pointer
@@ -1131,6 +1150,8 @@ WRTPUT   DS    0H
          ICM   R15,B'1000',=C' '       * Filler byte
          MVCL  R0,R14                  * Fill buffer with spaces
          STH   R14,WAPAGOFF            * Reset line offset on page to 0
+* Prime ASA character to '1' to eject page on first line of next page
+         MVI   WAPRASA,C'1'            * Pre-fill page eject
 *
          L     R14,WAWRTRET            * Retrieve return address
          BR    R14                     * Return to mainline
@@ -1164,6 +1185,7 @@ ENDRPT10 DS    0H
 ** If page buffer not empty: print
          CLC   WAPAGOFF,=H'0'          * Check offset to next column
          BZ    ENDRPT20                * No entries: skip print
+         OI    WAPRLAST,X'FF'          * Mark printing last page
          BAL   R14,WRTPAG              * Valid entries: write page
 ENDRPT20 DS    0H
 *
@@ -1249,7 +1271,7 @@ EBC2ASC  DC    256X'00'
 
 * template DCB for sysout in EBCDIC
 &LRECL   SETA  #CPL+1
-SYSOUTE  DCB   DDNAME=SYSOUT,DSORG=PS,MACRF=PM,LRECL=&LRECL,RECFM=FB
+SYSOUTE  DCB   DDNAME=SYSOUT,DSORG=PS,MACRF=PM,LRECL=&LRECL,RECFM=FBA
 * template DCB for sysout in ASCII
 &LRECL   SETA  #CPL+2
 SYSOUTA  DCB   DDNAME=SYSOUT,DSORG=PS,MACRF=PM,LRECL=&LRECL,RECFM=FB
