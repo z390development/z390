@@ -67,6 +67,10 @@ bash/cblclg zcobol/tests/TESTINT1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTMPY1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTMPY2 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTRMD1 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/TESTSTR1 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/TESTSTR2 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/TESTSTR3 $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/TSUNSTR  $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/CM101M01 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblc   zcobol/tests/CM101M03 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/DB101A01 $1 $2 $3 $4 $5 $6 $7 $8 $9
