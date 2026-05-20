@@ -1,0 +1,312 @@
+*********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, see https://www.gnu.org/licenses.
+*********************************************************************
+* Author - Zane Hambly                                              *
+* Date   - 2025/12                                                  *
+*********************************************************************
+* UNSTRING runtime library function
+* Implements COBOL UNSTRING statement per FIPS PUB 21-2 Section 6.27
+*********************************************************************
+* Input parameters in ZCVT_WORKAREA (pointed to by R1):
+*   0(R1)   - A(source)        Address of source field
+*   4(R1)   - L'source         Length of source field
+*   8(R1)   - A(delim)         Address of delimiter (0 if none)
+*   12(R1)  - L'delim          Length of delimiter
+*   16(R1)  - delim flags      Bit 0: ALL flag
+*   20(R1)  - Target count     Number of target fields
+*   24(R1)  - A(pointer)       Address of pointer field (0 if none)
+*   28(R1)  - A(tallying)      Address of tallying field (0 if none)
+*   32(R1)  - A(target1)       Address of target 1
+*   36(R1)  - L'target1        Length of target 1
+*   40(R1)  - A(target2)       (if present)
+*   44(R1)  - L'target2
+*   ... etc for targets 3, 4
+*
+* Returns:
+*   R0 = new pointer position (1-based)
+*   R1 = overflow flag (0=no overflow, 1=overflow)
+*********************************************************************
+UNSTRING CSECT
+         USING UNSTRING,R15
+         COPY  ASMMSP
+         SAVE  (R14,R12)
+*
+* Save parameter base
+*
+         LR    R10,R1             R10 = Parameter block base
+*
+* Load source parameters
+*
+         L     R2,0(R10)          R2 = A(source)
+         L     R3,4(R10)          R3 = L'source
+*
+* Load delimiter parameters
+*
+         L     R4,8(R10)          R4 = A(delim)
+         L     R5,12(R10)         R5 = L'delim
+*
+* Get current pointer position (1-based, default 1)
+*
+         L     R6,24(R10)         R6 = A(pointer)
+         LTR   R6,R6
+         BZ    NOPTR1
+         L     R11,0(R6)          R11 = pointer value (1-based)
+         BCTR  R11,0              R11 = 0-based position
+         B     GOTPTR
+NOPTR1   DS    0H
+         SR    R11,R11            R11 = 0 (start at position 1)
+GOTPTR   DS    0H
+*
+* Check if pointer already past source end (overflow)
+*
+         CR    R11,R3
+         BL    NOTOVER1
+         LA    R1,1               Return overflow
+         J     UNSEXIT
+NOTOVER1 DS    0H
+*
+* Initialize target index and tallying count
+*
+         SR    R12,R12            R12 = target index (0-based)
+         L     R9,20(R10)         R9 = target count
+         LTR   R9,R9
+         BZ    UNSEXIT            No targets, done
+*
+* Main UNSTRING loop - process each target field
+*
+UNSLOOP  DS    0H
+*
+* Calculate current source position
+*
+         LR    R7,R2              R7 = base of source
+         AR    R7,R11             R7 = current position in source
+         LR    R8,R3              R8 = remaining source length
+         SR    R8,R11             R8 = chars remaining
+         BNP   OVERFLOW           No more source, but more targets
+*
+* Find delimiter in remaining source
+*
+         LTR   R4,R4              Is there a delimiter?
+         BZ    NODELIM            No delimiter - use target length
+*
+* Search for delimiter starting at R7, length R8
+*
+         LR    R14,R7             R14 = search start
+         LR    R0,R8              R0 = search length
+SRCHLOOP DS    0H
+         LTR   R0,R0
+         BNP   NOTFOUND           Delimiter not found
+         CR    R0,R5              Enough chars for delimiter?
+         BL    NOTFOUND
+*
+* Compare delimiter at current position
+*
+         LR    R1,R5              R1 = delimiter length
+         BCTR  R1,0               R1 = length - 1 for EX
+         EX    R1,CLCDELM         Compare delimiter
+         BE    DELFOUND           Found delimiter
+*
+NEXTCHAR DS    0H
+         LA    R14,1(R14)         Move to next char
+         BCTR  R0,0               Decrement remaining length
+         B     SRCHLOOP
+*
+NOTFOUND DS    0H
+*
+* Delimiter not found - copy remaining to target
+*
+         LR    R0,R8              R0 = chars to copy (remaining)
+         SR    R9,R9              R9 = 0 (no delimiter found)
+         B     DOCOPY
+*
+DELFOUND DS    0H
+*
+* Delimiter found at R14
+*
+         LR    R0,R14             R0 = delimiter position
+         SR    R0,R7              R0 = chars before delimiter
+         LR    R9,R5              R9 = delimiter length to skip
+         B     DOCOPY
+*
+NODELIM  DS    0H
+*
+* No delimiter - copy based on target field length
+*
+         ACALL GETTGT             Get current target params
+         CR    R8,R6              Compare remaining vs target len (R6)
+         BNH   USEREMAIN          Use remaining if less
+         LR    R0,R6              Use target length
+         B     DOCOPY3
+USEREMAIN DS   0H
+         LR    R0,R8              Use remaining source
+DOCOPY3  DS    0H
+         SR    R9,R9              No delimiter (R9 = skip length)
+*
+DOCOPY   DS    0H
+*
+* Get current target field parameters
+*
+         ACALL GETTGT             Get target params -> R6=A, R1=L
+*
+* Copy data to target using MVCL
+* R0 = source length to copy, R7 = source position
+* R6 = A(target), R1 = L'target
+*
+         LR    R8,R0              R8 = source length to copy
+*
+* Use MVCL for copy with automatic space padding
+* MVCL R0,R2: R0-R1=dest addr/len, R2-R3=src addr/len+pad
+* Save R2 (source base) as MVCL modifies it
+*
+         LR    R14,R2             R14 = save source base (R2)
+         LR    R0,R6              R0 = target address
+         LR    R4,R1              R4 = save target length
+         LR    R2,R7              R2 = source position
+         LR    R3,R8              R3 = source length to copy
+         OILH  R3,X'4000'         Set pad character to space (0x40)
+         LR    R1,R4              R1 = target length
+         MVCL  R0,R2              Copy source to target with padding
+         LR    R2,R14             Restore R2 = source base
+*
+AFTCOPY  DS    0H
+*
+* Update pointer position
+*
+         AR    R11,R8             Add chars copied
+         AR    R11,R9             Add delimiter length (skip it)
+*
+* Handle ALL - skip additional consecutive delimiters
+*
+         L     R1,16(R10)         R1 = delim ALL flag
+         LTR   R1,R1
+         BZ    NOALLSKP
+         LTR   R9,R9              Was delimiter found?
+         BZ    NOALLSKP
+ALLSKIP  DS    0H
+*        Check if next chars are also the delimiter
+         L     R7,0(R10)          R7 = A(source)
+         AR    R7,R11             R7 = current position
+         L     R0,4(R10)          R0 = source length
+         SR    R0,R11             R0 = remaining
+         CR    R0,R5              Enough chars for delimiter?
+         BL    NOALLSKP
+         LR    R1,R5              R1 = delim length
+         BCTR  R1,0
+         EX    R1,CLCALL          Compare
+         BNE   NOALLSKP
+         AR    R11,R5             Skip this delimiter too
+         B     ALLSKIP
+NOALLSKP DS    0H
+*
+*
+* Increment TALLYING counter
+* Per FIPS PUB 21-2 Section 6.27 (16): "the content of the data item
+* referenced by identifier-8 contains a value equal to its value at
+* the beginning of the execution of the statement plus a value equal
+* to the number of identifier-4 receiving data items accessed"
+*
+         L     R1,28(R10)         R1 = A(tallying)
+         LTR   R1,R1
+         BZ    NOTALLY
+         L     R0,0(R1)           Get current tally
+*        Note: Cannot use LA R0,1(R0) - R0 as base means "no base"
+*        per IBM Principles of Operation Chapter 5
+         AHI   R0,1               Increment tally counter
+         ST    R0,0(R1)           Store back
+NOTALLY  DS    0H
+*
+* Move to next target
+*
+         LA    R12,1(R12)         Increment target index
+         L     R9,20(R10)         R9 = target count
+         CR    R12,R9             Processed all targets?
+         BNL   UNSDONE            Yes, done
+*
+* Check if more source to process
+*
+         L     R3,4(R10)          R3 = source length
+         CR    R11,R3             Pointer past end?
+         BNL   UNSDONE            Yes, done
+*
+* Reload source and delimiter params for next iteration
+*
+         L     R2,0(R10)          R2 = A(source)
+         L     R4,8(R10)          R4 = A(delim)
+         L     R5,12(R10)         R5 = L'delim
+         B     UNSLOOP
+*
+OVERFLOW DS    0H
+*
+* Overflow - more targets than source can fill
+*
+         LA    R1,1               Set overflow flag
+         B     UPDPTR
+*
+UNSDONE  DS    0H
+*
+* Check for overflow (source remaining but no more targets)
+*
+         L     R3,4(R10)          R3 = source length
+         CR    R11,R3             Pointer at/past end?
+         BNL   NOOVER2
+         LA    R1,1               Overflow - chars remaining
+         B     UPDPTR
+NOOVER2  DS    0H
+         SR    R1,R1              No overflow
+*
+UPDPTR   DS    0H
+*
+* Update pointer field if specified
+*
+         L     R6,24(R10)         R6 = A(pointer)
+         LTR   R6,R6
+         BZ    NOPTR2
+         LA    R11,1(R11)         Convert to 1-based
+         ST    R11,0(R6)          Store new pointer value
+NOPTR2   DS    0H
+*
+* Return
+*
+         LR    R0,R11             R0 = new pointer position
+*
+UNSEXIT  DS    0H
+         L     R14,12(R13)
+         RETURN (R2,R12)
+*
+*********************************************************************
+* GETTGT - Get current target field parameters
+* Input:  R12 = target index (0-based)
+*         R10 = parameter block base
+* Output: R6 = A(target)
+*         R1 = L'target
+*********************************************************************
+         AENTRY GETTGT
+         LR    R1,R12             R1 = target index
+         SLL   R1,3               R1 = offset (8 bytes per target)
+         LA    R1,32(R1,R10)      R1 = address of target params
+         L     R6,0(R1)           R6 = A(target)
+         L     R1,4(R1)           R1 = L'target
+         AEND
+*
+* Execute templates for delimiter comparison
+*
+CLCDELM  CLC   0(*-*,R14),0(R4)   Compare delimiter
+CLCALL   CLC   0(*-*,R7),0(R4)    Compare for ALL skip
+*
+         EQUREGS
+         END
