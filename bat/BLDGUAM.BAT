@@ -12,24 +12,24 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..
-call bat\asml %z_TraceMode% guam\demo\DEMOAPL1  sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\demo\DEMOGUI1  sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\demo\DEMOGUI2  sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\demo\DEMOGUI3  sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\demo\DEMOGUI4  sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\demo\DEMOGUI5  sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\demo\DEMOGUI6  sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\demo\HELLO1    sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\demo\HELLO2    sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\demo\HELLO3    sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\demo\DEMOAPL1 guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\demo\DEMOGUI1 guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\demo\DEMOGUI2 guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\demo\DEMOGUI3 guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\demo\DEMOGUI4 guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\demo\DEMOGUI5 guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\demo\DEMOGUI6 guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\demo\HELLO1   guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\demo\HELLO2   guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\demo\HELLO3   guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 
-call bat\asml %z_TraceMode% guam\test\AID       sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\test\EXSAMPL2  sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\test\TESTGP1   sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\test\TESTGP2   sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\test\TESTGP3   sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\test\TESTGP4   sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asml %z_TraceMode% guam\test\TGUAM     sysmac(mac) syscpy(mac) guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\test\AID      guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\test\EXSAMPL2 guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\test\TESTGP1  guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\test\TESTGP2  guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\test\TESTGP3  guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\test\TESTGP4  guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asml %z_TraceMode% guam\test\TGUAM    guam %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 set z_ReturnCode=0
 goto return
 
