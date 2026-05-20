@@ -1,0 +1,187 @@
+*********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License 
+* along with this program; if not, see https://www.gnu.org/licenses.
+*********************************************************************
+* Author - Zane Hambly                                              *
+* Date   - 2025/12                                                  *
+*********************************************************************
+* STRING runtime library function
+* Implements COBOL STRING statement per FIPS PUB 21-2 Section 6.25
+*********************************************************************
+* Input parameters in ZCVT_WORKAREA (pointed to by R1):
+*   0(R1)   - A(source)     Address of source data
+*   4(R1)   - L'source      Length of source data
+*   8(R1)   - A(delimiter)  Address of delimiter (0 if SIZE)
+*   12(R1)  - L'delimiter   Length of delimiter (0 if SIZE)
+*   16(R1)  - A(target)     Address of target field
+*   20(R1)  - L'target      Length of target field
+*   24(R1)  - A(pointer)    Address of pointer field (0 if none)
+*   28(R1)  - flags         Bit 0: overflow occurred
+*
+* Returns:
+*   R0 = new pointer position (1-based)
+*   R1 = overflow flag (0=no overflow, 1=overflow)
+*********************************************************************
+STRING   CSECT
+         USING STRING,R15
+         COPY  ASMMSP
+         SAVE  (R14,R12)
+*
+* Load parameters
+*
+         LM    R2,R9,0(R1)
+*        R2 = A(source)
+*        R3 = L'source  
+*        R4 = A(delimiter)
+*        R5 = L'delimiter
+*        R6 = A(target)
+*        R7 = L'target
+*        R8 = A(pointer)
+*        R9 = flags
+*
+* Get current pointer position (1-based, default 1)
+*
+         SR    R10,R10
+         LTR   R8,R8
+         BZ    NOPTR1
+         L     R10,0(R8)
+         BCTR  R10,0
+NOPTR1   DS    0H
+*
+* Check if pointer already past target end (overflow)
+*
+         CR    R10,R7
+         BL    NOTOVER1
+         LA    R1,1
+         J     STREXIT
+NOTOVER1 DS    0H
+*
+* Calculate source length to copy
+*
+         LR    R11,R3
+         LTR   R4,R4
+         BZ    NODELIM
+         BAS   R14,FINDDELM
+NODELIM  DS    0H
+*
+* Calculate space remaining in target
+*
+         LR    R12,R7
+         SR    R12,R10
+*
+* Determine actual copy length
+*
+         SR    R1,R1
+         CR    R11,R12
+         BNH   NOTOVER2
+         LR    R11,R12
+         LA    R1,1
+NOTOVER2 DS    0H
+*
+* Copy characters to target using MVCL for simplicity
+*
+         LTR   R11,R11
+         BZ    STRDONE
+*
+         LA    R6,0(R10,R6)     R6 = target start position
+*
+* Use MVCL for the copy (R6-R7 = target, R2-R3 = source)
+* R6 already has target address
+* R7 gets target length (R11)
+* R2 already has source address  
+* R3 gets source length (R11), pad with spaces
+*
+         LR    R7,R11           R7 = target length
+         LR    R14,R3           Save original source length
+         LR    R3,R11           R3 = source length to copy
+         OILH  R3,X'4000'       Set pad character to space
+         MVCL  R6,R2            Copy source to target
+         LR    R3,R14           Restore R3
+*
+STRDONE  DS    0H
+         AR    R10,R11
+         LA    R10,1(R10)
+         LTR   R8,R8
+         BZ    NOPTR2
+         ST    R10,0(R8)
+NOPTR2   DS    0H
+*
+         LR    R0,R10
+*
+STREXIT  DS    0H
+         L     R14,12(R13)
+         RETURN (R2,R12)
+*
+STRMVC   MVC   0(*-*,R6),0(R2)
+*
+*********************************************************************
+* FINDDELM - Find delimiter in source string
+* Input:  R2=A(source), R3=L'source, R4=A(delimiter), R5=L'delimiter
+* Output: R11 = position of delimiter (or full length if not found)
+*********************************************************************
+FINDDELM DS    0H
+         LR    R11,R3
+         LTR   R5,R5
+         BZR   R14
+*
+* Single char delimiter search
+*
+         CHI   R5,1
+         BNE   FINDMULTI
+         LR    R1,R2
+         LR    R0,R3
+FINDLOOP DS    0H
+         LTR   R0,R0
+         BZR   R14
+         CLC   0(1,R1),0(R4)
+         BE    FINDHIT
+         LA    R1,1(R1)
+         BCTR  R0,0
+         J     FINDLOOP
+FINDHIT  DS    0H
+         LR    R11,R1
+         SR    R11,R2
+         BR    R14
+*
+* Multi-char delimiter search
+*
+FINDMULTI DS   0H
+         LR    R1,R2
+         LR    R0,R3
+         SR    R0,R5
+         AHI   R0,1
+FINDML   DS    0H
+         LTR   R0,R0
+         BNP   FINDMNF
+         LR    R11,R5
+         BCTR  R11,0
+         EX    R11,FINDCLC
+         BE    FINDMHIT
+         LA    R1,1(R1)
+         BCTR  R0,0
+         J     FINDML
+FINDMHIT DS    0H
+         LR    R11,R1
+         SR    R11,R2
+         BR    R14
+FINDMNF  DS    0H
+         LR    R11,R3
+         BR    R14
+FINDCLC  CLC   0(*-*,R1),0(R4)
+*
+         EQUREGS
+         END
