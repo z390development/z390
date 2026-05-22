@@ -97,7 +97,7 @@ class RunMfAcc extends z390Test{
         assert fileData.get('TF1') == fileData.get('OUT')
     }
 
-    @Test
+    @Test // can be run with notime option, but takes too long to complete
     void test_P20WR1() {
         int rc = this.asml(basePath("mfacc", "P20WR1"), *options)
         this.printOutput()

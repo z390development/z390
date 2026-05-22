@@ -70,7 +70,7 @@ call bat\ASMLG %z_TraceMode% mfacc\P17DW1   notiming stats bal noloadhigh %1 %2 
 call bat\ASMLG %z_TraceMode% mfacc\P17WR1   notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% mfacc\P18DSH1  notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% mfacc\P19WR1   notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASML  %z_TraceMode% mfacc\P20WR1   notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error rem abends when run
+call bat\ASML  %z_TraceMode% mfacc\P20WR1   notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error rem runs too long to include
 call bat\ASMLG %z_TraceMode% mfacc\P21DW1   notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% mfacc\P22DSH1  notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% mfacc\P22FS1   notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
@@ -78,7 +78,8 @@ call bat\ASMLG %z_TraceMode% mfacc\P22GH1   notiming stats bal noloadhigh %1 %2 
 call bat\ASMLG %z_TraceMode% mfacc\P22MM1   notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% mfacc\P22RL1   notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 set SYSOUT=mfacc\P16AFK1.OUT
-call bat\ASMLG %z_TraceMode% mfacc\P16AFK1  notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% mfacc\P16AFK1  notiming stats bal noloadhigh PARM(ASCII) %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+fc mfacc\P16AFK1.OUT mfacc\P16AFK1.TF1 > nul || goto error
 set z_ReturnCode=0
 goto return
 
