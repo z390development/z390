@@ -90,6 +90,11 @@ class RunMfAcc extends z390Test{
         int rc = this.asmlg(basePath("mfacc", "P16AFK1"), *options)
         this.printOutput()
         assert rc == 0
+        // Load files to fileData
+        loadFile(basePath("tests", "P16AFK1.TF1"), 'TF1')
+        loadFile(basePath("tests", "P16AFK1.OUT"), 'OUT')
+        // Check files equal
+        assert fileData.get('TF1') == fileData.get('OUT')
     }
 
     @Test
