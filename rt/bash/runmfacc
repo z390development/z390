@@ -77,7 +77,7 @@ bash/asmlg mfacc/P22MM1   notiming stats bal noloadhigh
 bash/asmlg mfacc/P22RL1   notiming stats bal noloadhigh
 
 export SYSOUT=mfacc/P16AFK1.OUT
-bash/asmlg mfacc/P16AFK1  notiming stats bal noloadhigh parm(ASCII)
+bash/asmlg mfacc/P16AFK1  notiming stats bal noloadhigh "parm(ASCII)"
 
 # if we get here, there were no errors
 echo "MFACC tests ran without errors"
