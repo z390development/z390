@@ -452,6 +452,7 @@ public  class  az390 implements Runnable {
     * 2025-10-11 AFK #656 Change architecture level constants to an enum
     * 2026-01-19 AFK #750 Missing error detection for MP/DP assembly
     * 2026-01-29 AFK #730 Incorrect code generated for zCobol MULTIPLY verb
+    * 2026-03-25 ZH  #704 Flag invalid register operands for KM, KMA, KMC
   	*****************************************************
     * Global variables                        last rpi
     *****************************************************/
@@ -3381,23 +3382,23 @@ private void process_bal_op(){
 	        || bal_op.equals("PCC")){ // RPI 1125
     		get_hex_zero(2);
     	} else {
-    		if (bal_op.equals("KM")       // Issue #704
-    			|| bal_op.equals("KMC")){ // Issue #704
-    			get_hex_reg_even_nz();
-    		} else {
+    		if (bal_op.equals("KM")                                                // #704
+    			|| bal_op.equals("KMC")){                                          // #704
+    			get_hex_reg_even_nz();                                             // #704
+    		} else {                                                               // #704
     			get_hex_reg();
-    		}
+    		}                                                                      // #704
     		if (exp_index >= exp_text.length()
     			|| exp_text.charAt(exp_index) != ','){
     			obj_code = obj_code.concat("0"); // IPM,EFPC,SFPC,PTF RPI 817
     		} else {
     			skip_comma();
-    			if (bal_op.equals("KM")       // Issue #704
-    				|| bal_op.equals("KMC")){ // Issue #704
-    				get_hex_reg_even_nz();
-    			} else {
+    			if (bal_op.equals("KM")                                            // #704
+    				|| bal_op.equals("KMC")){                                      // #704
+    				get_hex_reg_even_nz();                                         // #704
+    			} else {                                                           // #704
     				get_hex_reg();
-    			}
+    			}                                                                  // #704
     		}
         	if (bal_op.equals("TROO")
         			|| bal_op.equals("TROT")
@@ -4412,19 +4413,19 @@ private void process_bal_op(){
     	loc_start = loc_ctr;
     	loc_len = 4;
     	get_hex_op(1,4);  // oooo
-    	if (bal_op.equals("KMA")){ // Issue #704
-    		get_hex_reg_even_nz();  // r1
-    		skip_comma();
-    		get_hex_reg_even_nz();  // r3 (m3 position)
-    		skip_comma();
-    		get_hex_reg_even_nz();  // r2
-    	} else {
+    	if (bal_op.equals("KMA")){                                                 // #704
+    		get_hex_reg_even_nz();  // r1                                          // #704
+    		skip_comma();                                                          // #704
+    		get_hex_reg_even_nz();  // r3 (m3 position)                            // #704
+    		skip_comma();                                                          // #704
+    		get_hex_reg_even_nz();  // r2                                          // #704
+    	} else {                                                                   // #704
   			get_hex_reg();     // r1
 			skip_comma();
 			get_hex_reg();    // m3
 			skip_comma();
 			get_hex_reg();    // r2
-    	}
+    	}                                                                          // #704
      	if (!bal_abort && exp_next_char(',')){
      		skip_comma();
      		get_hex_reg();  // optional m4
@@ -4436,21 +4437,21 @@ private void process_bal_op(){
      	    + obj_code.substring(7,8)             // m4 or 0
 	    	+ obj_code.substring(4,5)             // r1
 	    	+ obj_code.substring(6,7);            // r2
-    	if (bal_op.equals("KMA") && !bal_abort){ // Issue #704
-    		// r1 at position 4, r3 at position 5, r2 at position 6 (pre-reorder)
-    		// After reorder: r1 at 6, r3 at 4, r2 at 7
-    		char kma_r1 = obj_code.charAt(6);
-    		char kma_r3 = obj_code.charAt(4);
-    		char kma_r2 = obj_code.charAt(7);
-    		if (kma_r3 == kma_r1){
-    			log_error(56,"incorrect register specification"
-    				+ " - R3 must not equal R1");
-    		}
-    		if (kma_r3 == kma_r2){
-    			log_error(56,"incorrect register specification"
-    				+ " - R3 must not equal R2");
-    		}
-    	}
+    	if (bal_op.equals("KMA") && !bal_abort){                                   // #704
+    		// r1 at position 4, r3 at position 5, r2 at position 6 (pre-reorder)  // #704
+    		// After reorder: r1 at 6, r3 at 4, r2 at 7                            // #704
+    		char kma_r1 = obj_code.charAt(6);                                      // #704
+    		char kma_r3 = obj_code.charAt(4);                                      // #704
+    		char kma_r2 = obj_code.charAt(7);                                      // #704
+    		if (kma_r3 == kma_r1){                                                 // #704
+    			log_error(56,"incorrect register specification"                    // #704
+    				+ " - R3 must not equal R1");                                  // #704
+    		}                                                                      // #704
+    		if (kma_r3 == kma_r2){                                                 // #704
+    			log_error(56,"incorrect register specification"                    // #704
+    				+ " - R3 must not equal R2");                                  // #704
+    		}                                                                      // #704
+    	}                                                                          // #704
     	check_end_parms();
     	put_obj_text();
     	break;
@@ -9322,33 +9323,33 @@ private void get_hex_reg_even() {// RPI 1209N
         }
     }
 
-/**
- * Append hex reg from next parm - must be even and non-zero.
- * Used by KM, KMA, KMC per issue #704.
- */
-private void get_hex_reg_even_nz() {
-    if (calc_abs_exp()) {
-        if (exp_val >= 0 && exp_val <= 15) {
-            if (exp_val == 0) {
-                log_error(56, "incorrect register specification"
-                    + " - register 0 not allowed - " + exp_val);
-                obj_code = obj_code + "r";
-            } else if ((exp_val & 1) != 0) {
-                log_error(56, "incorrect register specification"
-                    + " - even register required - " + exp_val);
-                obj_code = obj_code + "r";
-            } else {
-                obj_code = obj_code + tz390.get_hex(exp_val, 1);
-            }
-        } else {
-            log_error(55, "invalid register expression - " + exp_val);
-            obj_code = obj_code + "r";
-        }
-    } else {
-        log_error(41, "invalid register value");
-        obj_code = obj_code + "r";
-    }
-}
+/**                                                                                // #704
+ * Append hex reg from next parm - must be even and non-zero.                      // #704
+ * Used by KM, KMA, KMC per issue #704.                                            // #704
+ */                                                                                // #704
+private void get_hex_reg_even_nz() {                                               // #704
+    if (calc_abs_exp()) {                                                          // #704
+        if (exp_val >= 0 && exp_val <= 15) {                                       // #704
+            if (exp_val == 0) {                                                    // #704
+                log_error(56, "incorrect register specification"                   // #704
+                    + " - register 0 not allowed - " + exp_val);                   // #704
+                obj_code = obj_code + "r";                                         // #704
+            } else if ((exp_val & 1) != 0) {                                       // #704
+                log_error(56, "incorrect register specification"                   // #704
+                    + " - even register required - " + exp_val);                   // #704
+                obj_code = obj_code + "r";                                         // #704
+            } else {                                                               // #704
+                obj_code = obj_code + tz390.get_hex(exp_val, 1);                   // #704
+            }                                                                      // #704
+        } else {                                                                   // #704
+            log_error(55, "invalid register expression - " + exp_val);             // #704
+            obj_code = obj_code + "r";                                             // #704
+        }                                                                          // #704
+    } else {                                                                       // #704
+        log_error(41, "invalid register value");                                   // #704
+        obj_code = obj_code + "r";                                                 // #704
+    }                                                                              // #704
+}                                                                                  // #704
 
 /**
  * vector register 1-5 high bits to support registers 16-31

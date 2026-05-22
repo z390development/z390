@@ -1,0 +1,35 @@
+IS704     MZ390 START
+IS704     AZ390 AZ390E error  56       (1/47)47            KM    1,4         R1 odd
+IS704     AZ390 AZ390I incorrect register specification - even register required - 1
+IS704     AZ390 AZ390E error  56       (1/48)48            KM    2,3         R2 odd
+IS704     AZ390 AZ390I incorrect register specification - even register required - 3
+IS704     AZ390 AZ390E error  56       (1/52)52            KM    0,4         R1 is zero
+IS704     AZ390 AZ390I incorrect register specification - register 0 not allowed - 0
+IS704     AZ390 AZ390E error  56       (1/53)53            KM    2,0         R2 is zero
+IS704     AZ390 AZ390I incorrect register specification - register 0 not allowed - 0
+IS704     AZ390 AZ390E error  56       (1/57)57            KMC   3,6         R1 odd
+IS704     AZ390 AZ390I incorrect register specification - even register required - 3
+IS704     AZ390 AZ390E error  56       (1/58)58            KMC   8,5         R2 odd
+IS704     AZ390 AZ390I incorrect register specification - even register required - 5
+IS704     AZ390 AZ390E error  56       (1/62)62            KMC   0,2         R1 is zero
+IS704     AZ390 AZ390I incorrect register specification - register 0 not allowed - 0
+IS704     AZ390 AZ390E error  56       (1/63)63            KMC   4,0         R2 is zero
+IS704     AZ390 AZ390I incorrect register specification - register 0 not allowed - 0
+IS704     AZ390 AZ390E error  56       (1/67)67            KMA   1,4,6       R1 odd
+IS704     AZ390 AZ390I incorrect register specification - even register required - 1
+IS704     AZ390 AZ390E error  56       (1/68)68            KMA   2,3,6       R2 odd
+IS704     AZ390 AZ390I incorrect register specification - even register required - 3
+IS704     AZ390 AZ390E error  56       (1/69)69            KMA   2,4,5       R3 odd
+IS704     AZ390 AZ390I incorrect register specification - even register required - 5
+IS704     AZ390 AZ390E error  56       (1/73)73            KMA   0,4,6       R1 is zero
+IS704     AZ390 AZ390I incorrect register specification - register 0 not allowed - 0
+IS704     AZ390 AZ390E error  56       (1/74)74            KMA   2,0,6       R2 is zero
+IS704     AZ390 AZ390I incorrect register specification - register 0 not allowed - 0
+IS704     AZ390 AZ390E error  56       (1/75)75            KMA   2,4,0       R3 is zero
+IS704     AZ390 AZ390I incorrect register specification - register 0 not allowed - 0
+IS704     AZ390 AZ390E error  56       (1/79)79            KMA   2,2,4       R3 = R1  (operand order: R1,R3,R2)
+IS704     AZ390 AZ390I incorrect register specification - R3 must not equal R1
+IS704     AZ390 AZ390E error  56       (1/80)80            KMA   2,4,4       R3 = R2  (operand order: R1,R3,R2)
+IS704     AZ390 AZ390I incorrect register specification - R3 must not equal R2
+IS704     AZ390 AZ390I FID=  1 ERR=  16 C:\dev\z390\rt\mlc\IS704.MLC
+IS704     MZ390 ENDED   RC=12 MEM(MB)= MB IO=333
