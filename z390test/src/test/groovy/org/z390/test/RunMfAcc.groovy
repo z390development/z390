@@ -87,7 +87,7 @@ class RunMfAcc extends z390Test{
         this.env = [
              'SYSOUT' : basePath('mfacc', 'P16AFK1.OUT')
         ]
-        int rc = this.asmlg(basePath("mfacc", "P16AFK1"), *options, 'parm(EBCDIC)')
+        int rc = this.asmlg(basePath("mfacc", "P16AFK1"), *options, 'parm(ASCII)')
         this.printOutput()
         assert rc == 0
         // Load files to fileData
