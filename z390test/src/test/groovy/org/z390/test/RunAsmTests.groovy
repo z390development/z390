@@ -212,9 +212,12 @@ class RunAsmTests extends z390Test {
         int rc = this.asm(basePath("rt", "mlc", "IS704"), 'optable(z390)', 'notiming')
         this.printOutput()
         assert rc == 12   // Check return code
-        // Compare generated .ERR against reference .TF1
+        // Compare AZ390 diagnostic lines only (filter out MZ390 framing + FID= path)
         loadFile(basePath("rt", "mlc", "IS704.TF1"), 'TF1')
-        assert fileData.get('TF1') == fileData.get('ERR')
+        def errLines = fileData.get('ERR').readLines()
+                .findAll { !it.contains('MZ390') && !it.contains('FID=') }
+                .join('\n') + '\n'
+        assert fileData.get('TF1') == errLines
     }
     @Test
     void test_GETMINI() {
