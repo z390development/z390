@@ -1,0 +1,18 @@
+P1RAFA1   EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P1RAFA1.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem P1MVC2 by RAFA using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 00008100 *C6C9C5D3 C440C140 40404040 40404040* *FIELD A         *
+ 00008110 *40404040 C6C9C5D3 C440C240 40404040* *    FIELD B     *
+ 00008120 *40404040 40404040                  * *                *
+SNAP DUMP ID=2 TEXT=Output Area
+ 00008100 *C6C9C5D3 C440C240 40404040 40404040* *FIELD B         *
+ 00008110 *40404040 C6C9C5D3 C440C140 40404040* *    FIELD A     *
+ 00008120 *40404040 40404040                  * *                *
+EZ390I total errors         = 0
+P1RAFA1   EZ390 ENDED   RC= 0 MEM(MB)= MB IO=179 INS=27

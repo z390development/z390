@@ -10,8 +10,7 @@ sysmac='sysmac(mac)'
 optable='optable(z390)'
 
 # For now: assembling and running; not validating output SNAP content
-# rem EXSAMPL2 and P20WR1 abend when executed
-bash/asml  mfacc/EXSAMPL2
+# P20WR1 abends when executed
 bash/asmlg mfacc/P1C1
 bash/asmlg mfacc/P1DSH1
 bash/asmlg mfacc/P1DSH1A

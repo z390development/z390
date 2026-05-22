@@ -8,6 +8,38 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest
 
 class RunMfAcc extends z390Test{
 
+    /** Helper for SNAP comparison: True for SNAP header lines. */
+    static boolean isSnapHeader(String line) {
+        line ==~ /(?i)SNAP DUMP.*/
+    }
+
+    /** Helper for SNAP comparison: True for standard SNAP hex dump lines (keeps load address). */
+    static boolean isSnapDataLine(String line) {
+        line ==~ /^\s+[0-9A-Fa-f]{8}\s+\*.*/
+    }
+
+    /**
+     * From LOG text: from first SNAP header through last SNAP data line.
+     * Stops at first line that is neither header nor data (EZ390 trailer, errors, etc.).
+     */
+    static List<String> extractSnapLines(String logText) {
+        def lines = logText.readLines()
+        int start = lines.findIndexOf { isSnapHeader(it) }
+        if (start < 0) {
+            return []
+        }
+        def result = []
+        for (int i = start; i < lines.size(); i++) {
+            def line = lines[i]
+            if (isSnapHeader(line) || isSnapDataLine(line)) {
+                result << line
+            } else {
+                break   // trailer / non-SNAP — do not include
+            }
+        }
+        return result
+    }
+
     var options  = ['noloadhigh bal notiming stats', "SYSMAC(+${basePath('mac')})", "SYSCPY(+${basePath('mfacc')}+${basePath('mac')})", "SYSOBJ(+${basePath('linklib')})"]
     var P5DW1opt = ['bal notiming stats', "SYSMAC(+${basePath('mac')})", "SYSCPY(+${basePath('mfacc')}+${basePath('mac')})"]
 
@@ -15,6 +47,10 @@ class RunMfAcc extends z390Test{
         int rc = this.asmlg(basePath("mfacc", moduleName), *options)
         this.printOutput()
         assert rc == 0
+        loadFile(basePath('mfacc', moduleName+".TF1"), 'TF1') // load reference file
+        def expected = extractSnapLines(fileData.get('TF1'))  // extract SNAP lines
+        def actual   = extractSnapLines(fileData.get('LOG'))  // actual SNAP lines
+        assert expected == actual
     }
 
     @TestFactory
@@ -37,9 +73,13 @@ class RunMfAcc extends z390Test{
 
     @Test
     void test_P5DW1() {
-        int rc = this.asml(basePath("mfacc", "P5DW1"), *P5DW1opt)
+        int rc = this.asmlg(basePath("mfacc", "P5DW1"), *P5DW1opt)
         this.printOutput()
         assert rc == 0
+        loadFile(basePath('mfacc', "P5DW1.TF1"), 'TF1')       // load reference file
+        def expected = extractSnapLines(fileData.get('TF1'))  // extract SNAP lines
+        def actual   = extractSnapLines(fileData.get('LOG'))  // actual SNAP lines
+        assert expected == actual
     }
 
     @Test
