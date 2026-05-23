@@ -36,6 +36,7 @@ rem download linter jar
 if not exist "build\checkstyle"                    mkdir build\checkstyle
 if not exist "build\checkstyle\checkstyle-all.jar" powershell -NoProfile -ExecutionPolicy Bypass -File "bat\GetCheckStyle.ps1"
 if not exist "build\checkstyle\checkstyle-all.jar" goto return || rem download must have failed - cannot continue
+java -jar build\checkstyle\checkstyle-all.jar --version
 
 rem run the linter
 java -jar build\checkstyle\checkstyle-all.jar -c src\checkstyle.xml src
