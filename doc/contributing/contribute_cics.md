@@ -33,9 +33,10 @@ after each assembly to provide an overview of unreferenced fields.
 **Note:** On Windows zCICS can also be built as part of the z390 build procedure:
     `bat> BUILD.BAT *All`
 
-## Regression testing for zCICS
+## zCICS Sequential Terminal Support
 
-This chapter explains the use of zCICS Sequential Terminal Support.
+This chapter explains the use of zCICS Sequential Terminal Support,
+which can be used for zCics and/or zCics application regression testing.
 
 ### Create a trace of your transactions
 
