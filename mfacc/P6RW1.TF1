@@ -1,0 +1,14 @@
+P6RW1     EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P6RW1.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem P6RW1 by RAY WONG using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 00008410 *C1C2                               * *AB              *
+SNAP DUMP ID=2 TEXT=Output Area
+ 00008414 *F1F1F0F0 F0F0F0F1 F1F1F0F0 F0F0F1F0* *1100000111000010*
+EZ390I total errors         = 0
+P6RW1     EZ390 ENDED   RC= 0 MEM(MB)= MB IO=175 INS=29
