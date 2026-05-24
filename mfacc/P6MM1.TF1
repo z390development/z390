@@ -1,0 +1,15 @@
+P6MM1     EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P6MM1.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem P6MM1 by Melvyn Maltz using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 000081A8 *AB                                 * *.               *
+SNAP DUMP ID=2 TEXT=Output Area
+ 000081AC *F1F0F1F0 F1F0F1F1 F1F0F1F0 F1F0F1F1* *1010101110101011*
+ 000081BC *F1F0F1F0 F1F0F1F1 F1FBF3FD F5FFF7F8* *101010111.3.5.78*
+EZ390I total errors         = 0
+P6MM1     EZ390 ENDED   RC= 0 MEM(MB)= MB IO=176 INS=160

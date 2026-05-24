@@ -1,0 +1,27 @@
+P22FS1    EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P22FS1.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem PROB22 by FRITZ SCHNEIDER using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 00008180 *C3968485 408681A2 A385A2A3 408995A2* *Code fastest ins*
+ 00008190 *A399A483 A3899695 40A28598 A4859583* *truction sequenc*
+ 000081A0 *8540A396 408396A4 95A34082 89A3A240* *e to count bits *
+ 000081B0 *89954081 95408199 8289A399 8199A840* *in an arbitrary *
+ 000081C0 *A2A39989 95874096 864082A8 A385A240* *string of bytes *
+ 000081D0 *A4A28995 874083A4 99998595 A393A840* *using currently *
+ 000081E0 *81A58189 93818293 8540A961 C1998388* *available z/Arch*
+ 000081F0 *89A38583 A3A49985 408995A2 A399A483* *itecture instruc*
+ 00008200 *A3899695 A2409799 89969940 A3964095* *tions prior to n*
+ 00008210 *85A64089 95A2A399 A483A389 96954083* *ew instruction c*
+ 00008220 *96948995 8740A689 A38840A9 F1F9F640* *oming with z196 *
+ 00008230 *A6888983 884089A2 4085A2A3 899481A3* *which is estimat*
+ 00008240 *858440A3 96408285 40F540A3 899485A2* *ed to be 5 times*
+ 00008250 *408681A2 A385994B                  * * faster.        *
+SNAP DUMP ID=2 TEXT=Output Area
+ 00008178 *0000028F                           * *....            *
+EZ390I total errors         = 0
+P22FS1    EZ390 ENDED   RC= 0 MEM(MB)= MB IO=188 INS=194
