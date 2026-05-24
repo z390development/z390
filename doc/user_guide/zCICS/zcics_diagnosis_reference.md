@@ -780,13 +780,592 @@ the `COMMAREA` specified.
 
 ## ENQ/DEQ Management
 
+### ENQ
 
+The module `LCL1204` validates the length.
+Although an omitted `LENGTH` is accepted, it may not work in zCICS.
 
+The ENQ command parameters are then shipped to the Server.
 
+Server processing `GBL1204`
 
+- The `QEA` chain is scanned.
+- If a `QEA` is found with the same resource, length and originating termid,
+  then the use count (`QEAUCT`) is incremented.
+- If no `QEA` is found with the same resource and length, then a new `QEA` is
+  built and chained.
+- If a QEA is found with the same resource and length but a different
+  originating termid, then a potential suspend has occurred.
+  - Please refer to the matrix in `GBL1204` at label `KCENQBSY` for the
+    complete logic of the `ENQBUSY` condition.
+  - The Manual omits one description, when `HANDLE CONDITION ENQBUSY()`
+    is not specified, `NOSUSPEND` is specified and there is no
+    `NOHANDLE`, then `NOHANDLE` must be forced as the task can never
+    abend `ENQBUSY` (there is no abend code).
+- When a task is suspended the `THRDCNTL` entry for this terminal is marked
+  `SUS-ENQ` and the `QEA` is flagged with the termid suffix (`QEAWAIT`).
+- A task is suspended because we don't respond to the shipped ENQ
+  request; this is done by the DEQ process.
 
+### DEQ
 
+The module `LCL1206` validates the length.
+The DEQ command parameters are then shipped to the Server.
 
+Server processing `GBL1206`
 
+- The `QEA` chain is scanned.
+- If a QEA is found with the same resource, length and originating termid
+  - The use count is decremented if not zero. Ok response is returned.
+  - If the use count is zero, and no tasks are waiting for this resource, then
+    the `QEA` is released and the chain repaired.
+    Ok response is returned.
+  - If the use count is zero, and tasks are waiting for this resource, then ok
+    response is sent to each waiting task.<br />
+    The terminal status is reset to `RUNNING`.<br />
+    Then the `QEA` is released and the chain repaired.
+    Ok response is returned.
 
+### Task end or abend
 
+`Z390KCP` will invoke a special `DEQALL` server request.
+
+Server processing `GBL12FC`
+
+The `QEA` chain is scanned.
+
+If a `QEA` is found with the same originating termid
+- If no tasks are waiting for this resource, then the `QEA` is released and
+  the chain repaired. Ok response is returned.
+- If tasks are waiting for this resource, then ok response is sent to each
+  waiting task.<br />
+  The terminal status is reset to `RUNNING`.<br />
+  Then the `QEA` is released and the chain repaired. Ok response is returned.
+
+## CWA Management
+
+The `CWA` is considered a Global Resource, and is therefore owned and handled by
+the Global Manager, `Z390CICS`.
+
+`CWA` size is determined by the `Z390CICS.INI` parameter `CWASIZE=` and the
+original 3.5K limit has been extended to 9,999,999 bytes.
+
+The only access to the `CWA` is via `EXEC CICS ADDRESS CWA()`.
+This obtains a copy of the `CWA` and ENQ is used to lock any further `CWA` access
+for the duration of the task. See later for exceptions.
+
+When the task ends or abends the `CWA` is sent back to the Global Manager for a
+refresh, and the natural clean-up process will ensure that the local copy is freed
+and DEQ takes place.
+
+There is no programmable access to the refresh/unlock mechanism.
+
+### Exceptions
+
+`EXEC CICS RECEIVE` (conversational) and `EXEC CICS DELAY` are
+considered to be long running and therefore each of those processes have a
+refresh/unlock and re-acquire mechanism wrapped around them.
+
+## Macros, LCLhhhh modules and Z390LCL - the linkage mechanisms
+
+Before the terminal is created, the module `Z390LCL` is loaded and the address
+placed in `TCTTELCL`.
+
+I am going to use `EXEC CICS READ` as an example.
+
+When this macro is issued the parameter list is set up and these instructions are
+issued:
+```hlasm
+         L     R15,TCTTELCL R15=LCL    MODULE INDEXER
+         LARL  R1,=A(P0602) R1=LCL     MODULE PARAMETER LIST
+         BAKR  0,R15                   STACK REGS AND GO
+```
+
+`Z390LCL` has almost all (see later for exceptions) the macro processors linked in.
+The processor is located and a direct branch, `BR R15` is used to invoke it.
+
+An `LCLhhhh` module can itself issue an `EXEC CICS` command, even though it's
+not really a CICS program. This will just create another stack entry.
+
+When a processor completes, the `PR` will unstack (only `GR2`-`GR14`) and return to
+the invoking macro for error processing or return to the invoking application.
+
+### Exceptions
+
+There are three processes that don't return immediately to the invoking
+application after completion: `LINK`, `XCTL` and `RETURN`.
+
+These LCL modules are not part of `Z390LCL` and are linked in to each
+application that uses them.
+
+When these macros are issued the parameter list is set up and these
+instructions are issued:
+```hlasm
+         LARL  R1,P0E08             R1=PARAMETER LIST
+         LARL  R14,P0E08RTN_&SYSNDX RETURN ADDRESS
+         LRL   R15,=V(LCL0E08)      R15=EXTERNAL RETURN MODULE ADDRESS
+         BR    R15                  GO TO IT
+P0E08RTN_&SYSNDX EQU *
+```
+
+The processor decides where to go next.
+
+## Non-terminal Support
+
+Tne `INI` parameter `MAX_NONTERMS=n` limits the number of non-terminal tasks
+that may be running at the same time.
+
+Each non-terminal in zCICS is really a special type of terminal with a terminal id.
+of !!0n. Tests have been placed in various macro processors (LCL modules) to
+raise conditions for commands like `SEND` and `RECEIVE` which cannot be
+executed in a non-terminal environment.
+
+When a non-terminal task ends or abends, the terminal is shut down.
+
+`CEMT I TER` will display non-terminals with a type of `NONTERM`.
+
+## Sequential Terminal support
+
+Please read the Doc for this feature in zCICS Sequential Terminal Support. This
+section does not cover the batch programs `Z390SEQ` or `Z390COMP`.
+
+When the `INI` parameter `SEQ_TERM=YES` is specified then `Z390CICS` will start a
+special `CMDPROC` terminal with a terminal id of `SQ01`.
+This will reduce the total terminals that may be started to nine.
+
+When `Z390KCP` is invoked for `SQ01`, two QSAM files are opened, one to process
+the input streams, and the other to write the output streams to `SEQO0001`. The
+`TCTTE` contains the `DCB` addresses and other supporting fields.
+
+The internal `EXEC CICS RECEIVE` in `Z390KCP` and any in user programs read
+the next data stream from the input QSAM file.
+
+The internal `EXEC CICS SEND` in `Z390KCP` and any in user programs writes all
+data streams to the output QSAM file and displays them on the `SQ01` terminal.
+
+When an input file reaches the end, the file number is incremented and the file is
+closed and re-opened.
+
+When all of the input streams are exhausted, the terminal is closed via an
+emulated `CEMT S TER OUT` unless the last input data stream was `CEMT P SHU`
+(recommended), in which case zCICS is shut down.
+
+## Channel/Container support
+
+This is an extended form of IBM's badly defined facility.
+
+I have ignored the term 'scope' and have allowed both `CHANNEL` and
+`COMMAREA` to co-exist. In addition, `START` may have other parameters as well as
+`CHANNEL`. In these cases a warning `MNOTE` is issued as the program won't
+assemble in the mainframe environment.
+
+When a `PUT` or `MOVE` is issued a `DFHCHAN` block is built. The first one sets the
+anchor at `TCTTECAQ`, subsequent channels are chained via `CHANADDR`.
+
+The first container is chained from `CHANCONT` and each has a prefix
+(`DFHCONT`). Subsequent containers are chained from `CONTADDR`.
+
+For `GET` with `SET`, a copy of the container is made and chained from `CONTSET`,
+if any copies have been made before (`CONTSET` has an address), then it is freed
+before a new copy is made.
+
+For `DELETE`, the container and any `SET` are freed and the chain is repaired.
+
+A `PUT` to an existing container will do a `DELETE` first and then a `PUT`.
+Container data is never overlaid (this is not well described).
+
+In zCICS a channel belongs to the link-level that created it (`CHANLINK`), therefore
+when a `RETURN` is issued all channels/containers belonging to that link-level are
+deleted. A special `DELETE` is used internally to delete a channel and all of its
+containers: `EXEC CICS DELETE CONTAINER('*') CHANNEL(name)`
+
+If a `RETURN CHANNEL(name)` returns to zCICS, all channels are deleted except
+the one named in the `RETURN`.
+
+When a channel is passed via `LINK`, `XCTL`, `RETURN` or `START` the name is stored
+in `TCTTECHN`. The program receiving the passed channel can access it via
+`ASSIGN CHANNEL(name)` and then `GET` etc. The passed channel name is also
+stored in that program's `DSA` (`DFHEICHN`) so that it can be restored if control is
+passed back (another thing not well defined).
+
+For further information about the mechanism used to pass a channel on the `START`
+command see [Interval Control Management](#interval-control-management).
+
+## Browse operation
+
+When a `STARTBROWSE` is issued a `DFHCHWA` block is built. The first one sets
+the anchor at `TCTTECHW`, subsequent blocks are chained via `CHWAADDR`.
+
+A fullword counter at `TCTTETKN` is incremented and this is used as the
+`BROWSETOKEN`, stored at `CHWATOKN` and returned to the requestor.
+
+Because the creation and deletion of containers is dynamic, browsing operations
+may lead to container names being returned that no longer exist when a `GETNEXT`
+is issued. The last container name retrieved is stored at `CHWACONT`, if this is not
+found or if the channel no longer exists then the `GETNEXT` will raise the `END`
+condition.
+
+`ENDBROWSE` will delete the `DFHCHWA` and repair the chain.
+
+## CEDF operation
+
+In this chapter `DON0` is used as the terminal to receive the intercepts and `DON1`
+as the terminal running the transaction being monitored. Any two terminals can be
+used.
+
+### Starting and Stopping CEDF
+
+The processing for start and stop is in `Z390CEDF`.
+
+#### Starting
+
+On `DON0` the transaction `CEDF DON1,ON` is entered.
+
+This causes an `EXEC CICS START TRANSID('CEDZ')` with data to be sent to
+`DON1`. The data contains the invoking termid (`DON0`) and the parameter `ON`.
+
+A confirmation message is sent to `DON0`.
+
+When `CEDZ` is invoked on `DON1`, the invoking termid is saved in `TCTTEEDT`
+and the `CEDF` flag is set (`TCTTEEDF=X'FF'`). A confirmation message is
+displayed.
+
+#### Stopping
+
+During a `CEDF` session, PF3 can be pressed.
+
+See the [intercept operation](#interception-operation).
+
+At task termination, clear the screen, enter `CEDF DON1,OFF`
+in a similar manner to starting, `EXEC CICS START TRANSID('CEDZ')` with
+data is sent to `DON1`. The data contains the invoking termid (`DON0`) and the
+parameter `OFF`.
+
+When `CEDZ` is invoked on `DON1`, `TCTTEEDT` and `TCTTEEDF` are cleared.
+No confirmation message is displayed as it may interfere with the display on `DON1`.
+
+The redisplay `TS` queue `--CEDF--` is deleted.
+
+#### Command Interception
+
+The `CEDF` interception module `LCLCEDF` is loaded when the terminal
+environment is created and the address is stored in `TCTTEEDA`.
+Each `EXEC CICS` command is associated with an LCL module.
+See [LCL Submodules for EXEC CICS processing](#lcl-submodules-for-exec-cics-processing) for a full list.
+Within the module there is an interception point both before and after the command processing.
+
+`LCLCEDF` is not invoked if `EDF` is off, or if the command has specified `NOEDF`.
+`TCTTEEBA` is set to `X'00'` (before) or `X'FF'` (after).
+
+The indicator in `TCTTEEDL` specifies the type of linkage and parameter list
+location:
+- `X'00'` Conventional invocation with GR3 pointing to the parameter list
+- `X'FE'` Entry from `DFHEIENT` for the `PROGRAM INITIATION` intercept.
+  The parameter list comes from `LINK`/`XCTL` and is stored inside `DFHEIENT`
+  it is then extracted using the `ESTA` instruction and moved to `GR3`.
+- `X'FF'` Direct Linkage from `LINK`, `XCTL` or `RETURN`.
+  The parameter list pointer is passed in `GR1` and moved to `GR3`
+
+In `LCLCEDF` a table (`EDFTABL`) is scanned and the routine associated with the
+command is invoked.
+
+The `EDF` mapset `MAPEDF` contains all the maps used in the interception.
+`GR4` is used as the map structure base.
+The intercept map is built and a `GETMAIN` is done to hold:
+- The map structure
+- `DSA` address and lengths
+- The current `DSA`
+- Additional data for pagable intercepts
+
+For intercepts that may require paging, the data is not set into the map in
+`LCLCEDF` but sent to `Z390CEDF` and built there.
+
+An `EXEC CICS START TRANSID('CEDZ')` then passes this data to `DON0` with the
+`SEND` parameter and the function code of the command.
+
+The task is then suspended using `EXEC CICS DELAY HOURS(1)` with a `REQID` of
+`!!CEDF!!`. The time period should be large enough for normal operation.
+
+This `DELAY` is canceled using the `REQID` when the user wishes to continue the
+task.
+
+#### Interception operation
+
+`CEDZ` is started on `DON0` and the parameters and data are retrieved.
+
+On first entry, PF2 is preset as the first input key and is used as a reset function.
+
+After the transaction id. has been entered on `DON1`, the `PROGRAM INITIATION`
+intercept is invoked and the switch (focus) to `DON0` occurs.
+
+A table (`KEYTAB`) containing all valid keypresses and function codes is scanned
+and the processing routine invoked.
+
+Subsequent keypresses cause a rescan of `KEYTAB`.
+
+An exception to this is PF3 which has special handling:
+
+- A special `EXEC CICS CANCEL` is issued using an internal parameter `EDFOFF`.
+- This not only cancels the `DELAY` that has suspended the task, but also turns off
+  `CEDF` on `DON1` thus allowing the task to continue normally.
+- A message is displayed on `DON0` confirming `CEDF` has ended.
+
+Most commands just display the interception screen as it was sent, exceptions are
+discussed later. If further modification of the display screen is possible then the key
+operation lines at the bottom are set up. Only those keys which can be seen are
+active.
+
+PF2: Mode change
+
+- If shown, then there are fields displayed which can have valid EBCDIC, ASCII or
+  hex content. Pressing PF2 will cycle through the modes and is controlled by the
+  field `CURRMODE`. `R` is used as the reset, then `E`,`A`,`H` accordingly.
+
+PF5: Working Storage
+
+- Except at task termination, it is always available.
+- A dump display is shown in EBCDIC and hex, paging keys are activated if
+  appropriate and PF2 can be used to switch between EBCDIC and ASCII.
+- The Working Storage mode is independent of the intercept mode.
+- Pressing ENTER will return to the intercept display.
+
+PF7,8,10,11: Paging keys
+
+- For some commands, there are too many parameters to display on one screen,
+- Paging keys are displayed as appropriate.
+
+PF12: Redisplay Mode and Redisplay Paging
+
+- There is no 'screen save' function, all command environments are saved to the
+  `TS` queue `--CEDF--`.
+- When the initialization process is done the `TS` record is written and a switch
+  (`EDFRDYWQ`) is set to prevent multiple writes. This switch is reset when the
+  user presses ENTER to continue the task.
+- The screen is modified for Redisplay Mode by showing navigation keys which
+  allow +/-1 and +/-5 commands. Also an input field appears top right to go directly
+  to a specific screen - typing a large number like 999 will go to the earliest
+  intercept.
+- Pressing PF5 while in Redisplay Mode will display the Working Storage as it was
+  when the command was intercepted.
+- Pressing ENTER will return to Redisplay Mode with the Redisplay keyset.
+- If PF2 is displayed then a mode change is possible and works identically to
+  intercept mode described above. The control switch (`REDPMODE`) is different.
+
+Redisplay Mode and Paging
+
+As described above, some commands have too many parameters to display on
+one screen. When this happens in Redisplay Mode, `PF12:PAGING KEYS`
+appears and is used to switch between the Redisplay keyset and the Paging
+keyset.
+
+## Event Tracing
+
+Tracing is currently limited to those events that the server knows about. These
+events appear on the log as `WTO` messages.
+
+The level of tracing is controlled by the `INI` parm `TRACE_Z390CICS=`.
+
+There is an intent to provide full application tracing, but each event would have to
+be sent to the server and may be too great an overhead in this environment.
+
+## LCL Submodules for EXEC CICS processing
+
+| Module  | Process               | Notes              |
+|---------|-----------------------|--------------------|
+| LCL0202 | ADDRESS               | Embedded EXEC CICS |
+| LCL0204 | HANDLE CONDITION      |                    |
+| LCL0206 | HANDLE AID            |                    |
+| LCL0208 | ASSIGN                |                    |
+| LCL020A | IGNORE CONDITION      |                    |
+| LCL020C | PUSH HANDLE           |                    |
+| LCL020E | POP HANDLE            |                    |
+|         |                       |                    |
+| LCL0402 | RECEIVE               | Embedded EXEC CICS |
+| LCL0404 | SEND                  |                    |
+|         |                       |                    |
+| LCL0602 | READ                  | Embedded EXEC CICS |
+| LCL060C | STARTBR               | Embedded EXEC CICS |
+| LCL060E | READNEXT              | Embedded EXEC CICS |
+| LCL0610 | READPREV              | Embedded EXEC CICS |
+| LCL0612 | ENDBR                 | Embedded EXEC CICS |
+| LCL0614 | RESETBR               | Embedded EXEC CICS |
+|         |                       |                    |
+| LCL0A02 | WRITEQ TS             | Embedded EXEC CICS |
+| LCL0A04 | READQ TS              | Embedded EXEC CICS |
+| LCL0A06 | DELETEQ TS            | Embedded EXEC CICS |
+|         |                       |                    |
+| LCL0C02 | GETMAIN               |                    |
+| LCL0C04 | FREEMAIN              |                    |
+|         |                       |                    |
+| LCL0E02 | LINK                  | Direct linkage     |
+| LCL0E04 | XCTL                  | Direct linkage     |
+| LCL0E06 | LOAD                  |                    |
+| LCL0E08 | RETURN                | Direct linkage     |
+| LCL0E0A | RELEASE               |                    |
+| LCL0E0C | ABEND                 |                    |
+| LCL0E0E | HANDLE ABEND          |                    |
+|         |                       |                    |
+| LCL1002 | ASKTIME               |                    |
+| LCL1004 | DELAY                 |Embedded EXEC CICS  |
+| LCL1008 | START                 |Embedded EXEC CICS  |
+| LCL100A | RETRIEVE              |Embedded EXEC CICS  |
+| LCL100C | CANCEL                |                    |
+|         |                       |                    |
+| LCL1204 | ENQ                   |                    |
+| LCL1206 | DEQ                   |                    |
+|         |                       |                    |
+| LCL1802 | RECEIVE MAP           |                    |
+| LCL1804 | SEND MAP              |                    |
+| LCL1812 | SEND CONTROL          | Embedded EXEC CICS |
+|         |                       |                    |
+| LCL1C02 | DUMP                  |                    |
+|         |                       |                    |
+| LCL3412 | DELETE CONTAINER      |                    |
+| LCL3414 | GET CONTAINER         |                    |
+| LCL3416 | PUT CONTAINER         |                    |
+| LCL3440 | MOVE CONTAINER        |                    |
+| LCL9626 | STARTBROWSE CONTAINER |                    |
+| LCL9628 | GETNEXT CONTAINER     |                    |
+| LCL962A | ENDBROWSE CONTAINER   |                    |
+|         |                       |                    |
+| LCL4A02 | ASKTIME ABSTIME       |                    |
+| LCL4A04 | FORMATTIME            |                    |
+|         |                       |                    |
+| LCL4C02 | INQUIRE FILE          |                    |
+| LCL4C04 | SET FILE              |                    |
+
+## Z390CEMT submodules
+
+`Z390CEMT` handles all the `CEMT` functions.
+
+Most functions have been split into submodules.
+
+| Module   | Function            |
+|----------|---------------------|
+| CEMTFILE | INQUIRE/SET FILE    |
+| CEMTIENQ | INQUIRE ENQUEUE     |
+| CEMTISYS | INQUIRE SYSTEM      |
+| CEMTITER | INQUIRE TERMINAL    |
+| CEMTITRN | INQUIRE TRANSACTION |
+
+## Z390CICS Operation
+
+- The file `Z390CICS.INI` is opened and the parameters analyzed and used to
+  set fixed fields in the program.<br />
+- Note: `CEMT I SYS` can be used to display them.
+- A Command Prompt is started with the correct directory and parameters for
+  each local terminal requested and Z390KCP is invoked in each one.
+- A 32K receive area is acquired
+- The Server port is opened.
+- The `FCT` is loaded and any files eligible to be opened immediately are opened.
+- At `READLOOP` a `TCPIO RECEIVE` is done. The process is slightly different
+  when in shutdown mode (see later).
+  - `Z390CICS` will wait here for a request sent by any client.
+  - When a request is received the identity of the Client is return in `GR2`.
+  - Occasionally more than one request is received at the same time (batched),
+    these are identified and the messages are split and individually processed.
+  - `REQTABLE` is then scanned for the requested process and the routine is invoked.
+  - Some routines are handled within `Z390CICS` and others will `CALL` a `GBL`
+    submodule. For a list, see below.
+  - After the process is complete a `TCPIO SEND` is done with return codes and
+    data (if requested) to the Client and the program returns to `READLOOP`.
+- Shutdown processing
+  - After a Client has issued `CEMT P SHU (IMM)` a flag (`SHUTIND`) is set. The
+    alternate code at `READLOOP` is then invoked which does a `TCPIO RECEIVE,NOWAIT`
+    and checks every second if all Clients have closed.
+  - Then all open VSAM files are closed and the Server (`Z390CICS`) shuts down.
+
+## GBL Submodules
+
+| Module  | Description           | Program  |
+|---------|-----------------------|----------|
+| GBL0602 | READ                  | Any      |
+| GBL060C | STARTBR               | Any      |
+| GBL060E | READNEXT              | Any      |
+| GBL0610 | READPREV              | Any      |
+| GBL0612 | ENDBR                 | Any      |
+| GBL0614 | RESETBR               | Any      |
+|         |                       |          |
+| GBL0A02 | WRITEQ TS             | Any      |
+| GBL0A04 | READQ TS              | Any      |
+| GBL0A06 | DELETEQ TS            | Any      |
+| GBL0AFF | CEBR Request Qnames   | Z390CEBR |
+|         |                       |          |
+| GBL1004 | DELAY                 | Any      |
+| GBL1008 | START                 | Any      |
+| GBL100C | CANCEL                | Any      |
+| GBL10FF | ICE SCAN              | Z390KCP  |
+|         |                       |          |
+| GBL1204 | ENQ                   | Any      |
+| GBL1206 | DEQ                   | Any      |
+| GBL12FC | DEQALL                | Z390KCP  |
+|         |                       |          |
+| GBL4C02 | INQUIRE FILE          | Any      |
+| GBL4C04 | SET FILE              | Any      |
+|         |                       |          |
+| GBLFE00 | CEMT I TERm           | Z390CEMT |
+| GBLFE01 | CEMT I SYStem         | Z390CEMT |
+| GBLFE06 | CEMT I ENQueue        | Z390CEMT |
+| GBLFE07 | CWA GET/PUT           | Any      |
+
+## Copy Books
+
+| Name     | Purpose               | Program  |
+|----------|-----------------------|----------|
+| FILEERTB | VSAM Error Code Table | Z390CICS |
+
+## Internal Abends
+
+These are mostly caused by programming errors or situations that were not anticipated.
+If you encounter any of them, please report them to the z390 support team.
+
+- 444 Abend code missing from the table in Z390CICS
+- 555 Unknown request sent to Server
+- 666 CMDPROC failed
+- 777 TCPIO OPEN/CLOSE Server failed
+- 778 TCPIO RECEIVE failed
+- 780 TCPIO SEND failed
+- 790 VSAM feedback code was not expected
+
+## Change Summary
+
+- February 1, 2012
+  - Abend code 444 added
+  - Seven new LCL Modules added for Channel/Container support
+  - Control blocks DFHCHAN, DFHCONT and DFHCHWA added
+  - Added management description for Channels/Containers
+  - Added description of START with CHANNEL to the IC management section
+- June 10, 2011
+  - GBLFE05 renamed to GBL4C02
+  - GBLFE08 renamed to GBL4C04
+  - Removed duplicate paragraph about DELETEQ TS
+  - Added section on CEDF
+- November 1, 2010
+  - Update to LCL1812
+  - Section on Non-terminal support added
+  - Change to description of GBLFE05
+  - Added LCL4C04 and GBLFE08 (SET FILE)
+  - Added section on Z390CEMT submodules
+  - Added GBL1004 (DELAY)
+- August 1, 2009
+  - References to DFHEIRET removed
+  - References to DFHEIPRM removed, XCTL updated
+  - Added LCL0208, LCL 4C02
+  - Amended Z390LCL processing
+- February 21, 2009
+  - Added LCL0202, GBLFE07
+  - Added DFHCWBLK and CWA Management
+  - Added Macro and LCL processor Management
+- November 24, 2008
+  - Added section on LCL submodules
+  - Added control blocks:
+  - DFHICBLK, DFHICEDS, DFHTSNDS, DFHKCBLK, THRDDSCT,
+  - DFHQEADS
+  - Added Interval Control Management
+  - Added ENQ/DEQ Management
+  - Completed Z390CICS operation
+  - GBLFE06 added (CEMT I ENQ)
+- June 27, 2008
+  - Z390CICS operation extensively expanded
+- January 18, 2008
+  - Extensive updates to File Control
