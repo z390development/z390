@@ -4,6 +4,7 @@
 
 ### Dynamic Storage Area (DSA)
 
+| Item        | Details                            |
 |-------------|------------------------------------|
 | Eye catcher | None                               |
 | Acquired    | DFHEIENT                           |
@@ -15,6 +16,7 @@
 
 ### EXEC Interface Block (EIB)
 
+| Item        | Details                            |
 |-------------|------------------------------------|
 | Eye catcher | 'DFHEIBLK'                         |
 | Acquired    | Z390KCP                            |
@@ -26,6 +28,7 @@
 
 ### HANDLE ABEND Block
 
+| Item        | Details                            |
 |-------------|------------------------------------|
 | Eye catcher | 'DFHABBLK'                         |
 | Acquired    | 1st use                            |
@@ -38,6 +41,7 @@
 
 ### HANDLE AID block
 
+| Item        | Details                                          |
 |-------------|--------------------------------------------------|
 | Eye catcher | 'DFHADBLK'                                       |
 | Acquired    | HANDLE AID (1st block only)                      |
@@ -53,6 +57,7 @@
 
 ### HANDLE CONDITION block
 
+| Item        | Details                                                       |
 |-------------|---------------------------------------------------------------|
 | Eye catcher | 'DFHHCBLK'                                                    |
 | Acquired    | HANDLE CONDITION (1st block only)                             |
@@ -68,6 +73,7 @@
 
 ### Link-Level Area (LKA)
 
+| Item        | Details                            |
 |-------------|------------------------------------|
 | Eye catcher | None                               |
 | Acquired    | Z390KCP                            |
@@ -79,6 +85,7 @@
 
 ### Terminal Control Table Terminal Entry (TCTTE)
 
+| Item        | Details                            |
 |-------------|------------------------------------|
 | Eye catcher | 'DFHTCTTE'                         |
 | Acquired    | Z390KCP                            |
@@ -92,6 +99,7 @@
 
 Data sent/received follows the block.
 
+| Item        | Details                            |
 |-------------|------------------------------------|
 | Eye catcher | None                               |
 | Acquired    | GETMAINd by EXEC CICS TS command   |
@@ -105,6 +113,7 @@ Data sent/received follows the block.
 
 Data sent/received follows the block.
 
+| Item        | Details                                        |
 |-------------|------------------------------------------------|
 | Eye catcher | None                                           |
 | Acquired    | GETMAINd by an EXEC CICS file control command  |
@@ -116,6 +125,7 @@ Data sent/received follows the block.
 
 ### Interval Control request/reply block (DFHICBLK)
 
+| Item        | Details                                        |
 |-------------|------------------------------------------------|
 | Eye catcher | None                                           |
 | Acquired    | GETMAINd by an EXEC CICS START/CANCEL command  |
@@ -127,6 +137,7 @@ Data sent/received follows the block.
 
 ### Task Control request/reply block (DFHKCBLK)
 
+| Item        | Details                                        |
 |-------------|------------------------------------------------|
 | Eye catcher | None                                           |
 | Acquired    | GETMAINd by an EXEC CICS ENQ/DEQ command       |
@@ -138,6 +149,7 @@ Data sent/received follows the block.
 
 ### CWA request/reply block (DFHCWBLK)
 
+| Item        | Details                                        |
 |-------------|------------------------------------------------|
 | Eye catcher | None                                           |
 | Acquired    | Embedded in LCL0202                            |
@@ -149,6 +161,7 @@ Data sent/received follows the block.
 
 ### Channel control block (DFHCHAN)
 
+| Item        | Details                                              |
 |-------------|------------------------------------------------------|
 | Eye catcher | None                                                 |
 | Acquired    | EXEC CICS PUT/MOVE (LCL3416/LCL3440)                 |
@@ -160,6 +173,7 @@ Data sent/received follows the block.
 
 ### Container control block (DFHCONT)
 
+| Item        | Details                                              |
 |-------------|------------------------------------------------------|
 | Eye catcher | None                                                 |
 | Acquired    | EXEC CICS PUT/MOVE (LCL3416/LCL3440)                 |
@@ -171,6 +185,7 @@ Data sent/received follows the block.
 
 ### STARTBROWSE CONTAINER control block (DFHCHWA)
 
+| Item        | Details                                              |
 |-------------|------------------------------------------------------|
 | Eye catcher | None                                                 |
 | Acquired    | EXEC CICS STARTBROWSE (LCL9626)                      |
@@ -186,6 +201,7 @@ Data sent/received follows the block.
 
 Contains the ACB for each file operation.
 
+| Item        | Details                                              |
 |-------------|------------------------------------------------------|
 | Eye catcher | None                                                 |
 | Acquired    | Z390CICS at start                                    |
@@ -198,6 +214,7 @@ Contains the ACB for each file operation.
 
 Also contains the RPL for file operations.
 
+| Item        | Details                                              |
 |-------------|------------------------------------------------------|
 | Eye catcher | None                                                 |
 | Acquired    | Z390CICS at File Control process start               |
@@ -212,6 +229,7 @@ Also contains the RPL for file operations.
 
 Chained in time order
 
+| Item        | Details                                              |
 |-------------|------------------------------------------------------|
 | Eye catcher | None                                                 |
 | Acquired    | GBL1008 when a valid EXEC CICS START is processed    |
@@ -225,6 +243,7 @@ Chained in time order
 
 ### Temporary Storage Name Table (DFHTSNDS)
 
+| Item        | Details                                              |
 |-------------|------------------------------------------------------|
 | Eye catcher | None                                                 |
 | Acquired    | GBL0A02 when first EXEC CICS WRITEQ TS is processed  |
@@ -240,6 +259,7 @@ Chained in time order
 One entry for each terminal to a maximum of 10.
 When `SEQ_TERM=YES`, the special 11th terminal is reserved for `SQ01`.
 
+| Item        | Details                                              |
 |-------------|------------------------------------------------------|
 | Eye catcher | None                                                 |
 | Acquired    | Fixed in Z390CICS                                    |
@@ -251,6 +271,7 @@ When `SEQ_TERM=YES`, the special 11th terminal is reserved for `SQ01`.
 
 ### Queue Element Area (DFHQEADS)
 
+| Item        | Details                                              |
 |-------------|------------------------------------------------------|
 | Eye catcher | None                                                 |
 | Acquired    | GBL1204 when EXEC CICS ENQ is processed              |
@@ -277,6 +298,7 @@ the HANDLE ABEND status which is discussed later.
 
 All of the above types cause a program check, with the following markers:
 
+| Item                                 | Details             |
 |--------------------------------------|---------------------|
 | X'000000',C'ABEND',A(IGNORE address) | HANDLE CONDITION    |
 | X'0000FE',C'ABEND',C'xxxx'           | ABEND with dump     |
@@ -1319,13 +1341,15 @@ Most functions have been split into submodules.
 These are mostly caused by programming errors or situations that were not anticipated.
 If you encounter any of them, please report them to the z390 support team.
 
-- 444 Abend code missing from the table in Z390CICS
-- 555 Unknown request sent to Server
-- 666 CMDPROC failed
-- 777 TCPIO OPEN/CLOSE Server failed
-- 778 TCPIO RECEIVE failed
-- 780 TCPIO SEND failed
-- 790 VSAM feedback code was not expected
+| Abend code | Meaning                                       |
+|------------|-----------------------------------------------|
+| 444        | Abend code missing from the table in Z390CICS |
+| 555        | Unknown request sent to Server                |
+| 666        | CMDPROC failed                                |
+| 777        | TCPIO OPEN/CLOSE Server failed                |
+| 778        | TCPIO RECEIVE failed                          |
+| 780        | TCPIO SEND failed                             |
+| 790        | VSAM feedback code was not expected           |
 
 ## Change Summary
 
