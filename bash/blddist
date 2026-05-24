@@ -42,7 +42,7 @@ for dir in ${CORE_DIRS[@]}; do
 done
 
 # add test and supplimental components
-SUPP_DIRS=( assist demo guam qsam bsam rt soa sort structuredmacros tests vsam1 
+SUPP_DIRS=( assist demo guam qsam bsam rt soa sort structuredmacros mfacc tests vsam1 
 vsam2 vse zopcheck zpar )
 for dir in ${SUPP_DIRS[@]}; do
     cp -R ${ROOT_DIR}/${dir} .

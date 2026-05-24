@@ -1,0 +1,17 @@
+P13SC1    EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P13SC1.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem P13SC1 by Steve Comstock using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 0000811C *E3D6E3C1 D340C3D6 E2E3407E 40000042* *TOTAL COST = ...*
+ 0000812C *375CD8E4 C1D5E3C9 E3E8407E 4000037C* *.*QUANTITY = ..@*
+SNAP DUMP ID=2 TEXT=Output Area
+ 0000813C *E4D5C9E3 40D7D9C9 C3C5407E 40000001* *UNIT PRICE = ...*
+ 0000814C *145CE6D6 D9D240C1 D9C5C140 7E400001* *.*WORK AREA = ..*
+ 0000815C *145C0001 0C                        * *.*...           *
+EZ390I total errors         = 0
+P13SC1    EZ390 ENDED   RC= 0 MEM(MB)= MB IO=178 INS=30

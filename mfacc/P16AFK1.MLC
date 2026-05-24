@@ -1,0 +1,1280 @@
+P16AFK1  TITLE 'Find Primes Using Sieve of Erathostenes'
+***********************************************************************
+* Start create : 06-06-2006
+* 1st delivery :
+* Designer     : AF Kornelis
+* Programmer   : AF Kornelis
+***********************************************************************
+*
+* Parameter: [charmode][separator][spacing]
+* Where charmode = EBCDIC|ASCII
+*       separator= PERIOD|COMMA
+*       spacing  = SPACING(n|nn) - n|nn being a number between 1 and 99
+*
+* Options may appear in any order and must be separated by a comma.
+* Default: EBCDIC,PERIOD,SPACING(4)
+*
+***********************************************************************
+*
+* Internal calculus is done in excess-30/210 notation. That is, each
+* number is represented by the results of its division by 30/210:
+* both its quotient and its remainder. 30/210 are chosen because it is
+* the product of the first three/four primes: 2, 3, 5 (and 7).
+* The remainder thus tells us straight away whether the number might
+* be divisible by 2, 3, 5 (or 7). If it is not, it might be a prime.
+* Each stretch of 30/210 numbers thus contains 8/48 potential primes.
+* The status of these 8/48 numbers can be represented in 1/6 byte(s).
+*
+***********************************************************************
+
+***********************************************************************
+*
+* Define constants and environment
+*
+***********************************************************************
+         YREGS ,                       * Define register equates
+         DCBD  DSORG=PS
+
+***********************************************************************
+*
+* Define workareas and fixed constants
+*
+***********************************************************************
+* Settings for Courier 10 on a default doc in OpenOffice
+#LPP     EQU   64                      * Nr of lines per page
+#CPL     EQU   80                      * Nr of characters per line
+*
+&#MAXP   SETA  7                       * Highest pre-determined prime
+&INTVALS SETA  12345                   * Nr of intervals to process
+#MAXP    EQU   &#MAXP                  * Max pre-calculated prime
+         AIF   ('&#MAXP' EQ '7').INTVAL7
+#INTVAL  EQU   2*3*5                   * Interval size = 30
+#CAND    EQU   8                       * Nr of candidates per interval
+         AGO   .INTVAL
+.INTVAL7 ANOP  ,
+#INTVAL  EQU   2*3*5*7                 * Interval size = 210
+#CAND    EQU   48                      * Nr of candidates per interval
+.INTVAL  ANOP  ,
+&CAND    SETA  #CAND                   * Nr of candidates per interval
+
+WORKAREA DSECT ,                       *
+SAVEAREA DS    18F                     * Save area for GPRs
+WAEYE    DS    CL8                     * Eye Catcher
+WACHARS  DS    C                       * Character set: Ebcdic / Ascii
+WASEPRTR DS    C                       * Thousands separator
+WASPACE  DS    H                       * Column spacing
+WAINTVBITS DS  H                       * Nr of candidate primes/intval
+WAINTVBYTS DS  H                       * Interval size in bytes
+WAPRHDR1 DS    A                       * Ptr to first PRIMHDR area
+WACOLBUF DS    A                       * Ptr to column bufr for report
+WACOLSZ  DS    F                       * Size of column buffer
+WACOLCT  DS    H                       * Nr of entries used in COLBUF
+WACOLPTR DS    A                       * Ptr to next entry in COLBUF
+WAPAGBUF DS    A                       * Ptr to page bufr for reporting
+WAPAGSZ  DS    F                       * Size of page buffer
+WAPAGOFF DS    H                       * Line offset to free position
+WAPRMRET DS    A                       * Return address from PARMS
+WAPRMPTR DS    A                       * Ptr to parameter string
+WASTPRET DS    A                       * Return address from SETUP
+WAFNPRET DS    A                       * Return address from FNP
+WAFNPR5  DS    F                       * Pointer to current bit
+WAFNPR9  DS    F                       * Address of current bitstring
+WASQPRET DS    A                       * Return address from SQP
+WARMVRET DS    A                       * Return address from RMV
+WARPTRET DS    A                       * Return address from RPT-rtns
+WACPYRET DS    A                       * Return address from CPYCOL rtn
+WAWRTRET DS    A                       * Return address from WRT
+WAPRIMB  DS    F                       * Current prime (Base)
+WADBLB   DS    F                       * Double of WAPRIMB (base)
+WACURB   DS    F                       * Current number (Base)
+WAPRIMX  DS    X                       * Current prime (excess)
+WADBLX   DS    X                       * Double of WAPRIMB (excess)
+WACURX   DS    X                       * Current number (excess)
+WAPRLAST DS    X                       * X'FF' for last page
+WAPRASA  DS    CL1                     * ASA character-for EBCDIC only
+WAPRLINE DS    CL(#CPL)                * Line buffer
+WAPRCRLF DS    CL2                     * Room for CRLF if ASCII
+         DS    0D
+WAPRIMPK DS    PL8                     * Packed prime number
+WAEDMASK DS    XL20                    * mask for editing prime nr
+         DS    0D
+WASYSOUT_EYE DS XL8                    * Room for eyecatcher
+WASYSOUT DS    XL(SYSOUT_LEN)          * Room for runtime copy of DCB
+         DS    0D
+WAMASKS_EYE DS XL8                     * Room for eyecatcher
+WAMASKS  DS    8X                      * Bit masks for AND-ing a bit
+         DS    0D
+WAPRIMES_EYE DS XL8                    * Room for eyecatcher
+WAPRIMES DS    XL(#INTVAL)             * Byte-size entries for 1 intval
+*                                      * 0   = not a candidate prime
+*                                      * 1-n = candidate prime nr
+*                                      * Also bit nr in bit string 
+*                                      *   counting bits from 1 thru n
+*                                      *   rather than 0 thru n-1
+         DS    0D
+WABIT2OF_EYE DS XL8                    * Room for eyecatcher
+WABIT2OF DS    XL(&CAND)               * Bit nr to offset in interval
+*                                      * Each byte corresponds to a bit
+*                                      * in each bitstring (interval).
+*                                      * Each byte holds the value that
+*                                      * the corresponding bit in its
+*                                      * interval represents.
+*                                      * E.g. if #MAXP=5, then the
+*                                      * first bit represents 1, the
+*                                      * second 7, the third 11, etc.
+*                                      * The values are used to convert
+*                                      * between binary and
+*                                      * excess-30/210 notation.
+         DS    0D                      * Re-align to Double-word
+WAEYE2   DS    CL8                     * Second Eye-catcher
+WORKAREA_LEN EQU *-WORKAREA
+
+*
+* Header for a primes area. Each primes area consists of a series
+* of consecutive bitstrings of length &CAND bits. &CAND is always a 
+* multiple of 8, thus each string is &CAND/8 bytes in size
+*
+PRIMHDR  DSECT
+PRIMNEXT DS    A                       * Ptr to next PRIMHDR
+PRIMBASE DS    F                       * Interval number (30s/210s)
+PRIMLAST DS    F                       * Last interval number
+PRIMPTR  DS    A                       * Area of bit map
+PRIMLEN  DS    A                       * Length of bitmap area
+PRIMSTAT DS    X                       * Status flag
+PRIMSINI EQU   X'80'                   * -bit0 = area initialized
+PRIMSOK  EQU   X'40'                   * -bit1 = all primes located
+PRIMSWR  EQU   X'01'                   * -bit7 = area needs to be writ
+         DS    0D                      * Re-align
+PRIMHDR_LEN EQU *-PRIMHDR
+
+***********************************************************************
+*
+* Program entry and linkage
+*
+***********************************************************************
+P16AFK1  RSECT ,                       *
+P16AFK1  AMODE 31
+P16AFK1  RMODE ANY
+***********************************************************************
+         USING P16AFK1,R15             * Establish addressability
+         B     P16AFK10                * Skip header data
+         DC    AL1(P16AFK1-*),C'P16AFK1  &SYSDATE &SYSTIME'
+P16AFK10 EQU   *
+         STM   R14,R12,12(R13)         * Save GPRs
+         LR    R12,R15                 * Copy base address
+         LR    R2,R1                   * Copy ptr to parm string
+         DROP  R15                     * No longer needed
+         USING P16AFK1,R12             * Re-establish addressability
+         LA    R11,WORKAREA_LEN        * Size of req'd workarea
+         GETMAIN R,LV=(R11),LOC=BELOW  * Acquire working storage
+         ST    R1,8(,R13)              * Set ptr to new savearea
+         ST    R13,4(,R1)              * Set ptr from ne to prev save
+         LR    R13,R1                  * Activate new savearea
+         USING WORKAREA,R13            * Set addressable
+         XR    R0,R0                   * Set to zero
+         ST    R0,SAVEAREA             * Nullify header-word
+         ST    R2,WAPRMPTR             * Save pointer to parmstring
+
+***********************************************************************
+*
+* Set up working storage areas
+*
+***********************************************************************
+         MVC   WAEYE,=CL8'P16AFK1 '    * Init Eye-catcher
+         MVC   WAEYE2,=CL8'P16AFK1 '   * and ending eye-catcher as well
+         MVC   WASYSOUT_EYE,=CL8'WASYSOUT'
+         MVC   WAMASKS_EYE,=CL8'WAMASKS'
+         MVC   WAPRIMES_EYE,=CL8'WAPRIMES'
+         MVC   WABIT2OF_EYE,=CL8'WABIT2OF'
+         XR    R0,R0
+         ST    R0,WAPRIMB
+         ST    R0,WADBLB
+         ST    R0,WACURB
+         MVI   WAPRIMX,#MAXP
+         MVI   WADBLX,0
+         MVI   WACURX,0
+         BAL   R14,PARMS               * Extract parameters from string
+         BAL   R14,SETUP               * Setup various arrays
+
+***********************************************************************
+*
+* Obtain and init first area for finding primes
+*
+***********************************************************************
+         LA    R11,PRIMHDR_LEN         * Size of header area
+         GETMAIN R,LV=(R11),LOC=ABOVE  * Acquire header area
+         LR    R11,R1                  * Get pointer to header
+         USING PRIMHDR,R11             * Set header area addressable
+         ST    R11,WAPRHDR1            * Save pointer
+         XC    PRIMHDR(PRIMHDR_LEN),PRIMHDR * Wipe area
+         L     R2,=F'&INTVALS'         * Nr of intervals to allocate
+         LH    R3,WAINTVBYTS           * Interval size in bytes
+         LR    R1,R2                   * Save nr of intervals
+         BCTR  R1,R0                   * Get highest interval nr
+         ST    R1,PRIMLAST             * Insert that into header
+         MR    R2,R2                   * R2*R3 --> R2R3
+         GETMAIN R,LV=(R3),LOC=ABOVE   * Get storage
+         ST    R3,PRIMLEN              * Save length of area
+         ST    R1,PRIMPTR              * Save pointer to area
+         LR    R10,R1                  * Get pointer to storage
+*
+         LR    R0,R1                   * Destination pointer
+         L     R1,PRIMLEN              * Destination length
+         XR    R14,R14                 * Source pointer
+         XR    R15,R15                 * Source length
+         ICM   R15,B'1000',=X'FF'      * Filler byte
+         MVCL  R0,R14                  * Init entire bit map
+*
+         OI    PRIMSTAT,PRIMSINI       * Set status to init ok
+         LA    R1,1                    * First 'potential' prime
+         STC   R1,WAPRIMX              * Multiples of 1 do not need
+*                                      *     to be removed
+         NI    0(R10),X'FF'-X'80'      * Reset '1' - it is no prime
+
+* 
+** Setup data for FNP routine to pretend '1' was lastly processed
+         LA    R15,&CAND               * Bit pointer in bitstring
+         ST    R15,WAFNPR5             *
+         MVC   WAFNPR9,PRIMPTR         * Pointer to bitstring
+
+***********************************************************************
+*
+* Prepare for processing: Find first prime to process
+*
+***********************************************************************
+NEXTPRIM DS    0H                      *
+         BAL   R14,FNP                 * Find Next Prime
+         BAL   R14,SQP                 * SQuare Prime nr
+         CLC   WACURB,PRIMLAST         * Square exceeds area?
+         BH    REPORT                  * Yes: Report primes found
+         BAL   R14,RMV                 * ReMoVe all multiples
+         B     NEXTPRIM                * Go find & Process next prime
+
+REPORT   DS    0H
+         OI    PRIMSTAT,PRIMSOK        * Mark area completed
+* 
+** Setup data for FNP routine to pretend '1' was lastly processed
+         XC    WAPRIMB,WAPRIMB         * First prime is in interval 0
+         XC    WAPRIMX,WAPRIMX         * First prims not found yet
+         LA    R15,&CAND               * Bit pointer in bitstring
+         ST    R15,WAFNPR5             *
+         MVC   WAFNPR9,PRIMPTR         * Pointer to bitstring
+*
+         BAL   R14,INITRPT             * Setup for printing
+RPTLOOP  DS    0H
+         BAL   R14,FNP                 * Find Next Prime
+         LTR   R15,R15                 * No more primes?
+         BNZ   RPTDONE                 * No: we're done
+         BAL   R14,RPTPRIM             * Ok: Report this prime
+         B     RPTLOOP                 *
+RPTDONE  DS    0H
+         BAL   R14,ENDRPT              * Terminate printing
+         WTO   'OK, ready'             *
+         B     EXIT                    * Quit program
+
+ABEND001 ABEND 001                     * User Abend 001:
+*                                      * Nr of candidate primes per
+*                                      * interval does not match preset
+*                                      * value: initialization error
+ABEND002 ABEND 002                     * User Abend 002:
+*                                      * Last prime processed cannot be
+*                                      * located in bit string
+ABEND003 ABEND 003                     * User Abend 003:
+*                                      * Next prime to process has a
+*                                      * square that exceeds 2**31
+ABEND004 ABEND 004                     * User Abend 004:
+*                                      * Input parameterstring cannot
+*                                      * be processed correctly
+ABEND005 ABEND 005                     * User Abend 005:
+*                                      * Internal error while
+*                                      * processing parameter string
+         DROP  ,
+***********************************************************************
+*
+* Subroutine to process run-time parameter string
+*
+* Input : Workarea - WAPRMPTR
+* Output: Workarea - wachars, WASEPRTR, WASPACE
+*
+* Allowed parameters:
+* EBCDIC
+* ASCII
+* COMMA
+* PERIOD
+* SPACING
+*
+* Register allocations:
+* R13 - workarea
+* R12 - codebase
+* R11 - parmstring
+* R10 - length of string
+*
+***********************************************************************
+PARMS    DS    0H
+         USING WORKAREA,R13
+         USING P16AFK1,R12
+         ST    R14,WAPRMRET            * Save return address
+
+*
+** Start with setting appropriate defaults
+         MVI   WACHARS,C'E'            * EBCDIC
+         MVI   WASEPRTR,C'.'           * Period
+         MVC   WASPACE,=H'04'          * Spacing(4)
+
+*
+** Get to parmstring content
+         L     R11,WAPRMPTR            * Point to parmlist ptr
+         LTR   R11,R11                 * Valid pointer?
+         BZ    PARMDONE                * No: exit with defaults
+         L     R11,0(,R11)             * Point to parmlist string
+         LTR   R11,R11                 * Valid pointer?
+         BZ    PARMDONE                * No: exit with defaults
+         LH    R10,0(R11)              * Get length from string
+         LA    R11,2(,R11)             * Point to first char in string
+         LTR   R10,R10                 * Valid length?
+         BZ    PARMDONE                * No: exit with defaults
+
+*
+** Loop to find all paramters
+PARMLOOP DS    0H
+         LTR   R10,R10                 * Any characters left in string?
+         BZ    PARMDONE                * Nope: we're done
+
+         CH    R10,=H'5'               * Enough chars left?
+         BL    ABEND004                * No: can't be right
+         CLC   0(5,R11),=CL5'ASCII'    * ASCII requested?
+         BE    PARMASC                 * Yes: go process
+         CLC   0(5,R11),=CL5'COMMA'    * COMMA requested?
+         BE    PARMCOM                 * Yes: Go process
+
+         CH    R10,=H'6'               * Enough chars left?
+         BL    ABEND004                * No: can't be right
+         CLC   0(6,R11),=CL6'EBCDIC'   * EBCDIC requested?
+         BE    PARMEBC                 * Yes: go process
+         CLC   0(6,R11),=CL6'PERIOD'   * PERIOD requested?
+         BE    PARMPER                 * Yes: go process
+
+         CH    R10,=H'7'               * Enough chars left?
+         BL    ABEND004                * No: can't be right
+         CLC   0(7,R11),=CL7'SPACING'  * SPACING requested?
+         BE    PARMSPA                 * Yes: go process
+         B     ABEND004                * Invalid keyword
+
+*
+** ASCII requested
+PARMASC  DS    0H
+         MVI   WACHARS,C'A'            * Set charmode to Ascii
+         LA    R11,5(,R11)             * Advance pointer
+         SH    R10,=H'5'               * Reduce length
+         BO    ABEND005                * Signal internal error
+         BE    PARMDONE                * Nothing left to process
+         B     PARMNEXT                * Check for next comma
+
+*
+** EBCDIC requested
+PARMEBC  DS    0H
+         MVI   WACHARS,C'E'            * Set charmode to Ebcdic
+         LA    R11,6(,R11)             * Advance pointer
+         SH    R10,=H'6'               * Reduce length
+         BO    ABEND005                * Signal internal error
+         BE    PARMDONE                * Nothing left to process
+         B     PARMNEXT                * Check for next comma
+
+*
+** COMMA requested
+PARMCOM  DS    0H
+         MVI   WASEPRTR,C','           * Set separator to a comma
+         LA    R11,5(,R11)             * Advance pointer
+         SH    R10,=H'5'               * Reduce length
+         BO    ABEND005                * Signal internal error
+         BE    PARMDONE                * Nothing left to process
+         B     PARMNEXT                * Check for next comma
+
+*
+** PERIOD requested
+PARMPER  DS    0H
+         MVI   WASEPRTR,C'.'           * Set separator to a period
+         LA    R11,6(,R11)             * Advance pointer
+         SH    R10,=H'6'               * Reduce length
+         BO    ABEND005                * Signal internal error
+         BE    PARMDONE                * Nothing left to process
+         B     PARMNEXT                * Check for next comma
+
+*
+** SPACING(n|nn) requested
+PARMSPA  DS    0H
+         LA    R11,7(,R11)             * Advance pointer
+         SH    R10,=H'7'               * Reduce length
+         BO    ABEND005                * Signal internal error
+         BZ    ABEND005                * Nothing left to process
+* Ok, now check for opening parenthesis
+         CLI   0(R11),C'('             * Left parenthesis present?
+         BNE   ABEND004                * No: string in error
+         LA    R11,1(,R11)             * Advance pointer
+         SH    R10,=H'1'               * Reduce length
+         BO    ABEND005                * Signal internal error
+         BZ    ABEND005                * Nothing left to process
+* Ok, check for first digit
+         CLI   0(R11),C'0'             * Valid digit?
+         BL    ABEND004                * No: string in error
+         CLI   0(R11),C'9'             * Valid digit?
+         BH    ABEND004                * No: string in error
+         XR    R3,R3                   * Set spacing to 0
+         IC    R3,0(R11)               * Obtain firts digit
+         LA    R2,C'0'                 *
+         SR    R3,R2                   * Get numerical value
+         LA    R11,1(,R11)             * Advance pointer
+         SH    R10,=H'1'               * Reduce length
+         BO    ABEND005                * Signal internal error
+         BZ    ABEND005                * Nothing left to process
+* Ok, check for second digit (or closing parenthesis)
+         CLI   0(R11),C'0'             * Valid digit?
+         BL    PARMSPA2                * No: should be closing par.
+         CLI   0(R11),C'9'             * Valid digit?
+         BH    ABEND004                * No: string in error
+         LA    R2,10                   * Ok: valid digit, therefore
+         MR    R2,R3                   * R2*R3 --> R2R3 ==> R3=10n
+         IC    R2,0(R11)               * Get second digit
+         LA    R1,C'0'                 *
+         SR    R2,R1                   * Get numerical value
+         AR    R3,R2                   * And add to total
+         LA    R11,1(,R11)             * Advance pointer
+         SH    R10,=H'1'               * Reduce length
+         BO    ABEND005                * Signal internal error
+         BZ    ABEND005                * Nothing left to process
+* Ok, check for closing parenthesis
+PARMSPA2 DS    0H
+         STH   R3,WASPACE              * Save spacing from parm
+         CLI   0(R11),C')'             * Right parenthesis present?
+         BNE   ABEND004                * No: string in error
+         LA    R11,1(,R11)             * Advance pointer
+         SH    R10,=H'1'               * Reduce length
+         BO    ABEND005                * Signal internal error
+         BZ    PARMDONE                * Nothing left to process
+         B     PARMNEXT                * Check for next comma
+
+*
+** Start processing next parameter
+PARMNEXT DS    0H
+         CLI   0(R11),C','             * Comma present?
+         BNE   ABEND004                * No: string in error
+         LA    R11,1(,R11)             * Advance pointer
+         BCT   R10,PARMLOOP            * Reduce length and loop
+*                                      * Length is reduced to zero
+*                                      * i.e. parm ends with a comma
+*                                      * Allow this; just end
+
+PARMDONE DS    0H
+         L     R14,WAPRMRET            * Retrieve return address
+         BR    R14                     * Return to mainline
+
+         DROP  ,
+***********************************************************************
+*
+* Subroutine to setup various arrays
+*
+* Input : Workarea
+* Output: Workarea - PRIMES, WABIT2OF, WAMASKS, WAINTVBITS, WAINTVBYTS
+*
+* Register allocations:
+* R13 - workarea
+* R12 - codebase
+*
+***********************************************************************
+SETUP    DS    0H
+         USING WORKAREA,R13
+         USING P16AFK1,R12
+         ST    R14,WASTPRET            * Save return address
+*
+** Step 1: Setup the PRIMES array using a simple sieve algorithm
+         MVI   WAPRIMES,X'01'          * Set all numbers to primes
+         MVC   WAPRIMES+1(#INTVAL-1),WAPRIMES
+*
+* Mark all even numbers as non-primes
+         LA    R14,2                   * First prime
+         LA    R15,WAPRIMES+#INTVAL-1  * End of interval
+         LA    R1,WAPRIMES             * Point start of interval
+LOOP2    DS    0H
+         MVI   0(R1),X'00'             * Mark as non-prime
+         BXLE  R1,R14,LOOP2            * Repeat for entire interval
+*
+* Mark all multiples of three as non-primes
+         LA    R14,3                   * Second prime
+         LA    R15,WAPRIMES+#INTVAL-1  * End of interval
+         LA    R1,WAPRIMES             * Point start of interval
+LOOP3    DS    0H
+         MVI   0(R1),X'00'             * Mark as non-prime
+         BXLE  R1,R14,LOOP3            * Repeat for entire interval
+*
+* Mark all multiples of five as non-primes
+         LA    R14,5                   * Third prime
+         LA    R15,WAPRIMES+#INTVAL-1  * End of interval
+         LA    R1,WAPRIMES             * Point start of interval
+LOOP5    DS    0H
+         MVI   0(R1),X'00'             * Mark as non-prime
+         BXLE  R1,R14,LOOP5            * Repeat for entire interval
+
+         AIF   (&#MAXP LT 7).SKIP7
+*
+* Mark all multiples of seven as non-primes
+         LA    R14,7                   * Third prime
+         LA    R15,WAPRIMES+#INTVAL-1  * End of interval
+         LA    R1,WAPRIMES             * Point start of interval
+LOOP7    DS    0H
+         MVI   0(R1),X'00'             * Mark as non-prime
+         BXLE  R1,R14,LOOP7            * Repeat for entire interval
+.SKIP7   ANOP
+
+*
+** Count the number of potential primes per interval
+** Also update the table to contain bit sequence numbers
+** And fill table WABIT2OF for translating bit nrs to offset in intval
+         LA    R14,1                   * Count each byte
+         LA    R15,WAPRIMES+#INTVAL-1  * End of interval
+         LA    R1,WAPRIMES             * Point start of interval
+         XR    R2,R2                   * Init counter
+         XR    R3,R3                   * To hold copy of each byte
+         LA    R4,WABIT2OF             * Point first table entry
+LOOPCT   DS    0H
+         IC    R3,0(R1)                * Obtain byte value
+         LA    R2,0(R3,R2)             * And add to total
+         LTR   R3,R3                   * This is a possible prime?
+         BZ    LOOPCTNX                * Yes: process next entry
+         STC   R2,0(R1)                * Insert bit sequence nr.
+         LR    R5,R1                   * Copy address
+         LA    R6,WAPRIMES             * 
+         SR    R5,R6                   * Determine offset in table
+         STC   R5,0(R4)                * Save offset for bit nr
+         LA    R4,1(,R4)               * and point next wabit2of entry
+LOOPCTNX DS    0H
+         BXLE  R1,R14,LOOPCT           * Repeat for entire interval
+         STH   R2,WAINTVBITS           * Nr of candidates per interval
+         CLC   WAINTVBITS,=H'&CAND'    * Nr of candidates matches?
+         BNE   ABEND001                * On mismatch: Abend
+         LA    R2,7(,R2)               * Add for rounding up
+         SRA   R2,3                    * Divide by 8 to get bytes
+         STH   R2,WAINTVBYTS           * Save nr of bytes per interval
+
+*
+** Fill entire wamasks array
+         LH    R3,=X'FF7F'             * Mask for bit 1
+         LA    R2,8                    * Nr of bit masks required
+         LA    R1,WAMASKS              * Point to masks array
+MASKLOOP DS    0H
+         STC   R3,0(,R1)               * Save bit mask
+         SRA   R3,1                    * Shift 0-bit 1 position
+         LA    R1,1(,R1)               * Point next entry
+         BCT   R2,MASKLOOP             * Repeat for each mask
+
+         L     R14,WASTPRET            * Retrieve return address
+         BR    R14                     * Return to mainline
+
+         DROP  ,
+***********************************************************************
+*
+* Subroutine to find next prime to be processed
+*
+* Input : Workarea fields WAPRIMB+WAPRIMX = current prime
+*         Workarea PRIMPTR1 = pointer to first bitmap array
+*         R11 --> Current PRIMHDR
+* Output: R15=0: ok, R15=4: No more primes
+*         WAPRIMB+WAPRIMX updated
+*
+* Register allocations:
+* R13 - workarea
+* R12 - codebase
+* R11 - Current primhdr
+* R10 - Start of first bitstring array
+* R9  - Pointer in bitstring array 
+* R8  - Highest interval number in area
+* R6/7- Copy of bitstring of current interval
+* R5  - Loop counter
+*
+***********************************************************************
+FNP      DS    0H
+         USING WORKAREA,R13
+         USING P16AFK1,R12
+         USING PRIMHDR,R11
+         ST    R14,WAFNPRET            * Save return address
+*
+** First step: locate currently processed prime's bit location
+         L     R10,WAPRHDR1            * Point first Header area
+         L     R10,PRIMPTR-PRIMHDR(R10) * Point bitmap area
+         L     R5,WAFNPR5              * Reload bit index
+         L     R9,WAFNPR9              * Reload bitstring pointer
+         L     R8,PRIMLAST             * Get highest valid interval nr
+*
+** Load bitstring - may have been changed by removing non-primes!
+         AIF   (&#MAXP EQ 5).LOAD5
+         AIF   (&#MAXP EQ 7).LOAD7
+         MNOTE 12,'Unsupported value for #MAXP'
+.LOAD5   ANOP  ,
+         XR    R6,R6                   * Set sign bit
+         IC    R7,0(R9)                * Get interval bitstring
+         SLDA  R6,63-&CAND             * Move bitstring to hi-order
+*                                      *    excluding sign position
+         AGO   .LOADED
+.LOAD7   ANOP  ,
+         XR    R6,R6                   * Set sign bit to zero
+         ICM   R6,B'0011',0(R9)        * Load first 16 bits
+         ICM   R7,B'1111',2(R9)        * Load trailing 32 bits
+         SLDA  R6,63-&CAND             * Move bitstring to hi-order
+*                                      *    excluding sign position
+.LOADED  ANOP  ,
+         LA    R15,&CAND+1             * Determine nr of bits used up
+         SR    R15,R5                  * this is the nr of bits to
+         SLDA  R6,0(R15)               * shift out before searching
+         BCTR  R5,R0                   * Decrement nr of bits left
+
+*
+** Ok, we've found the right bit - search the next 1-bit
+FNPSRCH  DS    0H
+         SLDA  R6,1                    * Shift out next bit
+         BO    FNPFOUND                * One out = found next prime;
+*                                      * But index will be 1 too high
+         BZ    FNPNEXT                 * Remainder of bit string is 0
+         BCT   R5,FNPSRCH              * Go try next bit in string
+*
+* Bitstring has been emptied: load next string
+FNPNEXT  DS    0H
+         L     R1,WAPRIMB              * Get interval nr
+         LA    R1,1(,R1)               * Increment
+         ST    R1,WAPRIMB              * Save incremented interval nr
+         CR    R1,R8                   * Compare with highest valid
+         BH    FNPEND                  * End of strings area!
+         LA    R9,&CAND/8(,R9)         * Point next bitstring
+*        XR    R6,R6                   * Sign bit always 0 here
+         AIF   (&#MAXP EQ 5).LOAD_5
+         AIF   (&#MAXP EQ 7).LOAD_7
+         MNOTE 12,'Unsupported value for #MAXP'
+.LOAD_5  ANOP  ,
+         ICM   R7,B'0001',0(R9)        * Get interval bitstring
+         BZ    FNPNEXT                 * Skip interval: no primes
+         SLDA  R6,63-&CAND             * Move bitstring to hi-order
+*                                      *    excluding sign position
+         AGO   .LOADED_
+.LOAD_7  ANOP  ,
+         ICM   R6,B'0011',0(R9)        * Load first 16 bits
+         ICM   R7,B'1111',2(R9)        * Load trailing 32 bits
+         SLDA  R6,63-&CAND             * Move bitstring to hi-order
+*                                      *    excluding sign position
+         BZ    FNPNEXT                 * Skip interval: no primes
+.LOADED_ ANOP  ,
+
+*
+** Now we must scan the bitstring for a '1' value
+         LA    R5,&CAND                * Nr of bits in string
+         B     FNPSRCH                 * Ok: start scanning
+
+* We've found a one-bit, WAPRIMB is correct for the current interval
+* Determine new value for WAPRIMX
+FNPFOUND DS    0H                      * Index in R5 is 1 too high
+*                                      * R5 now in range 8 thru 1
+         LA    R1,&CAND                * Convert decremented loop ctr
+*                                      *   in range 0 thru 7
+         SR    R1,R5                   * to incremented index value
+         IC    R1,WABIT2OF(R1)         * for wabit2of array
+         STC   R1,WAPRIMX              * Save new excess value
+
+* 
+** Save current status before leaving
+         ST    R5,WAFNPR5              * Save bit index
+         ST    R9,WAFNPR9              * Save bitstring address
+
+         XR    R15,R15                 * Set retcode 0
+         L     R14,WAFNPRET            * Retrieve return address
+         BR    R14                     * Return to mainline
+
+FNPEND   DS    0H                      * Not found handler
+         LA    R15,4                   * Set retcode 4
+         L     R14,WAFNPRET            * Retrieve return address
+         BR    R14                     * Return to mainline
+
+         DROP  ,
+***********************************************************************
+*
+* Square a Prime nr in excess-30/210 notation
+*
+* Input : Workarea fields WAPRIMB+WAPRIMX = current prime
+* Output: PRIMSQR+PRIMSQRX updated
+*         WADBLB+WADBLX updated
+*
+* Register allocations:
+* R13 - workarea
+* R12 - codebase
+* R11 - Current primhdr
+*
+* Number in excess notation = N*I+O
+* where n=interval nr, I=interval size, O=offset in interval
+*
+***********************************************************************
+SQP      DS    0H
+         USING WORKAREA,R13
+         USING P16AFK1,R12
+         USING PRIMHDR,R11
+         ST    R14,WASQPRET            * Save return address
+
+*
+** First we'll take the current number
+         LA    R10,#INTVAL             * Get interval size
+         L     R9,WAPRIMB              * Get interval nr
+         XR    R1,R1                   * Wipe register
+         IC    R1,WAPRIMX              * To contain offset
+
+*
+** Calculate the double value
+         LA    R6,0(R9,R9)             * Double interval nr
+         LA    R7,0(R1,R1)             * Double offset
+         CR    R7,R10                  * Exceeds interval size?
+         BNH   SQPDBLOK                * If <= tehn no need to adjust
+         LA    R6,1(,R6)               * Increment interval count
+         SR    R7,R10                  * Decrement excess
+SQPDBLOK DS    0H
+         ST    R6,WADBLB               * Save intervals for DBL
+         STC   R7,WADBLX               * Save excess for DBL
+
+*
+** Calculate square = starting number
+         MR    R8,R10                  * R9*R10 --> R8R9 
+         AR    R9,R1                   * Add offset
+         BO    ABEND003                * Abort if too large
+         MR    R8,R9                   * Take square into R8R9
+         DR    R8,R10                  * Divide by interval size
+         ST    R9,WACURB               * Save interval number
+         STC   R8,WACURX               * Save excess (remainder)
+
+         L     R14,WASQPRET            * Retrieve return address
+         BR    R14                     * Return to mainline
+
+         DROP  ,
+***********************************************************************
+*
+* Remove all multiples of current prime
+*
+* Register allocations:
+* R15    - work register
+* R14    - Size of interval
+* R13    - workarea
+* R12    - codebase
+* R11    - Current primhdr
+* R10    - Pointer to waprimes
+* R8/9   - Current number (base/excess)
+* R6/7   - Doubled prime (base/excess)
+* R5     - Doubled prime (base * interval-size in bytes)
+* R4     - pointer to current bitstring
+* R3     - Mask pointer for resetting non-primes
+* R2     - Byte index of bit within bitstring
+* R1     - work register / bit index of bit within byte
+* R0     - High interval number of bitstring area
+*
+***********************************************************************
+RMV      DS    0H
+         USING WORKAREA,R13
+         USING P16AFK1,R12
+         USING PRIMHDR,R11
+         ST    R14,WARMVRET            * Save return address
+*
+** Setup registers
+         LA    R14,#INTVAL             * Interval size
+         LA    R10,WAPRIMES            * Point validity array
+         L     R8,WACURB               * Get current number (base)
+         XR    R9,R9                   * 
+         IC    R9,WACURX               * Get current number (excess)
+         L     R6,WADBLB               * Get doubled prime (base)
+         XR    R7,R7                   * 
+         IC    R7,WADBLX               * Get doubled prime (excess)
+         AIF   (&#MAXP EQ 7).PTR7
+.PTR5    ANOP  ,
+         L     R15,PRIMPTR             * Point to Primes area
+         LA    R4,0(R8,R15)            * Save current interval address
+         LR    R5,R6                   * Interval size = 1
+         AGO   .PTROK
+.PTR7    ANOP  ,
+         LH    R2,WAINTVBYTS           * Bytes per interval
+         LR    R3,R8                   * Current interval nr
+         MR    R2,R2                   * R2*R3 --> R2R3
+         L     R2,PRIMPTR              * Point to Primes area
+         LA    R4,0(R3,R2)             * Save current interval address
+         LR    R3,R6                   * WADBLB
+         LA    R2,&CAND/8              * Nr of bytes per interval
+         MR    R2,R2                   * R2*R3 --> R2R3
+         LR    R5,R3                   * Nr of bytes for WADBLB
+.PTROK   ANOP  ,
+         XR    R3,R3                   *
+         XR    R2,R2                   *
+         XR    R1,R1                   *
+         L     R0,PRIMLAST             * Get last interval to process
+
+*
+** Remove current number
+RMVNEXT  DS    0H
+         IC    R1,0(R9,R10)            * Get candidate index nr
+         LTR   R1,R1                   * Is it a one?
+         BZ    RMVADD                  * No candidate - go add
+         AIF   (&#MAXP NE 7).BITADROK
+         LR    R2,R1                   * Copy bit index in bitstring
+         SRA   R2,3                    * Create byte index
+         N     R1,=X'00000007'         * Create bit index within byte
+         BNZ   RMVADROK                * Bit address down to zero
+         BCTR  R2,R0                   * Adjust byte index
+         LA    R1,8                    *   and bit index too
+RMVADROK DS    0H         
+.BITADROK ANOP ,
+         LA    R3,WAMASKS-1(R1)        * Point at mask to be used
+         LA    R15,0(R2,R4)            * Point byte to update
+         NC    0(1,R15),0(R3)          * Set current bit to 'noprime'
+
+*
+** Number has been processed: Add the doubled prime to find next number
+RMVADD   DS    0H
+         LA    R9,0(R9,R7)             * New offset
+         CR    R9,R14                  * Exceeds interval size?
+         BNH   RMVADD0                 * No: simple addition
+         LA    R8,1(R6,R8)             * New interval number
+         SR    R9,R14                  * New excess value
+         LA    R4,&CAND/8(R4,R5)       * New bitstring address
+         B     RMVADDOK                * Ok: done
+RMVADD0  DS    0H
+         LA    R8,0(R6,R8)             * New interval number
+         LA    R4,0(R4,R5)             * New bitstring address
+RMVADDOK DS    0H
+         CR    R8,R0                   * End of bitstring area?
+         BNH   RMVNEXT                 * No: remove this non-prime too
+
+         L     R14,WARMVRET            * Retrieve return address
+         BR    R14                     * Return to mainline
+
+         DROP  ,
+***********************************************************************
+*
+* Open Report file and setup for printing
+*
+* Register allocations:
+* R13 - Workarea
+* R12 - Codebase
+* R11 - PRIMHDR pointer (not used)
+* R10 - DCB pointer, record pointer, entry in column buffer
+*
+***********************************************************************
+INITRPT  DS    0H
+         USING WORKAREA,R13
+         USING P16AFK1,R12
+         ST    R14,WARPTRET            * Save return address
+
+*
+** Create editing mask (step 1: whole sections of separator+3 digits)
+         L     R14,=F'-4'              * Increment value
+         LA    R15,WAEDMASK+1          * Mask to be created
+*                                      * Skip first byte: will be blank
+         L     R0,=X'20202020'         * Three digit selectors
+         ICM   R0,B'1000',WASEPRTR     * preceded by separator char
+         LA    R1,WAEDMASK+L'WAEDMASK-4 * Point last section in mask
+INRPTLUP STCM  R0,B'1111',0(R1)        * Fill current 4-byte section
+         BXH   R1,R14,INRPTLUP         * Loop back while in WAEDMASK
+* Create editing mask (step 2: leading digits)
+         L     R14,=F'-1'              * Now loop by character
+         LA    R15,WAEDMASK            * Mask to be created
+*                                      * Skip first byte: will be blank
+         LA    R1,3(,R1)               * Point before first separator
+INRPTLP2 MVI   0(R1),X'20'             * Insert digit selector
+         BXH   R1,R14,INRPTLP2         * Loop back while in WAEDMASK
+* Create editing mask (step 3: leading suppression char)
+         MVI   WAEDMASK,C' '           * Prefix with a space
+
+*
+** Open DCB
+         CLI   WACHARS,C'E'            * Ebcdic requested?
+         BE    INRPTEBC                * Yes: use Ebcdic template
+         MVC   WASYSOUT(SYSOUT_LEN),SYSOUTA * Copy DCB prototype (asc)
+         B     INRPTOPN                * Go open the DCB
+INRPTEBC DS    0H
+         MVC   WASYSOUT(SYSOUT_LEN),SYSOUTE * Copy DCB prototype (ebc)
+INRPTOPN DS    0H
+         OPEN  (WASYSOUT,OUTPUT)       * Open Sysout
+
+*
+** Allocate and init page buffer
+         LH    R10,=AL2(#LPP*#CPL)     * Nr of bytes for a page
+         ST    R10,WAPAGSZ             * Save buffer size
+         GETMAIN R,LV=(R10),LOC=ABOVE  * Acquire page buffer
+         LR    R10,R1                  * Set ptr to first line
+         ST    R10,WAPAGBUF            * Save ptr to report buffer
+         XC    WAPAGOFF,WAPAGOFF       * Line offset is now zero
+*
+         LR    R0,R1                   * Destination pointer
+         L     R1,WAPAGSZ              * Destination length
+         XR    R14,R14                 * Source pointer
+         XR    R15,R15                 * Source length
+         ICM   R15,B'1000',=C' '       * Filler byte
+         MVCL  R0,R14                  * Fill buffer with spaces
+*
+** Allocate and init column buffer
+         LH    R10,=AL2(#LPP*(L'WAEDMASK)) * size of entry
+         ST    R10,WACOLSZ             * Save buffer size
+         GETMAIN R,LV=(R10),LOC=ABOVE  * Acquire column buffer
+         LR    R10,R1                  * Set ptr to first entry
+         ST    R10,WACOLBUF            * Save ptr to column buffer
+         ST    R10,WACOLPTR            * Save ptr to next entry
+*
+         LR    R0,R1                   * Destination pointer
+         L     R1,WACOLSZ              * Destination length
+         XR    R14,R14                 * Source pointer
+         XR    R15,R15                 * Source length
+         ICM   R15,B'1000',=C' '       * Filler byte
+         MVCL  R0,R14                  * Fill buffer with spaces
+         XC    WACOLCT,WACOLCT         * Set entry count to 0
+*
+** Report pre-determined primes
+         MVC   0(L'WAEDMASK,R10),REPORT2
+         LA    R10,L'WAEDMASK(,R10)    * Point next entry
+         LA    R14,1(,R14)             * Adjust counter
+         MVC   0(L'WAEDMASK,R10),REPORT3
+         LA    R10,L'WAEDMASK(,R10)    * Point next entry
+         LA    R14,1(,R14)             * Adjust counter
+         MVC   0(L'WAEDMASK,R10),REPORT5
+         LA    R10,L'WAEDMASK(,R10)    * Point next entry
+         LA    R14,1(,R14)             * Adjust counter
+         AIF   (&#MAXP EQ 5).INRPTOK
+         MVC   0(L'WAEDMASK,R10),REPORT7
+         LA    R10,L'WAEDMASK(,R10)    * Point next entry
+         LA    R14,1(,R14)             * Adjust counter
+.INRPTOK ANOP  ,
+         ST    R10,WACOLPTR            * Save pointer to next entry
+         STH   R14,WACOLCT             * Save count of entries
+*
+         L     R14,WARPTRET            * Retrieve return address
+         BR    R14                     * Return to mainline
+
+REPORT2  DC    CL(L'WAEDMASK-1)' ',C'2'
+REPORT3  DC    CL(L'WAEDMASK-1)' ',C'3'
+REPORT5  DC    CL(L'WAEDMASK-1)' ',C'5'
+         AIF   (&#MAXP EQ 5).INRPTOK2
+REPORT7  DC    CL(L'WAEDMASK-1)' ',C'7'
+.INRPTOK2 ANOP ,
+
+         DROP  ,
+***********************************************************************
+*
+* Report a single prime
+*
+* Input : WAPRIMB+WAPRIMX
+* Output: Formatted prime nr in columnn buffer
+*         When column buffer fills, it is copied to page buffer
+*         When page buffer fills, it is printed on SYSOUT
+*         WACOLCT and WACOLPTR are updated to point next entry
+*
+* Register allocations:
+* R13 - Workarea
+* R12 - Codebase
+* R11 - Current primhdr area (not used)
+* R6  - Column buffer entry
+* R5  - Count of valid entries in column buffer
+*
+***********************************************************************
+RPTPRIM  DS    0H
+         USING WORKAREA,R13
+         USING P16AFK1,R12
+         ST    R14,WARPTRET            * Save return address
+*
+* Create correct number in binary
+         LA    R10,#INTVAL             * Interval size
+         L     R9,WAPRIMB              * Interval nr
+         MR    R8,R10                  * R9*R10 --> R8R9
+         XR    R10,R10                 *
+         IC    R10,WAPRIMX             * Get offset
+         AR    R9,R10                  * Add to number
+* 
+* Convert to display format
+         CVD   R9,WAPRIMPK             *
+         L     R6,WACOLPTR             * Point next column entry
+         MVC   0(L'WAEDMASK,R6),WAEDMASK * Setup mask
+         ED    0(L'WAEDMASK,R6),WAPRIMPK * Create text
+         OI    L'WAEDMASK(R6),X'F0'    * Remove sign
+
+*
+* Update pointer and counter
+         LH    R5,WACOLCT              * Get count of entries
+         LA    R5,1(,R5)               * increment by one
+         CH    R5,=AL2(#LPP)           * Columnn full now?
+         BNL   RPTPRIMC                * Yes: go copy column
+
+         STH   R5,WACOLCT              * ok: save updated value
+         LA    R6,L'WAEDMASK(,R6)      * Point next entry
+         ST    R6,WACOLPTR             * Save updated pointer
+         B     RPTPRIMX                * and exit
+*
+* Copy the entire column into the page buffer
+* Do not update pointer and counter: CPYCOL expects
+* pointer to point last valid entry
+RPTPRIMC DS    0H
+         BAL   R14,CPYCOL
+         XC    WACOLCT,WACOLCT         * Reset use counter to zero
+         MVC   WACOLPTR,WACOLBUF       * Point to first entry
+*
+* Exit
+RPTPRIMX DC    0H
+         L     R14,WARPTRET            * Retrieve return address
+         BR    R14                     * Return to mainline
+
+         DROP  ,
+***********************************************************************
+*
+* Copy column buffer into page buffer
+*
+* Input : WACOLBUF
+*         WACOLPTR pointing to last entry in column buffer
+* Output: WAPAGBUF with column data added
+*         When page buffer is full, it is printed on SYSOUT
+*
+* Register allocations:
+* R13 - Workarea
+* R12 - Codebase
+* R11 - Current primhdr area (not used)
+* R2  - Offset (nr of ignorable lead spaces) in this column
+* R3  - Max nr of significant characters in this column
+* R4  - Column entry pointer (source)
+* R5  - Page line pointer (destination area)
+* R6  - length of each column entry
+* R7  - pointer to last valid entry in column buffer
+*
+***********************************************************************
+CPYCOL   DS    0H
+         USING WORKAREA,R13
+         USING P16AFK1,R12
+         ST    R14,WACPYRET            * Save return address
+*
+* Determine how many characters are valid in the last entry
+CPYCOL00 DS    0H
+         L     R10,WACOLPTR            * Point last entry in column
+         TRT   0(L'WAEDMASK,R10),CPYCOLTT * Find first non-space
+         SR    R1,R10                  * Determine nr of lead spaces
+         LR    R2,R1                   * Offset to start of chars
+         LA    R3,L'WAEDMASK           * Full length of each entry
+         SR    R3,R2                   * Nr of significant chars
+         BCTR  R3,R0                   * -1 for EXecute
+*
+* Will this column fit on the current page?
+         LH    R15,WAPAGOFF            * Get current offset in line
+         LA    R15,0(R3,R15)           * Point last char after move
+         CH    R15,=AL2(#CPL)          * Will fit on line?
+         BNL   CPYCOLPP                * No: go print page first
+*
+* Copy all valid entries
+         L     R4,WACOLBUF             * Point first entry source
+         L     R5,WAPAGBUF             * Point first line on page
+         LA    R6,L'WAEDMASK           * Increment value for source
+         L     R7,WACOLPTR             * Point last entry
+         LA    R4,0(R1,R4)             * Advance both src pointers...
+         LA    R7,0(R1,R7)             * ... to significant part of src
+         AH    R5,WAPAGOFF             * increment destination ptr ...
+*                                      * ... to first free byte
+CPYCOLLP DS    0H                   
+         EX    R3,CPYCOLMV             * Copy entry into page buffer
+         LA    R5,#CPL(,R5)            * Point next line in page buffer
+         BXLE  R4,R6,CPYCOLLP          * For all valid entries
+*
+* All entries copied: advance line offset pointer
+         LH    R9,WAPAGOFF             * Get current/old value
+         LA    R9,1(R3,R9)             * Point after added content
+         AH    R9,WASPACE              * Add value for column spacing
+         STH   R9,WAPAGOFF             * Offset value for next column
+
+         L     R14,WACPYRET            * Retrieve return address
+         BR    R14                     * Return to mainline
+
+CPYCOLPP DS    0H
+         BAL   R14,WRTPAG              * Go write the page
+         B     CPYCOL00                * Re-drive this routine
+*
+CPYCOLMV MVC   0(0,R5),0(R4)           * Copy column entry to page buf
+CPYCOLTT DC    256X'FF'                * All characters are relevant
+         ORG   CPYCOLTT+C' '           * Position to space
+         DC    X'00'                   * Mark space irrelevant
+         ORG   ,
+
+         DROP  ,
+***********************************************************************
+*
+* Write a page from the print buffer
+*
+* Register input:
+* R13 - Workarea
+* R12 - Codebase
+* R11 - First primhdr area (not used)
+* WAPAGBUF = ptr to page buffer
+*
+***********************************************************************
+WRTPAG   DS    0H
+         USING WORKAREA,R13
+         USING P16AFK1,R12
+         ST    R14,WAWRTRET            * Save return address
+*
+         LA    R5,#LPP                 * Nr of lines to process
+         L     R4,WAPAGBUF             * Point first line
+*
+** Data is in EBCDIC - if ASCII requested: translate
+WRTPAGLP DS    0H                      * Loop over all lines
+         MVC   WAPRLINE,0(R4)          * Copy line content
+         CLI   WACHARS,C'E'            * Ebcdoc requested?
+         BE    WRTPUTE                 * Yes: go handle
+         TR    WAPRLINE,EBC2ASC        * Change to ASCII
+         MVC   WAPRCRLF,=X'0D0A'       * Add carriage return+linefeed
+         CH    R5,=H'1'                * Last line of page?
+         BNE   WRTPUTA                 * Nope: just a line
+* On last line of page, use page eject instead of line feed
+* Except when we're printing the last page
+         CLI   WAPRLAST,X'FF'          * Last page?
+         BE    WRTPUTA                 * Yes, use CRLF
+         MVC   WAPRCRLF,=X'0D0C'       * Add carriage return+page eject
+WRTPUTA  DS    0H
+         PUT   WASYSOUT,WAPRLINE       * Write ascii line
+         LA    R4,#CPL(,R4)            * Point next line on page
+         BCT   R5,WRTPAGLP             * Advance to next line
+         B     WRTDONE
+
+*
+** WAPRASA starts out blank, resets to '1' after page completes
+**         and needs to be reset to blank after each line.
+WRTPUTE  DS    0H
+         PUT   WASYSOUT,WAPRASA        * Write ASA + ebcdic line
+         LA    R4,#CPL(,R4)            * Point next line on page
+         MVI   WAPRASA,C' '            * Reset page eject
+         BCT   R5,WRTPAGLP             * Advance to next line
+*
+** Re-init buffer with spaces
+WRTDONE  DC    0H
+         L     R0,WAPAGBUF             * Point start of buffer
+         L     R1,WAPAGSZ              * Destination length
+         XR    R14,R14                 * Source pointer
+         XR    R15,R15                 * Source length
+         ICM   R15,B'1000',=C' '       * Filler byte
+         MVCL  R0,R14                  * Fill buffer with spaces
+         STH   R14,WAPAGOFF            * Reset line offset on page to 0
+* Prime ASA character to '1' to eject page on first line of next page
+         MVI   WAPRASA,C'1'            * Pre-fill page eject
+*
+         L     R14,WAWRTRET            * Retrieve return address
+         BR    R14                     * Return to mainline
+
+         DROP  ,
+***********************************************************************
+*
+* Close Report file
+*
+* Register allocations:
+* R13 - Workarea
+* R12 - Codebase
+* R11 - PRIMHDR area (not used)
+* R10 - DCB pointer
+*
+***********************************************************************
+ENDRPT   DS    0H
+         USING WORKAREA,R13
+         USING P16AFK1,R12
+         ST    R14,WARPTRET            * Save return address
+*
+** If column buffer not empty: copy to page buffer
+         CLC   WACOLCT,=H'0'           * Check nr of valid entries
+         BZ    ENDRPT10                * No entries: skip copy
+         L     R1,WACOLPTR             * Pointer to next free entry
+         SH    R1,=AL2(L'WAEDMASK)     * .. backup to last valid entry
+         ST    R1,WACOLPTR             * Set for CPYCOL routine
+         BAL   R14,CPYCOL              * Valid entries: copy to page
+ENDRPT10 DS    0H
+*
+** If page buffer not empty: print
+         CLC   WAPAGOFF,=H'0'          * Check offset to next column
+         BZ    ENDRPT20                * No entries: skip print
+         OI    WAPRLAST,X'FF'          * Mark printing last page
+         BAL   R14,WRTPAG              * Valid entries: write page
+ENDRPT20 DS    0H
+*
+** Release column buffer storage
+         L     R10,WACOLBUF            * Point buffer area
+         L     R9,WACOLSZ              * Obtain area length
+         FREEMAIN RU,LV=(R9),A=(R10)   * Free report buffer area
+         SR    R0,R0                   * Set to zero
+         ST    R0,WACOLBUF             * Wipe pointer to buffer
+         ST    R0,WACOLSZ              * And length
+
+*
+** Release page buffer storage
+         L     R10,WAPAGBUF            * Point buffer area
+         L     R9,WAPAGSZ              * Obtain area length
+         FREEMAIN RU,LV=(R9),A=(R10)   * Free report buffer area
+         SR    R0,R0                   * Set to zero
+         ST    R0,WAPAGBUF             * Wipe pointer to buffer
+         ST    R0,WAPAGSZ              * And length
+
+*
+** Close DCB - z390 will only open/close a DCB in static storage :-(
+         CLOSE (WASYSOUT)              * Close Sysout
+
+         L     R14,WARPTRET            * Retrieve return address
+         BR    R14                     * Return to mainline
+
+         DROP  ,
+***********************************************************************
+*
+* To exit program - release all acquired storage
+*
+* Register allocations:
+* R13 - Workarea
+* R12 - Codebase
+* R11 - PRIMHDR area
+* R10 - bitmap pointer
+*
+***********************************************************************
+EXIT     DS    0H
+         USING WORKAREA,R13
+         USING P16AFK1,R12
+         USING PRIMHDR,R11
+
+         ICM   R11,B'1111',WAPRHDR1    * Point first HDR area
+         BZ    EXIT_WA                 * No more HDR areas
+         ICM   R10,B'1111',PRIMPTR     * Point to bitmap area
+         BZ    EXIT_HDR                * Not allocated: free HDR
+         L     R9,PRIMLEN              * Get bitmap length
+         FREEMAIN RU,LV=(R9),A=(R10)   * Free bitmap area
+         XC    PRIMPTR,PRIMPTR         * Set ptr to zero
+         XC    PRIMLEN,PRIMLEN         *     and length as well
+EXIT_HDR DS    0H                      * Free HDR area
+         MVC   WAPRHDR1,PRIMNEXT       * Remove HDR from chain
+         LA    R9,PRIMHDR_LEN          *
+         FREEMAIN RU,LV=(R9),A=(R11)   * Free PRIMHDR area
+         B     EXIT                    * And go free next HDR
+         DROP  R11                     * HDR no longer addressable
+
+EXIT_WA  DS    0H                      * Workarea handling
+         L     R11,4(,R13)             * Get ptr to prev savearea
+         LA    R10,WORKAREA_LEN        * Size of area to be freed
+         FREEMAIN RU,LV=(R10),A=(R13)  * Free workarea
+         DROP  R13                     * End addressability of workarea
+         LR    R13,R11                 * Set prev savearea current
+         LM    R14,R12,12(R13)         * Reset all registers
+         XR    R15,R15                 * Set RC=0
+         BR    R14                     * Return
+
+         DROP  ,
+***********************************************************************
+         DS    0D
+EBC2ASC  DC    256X'00'
+         ORG   EBC2ASC+C' '
+         DC    X'20'                   * Ascii space
+         ORG   EBC2ASC+C'.'
+         DC    X'2E'                   * Ascii period
+         ORG   EBC2ASC+C','
+         DC    X'2C'                   * Ascii comma
+         ORG   EBC2ASC+C'0'
+         DC    X'30313233343536373839' * Ascii digits
+         ORG   ,
+
+* template DCB for sysout in EBCDIC
+&LRECL   SETA  #CPL+1
+SYSOUTE  DCB   DDNAME=SYSOUT,DSORG=PS,MACRF=PM,LRECL=&LRECL,RECFM=FBA
+* template DCB for sysout in ASCII
+&LRECL   SETA  #CPL+2
+SYSOUTA  DCB   DDNAME=SYSOUT,DSORG=PS,MACRF=PM,LRECL=&LRECL,RECFM=FB
+SYSOUT_LEN EQU *-SYSOUTA
+         LTORG
+         END
