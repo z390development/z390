@@ -417,6 +417,8 @@ program. The `CONDITION` block (`DFHHCBLK`) is acquired on first use. `PUSH` and
 `POP` will acquire/release additional `CONDITION` blocks.
 
 Each 4-byte entry represents a condition, this may contain:
+
+| Content | Meaning                                |
 |---------|----------------------------------------|
 | 4X'00'  | The condition is not handled (default) |
 | A(label)| The condition will be handled at label |
