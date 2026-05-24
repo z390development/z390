@@ -1,0 +1,20 @@
+P12DSH1   EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P12DSH1.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem P10DSH1 by DON HIGGINS using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 00008120 *3FFF0000 00000000 00000000 00000000* *................*
+ 00008130 *40000000 00000000 00000000 00000000* * ...............*
+ 00008140 *40008000 00000000 00000000 00000000* * ...............*
+ 00008150 *40018000 00000000 00000000 00000000* * ...............*
+SNAP DUMP ID=2 TEXT=Output Area
+ 00008160 *3FFFDEEE A11683F4 920555C9 7F4F84DC* *....~.c4k..I".d.*
+ 00008170 *F14BF8F7 F0F8F2F8 F6F9F3F3 F8F6F9F7* *1.87082869338697*
+ 00008180 *F0F6F9F2 F7F9F1F8 F7F4F3F6 F6F1F5F8* *0692791874366158*
+ 00008190 *F2F7F540 40404040 40404040 40      * *275             *
+EZ390I total errors         = 0
+P12DSH1   EZ390 ENDED   RC= 0 MEM(MB)= MB IO=193 INS=144

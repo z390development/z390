@@ -1,0 +1,16 @@
+17:06:18 p20wr1    EZ390 START USING z390 1.8.4.3 ON J2SE 21.0.6 05/22/26
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\p20wr1.390
+EZ390I options = notime
+ZMFACC Solution for problem P20WR1 by WERNER RAMS using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 000FFF24 *00000065 17ACDA7E                  * *.......=        *
+ZUFALL =            101
+ZUFALL =  2.147.483.645
+SNAP DUMP ID=2 TEXT=Output Area
+EZ390I instructions/sec     = 91867519
+EZ390I total errors         = 0
+17:09:25 p20wr1    EZ390 ENDED   RC= 0 SEC=187 MEM(MB)= 20 IO=36 INS=17179869204

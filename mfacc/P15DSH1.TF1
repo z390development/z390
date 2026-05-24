@@ -1,0 +1,18 @@
+P15DSH1   EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P15DSH1.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem P15DSH1 by DON HIGGINS using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+SNAP DUMP ID=2 TEXT=Output Area
+ 00008154 *C4C9E5C4 F1404040 12345678 1234567C* *DIVD1   .......@*
+ 00008164 *C4C9E5D9 F1404040 00000000 0001000C* *DIVR1   ........*
+ 00008174 *D8E4D6E3 F1404040 00012345 6781235C* *QUOT1   .....a.**
+ 00008184 *C4C9E5C4 F2404040 12345678 1234567C* *DIVD2   .......@*
+ 00008194 *C4C9E5D9 F2404040 00000000 0010000C* *DIVR2   ........*
+ 000081A4 *D8E4D6E3 F2404040 00001234 5678123C* *QUOT2   ........*
+EZ390I total errors         = 0
+P15DSH1   EZ390 ENDED   RC= 0 MEM(MB)= MB IO=179 INS=40

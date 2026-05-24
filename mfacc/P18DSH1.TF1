@@ -1,0 +1,19 @@
+P18DSH1   EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P18DSH1.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem P18DSH1 by DON HIGGINS using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+MEASURE MIPS FOR 1000000 BCTR,LTR,JNZ
+2026-05-22 16:28:23.085209100 INS=             34 MIPS=   0.00
+2026-05-22 16:28:23.132541700 INS=      3,000,068 MIPS=  64.29
+MEASURE MIPS FOR 1000000 BCTR,CIJNE
+2026-05-22 16:28:23.172563900 INS=      5,000,122 MIPS=  49.92
+SNAP DUMP ID=2 TEXT=Output Area
+ 000081FC *D4C9D7E2 40C4D6E6 D57E4040 F2F2406C* *MIPS DOWN=  22 %*
+ 0000820C *D5E2C5C3 40C4D6E6 D57E4040 F1F4406C* *NSEC DOWN=  14 %*
+EZ390I total errors         = 0
+P18DSH1   EZ390 ENDED   RC= 0 MEM(MB)= MB IO=186 INS=5000177
