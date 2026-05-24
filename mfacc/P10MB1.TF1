@@ -1,0 +1,18 @@
+P10MB1    EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P10MB1.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem P10MB1 by MATS BROBERG AT SEB SWEDEN using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 00008184 *F6F6F6F6 BBBBBBBB BBBBBBBB BBBBBBBB* *6666............*
+ 00008194 *BBBBBBBB                           * *....            *
+SNAP DUMP ID=2 TEXT=Output Area
+ 00008198 *40F2F4F9 40F5F4F0 40F4F0F2 40F4F0F8* * 249 540 402 408*
+ 000081A8 *40F6F8F8 40F2F0F6 40F5F3F9 40F8F0F8* * 688 206 539 808*
+ 000081B8 *40F0F4F5 40F4F4F9 40F9F6F3 40F3F5F5* * 045 449 963 355*
+ 000081C8 *40F0F6F7                           * * 067            *
+EZ390I total errors         = 0
+P10MB1    EZ390 ENDED   RC= 0 MEM(MB)= MB IO=179 INS=48

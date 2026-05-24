@@ -1,0 +1,84 @@
+#!/bin/bash
+
+# runmfacc: Run the MainFrame Assembler Coding Contest solution programs
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
+
+sysmac='sysmac(mac)'
+optable='optable(z390)'
+
+# For now: assembling and running; not validating output SNAP content
+# P20WR1 abends when executed
+bash/asmlg mfacc/P1C1     notiming stats bal noloadhigh
+bash/asmlg mfacc/P1DSH1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P1DSH1A  notiming stats bal noloadhigh
+bash/asmlg mfacc/P1RAFA1  notiming stats bal noloadhigh
+bash/asmlg mfacc/P2MD1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P3DW1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P3LKM1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P3MM1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P4AN1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P4APN2   notiming stats bal noloadhigh
+bash/asmlg mfacc/P4DSH1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P4DW1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P4RAFA1  notiming stats bal noloadhigh
+bash/asmlg mfacc/P4RAFA2  notiming stats bal noloadhigh
+bash/asmlg mfacc/P4RJ1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P5DW1    notiming stats bal   loadhigh
+bash/asmlg mfacc/P5MM1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P6BR1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P6MM1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P6PJF1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P6PL1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P6RW1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P7DSH1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P7EH1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P7RV1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P8DSH1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P8DSH2   notiming stats bal noloadhigh
+bash/asmlg mfacc/P8LM1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P8MM1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P9DSH1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P9MM1    notiming stats bal noloadhigh
+bash/asmlg mfacc/P9MM2    notiming stats bal noloadhigh
+bash/asmlg mfacc/P10DSH1  notiming stats bal noloadhigh
+bash/asmlg mfacc/P10DSH2  notiming stats bal noloadhigh
+bash/asmlg mfacc/P10MB1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P11DSH1  notiming stats bal noloadhigh
+bash/asmlg mfacc/P11DSH2  notiming stats bal noloadhigh
+bash/asmlg mfacc/P11DW1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P11FIND1 notiming stats bal noloadhigh
+bash/asmlg mfacc/P11FIND2 notiming stats bal noloadhigh
+bash/asmlg mfacc/P11MODEL notiming stats bal noloadhigh
+bash/asmlg mfacc/P11WR1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P12DSH1  notiming stats bal noloadhigh
+bash/asmlg mfacc/P12DSH2  notiming stats bal noloadhigh
+bash/asmlg mfacc/P12DSH3  notiming stats bal noloadhigh
+bash/asmlg mfacc/P13DSH1  notiming stats bal noloadhigh
+bash/asmlg mfacc/P13SC1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P14DSH1  notiming stats bal noloadhigh
+bash/asmlg mfacc/P14MW1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P15DSH1  notiming stats bal noloadhigh
+bash/asmlg mfacc/P15WR1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P16DSH1  notiming stats bal noloadhigh
+bash/asmlg mfacc/P16WR1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P17DW1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P17WR1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P18DSH1  notiming stats bal noloadhigh
+bash/asmlg mfacc/P19WR1   notiming stats bal noloadhigh
+bash/asml  mfacc/P20WR1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P21DW1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P22DSH1  notiming stats bal noloadhigh
+bash/asmlg mfacc/P22FS1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P22GH1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P22MM1   notiming stats bal noloadhigh
+bash/asmlg mfacc/P22RL1   notiming stats bal noloadhigh
+
+export SYSOUT=mfacc/P16AFK1.OUT
+bash/asmlg mfacc/P16AFK1  notiming stats bal noloadhigh "parm(ASCII)"
+
+# if we get here, there were no errors
+echo "MFACC tests ran without errors"
+exit 0

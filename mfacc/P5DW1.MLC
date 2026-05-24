@@ -7,6 +7,9 @@
 *        DATE    - 27TH AUGUST 2008
 *        AUTHOR  - DAVID WILKINSON
 *
+* Warning: this program cannot be run with z390 option noloadhigh
+*          which will cause an abend S0C5 due to address arithmetic
+*
 *=====================================================================*
 P5DW1    ZMFACC CODE,START,NAME='DAVID WILKINSON'
 *
