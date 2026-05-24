@@ -214,10 +214,10 @@ class RunAsmTests extends z390Test {
         assert rc == 12   // Check return code
         // Compare AZ390 diagnostic lines only (filter out MZ390 framing + FID= path)
         loadFile(basePath("rt", "mlc", "IS704.TF1"), 'TF1')
+        def expected = fileData.get('TF1').readLines()
         def errLines = fileData.get('ERR').readLines()
                 .findAll { !it.contains('MZ390') && !it.contains('FID=') }
-                .join('\n') + '\n'
-        assert fileData.get('TF1') == errLines
+        assert expected == errLines, "IS704.ERR diagnostics differ from IS704.TF1"
     }
     @Test
     void test_GETMINI() {
