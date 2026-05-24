@@ -1,0 +1,16 @@
+P7DSH1    EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P7DSH1.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem P7EH1 by John Erhman using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 000081F0 *F6F6F6F6 F6F6F6F6 F6F6F6F6         * *666666666666    *
+EH=311./99=3.1414136
+DH=EH*1E7+=314141.868865967
+SNAP DUMP ID=2 TEXT=Output Area
+ 000081F0 *4E4BF3F1 F4F1F4F1 C54EF0F1         * *+.314141E+01    *
+EZ390I total errors         = 0
+P7DSH1    EZ390 ENDED   RC= 0 MEM(MB)= MB IO=185 INS=62

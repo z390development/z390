@@ -1,0 +1,16 @@
+P15WR1    EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P15WR1.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem P15WR1 by WERNER RAMS using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 00008148 *F8F7F6F5 F4F3F2F1 4BF9F0F1 F2F3F4F7* *87654321.9012347*
+ 00008158 *F0F0F3F4 F5F6F7F8 4BF1F2F3 F4F5F6F7* *00345678.1234567*
+SNAP DUMP ID=2 TEXT=Output Area
+ 00008188 *40404040 40404040 F2F5F34B F5F7F2F0* *        253.5720*
+ 00008198 *F8F3F3                             * *833             *
+EZ390I total errors         = 0
+P15WR1    EZ390 ENDED   RC= 0 MEM(MB)= MB IO=177 INS=38
