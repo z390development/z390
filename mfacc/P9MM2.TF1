@@ -1,0 +1,16 @@
+P9MM2     EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P9MM2.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem P9 by MELVYN MALTZ using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 00008178 *0089378C 9142536D 0000000C 0000001D* *.i..j.._........*
+SNAP DUMP ID=2 TEXT=Output Area
+ 00008198 *4040405B F8F9F34B F7F84D5B F9F16BF4* *   $893.78($91,4*
+ 000081A8 *F2F54BF3 F65D4040 4040405B F04BF0F0* *25.36)     $0.00*
+ 000081B8 *40404040 404D5BF0 4BF0F15D         * *     ($0.01)    *
+EZ390I total errors         = 0
+P9MM2     EZ390 ENDED   RC= 0 MEM(MB)= MB IO=177 INS=53

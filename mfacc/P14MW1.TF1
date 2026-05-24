@@ -1,0 +1,15 @@
+P14MW1    EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P14MW1.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem P14MW1 by Martin Ward using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 000081E0 *00000000 00000000 00000000 0000004C* *...............<*
+ 000081F0 *00000000 00000000 00000000 0000001C* *................*
+SNAP DUMP ID=2 TEXT=Output Area
+ 00008200 *00000000 00000000 00000000 0065533C* *................*
+EZ390I total errors         = 0
+P14MW1    EZ390 ENDED   RC= 0 MEM(MB)= MB IO=176 INS=40
