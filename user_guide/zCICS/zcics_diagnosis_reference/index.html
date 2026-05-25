@@ -1,0 +1,6095 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+        <meta name="author" content="z390 Development team">
+      
+      
+        <link rel="canonical" href="https://z390development.github.io/z390/user_guide/zCICS/zcics_diagnosis_reference/">
+      
+      
+        <link rel="prev" href="../zcics_basic_mapping_support/">
+      
+      
+        <link rel="next" href="../zcics_history/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>zCICS Diagnosis Reference - z390</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#zcics-diagnosis-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner">
+          <div class="md-banner__inner md-grid md-typeset">
+            
+            
+  <p>This is a work in progress. Contributions to the documentation are welcome. See <a
+    href="../../../contributing/contribute_docs">Contributing</a> for more information.</p>
+
+          </div>
+          
+        </aside>
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="z390" class="md-header__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            z390
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              zCICS Diagnosis Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../getting_started/install/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../z390/commands/" class="md-tabs__link">
+          
+  
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../reference/svc_services/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../contributing/contribute_docs/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="z390" class="md-nav__button md-logo" aria-label="z390" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    z390
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/z390development/z390" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    z390development/z390
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick starts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/learning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learning resources
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/macro_index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mainframe OS compatible macros
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Z390
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Z390
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../z390/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../z390/structured_macro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structured Macro Extensions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../z390/z390_filetypes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    z390 File types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../z390/z390_options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    z390 Options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    zCOBOL
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zCOBOL/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zCOBOL/zCOBOL_User_Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zCOBOL/zCOBOL_System_Programmer_Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL System Programmer's Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zCOBOL/zCOBOL_filetypes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL file types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zCOBOL/zCOBOL_options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL options
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zCOBOL/zCOBOL_NIST_COBOL_1985_Test_Results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL NIST COBOL 1985 Test Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zCOBOL/sort_implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL SORT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zCOBOL/replace_implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL REPLACE Statement Implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCICS
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    zCICS
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manuals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zcics_app_prog_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCICS Application Programming Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zcics_basic_mapping_support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCICS Basic Mapping Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCICS Diagnosis Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCICS Diagnosis Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#client-control-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Client Control Blocks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Client Control Blocks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dynamic-storage-area-dsa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dynamic Storage Area (DSA)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exec-interface-block-eib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EXEC Interface Block (EIB)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handle-abend-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HANDLE ABEND Block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handle-aid-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HANDLE AID block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handle-condition-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HANDLE CONDITION block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#link-level-area-lka" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Link-Level Area (LKA)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terminal-control-table-terminal-entry-tctte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Terminal Control Table Terminal Entry (TCTTE)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temporary-storage-requestreply-block-dfhtsblk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Temporary Storage request/reply block (DFHTSBLK).
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-control-requestreply-block-dfhfcblk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Control request/reply block (DFHFCBLK)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interval-control-requestreply-block-dfhicblk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interval Control request/reply block (DFHICBLK)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-control-requestreply-block-dfhkcblk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task Control request/reply block (DFHKCBLK)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cwa-requestreply-block-dfhcwblk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CWA request/reply block (DFHCWBLK)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#channel-control-block-dfhchan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Channel control block (DFHCHAN)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#container-control-block-dfhcont" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Container control block (DFHCONT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#startbrowse-container-control-block-dfhchwa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        STARTBROWSE CONTAINER control block (DFHCHWA)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#server-control-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Control Blocks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Server Control Blocks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-control-table-dfhfct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Control Table (DFHFCT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vsam-work-area-dfhvswad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VSAM Work Area (DFHVSWAD)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interval-control-element-dfhiceds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interval Control Element (DFHICEDS)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temporary-storage-name-table-dfhtsnds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Temporary Storage Name Table (DFHTSNDS)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#thread-control-thrddsct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thread Control (THRDDSCT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#queue-element-area-dfhqeads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Queue Element Area (DFHQEADS)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#management-descriptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Management descriptions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Management descriptions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#abend-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Abend Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commarea-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        COMMAREA Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="COMMAREA Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#return-commarea" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RETURN COMMAREA
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#link-commarea" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LINK COMMAREA
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xctl-commarea" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        XCTL COMMAREA
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getmainfreemain-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GETMAIN/FREEMAIN Management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handle-aid-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HANDLE AID Management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handleignore-condition-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HANDLE/IGNORE CONDITION Management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#temporary-storage-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Temporary Storage Management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-control-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Control Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File Control Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-opening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File opening
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request processing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interval-control-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interval Control Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interval Control Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#delay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DELAY
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#asktime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ASKTIME
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        START
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Invocation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retrieve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RETRIEVE
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cancel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CANCEL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ic-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IC tasks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enqdeq-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ENQ/DEQ Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ENQ/DEQ Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ENQ
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DEQ
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-end-or-abend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task end or abend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cwa-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CWA Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CWA Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exceptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exceptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#macros-lclhhhh-modules-and-z390lcl-the-linkage-mechanisms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Macros, LCLhhhh modules and Z390LCL - the linkage mechanisms
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Macros, LCLhhhh modules and Z390LCL - the linkage mechanisms">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exceptions_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exceptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#non-terminal-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-terminal Support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sequential-terminal-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sequential Terminal support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#channelcontainer-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Channel/Container support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browse-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browse operation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cedf-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CEDF operation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CEDF operation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#starting-and-stopping-cedf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Starting and Stopping CEDF
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#event-tracing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event Tracing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lcl-submodules-for-exec-cics-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LCL Submodules for EXEC CICS processing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#z390cemt-submodules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Z390CEMT submodules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#z390cics-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Z390CICS Operation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gbl-submodules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GBL Submodules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#copy-books" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Copy Books
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#internal-abends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Internal Abends
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#change-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Change Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zcics_history/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCics History
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zcics_intro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCics - introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    zVSAM
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zVSAM/zVSAM_V2_Design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 Design and Logic manual
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zVSAM/zVSAM_V2_Design_File_Structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 - Physical structure of the files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zVSAM/zVSAM_V2_Design_Interfaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 - API for Assembler and zCobol programs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zVSAM/zVSAM_V2_Design_RPL_Processes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 - Logical processes for RPL-based requests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zVSAM/zVSAM_V2_Design_ACB_Processes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 - Logical processes for ACB-based requests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zVSAM/zVSAM_V2_Design_Addenda/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 - Addenda
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/svc_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SVC services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/program_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Program Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/storage_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/file_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Non-VSAM File Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/guam_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GUAM services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/soa_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SOA services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/structured_program/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Structured programming macros
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/vsam_file_services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/zpar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zPAR and zPARTRS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/sort/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zSORT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/assist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ASSIST support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/contribute_docs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing to z390 Documentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/contribute_code/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing to z390
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/contributing_zcobol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing to zCOBOL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="/z390/javadoc/index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    z390 JavaDocs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#client-control-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Client Control Blocks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Client Control Blocks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dynamic-storage-area-dsa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dynamic Storage Area (DSA)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exec-interface-block-eib" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EXEC Interface Block (EIB)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handle-abend-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HANDLE ABEND Block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handle-aid-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HANDLE AID block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#handle-condition-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HANDLE CONDITION block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#link-level-area-lka" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Link-Level Area (LKA)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#terminal-control-table-terminal-entry-tctte" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Terminal Control Table Terminal Entry (TCTTE)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temporary-storage-requestreply-block-dfhtsblk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Temporary Storage request/reply block (DFHTSBLK).
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-control-requestreply-block-dfhfcblk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Control request/reply block (DFHFCBLK)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interval-control-requestreply-block-dfhicblk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interval Control request/reply block (DFHICBLK)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-control-requestreply-block-dfhkcblk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task Control request/reply block (DFHKCBLK)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cwa-requestreply-block-dfhcwblk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CWA request/reply block (DFHCWBLK)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#channel-control-block-dfhchan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Channel control block (DFHCHAN)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#container-control-block-dfhcont" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Container control block (DFHCONT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#startbrowse-container-control-block-dfhchwa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        STARTBROWSE CONTAINER control block (DFHCHWA)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#server-control-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server Control Blocks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Server Control Blocks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-control-table-dfhfct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Control Table (DFHFCT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vsam-work-area-dfhvswad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VSAM Work Area (DFHVSWAD)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interval-control-element-dfhiceds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interval Control Element (DFHICEDS)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temporary-storage-name-table-dfhtsnds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Temporary Storage Name Table (DFHTSNDS)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#thread-control-thrddsct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thread Control (THRDDSCT)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#queue-element-area-dfhqeads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Queue Element Area (DFHQEADS)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#management-descriptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Management descriptions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Management descriptions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#abend-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Abend Management
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commarea-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        COMMAREA Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="COMMAREA Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#return-commarea" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RETURN COMMAREA
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#link-commarea" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LINK COMMAREA
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#xctl-commarea" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        XCTL COMMAREA
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getmainfreemain-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GETMAIN/FREEMAIN Management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handle-aid-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HANDLE AID Management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handleignore-condition-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HANDLE/IGNORE CONDITION Management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#temporary-storage-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Temporary Storage Management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#file-control-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File Control Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="File Control Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-opening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File opening
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request processing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interval-control-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interval Control Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interval Control Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#delay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DELAY
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#asktime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ASKTIME
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        START
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invocation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Invocation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retrieve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RETRIEVE
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cancel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CANCEL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ic-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IC tasks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enqdeq-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ENQ/DEQ Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ENQ/DEQ Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ENQ
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DEQ
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-end-or-abend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task end or abend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cwa-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CWA Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CWA Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exceptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exceptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#macros-lclhhhh-modules-and-z390lcl-the-linkage-mechanisms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Macros, LCLhhhh modules and Z390LCL - the linkage mechanisms
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Macros, LCLhhhh modules and Z390LCL - the linkage mechanisms">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exceptions_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exceptions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#non-terminal-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Non-terminal Support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sequential-terminal-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sequential Terminal support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#channelcontainer-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Channel/Container support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browse-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browse operation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cedf-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CEDF operation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CEDF operation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#starting-and-stopping-cedf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Starting and Stopping CEDF
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#event-tracing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event Tracing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lcl-submodules-for-exec-cics-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LCL Submodules for EXEC CICS processing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#z390cemt-submodules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Z390CEMT submodules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#z390cics-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Z390CICS Operation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gbl-submodules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GBL Submodules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#copy-books" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Copy Books
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#internal-abends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Internal Abends
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#change-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Change Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="zcics-diagnosis-reference">zCICS Diagnosis Reference</h1>
+<h2 id="client-control-blocks">Client Control Blocks</h2>
+<h3 id="dynamic-storage-area-dsa">Dynamic Storage Area (DSA)</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>DFHEIENT</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>RETURN at highest level XCTL</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>R13</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHEISTG (prefix only)</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Only the prefix, not the user area</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>Variable</td>
+</tr>
+</tbody>
+</table>
+<h3 id="exec-interface-block-eib">EXEC Interface Block (EIB)</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>'DFHEIBLK'</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>Z390KCP</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>Close of thread</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>R11 (DFHEIBR)</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHEIBLK</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>EIBLENG</td>
+</tr>
+</tbody>
+</table>
+<h3 id="handle-abend-block">HANDLE ABEND Block</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>'DFHABBLK'</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>1<sup>st</sup> use</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>Task end</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>TCTTEABD (Byte after eye catcher)</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHABBLK</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>ABDLENG (one table entry)</td>
+</tr>
+<tr>
+<td>Entries</td>
+<td>25</td>
+</tr>
+</tbody>
+</table>
+<h3 id="handle-aid-block">HANDLE AID block</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>'DFHADBLK'</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>HANDLE AID (1<sup>st</sup> block only)</td>
+</tr>
+<tr>
+<td></td>
+<td>PUSH HANDLE</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>RETURN at highest level (all chained AID blocks)</td>
+</tr>
+<tr>
+<td></td>
+<td>POP HANDLE (only top-of-chain block)</td>
+</tr>
+<tr>
+<td></td>
+<td>XCTL (all chained AID blocks)</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>DFHEIAID (DSA)</td>
+</tr>
+<tr>
+<td>Chain</td>
+<td>AIDCHAIN</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHADBLK</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>AIDLENG</td>
+</tr>
+</tbody>
+</table>
+<h3 id="handle-condition-block">HANDLE CONDITION block</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>'DFHHCBLK'</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>HANDLE CONDITION (1<sup>st</sup> block only)</td>
+</tr>
+<tr>
+<td></td>
+<td>PUSH HANDLE</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>RETURN at highest level (all chained HANDLE CONDITION blocks)</td>
+</tr>
+<tr>
+<td></td>
+<td>POP HANDLE (only top-of-chain block)</td>
+</tr>
+<tr>
+<td></td>
+<td>XCTL (all chained HANDLE CONDITION blocks)</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>DFHEIHCN (DSA)</td>
+</tr>
+<tr>
+<td>Chain</td>
+<td>HCNCHAIN</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHHCBLK</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>HCNLENG</td>
+</tr>
+</tbody>
+</table>
+<h3 id="link-level-area-lka">Link-Level Area (LKA)</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>Z390KCP</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>Close of thread</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>TCTTELKA</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>4 (R13 value for this link-level)</td>
+</tr>
+<tr>
+<td>Entries</td>
+<td>25</td>
+</tr>
+</tbody>
+</table>
+<h3 id="terminal-control-table-terminal-entry-tctte">Terminal Control Table Terminal Entry (TCTTE)</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>'DFHTCTTE'</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>Z390KCP</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>Close of thread</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>R10 (TCTTEAR)</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHTCTTE</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>TCTTELEN</td>
+</tr>
+</tbody>
+</table>
+<h3 id="temporary-storage-requestreply-block-dfhtsblk">Temporary Storage request/reply block (DFHTSBLK).</h3>
+<p>Data sent/received follows the block.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>GETMAINd by EXEC CICS TS command</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>FREEMAINd by EXEC CICS TS command</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>None</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHTSBLK</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>TSPREFIX</td>
+</tr>
+</tbody>
+</table>
+<h3 id="file-control-requestreply-block-dfhfcblk">File Control request/reply block (DFHFCBLK)</h3>
+<p>Data sent/received follows the block.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>GETMAINd by an EXEC CICS file control command</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>FREEMAINd by an EXEC CICS file control command</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>None</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHFCBLK</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>FCPREFIX</td>
+</tr>
+</tbody>
+</table>
+<h3 id="interval-control-requestreply-block-dfhicblk">Interval Control request/reply block (DFHICBLK)</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>GETMAINd by an EXEC CICS START/CANCEL command</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>At task end</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>None</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHICBLK</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>ICPREFIX</td>
+</tr>
+</tbody>
+</table>
+<h3 id="task-control-requestreply-block-dfhkcblk">Task Control request/reply block (DFHKCBLK)</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>GETMAINd by an EXEC CICS ENQ/DEQ command</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>At task end</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>None</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHKCBLK</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>KCPREFIX</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cwa-requestreply-block-dfhcwblk">CWA request/reply block (DFHCWBLK)</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>Embedded in LCL0202</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>None</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHCWBLK</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>CWPREFIX</td>
+</tr>
+</tbody>
+</table>
+<h3 id="channel-control-block-dfhchan">Channel control block (DFHCHAN)</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>EXEC CICS PUT/MOVE (LCL3416/LCL3440)</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>EXEC CICS DELETE (LCL3412), link-level end, task end</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>TCTTECAQ</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHCHAN</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>26</td>
+</tr>
+</tbody>
+</table>
+<h3 id="container-control-block-dfhcont">Container control block (DFHCONT)</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>EXEC CICS PUT/MOVE (LCL3416/LCL3440)</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>EXEC CICS DELETE (LCL3412), link-level end, task end</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>CHANCONT (DFHCHAN)</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHCONT (in DFHCHAN)</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>28+Container length</td>
+</tr>
+</tbody>
+</table>
+<h3 id="startbrowse-container-control-block-dfhchwa">STARTBROWSE CONTAINER control block (DFHCHWA)</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>EXEC CICS STARTBROWSE (LCL9626)</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>EXEC CICS ENDBROWSE (LCL962A), task end</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>TCTTECHW</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHCHWA</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>40</td>
+</tr>
+</tbody>
+</table>
+<h2 id="server-control-blocks">Server Control Blocks</h2>
+<h3 id="file-control-table-dfhfct">File Control Table (DFHFCT)</h3>
+<p>Contains the ACB for each file operation.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>Z390CICS at start</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>Never</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>DFHFCTAD</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHFCTDS</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>FCTABLEN</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vsam-work-area-dfhvswad">VSAM Work Area (DFHVSWAD)</h3>
+<p>Also contains the RPL for file operations.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>Z390CICS at File Control process start</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>Z390CICS at File Control process end or task abend</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>FCTVSWA</td>
+</tr>
+<tr>
+<td>Chain</td>
+<td>VSWCHAIN</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHVSWAD</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>VSWLEN</td>
+</tr>
+</tbody>
+</table>
+<h3 id="interval-control-element-dfhiceds">Interval Control Element (DFHICEDS)</h3>
+<p>Chained in time order</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>GBL1008 when a valid EXEC CICS START is processed</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>GBL100C when a valid EXEC CICS CANCEL is processed</td>
+</tr>
+<tr>
+<td></td>
+<td>GBL10FF when an ICE scan can start a task</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>ICEANCHR</td>
+</tr>
+<tr>
+<td>Chain</td>
+<td>ICECHAIN</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHICEDS</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>ICELEN</td>
+</tr>
+</tbody>
+</table>
+<h3 id="temporary-storage-name-table-dfhtsnds">Temporary Storage Name Table (DFHTSNDS)</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>GBL0A02 when first EXEC CICS WRITEQ TS is processed</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>GBL0A06 when EXEC CICS DELETEQ TS is processed</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>TSNANCHR</td>
+</tr>
+<tr>
+<td>Chain</td>
+<td>TSNCHAIN</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHTSNDS</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>TSNLEN</td>
+</tr>
+</tbody>
+</table>
+<h3 id="thread-control-thrddsct">Thread Control (THRDDSCT)</h3>
+<p>One entry for each terminal to a maximum of 10.
+When <code>SEQ_TERM=YES</code>, the special 11<sup>th</sup> terminal is reserved for <code>SQ01</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>Fixed in Z390CICS</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>Never</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>THRDCNTL</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>THRDDSCT</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>THRDLEN</td>
+</tr>
+</tbody>
+</table>
+<h3 id="queue-element-area-dfhqeads">Queue Element Area (DFHQEADS)</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eye catcher</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Acquired</td>
+<td>GBL1204 when EXEC CICS ENQ is processed</td>
+</tr>
+<tr>
+<td>Released</td>
+<td>GBL1206 when EXEC CICS DEQ is processed</td>
+</tr>
+<tr>
+<td></td>
+<td>GBL12FC when task end DEQALL is processed</td>
+</tr>
+<tr>
+<td>Anchor</td>
+<td>QEAANCHR</td>
+</tr>
+<tr>
+<td>Chain</td>
+<td>QEACHNF</td>
+</tr>
+<tr>
+<td>DSECT</td>
+<td>DFHQEADS</td>
+</tr>
+<tr>
+<td>Cleared</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Length</td>
+<td>QEALEN</td>
+</tr>
+</tbody>
+</table>
+<h2 id="management-descriptions">Management descriptions</h2>
+<h3 id="abend-management">Abend Management</h3>
+<p>The following types of abend may occur:
+- Program check
+- IGNORE CONDITION not permitted (program check)
+- Condition raised but not handled or ignored
+- EXEC CICS ABEND</p>
+<p>Whether any of these result in a dump and/or termination of the task depends on
+the HANDLE ABEND status which is discussed later.</p>
+<p>All of the above types cause a program check, with the following markers:</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>X'000000',C'ABEND',A(IGNORE address)</td>
+<td>HANDLE CONDITION</td>
+</tr>
+<tr>
+<td>X'0000FE',C'ABEND',C'xxxx'</td>
+<td>ABEND with dump</td>
+</tr>
+<tr>
+<td>X'0000FF',C'ABEND',C'????'</td>
+<td>ABEND without dump</td>
+</tr>
+<tr>
+<td>Other</td>
+<td>Program check</td>
+</tr>
+</tbody>
+</table>
+<p>The program check is trapped by the ESTAE routine <code>APPABEND</code> in <code>Z390KCP</code>.
+This routine determines the cause of the abend and takes the correct action.</p>
+<h4 id="handle-condition-marker">HANDLE CONDITION marker</h4>
+<ul>
+<li>The last <code>CONDITION</code> block is located (if any) and the condition slot is tested, followed by the <code>ERROR</code> slot.</li>
+<li>If no <code>HANDLE</code> or <code>IGNORE</code> then the terminate handler is invoked (see later).</li>
+</ul>
+<p>ABEND with/without dump and program checks go straight to the terminate handler.</p>
+<h4 id="terminate-handler">Terminate handler</h4>
+<p><code>APPTABDN</code> in <code>Z390KCP</code> tests for the existence of a <code>HANDLE ABEND</code>
+block (<code>DFHABBLK</code>). If none the task is terminated abnormally.</p>
+<p>Each entry in the <code>HANDLE ABEND</code> block represents a link-level, so the
+table is scanned backwards for the highest active entry.
+If there are no active entries, the task is terminated abnormally.</p>
+<p>If an active entry is found it is immediately inactivated.
+- <code>HANDLE ABEND LABEL</code> will cause a branch to the label.
+- <code>HANDLE ABEND PROGRAM</code> will cause an <code>XCTL</code> to the program.
+- If the abending program has received a <code>COMMAREA</code>, then that will be passed to the abend handler.</p>
+<p>If <code>HANDLE ABEND LABEL</code> is at a higher link-level than the abending
+program, then a special <code>EXEC CICS RETURN CLEANER</code> is issued (in <code>Z390KCP</code>)
+to simulate a <code>RETURN</code>, as all lower levels are now considered abandoned.</p>
+<p>Note that <code>PUSH</code>, <code>POP</code>, <code>HANDLE ABEND CANCEL/RESET</code> only affect the
+current link-level.</p>
+<h4 id="dumps">Dumps</h4>
+<ul>
+<li>A program check will always produce an <code>ASRA SNAP</code> dump.</li>
+<li><code>ABEND</code> without <code>NODUMP</code>, will always produce a dump using <code>ABCODE</code>.</li>
+<li>No other dumps will be produced if an abend or condition is handled.</li>
+</ul>
+<h2 id="commarea-management">COMMAREA Management</h2>
+<h3 id="return-commarea">RETURN COMMAREA</h3>
+<p>The program issuing the <code>RETURN</code> must be at link-level 1 (i.e. about to return to 
+<code>Z390KCP</code>). If this is not the case then <code>INVREQ</code> will be raised. This condition
+cannot be <code>IGNORE</code>d as it is assumed that no valid code follows a <code>RETURN</code>.</p>
+<p>The <code>RETURN</code> macro sets <code>TCTTECA</code> (address) and <code>TCTTECAL</code> (length).
+When the next task is invoked <code>TCTTECAL</code> is used to refresh <code>EIBCALEN</code>.</p>
+<p>When <code>Z390KCP</code> regains control after <code>RETURN</code>, the <code>COMMAREA</code> address and
+length are compared with the last <code>RETURN COMMAREA</code> (holding areas
+<code>COMMADDR</code> and <code>COMMLEN</code>):
+- If both are the same, they are passed to the next transid.
+- If either is different, then a new area is <code>GETMAIN</code>ed, the <code>COMMAREA</code> is
+  copied, and the old one <code>FREEMAIN</code>ed.
+- Temporary holding areas <code>COMMSAVA</code> and <code>COMMSAVL</code> are used during the <code>FREEMAIN</code> process.</p>
+<h3 id="link-commarea">LINK COMMAREA</h3>
+<p>The address is stored in the linkers <code>DSA</code> at <code>DFHEICAP</code> and the length in
+<code>EIBCALEN</code>. <code>DFHEICAP</code> is passed as a parameter.</p>
+<blockquote>
+<p>[!NOTE]
+A <code>LINK COMMAREA</code> is never specifically <code>FREEMAIN</code>ed; it is always part
+of another storage area (<code>DSA</code>, Program, <code>GETMAIN</code>).</p>
+</blockquote>
+<h3 id="xctl-commarea">XCTL COMMAREA</h3>
+<p>The current <code>COMMAREA</code> address in the <code>DSA</code> (<code>DFHEICAP</code>) and length in
+<code>EIBCALEN</code> are compared with the <code>XCTL COMMAREA</code>.
+- If both are the same, the address is passed to the next program.
+- If either is different, then a new area is <code>GETMAIN</code>ed and the <code>COMMAREA</code> is copied.<br />
+  The new <code>COMMAREA</code> address is held in the callers <code>DSA</code> (<code>DFHEICAP</code>) and
+  its existence flagged by <code>TCTTECND=X'FF'</code>. This <code>COMMAREA</code> copy will be
+  <code>FREEMAIN</code>ed by the next <code>RETURN</code> without the <code>COMMAREA</code> parameter.</p>
+<p>See <a href="#interval-control-management">Interval Control Management</a> for further documentation which may affect
+<code>COMMAREA</code> processing.</p>
+<h2 id="getmainfreemain-management">GETMAIN/FREEMAIN Management</h2>
+<p>A chain of storage areas is anchored from <code>TCTTESCC</code>.
+<code>TCTTESCC</code> has the address of the first <code>GETMAIN</code>ed area.</p>
+<p>Eight bytes are added to each request, and they serve as a prefix:
+- 4-byte address of next <code>GETMAIN</code> or 0
+- 4-byte total length</p>
+<p>The user is passed the address after the prefix.</p>
+<p><code>FREEMAIN</code> must have the same address as the <code>GETMAIN</code> passed otherwise an
+<code>INVREQ</code> condition is raised. <code>FREEMAIN</code>s may occur in any order, the chain is just
+'repaired' at that point.</p>
+<p>At task end or task abend all remaining <code>GETMAIN</code>s are <code>FREEMAIN</code>ed.</p>
+<h2 id="handle-aid-management">HANDLE AID Management</h2>
+<p>A <code>HANDLE AID</code> is owned by a program and is never passed to another program.
+The <code>AID</code> block (<code>DFHADBLK</code>) is acquired on first use. <code>PUSH</code> and <code>POP</code> will
+acquire/release additional <code>AID</code> blocks.</p>
+<p>At task end, task abend or an <code>XCTL</code>, all <code>AID</code> blocks are <code>FREEMAIN</code>ed.</p>
+<p><code>HANDLE AID</code> only works for conversational tasks.</p>
+<h2 id="handleignore-condition-management">HANDLE/IGNORE CONDITION Management</h2>
+<p>A <code>HANDLE CONDITION</code> is owned by a program and is never passed to another
+program. The <code>CONDITION</code> block (<code>DFHHCBLK</code>) is acquired on first use. <code>PUSH</code> and
+<code>POP</code> will acquire/release additional <code>CONDITION</code> blocks.</p>
+<p>Each 4-byte entry represents a condition, this may contain:</p>
+<table>
+<thead>
+<tr>
+<th>Content</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4X'00'</td>
+<td>The condition is not handled (default)</td>
+</tr>
+<tr>
+<td>A(label)</td>
+<td>The condition will be handled at label</td>
+</tr>
+<tr>
+<td>4X'FF'</td>
+<td>The condition should be ignored</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>ERROR</code> condition can be handled as a 'catch-all' for any type of condition that
+doesn't have a specific <code>HANDLE CONDITION</code>.
+When both a condition and <code>ERROR</code> are set, only the condition label is used, not both.</p>
+<p>At task end, task abend or an <code>XCTL</code>, all <code>CONDITION</code> blocks are <code>FREEMAIN</code>ed.</p>
+<h2 id="temporary-storage-management">Temporary Storage Management</h2>
+<p>The queues are owned by <code>Z390CICS</code>, so all requests for TS services are sent by
+zCICS tasks to the server.</p>
+<p>There are two structures in the server:
+- The queue name chain
+  - A chain of all queue names.
+  - The anchor of the chain is internal (<code>TSNANCHR</code>).
+  - The TS name block is <code>DFHTSNDS</code>.
+  - A queue name is created by the first <code>WRITEQ TS</code> for the name and is chained on the end.
+- The TS data chain
+  - A chain of all items added to the queue.
+  - The anchor of the chain is in the queue name table (<code>TSNITEM1</code>).
+  - The <code>DSECT</code> for the TS data chain prefix is internal (<code>TSDPREFX</code>), the data follows the prefix.</p>
+<blockquote>
+<p>[!NOTE]
+- <code>WRITEQ TS</code> will add a new item to the chain end.
+- <code>WRITEQ TS REWRITE</code> will free the old item, create a new one, and repair the chain.
+- <code>DELETEQ TS</code> will delete all the data items and then delete the queue name and repair the chain.</p>
+</blockquote>
+<h2 id="file-control-management">File Control Management</h2>
+<p>The files are owned by <code>Z390CICS</code>, so all requests for FC services are sent by
+zCICS tasks to the server.</p>
+<p>The <code>FCT</code> (<code>DFHFCTDS</code>) defines the status of each file.
+Each <code>FCTTE</code> contains the <code>ACB</code> for that file.
+See the <a href="zcics_vsam_guide.md">zCICS VSAM Guide</a> to see how files are created and defined to zCICS.</p>
+<h3 id="file-opening">File opening</h3>
+<p>When <code>Z390CICS</code> starts, all files defined as <code>FILSTAT=OPENED</code> are opened.
+Failure results in the status <code>(CLOSED,DISABLED)</code>.</p>
+<p>Files defined as <code>(CLOSED,ENABLED)</code> are opened when the first request is received.
+Failure results in the status <code>(CLOSED,DISABLED)</code>.</p>
+<h3 id="request-processing">Request processing</h3>
+<p>No error conditions are explained here, they are listed in
+the <a href="../zcics_app_prog_guide/">zCICS Application Programming Guide</a>, and in the IBM Manuals.</p>
+<p>Any VSAM feedback codes and errors are converted to <code>RESP</code>/<code>RESP2</code> values
+and sent back to the Client.</p>
+<p>When a task ends or abends all <code>VSWA</code>s owned by the task are released. An
+exception to this occurs when a condition is raised after a browse command is
+issued and there is a <code>HANDLE CONDITION</code>. In this case, the <code>VSWA</code> is not
+released unless the transaction is abended and will require an <code>ENDBR</code>.</p>
+<p>A <code>READ</code> will always release the <code>VSWA</code> regardless of <code>HANDLE CONDITION</code>.</p>
+<h4 id="read-esds-logic">READ (ESDS) logic</h4>
+<ul>
+<li>A VSWA is acquired.</li>
+<li>RPL OPTCD is set to (ADR) or (ADR,XRBA).</li>
+<li>RPLARG is set to the address of FCP(X)RBA.</li>
+<li>Area of the maximum or fixed length is GETMAINd and RPLAREA is set.</li>
+<li>GET issued and the data is sent to the program.</li>
+<li>The VSWA is released.</li>
+</ul>
+<h4 id="read-rrds-logic">READ (RRDS) logic</h4>
+<ul>
+<li>A VSWA is acquired.</li>
+<li>RPL OPTCD is set to (KEY).</li>
+<li>RPLARG is set to the address of FCPRRN.</li>
+<li>Area of the maximum or fixed length is GETMAINd and RPLAREA is set.</li>
+<li>GET issued and the data is sent to the program.</li>
+<li>The VSWA is released.</li>
+</ul>
+<h4 id="read-ksds-logic">READ (KSDS) logic</h4>
+<ul>
+<li>A VSWA is acquired.</li>
+<li>RPL OPTCD is set to (KEY,FKS,KEQ).</li>
+<li>Options KGE and/or GEN are also set if specified.</li>
+<li>KEYLENGTH(0) is a special case and forces GEN and KGE.</li>
+<li>RPLARG is set to the address of FCPRID.</li>
+<li>Area of the maximum or fixed length is GETMAINd and RPLAREA is set.</li>
+<li>If GEN or KGE is specified, then POINT is issued.</li>
+<li>GET issued and the data is sent to the program.</li>
+<li>The VSWA is released.</li>
+</ul>
+<h4 id="startbr-esds-logic">STARTBR (ESDS) logic</h4>
+<ul>
+<li>A VSWA is acquired.</li>
+<li>The REQID is set (default is zero).</li>
+<li>RPL OPTCD is set to (ADR,SEQ) or (ADR,SEQ,XRBA).</li>
+<li>RPLARG is set to the address of FCP(X)RBA.</li>
+<li>A POINT is issued.</li>
+<li>The current XRBA is saved in the VSWA.</li>
+</ul>
+<h4 id="startbr-rrds-logic">STARTBR (RRDS) logic</h4>
+<ul>
+<li>A VSWA is acquired.</li>
+<li>The REQID is set (default is zero).</li>
+<li>RPL OPTCD is set to (KEY,SEQ).</li>
+<li>RPLARG is set to the address of FCPRRN.</li>
+<li>A POINT is issued.</li>
+<li>The current RRN is saved in the VSWA.</li>
+</ul>
+<h4 id="startbr-ksds-logic">STARTBR (KSDS) logic</h4>
+<ul>
+<li>A VSWA is acquired.</li>
+<li>The REQID is set (default is zero).</li>
+<li>RPL OPTCD is set to (KEY,SEQ,FKS,KEQ).</li>
+<li>Options KGE and/or GEN are also set if specified.</li>
+<li>KEYLENGTH(0) is a special case and forces GEN and KGE.</li>
+<li>RPLARG is set to the address of FCPRID.</li>
+<li>A POINT is issued.</li>
+<li>The current (generic) FCPRID is saved in the VSWA.</li>
+<li>The current KEYLENGTH is saved in the VSWA.</li>
+</ul>
+<h4 id="readnext-esds-logic">READNEXT (ESDS) logic</h4>
+<ul>
+<li>The VSWA created by the STARTBR is located.</li>
+<li>RPL OPTCD is set to (ADR,SEQ,FWD) or (ADR,SEQ,FWD,XRBA).</li>
+<li>RPLARG is set to the address of FCP(X)RBA.</li>
+<li>A check is made to see if the XRBA supplied differs from the current XRBA,
+  if it does then a POINT is issued. This allows skip-sequential processing to occur.</li>
+<li>Area of the maximum or fixed length is GETMAINd and RPLAREA is set.</li>
+<li>The current XRBA is saved in the VSWA, a GET is issued, and the current
+  (X)RBA and the data are sent to the program.</li>
+</ul>
+<h4 id="readnext-rrds-logic">READNEXT (RRDS) logic</h4>
+<ul>
+<li>The VSWA created by the STARTBR is located.</li>
+<li>RPL OPTCD is set to (KEY,SEQ,FWD).</li>
+<li>RPLARG is set to the address of FCPRRN.</li>
+<li>A check is made to see if the RRN supplied differs from the current RRN, if
+  it does then a POINT is issued. This allows skip-sequential processing to occur.</li>
+<li>Area of the maximum or fixed length is GETMAINd and RPLAREA is set.</li>
+<li>The current RRN is saved in the VSWA, a GET is issued, and the current
+  RRN and the data are sent to the program.</li>
+</ul>
+<h4 id="readnext-ksds-logic">READNEXT (KSDS) logic</h4>
+<ul>
+<li>The VSWA created by the STARTBR is located.</li>
+<li>RPL OPTCD is set to (KEY,SEQ,FKS,KEQ,FWD).</li>
+<li>Options KGE and/or GEN are also set if specified in the STARTBR.</li>
+<li>RPLARG is set to the address of FCPRID.</li>
+<li>POINT is issued for skip-sequential:</li>
+<li>If the keylength has changed and/or the (generic) key in FCPRID has changed.</li>
+<li>Area of the maximum or fixed length is GETMAINd and RPLAREA is set.</li>
+<li>The current (generic) FCPRID is saved in the VSWA, a GET is issued, and
+  the current full key and the data are sent to the program.</li>
+</ul>
+<h4 id="readprev-esds-logic">READPREV (ESDS) logic</h4>
+<ul>
+<li>The VSWA created by the STARTBR is located.</li>
+<li>RPL OPTCD is set to (ADR,SEQ,BWD) or (ADR,SEQ,BWD,XRBA).</li>
+<li>RPLARG is set to the address of FCP(X)RBA.</li>
+<li>A check is made to see if the XRBA supplied differs from the current XRBA,
+  if it does then a POINT is issued. This allows skip-sequential processing to occur.</li>
+<li>Area of the maximum or fixed length is GETMAINd and RPLAREA is set.</li>
+<li>The current XRBA is saved in the VSWA, a GET is issued, and the current
+  (X)RBA and the data are sent to the program.</li>
+</ul>
+<h4 id="readprev-rrds-logic">READPREV (RRDS) logic</h4>
+<ul>
+<li>The VSWA created by the STARTBR is located.</li>
+<li>RPL OPTCD is set to (KEY,SEQ,BWD).</li>
+<li>RPLARG is set to the address of FCPRRN.</li>
+<li>A check is made to see if the RRN supplied differs from the current RRN, if
+  it does then a POINT is issued. This allows skip-sequential processing to occur.</li>
+<li>Area of the maximum or fixed length is GETMAINd and RPLAREA is set.</li>
+<li>The current RRN is saved in the VSWA, a GET is issued, and the current
+  RRN and the data are sent to the program.</li>
+</ul>
+<h4 id="readprev-ksds-logic">READPREV (KSDS) logic</h4>
+<ul>
+<li>The VSWA created by the STARTBR is located.</li>
+<li>RPL OPTCD is set to (KEY,SEQ,FKS,KEQ,BWD).</li>
+<li>Note: GEN is invalid and KGE is ignored.</li>
+<li>RPLARG is set to the address of FCPRID.</li>
+<li>POINT is issued for skip-sequential if the keylength has changed.</li>
+<li>Area of the maximum or fixed length is GETMAINd and RPLAREA is set.</li>
+<li>The current FCPRID is saved in the VSWA, a GET is issued, and the
+  current full key and the data are sent to the program.</li>
+</ul>
+<h4 id="resetbr-esds-logic">RESETBR (ESDS) logic</h4>
+<ul>
+<li>The VSWA created by the STARTBR is located.</li>
+<li>RPL OPTCD is set to (ADR,SEQ) or (ADR,SEQ,XRBA).</li>
+<li>RPLARG is set to the address of FCP(X)RBA.</li>
+<li>A POINT is issued.</li>
+<li>The current XRBA is saved in the VSWA.</li>
+</ul>
+<h4 id="resetbr-rrds-logic">RESETBR (RRDS) logic</h4>
+<ul>
+<li>The VSWA created by the STARTBR is located.</li>
+<li>RPL OPTCD is set to (KEY,SEQ).</li>
+<li>RPLARG is set to the address of FCPRRN.</li>
+<li>A POINT is issued.</li>
+<li>The current RRN is saved in the VSWA.</li>
+</ul>
+<h4 id="resetbr-ksds-logic">RESETBR (KSDS) logic</h4>
+<ul>
+<li>The VSWA created by the STARTBR is located.</li>
+<li>RPL OPTCD is set to (KEY,SEQ,FKS,KEQ).</li>
+<li>Options KGE and/or GEN are also set if specified.</li>
+<li>KEYLENGTH(0) is a special case and forces GEN and KGE.</li>
+<li>RPLARG is set to the address of FCPRID.</li>
+<li>A POINT is issued.</li>
+<li>The current (generic) FCPRID is saved in the VSWA.</li>
+<li>The current KEYLENGTH is saved in the VSWA.</li>
+</ul>
+<h4 id="endbr-esds-rrds-ksds-logic">ENDBR (ESDS, RRDS, KSDS) logic</h4>
+<ul>
+<li>The VSWA created by the STARTBR is located.</li>
+<li>The VSWA is released.</li>
+</ul>
+<h2 id="interval-control-management">Interval Control Management</h2>
+<h3 id="delay">DELAY</h3>
+<p><code>DELAY</code> is handled by the Client.</p>
+<h3 id="asktime">ASKTIME</h3>
+<p><code>ASKTIME</code> is handled by the Client.</p>
+<h3 id="start">START</h3>
+<p>The module <code>LCL1008</code> validates the time parameters and also the <code>TRANSID</code>.</p>
+<p>However the time is specified, it is converted to a <code>STCK</code> time that has been
+reduced to units of 0.01 seconds.</p>
+<p>If <code>REQID</code> has not been specified, one is created by multiplying <code>TRANSID</code> and
+<code>TERMID</code> and then overlaying the first two bytes with <code>C'DF'</code>. If <code>TERMID</code> is
+omitted then blanks are assumed as zeros would produce a zero result. The
+<code>REQID</code> is then stored in <code>EIBREQID</code>.</p>
+<p>If the <code>START</code> command contains any of the parameters <code>FROM</code>, <code>QUEUE</code>,
+<code>RTRANSID</code> or <code>RTERMID</code> then a <code>TS Q</code> will be built.</p>
+<p>The <code>TS Q</code> record will have a 16-byte prefix to hold any of the parameters
+<code>QUEUE</code>, <code>RTRANSID</code> or <code>RTERMID</code> followed by the <code>FROM</code> data (if any). In the
+prefix, any parameters not specified will be <code>X'00'</code>.</p>
+<p>If the <code>CHANNEL</code> parameter is specified the channel and its containers are
+written to a <code>TS Q</code>. The queue name is created by multiplying <code>TRANSID</code> and
+<code>TERMID</code> and then overlaying the first two bytes with <code>C'CH'</code>. If <code>TERMID</code> is
+omitted then blanks are assumed as zeros would produce a zero result.
+As containers can be up to 2GB, the <code>FLENGTH</code> extension to <code>WRITEQ TS</code> is
+used.</p>
+<p>The <code>WRITEQ TS</code> has two special parameters (internal use only), <code>ICTRAN</code> and
+<code>ICTERM</code>. These are the <code>TRANSID</code> and <code>TERMID</code> parameters from the <code>START</code>
+command. When the <code>WRITEQ TS</code> is shipped to the Server for processing,
+these parameters are stored in the <code>TS</code> name table. The <code>REQID</code> (<code>TS Q</code> name)
+must be owned by the <code>START TRANSID</code>/<code>TERMID</code> combination. Any violation of
+that rule will raise the <code>IOERR</code> condition. Although the <code>WRITEQ TS</code> detects the
+<code>IOERR</code> condition, it is passed on to the <code>START</code> command.</p>
+<p>The <code>ICTRAN</code>/<code>ICTERM</code> parameters also serve another purpose, in that
+specifying them allows the writing of a DF-prefix <code>TS</code> record which would
+normally raise the <code>INVREQ</code> condition.</p>
+<p>The <code>START</code> command parameters are then shipped to the Server.</p>
+<h4 id="server-processing-gbl1008">Server processing (<code>GBL1008</code>)</h4>
+<p>The <code>TERMID</code> is validated; if invalid the <code>TERMIDERR</code> condition is returned to the Client.</p>
+<p>An Interval Control Element (<code>ICE</code>) is then created and chained in expiration time order.</p>
+<h3 id="invocation">Invocation</h3>
+<p>This mechanism is unique to each terminal.</p>
+<p>The <code>IC</code> scan mechanism is in <code>Z390KCP</code>.
+On every attempt to receive data from a terminal a request is sent to the
+Server to do an <code>ICE</code> scan for an expired one.</p>
+<h4 id="server-processing-gbl10ff">Server processing (<code>GBL10FF</code>)</h4>
+<p>Assuming an expired <code>ICE</code> is found for our terminal, checks are made to see if the terminal is available.</p>
+<ul>
+<li>Terminal not available</li>
+<li>If the <code>ICE REQID</code> and <code>TRANSID</code> are the same then this is a repeated
+    <code>START</code> request which has written more records to the <code>TS Q</code> to be read
+    by the initiated task. The <code>ICE</code> is deleted.<br />
+    This situation will occur if multiple tasks issue <code>START</code> requests all with
+    a very close expiry time.</li>
+<li>Terminal available</li>
+<li>The Client is sent a zero return and will initiate the transaction and set
+    <code>EIBREQID</code>. The <code>ICE</code> is then deleted.</li>
+<li>An <code>ICE</code> rescan is then done, and if any expired <code>ICE</code>s match the <code>REQID</code>
+    and <code>TRANSID</code>, they are deleted.<br />
+    This situation will occur if one task issues multiple <code>START</code> requests all
+    with a very close expiry time.</li>
+<li><code>Z390KCP</code> will issue a <code>READQ TS</code> for the <code>'CH...'</code> queue to see if
+    channels and containers have been passed. If the read succeeds then
+    the channel/container structure is built for the task and the <code>'CH...'</code>
+    queue is deleted.</li>
+</ul>
+<h3 id="retrieve">RETRIEVE</h3>
+<p>An <code>IC</code> invoked transaction is passed the <code>REQID</code> in <code>EIBREQID</code>.
+The module <code>LCL100A</code> issues a <code>READQ TS QUEUE(EIBREQID)</code></p>
+<p>If conditions <code>ITEMERR</code> or <code>QIDERR</code> occur these are converted to condition
+<code>ENDDATA</code> and this condition is raised.</p>
+<p>Each <code>TS Q</code> record has a 16-byte prefix and the fields <code>QUEUE</code>, <code>RTRANSID</code> and
+<code>RTERMID</code> are moved into the labels provided.</p>
+<p>If a field is requested but is <code>X'00'</code>, then the <code>ENVDEFERR</code> condition is raised.</p>
+<blockquote>
+<p>[!NOTE]
+If one of the three fields is supplied but not requested, then no error is raised.</p>
+</blockquote>
+<p>The relationship between <code>SET</code>/<code>INTO</code> and <code>LENGTH</code> is complex, rather than
+repeat the logic here, I refer the reader to the text following label <code>PFXDUN</code> in <code>LCL100A</code>.</p>
+<p><code>INTO</code>/<code>SET</code> will receive the data after the prefix.</p>
+<p>Deletion of the <code>TS Q</code>
+- The condition <code>ENDDATA</code> will attempt a <code>DELETEQ TS</code>, no error occurs if this fails.
+- A successful <code>READQ TS</code> will do a <code>DELETEQ TS</code> if it returns <code>NUMITEMS=1</code>.
+- The condition <code>LENGERR</code> will attempt a <code>DELETEQ TS</code> if <code>NUMITEMS=1</code>.
+  - No error occurs if this fails.
+- If <code>EIBREQID</code> is not null at task end or abend, a <code>DELETEQ TS</code> is done.
+  - No error occurs if this fails.</p>
+<p>Mysteries:
+- It is not known how the condition <code>NOTFND</code> can be raised.
+  IBM have now acknowledged that this is an error in the Manual and will be
+  corrected.</p>
+<h3 id="cancel">CANCEL</h3>
+<p>The module <code>LCL100C</code> sends the <code>REQID</code> to the server.</p>
+<p>The server module <code>GBL100C</code> scans the <code>ICE</code> chain for a matching <code>REQID</code>. If
+found the <code>ICE</code> is deleted and a rescan is done.</p>
+<p>If no <code>ICE</code>s are deleted then the <code>NOTFND</code> condition is raised.
+Any <code>TS Q</code> records associated with the deleted <code>ICE</code>s are not deleted.</p>
+<h3 id="ic-tasks">IC tasks</h3>
+<p><code>IC</code> tasks initiated while a pseudo-conversational task is in progress.</p>
+<blockquote>
+<p>[!NOTE]
+It is unwise to change the screen in a way that would affect a
+mapping operation. e.g. don't add any unprotected fields or overlay
+any existing attributes.</p>
+</blockquote>
+<h4 id="ic-tasks-that-end-with-exec-cics-return">IC tasks that end with EXEC CICS RETURN</h4>
+<p>e.g. message broadcasters</p>
+<p>The pseudo-conversational task should continue to operate correctly.</p>
+<h4 id="ic-tasks-that-end-with-exec-cics-return-transid">IC tasks that end with EXEC CICS RETURN TRANSID()</h4>
+<p>The original pseudo-conversational task will no longer operate. Any
+<code>COMMAREA</code> built by that task will be freed.</p>
+<p>The next task initiated will be the <code>TRANSID</code> specified.</p>
+<h4 id="ic-tasks-that-end-with-exec-cics-return-transid-commarea">IC tasks that end with EXEC CICS RETURN TRANSID() COMMAREA()</h4>
+<p>The original pseudo-conversational task will no longer operate. Any
+<code>COMMAREA</code> built by that task will be freed.</p>
+<p>The next task initiated will be the <code>TRANSID</code> specified and will be passed
+the <code>COMMAREA</code> specified.</p>
+<h2 id="enqdeq-management">ENQ/DEQ Management</h2>
+<h3 id="enq">ENQ</h3>
+<p>The module <code>LCL1204</code> validates the length.
+Although an omitted <code>LENGTH</code> is accepted, it may not work in zCICS.</p>
+<p>The ENQ command parameters are then shipped to the Server.</p>
+<p>Server processing <code>GBL1204</code></p>
+<ul>
+<li>The <code>QEA</code> chain is scanned.</li>
+<li>If a <code>QEA</code> is found with the same resource, length and originating termid,
+  then the use count (<code>QEAUCT</code>) is incremented.</li>
+<li>If no <code>QEA</code> is found with the same resource and length, then a new <code>QEA</code> is
+  built and chained.</li>
+<li>If a QEA is found with the same resource and length but a different
+  originating termid, then a potential suspend has occurred.</li>
+<li>Please refer to the matrix in <code>GBL1204</code> at label <code>KCENQBSY</code> for the
+    complete logic of the <code>ENQBUSY</code> condition.</li>
+<li>The Manual omits one description, when <code>HANDLE CONDITION ENQBUSY()</code>
+    is not specified, <code>NOSUSPEND</code> is specified and there is no
+    <code>NOHANDLE</code>, then <code>NOHANDLE</code> must be forced as the task can never
+    abend <code>ENQBUSY</code> (there is no abend code).</li>
+<li>When a task is suspended the <code>THRDCNTL</code> entry for this terminal is marked
+  <code>SUS-ENQ</code> and the <code>QEA</code> is flagged with the termid suffix (<code>QEAWAIT</code>).</li>
+<li>A task is suspended because we don't respond to the shipped ENQ
+  request; this is done by the DEQ process.</li>
+</ul>
+<h3 id="deq">DEQ</h3>
+<p>The module <code>LCL1206</code> validates the length.
+The DEQ command parameters are then shipped to the Server.</p>
+<p>Server processing <code>GBL1206</code></p>
+<ul>
+<li>The <code>QEA</code> chain is scanned.</li>
+<li>If a QEA is found with the same resource, length and originating termid</li>
+<li>The use count is decremented if not zero. Ok response is returned.</li>
+<li>If the use count is zero, and no tasks are waiting for this resource, then
+    the <code>QEA</code> is released and the chain repaired.
+    Ok response is returned.</li>
+<li>If the use count is zero, and tasks are waiting for this resource, then ok
+    response is sent to each waiting task.<br />
+    The terminal status is reset to <code>RUNNING</code>.<br />
+    Then the <code>QEA</code> is released and the chain repaired.
+    Ok response is returned.</li>
+</ul>
+<h3 id="task-end-or-abend">Task end or abend</h3>
+<p><code>Z390KCP</code> will invoke a special <code>DEQALL</code> server request.</p>
+<p>Server processing <code>GBL12FC</code></p>
+<p>The <code>QEA</code> chain is scanned.</p>
+<p>If a <code>QEA</code> is found with the same originating termid
+- If no tasks are waiting for this resource, then the <code>QEA</code> is released and
+  the chain repaired. Ok response is returned.
+- If tasks are waiting for this resource, then ok response is sent to each
+  waiting task.<br />
+  The terminal status is reset to <code>RUNNING</code>.<br />
+  Then the <code>QEA</code> is released and the chain repaired. Ok response is returned.</p>
+<h2 id="cwa-management">CWA Management</h2>
+<p>The <code>CWA</code> is considered a Global Resource, and is therefore owned and handled by
+the Global Manager, <code>Z390CICS</code>.</p>
+<p><code>CWA</code> size is determined by the <code>Z390CICS.INI</code> parameter <code>CWASIZE=</code> and the
+original 3.5K limit has been extended to 9,999,999 bytes.</p>
+<p>The only access to the <code>CWA</code> is via <code>EXEC CICS ADDRESS CWA()</code>.
+This obtains a copy of the <code>CWA</code> and ENQ is used to lock any further <code>CWA</code> access
+for the duration of the task. See later for exceptions.</p>
+<p>When the task ends or abends the <code>CWA</code> is sent back to the Global Manager for a
+refresh, and the natural clean-up process will ensure that the local copy is freed
+and DEQ takes place.</p>
+<p>There is no programmable access to the refresh/unlock mechanism.</p>
+<h3 id="exceptions">Exceptions</h3>
+<p><code>EXEC CICS RECEIVE</code> (conversational) and <code>EXEC CICS DELAY</code> are
+considered to be long running and therefore each of those processes have a
+refresh/unlock and re-acquire mechanism wrapped around them.</p>
+<h2 id="macros-lclhhhh-modules-and-z390lcl-the-linkage-mechanisms">Macros, LCLhhhh modules and Z390LCL - the linkage mechanisms</h2>
+<p>Before the terminal is created, the module <code>Z390LCL</code> is loaded and the address
+placed in <code>TCTTELCL</code>.</p>
+<p>I am going to use <code>EXEC CICS READ</code> as an example.</p>
+<p>When this macro is issued the parameter list is set up and these instructions are
+issued:
+<div class="highlight"><pre><span></span><code>         L     R15,TCTTELCL R15=LCL    MODULE INDEXER
+         LARL  R1,=A(P0602) R1=LCL     MODULE PARAMETER LIST
+         BAKR  0,R15                   STACK REGS AND GO
+</code></pre></div></p>
+<p><code>Z390LCL</code> has almost all (see later for exceptions) the macro processors linked in.
+The processor is located and a direct branch, <code>BR R15</code> is used to invoke it.</p>
+<p>An <code>LCLhhhh</code> module can itself issue an <code>EXEC CICS</code> command, even though it's
+not really a CICS program. This will just create another stack entry.</p>
+<p>When a processor completes, the <code>PR</code> will unstack (only <code>GR2</code>-<code>GR14</code>) and return to
+the invoking macro for error processing or return to the invoking application.</p>
+<h3 id="exceptions_1">Exceptions</h3>
+<p>There are three processes that don't return immediately to the invoking
+application after completion: <code>LINK</code>, <code>XCTL</code> and <code>RETURN</code>.</p>
+<p>These LCL modules are not part of <code>Z390LCL</code> and are linked in to each
+application that uses them.</p>
+<p>When these macros are issued the parameter list is set up and these
+instructions are issued:
+<div class="highlight"><pre><span></span><code>         LARL  R1,P0E08             R1=PARAMETER LIST
+         LARL  R14,P0E08RTN_&amp;SYSNDX RETURN ADDRESS
+         LRL   R15,=V(LCL0E08)      R15=EXTERNAL RETURN MODULE ADDRESS
+         BR    R15                  GO TO IT
+P0E08RTN_&amp;SYSNDX EQU *
+</code></pre></div></p>
+<p>The processor decides where to go next.</p>
+<h2 id="non-terminal-support">Non-terminal Support</h2>
+<p>Tne <code>INI</code> parameter <code>MAX_NONTERMS=n</code> limits the number of non-terminal tasks
+that may be running at the same time.</p>
+<p>Each non-terminal in zCICS is really a special type of terminal with a terminal id.
+of !!0n. Tests have been placed in various macro processors (LCL modules) to
+raise conditions for commands like <code>SEND</code> and <code>RECEIVE</code> which cannot be
+executed in a non-terminal environment.</p>
+<p>When a non-terminal task ends or abends, the terminal is shut down.</p>
+<p><code>CEMT I TER</code> will display non-terminals with a type of <code>NONTERM</code>.</p>
+<h2 id="sequential-terminal-support">Sequential Terminal support</h2>
+<p>Please read the Doc for this feature in zCICS Sequential Terminal Support. This
+section does not cover the batch programs <code>Z390SEQ</code> or <code>Z390COMP</code>.</p>
+<p>When the <code>INI</code> parameter <code>SEQ_TERM=YES</code> is specified then <code>Z390CICS</code> will start a
+special <code>CMDPROC</code> terminal with a terminal id of <code>SQ01</code>.
+This will reduce the total terminals that may be started to nine.</p>
+<p>When <code>Z390KCP</code> is invoked for <code>SQ01</code>, two QSAM files are opened, one to process
+the input streams, and the other to write the output streams to <code>SEQO0001</code>. The
+<code>TCTTE</code> contains the <code>DCB</code> addresses and other supporting fields.</p>
+<p>The internal <code>EXEC CICS RECEIVE</code> in <code>Z390KCP</code> and any in user programs read
+the next data stream from the input QSAM file.</p>
+<p>The internal <code>EXEC CICS SEND</code> in <code>Z390KCP</code> and any in user programs writes all
+data streams to the output QSAM file and displays them on the <code>SQ01</code> terminal.</p>
+<p>When an input file reaches the end, the file number is incremented and the file is
+closed and re-opened.</p>
+<p>When all of the input streams are exhausted, the terminal is closed via an
+emulated <code>CEMT S TER OUT</code> unless the last input data stream was <code>CEMT P SHU</code>
+(recommended), in which case zCICS is shut down.</p>
+<h2 id="channelcontainer-support">Channel/Container support</h2>
+<p>This is an extended form of IBM's badly defined facility.</p>
+<p>I have ignored the term 'scope' and have allowed both <code>CHANNEL</code> and
+<code>COMMAREA</code> to co-exist. In addition, <code>START</code> may have other parameters as well as
+<code>CHANNEL</code>. In these cases a warning <code>MNOTE</code> is issued as the program won't
+assemble in the mainframe environment.</p>
+<p>When a <code>PUT</code> or <code>MOVE</code> is issued a <code>DFHCHAN</code> block is built. The first one sets the
+anchor at <code>TCTTECAQ</code>, subsequent channels are chained via <code>CHANADDR</code>.</p>
+<p>The first container is chained from <code>CHANCONT</code> and each has a prefix
+(<code>DFHCONT</code>). Subsequent containers are chained from <code>CONTADDR</code>.</p>
+<p>For <code>GET</code> with <code>SET</code>, a copy of the container is made and chained from <code>CONTSET</code>,
+if any copies have been made before (<code>CONTSET</code> has an address), then it is freed
+before a new copy is made.</p>
+<p>For <code>DELETE</code>, the container and any <code>SET</code> are freed and the chain is repaired.</p>
+<p>A <code>PUT</code> to an existing container will do a <code>DELETE</code> first and then a <code>PUT</code>.
+Container data is never overlaid (this is not well described).</p>
+<p>In zCICS a channel belongs to the link-level that created it (<code>CHANLINK</code>), therefore
+when a <code>RETURN</code> is issued all channels/containers belonging to that link-level are
+deleted. A special <code>DELETE</code> is used internally to delete a channel and all of its
+containers: <code>EXEC CICS DELETE CONTAINER('*') CHANNEL(name)</code></p>
+<p>If a <code>RETURN CHANNEL(name)</code> returns to zCICS, all channels are deleted except
+the one named in the <code>RETURN</code>.</p>
+<p>When a channel is passed via <code>LINK</code>, <code>XCTL</code>, <code>RETURN</code> or <code>START</code> the name is stored
+in <code>TCTTECHN</code>. The program receiving the passed channel can access it via
+<code>ASSIGN CHANNEL(name)</code> and then <code>GET</code> etc. The passed channel name is also
+stored in that program's <code>DSA</code> (<code>DFHEICHN</code>) so that it can be restored if control is
+passed back (another thing not well defined).</p>
+<p>For further information about the mechanism used to pass a channel on the <code>START</code>
+command see <a href="#interval-control-management">Interval Control Management</a>.</p>
+<h2 id="browse-operation">Browse operation</h2>
+<p>When a <code>STARTBROWSE</code> is issued a <code>DFHCHWA</code> block is built. The first one sets
+the anchor at <code>TCTTECHW</code>, subsequent blocks are chained via <code>CHWAADDR</code>.</p>
+<p>A fullword counter at <code>TCTTETKN</code> is incremented and this is used as the
+<code>BROWSETOKEN</code>, stored at <code>CHWATOKN</code> and returned to the requestor.</p>
+<p>Because the creation and deletion of containers is dynamic, browsing operations
+may lead to container names being returned that no longer exist when a <code>GETNEXT</code>
+is issued. The last container name retrieved is stored at <code>CHWACONT</code>, if this is not
+found or if the channel no longer exists then the <code>GETNEXT</code> will raise the <code>END</code>
+condition.</p>
+<p><code>ENDBROWSE</code> will delete the <code>DFHCHWA</code> and repair the chain.</p>
+<h2 id="cedf-operation">CEDF operation</h2>
+<p>In this chapter <code>DON0</code> is used as the terminal to receive the intercepts and <code>DON1</code>
+as the terminal running the transaction being monitored. Any two terminals can be
+used.</p>
+<h3 id="starting-and-stopping-cedf">Starting and Stopping CEDF</h3>
+<p>The processing for start and stop is in <code>Z390CEDF</code>.</p>
+<h4 id="starting">Starting</h4>
+<p>On <code>DON0</code> the transaction <code>CEDF DON1,ON</code> is entered.</p>
+<p>This causes an <code>EXEC CICS START TRANSID('CEDZ')</code> with data to be sent to
+<code>DON1</code>. The data contains the invoking termid (<code>DON0</code>) and the parameter <code>ON</code>.</p>
+<p>A confirmation message is sent to <code>DON0</code>.</p>
+<p>When <code>CEDZ</code> is invoked on <code>DON1</code>, the invoking termid is saved in <code>TCTTEEDT</code>
+and the <code>CEDF</code> flag is set (<code>TCTTEEDF=X'FF'</code>). A confirmation message is
+displayed.</p>
+<h4 id="stopping">Stopping</h4>
+<p>During a <code>CEDF</code> session, PF3 can be pressed.</p>
+<p>See the <a href="#interception-operation">intercept operation</a>.</p>
+<p>At task termination, clear the screen, enter <code>CEDF DON1,OFF</code>
+in a similar manner to starting, <code>EXEC CICS START TRANSID('CEDZ')</code> with
+data is sent to <code>DON1</code>. The data contains the invoking termid (<code>DON0</code>) and the
+parameter <code>OFF</code>.</p>
+<p>When <code>CEDZ</code> is invoked on <code>DON1</code>, <code>TCTTEEDT</code> and <code>TCTTEEDF</code> are cleared.
+No confirmation message is displayed as it may interfere with the display on <code>DON1</code>.</p>
+<p>The redisplay <code>TS</code> queue <code>--CEDF--</code> is deleted.</p>
+<h4 id="command-interception">Command Interception</h4>
+<p>The <code>CEDF</code> interception module <code>LCLCEDF</code> is loaded when the terminal
+environment is created and the address is stored in <code>TCTTEEDA</code>.
+Each <code>EXEC CICS</code> command is associated with an LCL module.
+See <a href="#lcl-submodules-for-exec-cics-processing">LCL Submodules for EXEC CICS processing</a> for a full list.
+Within the module there is an interception point both before and after the command processing.</p>
+<p><code>LCLCEDF</code> is not invoked if <code>EDF</code> is off, or if the command has specified <code>NOEDF</code>.
+<code>TCTTEEBA</code> is set to <code>X'00'</code> (before) or <code>X'FF'</code> (after).</p>
+<p>The indicator in <code>TCTTEEDL</code> specifies the type of linkage and parameter list
+location:
+- <code>X'00'</code> Conventional invocation with GR3 pointing to the parameter list
+- <code>X'FE'</code> Entry from <code>DFHEIENT</code> for the <code>PROGRAM INITIATION</code> intercept.
+  The parameter list comes from <code>LINK</code>/<code>XCTL</code> and is stored inside <code>DFHEIENT</code>
+  it is then extracted using the <code>ESTA</code> instruction and moved to <code>GR3</code>.
+- <code>X'FF'</code> Direct Linkage from <code>LINK</code>, <code>XCTL</code> or <code>RETURN</code>.
+  The parameter list pointer is passed in <code>GR1</code> and moved to <code>GR3</code></p>
+<p>In <code>LCLCEDF</code> a table (<code>EDFTABL</code>) is scanned and the routine associated with the
+command is invoked.</p>
+<p>The <code>EDF</code> mapset <code>MAPEDF</code> contains all the maps used in the interception.
+<code>GR4</code> is used as the map structure base.
+The intercept map is built and a <code>GETMAIN</code> is done to hold:
+- The map structure
+- <code>DSA</code> address and lengths
+- The current <code>DSA</code>
+- Additional data for pagable intercepts</p>
+<p>For intercepts that may require paging, the data is not set into the map in
+<code>LCLCEDF</code> but sent to <code>Z390CEDF</code> and built there.</p>
+<p>An <code>EXEC CICS START TRANSID('CEDZ')</code> then passes this data to <code>DON0</code> with the
+<code>SEND</code> parameter and the function code of the command.</p>
+<p>The task is then suspended using <code>EXEC CICS DELAY HOURS(1)</code> with a <code>REQID</code> of
+<code>!!CEDF!!</code>. The time period should be large enough for normal operation.</p>
+<p>This <code>DELAY</code> is canceled using the <code>REQID</code> when the user wishes to continue the
+task.</p>
+<h4 id="interception-operation">Interception operation</h4>
+<p><code>CEDZ</code> is started on <code>DON0</code> and the parameters and data are retrieved.</p>
+<p>On first entry, PF2 is preset as the first input key and is used as a reset function.</p>
+<p>After the transaction id. has been entered on <code>DON1</code>, the <code>PROGRAM INITIATION</code>
+intercept is invoked and the switch (focus) to <code>DON0</code> occurs.</p>
+<p>A table (<code>KEYTAB</code>) containing all valid keypresses and function codes is scanned
+and the processing routine invoked.</p>
+<p>Subsequent keypresses cause a rescan of <code>KEYTAB</code>.</p>
+<p>An exception to this is PF3 which has special handling:</p>
+<ul>
+<li>A special <code>EXEC CICS CANCEL</code> is issued using an internal parameter <code>EDFOFF</code>.</li>
+<li>This not only cancels the <code>DELAY</code> that has suspended the task, but also turns off
+  <code>CEDF</code> on <code>DON1</code> thus allowing the task to continue normally.</li>
+<li>A message is displayed on <code>DON0</code> confirming <code>CEDF</code> has ended.</li>
+</ul>
+<p>Most commands just display the interception screen as it was sent, exceptions are
+discussed later. If further modification of the display screen is possible then the key
+operation lines at the bottom are set up. Only those keys which can be seen are
+active.</p>
+<p>PF2: Mode change</p>
+<ul>
+<li>If shown, then there are fields displayed which can have valid EBCDIC, ASCII or
+  hex content. Pressing PF2 will cycle through the modes and is controlled by the
+  field <code>CURRMODE</code>. <code>R</code> is used as the reset, then <code>E</code>,<code>A</code>,<code>H</code> accordingly.</li>
+</ul>
+<p>PF5: Working Storage</p>
+<ul>
+<li>Except at task termination, it is always available.</li>
+<li>A dump display is shown in EBCDIC and hex, paging keys are activated if
+  appropriate and PF2 can be used to switch between EBCDIC and ASCII.</li>
+<li>The Working Storage mode is independent of the intercept mode.</li>
+<li>Pressing ENTER will return to the intercept display.</li>
+</ul>
+<p>PF7,8,10,11: Paging keys</p>
+<ul>
+<li>For some commands, there are too many parameters to display on one screen,</li>
+<li>Paging keys are displayed as appropriate.</li>
+</ul>
+<p>PF12: Redisplay Mode and Redisplay Paging</p>
+<ul>
+<li>There is no 'screen save' function, all command environments are saved to the
+  <code>TS</code> queue <code>--CEDF--</code>.</li>
+<li>When the initialization process is done the <code>TS</code> record is written and a switch
+  (<code>EDFRDYWQ</code>) is set to prevent multiple writes. This switch is reset when the
+  user presses ENTER to continue the task.</li>
+<li>The screen is modified for Redisplay Mode by showing navigation keys which
+  allow &plusmn;1 and &plusmn;5 commands. Also an input field appears top right to go directly
+  to a specific screen - typing a large number like 999 will go to the earliest
+  intercept.</li>
+<li>Pressing PF5 while in Redisplay Mode will display the Working Storage as it was
+  when the command was intercepted.</li>
+<li>Pressing ENTER will return to Redisplay Mode with the Redisplay keyset.</li>
+<li>If PF2 is displayed then a mode change is possible and works identically to
+  intercept mode described above. The control switch (<code>REDPMODE</code>) is different.</li>
+</ul>
+<p>Redisplay Mode and Paging</p>
+<p>As described above, some commands have too many parameters to display on
+one screen. When this happens in Redisplay Mode, <code>PF12:PAGING KEYS</code>
+appears and is used to switch between the Redisplay keyset and the Paging
+keyset.</p>
+<h2 id="event-tracing">Event Tracing</h2>
+<p>Tracing is currently limited to those events that the server knows about. These
+events appear on the log as <code>WTO</code> messages.</p>
+<p>The level of tracing is controlled by the <code>INI</code> parm <code>TRACE_Z390CICS=</code>.</p>
+<p>There is an intent to provide full application tracing, but each event would have to
+be sent to the server and may be too great an overhead in this environment.</p>
+<h2 id="lcl-submodules-for-exec-cics-processing">LCL Submodules for EXEC CICS processing</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Process</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LCL0202</td>
+<td>ADDRESS</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td>LCL0204</td>
+<td>HANDLE CONDITION</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL0206</td>
+<td>HANDLE AID</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL0208</td>
+<td>ASSIGN</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL020A</td>
+<td>IGNORE CONDITION</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL020C</td>
+<td>PUSH HANDLE</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL020E</td>
+<td>POP HANDLE</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LCL0402</td>
+<td>RECEIVE</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td>LCL0404</td>
+<td>SEND</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LCL0602</td>
+<td>READ</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td>LCL060C</td>
+<td>STARTBR</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td>LCL060E</td>
+<td>READNEXT</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td>LCL0610</td>
+<td>READPREV</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td>LCL0612</td>
+<td>ENDBR</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td>LCL0614</td>
+<td>RESETBR</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LCL0A02</td>
+<td>WRITEQ TS</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td>LCL0A04</td>
+<td>READQ TS</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td>LCL0A06</td>
+<td>DELETEQ TS</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LCL0C02</td>
+<td>GETMAIN</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL0C04</td>
+<td>FREEMAIN</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LCL0E02</td>
+<td>LINK</td>
+<td>Direct linkage</td>
+</tr>
+<tr>
+<td>LCL0E04</td>
+<td>XCTL</td>
+<td>Direct linkage</td>
+</tr>
+<tr>
+<td>LCL0E06</td>
+<td>LOAD</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL0E08</td>
+<td>RETURN</td>
+<td>Direct linkage</td>
+</tr>
+<tr>
+<td>LCL0E0A</td>
+<td>RELEASE</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL0E0C</td>
+<td>ABEND</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL0E0E</td>
+<td>HANDLE ABEND</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LCL1002</td>
+<td>ASKTIME</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL1004</td>
+<td>DELAY</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td>LCL1008</td>
+<td>START</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td>LCL100A</td>
+<td>RETRIEVE</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td>LCL100C</td>
+<td>CANCEL</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LCL1204</td>
+<td>ENQ</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL1206</td>
+<td>DEQ</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LCL1802</td>
+<td>RECEIVE MAP</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL1804</td>
+<td>SEND MAP</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL1812</td>
+<td>SEND CONTROL</td>
+<td>Embedded EXEC CICS</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LCL1C02</td>
+<td>DUMP</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LCL3412</td>
+<td>DELETE CONTAINER</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL3414</td>
+<td>GET CONTAINER</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL3416</td>
+<td>PUT CONTAINER</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL3440</td>
+<td>MOVE CONTAINER</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL9626</td>
+<td>STARTBROWSE CONTAINER</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL9628</td>
+<td>GETNEXT CONTAINER</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL962A</td>
+<td>ENDBROWSE CONTAINER</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LCL4A02</td>
+<td>ASKTIME ABSTIME</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL4A04</td>
+<td>FORMATTIME</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LCL4C02</td>
+<td>INQUIRE FILE</td>
+<td></td>
+</tr>
+<tr>
+<td>LCL4C04</td>
+<td>SET FILE</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="z390cemt-submodules">Z390CEMT submodules</h2>
+<p><code>Z390CEMT</code> handles all the <code>CEMT</code> functions.</p>
+<p>Most functions have been split into submodules.</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CEMTFILE</td>
+<td>INQUIRE/SET FILE</td>
+</tr>
+<tr>
+<td>CEMTIENQ</td>
+<td>INQUIRE ENQUEUE</td>
+</tr>
+<tr>
+<td>CEMTISYS</td>
+<td>INQUIRE SYSTEM</td>
+</tr>
+<tr>
+<td>CEMTITER</td>
+<td>INQUIRE TERMINAL</td>
+</tr>
+<tr>
+<td>CEMTITRN</td>
+<td>INQUIRE TRANSACTION</td>
+</tr>
+</tbody>
+</table>
+<h2 id="z390cics-operation">Z390CICS Operation</h2>
+<ul>
+<li>The file <code>Z390CICS.INI</code> is opened and the parameters analyzed and used to
+  set fixed fields in the program.<br /></li>
+<li>Note: <code>CEMT I SYS</code> can be used to display them.</li>
+<li>A Command Prompt is started with the correct directory and parameters for
+  each local terminal requested and Z390KCP is invoked in each one.</li>
+<li>A 32K receive area is acquired</li>
+<li>The Server port is opened.</li>
+<li>The <code>FCT</code> is loaded and any files eligible to be opened immediately are opened.</li>
+<li>At <code>READLOOP</code> a <code>TCPIO RECEIVE</code> is done. The process is slightly different
+  when in shutdown mode (see later).</li>
+<li><code>Z390CICS</code> will wait here for a request sent by any client.</li>
+<li>When a request is received the identity of the Client is return in <code>GR2</code>.</li>
+<li>Occasionally more than one request is received at the same time (batched),
+    these are identified and the messages are split and individually processed.</li>
+<li><code>REQTABLE</code> is then scanned for the requested process and the routine is invoked.</li>
+<li>Some routines are handled within <code>Z390CICS</code> and others will <code>CALL</code> a <code>GBL</code>
+    submodule. For a list, see below.</li>
+<li>After the process is complete a <code>TCPIO SEND</code> is done with return codes and
+    data (if requested) to the Client and the program returns to <code>READLOOP</code>.</li>
+<li>Shutdown processing</li>
+<li>After a Client has issued <code>CEMT P SHU (IMM)</code> a flag (<code>SHUTIND</code>) is set. The
+    alternate code at <code>READLOOP</code> is then invoked which does a <code>TCPIO RECEIVE,NOWAIT</code>
+    and checks every second if all Clients have closed.</li>
+<li>Then all open VSAM files are closed and the Server (<code>Z390CICS</code>) shuts down.</li>
+</ul>
+<h2 id="gbl-submodules">GBL Submodules</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Description</th>
+<th>Program</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GBL0602</td>
+<td>READ</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>GBL060C</td>
+<td>STARTBR</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>GBL060E</td>
+<td>READNEXT</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>GBL0610</td>
+<td>READPREV</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>GBL0612</td>
+<td>ENDBR</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>GBL0614</td>
+<td>RESETBR</td>
+<td>Any</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>GBL0A02</td>
+<td>WRITEQ TS</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>GBL0A04</td>
+<td>READQ TS</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>GBL0A06</td>
+<td>DELETEQ TS</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>GBL0AFF</td>
+<td>CEBR Request Qnames</td>
+<td>Z390CEBR</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>GBL1004</td>
+<td>DELAY</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>GBL1008</td>
+<td>START</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>GBL100C</td>
+<td>CANCEL</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>GBL10FF</td>
+<td>ICE SCAN</td>
+<td>Z390KCP</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>GBL1204</td>
+<td>ENQ</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>GBL1206</td>
+<td>DEQ</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>GBL12FC</td>
+<td>DEQALL</td>
+<td>Z390KCP</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>GBL4C02</td>
+<td>INQUIRE FILE</td>
+<td>Any</td>
+</tr>
+<tr>
+<td>GBL4C04</td>
+<td>SET FILE</td>
+<td>Any</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>GBLFE00</td>
+<td>CEMT I TERm</td>
+<td>Z390CEMT</td>
+</tr>
+<tr>
+<td>GBLFE01</td>
+<td>CEMT I SYStem</td>
+<td>Z390CEMT</td>
+</tr>
+<tr>
+<td>GBLFE06</td>
+<td>CEMT I ENQueue</td>
+<td>Z390CEMT</td>
+</tr>
+<tr>
+<td>GBLFE07</td>
+<td>CWA GET/PUT</td>
+<td>Any</td>
+</tr>
+</tbody>
+</table>
+<h2 id="copy-books">Copy Books</h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Purpose</th>
+<th>Program</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FILEERTB</td>
+<td>VSAM Error Code Table</td>
+<td>Z390CICS</td>
+</tr>
+</tbody>
+</table>
+<h2 id="internal-abends">Internal Abends</h2>
+<p>These are mostly caused by programming errors or situations that were not anticipated.
+If you encounter any of them, please report them to the z390 support team.</p>
+<table>
+<thead>
+<tr>
+<th>Abend code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>444</td>
+<td>Abend code missing from the table in Z390CICS</td>
+</tr>
+<tr>
+<td>555</td>
+<td>Unknown request sent to Server</td>
+</tr>
+<tr>
+<td>666</td>
+<td>CMDPROC failed</td>
+</tr>
+<tr>
+<td>777</td>
+<td>TCPIO OPEN/CLOSE Server failed</td>
+</tr>
+<tr>
+<td>778</td>
+<td>TCPIO RECEIVE failed</td>
+</tr>
+<tr>
+<td>780</td>
+<td>TCPIO SEND failed</td>
+</tr>
+<tr>
+<td>790</td>
+<td>VSAM feedback code was not expected</td>
+</tr>
+</tbody>
+</table>
+<h2 id="change-summary">Change Summary</h2>
+<ul>
+<li>February 1, 2012</li>
+<li>Abend code 444 added</li>
+<li>Seven new LCL Modules added for Channel/Container support</li>
+<li>Control blocks DFHCHAN, DFHCONT and DFHCHWA added</li>
+<li>Added management description for Channels/Containers</li>
+<li>Added description of START with CHANNEL to the IC management section</li>
+<li>June 10, 2011</li>
+<li>GBLFE05 renamed to GBL4C02</li>
+<li>GBLFE08 renamed to GBL4C04</li>
+<li>Removed duplicate paragraph about DELETEQ TS</li>
+<li>Added section on CEDF</li>
+<li>November 1, 2010</li>
+<li>Update to LCL1812</li>
+<li>Section on Non-terminal support added</li>
+<li>Change to description of GBLFE05</li>
+<li>Added LCL4C04 and GBLFE08 (SET FILE)</li>
+<li>Added section on Z390CEMT submodules</li>
+<li>Added GBL1004 (DELAY)</li>
+<li>August 1, 2009</li>
+<li>References to DFHEIRET removed</li>
+<li>References to DFHEIPRM removed, XCTL updated</li>
+<li>Added LCL0208, LCL 4C02</li>
+<li>Amended Z390LCL processing</li>
+<li>February 21, 2009</li>
+<li>Added LCL0202, GBLFE07</li>
+<li>Added DFHCWBLK and CWA Management</li>
+<li>Added Macro and LCL processor Management</li>
+<li>November 24, 2008</li>
+<li>Added section on LCL submodules</li>
+<li>Added control blocks:</li>
+<li>DFHICBLK, DFHICEDS, DFHTSNDS, DFHKCBLK, THRDDSCT,</li>
+<li>DFHQEADS</li>
+<li>Added Interval Control Management</li>
+<li>Added ENQ/DEQ Management</li>
+<li>Completed Z390CICS operation</li>
+<li>GBLFE06 added (CEMT I ENQ)</li>
+<li>June 27, 2008</li>
+<li>Z390CICS operation extensively expanded</li>
+<li>January 18, 2008</li>
+<li>Extensive updates to File Control</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      &copy; 2026 z390 Assembler LLC. All rights reserved
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="/z390/javadoc/index.html" target="_blank" rel="noopener" title="" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M277.8 312.9c9.8-6.7 23.4-12.5 23.4-12.5s-38.7 7-77.2 10.2c-47.1 3.9-97.7 4.7-123.1 1.3-60.1-8 33-30.1 33-30.1s-36.1-2.4-80.6 19c-52.5 25.4 130 37 224.5 12.1m-85.4-32.1c-19-42.7-83.1-80.2 0-145.8C296.1 53.2 242.9 0 242.9 0c21.5 84.5-75.6 110.1-110.7 162.6-23.9 35.9 11.7 74.4 60.2 118.2M307 104.6c.1 0-175.2 43.8-91.5 140.2 24.7 28.4-6.5 54-6.5 54s62.7-32.4 33.9-72.9c-26.9-37.8-47.5-56.6 64.1-121.3m-6.1 270.5c-.5 1-1.2 1.8-2 2.6 128.3-33.7 81.1-118.9 19.8-97.3-3.3 1.2-6.2 3.4-8.2 6.3 3.6-1.3 7.3-2.3 11-3 31-6.5 75.5 41.5-20.6 91.4m47.1 62.3s14.5 11.9-15.9 21.2c-57.9 17.5-240.8 22.8-291.6.7-18.3-7.9 16-19 26.8-21.3 11.2-2.4 17.7-2 17.7-2-20.3-14.3-131.3 28.1-56.4 40.2C232.8 509.4 401 461.3 348 437.4M124.5 396c-78.7 22 47.9 67.4 148.1 24.5q-14.7-5.7-28.2-13.8c-44.7 8.5-65.4 9.1-106 4.5-33.5-3.8-13.9-15.2-13.9-15.2m179.8 97.2C225.6 508 128.5 506.3 71 496.8c0-.1 11.8 9.7 72.4 13.6 92.2 5.9 233.8-3.3 237.1-46.9 0 0-6.4 16.5-76.2 29.7M260.7 353c-59.2 11.4-93.5 11.1-136.8 6.6-33.5-3.5-11.6-19.7-11.6-19.7-86.8 28.8 48.2 61.4 169.5 25.9-7.8-2.8-15-7.1-21.1-12.8"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-52-gea0072f3"}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
