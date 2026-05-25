@@ -30,6 +30,18 @@
          WRITE &RECORD
          COPY  ZC_WS
          :&NP  SETA  N'&SYSLIST        
+.* Find record and file pointer                                         #808
+         ZC_SYM_FIND &RECORD
+         AIF   (&SYM_IX EQ 0)
+               MNOTE 8,'WRITE RECORD NOT FOUND - &RECORD'
+               MEXIT
+         AEND
+         :&FILE_IX SETA  &SYM_FD(&SYM_IX)  RPI 1065
+         AIF   (&FILE_IX EQ 0)
+               MNOTE 8,'WRITE RECORD NOT A FILE RECORD - &RECORD'
+               MEXIT
+         AEND
+.* Analyze all subclauses / phrases                                     #808
          :&FROM   SETC ''              Init FROM field list             #808
          :&ADV    SETC ''              Init ADVANCING parameters        #808
          :&AFTER  SETB 0               Before/After indicator           #808
@@ -55,6 +67,14 @@
                         :&CV    SETC 'ADV'  Set target variable         #808
                         :&(&CV) SETC '&CUR' init ADV field              #808
                         :&AFTER SETB ('&CUR' EQ 'AFTER') Before/After?  #808
+                  AEND                                                  #808
+                  AIF   ('&CUR' EQ 'ADVANCING')                         #808
+                        :&KWD   SETB 1      Mark keyword found          #808
+                        AIF ('&ADV' EQ '')  No BEFORE/AFTER found       #808
+                            :&CV    SETC 'ADV'  Set target variable     #808
+                            :&(&CV) SETC '&CUR' init ADV field          #808
+                            :&AFTER SETB (1) After 1 is default         #808
+                        AEND                                            #808
                   AEND                                                  #808
                   AIF   ('&CUR' EQ 'AT' OR '&CUR' EQ 'EOP' OR '&CUR' EQX#808
                                   'END-OF-PAGE')                        #808
@@ -99,7 +119,7 @@
          AEND                          Parameter loop                   #808
 .* AFTER ADVANCING                                                      #808
          AIF      ('&ADV' NE '' AND &AFTER) Advance after?              #808
-                  ADVANCING &ADV                                        #808
+                  ADVANCING &FILE_IX,&ADV                               #808
          AEND                                                           #808
 .* FROM clause                                                          #808
          AIF   ('&FROM' NE '')                                          #808
@@ -107,20 +127,10 @@
                MOVE   &FROM,TO,&RECORD                                  #808
          AEND                                                           #808
 .* Actual WRITE                                                         #808
-         ZC_SYM_FIND &RECORD
-         AIF   (&SYM_IX EQ 0)
-               MNOTE 8,'WRITE RECORD NOT FOUND - &RECORD'
-               MEXIT
-         AEND
-         :&FILE_IX SETA  &SYM_FD(&SYM_IX)  RPI 1065
-         AIF   (&FILE_IX EQ 0)
-               MNOTE 8,'WRITE RECORD NOT A FILE RECORD - &RECORD'
-               MEXIT
-         AEND
          GEN_WRITE &RECORD
 .* BEFORE ADVANCING                                                     #808
          AIF      ('&ADV' NE '' AND NOT &AFTER) Advance before?         #808
-                  ADVANCING &ADV                                        #808
+                  ADVANCING &FILE_IX,&ADV                               #808
          AEND                                                           #808
 .* AT END-OF-PAGE                                                       #808
          AIF      ('&EOP' NE '')     AT EOP clause ?                    #808

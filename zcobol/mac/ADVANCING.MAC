@@ -1,0 +1,45 @@
+         MACRO
+.*********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
+.*********************************************************************
+.* Author - Abe Kornelis                                             *
+.* Date   - 05/25/2026                                               *
+.*                                                                   *
+.* Purpose of this macro:                                            *
+.* - Analyze subparameters on the ADVANCING clause of a WRITE verb   *
+.* - issue error if needed                                           *
+.* - generate code to implement the advancing option specified       *
+.*                                                                   *
+.* Input parameters:                                                 *
+.* - First positional is index of file to be written                 *
+.* - Remaining positionals are the ADVANCING suboperands/keywords    *
+.* - No keyword parameters are provided                              *
+.*                                                                   *
+.* Note:                                                             *
+.* - BEFORE/AFTER can be ignored because the point where this macro  *
+.*   is invoked already caters to the advancing relative to the      *
+.*   actual WRITE of the record data.                                *
+.*                                                                   *
+.*********************************************************************
+.* 25/15/26 #808     WRITE not recognizing BEFORE / AFTER clauses
+.*********************************************************************
+         ADVANCING &FILE_IX
+         COPY  ZC_WS
+         :&FILE_ADVANCING(&FILE_IX) SETB 1 Set advancing support
+         MNOTE 8,'Support for ADVANCING option on WRITE not complete'
+         MEND
