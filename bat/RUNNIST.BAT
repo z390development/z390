@@ -14,7 +14,8 @@ rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 pushd %~dps0..
 if %1. == . goto notNist
 if not exist %1\z390\RUNNIST.BAT goto notNist
-if exist %1\z390\RUNNIST.BAT call %1\z390\RUNNIST.BAT "%CD%" || goto error
+rem -- call NIST repo's RUNNIST.bat using our local full path name
+for %%I in ("%~dp0..") do call %1\z390\RUNNIST.BAT "%%~fI" || goto error
 goto return
 
 :notNist

@@ -23,9 +23,9 @@ call z390test\gradlew.bat -p z390test cleanTest || goto error
 call z390test\gradlew.bat -p z390test test      || goto error
 
 rem if NIST was specified, it must be followed by the NIST repository's path
-if /I %1. == nist. call bat\RUNNIST.BAT %z_TraceMode% %2 %z_TraceMode%
-if /I %2. == nist. call bat\RUNNIST.BAT %z_TraceMode% %3 %z_TraceMode%
-if /I %3. == nist. call bat\RUNNIST.BAT %z_TraceMode% %4 %z_TraceMode%
+if /I %1. == nist. call bat\RUNNIST.BAT %z_TraceMode% %2
+if /I %2. == nist. call bat\RUNNIST.BAT %z_TraceMode% %3
+if /I %3. == nist. call bat\RUNNIST.BAT %z_TraceMode% %4
 
 set z_ReturnCode=0
 goto return
