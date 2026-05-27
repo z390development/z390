@@ -404,6 +404,10 @@ ZC_ALL_BLNKS_RECORD_SPACES DS CL(&ZC_ALL_BLANKS_LRECL)' '               #808
                    :&LRECL SETA &FILE_LRECL2(&FILE_IX)
                AEND
 &FILE_NAME(&FILE_IX) DCB DSORG=PS,RECFM=&RECFM,BLKSIZE=&LRECL,&DDNAME
+.* If LINAGE clause present on FD add room for counters                 #808
+         AIF   ('&FILE_LINAGE(&FILE_IX)' NE '')                         #808
+         DC    4H'0' 4 unnamed halfwords: LINAGE,FOOTING, TOP, BOTTOM   #808
+         AEND                                                           #808
      AELSEIF ('&FILE_ORG(&FILE_IX)' EQ 'QSAM')
 .*
 .* GEN DCB FOR SEQUENTIAL (F/V)
@@ -416,6 +420,10 @@ ZC_ALL_BLNKS_RECORD_SPACES DS CL(&ZC_ALL_BLANKS_LRECL)' '               #808
                    :&LRECL SETA &FILE_LRECL2(&FILE_IX)
                AEND
 &FILE_NAME(&FILE_IX) DCB DSORG=PS,RECFM=&RECFM,BLKSIZE=&LRECL,&DDNAME
+.* If LINAGE clause present on FD add room for counters                 #808
+         AIF   ('&FILE_LINAGE(&FILE_IX)' NE '')                         #808
+         DC    4H'0' 4 unnamed halfwords: LINAGE,FOOTING, TOP, BOTTOM   #808
+         AEND                                                           #808
      AELSEIF ('&FILE_ORG(&FILE_IX)' EQ 'KSDS')
 .*
 .* GEN ACB FOR INDEXED 

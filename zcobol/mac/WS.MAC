@@ -282,6 +282,9 @@
          :&SYM_LEN(&SYM_TOT)  SETA &WS_PAD 
          :&SYM_DUP(&SYM_TOT)  SETA 1        SYM FIELD OCCURANCES     
          :&SYM_PIC_TYPE(&SYM_TOT) SETC 'X'  SYM PIC TYPE DEF DSP
+.* Add full picture string to avoid dup factor of 0 being generated     #808
+.*   in GEN_WS.MAC (intended for group items only)                      #808
+         :&SYM_PIC(&SYM_TOT) SETC 'X(&WS_PAD)' Full picture string      #808
          AEND
 .*
 .* STORE SINGLE OR MULTIPLE 88 CONDITION VALUES FOR PRIOR WS ITEM
@@ -424,7 +427,7 @@
          :&SYM_DUP(&SYM_TOT)  SETA 1
          :&SYM_PIC_TYPE(&SYM_TOT) SETC 'X'
          :&WS_LOC SETA &WS_LOC+&ZC_DCB_LEN
-.* If LINAGE clause present on FD add room for counters
+.* If LINAGE clause present on FD add room for counters                 #808
          AIF   ('&FILE_LINAGE(&FILE_IX)' NE '')                         #808
          :&WS_LOC SETA &WS_LOC+8     4 hidden unnamed halfwords:        #808
          AEND                        LINAGE,FOOTING, TOP, BOTTOM        #808

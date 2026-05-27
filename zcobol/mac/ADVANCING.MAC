@@ -26,9 +26,9 @@
 .* - generate code to implement the advancing option specified       *
 .*                                                                   *
 .* Input parameters:                                                 *
-.* - First positional is index of file to be written                 *
-.* - Remaining positionals are the ADVANCING suboperands/keywords    *
-.* - No keyword parameters are provided                              *
+.* - No parameters are used                                          *
+.* - GBLA &FILE_IX must be set to the appropriate value for the file *
+.*   to be written                                                   *
 .*                                                                   *
 .* Note:                                                             *
 .* - BEFORE/AFTER can be ignored because the point where this macro  *
@@ -38,7 +38,7 @@
 .*********************************************************************
 .* 25/15/26 #808     WRITE not recognizing BEFORE / AFTER clauses
 .*********************************************************************
-         ADVANCING &FILE_IX
+         ADVANCING ,
          COPY  ZC_WS
          :&FILE_ADVANCING(&FILE_IX) SETB 1 Set advancing support
          MNOTE 8,'Support for ADVANCING option on WRITE not complete'
