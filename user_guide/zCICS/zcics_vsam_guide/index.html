@@ -10,13 +10,13 @@
         <meta name="author" content="z390 Development team">
       
       
-        <link rel="canonical" href="https://z390development.github.io/z390/user_guide/zCICS/zcics_basic_mapping_support/">
+        <link rel="canonical" href="https://z390development.github.io/z390/user_guide/zCICS/zcics_vsam_guide/">
       
       
-        <link rel="prev" href="../zcics_app_prog_guide/">
+        <link rel="prev" href="../zcics_sys_prog_guide/">
       
       
-        <link rel="next" href="../zcics_diagnosis_reference/">
+        <link rel="next" href="../../zVSAM/zVSAM_V2_Design/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>zCICS Basic Mapping Support - z390</title>
+        <title>zCICS VSAM Guide - z390</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#zcics-basic-mapping-support" class="md-skip">
+        <a href="#zcics-vsam-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              zCICS Basic Mapping Support
+              zCICS VSAM Guide
             
           </span>
         </div>
@@ -1192,37 +1192,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    zCICS Basic Mapping Support
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../zcics_basic_mapping_support/" class="md-nav__link">
         
   
   
@@ -1238,87 +1211,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#introduction" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Introduction
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#zcics-basic-mapping-support_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        zCICS Basic Mapping Support
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="zCICS Basic Mapping Support">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#bms-macros" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BMS Macros
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#map-generation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Map generation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#change-summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Change Summary
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1468,10 +1360,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../zcics_vsam_guide/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCICS VSAM Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1487,6 +1406,109 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#zcics-vsam-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        zCICS VSAM Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="zCICS VSAM Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4:
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vsam-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VSAM Extensions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vsam-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VSAM limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2303,33 +2325,55 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#introduction" class="md-nav__link">
+  <a href="#zcics-vsam-installation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Introduction
+        zCICS VSAM Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="zCICS VSAM Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#zcics-basic-mapping-support_1" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#step-2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        zCICS Basic Mapping Support
+        Step 2
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="zCICS Basic Mapping Support">
-      <ul class="md-nav__list">
+</li>
         
           <li class="md-nav__item">
-  <a href="#bms-macros" class="md-nav__link">
+  <a href="#step-3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        BMS Macros
+        Step 3
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4:
       
     </span>
   </a>
@@ -2342,10 +2386,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#map-generation" class="md-nav__link">
+  <a href="#vsam-extensions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Map generation
+        VSAM Extensions
       
     </span>
   </a>
@@ -2353,10 +2397,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#change-summary" class="md-nav__link">
+  <a href="#vsam-limits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Change Summary
+        VSAM limits
       
     </span>
   </a>
@@ -2383,492 +2427,48 @@
   
 
 
-<h1 id="zcics-basic-mapping-support">zCICS Basic Mapping Support</h1>
-<h2 id="introduction">Introduction</h2>
-<p>This document outlines the extensions and facilities implemented in zCICS.
-Please refer to the IBM Manuals on BMS usage.</p>
-<p>The documentation for <code>EXEC CICS SEND MAP</code>, <code>RECEIVE MAP</code> and <code>SEND CONTROL</code>
-are in the <a href="../zcics_app_prog_guide/">zCICS Application Programming Guide</a>.</p>
-<p>The following BMS facilities are not yet implemented:
-- Support for devices outside the 3270 family Printers
-- Extended Attributes (other than colour) and alternate screen size
-- Dynamic Map Positioning and ACCUM processing
-- Partitioning
-- Paging</p>
-<h2 id="zcics-basic-mapping-support_1">zCICS Basic Mapping Support</h2>
-<h3 id="bms-macros">BMS Macros</h3>
-<h4 id="dfhmsd-mapset-definition-and-termination">DFHMSD -- Mapset definition and termination</h4>
-<p>Although <code>DFHMSD</code> is optional it is recommended that one is coded. A default set of
-values will be internally generated from the <code>DFHMDI</code> macro if missing.</p>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Operation</th>
-<th>Operands</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>mapset</td>
-<td>DFHMSD</td>
-<td>TYPE=MAP/DSECT/FINAL</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>MODE=IN/OUT/INOUT</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>LANG=ASM/COBOL</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>CTRL=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>CURSLOC=YES/NO</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>DSATTS=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>EXTATT=YES/NO/MAPONLY</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>MAPATTS=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>STORAGE=AUTO</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>TIOAPFX=YES/NO</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>TERM=</td>
-</tr>
-</tbody>
-</table>
+<h1 id="zcics-vsam-guide">zCICS VSAM Guide</h1>
+<h2 id="zcics-vsam-installation">zCICS VSAM Installation</h2>
+<p>I recommend that the catalog and file structures are kept in a common directory.
+More flexibility will be added if time permits.</p>
+<h3 id="step-1">Step 1</h3>
+<ul>
+<li>Create and assemble a catalog and the files it is to contain using the <code>DEFINE</code> macro.</li>
+<li>The test files used in <code>zZ390\cics</code> are in the <code>cics\vsam</code> subdirectory, and many more
+  examples in <code>vsam\demo</code>.</li>
+<li>Multiple catalogs are supported.</li>
+</ul>
+<h3 id="step-2">Step 2</h3>
+<ul>
+<li>Use <code>REPRO</code> to create the VSAM base cluster, paths and alternate indexes as
+  needed.</li>
+</ul>
+<h3 id="step-3">Step 3</h3>
+<ul>
+<li>Add the <code>FCT</code> entries for your files to <code>DFHFCTUS</code> and assemble.</li>
+</ul>
+<h3 id="step-4">Step 4:</h3>
+<ul>
+<li>Add <code>SET</code> statements to <code>Z390FILE.BAT</code> to define the catalog and filename that will
+  be used at OPEN time.</li>
+</ul>
+<h2 id="vsam-extensions">VSAM Extensions</h2>
+<p>The following facilities are not supported in standard CICS/VSAM, but they are in
+zCICS VSAM:
+- Support of 4 gigabyte files and record sizes greater than 32K for all VSAM file types.
+- Skip-sequential access (browse) of an <code>ESDS</code> by <code>RBA</code> (fixed or variable), forward or backward.</p>
 <blockquote>
 <p>[!NOTE]
-<code>TERM=</code> is supported but discarded</p>
+Knowledge of the file will be necessary for variable <code>ESDS</code> in order to set
+the initial <code>RBA</code>.</p>
 </blockquote>
-<h5 id="errors">Errors:</h5>
+<h2 id="vsam-limits">VSAM limits</h2>
 <ul>
-<li>A MAXIMUM OF 3 OPERANDS ALLOWED IN CTRL</li>
-<li>CANNOT HAVE MORE THAN ONE DFHMSD MACRO</li>
-<li>DSATTS IS SPECIFIED WITHOUT MAPATTS</li>
-<li>EXTATT CONFLICTS WITH DSATTS/MAPATTS</li>
-<li>EXTATT NOT NO, MAPONLY OR YES</li>
-<li>INVALID CURSLOC -- cursloc</li>
-<li>INVALID LANG -- lang</li>
-<li>INVALID MODE -- mode</li>
-<li>INVALID STORAGE -- storage</li>
-<li>INVALID TIOAPFX -- tioapfx</li>
-<li>INVALID TYPE -- type</li>
-<li>MAPSET NAME IS MISSING</li>
-<li>POSITIONAL OPERAND xxxx INVALID</li>
+<li>For <code>KSDS</code>s and <code>AIX</code>s, there is an internal limit on all keylengths of 128 bytes.
+  Please raise an issue if this is not sufficient for you.</li>
+<li>There is an internal limit in zCICS on record sizes of 32K bytes.
+  Please raise an issue if this is not sufficient for you.</li>
 </ul>
-<h4 id="dfhmdi-map-definition">DFHMDI -- Map definition</h4>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Operation</th>
-<th>Operands</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>mapname</td>
-<td>DFHMDI</td>
-<td>TYPE=MAP/DSECT</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>MODE=IN/OUT/INOUT</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>LANG=ASM/COBOL</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>CTRL=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>CURSLOC=YES/NO</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>DSATTS=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>EXTATT=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>MAPATTS=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>SIZE=(24,80)</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>LINE=1</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>COLUMN=1</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>STORAGE=AUTO</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>TIOAPFX=YES/NO</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>JUSTIFY=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>NOLABEL=</td>
-</tr>
-</tbody>
-</table>
-<blockquote>
-<p>[!NOTE]
-<code>TYPE</code> and <code>STORAGE</code> are required here only if the <code>DFHMSD</code> macro is omitted.</p>
-<p>Parameters <code>TYPE</code>, <code>MODE</code>, <code>LANG</code>, <code>CTRL</code>, <code>CURSLOC</code>, <code>DSATTS</code>, <code>EXTATT</code>, <code>MAPATTS</code>,
-<code>STORAGE</code> and <code>TIOAPFX</code> can all be omitted if the settings specified in <code>DFHMSD</code>
-are correct for this map.</p>
-<p>MODE may be specified as an override to <code>DFHMSD</code>. This facility is an extension.</p>
-<p>Any option(s) specified in CTRL will override all the options specified in <code>DFHMSD</code>.</p>
-<p>For <code>LINE</code> and <code>COLUMN</code>, only numeric parameters are supported.</p>
-<p><code>JUSTIFY</code> is discarded.</p>
-<p><code>NOLABEL</code> is a special parameter for zCICS maps.
-It suppresses the label indicated and speeds up the map assembly.
-When used on the <code>DFHMDI</code> macro it applies to all labelled <code>DFHMDF</code> macros
-that follow. When specified on the <code>DFHMDF</code> macro it overrides any
-specification on the <code>DFHMDI</code> macro.</p>
-<p>The labels that can be suppressed are as follows:
-- A (attribute)
-- C (colour)
-- F (flag)
-- L (length)
-- O (output)
-- eg. <code>NOLABEL=ACF</code></p>
-</blockquote>
-<h5 id="errors_1">Errors:</h5>
-<ul>
-<li>A MAXIMUM OF 3 OPERANDS ALLOWED IN CTRL</li>
-<li>COLUMN CANNOT EXCEED nn</li>
-<li>DSATTS is specified without MAPATTS</li>
-<li>EXTATT conflicts with MAPATTS/DSATTS</li>
-<li>EXTATT not omitted, NO, MAPONLY or YES</li>
-<li>INVALID CTRL OPTION - ctrl</li>
-<li>INVALID CURSLOC -- cursloc</li>
-<li>INVALID MODE -- mode</li>
-<li>INVALID SIZE -- size</li>
-<li>INVALID TIOAPFX -- tioapfx</li>
-<li>LINE CANNOT EXCEED nn</li>
-<li>MAPNAME IS MISSING</li>
-<li>MSD AND MDI TYPE MISMATCH</li>
-<li>POSITIONAL OPERAND xxxx INVALID</li>
-</ul>
-<h4 id="dfhmdf-field-definition">DFHMDF -- Field definition</h4>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Operation</th>
-<th>Operands</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>fldname</td>
-<td>DFHMDF</td>
-<td>POS=n/(n,n)</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>LENGTH=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>ATTRB=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>COLOR=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>JUSTIFY=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>INITIAL=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>XINIT=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>PICIN=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>PICOUT=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>OCCURS=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>GRPNAME=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>NOLABEL=</td>
-</tr>
-</tbody>
-</table>
-<blockquote>
-<p>[!NOTE]
-fldname may now use long names.</p>
-<p>POS does not have to be in sequence.</p>
-<p>If <code>ATTRB</code> is missing then <code>ATTRB=(ASKIP,NORM)</code> is assumed.
-If protection or intensity parameters are missing then a sensible default is assumed.</p>
-<p>A field specified as <code>ATTRB=(UNPROT,NUM)</code> will only accept digits 0-9.
-Some 3270 models also allowed dots and commas.</p>
-<p>Extensive cross-checking is made, such that any 'unusual' map structure is
-flagged as an error. A peruse of the errors below give a good indication of
-these types of map structure.</p>
-</blockquote>
-<h5 id="extensions">Extensions:</h5>
-<ul>
-<li><code>ATTRB=(ALPHA)</code> has been added as the opposite of <code>NUM</code></li>
-<li><code>XINIT=FF..</code><br />
-  The dots are replaced by a hex code of a fill character.<br />
-  This will generate an <code>RA</code> order to fill this field for its whole length.<br />
-  e.g. Instead of coding <code>INITIAL='__________'</code> code <code>XINIT=FF6D</code></li>
-<li><code>PICIN</code> and <code>PICOUT</code><br />
-  These parameters are not well-described in the IBM Manuals.</li>
-<li><code>PICIN (COBOL)</code><br />
-  A symbolic reference to the input data, the data cannot be changed.<br />
-  ie. <code>PICIN='$$$9'</code> does not make any sense.<br />
-  <code>PICIN='99V99'</code> tells COBOL where the decimal point is.</li>
-<li><code>PICOUT (COBOL)</code><br />
-  The data is subject to an editting process.<br />
-  ie. <code>PICOUT='$$$9'</code> the data is editted<br />
-  <code>PICOUT='99V99'</code> is the same as <code>'9(4)'</code></li>
-<li><code>PICIN</code> (Assembler) extension<br />
-  The incoming data IS subjected to an editting process. Described below.</li>
-<li><code>PICOUT</code> (Assembler) extension<br />
-  The outgoing data is subjected to an editting process. Described below.</li>
-<li><code>PICIN</code> and <code>PICOUT</code> (Assembler)<br />
-  The parameter is (almost) a standard edit word with some restraints.</li>
-</ul>
-<p>Currently only numeric data can be subjected to <code>PICIN</code>/<code>PICOUT</code>.</p>
-<ul>
-<li><code>PICOUT</code><br />
-  Operates for a <code>SEND MAP</code>, but not if <code>MAPONLY</code> is specified.<br />
-  Data is taken from the map structure and subjected to the edit word before being sent to the screen.</li>
-<li><code>PICIN</code><br />
-  Operates for a <code>RECEIVE MAP</code>.<br />
-  The data received is subjected to the edit word and then passed to the application in the map structure.<br />
-  Note that the resulting data may no longer be numeric.</li>
-<li>The edit word has some strict rules at present. Suggested extensions are most welcome.
-  The first hex pair must be 40 (blank), 5C (asterisk), 5B (dollar) or 4D (open bracket).<br />
-  Blank and asterisk are fill characters, dollar and open bracket are float characters.</li>
-<li>The remaining hex pairs can be 20 (digit select), 21 (significancestarter), 4B (dot) or 6B (comma).
-  The number of 20 and 21's must be odd.</li>
-</ul>
-<h5 id="examples">Examples</h5>
-<ul>
-<li><code>PICOUT=4020216B202020</code><br />
-  Data is <code>12345</code>, displayed as <code>12,345</code></li>
-<li><code>PICOUT=5B20216B202020</code><br />
-  Data is <code>1234</code>, displayed as <code>$1,234</code></li>
-<li><code>PICOUT=5C20216B202020</code><br />
-  Data is <code>89</code>, displayed as <code>*****89</code></li>
-</ul>
-<p><code>PICIN</code> is no different, just that it edits incoming data.</p>
-<p>If the data to be processed is not numeric after being PACKed, a MAPFAIL/8 condition is raised.</p>
-<h5 id="img-file">IMG file</h5>
-<p>For each <code>TYPE=MAP</code> generation, a mapname.IMG file is generated.
-This gives a symbolic picture of the resulting screen and can be used for
-planning map changes.
-See the file <code>GUI6.IMG</code> for a good example.</p>
-<h5 id="nolabel">NOLABEL</h5>
-<p><code>NOLABEL</code> is a special parameter for zCICS maps.</p>
-<p>It suppresses the label indicated and speeds up the map assembly.
-When used on the <code>DFHMDI</code> macro it applies to all labelled <code>DFHMDF</code>
-macros that follow. When specified on the <code>DFHMDF</code> macro it overrides
-any specification on the <code>DFHMDI</code> macro.</p>
-<p>The labels that can be suppressed are as follows:
-A (attribute), C (colour), F (flag), L (length), O (output)<br />
-eg. <code>NOLABEL=ACF</code></p>
-<h5 id="errors_2">Errors:</h5>
-<ul>
-<li>A MAXIMUM OF 2 OPERANDS ALLOWED IN JUSTIFY</li>
-<li>ADJACENT ATTRIBUTE AT POS nnn</li>
-<li>ATTRIBUTE CONFLICT - ALPHA AND NUM</li>
-<li>ATTRIBUTE CONFLICT - ASKIP AND ALPHA</li>
-<li>ATTRIBUTE CONFLICT - ASKIP AND NUM</li>
-<li>ATTRIBUTE CONFLICT - ASKIP AND PROT</li>
-<li>ATTRIBUTE CONFLICT - ASKIP AND UNPROT</li>
-<li>ATTRIBUTE CONFLICT - BRT AND DRK</li>
-<li>ATTRIBUTE CONFLICT - BRT AND NORM</li>
-<li>ATTRIBUTE CONFLICT - NORM AND DRK</li>
-<li>ATTRIBUTE CONFLICT - PROT AND UNPROT</li>
-<li>BAD LENGTH - length</li>
-<li>BOTH INITIAL AND XINIT ARE SPECIFIED</li>
-<li>CONFLICTING JUSTIFY PARMS</li>
-<li>GRPNAME AND OCCURS ARE SPECIFIED</li>
-<li>GRPNAME SPECIFIED WITHOUT FLDNAME</li>
-<li>IC ATTRIBUTE HAS OCCURRED IN ANOTHER MDF MACRO</li>
-<li>INITIAL/XINIT IS GREATER THAN LENGTH</li>
-<li>INITIAL/XINIT IS INVALID WITH LENGTH=0</li>
-<li>INVALID ATTRB OPTION – attrb</li>
-<li>INVALID COLOR</li>
-<li>INVALID JUSTIFY OPTION - justify</li>
-<li>INVALID OCCURS - occurs</li>
-<li>INVALID POS - pos</li>
-<li>JUSTIFY CONFLICT - BLANK AND ZERO</li>
-<li>JUSTIFY CONFLICT - LEFT AND RIGHT</li>
-<li>LENGTH=0 IS INVALID FOR NAMED FIELD</li>
-<li>PICIN/PICOUT CAN ONLY BE SPECIFIED FOR A NAMED FIELD</li>
-<li>PICIN/PICOUT HAS ODD NUMBER OF HEX DIGITS</li>
-<li>PICIN/PICOUT HEX LENGTH NOT EQUAL TO LENGTH</li>
-<li>PICIN/PICOUT IS INVALID</li>
-<li>PICIN/PICOUT: 1ST PAIR NOT 40, 5C, 5B, 4D</li>
-<li>PICIN/PICOUT: NUMBER OF 20/21 IS NOT ODD</li>
-<li>POS nnn OVERLAPS WITH ANOTHER FIELD</li>
-<li>POS COLUMN+LENGTH EXCEEDS DEFINED MAP SIZE</li>
-<li>POS EXCEEDS DEFINED MAP SIZE</li>
-<li>POS HAS TOO MANY PARAMETERS</li>
-<li>POSITIONAL OPERAND xxxx INVALID</li>
-<li>SINGLE POS EXCEEDS DEFINED MAP SIZE</li>
-<li>SPECIAL FORMAT XINIT CANNOT BE SPECIFIED IF LENGTH IS LESS THAN 8</li>
-<li>UNNAMED FIELD HAS UNPROT OR FSET, INPUT DATA CANNOT BE MAPPED</li>
-<li>XINIT HAS ODD NUMBER OF HEX DIGITS</li>
-</ul>
-<p>The following errors occur owing to internal limits.
-Please report them.
-- AN INTERNAL ERROR HAS OCCURRED<br />
-  ERROR IN ATTRIBUTE TABLE nnnn
-- AN INTERNAL ERROR HAS OCCURRED<br />
-  MAPSIZE TOO LARGE - nnnn
-- AN INTERNAL ERROR HAS OCCURRED<br />
-  PICIN/PICOUT LENGTH GREATER THAN 50 BYTES</p>
-<h2 id="map-generation">Map generation</h2>
-<p>See the sample generation for <code>MAP01</code> embedded in <code>DFHALL.BAT</code>.
-This generates both the <code>TYPE=DSECT</code> creating <code>MAP01.CPY</code>
-and the <code>TYPE=MAP</code> creating <code>MAP01.390</code>.
-For <code>LANG=COBOL</code>, the structure will have a <code>.CPZ</code> suffix.
-This suffix is the default for the zCOBOL <code>COPY</code> statement.
-As the program name is the same, the <code>TYPE=DSECT</code> assembler output is
-renamed <code>mapset.PR1</code>.</p>
-<h2 id="change-summary">Change Summary</h2>
-<table>
-<thead>
-<tr>
-<th>February 1, 2012</th>
-<th>Comment on long fldname support added</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>November 1, 2010</td>
-<td>Colour support, EXTATT, DSATTS, MAPATTS and COLOR parameters added and extra MNOTEs</td>
-</tr>
-<tr>
-<td></td>
-<td>DFHMDI and DFHMDF new NOLABEL parameter</td>
-</tr>
-<tr>
-<td>August 1, 2009</td>
-<td>Update to PICIN and PICOUT doc.</td>
-</tr>
-<tr>
-<td>February 21, 2009</td>
-<td>Added LANG=COBOL and mention of the .CPZ suffix</td>
-</tr>
-<tr>
-<td></td>
-<td>Added commentary separating PICIN/PICOUT by language</td>
-</tr>
-<tr>
-<td>November 24, 2008</td>
-<td>Added comment about POS</td>
-</tr>
-<tr>
-<td></td>
-<td>TIOAPFX is fully supported</td>
-</tr>
-<tr>
-<td></td>
-<td>TERM is supported but discarded</td>
-</tr>
-<tr>
-<td></td>
-<td>Extra error checking for LINE/COLUMN</td>
-</tr>
-</tbody>
-</table>
 
 
 

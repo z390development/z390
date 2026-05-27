@@ -10,13 +10,13 @@
         <meta name="author" content="z390 Development team">
       
       
-        <link rel="canonical" href="https://z390development.github.io/z390/user_guide/zCICS/zcics_basic_mapping_support/">
+        <link rel="canonical" href="https://z390development.github.io/z390/user_guide/zCICS/zcics_sys_prog_guide/">
       
       
-        <link rel="prev" href="../zcics_app_prog_guide/">
+        <link rel="prev" href="../zcics_supplied_transactions/">
       
       
-        <link rel="next" href="../zcics_diagnosis_reference/">
+        <link rel="next" href="../zcics_vsam_guide/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>zCICS Basic Mapping Support - z390</title>
+        <title>zCICS System Programmer's Guide - z390</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#zcics-basic-mapping-support" class="md-skip">
+        <a href="#zcics-system-programmers-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              zCICS Basic Mapping Support
+              zCICS System Programmer's Guide
             
           </span>
         </div>
@@ -1192,37 +1192,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    zCICS Basic Mapping Support
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../zcics_basic_mapping_support/" class="md-nav__link">
         
   
   
@@ -1238,87 +1211,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#introduction" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Introduction
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#zcics-basic-mapping-support_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        zCICS Basic Mapping Support
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="zCICS Basic Mapping Support">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#bms-macros" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BMS Macros
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#map-generation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Map generation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#change-summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Change Summary
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1440,10 +1332,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../zcics_sys_prog_guide/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCICS System Programmer's Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1459,6 +1378,197 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#objectives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Objectives
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version compatibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current environment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reentrancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reentrancy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-it-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setting it up
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Setting it up">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#local-and-remote-terminals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local and Remote terminals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#starting-it-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Starting it up
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-transactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test transactions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shutdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shutdown
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#abends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Abends
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#aborting-the-environment-violently" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Aborting the environment violently
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#change-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Change Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2314,22 +2424,77 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#zcics-basic-mapping-support_1" class="md-nav__link">
+  <a href="#objectives" class="md-nav__link">
     <span class="md-ellipsis">
       
-        zCICS Basic Mapping Support
+        Objectives
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="zCICS Basic Mapping Support">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version compatibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#current-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current environment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reentrancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reentrancy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-it-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setting it up
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Setting it up">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#bms-macros" class="md-nav__link">
+  <a href="#parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        BMS Macros
+        Parameters
       
     </span>
   </a>
@@ -2342,10 +2507,65 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#map-generation" class="md-nav__link">
+  <a href="#local-and-remote-terminals" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Map generation
+        Local and Remote terminals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#starting-it-up" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Starting it up
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-transactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test transactions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shutdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shutdown
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#abends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Abends
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#aborting-the-environment-violently" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Aborting the environment violently
       
     </span>
   </a>
@@ -2383,492 +2603,260 @@
   
 
 
-<h1 id="zcics-basic-mapping-support">zCICS Basic Mapping Support</h1>
+<h1 id="zcics-system-programmers-guide">zCICS System Programmer's Guide</h1>
 <h2 id="introduction">Introduction</h2>
-<p>This document outlines the extensions and facilities implemented in zCICS.
-Please refer to the IBM Manuals on BMS usage.</p>
-<p>The documentation for <code>EXEC CICS SEND MAP</code>, <code>RECEIVE MAP</code> and <code>SEND CONTROL</code>
-are in the <a href="../zcics_app_prog_guide/">zCICS Application Programming Guide</a>.</p>
-<p>The following BMS facilities are not yet implemented:
-- Support for devices outside the 3270 family Printers
-- Extended Attributes (other than colour) and alternate screen size
-- Dynamic Map Positioning and ACCUM processing
-- Partitioning
-- Paging</p>
-<h2 id="zcics-basic-mapping-support_1">zCICS Basic Mapping Support</h2>
-<h3 id="bms-macros">BMS Macros</h3>
-<h4 id="dfhmsd-mapset-definition-and-termination">DFHMSD -- Mapset definition and termination</h4>
-<p>Although <code>DFHMSD</code> is optional it is recommended that one is coded. A default set of
-values will be internally generated from the <code>DFHMDI</code> macro if missing.</p>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Operation</th>
-<th>Operands</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>mapset</td>
-<td>DFHMSD</td>
-<td>TYPE=MAP/DSECT/FINAL</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>MODE=IN/OUT/INOUT</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>LANG=ASM/COBOL</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>CTRL=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>CURSLOC=YES/NO</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>DSATTS=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>EXTATT=YES/NO/MAPONLY</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>MAPATTS=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>STORAGE=AUTO</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>TIOAPFX=YES/NO</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>TERM=</td>
-</tr>
-</tbody>
-</table>
-<blockquote>
-<p>[!NOTE]
-<code>TERM=</code> is supported but discarded</p>
-</blockquote>
-<h5 id="errors">Errors:</h5>
+<p>This document describes the zCICS environment, how it operates and the
+modifications that can be made to it.</p>
+<p>Experienced CICS people may notice a lack of authenticity in the background
+coding and formats, and some use of archaic methods. This is all intentional, and
+as z390 matures, so will zCICS.</p>
+<h2 id="objectives">Objectives</h2>
+<p>1) To take an existing Assembler or COBOL CICS application, re-gen it in the
+   z390 environment and run it unmodified and successfully under zCICS.
+2) To be able to develop an Assembler or COBOL CICS application in the z390
+   environment and transfer the source to the mainframe for re-assembly and
+   testing.</p>
+<p>Only the source may be exchanged between environments.</p>
+<h2 id="version-compatibility">Version compatibility</h2>
+<p>Versions of Java and z390 are tested by the z390 support team
+and there are mechanisms for checking compatibility.</p>
+<p>zCics is integrated with z390 in a single github repository.
+There should not be compatibility issues.</p>
+<h2 id="current-environment">Current environment</h2>
+<p>The currently supported Application environment is described in the
+<a href="../zcics_app_prog_guide/">zCICS Application Programming Guide</a>.</p>
+<p>Requests for commands and extra parameters are very welcome and will help to
+set a priority list.</p>
+<h2 id="reentrancy">Reentrancy</h2>
+<p>Much of the internal code does not conform to the strict (quasi)-reentrancy rules
+required of mainframe CICS.</p>
+<p>If you are developing an application for later transfer to the mainframe, you must
+obey all the reentrancy rules. There is no checking yet for rule breaking.</p>
+<h2 id="how-it-works">How it works</h2>
+<p>The zCICS environment has been split into two sections.</p>
+<p>The primary task is <code>Z390CICS</code>, which is called the Global Manager.
+It will handle all shared resources like <code>TS</code>, <code>FC</code>, etc.</p>
+<p>Each terminal has its own Command Prompt (cmd window).
+This environment runs <code>Z390KCP</code> and invokes any Application programs requested.</p>
+<p>Each Command Prompt is effectively a single terminal, single task environment.</p>
+<p><code>Z390KCP</code> is therefore the Local Manager handling <code>EIB</code>, <code>COMMAREA</code>s, <code>DSA</code>s and
+other task related storage.</p>
+<p><code>TCPIO SEND/RECEIVE</code> are used to pass requests and data between <code>Z390CICS</code>
+and each <code>Z390KCP</code>, with <code>Z390CICS</code> being the server and all terminals running
+<code>Z390KCP</code> as multiple clients.</p>
+<h2 id="setting-it-up">Setting it up</h2>
+<h3 id="parameters">Parameters</h3>
+<p>The <code>Z390CICS.INI</code> file is self-documenting.</p>
+<p>The following BAT files may need to be modified to your own environment
+- <code>Z390CICG</code> - Start up zCICS
+- <code>Z390KCPR</code> - Start 1 remote terminal for testing/tracing.
+- <code>Z390KCPL</code> - Start many remote terminals.</p>
+<p><code>DFHPCT.MLC</code> has a basic set of test transaction codes which are listed later.
+Users should add their own transactions to <code>DFHPCTUS.CPY</code> and re-assemble the
+<code>PCT</code>.</p>
+<p><code>DFHFCT.MLC</code> has a basic set of test files. Users should add their own files to
+<code>DFHFCTUS.CPY</code> and re-assemble the <code>FCT</code>. File creation and setup is more fully
+described in the <a href="../zcics_vsam_guide/">zCICS VSAM Guide</a>.</p>
+<h2 id="local-and-remote-terminals">Local and Remote terminals</h2>
+<p>A Local terminal is a Command Prompt (cmd window) that is auto-started when
+<code>Z390CICS</code> is started. The number of Local terminals that are started is controlled
+by the <code>LOCAL_TERMINALS=</code> parameter.</p>
+<p>A Remote terminal must be started from a Command Prompt that you have
+manually created and is initiated by using <code>Z390KCPR</code> or <code>Z390KCPL</code>. See the
+<a href="#starting-it-up">Starting it up</a> section.</p>
+<p>A Remote terminal doesn't have to be on the same PC as <code>Z390CICS</code>, but can be
+on another PC connected via a home network.</p>
+<p>There is a restraint on the number of Remote terminals set by the
+<code>REMOTE_TERMINALS=</code> parameter.</p>
+<p>The <code>MAXTHREADS=</code> parameter defines the upper limit for all terminals.</p>
+<h2 id="starting-it-up">Starting it up</h2>
+<p>From the z390 GUI (recommended), or in your own Command Prompt:</p>
+<p>1) <code>Z390CICG</code>
+   - This will start the zCICS Global Manager and all Local terminals.
+2) A Remote terminal may be set up as follows:
+   - Method 1: One remote for testing
+     - If interactive debugging of an application is wanted
+     - Create a Command Prompt window and use <code>CD</code> to navigate to, and invoke
+       <code>Z390KCPR</code>. Parameters like <code>TEST</code> and <code>TRACE</code> may be added.
+     - Any test session will be recorded in <code>Z390KCP.TRE</code>.
+     - The remote terminal will be started in the Command Prompt.
+     - If <code>TEST</code> is specified, then zCICS progress cannot be made unless you give
+       commands to the z390 GUI as well.
+  - Method 2 : The Launcher
+    - Create a Command Prompt window and use <code>CD</code> to navigate to, and invoke <code>Z390KCPL</code>.
+    - <code>Z390KCPL</code> takes a single digit parameter, e.g. <code>Z390KCPL 2</code>
+    - A parameter of 1 is assumed if missing.
+    - <code>Z390KCPL</code> does not use the current Command Prompt, but creates the
+      specified number of remote terminals in other windows.
+    - The use of <code>TEST</code> or <code>TRACE</code> is not recommended as they will only affect
+      the launcher program <code>Z390RMTE</code>.
+    - The number of terminals actually started is subject to both the
+      <code>REMOTE_TERMINALS=</code> and the <code>MAXTHREADS=</code> parameters.</p>
+<h2 id="test-transactions">Test transactions</h2>
+<p>When the terminal is opened, the termid is in the title.</p>
+<p>From the 'initial screen' you can perform the following tests. Where two transids are
+shown, e.g. <code>BED1</code>/<code>BEC1</code>, the second is the identical process but written in zCOBOL.</p>
 <ul>
-<li>A MAXIMUM OF 3 OPERANDS ALLOWED IN CTRL</li>
-<li>CANNOT HAVE MORE THAN ONE DFHMSD MACRO</li>
-<li>DSATTS IS SPECIFIED WITHOUT MAPATTS</li>
-<li>EXTATT CONFLICTS WITH DSATTS/MAPATTS</li>
-<li>EXTATT NOT NO, MAPONLY OR YES</li>
-<li>INVALID CURSLOC -- cursloc</li>
-<li>INVALID LANG -- lang</li>
-<li>INVALID MODE -- mode</li>
-<li>INVALID STORAGE -- storage</li>
-<li>INVALID TIOAPFX -- tioapfx</li>
-<li>INVALID TYPE -- type</li>
-<li>MAPSET NAME IS MISSING</li>
-<li>POSITIONAL OPERAND xxxx INVALID</li>
+<li><code>CTRL+C</code></li>
+<li>Clear the screen.</li>
+<li>Within a transaction that has issued a <code>RECEIVE</code>, the <code>CLEAR AID</code> is returned.</li>
+<li><code>AAAA</code></li>
+<li>test invalid transid message</li>
+<li><code>MMM1</code></li>
+<li>test abend <code>APCT</code> message</li>
+<li><code>MMM2</code></li>
+<li>'hello world'</li>
+<li><code>GUI4</code></li>
+<li>Conversational test 1</li>
+<li><code>GUI6</code></li>
+<li>Conversational test 2</li>
+<li><code>TST1</code></li>
+<li>Conversational test 3 and LINK test</li>
+<li>Added test for <code>CWA</code>.</li>
+<li>
+<p>Added tests for <code>ASSIGN</code>.</p>
+</li>
+<li>
+<p><code>BED1</code>/<code>BEC1</code></p>
+</li>
+<li>Test bed for <code>LINK</code>, <code>XCTL</code> and <code>RETURN</code> with <code>COMMAREA</code>.</li>
+<li>Added test for <code>CWA</code>.</li>
+<li>Added tests for <code>ASSIGN</code>.</li>
+<li>Keep pressing <code>ENTER</code> until the 'clear screen' message is displayed.</li>
+<li><code>BED2</code>/<code>BEC2</code></li>
+<li><code>HANDLE AID</code> testing</li>
+<li>Follow the on-screen instructions.</li>
+<li><code>DUMP TRANSACTION</code> testing.</li>
+<li><code>BED3</code>/<code>BEC3</code></li>
+<li><code>HANDLE CONDITION</code>/<code>IGNORE CONDITION</code>/<code>PUSH</code>/<code>POP</code> testing.</li>
+<li><code>GETMAIN</code>/<code>FREEMAIN</code> testing.</li>
+<li>Abend handling.</li>
+<li>Follow the on-screen instructions.</li>
+<li><code>BED4</code>/<code>BEC4</code> <code>HANDLE ABEND</code> testing. Simple handling.</li>
+<li>Follow the on-screen instructions.</li>
+<li><code>BED5</code>/<code>BEC5</code></li>
+<li><code>HANDLE ABEND</code> testing. Complex handling.</li>
+<li>Follow the on-screen instructions.</li>
+<li><code>BED9</code>/<code>BEC9</code></li>
+<li>Temporary Storage testing.</li>
+<li>Also builds an environment for testing <code>CEBR</code>.</li>
+<li>Can be run multiple times to extend the <code>CEBR</code> test queues.</li>
+<li><code>IC01</code>/<code>ICC1</code> Test Interval Control <code>ASKTIME</code> (<code>ABSTIME</code>) and <code>DELAY</code>.</li>
+<li>This task may take up to 2 minutes to complete.</li>
+<li><code>IC02</code> Test Interval Control <code>START</code>, <code>RETRIEVE</code> and <code>CANCEL</code>.</li>
+<li>Watch for <code>HELLO FROM TEST1C03, THIS IS MESSAGE n</code> on the bottom line.</li>
+<li>Press <code>ENTER</code> after each change of n, there are 5.</li>
+<li>After a few seconds this message appears:
+    <code>HELLO FROM TEST1C03, THIS IS SUBVERSION</code></li>
+<li>Press <code>ENTER</code> to complete the test, when you see <code>END</code></li>
+<li>Task end, now press CLEAR the test is complete.</li>
+<li>This test cannot be repeated as there are residual <code>TS</code> records left behind.</li>
+<li><code>IC04</code></li>
+<li>Test <code>START</code>/<code>RETRIEVE</code> with <code>CHANNEL</code>.</li>
+<li><code>VSM1</code>/<code>VSC1</code></li>
+<li>Read and browse of <code>ESDS</code> files.</li>
+<li>Records successfully read are written to the <code>TS</code> queue <code>VSM1</code>.</li>
+<li><code>VSM2</code>/<code>VSC2</code> Read and browse of <code>RRDS</code> files.</li>
+<li>Records successfully read are written to the TS queue <code>VSM2</code>.</li>
+<li><code>VSM3</code>/<code>VSC3</code></li>
+<li>Read and browse of <code>KSDS</code> files.</li>
+<li>Records successfully read are written to the <code>TS</code> queue <code>VSM3</code>.</li>
+<li><code>BMS1</code>/<code>BMC1</code></li>
+<li>Test simple functions of mapping support.</li>
+<li><code>BMS2</code></li>
+<li>Test complex functions of mapping support.</li>
+<li><code>ENQ1</code></li>
+<li>This tests <code>ENQ</code>/<code>DEQ</code></li>
+<li>Ensure <code>LOCAL_TERMINALS=2</code> in the <code>.INI</code> file.</li>
+<li>This is time critical.<ul>
+<li>On <code>DON0</code>, clear the logo and enter <code>ENQ1</code></li>
+<li>Switch to <code>DON1</code>, clear the logo and enter <code>ENQ1</code></li>
+<li>Steps a and b must occur within 5 seconds.</li>
+<li><code>DON1</code> will suspend a number of times.</li>
 </ul>
-<h4 id="dfhmdi-map-definition">DFHMDI -- Map definition</h4>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Operation</th>
-<th>Operands</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>mapname</td>
-<td>DFHMDI</td>
-<td>TYPE=MAP/DSECT</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>MODE=IN/OUT/INOUT</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>LANG=ASM/COBOL</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>CTRL=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>CURSLOC=YES/NO</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>DSATTS=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>EXTATT=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>MAPATTS=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>SIZE=(24,80)</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>LINE=1</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>COLUMN=1</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>STORAGE=AUTO</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>TIOAPFX=YES/NO</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>JUSTIFY=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>NOLABEL=</td>
-</tr>
-</tbody>
-</table>
-<blockquote>
-<p>[!NOTE]
-<code>TYPE</code> and <code>STORAGE</code> are required here only if the <code>DFHMSD</code> macro is omitted.</p>
-<p>Parameters <code>TYPE</code>, <code>MODE</code>, <code>LANG</code>, <code>CTRL</code>, <code>CURSLOC</code>, <code>DSATTS</code>, <code>EXTATT</code>, <code>MAPATTS</code>,
-<code>STORAGE</code> and <code>TIOAPFX</code> can all be omitted if the settings specified in <code>DFHMSD</code>
-are correct for this map.</p>
-<p>MODE may be specified as an override to <code>DFHMSD</code>. This facility is an extension.</p>
-<p>Any option(s) specified in CTRL will override all the options specified in <code>DFHMSD</code>.</p>
-<p>For <code>LINE</code> and <code>COLUMN</code>, only numeric parameters are supported.</p>
-<p><code>JUSTIFY</code> is discarded.</p>
-<p><code>NOLABEL</code> is a special parameter for zCICS maps.
-It suppresses the label indicated and speeds up the map assembly.
-When used on the <code>DFHMDI</code> macro it applies to all labelled <code>DFHMDF</code> macros
-that follow. When specified on the <code>DFHMDF</code> macro it overrides any
-specification on the <code>DFHMDI</code> macro.</p>
-<p>The labels that can be suppressed are as follows:
-- A (attribute)
-- C (colour)
-- F (flag)
-- L (length)
-- O (output)
-- eg. <code>NOLABEL=ACF</code></p>
-</blockquote>
-<h5 id="errors_1">Errors:</h5>
-<ul>
-<li>A MAXIMUM OF 3 OPERANDS ALLOWED IN CTRL</li>
-<li>COLUMN CANNOT EXCEED nn</li>
-<li>DSATTS is specified without MAPATTS</li>
-<li>EXTATT conflicts with MAPATTS/DSATTS</li>
-<li>EXTATT not omitted, NO, MAPONLY or YES</li>
-<li>INVALID CTRL OPTION - ctrl</li>
-<li>INVALID CURSLOC -- cursloc</li>
-<li>INVALID MODE -- mode</li>
-<li>INVALID SIZE -- size</li>
-<li>INVALID TIOAPFX -- tioapfx</li>
-<li>LINE CANNOT EXCEED nn</li>
-<li>MAPNAME IS MISSING</li>
-<li>MSD AND MDI TYPE MISMATCH</li>
-<li>POSITIONAL OPERAND xxxx INVALID</li>
+</li>
+<li><code>ASGN</code></li>
+<li>Tests <code>ASSIGN</code>.</li>
+<li><code>NT01</code></li>
+<li>Test for non-terminal tasks.</li>
+<li>A bubble sort is performed for 20,000 records and timed.</li>
+<li>The data is split into 2 sets of 10,000 records and 2 non-terminal tasks
+    are started to sort each set in parallel.</li>
+<li>The display shows the timings of the 3 processes.</li>
+<li><code>SETF</code></li>
+<li>Tests <code>SET FILE</code>.</li>
+<li><code>CHN1</code></li>
+<li>Test all Channel/Container functions.</li>
 </ul>
-<h4 id="dfhmdf-field-definition">DFHMDF -- Field definition</h4>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Operation</th>
-<th>Operands</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>fldname</td>
-<td>DFHMDF</td>
-<td>POS=n/(n,n)</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>LENGTH=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>ATTRB=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>COLOR=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>JUSTIFY=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>INITIAL=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>XINIT=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>PICIN=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>PICOUT=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>OCCURS=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>GRPNAME=</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>NOLABEL=</td>
-</tr>
-</tbody>
-</table>
-<blockquote>
-<p>[!NOTE]
-fldname may now use long names.</p>
-<p>POS does not have to be in sequence.</p>
-<p>If <code>ATTRB</code> is missing then <code>ATTRB=(ASKIP,NORM)</code> is assumed.
-If protection or intensity parameters are missing then a sensible default is assumed.</p>
-<p>A field specified as <code>ATTRB=(UNPROT,NUM)</code> will only accept digits 0-9.
-Some 3270 models also allowed dots and commas.</p>
-<p>Extensive cross-checking is made, such that any 'unusual' map structure is
-flagged as an error. A peruse of the errors below give a good indication of
-these types of map structure.</p>
-</blockquote>
-<h5 id="extensions">Extensions:</h5>
-<ul>
-<li><code>ATTRB=(ALPHA)</code> has been added as the opposite of <code>NUM</code></li>
-<li><code>XINIT=FF..</code><br />
-  The dots are replaced by a hex code of a fill character.<br />
-  This will generate an <code>RA</code> order to fill this field for its whole length.<br />
-  e.g. Instead of coding <code>INITIAL='__________'</code> code <code>XINIT=FF6D</code></li>
-<li><code>PICIN</code> and <code>PICOUT</code><br />
-  These parameters are not well-described in the IBM Manuals.</li>
-<li><code>PICIN (COBOL)</code><br />
-  A symbolic reference to the input data, the data cannot be changed.<br />
-  ie. <code>PICIN='$$$9'</code> does not make any sense.<br />
-  <code>PICIN='99V99'</code> tells COBOL where the decimal point is.</li>
-<li><code>PICOUT (COBOL)</code><br />
-  The data is subject to an editting process.<br />
-  ie. <code>PICOUT='$$$9'</code> the data is editted<br />
-  <code>PICOUT='99V99'</code> is the same as <code>'9(4)'</code></li>
-<li><code>PICIN</code> (Assembler) extension<br />
-  The incoming data IS subjected to an editting process. Described below.</li>
-<li><code>PICOUT</code> (Assembler) extension<br />
-  The outgoing data is subjected to an editting process. Described below.</li>
-<li><code>PICIN</code> and <code>PICOUT</code> (Assembler)<br />
-  The parameter is (almost) a standard edit word with some restraints.</li>
-</ul>
-<p>Currently only numeric data can be subjected to <code>PICIN</code>/<code>PICOUT</code>.</p>
-<ul>
-<li><code>PICOUT</code><br />
-  Operates for a <code>SEND MAP</code>, but not if <code>MAPONLY</code> is specified.<br />
-  Data is taken from the map structure and subjected to the edit word before being sent to the screen.</li>
-<li><code>PICIN</code><br />
-  Operates for a <code>RECEIVE MAP</code>.<br />
-  The data received is subjected to the edit word and then passed to the application in the map structure.<br />
-  Note that the resulting data may no longer be numeric.</li>
-<li>The edit word has some strict rules at present. Suggested extensions are most welcome.
-  The first hex pair must be 40 (blank), 5C (asterisk), 5B (dollar) or 4D (open bracket).<br />
-  Blank and asterisk are fill characters, dollar and open bracket are float characters.</li>
-<li>The remaining hex pairs can be 20 (digit select), 21 (significancestarter), 4B (dot) or 6B (comma).
-  The number of 20 and 21's must be odd.</li>
-</ul>
-<h5 id="examples">Examples</h5>
-<ul>
-<li><code>PICOUT=4020216B202020</code><br />
-  Data is <code>12345</code>, displayed as <code>12,345</code></li>
-<li><code>PICOUT=5B20216B202020</code><br />
-  Data is <code>1234</code>, displayed as <code>$1,234</code></li>
-<li><code>PICOUT=5C20216B202020</code><br />
-  Data is <code>89</code>, displayed as <code>*****89</code></li>
-</ul>
-<p><code>PICIN</code> is no different, just that it edits incoming data.</p>
-<p>If the data to be processed is not numeric after being PACKed, a MAPFAIL/8 condition is raised.</p>
-<h5 id="img-file">IMG file</h5>
-<p>For each <code>TYPE=MAP</code> generation, a mapname.IMG file is generated.
-This gives a symbolic picture of the resulting screen and can be used for
-planning map changes.
-See the file <code>GUI6.IMG</code> for a good example.</p>
-<h5 id="nolabel">NOLABEL</h5>
-<p><code>NOLABEL</code> is a special parameter for zCICS maps.</p>
-<p>It suppresses the label indicated and speeds up the map assembly.
-When used on the <code>DFHMDI</code> macro it applies to all labelled <code>DFHMDF</code>
-macros that follow. When specified on the <code>DFHMDF</code> macro it overrides
-any specification on the <code>DFHMDI</code> macro.</p>
-<p>The labels that can be suppressed are as follows:
-A (attribute), C (colour), F (flag), L (length), O (output)<br />
-eg. <code>NOLABEL=ACF</code></p>
-<h5 id="errors_2">Errors:</h5>
-<ul>
-<li>A MAXIMUM OF 2 OPERANDS ALLOWED IN JUSTIFY</li>
-<li>ADJACENT ATTRIBUTE AT POS nnn</li>
-<li>ATTRIBUTE CONFLICT - ALPHA AND NUM</li>
-<li>ATTRIBUTE CONFLICT - ASKIP AND ALPHA</li>
-<li>ATTRIBUTE CONFLICT - ASKIP AND NUM</li>
-<li>ATTRIBUTE CONFLICT - ASKIP AND PROT</li>
-<li>ATTRIBUTE CONFLICT - ASKIP AND UNPROT</li>
-<li>ATTRIBUTE CONFLICT - BRT AND DRK</li>
-<li>ATTRIBUTE CONFLICT - BRT AND NORM</li>
-<li>ATTRIBUTE CONFLICT - NORM AND DRK</li>
-<li>ATTRIBUTE CONFLICT - PROT AND UNPROT</li>
-<li>BAD LENGTH - length</li>
-<li>BOTH INITIAL AND XINIT ARE SPECIFIED</li>
-<li>CONFLICTING JUSTIFY PARMS</li>
-<li>GRPNAME AND OCCURS ARE SPECIFIED</li>
-<li>GRPNAME SPECIFIED WITHOUT FLDNAME</li>
-<li>IC ATTRIBUTE HAS OCCURRED IN ANOTHER MDF MACRO</li>
-<li>INITIAL/XINIT IS GREATER THAN LENGTH</li>
-<li>INITIAL/XINIT IS INVALID WITH LENGTH=0</li>
-<li>INVALID ATTRB OPTION – attrb</li>
-<li>INVALID COLOR</li>
-<li>INVALID JUSTIFY OPTION - justify</li>
-<li>INVALID OCCURS - occurs</li>
-<li>INVALID POS - pos</li>
-<li>JUSTIFY CONFLICT - BLANK AND ZERO</li>
-<li>JUSTIFY CONFLICT - LEFT AND RIGHT</li>
-<li>LENGTH=0 IS INVALID FOR NAMED FIELD</li>
-<li>PICIN/PICOUT CAN ONLY BE SPECIFIED FOR A NAMED FIELD</li>
-<li>PICIN/PICOUT HAS ODD NUMBER OF HEX DIGITS</li>
-<li>PICIN/PICOUT HEX LENGTH NOT EQUAL TO LENGTH</li>
-<li>PICIN/PICOUT IS INVALID</li>
-<li>PICIN/PICOUT: 1ST PAIR NOT 40, 5C, 5B, 4D</li>
-<li>PICIN/PICOUT: NUMBER OF 20/21 IS NOT ODD</li>
-<li>POS nnn OVERLAPS WITH ANOTHER FIELD</li>
-<li>POS COLUMN+LENGTH EXCEEDS DEFINED MAP SIZE</li>
-<li>POS EXCEEDS DEFINED MAP SIZE</li>
-<li>POS HAS TOO MANY PARAMETERS</li>
-<li>POSITIONAL OPERAND xxxx INVALID</li>
-<li>SINGLE POS EXCEEDS DEFINED MAP SIZE</li>
-<li>SPECIAL FORMAT XINIT CANNOT BE SPECIFIED IF LENGTH IS LESS THAN 8</li>
-<li>UNNAMED FIELD HAS UNPROT OR FSET, INPUT DATA CANNOT BE MAPPED</li>
-<li>XINIT HAS ODD NUMBER OF HEX DIGITS</li>
-</ul>
-<p>The following errors occur owing to internal limits.
-Please report them.
-- AN INTERNAL ERROR HAS OCCURRED<br />
-  ERROR IN ATTRIBUTE TABLE nnnn
-- AN INTERNAL ERROR HAS OCCURRED<br />
-  MAPSIZE TOO LARGE - nnnn
-- AN INTERNAL ERROR HAS OCCURRED<br />
-  PICIN/PICOUT LENGTH GREATER THAN 50 BYTES</p>
-<h2 id="map-generation">Map generation</h2>
-<p>See the sample generation for <code>MAP01</code> embedded in <code>DFHALL.BAT</code>.
-This generates both the <code>TYPE=DSECT</code> creating <code>MAP01.CPY</code>
-and the <code>TYPE=MAP</code> creating <code>MAP01.390</code>.
-For <code>LANG=COBOL</code>, the structure will have a <code>.CPZ</code> suffix.
-This suffix is the default for the zCOBOL <code>COPY</code> statement.
-As the program name is the same, the <code>TYPE=DSECT</code> assembler output is
-renamed <code>mapset.PR1</code>.</p>
+<h2 id="shutdown">Shutdown</h2>
+<p><code>CEMT P SHU IMM</code> may still leave a zCICS window behind.
+- We are working to resolve this, just click close (big X) on each stranded window.</p>
+<p><code>CEMT S TER OUT</code>
+- This closes the terminal.
+- Local terminals may not be re-instated.
+- Even if all terminals are closed with this method, zCICS will not shut down.
+- A remote terminal may still be started.</p>
+<p><code>CEMT P SHU</code>
+- The terminal issuing this command will be closed.
+- No new terminals or tasks may be started.
+- If there are no active tasks, then the server is closed and zCICS ends.
+- When all active tasks terminate, zCICS will end.</p>
+<p><code>CEMT P SHU IMM</code>
+- The terminal issuing this command will be closed.
+- The server is then closed and zCICS ends.
+- Terminals with active tasks may remain stranded.</p>
+<h2 id="abends">Abends</h2>
+<p><code>SNAP</code> dumps are provided when requested or when circumstances demand them.</p>
+<p>A standard abend message (<code>DFH2206</code>) is usually displayed.</p>
+<p>An <code>ASRA</code> abend which is handled by a <code>HANDLE ABEND</code> command will always
+produce a <code>SNAP</code> dump but no message.</p>
+<p>If the initial program of a transaction is not available an <code>APCT</code> abend will occur.
+This won't produce a dump and cannot be <code>HANDLE</code>d.
+The <code>ID</code> of the <code>SNAP</code> indicates its origin:
+- 999
+  - Abend <code>ASRATEXT='ABEND ASRA'</code>
+- 998
+  - Requested dump by <code>EXEC CICS ABEND TEXT='ABEND abcode'</code>
+- 997
+  - Requested dump by <code>EXEC CICS DUMP</code>
+  - <code>COMPLETE TEXT='DUMP dumpcode COMPLETE'</code>
+  - Single area <code>TEXT='DUMP dumpcode AREA'</code>
+  - Segments <code>TEXT='DUMP dumpcode SEGMENT nnn'</code>
+  - Other values: The <code>EIBRESP</code> field, i.e. <code>27=PGMIDERR</code> has occurred
+    <code>TEXT='ABEND xxxx'</code> i.e. <code>AEI0=PGMIDERR</code></p>
+<h2 id="aborting-the-environment-violently">Aborting the environment violently</h2>
+<p>This is occasionally necessary to preserve traces and dumps.</p>
+<p>The z390 GUI can stay up and won't be harmed by this process.
+- Right click the taskbar
+- Select Task Manager
+- Search for <code>java.exe</code>
+  - There might be more than one, repeat steps below for each one.
+  - You can sort the tasks by clicking on 'Image name'
+  - Don't confuse this with <code>javaw.exe</code>
+- Right click on <code>java.exe</code>
+- Select <code>End Process</code> and <code>Yes</code>.
+  - All the zCICS environment and terminals should go away.</p>
 <h2 id="change-summary">Change Summary</h2>
-<table>
-<thead>
-<tr>
-<th>February 1, 2012</th>
-<th>Comment on long fldname support added</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>November 1, 2010</td>
-<td>Colour support, EXTATT, DSATTS, MAPATTS and COLOR parameters added and extra MNOTEs</td>
-</tr>
-<tr>
-<td></td>
-<td>DFHMDI and DFHMDF new NOLABEL parameter</td>
-</tr>
-<tr>
-<td>August 1, 2009</td>
-<td>Update to PICIN and PICOUT doc.</td>
-</tr>
-<tr>
-<td>February 21, 2009</td>
-<td>Added LANG=COBOL and mention of the .CPZ suffix</td>
-</tr>
-<tr>
-<td></td>
-<td>Added commentary separating PICIN/PICOUT by language</td>
-</tr>
-<tr>
-<td>November 24, 2008</td>
-<td>Added comment about POS</td>
-</tr>
-<tr>
-<td></td>
-<td>TIOAPFX is fully supported</td>
-</tr>
-<tr>
-<td></td>
-<td>TERM is supported but discarded</td>
-</tr>
-<tr>
-<td></td>
-<td>Extra error checking for LINE/COLUMN</td>
-</tr>
-</tbody>
-</table>
+<ul>
+<li>February 1, 2012</li>
+<li>Added test transactions IC04 and CHN1</li>
+<li>June 10, 2010</li>
+<li>Removed paragraph about limited application resources</li>
+<li>November 1, 2010</li>
+<li>Added NT01 and SETF to list of test transactions</li>
+<li>August 1, 2009</li>
+<li>Added zCOBOL to various texts</li>
+<li>Comment about extra ASSIGN tests for TST1 and BED1.</li>
+<li>Updated test transaction IC02...reconstructed</li>
+<li>Added ASGN to list of test transactions</li>
+<li>February 21, 2009</li>
+<li>Comment about extra CWA tests for TST1 and BED1.</li>
+<li>Added 'copy' transids for zCOBOL.</li>
+<li>November 24, 2008</li>
+<li>Added IC01, IC02, BMS2, ENQ1 to list of test transactions</li>
+<li>June 27, 2008</li>
+<li>Added BMS1 to list of test transactions</li>
+</ul>
 
 
 
