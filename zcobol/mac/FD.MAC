@@ -157,6 +157,11 @@
               AIF ('&FILE_LINAGE(&FILE_IX)' EQ '')                      #808
                   MNOTE 8,'LINAGE clause witout value'                  #808
               AEND                                                      #808
+              AIF ('&FILE_ORG(&FILE_IX)' NE 'LSEQ' AND '&FILE_ORG(&FILE*#808
+               _IX)' NE 'QSAM')                                         #808
+               MNOTE 8,'LINAGE clause not allowed for file with ORGANIZ*#808
+               ATON &FILE_ORG(&FILE_IX)'                                #808
+              AEND                                                      #808
 .* Check for FOOTING sub-clause                                         #808
               :&HAVE_FOOTING SETB 0                                     #808
               AIF ('&SYSLIST(&PARM_IX)' EQ 'FOOTING')                   #808

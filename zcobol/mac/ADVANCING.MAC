@@ -41,5 +41,121 @@
          ADVANCING ,
          COPY  ZC_WS
          :&FILE_ADVANCING(&FILE_IX) SETB 1 Set advancing support
-         MNOTE 8,'Support for ADVANCING option on WRITE not complete'
+.*
+.* Analyze all the parameters to figure out what needs to be done
+         LCLB  &ERROR                  Error detected
+         LCLB  &BEFORE                 BEFORE specified
+         LCLB  &AFTER                  AFTER  specified
+         LCLB  &LINES                  LINE or LINES  specified
+         LCLB  &PAGE                   PAGE   specified
+         LCLC  &LINESPEC               Nr or variable name
+         LCLA  &LINECT                 Actual linecount
+.*
+.* First parm could be BEFORE/AFTER or omitted
+&I       SETA  1                       Point first parm
+         AIF   ('&SYSLIST(&I)' EQ 'BEFORE')
+               :&BEFORE SETB 1         Mark BEFORE clause
+               :&I      SETA (&I+1)    point next parm
+         AELSEIF ('&SYSLIST(&I)' EQ 'AFTER')
+               :&AFTER  SETB 1         Mark AFTER clause
+               :&I      SETA (&I+1)    point next parm
+         AEND
+.*
+.* Next parm could be ADVANCING, or omitted
+         AIF   ('&SYSLIST(&I)' EQ 'ADVANCING')
+               :&I      SETA (&I+1)    ignore; point next parm
+         AEND
+.*
+.* Next parm could be PAGE, or the line count
+         AIF   ('&SYSLIST(&I)' EQ 'PAGE')
+               :&PAGE   SETB 1         Mark PAGE keyword
+               :&I      SETA (&I+1)    point next parm
+         AELSE ,                       Must be a line count or var
+               :&LINESPEC SETC '&SYSLIST(&I)'
+               :&I      SETA (&I+1)    point next parm
+         AEND
+.*
+.* Next parm could be LINE or LINES
+         AIF   ('&SYSLIST(&I)' EQ 'LINE')
+               :&LINES  SETB 1         Mark LINE/LINES clause
+               :&I      SETA (&I+1)    point next parm
+         AELSEIF ('&SYSLIST(&I)' EQ 'LINES')
+               :&LINES  SETB 1         Mark LINE/LINES clause
+               :&I      SETA (&I+1)    point next parm
+         AEND
+.*
+.* Any remaining parms to be reported as error
+         AWHILE (&I LE N'&SYSLIST)
+               MNOTE 8,'&SYSLIST(&I) is not supported on ADVANCING clau*
+               se of WRITE statement'
+               :&ERROR SETB 1          Mark error
+               :&I     SETA (&I+1)     Point next parm
+         AEND
+.*
+.* Errors for conflicting options and apply defaults
+         AIF   (&BEFORE AND &AFTER)
+               MNOTE 8,'Conflicting BEFORE/AFTER keywords on ADVANCING *
+               clause of WRITE statement'
+               :&ERROR SETB 1          Mark error
+         AEND
+         AIF   (&PAGE AND &LINES)
+               MNOTE 8,'Conflicting PAGE/LINE/LINES keywords on ADVANCI*
+               NG clause of WRITE statement'
+               :&ERROR SETB 1          Mark error
+         AEND
+.*
+.* Apply defaults AFTER and LINE if needed
+         AIF   (NOT &BEFORE AND NOT &AFTER)
+               :&AFTER SETB 1          AFTER is default
+         AEND
+         AIF   (NOT &PAGE AND NOT &LINES)
+               :&LINES SETB 1          LINE/LINES is default
+         AEND
+.*
+.* For LINE/LINES a quantity must be specified
+         AIF   (&LINES AND '&LINESPEC' EQ '')
+               MNOTE 8,'Nr of LINES to missing on ADVANCING clause of W*
+               RITE statement'
+               :&ERROR SETB 1          Mark error
+         AEND
+         AIF   (&LINES)
+               :&LINECT  SETA  (D2A('&LINESPEC'))
+               AIF   (&LINECT LT 0)
+                     MNOTE 8,'Cannot ADVANCE negative number of lines'
+                     :&ERROR SETB 1    Mark error
+               AEND
+         AEND
+.*
+.* Error out for options not yet supported
+         AIF   ('&FILE_LINAGE(&FILE_IX)' NE '')
+               MNOTE 8,'ADVANCING for file with LINAGE not supported ye*
+               t'
+               :&ERROR SETB 1          Mark error
+         AEND
+         AIF   (&BEFORE)
+               MNOTE 8,'BEFORE ADVANCING supported yet'
+               :&ERROR SETB 1          Mark error
+         AEND
+         AIF   (&PAGE)
+               MNOTE 8,'AFTER ADVANCING PAGE not yet supported'
+               :&ERROR SETB 1          Mark error
+         AEND
+         AIF   (&LINES AND '&LINESPEC'(1,1) LT '0')
+               MNOTE 8,'AFTER ADVANCING <variable> not yet supported'
+               :&ERROR SETB 1          Mark error
+         AEND
+         AIF   (&LINES AND &LINECT EQ 0)
+               MNOTE 8,'AFTER ADVANCING 0 LINES not yet supported'
+               :&ERROR SETB 1          Mark error
+         AEND
+         AIF   (&ERROR)                If any error occurred
+               MEXIT                      we're done error reporting
+         AEND
+.*
+.* AFTER ADVANCING 1 LINE is normal behaviour - no action needed
+         AIF   (&AFTER AND &LINES AND &LINECT EQ 1)
+               MEXIT                   We're okay!
+         AEND
+.*
+.*
          MEND

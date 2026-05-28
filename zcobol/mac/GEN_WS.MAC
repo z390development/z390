@@ -63,6 +63,7 @@ ZC_WSLOC LOCTR
          :&GRP_VAL SETC ''
          :&GRP_LVL SETA 0   
          :&I       SETA  1
+         :&ZC_ALL_BLANKS_LRECL SETA 0 Size of all blanks record area    #808
          AWHILE (&I LE &SYM_TOT)
             ACTR 1000
 .*
@@ -79,7 +80,6 @@ ZC_WSLOC LOCTR
                     :&RETRY SETB 0
                 AEND
             AEND 
-            :&ZC_ALL_BLANKS_LRECL SETA 0 Size of all blanks record area #808
             AIF (&SYM_LVL(&I) EQ 91 AND NOT &LK_MODE)
                 ACALL GEN_FILE
             AELSEIF (&SYM_LVL(&I) NE 88                                X
@@ -173,6 +173,7 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
          AIF   (&ZC_ALL_BLANKS_LRECL NE 0)                              #808
 ZC_ALL_BLNKS_RECORD_LENGTH DS XL4(0)       Record Descriptor Word       #808
 ZC_ALL_BLNKS_RECORD_SPACES DS CL(&ZC_ALL_BLANKS_LRECL)' '               #808
+ZC_ALL_BLNKS_RECORD_CNTRL  DS CL2' '       1 or 2 control chars         #808
          AEND                                                           #808
          MEXIT
 .*
@@ -419,6 +420,7 @@ ZC_ALL_BLNKS_RECORD_SPACES DS CL(&ZC_ALL_BLANKS_LRECL)' '               #808
                    :&RECFM SETC 'F'
                    :&LRECL SETA &FILE_LRECL2(&FILE_IX)
                AEND
+  mnote 8,'**!! LRECL=&LRECL'
 &FILE_NAME(&FILE_IX) DCB DSORG=PS,RECFM=&RECFM,BLKSIZE=&LRECL,&DDNAME
 .* If LINAGE clause present on FD add room for counters                 #808
          AIF   ('&FILE_LINAGE(&FILE_IX)' NE '')                         #808
