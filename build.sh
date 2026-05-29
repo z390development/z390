@@ -4,6 +4,7 @@ echo "::set-output name=javaversion::$(java -version)"
 
 # build the package
 bash/blddist "$@"
+bash/ivp
 
 # delete results output file
 rm -f ./z390test/build/z390test-output.txt
