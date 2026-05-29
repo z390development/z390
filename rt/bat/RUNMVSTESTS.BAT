@@ -12,9 +12,9 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..\..
-call bat\ASMLG %z_TraceMode% mvs\demo\DEMO     notiming stats bal noloadhigh                        %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASM   %z_TraceMode% mvs\test\TESTCVTX notiming stats bal noloadhigh                        %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\ASMLG %z_TraceMode% mvs\test\TESTCVT1 notiming stats bal noloadhigh sysmac(+mvs\maclib)    %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% mvs\demo\DEMO     notiming stats bal noloadhigh sysmac(mac)            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASM   %z_TraceMode% mvs\test\TESTCVTX notiming stats bal noloadhigh sysmac(mac)            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% mvs\test\TESTCVT1 notiming stats bal noloadhigh sysmac(mvs\maclib+mac) %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% mvs\test\TESTMVS1 notiming stats bal noloadhigh sysmac(mvs\maclib+mac) %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 set z_ReturnCode=0
 goto return
