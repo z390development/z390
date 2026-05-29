@@ -16,14 +16,10 @@ class RunMvsTests extends z390Test {
     }
 
     @Test
-    void test_CVTX() {
+    void test_CVT1() {
         int rc = this.asm(basePath('mvs', 'test', 'TESTCVTX'), *options, sysmacStd)
         this.printOutput()
         assert rc == 0
-    }
-
-    @Test
-    void test_CVT1() {
         int rc = this.asmlg(basePath('mvs', 'test', 'TESTCVT1'), *options, sysmacMvsAndMac)
         this.printOutput()
         assert rc == 0
