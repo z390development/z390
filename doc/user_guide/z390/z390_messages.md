@@ -1,10 +1,12 @@
 # Java message inventory (z390 runtime)
 
-Exhaustive list of messages emitted from `src/*.java`, one row per call site or
-message-bearing assignment. Duplicates are retained. Variable parts are shown as
-`{placeholder}` tokens.
+This document contains a list of messages emitted from our Java programs.
+Variable parts are shown as `{placeholder}` tokens.
 
-| #   | Message text                                                                                                        | Source module |
+The list below is a honest attempt at completeness, but cannot realistically
+be expected to be completely up-to-date. In case of doubt, consult the java code which is authoritative.
+
+| Nr. | Message text                                                                                                        | Source module |
 |-----|---------------------------------------------------------------------------------------------------------------------|---------------|
 |     | COPY file not found - {zc_copy_file_name}                                                                           | zc390.java    |
 |     | Couldn't find file: {path}                                                                                          | gz390.java    |
