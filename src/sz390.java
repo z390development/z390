@@ -237,6 +237,7 @@ public class sz390 implements Runnable {
     * 2025-10-07 Issue #658 Change CDE CDUSE field usage from byte to halfword
     * 2025-11-12 Issue #714 DELETE does not remove and FREEMAIN CDE from CVTCDE chain
     * 2026-01-16 AFK        Add javadoc comments
+    * 2026-05-30 Issue #654 Improve help text for debug mode commands
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -6770,21 +6771,25 @@ private void exec_test_cmd(){
 		go_test();
 	    break;
 	case 'H':  // help
-	    tz390.put_trace("z390 test command help summary (Visit www.z390.org for more information)");
-	    tz390.put_trace("  addr=sdt    set memory value  (ie 1r?=x'80' changes mem at (r1) 31 bit");
-	    tz390.put_trace("  reg=sdt     set register value (ie 15r=8 changes reg 15 to 8)");
-	    tz390.put_trace("  A addr      add/remove address stop (ie A FF348. or A *+4 etc.)");  // RPI 395
+	    tz390.put_trace("z390 test command help summary");                                                                                                // #654
+	    tz390.put_trace("  addr=sdt    set memory value (i.e. 1r?=x'80' changes mem at (r1) 31 bit");                                                     // #654
+	    tz390.put_trace("  reg=sdt     set register value (i.e. 15r=8 changes reg 15 to 8)");                                                             // #654
+	    tz390.put_trace("  A addr      add/remove address stop (i.e. A FF348. or A *+4 etc.)");  // RPI 395                                               // #654
 	    tz390.put_trace("  A addr label same as above, specified label will be shown when breakpoint is triggered");  // #678
 	    tz390.put_trace("  AR nn       display specified access register else all AR 0-15");  // RPI 2000 #515
-	    tz390.put_trace("  B=addr      set base for rel addr (ie B=15r% sets base to (r15) 24 bit");
+	    tz390.put_trace("  B=addr      set base for relative addresses (i.e. B=15r% sets base to (r15) 24 bit");                                          // #654
 	    tz390.put_trace("  D           display DCB file status, DDNAME, and DSNAME information");
 	    tz390.put_trace("  E           toggle EBCDIC/ASCII mode for dumping storage etc.");
 	    tz390.put_trace("  F nn        display specified floating-point register else FPC & all FPR 0-15"); // #515
 	    tz390.put_trace("  FPC         display floating-point-control register");                           // #515
 	    tz390.put_trace("  FPC+        display floating-point-control register in verbose mode");           // #515
 	    tz390.put_trace("  G nn/adr/op exec n instr. or to hex addr or until next break without trace");
+        tz390.put_trace("              One instruction is always executed before next opcode break even if it's the same instruction such as a BCT 1,*"); // #654
+        tz390.put_trace("              Addresses are distinguished from count by hex . or relative expression term such as *, +, or -.");                 // #654
+        tz390.put_trace("  H           list help command summary");                                                                                       // #654
 	    tz390.put_trace("  Interactive Make script execution end by going interactive instead of Quitting"); // #681
 	    tz390.put_trace("  J addr      jump to new addr and trace instruction");
+	    tz390.put_trace("  L           list all registers and trace current instruction");                                                                // #654
 	    tz390.put_trace("  L reg       list contents of register (ie l 1r dumps register 1");
 	    tz390.put_trace("  L addr len  list contents of memory area (ie l 10. 4 dumps cvt addr");
 	    tz390.put_trace("  M           display memory total allocated and free");
@@ -6792,22 +6797,32 @@ private void exec_test_cmd(){
         tz390.put_trace("  PSW         display current PSW");
         tz390.put_trace("  PSW+        display current PSW in verbose mode");
         tz390.put_trace("  PSW16       display 16 byte current PSW");                          // RPI 2008
+        tz390.put_trace("  Q           quite excution now");                                                                                              // #654
 	    tz390.put_trace("  R nn        display specified general purpose register else all GPR 0-15");      // #515
 	    tz390.put_trace("  S           clear all breaks");
 	    tz390.put_trace("  S reg??sdt  set break on register change");
 	    tz390.put_trace("  S addr??sdt set break on memory change");
 	    tz390.put_trace("  T nn/adr/op exec n instr. or to hex addr or until next break with trace");
+        tz390.put_trace("              One instruction is always executed before next opcode break even if it's the same instruction such as a BCT 1,*"); // #654
+        tz390.put_trace("              Addresses are distinguished from count by hex . or relative expression term such as *, +, or -");                  // #654
+        tz390.put_trace("              The symbol EPA may be used in place of address to refer to last program load point address.");                     // #654
         tz390.put_trace("  V op1 = op2 validate memory content against literal");              // RPI 1526
         tz390.put_trace("        op1:  addr len | reg[.+offset] [length]");                    // RPI 1526
         tz390.put_trace("        op1:  psw.[cc | mask | amode | key | addr]");                 // RPI 1526
         tz390.put_trace("        op2:  addr len | reg[.+offset] [length] | sdt");              // RPI 1526
-	    tz390.put_trace("  Z or Q      Z to zoom to normal end or Q to quit now");
-        tz390.put_trace("  .           Z returns retcode from prior V commands, or 0");        // RPI 1526
-        tz390.put_trace("  .             0: = all ok, 4: some failed, 8: some syntax failed"); // RPI 1526
-	    tz390.put_trace("* addr = [hex.|*|dec|nnr%(24)|nnr?(31)][+-addr]");
-	    tz390.put_trace("* reg  = nnr where nn = 0-15");
-	    tz390.put_trace("* sdt  = self defining term (b'01',c'ab',f'1',h'2',x'ff')");
-	    tz390.put_trace("* ??   = break compare operator (=,!=,<,<=,>,>=)");
+	    tz390.put_trace("  Z           exit test and run to end of program without trace");             // #654
+        tz390.put_trace("              Z returns retcode from prior V commands, or 0");        // RPI 1526 #654
+        tz390.put_trace("                0: = all ok, 4: some failed, 8: some syntax failed"); // RPI 1526 #654
+        tz390.put_trace("Where addr/len/reg/sdt/?? are defined as follows");                            // #654
+        tz390.put_trace("  addr = *[+addr|-addr]        current location");                             // #654
+        tz390.put_trace("  addr = dec|hex.[+addr|-addr] decimal value or hex value with period");       // #654
+        tz390.put_trace("  addr = nnr%[+addr|-addr]     use register value as 24-bit pointer");         // #654
+        tz390.put_trace("  addr = nnr?[+addr|-addr]     use register value as 31-bit pointer");         // #654
+        tz390.put_trace("     -->  Note recursive use of addr in the optional offset");                 // #654
+        tz390.put_trace("  len  = dec|hex.              decimal value or hex value with period");       // #654
+        tz390.put_trace("  reg  = nnr where nn = 0-15   the r is required for a register reference");   // #654
+        tz390.put_trace("  sdt  = self defining term (e.g.: b'01',c'ab',f'1',h'2',x'ff')");             // #654
+        tz390.put_trace("  ??   = break compare operator (one of: =,!=,<,<=,>,>=)");                    // #654
         break;
     case 'I': // switch script termination option to interactive (Default is batch) // #681
         switch (test_cmd.trim().toUpperCase())                                      // #681

@@ -87,7 +87,7 @@ Run ez390 emulator to execute 390 load module.
 The ez390 emulator supports the following interactive test commands when the
 [TEST option](z390_options.md) is specified:
 
-- `addr=sdt` – set memory value  (i.e. `1r?=x'80'` changes mem at (r1) 31 bit
+- `addr=sdt` – set memory value (i.e. `1r?=x'80'` changes mem at (r1) 31 bit
 - `reg=sdt` - set register value (i.e. `15r=8` changes reg 15 to 8)
 - `A addr` – set or reset up to 100 instruction address stops with hex address or relative expression such as `*+4`
 - `A addr label` – same as above, specified label will be shown when breakpoint is triggered
@@ -99,12 +99,12 @@ The ez390 emulator supports the following interactive test commands when the
 - `FPC` – display floating-point-control register
 - `FPC+` – display floating-point-control register in verbose mode
 - `G` - nn/addr/opcode - exec nn instr. or until specified instruction address or opcode is found with no trace.
-   One instruction is always executed before next opcode break even if it's the same instruction such as a `BCT 1,*`.
-   Addresses are distinguished from count by hex . or relative expression term such as `*`, `+`, or `-`.
-- `H`  -  list help command summary
-- `Interactive - Make script execution end by going interactive instead of Quitting`
-- `J addr` -  jump to new addr and trace instruction
-- `L`  - list all regs and trace current instruction
+  - One instruction is always executed before next opcode break even if it's the same instruction such as a `BCT 1,*`.
+  - Addresses are distinguished from count by hex . or relative expression term such as `*`, `+`, or `-`.
+- `H` - list help command summary
+- `Interactive` - Make script execution end by going interactive instead of Quitting
+- `J addr` - jump to new addr and trace instruction
+- `L` - list all regs and trace current instruction
 - `L reg` - list contents of register (ie `l 1r` dumps register 1
 - `L addr len` - list contents of memory area (i.e. `l 10. 4` dumps cvt addr
 - `M` – display total memory in MB and total allocate and free bytes
@@ -114,19 +114,32 @@ The ez390 emulator supports the following interactive test commands when the
 - `PSW16` – display 16 byte current PSW
 - `Q` - quit execution now
 - `R nn` – display specified general purpose register else all GPR 0-15
-- `S`  - clear register, address, and memory breaks
-- `S reg??sdt`  - set break on register change
+- `S` - clear register, address, and memory breaks
+- `S reg??sdt` - set break on register change
 - `S addr??sdt` - set break on memory change
 - `T nn/addr/opcode` - trace nn instr. or until specified instruction address or opcode is found.
-   One instruction is always executed before next opcode break even if it's the same instruction such as a `BCT 1,*`.
-   Addresses are distinguished from count by hex . or relative expression term such as `*`, `+`, or `-`.
-   The symbol EPA may be used in place of address to refer to last program load point address.
+  - One instruction is always executed before next opcode break even if it's the same instruction such as a `BCT 1,*`.
+  - Addresses are distinguished from count by hex . or relative expression term such as `*`, `+`, or `-`.
+  - The symbol EPA may be used in place of address to refer to last program load point address.
 - `V` - validate/verify
-- - `V * nn` - validate nn bytes starting at PSW address
-- - `V psw.subfield` - validate PSW subfield
-- - `V nnr` - validate GPR nn
-- `Z`  - exit test and run to end of program without trace
-- `* addr` = `hex.`,`+-hex`, `*+-hex`, `dec`, `nnr%` (24 bit), `nnr?` (31 bit)
-- `* reg` = nnr where nn = 0-15
-- `* sdt` = self defining term (`b'01'`, `c'ab'`, `f'1'`, `h'2'`, `x'ff'`)
-- `* ??` = break compare operator (`=`, `!=`, `<`, `<=`, `>`, `>=`)
+  - `V * nn` - validate nn bytes starting at PSW address
+  - `V psw.subfield` - validate PSW subfield
+  - `V nnr` - validate GPR nn
+- `Z` - exit test and run to end of program without trace
+
+Where addr/len/reg/sdt/?? are defined as follows:
+
+| term | syntax                            | meaning                                           |
+|------|-----------------------------------|---------------------------------------------------|
+| addr | `*[+addr|-addr]`                  | current location                                  |
+| addr | dec|hex.`[+addr|-addr]`           | decimal value or hex value with period            |
+| addr | nnr%`[+addr|-addr]`               | use register value as 24-bit pointer              |
+| addr | nnr?`[+addr|-addr]`               | use register value as 31-bit pointer              |
+| len  | dec|hex.                          | decimal value or hex value with period            |
+| reg  | nnr                               | the r is required for a register reference        |
+| sdt  | e.g.: b'01',c'ab',f'1',h'2',x'ff' | self defining term                                |
+| ??   | one of: =,!=,<,<=,>,>=            | break compare operator                            |
+
+> [!NOTE]
+> Please note the use of addr in the optional offset `[+addr|-addr]`
+> which makes the definition of addr recursive.
