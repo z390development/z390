@@ -123,11 +123,68 @@
                MEXIT
          AEND
 .*
-.* Get the comparison operator (=, <, >, etc.)
-.* PARM_IX was advanced by GET_PARM_FIELD, now points to operator
+.* Parse the COBOL relational operator, tolerating the reserved
+.* noise words IS, THAN and TO and the word forms EQUAL, GREATER,
+.* LESS and NOT.  On entry PARM_IX points at the first token after
+.* field1; on exit it points at the first token of the 2nd operand.
 .*
+.*   &SRC_REL - canonical relation: EQ GT LT GE LE
+.*   &SRC_NEG - set when the relation is negated with NOT
+.*
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'IS')   skip optional IS
+               :&PARM_IX SETA &PARM_IX+1
+         AEND
+         :&SRC_NEG SETB 0
+         AIF   ('&SYSLIST(&PARM_IX)' EQ 'NOT')  optional NOT
+               :&SRC_NEG SETB 1
+               :&PARM_IX SETA &PARM_IX+1
+         AEND
          :&OPER SETC '&SYSLIST(&PARM_IX)'
          :&PARM_IX SETA &PARM_IX+1
+         :&SRC_REL SETC ''
+         AIF ('&OPER' EQ '=' OR '&OPER' EQ 'EQUAL')
+               :&SRC_REL SETC 'EQ'
+               AIF ('&SYSLIST(&PARM_IX)' EQ 'TO')   skip noise TO
+                   :&PARM_IX SETA &PARM_IX+1
+               AEND
+         AELSEIF ('&OPER' EQ '>=' OR '&OPER' EQ 'GE')
+               :&SRC_REL SETC 'GE'
+         AELSEIF ('&OPER' EQ '<=' OR '&OPER' EQ 'LE')
+               :&SRC_REL SETC 'LE'
+         AELSEIF ('&OPER' EQ '>' OR '&OPER' EQ 'GREATER')
+               :&SRC_REL SETC 'GT'
+               AIF ('&SYSLIST(&PARM_IX)' EQ 'THAN')   skip noise THAN
+                   :&PARM_IX SETA &PARM_IX+1
+               AEND
+               AIF ('&SYSLIST(&PARM_IX)' EQ 'OR')   GREATER OR EQUAL
+                   :&SRC_REL SETC 'GE'
+                   :&PARM_IX SETA &PARM_IX+1
+                   AIF ('&SYSLIST(&PARM_IX)' EQ 'EQUAL')
+                       :&PARM_IX SETA &PARM_IX+1
+                   AEND
+                   AIF ('&SYSLIST(&PARM_IX)' EQ 'TO')
+                       :&PARM_IX SETA &PARM_IX+1
+                   AEND
+               AEND
+         AELSEIF ('&OPER' EQ '<' OR '&OPER' EQ 'LESS')
+               :&SRC_REL SETC 'LT'
+               AIF ('&SYSLIST(&PARM_IX)' EQ 'THAN')   skip noise THAN
+                   :&PARM_IX SETA &PARM_IX+1
+               AEND
+               AIF ('&SYSLIST(&PARM_IX)' EQ 'OR')   LESS OR EQUAL
+                   :&SRC_REL SETC 'LE'
+                   :&PARM_IX SETA &PARM_IX+1
+                   AIF ('&SYSLIST(&PARM_IX)' EQ 'EQUAL')
+                       :&PARM_IX SETA &PARM_IX+1
+                   AEND
+                   AIF ('&SYSLIST(&PARM_IX)' EQ 'TO')
+                       :&PARM_IX SETA &PARM_IX+1
+                   AEND
+               AEND
+         AELSE
+               MNOTE 8,'SEARCH WHEN INVALID OPERATOR - &OPER'
+               MEXIT
+         AEND
 .*
 .* Parse second operand (right side of comparison)
 .* Can be a field name or a literal value
@@ -138,31 +195,36 @@
          :&SRC_FLD2 SETC '&FIELD_NAME'
          :&SRC_FLD2_IX SETA &FIELD_IX
 .*
-.* Map COBOL operator to condition code for FALSE branch
-.*
-.* We branch to INCR when condition is FALSE (try next element)
-.* So we need the INVERSE condition code:
-.*   COBOL "="  -> branch on NOT EQUAL (ZC_NE)
-.*   COBOL "<"  -> branch on GREATER OR EQUAL (ZC_GE)
-.*   COBOL ">"  -> branch on LESS OR EQUAL (ZC_LE)
-.*   etc.
+.* Map relation (and optional NOT) to the condition-code mask used
+.* to branch to INCR when the WHEN condition is FALSE.  When not
+.* negated we branch on the inverse relation; when negated (NOT) we
+.* branch on the relation itself.
 .*
          :&SRC_CCT SETC ''
-         AIF ('&OPER' EQ '=' OR '&OPER' EQ 'EQUAL')
-               :&SRC_CCT SETC 'ZC_NE'
-         AELSEIF ('&OPER' EQ '<' OR '&OPER' EQ 'LESS')
-               :&SRC_CCT SETC 'ZC_GE'
-         AELSEIF ('&OPER' EQ '>' OR '&OPER' EQ 'GREATER')
-               :&SRC_CCT SETC 'ZC_LE'
-         AELSEIF ('&OPER' EQ '<=' OR '&OPER' EQ 'LE')
-               :&SRC_CCT SETC 'ZC_H'
-         AELSEIF ('&OPER' EQ '>=' OR '&OPER' EQ 'GE')
-               :&SRC_CCT SETC 'ZC_L'
-         AELSEIF ('&OPER' EQ 'NOT')
-               :&SRC_CCT SETC 'ZC_EQ'
+         AIF (NOT &SRC_NEG)
+               AIF   ('&SRC_REL' EQ 'EQ')
+                     :&SRC_CCT SETC 'ZC_NE'
+               AELSEIF ('&SRC_REL' EQ 'LT')
+                     :&SRC_CCT SETC 'ZC_GE'
+               AELSEIF ('&SRC_REL' EQ 'GT')
+                     :&SRC_CCT SETC 'ZC_LE'
+               AELSEIF ('&SRC_REL' EQ 'LE')
+                     :&SRC_CCT SETC 'ZC_H'
+               AELSEIF ('&SRC_REL' EQ 'GE')
+                     :&SRC_CCT SETC 'ZC_L'
+               AEND
          AELSE
-               MNOTE 8,'SEARCH WHEN INVALID OPERATOR - &OPER'
-               MEXIT
+               AIF   ('&SRC_REL' EQ 'EQ')
+                     :&SRC_CCT SETC 'ZC_EQ'
+               AELSEIF ('&SRC_REL' EQ 'LT')
+                     :&SRC_CCT SETC 'ZC_L'
+               AELSEIF ('&SRC_REL' EQ 'GT')
+                     :&SRC_CCT SETC 'ZC_H'
+               AELSEIF ('&SRC_REL' EQ 'LE')
+                     :&SRC_CCT SETC 'ZC_LE'
+               AELSEIF ('&SRC_REL' EQ 'GE')
+                     :&SRC_CCT SETC 'ZC_GE'
+               AEND
          AEND
 .*
 .* Generate the actual field comparison code
