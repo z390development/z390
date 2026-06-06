@@ -32,7 +32,7 @@
                MNOTE 8,'WHEN MISSING EVALUATE OR SEARCH'
                MEXIT
          AEND
-         AIF   (&IE_TYPE(&IE_LVL) EQ 15)
+         AIF   (&IE_TYPE(&IE_LVL) EQ 16)
 .*
 .* SEARCH WHEN - Format: WHEN field = value
 .*
@@ -68,7 +68,7 @@
 .*
 .*********************************************************************
 .* SEARCH WHEN HANDLER
-.* Called when WHEN appears inside a SEARCH block (IE_TYPE=15)
+.* Called when WHEN appears inside a SEARCH block (IE_TYPE=16)
 .*
 .* Syntax: WHEN field1 operator field2
 .* Example: WHEN TABLE-KEY(IDX) = SEARCH-ARG
