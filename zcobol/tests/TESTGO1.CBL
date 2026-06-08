@@ -49,5 +49,16 @@
            MOVE 16 TO RETURN-CODE
            DISPLAY 'ERROR BEFORE P10'.
        P10.
+           MOVE 3 TO IZ1
+           GO TO PA PB PC DEPENDING ON IZ1
+           MOVE 16 TO RETURN-CODE
+           DISPLAY 'ERROR BEFORE PA'.
+       PA.
+           MOVE 16 TO RETURN-CODE
+           DISPLAY 'ERROR AT PA'.
+       PB.
+           MOVE 16 TO RETURN-CODE
+           DISPLAY 'ERROR AT PB'.
+       PC.
            DISPLAY 'TESTGO1 ENDED OK'
            STOP RUN.
