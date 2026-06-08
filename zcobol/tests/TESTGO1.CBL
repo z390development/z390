@@ -11,6 +11,8 @@
        77  IH1   COMP   PIC S9(4)  VALUE 0.
        77  IP1   COMP-3 PIC S9(9)  VALUE 0.
        77  IZ1          PIC S9(9)  VALUE 0.
+       01  TBL.
+           02  ITEM OCCURS 5 TIMES PICTURE 9.
        PROCEDURE DIVISION.
        MAINLINE.
            DISPLAY 'TESTGO1 STARTING'
@@ -60,5 +62,17 @@
            MOVE 16 TO RETURN-CODE
            DISPLAY 'ERROR AT PB'.
        PC.
+           MOVE 2 TO ITEM(3)
+           GO TO PD PE PF DEPENDING ON ITEM(3)
+           MOVE 16 TO RETURN-CODE
+           DISPLAY 'ERROR BEFORE PD'.
+       PD.
+           MOVE 16 TO RETURN-CODE
+           DISPLAY 'ERROR AT PD'.
+       PE.
            DISPLAY 'TESTGO1 ENDED OK'
+           STOP RUN.
+       PF.
+           MOVE 16 TO RETURN-CODE
+           DISPLAY 'ERROR AT PF'.
            STOP RUN.
