@@ -126,10 +126,10 @@ primary indexes structures.
 15. `SHOWCB` – move `ACB` or `RPL` field to user area. Currently `AREA`, `RECLEN`, `FDBK`, `RBA`, and `XRBA` are supported for `RPL`. See `linklib\REPRO.MLC` and `vsam\test` regression test programs.
 16. `TESTCB` – test value of field in `ACB` or `RPL`. Currently `RECLEN` and `FDBK` fields in `RPL` are supported. See `linklib\REPRO.MLC` for example usage of `TESTCB` to check `FDBK` reason code for logical end or data error.
 17. `VCDTD` – VSAM Catalog Definition Table containing the following DSECTS:
-17.1. `IHAVCDT` – VSAM Catalog DSECT with pointers to `VCLR`, `VAIX`, and `VPTH` (Applications should only use `SHOWCB`, `TESTCB`, and `MODCB` for compatibility. See `linklib\REPRO.MLC` for example `VCDTD` usage).
-17.2. `IHAVCLR` – VSAM Base Cluster entry
-17.3. `IHAVAIX` – VSAM Alternate Index entry
-17.4. `IHAVPTH` – VSAM Path entry
+  1. `IHAVCDT` – VSAM Catalog DSECT with pointers to `VCLR`, `VAIX`, and `VPTH` (Applications should only use `SHOWCB`, `TESTCB`, and `MODCB` for compatibility. See `linklib\REPRO.MLC` for example `VCDTD` usage).
+  2. `IHAVCLR` – VSAM Base Cluster entry
+  3. `IHAVAIX` – VSAM Alternate Index entry
+  4. `IHAVPTH` – VSAM Path entry
 18. `ZDEFINE.MAC` – generate VSAM catalog from global data tables
 19. `ZDEFINE.CPY` – copybook with global data tables for catalog
 20. `ZGENACB` – create `ACB` control block for `GENCB` or `ACB`
