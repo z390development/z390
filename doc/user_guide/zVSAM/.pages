@@ -1,4 +1,6 @@
 nav:
+  - zVSAM_V1_User_Guide.md
+  - zVSAM_V1_zRepro_User_Guide.md
   - zVSAM_V2_Design.md
   - zVSAM_V2_Design_File_Structure.md
   - zVSAM_V2_Design_Interfaces.md
