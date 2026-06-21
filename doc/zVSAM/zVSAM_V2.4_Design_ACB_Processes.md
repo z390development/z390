@@ -1,6 +1,8 @@
 # zVSAM V2 - Logical processes for ACB-based requests
 
-## API for Assembler and zCobol programs
+# zVSAM V2 - API for Assembler and zCobol programs
+
+This document describes the macro interfaces for working with zVSAM V2 data sets.
 
 There is much more syntax checking in zVSAM V2 than in IBM macros and this may result in unexpected
 MNOTEs. All macros will continue processing after an MNOTE except for the most serious.
@@ -12,10 +14,10 @@ will be eliminated.
 The ACB is the primary interface for operations at the cluster level.
 Each cluster is represented by an ACB.
 
-The ACB interface consists of an ACB control block, possibly an Exit list Control Block, and a set of macros
-to manage and manipulate the ACB and EXLST control blocks. These macros can be used in your assembler
-programs. For zCobol and/or other higher-level languages, these macros will be generated from
-specifications for the files as appropriate in the host language's syntax.
+The ACB interface consists of an ACB control block, possibly an Exit list Control Block,
+and a set of macros to manage and manipulate the ACB and EXLST control blocks.
+These macros can be used in your assembler programs. For zCobol and/or other higher-level languages,
+these macros will be generated from specifications for the files as appropriate in the host language's syntax.
 
 The following macros are provided for assembler programs:
 
@@ -27,7 +29,7 @@ The following macros are provided for assembler programs:
 - SHOWCB ACB=
 - TESTCB ACB=
 
-*Note:* The ACB macro defines a statically allocated ACB.
+**Note:** The ACB macro defines a statically allocated ACB.
 This macro is primarily intended for use in non-reentrant programs.
 GENCB BLK=ACB should be used to create an ACB in dynamically acquired storage,
 or in private static storage. MODCB ACB= can be used to modify an existing ACB,
@@ -41,8 +43,8 @@ and TESTCB ACB= can be used to validate specific fields of an ACB.
 - SHOWCB EXLST=
 - TESTCB EXLST=
 
-*Note:* The EXLST macro defines a statically allocated EXLST.
-This macro is primarily intended for use in non-re-entrant programs.
+**Note:** The EXLST macro defines a statically allocated EXLST.
+This macro is primarily intended for use in non-reentrant programs.
 GENCB BLK=EXLST should be used to create an EXLST in dynamically acquired storage,
 or in private static storage. MODCB EXLST= can be used to modify an existing EXLST,
 whereas SHOWCB EXLST= can be used to query specific fields of an EXLST
@@ -51,12 +53,12 @@ and TESTCB EXLST= can be used to validate specific fields of an EXLST.
 - OPEN
 - CLOSE
 
-*Note:* OPEN and CLOSE macros can be used to open and close either sequential files represented by a DCB
+**Note:** OPEN and CLOSE macros can be used to open and close either sequential files represented by a DCB
 and/or zVSAM files represented by an ACB.
 
-A description of these interfaces as implemented for z390 and zVSAM is detailed in the next chapters
+A description of these interfaces as implemented for z390 and zVSAM is detailed in the next chapters.
 
-## ACB Macro
+### ACB macro
 
 The ACB macro will generate an ACB and initialize it according to the parameters
 specified on the macro invocation.
@@ -73,7 +75,7 @@ The table below shows how the ACB macro can be coded:
 
 | Opcode      | Operand                | Remarks                                                                                                                                            |
 |-------------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| [label] ACB | [AM=VSAM]              | Designates this ACB as a zVSAM ACB                                                                                                                 |
+| [label] ACB | [AM=VSAM]              | Designates this ACB as a zVSAM ACB; this is the default                                                                                            |
 |             | [DDNAME=ddname]        | DDNAME: name of an environment variable in the host OS holding the name of the cluster to be processed                                             |
 |             | [PASSWD=address]       | Address of password for the cluster. Points to a single byte length followed by the password eg. X'05',C'ABCDE'                                    |
 |             | [EXLST=address]        | Address of an exit list. Please see the EXLST macro description for details                                                                        |
@@ -84,14 +86,12 @@ The table below shows how the ACB macro can be coded:
 |             | [RMODE31=keyword]      | Indicates whether buffers and/or control blocks can be allocated above the line                                                                    |
 |             | [STRNO=value]          | Number of concurrent requests allowable for this ACB. Specify a number between 1 and 255. The default is 1                                         |
 |             | [BSTRNO=value]         | Beginning number of concurrent requests allocated to this ACB when a path is opened. Only applies if MACRF=NSR. Specify a number between 0 and 255 |
-|             | [MAREA=address]        | Not supported – future option. Keyword is flagged as ignored with a warning message                                                                |
-|             | [MLEN=value]           | Not supported – future option. Keyword is flagged as ignored with a warning message                                                                |
-|             | [RLSREAD=keyword]      | Not supported – future option. Keyword is flagged as ignored with a warning message                                                                |
-|             | [SHRPOOL=value]        | LSR shared pool number – future option                                                                                                             |
+|             | [MAREA=address]        | Not supported yet – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                            |
+|             | [MLEN=value]           | Not supported yet – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                            |
+|             | [RLSREAD=keyword]      | Not supported yet – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                            |
+|             | [SHRPOOL=value]        | Not supported yet – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                            |
 
-### Notes
-
-With the exception of the DDNAME parameter explained below, all supported parameters are implemented
+With the exception of the DDNAME= parameter explained below, all supported parameters are implemented
 compatibly with IBM's VSAM implementation. For details, please refer to the relevant IBM manual.
 
 #### DDNAME=
@@ -102,9 +102,8 @@ using MODCB ACB=
 
 In zVSAM the DDNAME refers to the name of an environment variable in the host OS. This variable in turn
 should contain the path and qualified filename of the cluster to be opened. The qualifier is the name of an
-environment variable in the host OS and is the path to the assembled catalog
+environment variable in the host OS and is the path to the assembled catalog.
 For more information on zVSAM catalogs, please refer to the "z390_zVSAM_Catalog_User_Guide"
-For more information on environment variables, please refer to the "z390_zVSAM_zREPRO_User_Guide"
 
 #### BUFSP=
 
@@ -125,30 +124,39 @@ The default for RMODE31 is NONE
 
 ### ACB MACRF keywords
 
+Defined options for the MACRF parameter are listed below:
+
 | Keyword subset    | Keyword | Remarks                                                                                                           |
 |-------------------|---------|-------------------------------------------------------------------------------------------------------------------|
-| [ADR KEY]         | ADR     | Addressed access to ESDS by (X)RBA. Using (X)RBA to access a KSDS is not supported                                |
-|                   | KEY     | Keyed access to a KSDS                                                                                            |
-|                   | RRN     | access to an RRDS                                                                                                 |
-|                   | CNV     | Not supported. Keyword is flagged with a warning message                                                          |
-| [DFR NDF]         | DFR     | Allow writes to be deferred                                                                                       |
+| [ADR/KEY/CNV]     |         | Only one of these allowed; ADR is the default                                                                     |
+|                   | ADR     | Addressed access to ESDS by (X)RBA. Using (X)RBA to access a KSDS is not supported                                |
+|                   | KEY     | Keyed access to a KSDS or RRDS                                                                                    |
+|                   | CNV     | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
+| [DFR/NDF]         |         | Only one of these allowed; DFR is the default                                                                     |
+|                   | DFR     | Allow writes to be deferred                                                                                       |
 |                   | NDF     | Do not defer writes                                                                                               |
-| [DIR SEQ SKP]     | DIR     | Direct access to ESDS, KSDS or RRDS                                                                               |
+| [DIR]/[SEQ]/[SKP] |         | May be combined; SEQ is the default                                                                               |
+|                   | DIR     | Direct access to ESDS, KSDS or RRDS                                                                               |
 |                   | SEQ     | Sequential access to ESDS, KSDS or RRDS                                                                           |
 |                   | SKP     | Skip sequential access to KSDS or RRDS. Only for keyed access. Allows the use of POINT                            |
-| [IN OUT]          | IN      | Read only access for ESDS, KSDS or RRDS                                                                           |
+| [IN]/[OUT]        |         | May be combined; IN is the default                                                                                |
+|                   | IN      | Read only access for ESDS, KSDS or RRDS                                                                           |
 |                   | OUT     | Both read and write access for ESDS, KSDS or RRDS                                                                 |
-| [NIS SIS]         | NIS     | Normal Insert Strategy for KSDS                                                                                   |
+| [NIS/SIS]         |         | Only one of these allowed; NIS is the default                                                                     |
+|                   | NIS     | Normal Insert Strategy for KSDS                                                                                   |
 |                   | SIS     | Sequential Insert Strategy for KSDS                                                                               |
-| [NRM AIX]         | NRM     | DDNAME indicates cluster to be processed                                                                          |
+| [NRM/AIX]         |         | Only one of these allowed; NRM is the default                                                                     |
+|                   | NRM     | DDNAME indicates cluster to be processed                                                                          |
 |                   | AIX     | DDNAME of a path to access an AIX directly, rather than using it to access records in the underlying base cluster |
-| [NRS RST]         |         | Not supported. Keyword is flagged with a warning message                                                          |
-| [LSR GSR NSR RLS] |         | Local, Global or no Shared Buffers. RLS is not supported                                                          |
-| [NUB/UBF]         |         | Not supported. Keyword is flagged with a warning message                                                          |
-| [CFX/NFX]         |         | Not supported. Keyword is flagged with a warning message                                                          |
-| [DDN/DSN]         |         | Not supported. Keyword is flagged with a warning message                                                          |
-| [ICI/NCI]         |         | Not supported. Keyword is flagged with a warning message                                                          |
-| [LEW/NLW]         |         | Not supported. Keyword is flagged with a warning message                                                          |
+| [NRS/RST]         |         | Only one of these allowed; NRM is the default                                                                     |
+|                   | NRS     | Treat dataset as non-reusable                                                                                     |
+|                   | RST     | Reset dataste during OPEN.                                                                                        |
+| [NSR/LSR/GSR/RLS] |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
+| [NUB/UBF]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
+| [CFX/NFX]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
+| [DDN/DSN]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
+| [ICI/NCI]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
+| [LEW/NLW]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
 
 ## OPEN macro
 
