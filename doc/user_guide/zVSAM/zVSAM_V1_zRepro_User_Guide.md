@@ -176,7 +176,7 @@ zREPRO VARIABLE RECORD TOO SHORT FOR BASE/AIX KEY AT RECORD NO. nnnnnnnnnnn
 
 zREPRO SEQUENCE ERROR \
 ---key 1--- \
----key 2--- \
+---key 2---
 - The input file has not been sorted into base key order for loading a KSDS.
 
 zREPRO CLUSTER NOT FOUND IN CATALOG
