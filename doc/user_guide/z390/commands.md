@@ -131,11 +131,11 @@ Where addr/len/reg/sdt/?? are defined as follows:
 
 | term | syntax                             | meaning                                           |
 |------|------------------------------------|---------------------------------------------------|
-| addr | `*[+addr|-addr]`                   | current location                                  |
-| addr | `dec|hex.[+addr|-addr]`            | decimal value or hex value with period            |
-| addr | nnr%`[+addr|-addr]`                | use register value as 24-bit pointer              |
-| addr | nnr?`[+addr|-addr]`                | use register value as 31-bit pointer              |
-| len  | `dec|hex.`                         | decimal value or hex value with period            |
+| addr | \*\[+addr\|-addr]                  | current location                                  |
+| addr | dec\|hex.\[+addr\|-addr]           | decimal value or hex value with period            |
+| addr | nnr%\[+addr\|-addr]                | use register value as 24-bit pointer              |
+| addr | nnr?\[+addr\|-addr]                | use register value as 31-bit pointer              |
+| len  | dec\|hex.                          | decimal value or hex value with period            |
 | reg  | nnr                                | the r is required for a register reference        |
 | sdt  | e.g.: b'01',c'ab',f'1',h'2',x'ff'  | self defining term                                |
 | ??   | one of: `=`,`!=`,`<`,`<=`,`>`,`>=` | break compare operator                            |
