@@ -17,6 +17,7 @@ java -version 2>&1 | echo ::set-output name=javaversion::%
 
 rem build the package -- %1 might be *ALL to include non-standard components in the build
 call bat\BLDDIST.BAT %z_TraceMode% %*           || goto error
+call bat\IVP.BAT     %z_TraceMode% %*           || goto error
 
 rem run the tests
 call z390test\gradlew.bat -p z390test cleanTest || goto error
