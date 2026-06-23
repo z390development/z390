@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# debug flag; 0=no debug, 1=debug
+debug=0
+
+# get full directory path to z390.jar; assumes that this bash script is in the z390 subdirectory
+jardir=$(dirname $0)
+jardir=$(cd $jardir && pwd)
+jardir=$(dirname $jardir)
+
+java -classpath ${jardir}/z390.jar -Xrs -Xms150000K -Xmx150000K $J2SEOPTIONS iz390 $1 $2 $3 $4 $5 $6 $7 $8 $9
+
+rc=$?
+# rc = 1 for Java issues; all other non-zero values for assembly issues
+if [ $debug -eq 1 ]; then echo "iz390 after java command; rc=$rc"; fi
+
+exit $rc
