@@ -10,13 +10,13 @@
         <meta name="author" content="z390 Development team">
       
       
-        <link rel="canonical" href="https://z390development.github.io/z390/user_guide/zVSAM/zVSAM_V2_Design/">
+        <link rel="canonical" href="https://z390development.github.io/z390/user_guide/zVSAM/zVSAM_V1_Catalog_User_Guide/">
       
       
-        <link rel="prev" href="../../zCICS/zcics_vsam_guide/">
+        <link rel="prev" href="../zVSAM_V1_User_Guide/">
       
       
-        <link rel="next" href="../zVSAM_V2_Design_File_Structure/">
+        <link rel="next" href="../zVSAM_V1_zRepro_User_Guide/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>zVSAM V2 Design and Logic manual - z390</title>
+        <title>zVSAM v1 Catalog User Guide - z390</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#zvsam-v2-design-and-logic-manual" class="md-skip">
+        <a href="#zvsam-v1-catalog-user-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              zVSAM V2 Design and Logic manual
+              zVSAM v1 Catalog User Guide
             
           </span>
         </div>
@@ -303,6 +303,36 @@
 
         </a>
       </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../design/zCOBOL/replace_implementation/" class="md-tabs__link">
+          
+  
+  
+  Design documents
+
+        </a>
+      </li>
+    
+  
+
     
   
 
@@ -1011,62 +1041,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../zCOBOL/sort_implementation/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    zCOBOL SORT
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../zCOBOL/replace_implementation/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    zCOBOL REPLACE Statement Implementation
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -1451,6 +1425,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../zVSAM_V1_User_Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM v1 User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1470,7 +1472,7 @@
   <span class="md-ellipsis">
     
   
-    zVSAM V2 Design and Logic manual
+    zVSAM v1 Catalog User Guide
   
 
     
@@ -1488,7 +1490,7 @@
   <span class="md-ellipsis">
     
   
-    zVSAM V2 Design and Logic manual
+    zVSAM v1 Catalog User Guide
   
 
     
@@ -1514,66 +1516,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#introduction" class="md-nav__link">
+  <a href="#catalog-and-zvsam-structure" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Introduction
+        Catalog and zVSAM Structure
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#copyright-notice" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Copyright Notice
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#acknowledgements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Acknowledgements
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#terminology" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Terminology
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#compatibility" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Compatibility
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Compatibility">
+    <nav class="md-nav" aria-label="Catalog and zVSAM Structure">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#zvsam-compatibility-with-ibm-vsam" class="md-nav__link">
+  <a href="#define-catalog" class="md-nav__link">
     <span class="md-ellipsis">
       
-        zVSAM compatibility with IBM VSAM
+        DEFINE CATALOG
       
     </span>
   </a>
@@ -1581,10 +1539,54 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#zvsam-v2-compatibility-with-zvsam-v1" class="md-nav__link">
+  <a href="#define-cluster" class="md-nav__link">
     <span class="md-ellipsis">
       
-        zVSAM V2 compatibility with zVSAM V1
+        DEFINE CLUSTER
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#define-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DEFINE INDEX
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#define-aix-or-alternateindex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DEFINE AIX or ALTERNATEINDEX
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#define-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DEFINE PATH
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#define-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DEFINE END
       
     </span>
   </a>
@@ -1600,6 +1602,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zVSAM_V1_zRepro_User_Guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM v1 zRepro User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2298,6 +2328,297 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design documents
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design documents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    zCOBOL
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../design/zCOBOL/replace_implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL REPLACE Statement Implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../design/zCOBOL/sort_implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL SORT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../design/zCOBOL/string_implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCOBOL STRING Statement Implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    zVSAM
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../design/zVSAM/zVSAM_V2_Design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 Design and Logic manual
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -2325,66 +2646,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#introduction" class="md-nav__link">
+  <a href="#catalog-and-zvsam-structure" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Introduction
+        Catalog and zVSAM Structure
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#copyright-notice" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Copyright Notice
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#acknowledgements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Acknowledgements
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#terminology" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Terminology
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#compatibility" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Compatibility
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Compatibility">
+    <nav class="md-nav" aria-label="Catalog and zVSAM Structure">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#zvsam-compatibility-with-ibm-vsam" class="md-nav__link">
+  <a href="#define-catalog" class="md-nav__link">
     <span class="md-ellipsis">
       
-        zVSAM compatibility with IBM VSAM
+        DEFINE CATALOG
       
     </span>
   </a>
@@ -2392,10 +2669,54 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#zvsam-v2-compatibility-with-zvsam-v1" class="md-nav__link">
+  <a href="#define-cluster" class="md-nav__link">
     <span class="md-ellipsis">
       
-        zVSAM V2 compatibility with zVSAM V1
+        DEFINE CLUSTER
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#define-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DEFINE INDEX
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#define-aix-or-alternateindex" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DEFINE AIX or ALTERNATEINDEX
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#define-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DEFINE PATH
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#define-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DEFINE END
       
     </span>
   </a>
@@ -2427,245 +2748,207 @@
   
 
 
-<h1 id="zvsam-v2-design-and-logic-manual">zVSAM V2 Design and Logic manual</h1>
-<h2 id="introduction">Introduction</h2>
-<p>This document describes the structure of the zVSAM component of the z390 assembler and runtime engine.</p>
-<h2 id="copyright-notice">Copyright Notice</h2>
-<p>This document Copyright 2018-2026 – z390 development team</p>
-<p>z390 is free software; its associated documentation is equally free.
-You can redistribute and/or modify both software and documentation under the terms of
-the GNU General Public License as published by the Free Software Foundation;
-either version 2 of the License, or (at your option) any later version.</p>
-<p>z390 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-See the GNU General Public License for more details.</p>
-<p>You should have received a copy of the GNU General Public License along with z390;
-if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.</p>
-<h2 id="acknowledgements">Acknowledgements</h2>
-<p>z390's purpose is to provide a source-level compatible assembler, linker and run-time execution engine
-for IBM's High-Level Assembler environment. By extension, the zVSAM component described in this document
-also aims at providing source-level compatibility. As a consequence, all source-level interfaces necessarily
-mimic the IBM-provided (and IBM-copyrighted) interfaces as described by IBM in publicly accessible documents.</p>
-<p>The logic and implementation behind these interfaces, however, was developed independently from IBM
-and is the product of the joint efforts of our team of volunteer developers.</p>
-<p>Source-level compatibility is a primary goal not only for z390 and zVSAM, but also for other z390 components
-such as zCobol and zCICS.</p>
-<p>All IBM publications and software we refer to in this document are copyright IBM Corporation with no exception.</p>
-<p>The drawings in this document have been made using the site draw.io.
-As part of the open source for z390 the xml and jpg documents describing these drawings are available
-with every distribution of z390 that contains this document.</p>
-<h2 id="terminology">Terminology</h2>
-<p>The reader is assumed to have at least some familiarity with IBM VSAM,
-to the extent that the following acronyms and terms are understood:</p>
-<table>
-<thead>
-<tr>
-<th>Acronym</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ACB</td>
-<td>Access Control Block</td>
-</tr>
-<tr>
-<td>AIX</td>
-<td>Alternate IndeX</td>
-</tr>
-<tr>
-<td>CBMR</td>
-<td>Control Block Modification Request</td>
-</tr>
-<tr>
-<td>CI</td>
-<td>Control Interval</td>
-</tr>
-<tr>
-<td>ESDS</td>
-<td>Entry Sequenced Data Set</td>
-</tr>
-<tr>
-<td>EXLST</td>
-<td>Exit List</td>
-</tr>
-<tr>
-<td>IBM</td>
-<td>International Business Machines Corp., USA</td>
-</tr>
-<tr>
-<td>KSDS</td>
-<td>Key Sequenced Data Set</td>
-</tr>
-<tr>
-<td>LDS</td>
-<td>Linear Data Set</td>
-</tr>
-<tr>
-<td>Path</td>
-<td>Access to a base cluster, usually through an AIX</td>
-</tr>
-<tr>
-<td>RBA</td>
-<td>Relative Byte Address</td>
-</tr>
-<tr>
-<td>RDW</td>
-<td>Record Descriptor Word in IBM-defined format</td>
-</tr>
-<tr>
-<td>RLF</td>
-<td>Record Length Field – z390 equivalent of RDW</td>
-</tr>
-<tr>
-<td>RPL</td>
-<td>Request Parameter List</td>
-</tr>
-<tr>
-<td>RRDS</td>
-<td>Relative Record Data Set</td>
-</tr>
-<tr>
-<td>RRN</td>
-<td>Relative Record Number</td>
-</tr>
-<tr>
-<td>SPX</td>
-<td>Segment Prefix</td>
-</tr>
-<tr>
-<td>VSAM</td>
-<td>Virtual Storage Access Method</td>
-</tr>
-<tr>
-<td>XRBA</td>
-<td>Extended Relative Byte Address</td>
-</tr>
-<tr>
-<td>XLRA</td>
-<td>Extended Logical Record Address</td>
-</tr>
-<tr>
-<td>zACB</td>
-<td>z390 equivalent of the ACB</td>
-</tr>
-<tr>
-<td>zEXLST</td>
-<td>z390 equivalent of the EXLST</td>
-</tr>
-<tr>
-<td>zRPL</td>
-<td>z390 equivalent of the RPL</td>
-</tr>
-</tbody>
-</table>
-<p>In this document we also use the following terms.
-The ones that are used by IBM as well, are intended to have the same meaning they do in IBM manuals.</p>
-<table>
-<thead>
-<tr>
-<th>Term</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Area</td>
-<td>a section of storage with a defined layout, depending on the type of Area</td>
-</tr>
-<tr>
-<td>Block</td>
-<td>zVSAM equivalent of a Control Interval - the unit of I/O operations</td>
-</tr>
-<tr>
-<td>Cluster</td>
-<td>a set of files that logically belong together</td>
-</tr>
-<tr>
-<td>Component</td>
-<td>either a data component or an index component of a cluster</td>
-</tr>
-<tr>
-<td>Element</td>
-<td>a primary key or XRBA in an AIX record</td>
-</tr>
-<tr>
-<td>File</td>
-<td>a single file as seen by the hosting operating system</td>
-</tr>
-<tr>
-<td>Foxes</td>
-<td>a value consisting of all high-values i.e. a value of all X'FF' bytes</td>
-</tr>
-<tr>
-<td>List</td>
-<td>a structure holding items that are linked together by pointers</td>
-</tr>
-<tr>
-<td>Segment</td>
-<td>a portion of a record in a spanned dataset</td>
-</tr>
-<tr>
-<td>Segmented</td>
-<td>a record that has been split into segments in a spanned dataset</td>
-</tr>
-<tr>
-<td>Spanned</td>
-<td>an attribute of a dataset that allows records to be split into segments</td>
-</tr>
-<tr>
-<td>Sphere</td>
-<td>a cluster and all associated AIXs</td>
-</tr>
-<tr>
-<td>Table</td>
-<td>a structure holding items that are physically adjacent</td>
-</tr>
-</tbody>
-</table>
-<h2 id="compatibility">Compatibility</h2>
-<p>As this document relates to zVSAM V2, there are two type of compatibility we need to consider.
-On the one hand we have designed zVSAM to be compatible with IBM VSAM.
-And on the other hand we need to consider compatibility with
-z390's zVSAM V1 – the prior implementation of zVSAM in the z390 environment.</p>
-<h3 id="zvsam-compatibility-with-ibm-vsam">zVSAM compatibility with IBM VSAM</h3>
-<p>Our z390 implementation of zVSAM V2 is intended to be source-level compatible with IBM VSAM.
-This has the following consequences:</p>
-<ol>
-<li>IBM VSAM documentation with regards to macros and interfaces applies to zVSAM
-   with the exception of parameters and options not supported by zVSAM.
-   Where zVSAM differs in behaviour this is noted in this document.
-   Please refer to the macro descriptions in <a href="../zVSAM_V2_Design_Interfaces/">the Interfaces section</a> for details.</li>
-<li>Control Blocks (such as ACB, RPL and some others) are not compatible.
-   zVSAM has its own structures. A side effect of this may be that a program's
-   assembled object code may be different in size than on your IBM operating system.
-   On rare occasions you may need an additional base register when porting your program either way.</li>
-<li>As a rule of thumb, a program using VSAM can be ported to z390 and should be able to assemble,
-   link and run without modification – provided it uses only the VSAM features and options that zVSAM supports.
-   And provided the program does not run out of addressability due to different control block lengths.</li>
-</ol>
-<h3 id="zvsam-v2-compatibility-with-zvsam-v1">zVSAM V2 compatibility with zVSAM V1</h3>
-<p>The user of z390's zVSAM component should be aware that zVSAM V2 as described in this document
-is not compatible with the pre-existing zVSAM V1. We – the development team – apologize for the
-inconvenience this may cause.</p>
-<p>We have taken the following measures to facilitate the transition from zVSAM V1 to zVSAM V2:</p>
-<ol>
-<li>We have introduced a new z390 option: ZVSAM which indicates which version of
-   zVSAM you want z390 to use.
-   For maximum compatibility the default is set to ZVSAM(1) to enable zVSAM v1.
-   The default will be changed to ZVSAM(2) in a future release of z390.
-   The parameter takes the following forms:</li>
-<li>ZVSAM(0) – zVSAM usage is disallowed</li>
-<li>ZVSAM(1) – zVSAM V1 is enabled, zVSAM V2 is disabled</li>
-<li>ZVSAM(2) – zVSAM V2 is enabled, zVSAM V1 is disabled</li>
-<li>To convert your zVSAM V1 clusters to zVSAM V2 you'll have to take the following steps:</li>
-<li>unload the existing data from their clusters using REPRO. \
-      For details on how to use REPRO, please refer to the "z390_VSAM_User_Guide"</li>
-<li>reload your data from your unload files, using ZREPRO. \
-      For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"</li>
-<li>For zVSAM V1 and zVSAM V2 there are distinct macro libraries.
-   To use the correct zVSAM maclib, specify the correct version in your maclib concatenation.</li>
-</ol>
+<h1 id="zvsam-v1-catalog-user-guide">zVSAM v1 Catalog User Guide</h1>
+<h2 id="catalog-and-zvsam-structure">Catalog and zVSAM Structure</h2>
+<p>The catalog is currently implemented as one or more assembled modules.
+A catalog dataset is on our wish-list.</p>
+<p>The <code>DEFINE</code> macro described below differs from the mainframe
+version, not only because of PC/Mainframe file definitions, but
+because we have constructed the VSAM datasets differently.</p>
+<p>Despite these differences we have strived to maintain all forms of
+application access and update to all types of VSAM datasets in
+conformity with IBM's specifications.</p>
+<p>The concept of Control Interval has been replaced by Data Blocks
+which have similarities.
+There is no exact equivalent of a Control Area, but the parameters
+<code>DATA</code> and <code>INDEXFREEBLOCKS</code> allow interspersed empty blocks.</p>
+<p>The Catalog structure is as follows:
+- DEFINE CATALOG,NAME=,VERSION= name the catalog and version Id
+- DEFINE CLUSTER, AIX, PATH define the components
+- DEFINE END end the definition</p>
+<p>The syntax for <code>DEFINE</code> supports the following:
+- CATALOG
+- CLUSTER
+- ALTERNATEINDEX or AIX
+- PATH
+- END</p>
+<h3 id="define-catalog">DEFINE CATALOG</h3>
+<p>Must be the first entry. Supports the following parameters:</p>
+<p>NAME=
+- is mandatory</p>
+<p>VERSION=
+- is optional and should be allowed to default.
+- Default VERSION is 2</p>
+<h3 id="define-cluster">DEFINE CLUSTER</h3>
+<p>Supports the following parameters:</p>
+<p>NAME=
+- is mandatory</p>
+<p>DATABLOCKSIZE=
+- The initial data blocksize setting, this may be modified by other parameters.
+- The parameter may be specified in bytes or as nnnnK.
+- Minimum 512 bytes, maximum 4096K.
+- Default=4K.</p>
+<p>INDEXBLOCKSIZE=
+- The initial index blocksize setting, this may be modified by other parameters.
+- The parameter may be specified in bytes or as nnnnK.
+- Minimum 512 bytes, maximum 4096K. Default=4K.</p>
+<p>DATAADJUST=YES/NO
+- Subject to rules outlined in the zVSAM Technical Guide,
+  the DATABLOCKSIZE may be reduced to optimise it.
+- Default=NO.</p>
+<p>INDEXADJUST=YES/NO
+- Subject to rules outlined in the zVSAM Technical Guide,
+  the INDEXBLOCKSIZE may be reduced to optimise it.
+- Default=NO.</p>
+<p>DATAFREESPACE=nn
+- Subject to rules outlined in the zVSAM Technical Guide, a
+  percentage of the total free space within a data block is
+  reserved for expansion.
+- Permitted values are 0-99.
+- Default=0.</p>
+<p>INDEXFREESPACE=nn
+- Subject to rules outlined in the zVSAM Technical Guide, a
+  percentage of the totalfree space within an index block is
+  reserved for expansion.
+- Permitted values are 0-99.
+- Default=0.</p>
+<p>DATAFREEBLOCKS=(x,y)
+- Subject to rules outlined in the zVSAM Technical Guide,
+  after every y data blocks are written, x empty blocks are
+  written to facilitate expansion.\
+- Maximum values for x and y are 65535.
+- Default=(0,0).
+- Note: The values (x,0) are permitted, this causes x empty
+  blocks to be written before the first one.</p>
+<p>INDEXFREEBLOCKS=(x,y)
+- Subject to rules outlined in the zVSAM Technical Guide,
+  after every y index blocks are written, x empty blocks are
+  written to facilitate expansion.
+- Maximum values for x and y are 65535.
+- Default=(0,0).
+- Note: The values (x,0) are permitted, this causes x empty
+  blocks to be written before the first one.</p>
+<h3 id="define-index">DEFINE INDEX</h3>
+<p>Supports the following options:</p>
+<ul>
+<li>INDEX=INDEXED Create a KSDS</li>
+<li>INDEX=NONINDEXED Create an ESDS</li>
+<li>INDEX=NUMBERED Create an RRDS</li>
+<li>INDEX=LINEAR Create an LDS (not likely to be supported)</li>
+</ul>
+<p>Supports the following parameters:</p>
+<p>RECORDSIZE
+- RECORDSIZE=n Fixed length.
+- RECORDSIZE=(avg,max) Variable length
+- Specifies the record length(s) in bytes.
+- If two parameters are present the dataset is assumed to be variable.
+- Maximum value is 4GB.</p>
+<p>SPANNED=YES/NO
+- Subject to rules outlined in the zVSAM Technical Guide,
+  records may be split between data blocks and segment
+  blocks.
+- Default=NO.</p>
+<p>KEYS=(length,offset)
+- For KSDS only.
+- The length and offset of the key within the record.</p>
+<p>REUSE=YES/NO
+- The cluster is considered empty when opened.
+- Default=NO.</p>
+<p>DTADSN=
+- Override for the data file, must have the full drive:\path\file.sfx
+- Must not be the same as IDXDSN=
+- This override will be used to open the data file and be used in the Prefix Block.</p>
+<p>IDXDSN=
+- Override for the index file, must have the full drive:\path\file.sfx
+- Must not be the same as DTADSN=
+- This override will be used to open the index file and be used in the Prefix Block.</p>
+<h3 id="define-aix-or-alternateindex">DEFINE AIX or ALTERNATEINDEX</h3>
+<p>AIX and ALTERNATEINDEX are synonyms.</p>
+<p>Supports the following parameters:</p>
+<p>NAME=
+- is mandatory</p>
+<p>DATABLOCKSIZE=
+- The initial AIX data blocksize setting, this may be modified by other parameters.
+- The parameter may be specified in bytes or as nnnnK.
+- Minimum 512 bytes, maximum 4096K.
+- Default=4K.</p>
+<p>INDEXBLOCKSIZE=
+- The initial AIX index blocksize setting, this may be modified by other parameters.
+- The parameter may be specified in bytes or as nnnnK.
+- Minimum 512 bytes, maximum 4096K.
+- Default=4K.</p>
+<p>DATAADJUST=YES/NO
+- Subject to rules outlined in the zVSAM Technical Guide, 
+  the DATABLOCKSIZE may be reduced to optimise it.
+- Default=NO.</p>
+<p>INDEXADJUST=YES/NO
+- Subject to rules outlined in the zVSAM Technical Guide,
+  the INDEXBLOCKSIZE may be reduced to optimise it.
+- Default=NO.</p>
+<p>DATAFREESPACE=nn
+- Subject to rules outlined in the zVSAM Technical Guide, a
+  percentage of the total free space within a data block is
+  reserved for expansion.
+- Permitted values are 0-99.
+- Default=0.</p>
+<p>INDEXFREESPACE=nn
+- Subject to rules outlined in the zVSAM Technical Guide, a
+  percentage of the total free space within an index block
+  is reserved for expansion.
+- Permitted values are 0-99.
+- Default=0.</p>
+<p>DATAFREEBLOCKS=(x,y)
+- Subject to rules outlined in the zVSAM Technical Guide,
+  after every y data blocks are written, x empty blocks are
+  written to facilitate expansion.
+- Maximum values for x and y are 65535.
+- Default=(0,0).
+- Note: The values (x,0) are permitted, this causes x empty
+  blocks to be written before the first one.</p>
+<p>INDEXFREEBLOCKS=(x,y)
+- Subject to rules outlined in the zVSAM Technical Guide,
+  after every y index blocks are written, x empty blocks are
+  written to facilitate expansion.
+- Maximum values for x and y are 65535.
+- Default=(0,0).
+- Note: The values (x,0) are permitted, this causes x empty
+  blocks to be written before the first one.</p>
+<p>KEYS=(length,offset)
+- The length and offset of the alternate key within the base record.</p>
+<p>REUSE=YES/NO
+- The AIX is considered empty when opened.
+- Default=NO.</p>
+<p>DTADSN=
+- Override for the AIX data file, must have the full drive:\path\file.sfx
+- Must not be the same as IDXDSN=
+- This override will be used to open the data file and be used in the Prefix Block.</p>
+<p>IDXDSN=
+- Override for the AIX index file, must have the full drive:\path\file.sfx
+- Must not be the same as DTADSN=
+- This override will be used to open the index file and be used in the Prefix Block.</p>
+<p>RELATE=clustername
+- Mandatory and must have a valid cluster name within the same catalog.</p>
+<p>UNIQUEKEY=YES/NO
+- The alternate keys are/are not unique.
+- Default=YES.</p>
+<p>UPGRADE=YES/NO
+- The AIX has/has not the potential to be updated in line
+  with updates to the base cluster.
+- Default=YES</p>
+<h3 id="define-path">DEFINE PATH</h3>
+<p>Supports the following parameters:</p>
+<p>NAME=
+- is mandatory.</p>
+<p>ENTRY=name
+- Mandatory and must have the name of an AIX within the same catalog.</p>
+<p>UPDATE=YES/NO
+- Allows the associated AIX to be updated in line with
+  updates to the base cluster.
+- Default=YES.</p>
+<h3 id="define-end">DEFINE END</h3>
+<p>Defines the end of definitions for this catalog.</p>
+<p><strong>Note:</strong> this document refers to the "zVSAM Technical Guide"
+but that document is not currently available on any archive.</p>
 
 
 
@@ -2738,7 +3021,7 @@ inconvenience this may cause.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-56-gec259c88"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-63-gb785ac97"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
