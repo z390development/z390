@@ -6797,7 +6797,7 @@ private void exec_test_cmd(){
         tz390.put_trace("  PSW         display current PSW");
         tz390.put_trace("  PSW+        display current PSW in verbose mode");
         tz390.put_trace("  PSW16       display 16 byte current PSW");                          // RPI 2008
-        tz390.put_trace("  Q           quite excution now");                                                                                              // #654
+        tz390.put_trace("  Q           quit excution now");                                                                                               // #654
 	    tz390.put_trace("  R nn        display specified general purpose register else all GPR 0-15");      // #515
 	    tz390.put_trace("  S           clear all breaks");
 	    tz390.put_trace("  S reg??sdt  set break on register change");
