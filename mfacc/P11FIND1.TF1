@@ -1,0 +1,15 @@
+P11FIND1  EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P11FIND1.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem P11FIND1 by DON HIGGINS using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+SNAP DUMP ID=2 TEXT=Output Area
+ 0000817C *D7F1F1C6 C9D5C440 C4C9E5C9 E2D6D940* *P11FIND DIVISOR *
+ 0000818C *7EF6F6F6 00000000 0000BB8B 404040F4* *=666........   4*
+ 0000819C *F8F0F1F1                           * *8011            *
+EZ390I total errors         = 0
+P11FIND1  EZ390 ENDED   RC= 0 MEM(MB)= MB IO=182 INS=85137624

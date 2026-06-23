@@ -1,0 +1,14 @@
+P6PJF1    EZ390 START
+EZ390I Copyright (c) 2021 z390 Assembler LLC
+z390 comes with ABSOLUTELY NO WARRANTY;
+This is free software, and you are welcome to redistribute it
+under certain conditions; see included LICENSE file for details.
+EZ390I program = C:\z390dev\wrk_rt\mfacc\P6PJF1.390
+EZ390I options = notiming stats bal noloadhigh
+ZMFACC Solution for problem P6PJF1 by Peter J Farley using RUNSYS=390
+SNAP DUMP ID=1 TEXT=Input Area
+ 0000812C *A5                                 * *v               *
+SNAP DUMP ID=2 TEXT=Output Area
+ 00008130 *F1F0F1F0 F0F1F0F1                  * *10100101        *
+EZ390I total errors         = 0
+P6PJF1    EZ390 ENDED   RC= 0 MEM(MB)= MB IO=175 INS=69

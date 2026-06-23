@@ -42,7 +42,7 @@
 &ZRUNSYS  SETC  '&SYSPARM'(&N,3)        GET THREE BYTE CODE             
       AGO   .TSYS                 Go check validity                     
 .NOSYS ANOP  SET                  default                               
-         MNOTE 4,'No RUNSYS= on first ZMFACC, 390 assumed.'             
+         MNOTE *,'No RUNSYS= on first ZMFACC, 390 assumed.'             
 &ZRUNSYS  SETC  '390'                                                   
       AGO   .TSYS                                                       
 .GSETRUN ANOP                                                           

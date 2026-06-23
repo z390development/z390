@@ -1,0 +1,45 @@
+# zCICS VSAM Guide
+
+## zCICS VSAM Installation
+
+I recommend that the catalog and file structures are kept in a common directory.
+More flexibility will be added if time permits.
+
+### Step 1
+
+- Create and assemble a catalog and the files it is to contain using the `DEFINE` macro.
+- The test files used in `zZ390\cics` are in the `cics\vsam` subdirectory, and many more
+  examples in `vsam\demo`.
+- Multiple catalogs are supported.
+
+### Step 2
+
+- Use `REPRO` to create the VSAM base cluster, paths and alternate indexes as
+  needed.
+
+### Step 3
+
+- Add the `FCT` entries for your files to `DFHFCTUS` and assemble.
+
+### Step 4:
+
+- Add `SET` statements to `Z390FILE.BAT` to define the catalog and filename that will
+  be used at OPEN time.
+
+## VSAM Extensions
+
+The following facilities are not supported in standard CICS/VSAM, but they are in
+zCICS VSAM:
+- Support of 4 gigabyte files and record sizes greater than 32K for all VSAM file types.
+- Skip-sequential access (browse) of an `ESDS` by `RBA` (fixed or variable), forward or backward.
+
+> [!NOTE]
+> Knowledge of the file will be necessary for variable `ESDS` in order to set
+> the initial `RBA`.
+
+## VSAM limits
+
+- For `KSDS`s and `AIX`s, there is an internal limit on all keylengths of 128 bytes.
+  Please raise an issue if this is not sufficient for you.
+- There is an internal limit in zCICS on record sizes of 32K bytes.
+  Please raise an issue if this is not sufficient for you.
