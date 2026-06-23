@@ -1,5 +1,5 @@
 This is the z390 MVS 3.8J public domain macro library directory.
-The content was taken from [CBT](www.cbttape.org) file 086.
+The content was taken from [CBT](https://www.cbttape.org) file 086.
 
 Below is a copy of the [`@FILE086`](maclib/@FILE086.MAC) member on that file:
 
