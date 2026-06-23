@@ -136,3 +136,14 @@ We have taken the following measures to facilitate the transition from zVSAM V1 
       For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"
 3. For zVSAM V1 and zVSAM V2 there are distinct macro libraries.
    To use the correct zVSAM maclib, specify the correct version in your maclib concatenation.
+
+### Alternative approach
+
+Instead of enabling either zVSAM V1 or zVSAM V2 exclusively,
+I think we can also allow a hybrid approach. For zVSAM 0 and 1 the behaviour is as descriebd above.
+For zVSAM 2 we will assemble the V2 logic, yet during execution, when we encounter an existing V1 cluster
+during open processing, we will handle that cluster using the existing zVSAM V1 logic.
+
+Since the new V2 logic will go into a completely different module the old logic in vz390.java
+should be able to remain as is, (almost) completely unchanged.
+
