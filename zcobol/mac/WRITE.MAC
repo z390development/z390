@@ -25,19 +25,12 @@
 .* 10/06/08 ZSTRMAC
 .* 07/09/09 RPI 1065 move FILE_IX from SYM_REF to SYM_FD for groups
 .* 03/14/12 RPI 1182 COPY ALL OF PARMS FOR FROM FIELD FOR USE IN MOVE
+.* 05/15/26 #808     WRITE not recognizing BEFORE / AFTER clauses
 .*********************************************************************
          WRITE &RECORD
          COPY  ZC_WS
          :&NP  SETA  N'&SYSLIST        
-         AIF   (&NP GE 3 AND '&SYSLIST(2)' EQ 'FROM')
-                  :&PARMS SETC '&SYSLIST(3)'                               RPI 1182
-                  :&I     SETA 4                                                                RPI 1182
-                 AWHILE (&I LE &NP)                                                  RPI 1182
-                       :&PARMS SETC '&PARMS,&SYSLIST(&I)'      RPI 1182
-                       :&I SETA &I+1                                                         RPI 1182
-                AEND
-                 MOVE  &PARMS,TO,&RECORD
-         AEND
+.* Find record and file pointer                                         #808
          ZC_SYM_FIND &RECORD
          AIF   (&SYM_IX EQ 0)
                MNOTE 8,'WRITE RECORD NOT FOUND - &RECORD'
@@ -48,6 +41,117 @@
                MNOTE 8,'WRITE RECORD NOT A FILE RECORD - &RECORD'
                MEXIT
          AEND
+.* Analyze all subclauses / phrases                                     #808
+         :&FROM   SETC ''              Init FROM field list             #808
+         :&ADV    SETC ''              Init ADVANCING parameters        #808
+         :&AFTER  SETB 0               Before/After indicator           #808
+         :&EOP    SETC ''              Init END-OF-PAGE parms           #808
+         :&NEOP   SETC ''              Init NOT END-OF-PAGE parameters  #808
+         :&INV    SETC ''              Init INVALID-KEY parms           #808
+         :&NINV   SETC ''              Init NOT INVALID-KEY parms       #808
+         :&ENDW   SETC ''              INIT END-WRITE parameters        #808
+         :&PTR    SETA 1               Parm 1 = record name             #808
+         :&CV     SETC ''              Current Variable name            #808
+         AWHILE   (&PTR LT &NP)        Scan starting at sysparm(2)      #808
+                  :&PTR SETA (&PTR + 1)     point next entry            #808
+                  :&CUR SETC '&SYSLIST(&PTR)'         get  parameter    #808
+                  :&NXT SETC '&SYSLIST(&PTR+1)'       next parameter    #808
+                  :&KWD SETB 0                        not a keyword     #808
+                  AIF   ('&CUR' EQ 'FROM')                              #808
+                        :&KWD   SETB 1      Mark keyword found          #808
+                        :&CV    SETC 'FROM' Set target variable         #808
+                        :&(&CV) SETC '&CUR' init FROM field             #808
+                  AEND                                                  #808
+                  AIF   ('&CUR' EQ 'BEFORE' OR '&CUR' EQ 'AFTER')       #808
+                        :&KWD   SETB 1      Mark keyword found          #808
+                        :&CV    SETC 'ADV'  Set target variable         #808
+                        :&(&CV) SETC '&CUR' init ADV field              #808
+                        :&AFTER SETB ('&CUR' EQ 'AFTER') Before/After?  #808
+                  AEND                                                  #808
+                  AIF   ('&CUR' EQ 'ADVANCING')                         #808
+                        :&KWD   SETB 1      Mark keyword found          #808
+                        AIF ('&ADV' EQ '')  No BEFORE/AFTER found       #808
+                            :&CV    SETC 'ADV'  Set target variable     #808
+                            :&(&CV) SETC '&CUR' init ADV field          #808
+                            :&AFTER SETB (1) After 1 is default         #808
+                        AEND                                            #808
+                  AEND                                                  #808
+                  AIF   ('&CUR' EQ 'AT' OR '&CUR' EQ 'EOP' OR '&CUR' EQX#808
+                                  'END-OF-PAGE')                        #808
+                        :&KWD   SETB 1      Mark keyword found          #808
+                        :&CV   SETC 'EOP'   Set target variable         #808
+                        :&(&CV) SETC '&CUR' init EOP field              #808
+                  AEND                                                  #808
+                  AIF   ('&CUR' EQ 'INVALID')                           #808
+                        :&KWD   SETB 1      Mark keyword found          #808
+                        :&CV    SETC 'INV'  Set target variable         #808
+                        :&(&CV) SETC '&CUR' init INV field              #808
+                  AEND                                                  #808
+                  AIF   ('&CUR' EQ 'END-WRITE')                         #808
+                        :&KWD   SETB 1      Mark keyword found          #808
+                        :&CV    SETC 'ENDW'  Set target variable        #808
+                        :&(&CV) SETC '&SYSLIST(&PTR)' init ENDW         #808
+                  AEND                                                  #808
+.* NOT can be NOT INVALID or NOT [AT] {EOP|END-OF-PAGE}                 #808
+                  AIF   ('&CUR' EQ 'NOT')                               #808
+                        :&KWD   SETB 1      Mark keyword found          #808
+                        AIF ('&NXT' EQ 'INVALID')   NOT INVALID KEY     #808
+                            :&CV    SETC 'NINV'  Set target variable    #808
+                            :&(&CV) SETC '&SYSLIST(&PTR)' init NINV     #808
+                            :&(&CV) SETC '&(&CV)'.',&NXT)               #808
+                            :&PTR   SETA (&PTR + 1) Consume 1 parm xtra #808
+                        AELSE                       NOT AT EOP          #808
+                            :&CV    SETC 'NEOP'  Set target variable    #808
+                            :&(&CV) SETC '&SYSLIST(&PTR)' init NEOP     #808
+                            :&(&CV) SETC '&(&CV)'.',&NXT)'              #808
+                            :&PTR   SETA (&PTR + 1) Consume 1 parm xtra #808
+.* If it's AT, then also consume the next keyword                       #808
+                            AIF     ('&NXT' EQ 'AT')                    #808
+                                   :&NXT   SETC '&SYSLIST(&PTR+1)'      #808
+                                   :&(&CV) SETC '&(&CV)'.',&NXT)'       #808
+                                   :&PTR   SETA (&PTR + 1) Consume it   #808
+                            AEND                                        #808
+                        AEND                                            #808
+                  AEND                                                  #808
+                  AIF   (NOT &KWD)     Not a relevant keyword           #808
+                      :&(&CV) SETC '&(&CV)'.',&CUR' add to current var  #808
+                  AEND                 Keyword check                    #808
+         AEND                          Parameter loop                   #808
+.* AFTER ADVANCING                                                      #808
+         AIF      ('&ADV' NE '' AND &AFTER) Advance after?              #808
+                  ADVANCING &ADV                                        #808
+         AEND                                                           #808
+.* FROM clause                                                          #808
+         AIF   ('&FROM' NE '')                                          #808
+               :&FROM SETC '&FROM'(6,*)    drop 'FROM,'                 #808
+               MOVE   &FROM,TO,&RECORD                                  #808
+         AEND                                                           #808
+.* Actual WRITE                                                         #808
          GEN_WRITE &RECORD
-         MEXIT
+.* BEFORE ADVANCING                                                     #808
+         AIF      ('&ADV' NE '' AND NOT &AFTER) Advance before?         #808
+                  ADVANCING &ADV                                        #808
+         AEND                                                           #808
+.* AT END-OF-PAGE                                                       #808
+         AIF      ('&EOP' NE '')     AT EOP clause ?                    #808
+                  MNOTE 8,'AT END-OF-PAGE not yet implemented: &EOP'    #808
+         AEND                                                           #808
+.* NOT AT END-OF-PAGE                                                   #808
+         AIF      ('&NEOP' NE '')     NOT AT EOP clause ?               #808
+                MNOTE 8,'NOT AT END-OF-PAGE not yet implemented: &NEOP' #808
+         AEND                                                           #808
+.* INVALID KEY                                                          #808
+         AIF      ('&INV' NE '')     INVALID KEY clause ?               #808
+                  MNOTE 8,'INVALID KEY not yet implemented: &INV'       #808
+         AEND                                                           #808
+.* NOT INVALID KEY                                                      #808
+         AIF      ('&NINV' NE '')    NOT INVALID KEY clause ?           #808
+                  MNOTE 8,'NOT INVALID KEY not yet implemented: &NINV'  #808
+         AEND                                                           #808
+.* END-WRITE                                                            #808
+         AIF      ('&ENDW' NE '')    END-WRITE clause ?                 #808
+             AIF  ('&ENDW' NE 'END-WRITE') this is valid and ignorable  #808
+                  MNOTE 8,'END-WRITE suboperands not allowed'           #808
+             AEND                                                       #808
+         AEND                                                           #808
          MEND
