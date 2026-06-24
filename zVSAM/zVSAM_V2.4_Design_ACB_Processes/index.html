@@ -27,7 +27,7 @@
     
     
       
-        <title>zVSAM V2 - Logical processes for ACB-based requests - z390</title>
+        <title>zVSAM V2.4 Design ACB Processes - z390</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#zvsam-v2-logical-processes-for-acb-based-requests" class="md-skip">
+        <a href="#open-macro" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              zVSAM V2 - Logical processes for ACB-based requests
+              zVSAM V2.4 Design ACB Processes
             
           </span>
         </div>
@@ -1524,7 +1524,7 @@
   <span class="md-ellipsis">
     
   
-    zVSAM V2 - API for Assembler and zCobol programs
+    zVSAM V2 Design Interfaces
   
 
     
@@ -1608,7 +1608,7 @@
   <span class="md-ellipsis">
     
   
-    zVSAM V2 - Addenda
+    zVSAM V2 Design Addenda
   
 
     
@@ -2451,6 +2451,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/zVSAM/zVSAM_V2_Design_Interfaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 - API for Assembler and zCobol programs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../design/zVSAM/zVSAM_V2_Design_Addenda/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 - Addenda
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2483,75 +2539,12 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#api-for-assembler-and-zcobol-programs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        API for Assembler and zCobol programs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#acb-based-interfaces" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ACB-based interfaces
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#acb-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ACB Macro
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="ACB Macro">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Notes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#acb-macrf-keywords" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ACB MACRF keywords
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#open-macro" class="md-nav__link">
@@ -2712,298 +2705,8 @@
   
 
 
-<h1 id="zvsam-v2-logical-processes-for-acb-based-requests">zVSAM V2 - Logical processes for ACB-based requests</h1>
-<h2 id="api-for-assembler-and-zcobol-programs">API for Assembler and zCobol programs</h2>
-<p>There is much more syntax checking in zVSAM V2 than in IBM macros and this may result in unexpected
-MNOTEs. All macros will continue processing after an MNOTE except for the most serious.
-This may result in assembler errors. Once the reason for the MNOTE has been resolved the assembler errors
-will be eliminated.</p>
-<h2 id="acb-based-interfaces">ACB-based interfaces</h2>
-<p>The ACB is the primary interface for operations at the cluster level.
-Each cluster is represented by an ACB.</p>
-<p>The ACB interface consists of an ACB control block, possibly an Exit list Control Block, and a set of macros
-to manage and manipulate the ACB and EXLST control blocks. These macros can be used in your assembler
-programs. For zCobol and/or other higher-level languages, these macros will be generated from
-specifications for the files as appropriate in the host language's syntax.</p>
-<p>The following macros are provided for assembler programs:</p>
-<ul>
-<li>ACB</li>
-<li>ACBD</li>
-<li>CBMR</li>
-<li>GENCB BLK=ACB</li>
-<li>MODCB ACB=</li>
-<li>SHOWCB ACB=</li>
-<li>TESTCB ACB=</li>
-</ul>
-<p><em>Note:</em> The ACB macro defines a statically allocated ACB.
-This macro is primarily intended for use in non-reentrant programs.
-GENCB BLK=ACB should be used to create an ACB in dynamically acquired storage,
-or in private static storage. MODCB ACB= can be used to modify an existing ACB,
-whereas SHOWCB ACB= can be used to query specific fields of an ACB
-and TESTCB ACB= can be used to validate specific fields of an ACB.</p>
-<ul>
-<li>EXLST</li>
-<li>EXLSTD</li>
-<li>GENCB BLK=EXLST</li>
-<li>MODCB EXLST=</li>
-<li>SHOWCB EXLST=</li>
-<li>TESTCB EXLST=</li>
-</ul>
-<p><em>Note:</em> The EXLST macro defines a statically allocated EXLST.
-This macro is primarily intended for use in non-re-entrant programs.
-GENCB BLK=EXLST should be used to create an EXLST in dynamically acquired storage,
-or in private static storage. MODCB EXLST= can be used to modify an existing EXLST,
-whereas SHOWCB EXLST= can be used to query specific fields of an EXLST
-and TESTCB EXLST= can be used to validate specific fields of an EXLST.</p>
-<ul>
-<li>OPEN</li>
-<li>CLOSE</li>
-</ul>
-<p><em>Note:</em> OPEN and CLOSE macros can be used to open and close either sequential files represented by a DCB
-and/or zVSAM files represented by an ACB.</p>
-<p>A description of these interfaces as implemented for z390 and zVSAM is detailed in the next chapters</p>
-<h2 id="acb-macro">ACB Macro</h2>
-<p>The ACB macro will generate an ACB and initialize it according to the parameters
-specified on the macro invocation.</p>
-<p>Direct access to subfields in the ACB is discouraged. Use SHOWCB ACB=, TESTCB ACB= and/or
-MODCB ACB= to inspect, test, and/or modify the ACB's content.</p>
-<p>All keywords on the ACB macro are optional. Before the cluster is opened,
-all ACB values can be modified using MODCB ACB=, or by changing the ACB directly.
-The latter is not recommended, as it is not guaranteed to be portable or compatible
-with future versions of zVSAM.</p>
-<p>The table below shows how the ACB macro can be coded:</p>
-<table>
-<thead>
-<tr>
-<th>Opcode</th>
-<th>Operand</th>
-<th>Remarks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[label] ACB</td>
-<td>[AM=VSAM]</td>
-<td>Designates this ACB as a zVSAM ACB</td>
-</tr>
-<tr>
-<td></td>
-<td>[DDNAME=ddname]</td>
-<td>DDNAME: name of an environment variable in the host OS holding the name of the cluster to be processed</td>
-</tr>
-<tr>
-<td></td>
-<td>[PASSWD=address]</td>
-<td>Address of password for the cluster. Points to a single byte length followed by the password eg. X'05',C'ABCDE'</td>
-</tr>
-<tr>
-<td></td>
-<td>[EXLST=address]</td>
-<td>Address of an exit list. Please see the EXLST macro description for details</td>
-</tr>
-<tr>
-<td></td>
-<td>[MACRF=(keyword list)]</td>
-<td>List of keywords for processing options. See table below for valid keywords</td>
-</tr>
-<tr>
-<td></td>
-<td>[BUFSP=value]</td>
-<td>Max amount of storage (in bytes) to use for buffers</td>
-</tr>
-<tr>
-<td></td>
-<td>[BUFND=value]</td>
-<td>Number of data buffers to allocate for this ACB. Specify a number between 1 and 65535</td>
-</tr>
-<tr>
-<td></td>
-<td>[BUFNI=value]</td>
-<td>Number of index buffers to allocate for this ACB. Specify a number between 1 and 65535</td>
-</tr>
-<tr>
-<td></td>
-<td>[RMODE31=keyword]</td>
-<td>Indicates whether buffers and/or control blocks can be allocated above the line</td>
-</tr>
-<tr>
-<td></td>
-<td>[STRNO=value]</td>
-<td>Number of concurrent requests allowable for this ACB. Specify a number between 1 and 255. The default is 1</td>
-</tr>
-<tr>
-<td></td>
-<td>[BSTRNO=value]</td>
-<td>Beginning number of concurrent requests allocated to this ACB when a path is opened. Only applies if MACRF=NSR. Specify a number between 0 and 255</td>
-</tr>
-<tr>
-<td></td>
-<td>[MAREA=address]</td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message</td>
-</tr>
-<tr>
-<td></td>
-<td>[MLEN=value]</td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message</td>
-</tr>
-<tr>
-<td></td>
-<td>[RLSREAD=keyword]</td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message</td>
-</tr>
-<tr>
-<td></td>
-<td>[SHRPOOL=value]</td>
-<td>LSR shared pool number – future option</td>
-</tr>
-</tbody>
-</table>
-<h3 id="notes">Notes</h3>
-<p>With the exception of the DDNAME parameter explained below, all supported parameters are implemented
-compatibly with IBM's VSAM implementation. For details, please refer to the relevant IBM manual.</p>
-<h4 id="ddname">DDNAME=</h4>
-<p>DDNAME is required before open is executed. If DDNAME is not supplied on the ACB macro, the label
-used on the ACB macro is used as DDNAME. If neither is specified, a proper value must be supplied by
-using MODCB ACB=</p>
-<p>In zVSAM the DDNAME refers to the name of an environment variable in the host OS. This variable in turn
-should contain the path and qualified filename of the cluster to be opened. The qualifier is the name of an
-environment variable in the host OS and is the path to the assembled catalog
-For more information on zVSAM catalogs, please refer to the "z390_zVSAM_Catalog_User_Guide"
-For more information on environment variables, please refer to the "z390_zVSAM_zREPRO_User_Guide"</p>
-<h4 id="bufsp">BUFSP=</h4>
-<p>Maximum buffer space in virtual storage for this cluster.
-This is the combined size in bytes of all buffers allocated for this cluster. If (BUFND + BUFNI) * Block_size
-exceeds the value specified for BUFSP, then BUFND and BUFNI will be reduced proportionally to keep the
-total allocation below the limit specified in the BUFSP parameter.</p>
-<h4 id="rmode31">RMODE31=</h4>
-<p>Specifies whether buffers and/or control blocks should be allocated below or above the 16M line:
-- NONE Control Blocks and buffers below 16M
-- CB Control Blocks above or below 16M, buffers below 16M
-- BUFF Control Blocks below 16M, buffers above or below 16M
-- ALL Control Blocks and buffers above 16M or below 16M</p>
-<p>The default for RMODE31 is NONE</p>
-<h3 id="acb-macrf-keywords">ACB MACRF keywords</h3>
-<table>
-<thead>
-<tr>
-<th>Keyword subset</th>
-<th>Keyword</th>
-<th>Remarks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[ADR KEY]</td>
-<td>ADR</td>
-<td>Addressed access to ESDS by (X)RBA. Using (X)RBA to access a KSDS is not supported</td>
-</tr>
-<tr>
-<td></td>
-<td>KEY</td>
-<td>Keyed access to a KSDS</td>
-</tr>
-<tr>
-<td></td>
-<td>RRN</td>
-<td>access to an RRDS</td>
-</tr>
-<tr>
-<td></td>
-<td>CNV</td>
-<td>Not supported. Keyword is flagged with a warning message</td>
-</tr>
-<tr>
-<td>[DFR NDF]</td>
-<td>DFR</td>
-<td>Allow writes to be deferred</td>
-</tr>
-<tr>
-<td></td>
-<td>NDF</td>
-<td>Do not defer writes</td>
-</tr>
-<tr>
-<td>[DIR SEQ SKP]</td>
-<td>DIR</td>
-<td>Direct access to ESDS, KSDS or RRDS</td>
-</tr>
-<tr>
-<td></td>
-<td>SEQ</td>
-<td>Sequential access to ESDS, KSDS or RRDS</td>
-</tr>
-<tr>
-<td></td>
-<td>SKP</td>
-<td>Skip sequential access to KSDS or RRDS. Only for keyed access. Allows the use of POINT</td>
-</tr>
-<tr>
-<td>[IN OUT]</td>
-<td>IN</td>
-<td>Read only access for ESDS, KSDS or RRDS</td>
-</tr>
-<tr>
-<td></td>
-<td>OUT</td>
-<td>Both read and write access for ESDS, KSDS or RRDS</td>
-</tr>
-<tr>
-<td>[NIS SIS]</td>
-<td>NIS</td>
-<td>Normal Insert Strategy for KSDS</td>
-</tr>
-<tr>
-<td></td>
-<td>SIS</td>
-<td>Sequential Insert Strategy for KSDS</td>
-</tr>
-<tr>
-<td>[NRM AIX]</td>
-<td>NRM</td>
-<td>DDNAME indicates cluster to be processed</td>
-</tr>
-<tr>
-<td></td>
-<td>AIX</td>
-<td>DDNAME of a path to access an AIX directly, rather than using it to access records in the underlying base cluster</td>
-</tr>
-<tr>
-<td>[NRS RST]</td>
-<td></td>
-<td>Not supported. Keyword is flagged with a warning message</td>
-</tr>
-<tr>
-<td>[LSR GSR NSR RLS]</td>
-<td></td>
-<td>Local, Global or no Shared Buffers. RLS is not supported</td>
-</tr>
-<tr>
-<td>[NUB/UBF]</td>
-<td></td>
-<td>Not supported. Keyword is flagged with a warning message</td>
-</tr>
-<tr>
-<td>[CFX/NFX]</td>
-<td></td>
-<td>Not supported. Keyword is flagged with a warning message</td>
-</tr>
-<tr>
-<td>[DDN/DSN]</td>
-<td></td>
-<td>Not supported. Keyword is flagged with a warning message</td>
-</tr>
-<tr>
-<td>[ICI/NCI]</td>
-<td></td>
-<td>Not supported. Keyword is flagged with a warning message</td>
-</tr>
-<tr>
-<td>[LEW/NLW]</td>
-<td></td>
-<td>Not supported. Keyword is flagged with a warning message</td>
-</tr>
-</tbody>
-</table>
+  <h1>zVSAM V2.4 Design ACB Processes</h1>
+
 <h2 id="open-macro">OPEN macro</h2>
 <p>A cluster needs to be opened before it can be processed. The open macro is used to open one or more clusters
 and/or one or more sequential files in a single call.</p>
@@ -3949,7 +3652,7 @@ This logic consists of the following elements:</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-63-gb785ac97"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-64-g1c1519b1"}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>

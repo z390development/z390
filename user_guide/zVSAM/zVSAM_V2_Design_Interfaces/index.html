@@ -27,7 +27,7 @@
     
     
       
-        <title>zVSAM V2 - API for Assembler and zCobol programs - z390</title>
+        <title>zVSAM V2 Design Interfaces - z390</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#zvsam-v2-api-for-assembler-and-zcobol-programs" class="md-skip">
+        <a href="#gencb-acb-macro" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              zVSAM V2 - API for Assembler and zCobol programs
+              zVSAM V2 Design Interfaces
             
           </span>
         </div>
@@ -1546,8 +1546,6 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
-        
-      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
@@ -1556,7 +1554,7 @@
   <span class="md-ellipsis">
     
   
-    zVSAM V2 - API for Assembler and zCobol programs
+    zVSAM V2 Design Interfaces
   
 
     
@@ -1574,7 +1572,7 @@
   <span class="md-ellipsis">
     
   
-    zVSAM V2 - API for Assembler and zCobol programs
+    zVSAM V2 Design Interfaces
   
 
     
@@ -1590,8 +1588,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1600,29 +1596,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#acb-based-interfaces" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ACB-based interfaces
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="ACB-based interfaces">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#acb-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ACB macro
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#gencb-acb-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1632,8 +1605,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#modcb-acb-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1643,8 +1616,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#showcb-acb-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1654,8 +1627,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#testcb-acb-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1665,8 +1638,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#exlst-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1676,8 +1649,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#gencb-exlst-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1687,8 +1660,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#modcb-exlst-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1698,8 +1671,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#showcb-exlst-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1709,8 +1682,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#testcb-exlst-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1720,8 +1693,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#open-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1731,8 +1704,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#close-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1740,11 +1713,6 @@
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1987,7 +1955,7 @@
   <span class="md-ellipsis">
     
   
-    zVSAM V2 - Addenda
+    zVSAM V2 Design Addenda
   
 
     
@@ -2830,6 +2798,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../design/zVSAM/zVSAM_V2_Design_Interfaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 - API for Assembler and zCobol programs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../design/zVSAM/zVSAM_V2_Design_Addenda/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 - Addenda
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2862,8 +2886,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -2872,29 +2894,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#acb-based-interfaces" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ACB-based interfaces
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="ACB-based interfaces">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#acb-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        ACB macro
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#gencb-acb-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2904,8 +2903,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#modcb-acb-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2915,8 +2914,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#showcb-acb-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2926,8 +2925,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#testcb-acb-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2937,8 +2936,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#exlst-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2948,8 +2947,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#gencb-exlst-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2959,8 +2958,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#modcb-exlst-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2970,8 +2969,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#showcb-exlst-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2981,8 +2980,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#testcb-exlst-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2992,8 +2991,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#open-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3003,8 +3002,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#close-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3012,11 +3011,6 @@
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -3200,302 +3194,8 @@
   
 
 
-<h1 id="zvsam-v2-api-for-assembler-and-zcobol-programs">zVSAM V2 - API for Assembler and zCobol programs</h1>
-<p>This document describes the macro interfaces for working with zVSAM V2 data sets.</p>
-<h2 id="acb-based-interfaces">ACB-based interfaces</h2>
-<p>The ACB is the primary interface for operations at the cluster level.
-Each cluster is represented by an ACB.</p>
-<ul>
-<li>ACB.Open</li>
-<li>ACB.Close</li>
-</ul>
-<p>The ACB interface consists of an ACB control block, possibly an Exit list Control Block,
-and a set of macros to manage and manipulate the ACB and EXLST control blocks.
-These macros can be used in your assembler programs. For zCobol and/or other higher-level languages,
-these macros will be generated from specifications for the files as appropriate in the host language's syntax.</p>
-<p>The following macros are provided for assembler programs:</p>
-<ul>
-<li>ACB</li>
-<li>GENCB ACB</li>
-<li>MODCB ACB</li>
-<li>SHOWCB ACB</li>
-<li>TESTCB ACB</li>
-</ul>
-<p>Note: the ACB macro defines a statically allocated ACB. This macro is primarily intended for use
-in non-re-entrant programs. GENCB ACB should be used to create an ACB in dynamically acquired storage,
-or in private static storage. MODCB ACB can be used to modify a pre-existing ACB, whereas SHOWCB ACB
-can be used to query specific fields of an ACB and TESTCB ACB can be used to validate specific fields of an ACB.</p>
-<ul>
-<li>EXLST</li>
-<li>GENCB EXLST</li>
-<li>MODCB EXLST</li>
-<li>SHOWB EXLST</li>
-<li>TESTCB EXLST</li>
-</ul>
-<p>Note: the EXLST macro defines a statically allocated EXLST. This macro is primarily intended for use
-in non-re-entrant programs. GENCB EXLST should be used to create an EXLST in dynamically acquired storage,
-or in private static storage. MODCB EXLST can be used to modify a pre-existing EXLST, whereas SHOWCB EXLST
-can be used to query specific fields of an EXLST and TESTCB EXLST can be used to validate specific fields of an EXLST.</p>
-<ul>
-<li>OPEN</li>
-<li>CLOSE</li>
-</ul>
-<p>Note: Open and Close macros can be used to open and close either sequential files represented by a DCB
-and/or zVSAM files represented by an ACB.</p>
-<p>A description of these interfaces as implemented for z390 and zVSAM is detailed in the next chapters.</p>
-<h3 id="acb-macro">ACB macro</h3>
-<p>The ACB macro will generate an ACB and initialize it according to the parameters specified on the macro invocation.</p>
-<p>The structure and layout of the generated ACB are not part of the interface and are therefore not shown
-in this chapter. Direct access to subfields in the ACB is discouraged. Use SHOWCB ACB, TESTCB ACB and/or MODCB ACB
-to inspect, test, and/or modify the ACB's content.</p>
-<p>All keywords on the ACB macro are optional. Before the cluster is opened, all ACB values can be modified
-using MODCB ACB, or by changing the ACB directly. The latter is not recommended, as it is not guaranteed
-to be portable or compatible with future versions of zVSAM.</p>
-<p>The table below shows how the ACB macro can be coded.</p>
-<table>
-<thead>
-<tr>
-<th>Opcode</th>
-<th>Operand</th>
-<th>Remarks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ACB</td>
-<td>[AM=VSAM]</td>
-<td>Designates this ACB as a zVSAM ACB; this is the default</td>
-</tr>
-<tr>
-<td></td>
-<td>[DDNAME=ddname]</td>
-<td>DDNAME: name of an environment variable in the host OS holding the name of the cluster to be processed</td>
-</tr>
-<tr>
-<td></td>
-<td>[PASSWD=ptr]</td>
-<td>Pointer to password for the cluster</td>
-</tr>
-<tr>
-<td></td>
-<td>[EXLST=ptr]</td>
-<td>Pointer to EXLST structure</td>
-</tr>
-<tr>
-<td></td>
-<td>[MACRF=(keywd_list)]</td>
-<td>List of keywords specifying processing options. See table below for valid keywords</td>
-</tr>
-<tr>
-<td></td>
-<td>[BUFSP=nr]</td>
-<td>Max amount of storage (in bytes) to use for buffers</td>
-</tr>
-<tr>
-<td></td>
-<td>[BUFND=nr]</td>
-<td>Number of data buffers to allocate for this ACB</td>
-</tr>
-<tr>
-<td></td>
-<td>[BUFNI=nr]</td>
-<td>Number of index buffers to allocate for this ACB</td>
-</tr>
-<tr>
-<td></td>
-<td>[RMODE31=keyword]</td>
-<td>Indicates whether buffers and/or control blocks can be allocated above the line</td>
-</tr>
-<tr>
-<td></td>
-<td>[STRNO=nr]</td>
-<td>Number of concurrent requests allowable for this ACB</td>
-</tr>
-<tr>
-<td></td>
-<td>[BSTRNO=nr]</td>
-<td>Beginning number of concurrent requests allowable for this ACB</td>
-</tr>
-<tr>
-<td></td>
-<td>[<em>MAREA</em>=ptr]</td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-<tr>
-<td></td>
-<td>[<em>MLEN</em>=nr_]</td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-<tr>
-<td></td>
-<td>[<em>RLSREAD</em>=keyword_]</td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-<tr>
-<td></td>
-<td>[<em>SHRPOOL</em>=nr]</td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-</tbody>
-</table>
-<p>Defined options for the MACRF parameter are listed below:</p>
-<table>
-<thead>
-<tr>
-<th>Keyword subset</th>
-<th>Keyword</th>
-<th>Remarks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[ADR/KEY]</td>
-<td></td>
-<td>ADR is the default</td>
-</tr>
-<tr>
-<td></td>
-<td>ADR</td>
-<td>Addressed access to ESDS</td>
-</tr>
-<tr>
-<td></td>
-<td>KEY</td>
-<td>Keyed access to KSDS or RRDS</td>
-</tr>
-<tr>
-<td></td>
-<td><em>CNV</em></td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-<tr>
-<td>[DFR/NDF]</td>
-<td></td>
-<td>DFR is the default</td>
-</tr>
-<tr>
-<td></td>
-<td>DFR</td>
-<td>Allow writes to be deferred</td>
-</tr>
-<tr>
-<td></td>
-<td>NDF</td>
-<td>Disallow deferred writes</td>
-</tr>
-<tr>
-<td>[DIR]/[SEQ]/[SKP]</td>
-<td></td>
-<td>SEQ is the default</td>
-</tr>
-<tr>
-<td></td>
-<td>DIR</td>
-<td>Direct access to RRDS</td>
-</tr>
-<tr>
-<td></td>
-<td>SEQ</td>
-<td>Sequential access to ESDS, KSDS or RRDS</td>
-</tr>
-<tr>
-<td></td>
-<td>SKP</td>
-<td>Skip sequential access to KSDS or RRDS</td>
-</tr>
-<tr>
-<td>[IN/OUT]</td>
-<td></td>
-<td>IN is the default</td>
-</tr>
-<tr>
-<td></td>
-<td>IN</td>
-<td>Read access for ESDS, KSDS or RRDS</td>
-</tr>
-<tr>
-<td></td>
-<td>OUT</td>
-<td>Both read and write access for ESDS, KSDS or RRDS</td>
-</tr>
-<tr>
-<td>[NIS/SIS]</td>
-<td></td>
-<td>NIS is the default</td>
-</tr>
-<tr>
-<td></td>
-<td>NIS</td>
-<td>Normal Insert Strategy for KSDS</td>
-</tr>
-<tr>
-<td></td>
-<td>SIS</td>
-<td>Sequential Insert Strategy</td>
-</tr>
-<tr>
-<td>[NRM/AIX]</td>
-<td></td>
-<td>NRM is the default</td>
-</tr>
-<tr>
-<td></td>
-<td>NRM</td>
-<td>DDname indicates cluster to be processed</td>
-</tr>
-<tr>
-<td></td>
-<td>AIX</td>
-<td>DDname indicates an AIX to be processed as a path into its base cluster</td>
-</tr>
-<tr>
-<td>[<em>NRS/RST</em>]</td>
-<td></td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-<tr>
-<td>[<em>NSR/LSR/GSR/RLS</em>]</td>
-<td></td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-<tr>
-<td>[<em>NUB/UBF</em>]</td>
-<td></td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-<tr>
-<td>[<em>CFX/NFX</em>]</td>
-<td></td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-<tr>
-<td>[<em>DDN/DSN</em>]</td>
-<td></td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-<tr>
-<td>[<em>ICI/NCI</em>]</td>
-<td></td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-<tr>
-<td>[<em>LEW/NLW</em>]</td>
-<td></td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-</tbody>
-</table>
-<p>DDNAME= DDname is required before open is executed. If DDname is not supplied on the ACB
-macro, the label used on the ACB macro is used as DDname. If neither is specified,
-a proper value must be supplied by using MODCB ACB.
-In zVSAM the DDname is to hold the name of an environment variable in the host
-OS. This variable in turn should contain the path and qualified filename of the cluster
-to be opened. The qualifier is the name of an environment variable in the host OS
-and is the path to the assembled catalog. For more information on zVSAM catalogs,
-please refer to the "z390_zVSAM_Catalog_User_Guide".</p>
-<p>With the exception of the DDNAME parameter explained above, all supported parameters are implemented compatibly
-with IBM's VSAM implementation. For details, please refer to the relevant IBM manual.</p>
-<p>For ease of access a short summary can be found in the addenda.</p>
+  <h1>zVSAM V2 Design Interfaces</h1>
+
 <h3 id="gencb-acb-macro">GENCB ACB macro</h3>
 <p>The GENCB macro with BLK=ACB will generate or manipulate ACBs and initialize or change them
 according to the parameters specified on the macro invocation. It is for this reason that
@@ -5558,7 +5258,7 @@ in a future release.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-63-gb785ac97"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-64-g1c1519b1"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
