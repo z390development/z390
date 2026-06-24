@@ -257,7 +257,7 @@
          GBLA &IE_LVL               CURRENT LEVEL FOR IF OR EVALUATE
          GBLA &IE_TYPE(100)     1=IF, 2=EVALUATE, 3=END_READ 4=PM
 .*                                  11=ADD,12=SUB,13=MPY,14=DIV
-.*                                  15=SEARCH
+.*                                  15=RETURN,16=SEARCH
          GBLA &IE_TCNT(100)     IE TYPE  COUNT                  
          GBLA &IE_NOT(100)      NOT ON SIZE ERROR USED AT LEVEL
          GBLA &IE_BCNT(100)     IE BLOCK COUNT WITHIN TYPE     
@@ -267,7 +267,7 @@
          GBLA &IE_WHEN(100)     CURRENT EVAL WHEN LABEL #
          GBLC &IE_PM_LAB(100)   CURRENT PM STMT LOOP LABEL
 .*
-.* SEARCH STATEMENT SUPPORT (IE_TYPE=15)
+.* SEARCH STATEMENT SUPPORT (IE_TYPE=16)
 .* These variables store context for SEARCH/WHEN/END-SEARCH processing
 .* Indexed by IE_LVL to support nested SEARCH statements
 .*

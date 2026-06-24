@@ -32,7 +32,7 @@
 .*   5. END label (exit point for completed search)
 .*
 .* Uses IE block tracking to match with corresponding SEARCH:
-.*   IE_TYPE 15 = SEARCH (see ZC_WS.CPY:254)
+.*   IE_TYPE 16 = SEARCH (see ZC_WS.CPY)
 .*********************************************************************
          END_SEARCH
          COPY  ZC_WS
@@ -43,7 +43,7 @@
                MNOTE 8,'END-SEARCH WITHOUT MATCHING SEARCH'
                MEXIT
          AEND
-         AIF   (&IE_TYPE(&IE_LVL) NE 15)
+         AIF   (&IE_TYPE(&IE_LVL) NE 16)
                MNOTE 8,'END-SEARCH NOT IN A SEARCH BLOCK'
                MEXIT
          AEND
