@@ -15,7 +15,7 @@ jardir=$(dirname "$0")
 jardir=$(cd "$jardir" && pwd)
 jardir=$(dirname "$jardir")
 
-if [ $debug -eq 1 ]; then echo "ivp jardir=$jardir $@" fi
+if [ $debug -eq 1 ]; then echo "ivp jardir=$jardir $@"; fi
 java -classpath "${jardir}/z390.jar" -Xrs -Xms150000K -Xmx150000K $J2SEOPTIONS iz390 "$@"
 
 rc=$?
