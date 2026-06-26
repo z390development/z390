@@ -156,9 +156,7 @@ ACB_BASE EQU   X'10'                 BASE
          DS    0D
 ACBEND   EQU   *
 ACB_LEN  EQU   ACBEND-IHAACB
-         AIF   ('&Z390_ACBD_NAME' EQ '' OR '&Z390_ACBD_TYPE' EQ '').EXIX
-               T
+         AIF  ('&Z390_ACBD_NAME' EQ '' OR '&Z390_ACBD_TYPE' EQ '').EXIT
 &Z390_ACBD_NAME &Z390_ACBD_TYPE
 .EXIT    ANOP
          MEND
-
