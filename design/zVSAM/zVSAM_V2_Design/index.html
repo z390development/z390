@@ -2584,17 +2584,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#alternative-approach" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative approach
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -2778,17 +2767,6 @@
     <span class="md-ellipsis">
       
         zVSAM V2 compatibility with zVSAM V1
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#alternative-approach" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Alternative approach
       
     </span>
   </a>
@@ -3027,15 +3005,18 @@ This has the following consequences:</p>
 <ol>
 <li>IBM VSAM documentation with regards to macros and interfaces applies to zVSAM
    with the exception of parameters and options not supported by zVSAM.
+   Equally, z390 may introduce additional options not supported by IBM VSAM.
    Where zVSAM differs in behaviour this is noted in this document.
    Please refer to the macro descriptions in <a href="../zVSAM_V2_Design_Interfaces/">the Interfaces section</a> for details.</li>
 <li>Control Blocks (such as ACB, RPL and some others) are not compatible.
    zVSAM has its own structures. A side effect of this may be that a program's
    assembled object code may be different in size than on your IBM operating system.
    On rare occasions you may need an additional base register when porting your program either way.</li>
-<li>As a rule of thumb, a program using VSAM can be ported to z390 and should be able to assemble,
+<li>As a rule of thumb, a program using VSAM can be ported to or from z390 and should be able to assemble,
    link and run without modification – provided it uses only the VSAM features and options that zVSAM supports.
    And provided the program does not run out of addressability due to different control block lengths.</li>
+<li>The file structure of stored data on z390/zVSAM is entirely different from IBM VSAM clusters.
+   Data can be ported only as unloaded sequential files.</li>
 </ol>
 <h3 id="zvsam-v2-compatibility-with-zvsam-v1">zVSAM V2 compatibility with zVSAM V1</h3>
 <p>The user of z390's zVSAM component should be aware that zVSAM V2 as described in this document
@@ -3047,25 +3028,27 @@ inconvenience this may cause.</p>
    zVSAM you want z390 to use.
    For maximum compatibility the default is set to ZVSAM(1) to enable zVSAM v1.
    The default will be changed to ZVSAM(2) in a future release of z390.
-   The parameter takes the following forms:</li>
+   The parameter takes the following forms:<ol>
 <li>ZVSAM(0) – zVSAM usage is disallowed</li>
 <li>ZVSAM(1) – zVSAM V1 is enabled, zVSAM V2 is disabled</li>
 <li>ZVSAM(2) – zVSAM V2 is enabled, zVSAM V1 is disabled</li>
-<li>To convert your zVSAM V1 clusters to zVSAM V2 you'll have to take the following steps:</li>
-<li>unload the existing data from their clusters using REPRO. \
-      For details on how to use REPRO, please refer to the "z390_VSAM_User_Guide"</li>
-<li>reload your data from your unload files, using ZREPRO. \
-      For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"</li>
-<li>For zVSAM V1 and zVSAM V2 there are distinct macro libraries.
-   To use the correct zVSAM maclib, specify the correct version in your maclib concatenation.</li>
 </ol>
-<h3 id="alternative-approach">Alternative approach</h3>
-<p>Instead of enabling either zVSAM V1 or zVSAM V2 exclusively,
-I think we can also allow a hybrid approach. For zVSAM 0 and 1 the behaviour is as descriebd above.
-For zVSAM 2 we will assemble the V2 logic, yet during execution, when we encounter an existing V1 cluster
-during open processing, we will handle that cluster using the existing zVSAM V1 logic.</p>
-<p>Since the new V2 logic will go into a completely different module the old logic in vz390.java
-should be able to remain as is, (almost) completely unchanged.</p>
+</li>
+<li>Any assembly involving zVSAM must use either zVSAM V1 or zVSAM V2,
+   the cannot be mixed. However, modules using zVSAM V1 and zVSAM V2 can be linked
+   and executed in the z390. This should allow for a gradual transition from zVSAM V1 to V2.</li>
+<li>To convert your zVSAM V1 clusters to zVSAM V2 you'll have to take the following steps:<ol>
+<li>unload the existing data from their clusters using REPRO. \
+   For details on how to use REPRO, please refer to the "z390_VSAM_User_Guide"</li>
+<li>reload your data from your unload files, using ZREPRO. \
+   For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"</li>
+</ol>
+</li>
+<li>All macros supporting zVSAM will be modified to make them version-aware.
+   The ZVSAM option value described above will be propagated into a sytem SETC variable &amp;SYS_Z390_ZVSAM.
+   This variable can be tested to choose the correct expansion of these macros.
+   Your own code can also test this system variable.</li>
+</ol>
 
 
 
@@ -3138,7 +3121,7 @@ should be able to remain as is, (almost) completely unchanged.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-64-g1c1519b1"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-65-gebd8e4bf"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
