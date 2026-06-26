@@ -17,15 +17,17 @@ and a set of macros to manage and manipulate the ACB and EXLST control blocks.
 These macros can be used in your assembler programs. For zCobol and/or other higher-level languages,
 these macros will be generated from specifications for the files as appropriate in the host language's syntax.
 
-The following macros are provided for assembler programs:
+The following macros for assembler programs implement functions to manage ACBs:
 
-- ACB
-- ACBD
-- CBMR
-- GENCB BLK=ACB
-- MODCB ACB=
-- SHOWCB ACB=
-- TESTCB ACB=
+| Macro         | Function                                             |
+|---------------|------------------------------------------------------|
+| ACB           | Create/instantiate an ACB during assembly            |
+| ACBD          | Describe ACB subfields                               |
+| CBMR          | Create/instatiate Control Block Modification Request |
+| GENCB BLK=ACB | Dynamically create/instantiate ACB(s)                |
+| MODCB ACB=    | Dynamically modify an ACB                            |
+| SHOWCB ACB=   | Extract ACB subfield(s) (generic getter method)      |
+| TESTCB ACB=   | Test ACB subfield(s) (generic tester method)         |
 
 **Note:** The ACB macro defines a statically allocated ACB.
 This macro is primarily intended for use in non-reentrant programs.
@@ -34,12 +36,16 @@ or in private static storage. MODCB ACB= can be used to modify an existing ACB,
 whereas SHOWCB ACB= can be used to query specific fields of an ACB
 and TESTCB ACB= can be used to validate specific fields of an ACB.
 
-- EXLST
-- EXLSTD
-- GENCB BLK=EXLST
-- MODCB EXLST=
-- SHOWCB EXLST=
-- TESTCB EXLST=
+The following macros for assembler programs implement functions to manage EXLSTs:
+
+| Macro           | Function                                             |
+|-----------------|------------------------------------------------------|
+| EXLST           | Create/instantiate an EXLST during assembly          |
+| EXLSTD          | Describe EXLST subfields                             |
+| GENCB BLK=EXLST | Dynamically create/instantiate EXLST(s)              |
+| MODCB EXLST=    | Dynamically modify an EXLST                          |
+| SHOWCB EXLST=   | Extract EXLST subfield(s) (generic getter method)    |
+| TESTCB EXLST=   | Test EXLST subfield(s) (generic tester method)       |
 
 **Note:** The EXLST macro defines a statically allocated EXLST.
 This macro is primarily intended for use in non-reentrant programs.
@@ -48,8 +54,12 @@ or in private static storage. MODCB EXLST= can be used to modify an existing EXL
 whereas SHOWCB EXLST= can be used to query specific fields of an EXLST
 and TESTCB EXLST= can be used to validate specific fields of an EXLST.
 
-- OPEN
-- CLOSE
+The following macros for assembler programs implement data manipulation functions for ACB-defined clusters:
+
+| Macro           | Function                                             |
+|-----------------|------------------------------------------------------|
+| OPEN            | Open a cluster for processing                        |
+| CLOSE           | Close a cluster to terminate processing              |
 
 **Note:** OPEN and CLOSE macros can be used to open and close either sequential files represented by a DCB
 and/or zVSAM files represented by an ACB.
@@ -75,26 +85,30 @@ with future versions of zVSAM.
 
 The table below shows how the ACB macro can be coded:
 
-| Opcode      | Operand                | Remarks                                                                                                                                            |
-|-------------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| [label] ACB | [AM=VSAM]              | Designates this ACB as a zVSAM ACB; this is the default                                                                                            |
-|             | [DDNAME=ddname]        | DDNAME: name of an environment variable in the host OS holding the name of the cluster to be processed                                            |
-|             | [PASSWD=address]       | Address of password for the cluster. Points to a single byte length followed by the password eg. X'05',C'ABCDE'                                    |
-|             | [EXLST=address]        | Address of an exit list. Please see the EXLST macro description for details                                                                        |
-|             | [MACRF=(keyword list)] | List of keywords for processing options. See table below for valid keywords                                                                        |
-|             | [BUFSP=value]          | Max amount of storage (in bytes) to use for buffers                                                                                                |
-|             | [BUFND=value]          | Number of data buffers to allocate for this ACB. Specify a number between 1 and 65535                                                              |
-|             | [BUFNI=value]          | Number of index buffers to allocate for this ACB. Specify a number between 1 and 65535                                                             |
-|             | [RMODE31=keyword]      | Indicates whether buffers and/or control blocks can be allocated above the line                                                                    |
-|             | [STRNO=value]          | Number of concurrent requests allowable for this ACB. Specify a number between 1 and 255. The default is 1                                         |
-|             | [BSTRNO=value]         | Beginning number of concurrent requests allocated to this ACB when a path is opened. Only applies if MACRF=NSR. Specify a number between 0 and 255 |
-|             | [MAREA=address]        | Not supported yet – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                            |
-|             | [MLEN=value]           | Not supported yet – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                            |
-|             | [RLSREAD=keyword]      | Not supported yet – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                            |
-|             | [SHRPOOL=value]        | Not supported yet – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                            |
+| Opcode      | Operand                | Remarks                                                                                                 |
+|-------------|------------------------|---------------------------------------------------------------------------------------------------------|
+| [label] ACB | [AM=VSAM]              | Designates this ACB as a zVSAM ACB; this is the default                                                 |
+|             | [DDNAME=ddname]        | DDNAME: name of an environment variable in the host OS holding the name of the cluster to be processed  |
+|             | [PASSWD=address]       | Address of password for the cluster.                                                                    |
+|             | [EXLST=address]        | Address of an exit list.                                                                                |
+|             | [MACRF=(keyword list)] | List of keywords for processing options.                                                                |
+|             | [BUFSP=value]          | Max amount of storage (in bytes) to use for buffers                                                     |
+|             | [BUFND=value]          | Number of data buffers to allocate for this ACB.                                                        |
+|             | [BUFNI=value]          | Number of index buffers to allocate for this ACB.                                                       |
+|             | [RMODE31=keyword]      | Indicates whether buffers and/or control blocks can be allocated above the line                         |
+|             | [STRNO=value]          | Number of concurrent requests allowable for this ACB.                                                   |
+|             | [BSTRNO=value]         | Beginning number of concurrent requests allocated to this ACB when a path is opened.                    |
+|             | [MAREA=address]        | Not supported yet – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+|             | [MLEN=value]           | Not supported yet – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+|             | [RLSREAD=keyword]      | Not supported yet – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+|             | [SHRPOOL=value]        | Not supported yet – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
 
 With the exception of the DDNAME= parameter explained below, all supported parameters are implemented
 compatibly with IBM's VSAM implementation. For details, please refer to the relevant IBM manual.
+
+#### AM=
+
+Optional parameter. `AM=VSAM` is the default. No other values are supported.
 
 #### DDNAME=
 
@@ -102,58 +116,62 @@ DDNAME is required before open is executed. If DDNAME is not supplied on the ACB
 used on the ACB macro is used as DDNAME. If neither is specified, a proper value must be supplied by
 using MODCB ACB=.
 
-In zVSAM the DDNAME refers to the name of an environment variable in the host OS. This variable in turn
-should contain the path and qualified filename of the cluster to be opened. The qualifier is the name of an
-environment variable in the host OS and is the path to the assembled catalog.
+In zVSAM V1 and V2 the DDNAME refers to the name of an environment variable in the host OS. This variable in turn
+should contain the path and qualified filename of the catalog load module that defines the cluster to be opened.
+The qualifier must specify the catalog entry's name instead of the catalog's required `.390` extension.
+
 For more information on zVSAM catalogs, please refer to the
 [zVSAM Catalog User Guide](../../user_guide/zVSAM/zVSAM_V1_Catalog_User_Guide.md).
 
-#### BUFSP=
+> [!NOTE]
+> We are planning to replace the static catalog load modules with a dynamic catalog
+> after zVSAM V2 KSDS support covers all required functionality to implement such a dynamic catalog.
+> A host environment then may also specify the cluster's base file name.
+> The SYSCAT host environment can then be used to point to the catalog to be used.
 
-Maximum buffer space in virtual storage for this cluster.
-This is the combined size in bytes of all buffers allocated for this cluster. If (BUFND + BUFNI) \* Block_size
-exceeds the value specified for BUFSP, then BUFND and BUFNI will be reduced proportionally to keep the
-total allocation below the limit specified in the BUFSP parameter.
+#### PASSWD=
 
-#### RMODE31=
+Supply the address of the password, consisting of a single byte with the password's length (1-8 characters) followed by the password value.
 
-Specifies whether buffers and/or control blocks should be allocated below or above the 16M line:
-- NONE Control Blocks and buffers below 16M
-- CB Control Blocks above or below 16M, buffers below 16M
-- BUFF Control Blocks below 16M, buffers above or below 16M
-- ALL Control Blocks and buffers above 16M or below 16M
+#### EXLST=
 
-The default for RMODE31 is NONE.
+Connects this ACB to an EXLST, if any. Please see the [EXLST macro description](#exlst-macro) for details.
 
-### ACB MACRF keywords
+#### MACRF=
+
+List of keywords specifying how the cluster will be processed after open.
 
 Defined options for the MACRF parameter are listed below:
 
-| Keyword subset    | Keyword | Remarks                                                                                                           |
-|-------------------|---------|-------------------------------------------------------------------------------------------------------------------|
-| [ADR/KEY/CNV]     |         | Only one of these allowed; ADR is the default                                                                     |
-|                   | ADR     | Addressed access to ESDS by (X)RBA. Using (X)RBA to access a KSDS is not supported                                |
-|                   | KEY     | Keyed access to a KSDS or RRDS                                                                                    |
-|                   | CNV     | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
-| [DFR/NDF]         |         | Only one of these allowed; DFR is the default                                                                     |
-|                   | DFR     | Allow writes to be deferred                                                                                       |
-|                   | NDF     | Do not defer writes                                                                                               |
-| [DIR]/[SEQ]/[SKP] |         | May be combined; SEQ is the default                                                                               |
-|                   | DIR     | Direct access to ESDS, KSDS or RRDS                                                                               |
-|                   | SEQ     | Sequential access to ESDS, KSDS or RRDS                                                                           |
-|                   | SKP     | Skip sequential access to KSDS or RRDS. Only for keyed access. Allows the use of POINT                            |
-| [IN]/[OUT]        |         | May be combined; IN is the default                                                                                |
-|                   | IN      | Read access for ESDS, KSDS or RRDS                                                                                |
-|                   | OUT     | Both read and write/delete access for ESDS, KSDS or RRDS                                                          |
-| [NIS/SIS]         |         | Only one of these allowed; NIS is the default                                                                     |
-|                   | NIS     | Normal Insert Strategy for KSDS                                                                                   |
-|                   | SIS     | Sequential Insert Strategy for KSDS                                                                               |
-| [NRM/AIX]         |         | Only one of these allowed; NRM is the default                                                                     |
-|                   | NRM     | DDNAME indicates cluster to be processed                                                                          |
-|                   | AIX     | DDNAME of a path to access an AIX directly, rather than using it to access records in the underlying base cluster |
-| [NRS/RST]         |         | Only one of these allowed; NRS is the default                                                                     |
-|                   | NRS     | Treat dataset as non-reusable                                                                                     |
-|                   | RST     | Reset dataste during OPEN.                                                                                        |
+| Keyword subset    | Keyword | Remarks                                                                                                                               |
+|-------------------|---------|---------------------------------------------------------------------------------------------------------------------------------------|
+| [ADR/KEY/CNV]     |         | Non-exclusive keywords indicating whether the cluster may be accessed by address or by key; ADR is the default                        |
+|                   | ADR     | Addressed access to ESDS by (X)RBA. Using (X)RBA to access a KSDS is not supported                                                    |
+|                   | KEY     | Keyed access to a KSDS or RRDS                                                                                                        |
+|                   | CNV     | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                                   |
+| [DFR/NDF]         |         | Mutually exclusive keywords indicating whether buffer changes need to be written out to the file immediately                          |
+|                   | DFR     | Allows zVSAM to defer writing and keep changes in the buffer                                                                          |
+|                   |         | When multiple changes are combined, fewer I/Os are needed which should improve program performance                                    |
+|                   | NDF     | Disallows zVSAM to defer writing, forcing a buffer write for every single change to the buffer                                        |
+| [DIR]/[SEQ]/[SKP] |         | Can be coded in any combination. If none of the three is specified `SEQ` is used as a default                                         |
+|                   | DIR     | Cluster will be processed directly. `DIR` can be used with ESDS, KSDS, or RRDS to access data randomly                                |
+|                   | SEQ     | Cluster will be processed sequentially. `SEQ` can be used with ESDS, KSDS, or RRDS to access data sequentially                        |
+|                   | SKP     | Allow skip-sequential access. Enables usage of the POINT macro to position the file to a specific position to access data randomly    |
+|                   |         | SKP can be used with KSDS or RRDS to randomly position the file to a specific key or RRN prior to sequential access                   |
+| [IN]/[OUT]        |         | Non-exclusive keywords indicating whether the cluster will be processed for input only or for both input and output                   |
+|                   | IN      | Read-only access for ESDS, KSDS or RRDS                                                                                               |
+|                   | OUT     | Both read and write/delete access for ESDS, KSDS or RRDS                                                                              |
+| [NIS/SIS]         |         | Mutually exclusive keywords indicating how zVSAM inserts new records into the cluster                                                 |
+|                   |         | Relevant only for KSDS clusters. NIS is the default                                                                                   |
+|                   | NIS     | Normal insert strategy: zVSAM will insert records optimizing for inserts that are dispersed randomly across the data set              |
+|                   | SIS     | Sequential insert stragegy: zVSAM will insert records optimizing for inserts that are (mostly) packed together in a sequential manner |
+| [NRM/AIX]         |         | Mutually exclusive keywords indicating how zVSAM is to process accesses to an AIX                                                     |
+|                   |         | Relevant only when the DDname specifies a path. NRM is the default                                                                    |
+|                   | NRM     | Normal mode: zVSAM will use the AIX to access records in the underlying base cluster                                                  |
+|                   | AIX     | AIX mode: zVSAM treats the AIX data as a normal KSDS. This allows direct access to the AIX's data records                             |
+| [NRS/RST]         |         | Mutually exclusive keywords to control dataset reset processing; NRS is the default                                                   |
+|                   | NRS     | No-ReSet: after OPEN the data in the dataset are available                                                                            |
+|                   | RST     | ReSeT: During OPEN the high water mark is reset effectively deleting all the data in the dataset                                      |
 | [NSR/LSR/GSR/RLS] |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
 | [NUB/UBF]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
 | [CFX/NFX]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
@@ -161,9 +179,44 @@ Defined options for the MACRF parameter are listed below:
 | [ICI/NCI]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
 | [LEW/NLW]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
 
-**Note 1:** Option RRN for access to RRDS was defined by Melvyn, but is not documented for IBM VSAM. Instead we use option KEY to indicate access by RRN to a RRDS.
+**Note 1:** Option `DFR`: 
 
-**Note 2:** Options LSR and GSR were defined by Melvyn, but will not be implemented on z390.
+**Note 2:** Option RRN for access to RRDS was defined by Melvyn, but is not documented for IBM VSAM. Instead we use option KEY to indicate access by RRN to a RRDS.
 
+**Note 3:** Options LSR and GSR were defined by Melvyn, but will not be implemented on z390.
 
+#### BUFSP=
 
+Maximum buffer space in virtual storage for this cluster.
+
+This is the combined size in bytes of all buffers allocated for this cluster. If `(BUFND + BUFNI) * Block_size`
+exceeds the value specified for `BUFSP`, then `BUFND` and `BUFNI` will be reduced proportionally to keep the
+total allocation below the limit specified in the `BUFSP` parameter.
+
+#### BUFND=
+
+Number of data buffers to allocate for this ACB. Specify a number between 1 and 65535.
+When over-allocating (see `BUFSP` parameter above) fewer data buffers will be allocated than requested.
+
+#### BUFNI=
+
+Number of index buffers to allocate for this ACB. Specify a number between 1 and 65535.
+When over-allocating (see `BUFSP` parameter above) fewer index buffers will be allocated than requested.
+#### RMODE31=
+
+Specifies whether buffers and/or control blocks should be allocated below the 16M line, or may be allocated above the 16M line.
+The default is `NONE`.
+
+The following keywords are supported:
+- `NONE` Control Blocks and buffers below 16M
+- `CB` Control Blocks above or below 16M, buffers below 16M
+- `BUFF` Control Blocks below 16M, buffers above or below 16M
+- `ALL` Control Blocks and buffers above 16M or below 16M
+
+#### STRNO=
+
+Number of concurrent requests allowable for this ACB. Specify a number between 1 and 255. The default is 1.
+
+#### BSTRNO=
+
+Beginning number of concurrent requests allocated to this ACB when a path is opened. Specify a number between 1 and 255. The default is 1.
