@@ -163,12 +163,16 @@ MYDCB    DCB   DDNAME=MYDATA, ...
 ```
 
 Run using the following commands:
+
 === "Windows"
+
     ``` dos
     SET MYDATA=c:\path\file
     CALL c:\path_to_z390\bat\ez390 c:\path\program parms
     ```
+
 === "MacOS/Unix"
+
     ``` sh
     export MYDATA=/path/file
     /path_to_z390/bash/ez390 /path/program parms
@@ -178,8 +182,8 @@ Run using the following commands:
     For both Windows and \*nix, the invocation of ez390 should be preceded by a
     path to the z390 script folder.
 
-    - bat for Windows
-    - bash for \*nix
+- bat for Windows
+- bash for \*nix
 
 DSNAME is a label defined in the program which has the file spec.
 
