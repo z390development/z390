@@ -2,4 +2,6 @@ nav:
   - contribute_docs.md
   - contribute_code.md
   - contributing_zcobol.md
+  - contribute_cics.md
+  - cics_regression_testing.md
   - z390 JavaDocs: /z390/javadoc/index.html
