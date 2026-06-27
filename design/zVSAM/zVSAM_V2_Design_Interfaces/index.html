@@ -2557,6 +2557,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#acbd-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ACBD macro
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2657,6 +2668,17 @@
     <span class="md-ellipsis">
       
         ACB macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acbd-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ACBD macro
       
     </span>
   </a>
@@ -2812,9 +2834,32 @@ and/or zVSAM files represented by an ACB.</p>
 <h3 id="acb-macro">ACB macro</h3>
 <p>The ACB macro will generate an ACB and initialize it according to the parameters
 specified on the macro invocation.</p>
+<p>The ACB macro's function depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>ACB1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>ACB2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
 <p>The structure and layout of the generated ACB are not part of the interface definition
-and are therefore not shown in this chapter.
-For details please see the <a href="../zVSAM_V2_Design_Addenda/#acb-macro-parameters">ACB chapter in the Addenda</a>.</p>
+and are therefore not shown in this chapter. For details please see the ACB, ACB1 and ACB2 macros
+in the mac folder.</p>
 <p>Direct access to subfields in the ACB is discouraged. Use SHOWCB ACB=, TESTCB ACB= and/or
 MODCB ACB= to inspect, test, and/or modify the ACB's content.</p>
 <p>All keywords on the ACB macro are optional. Before the cluster is opened,
@@ -2910,6 +2955,15 @@ with future versions of zVSAM.</p>
 </table>
 <p>With the exception of the DDNAME= parameter explained below, all supported parameters are implemented
 compatibly with IBM's VSAM implementation. For details, please refer to the relevant IBM manual.</p>
+<blockquote>
+<p>[!NOTE]
+There is no MF= parameter defined for the ACB macro.
+Use GENCB to generate ACBs in dynamically acquired storage.</p>
+<p>[!NOTE]
+The parameter DSNAME= which is supported for zVSAM V1 will not be supported for zVSAM V2.
+zVSAM V2 will require a DDNAME pointing to a host environment variable holding the file specification
+for a catalog load module, a period, and the catalog entry name.</p>
+</blockquote>
 <h4 id="am">AM=</h4>
 <p>Optional parameter. <code>AM=VSAM</code> is the default. No other values are supported.</p>
 <h4 id="ddname">DDNAME=</h4>
@@ -3137,6 +3191,41 @@ The default is <code>NONE</code>.</p>
 <p>Number of concurrent requests allowable for this ACB. Specify a number between 1 and 255. The default is 1.</p>
 <h4 id="bstrno">BSTRNO=</h4>
 <p>Beginning number of concurrent requests allocated to this ACB when a path is opened. Specify a number between 1 and 255. The default is 1.</p>
+<h3 id="acbd-macro">ACBD macro</h3>
+<p>The ACBD macro maps the ACB. Its function depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>ACBD1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>ACBD2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The mappings defined in the ACBD1 and ACBD2 macros are very different.</p>
+<p>For details, please see the ACBD, ACBD1 and ACBD2 macros in the mac folder.</p>
+<p>The DSECT is always named <code>IHAACB</code>, <code>ACB_LEN</code> is EQUated to the ACB's length,
+and <code>ACBEND</code> points right after the <code>IHAACB</code>.</p>
+<blockquote>
+<p>[!NOTE]
+The ACBD macro generates no executable code.</p>
+<p>[!NOTE]
+The ACBD macro can be invoked multiple times, but will generate the DSECT mapping
+only on its first invocation.</p>
+</blockquote>
 
 
 
@@ -3209,7 +3298,7 @@ The default is <code>NONE</code>.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-65-gebd8e4bf"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-66-g56bb61e5"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
