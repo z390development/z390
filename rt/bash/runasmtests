@@ -45,7 +45,9 @@ bash/asmlg rt/mlc/TESTDC1  trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTASC1 ASCII trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTDC2  trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TESTDC3  trace noloadhigh $sysmac $optable
+bash/asml  rt/mlc/TESTX2C  trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TB2CX2C  trace noloadhigh $sysmac
+bash/asmlg rt/mlc/TLPSW    trace noloadhigh $sysmac
 bash/asm   rt/mlc/ATTRIB\$O trace noloadhigh $sysmac
 rt/bash/zopcheck
 
