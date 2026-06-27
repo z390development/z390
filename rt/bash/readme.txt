@@ -15,6 +15,7 @@ runtestopt  - verify indirection usage in options files
 runbr14owe  - verifies test IEFBR14 asm[l[g]] with Okay, Warning, Error variants
 runmfacc    - Run and verify all MFACC solution programs
 runmvstests - run and verify all mvs demo/test programs
+runvsam2    - run zVSAM V2 tests
 runcodepagetests - verifies usage of CODEPAGE issue #451
 runhlasmbiftests - run HLASM built-in function tests issue 509
 errora2btests    - verify A2B  error tests
