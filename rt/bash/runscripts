@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# runscripts: run scripted regression tests
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
+
+sysmac='sysmac(mac)'
+optable='optable(z390)'
+
+rtscript='rt\rt\BATCH.RT'
+bash/asmlg demo/HELLO noloadhigh $sysmac test(rtscript) || test $? -eq 16
+
+# if we get here, there were no errors
+echo "Verify tests ran without errors"
+exit 0
