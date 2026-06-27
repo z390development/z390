@@ -141,6 +141,6 @@ We have taken the following measures to facilitate the transition from zVSAM V1 
     2. reload your data from your unload files, using ZREPRO. \
        For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"
 4. All macros supporting zVSAM will be modified to make them version-aware.
-   The ZVSAM option value described above will be propagated into a sytem SETC variable &SYS_Z390_ZVSAM.
+   The ZVSAM option value described above will be propagated into a sytem SETC variable &SYSZVSAM.
    This variable can be tested to choose the correct expansion of these macros.
    Your own code can also test this system variable.
