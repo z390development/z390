@@ -71,9 +71,17 @@ A description of these interfaces as implemented for z390 and zVSAM is detailed 
 The ACB macro will generate an ACB and initialize it according to the parameters
 specified on the macro invocation.
 
+The ACB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                  |
+|----------|-------------------------|
+| ZVSAM(0) | Error: zVSAM disabled   |
+| ZVSAM(1) | ACB1 macro is expanded  |
+| ZVSAM(2) | ACB2 macro is expanded  |
+
 The structure and layout of the generated ACB are not part of the interface definition
-and are therefore not shown in this chapter.
-For details please see the [ACB chapter in the Addenda](zVSAM_V2_Design_Addenda.md#acb-macro-parameters).
+and are therefore not shown in this chapter. For details please see the ACB, ACB1 and ACB2 macros
+in the mac folder.
 
 Direct access to subfields in the ACB is discouraged. Use SHOWCB ACB=, TESTCB ACB= and/or
 MODCB ACB= to inspect, test, and/or modify the ACB's content.
@@ -105,6 +113,15 @@ The table below shows how the ACB macro can be coded:
 
 With the exception of the DDNAME= parameter explained below, all supported parameters are implemented
 compatibly with IBM's VSAM implementation. For details, please refer to the relevant IBM manual.
+
+> [!NOTE]
+> There is no MF= parameter defined for the ACB macro.
+> Use GENCB to generate ACBs in dynamically acquired storage.
+
+> [!NOTE]
+> The parameter DSNAME= which is supported for zVSAM V1 will not be supported for zVSAM V2.
+> zVSAM V2 will require a DDNAME pointing to a host environment variable holding the file specification
+> for a catalog load module, a period, and the catalog entry name.
 
 #### AM=
 
@@ -172,12 +189,12 @@ Defined options for the MACRF parameter are listed below:
 | [NRS/RST]         |         | Mutually exclusive keywords to control dataset reset processing; NRS is the default                                                   |
 |                   | NRS     | No-ReSet: after OPEN the data in the dataset are available                                                                            |
 |                   | RST     | ReSeT: During OPEN the high water mark is reset effectively deleting all the data in the dataset                                      |
-| [NSR/LSR/GSR/RLS] |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
-| [NUB/UBF]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
-| [CFX/NFX]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
-| [DDN/DSN]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
-| [ICI/NCI]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
-| [LEW/NLW]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                               |
+| [NSR/LSR/GSR/RLS] |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                                   |
+| [NUB/UBF]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                                   |
+| [CFX/NFX]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                                   |
+| [DDN/DSN]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                                   |
+| [ICI/NCI]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                                   |
+| [LEW/NLW]         |         | Not supported. Keyword is flagged as ignored with a warning message (Level 4 Mnote)                                                   |
 
 **Note 1:** Option `DFR`: 
 
@@ -220,3 +237,28 @@ Number of concurrent requests allowable for this ACB. Specify a number between 1
 #### BSTRNO=
 
 Beginning number of concurrent requests allocated to this ACB when a path is opened. Specify a number between 1 and 255. The default is 1.
+
+### ACBD macro
+
+The ACBD macro maps the ACB. Its function depends on the ZVSAM option in effect:
+
+| Option   | Effect                  |
+|----------|-------------------------|
+| ZVSAM(0) | Error: zVSAM disabled   |
+| ZVSAM(1) | ACBD1 macro is expanded |
+| ZVSAM(2) | ACBD2 macro is expanded |
+
+The mappings defined in the ACBD1 and ACBD2 macros are very different.
+
+For details, please see the ACBD, ACBD1 and ACBD2 macros in the mac folder.
+
+The DSECT is always named `IHAACB`, `ACB_LEN` is EQUated to the ACB's length,
+and `ACBEND` points right after the `IHAACB`.
+
+> [!NOTE]
+> The ACBD macro generates no executable code.
+
+> [!NOTE]
+> The ACBD macro can be invoked multiple times, but will generate the DSECT mapping
+> only on its first invocation.
+

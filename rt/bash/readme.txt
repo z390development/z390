@@ -7,6 +7,7 @@ runasmtests - verifies assembler instruction execution
 runcbltests - verifies ZCOBOL instructions
 runrtbsam   - verifies BSAM support for READ/WRITE with/without large blocks over 32K
 runrtqsam   - verifies QSAM support for large blocks over 32K
+runscripts  - run scripted validations
 runsort     - verifies sort merge
 runzpar     - verify ZCOBOL Program Analysis Report
 zopcheck    - verify all z390 assembler instructions generate correct code

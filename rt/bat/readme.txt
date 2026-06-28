@@ -10,6 +10,7 @@ RUNOPTABLE  - verify a single optable or machine option
 RUNOPTABLES - verify all optable and machine options
 RUNRTBSAM   - verifies BSAM support for READ/WRITE with/without large blocks over 32K
 RUNRTQSAM   - verifies QSAM support for large blocks over 32k
+RUNSCRIPTS  - Run scripted validation tests
 RUNSORT     - verifies sort merge
 RUNTBRCTX   - verify issue #238 which has been closed.
 RUNTESTOPT  - verify indirection usage in options files
