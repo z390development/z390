@@ -250,7 +250,7 @@ The ACBD macro maps the ACB. Its behaviour depends on the ZVSAM option in effect
 
 The mappings defined in the ACBD1 and ACBD2 macros are very different.
 
-For details, please see the [zACB layout](zVSAM_V2_Design_Addenda.md#zacb-description)
+For mapping details, please see the [zACB layout](zVSAM_V2_Design_Addenda.md#zacb-description)
 or the `ACBD`, `ACBD1` and `ACBD2` macros in the mac folder.
 
 > [!NOTE]
@@ -262,19 +262,28 @@ or the `ACBD`, `ACBD1` and `ACBD2` macros in the mac folder.
 
 ### CBMR macro
 
-The CBMR macro maps the Control Block Management Request. Its behaviour depends on the ZVSAM option in effect:
+A CBMR is generated for all forms of the '`GENCB`, `MODCB`, `SHOWCB`, and `TESTCB` macros.
+The CBMR is then used to direct the Control Block Management Program to carry out the
+request(s) encoded on the macro invocation.
+
+The CBMR macro maps the Control Block Management Request.
+The CBMR encodes a GENCB, MODCB, SHOWCB or TESTCB request
+and can be used with `BLK=ACB` to indicata an ACB-related Request,
+with `BLK=EXLST` to indicate an EXLST-related request, or with
+`BLK=RPL` to indicate an RPL-related request.
+
+The behaviour of the CBMR macro depends on the ZVSAM option in effect:
 
 | Option   | Effect                   |
 |----------|--------------------------|
-| ZVSAM(0) | Error: requires zVSMA(2) |
-| ZVSAM(1) | Error: requires zVSMA(2) |
+| ZVSAM(0) | Error: requires zVSAM(2) |
+| ZVSAM(1) | Error: requires zVSAM(2) |
 | ZVSAM(2) | CBMR macro is expanded   |
 
-For mapping details, please see the CBMR macro in the mac folder.
+The CBMR is not available with zVSAM V1; it is implemented for zVSAM V2 only.
 
-
-
-
+For mapping details, please see the [CBMR layout](zVSAM_V2_Design_Addenda.md#cbmr-description)
+or the `CBMR` macro in the mac folder.
 
 
 
