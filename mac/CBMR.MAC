@@ -21,7 +21,13 @@
 ***********************************************************************
          CBMR
 .*
-.* CONTROL BLOCK MANAGEMENT RECORD HEADER
+.* Check zVSAM(2) is in effect
+         AIF   (&SYSZVSAM LT 2)
+         MNOTE 15,'CBMR Macro is valid only when zVSAM(2) is active'
+         AGO   .EXIT
+         AEND
+.*
+.* CONTROL BLOCK MANAGEMENT REQUEST header part
 .* USED BY TESTCB, SHOWCB, MODCB, GENCB
 .*
          GBLB  &Z390_CBMR
@@ -30,6 +36,9 @@
 .* IF CBMR ALREADY DEFINED EXIT NOW
          AIF   (&Z390_CBMR).EXIT
 &Z390_CBMR SETB 1
+
+
+
 &Z390_CBMR_NAME SETC '&SYSLOC'
 &Z390_CBMR_TYPE SETC '&SYSSTYP'
 .*
@@ -264,8 +273,11 @@ CBMRNB_LENGTH   EQU X'63'
 CBMRNB_AREA     EQU X'65'
 CBMRNB_ERET     EQU X'9C'
 .*
+
+CBMREND  EQU   *
+CBMR_LEN EQU   *-CBMR
+.*
          AIF  ('&Z390_CBMR_NAME' EQ '' OR '&Z390_CBMR_TYPE' EQ '').EXIT
 &Z390_CBMR_NAME &Z390_CBMR_TYPE
 .EXIT    ANOP
          MEND
-

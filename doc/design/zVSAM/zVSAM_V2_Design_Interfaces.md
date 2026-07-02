@@ -240,7 +240,7 @@ Beginning number of concurrent requests allocated to this ACB when a path is ope
 
 ### ACBD macro
 
-The ACBD macro maps the ACB. Its function depends on the ZVSAM option in effect:
+The ACBD macro maps the ACB. Its behaviour depends on the ZVSAM option in effect:
 
 | Option   | Effect                  |
 |----------|-------------------------|
@@ -250,10 +250,8 @@ The ACBD macro maps the ACB. Its function depends on the ZVSAM option in effect:
 
 The mappings defined in the ACBD1 and ACBD2 macros are very different.
 
-For details, please see the ACBD, ACBD1 and ACBD2 macros in the mac folder.
-
-The DSECT is always named `IHAACB`, `ACB_LEN` is EQUated to the ACB's length,
-and `ACBEND` points right after the `IHAACB`.
+For mapping details, please see the [zACB layout](zVSAM_V2_Design_Addenda.md#zacb-description)
+or the `ACBD`, `ACBD1` and `ACBD2` macros in the mac folder.
 
 > [!NOTE]
 > The ACBD macro generates no executable code.
@@ -261,4 +259,31 @@ and `ACBEND` points right after the `IHAACB`.
 > [!NOTE]
 > The ACBD macro can be invoked multiple times, but will generate the DSECT mapping
 > only on its first invocation.
+
+### CBMR macro
+
+A CBMR is generated for all forms of the '`GENCB`, `MODCB`, `SHOWCB`, and `TESTCB` macros.
+The CBMR is then used to direct the Control Block Management Program to carry out the
+request(s) encoded on the macro invocation.
+
+The CBMR macro maps the Control Block Management Request.
+The CBMR encodes a GENCB, MODCB, SHOWCB or TESTCB request
+and can be used with `BLK=ACB` to indicata an ACB-related Request,
+with `BLK=EXLST` to indicate an EXLST-related request, or with
+`BLK=RPL` to indicate an RPL-related request.
+
+The behaviour of the CBMR macro depends on the ZVSAM option in effect:
+
+| Option   | Effect                   |
+|----------|--------------------------|
+| ZVSAM(0) | Error: requires zVSAM(2) |
+| ZVSAM(1) | Error: requires zVSAM(2) |
+| ZVSAM(2) | CBMR macro is expanded   |
+
+The CBMR is not available with zVSAM V1; it is implemented for zVSAM V2 only.
+
+For mapping details, please see the [CBMR layout](zVSAM_V2_Design_Addenda.md#cbmr-description)
+or the `CBMR` macro in the mac folder.
+
+
 
