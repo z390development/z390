@@ -53,7 +53,7 @@ BLDESDS  DS    0H
 * Open the ACB
 *
 ***********************************************************************
-         OPEN  (MYACB)
+         OPEN  (MYACB,(OUTPUT))        * Open/create ESDS cluster
 *
          MVC   MYRECORD,RECORD1
          PUT   RPL=MYRPL
@@ -76,7 +76,7 @@ EXIT     DS    0H
          LTORG
 *
 MYACB    ACB   AM=VSAM,                * Access method                 *
-               DDNAME=MYESDS0,         *                               *
+               DDNAME=MYESDS,          *                               *
                MACRF=(SEQ,DFR,OUT),    * Options for this ACB
 *
 MYRPL    RPL   ACB=MYACB,              *                               *

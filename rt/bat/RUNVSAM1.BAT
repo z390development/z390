@@ -15,13 +15,18 @@ pushd %~dps0..\..
 
 rem
 rem build the catalog
-call bat\asml %z_TraceMode% rt\vsam\BLDCAT1 @rt\vsam\RTVSAM1.opt || goto error
+call bat\asml  %z_TraceMode% rt\vsam\BLDCAT1  @rt\vsam\RTVSAM1.opt || goto error
 
 rem
-rem build the fixed esds as empty dataset
-SET INFILE=rt\vsam\BLDESDS0.TF1[RECFM=FT]
-SET OUTFILE=rt\vsam\BLDCAT1.ESDS_F
-CALL bat\EZ390 %z_TraceMode% linklib\REPRO  @rt\vsam\RTVSAM1.opt || goto error
+rem create the ESDS_F VES file
+set myesds=rt\vsam\BLDCAT1.ESDS_F
+call bat\asm   %z_TraceMode% rt\vsam\BLDESDS0 @rt\vsam\RTVSAM0.opt
+     if %ERRORLEVEL% NEQ 15 goto error
+call bat\asmlg %z_TraceMode% rt\vsam\BLDESDS0 @rt\vsam\RTVSAM1.opt || goto error
+
+
+
+
 
 rem if we get here, there were no errors
 echo Verify all zVSAM(1) tests ok
