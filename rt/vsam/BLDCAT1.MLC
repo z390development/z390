@@ -1,4 +1,4 @@
-         DEFINE CATALOG,NAME=Z390CAT2
+         DEFINE CATALOG,NAME=BLDCAT1
 *
 * FIXED ESDS
 *
@@ -19,4 +19,3 @@
 *
          DEFINE END
          END
-
