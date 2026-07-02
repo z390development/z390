@@ -24,10 +24,6 @@ call bat\asm   %z_TraceMode% rt\vsam\BLDESDS0 @rt\vsam\RTVSAM0.opt
      if %ERRORLEVEL% NEQ 15 goto error
 call bat\asmlg %z_TraceMode% rt\vsam\BLDESDS0 @rt\vsam\RTVSAM1.opt || goto error
 
-
-
-
-
 rem if we get here, there were no errors
 echo Verify all zVSAM(1) tests ok
 goto return
