@@ -238,6 +238,7 @@ public class sz390 implements Runnable {
     * 2025-11-12 Issue #714 DELETE does not remove and FREEMAIN CDE from CVTCDE chain
     * 2026-01-16 AFK        Add javadoc comments
     * 2026-05-30 Issue #654 Improve help text for debug mode commands
+    * 2026-06-27 Issue #853 Test script lines with leading * sometimes marked as invalid command
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -6641,6 +6642,7 @@ private void exec_test_cmd(){
   try { // RPI 1137	
 	if (test_cmd != null && test_cmd.length() > 0){
 		tz390.put_trace("test cmd: " + test_cmd);
+        if (test_cmd.charAt(0) == '*') return; // ignore comment lines // #853
 	    test_match = test_pattern.matcher(test_cmd);
 	}
 	test_token = get_next_test_token();
@@ -6688,8 +6690,6 @@ private void exec_test_cmd(){
 		}
 	}
 	switch (test_opcode){
-	case '*': // * with no = following is comment
-		break;
 	case '=': // addr=sdt or nr=sdt change
 		if (!test_cmd_abort){
 			test_sdt = get_next_test_token();
@@ -6772,6 +6772,7 @@ private void exec_test_cmd(){
 	    break;
 	case 'H':  // help
 	    tz390.put_trace("z390 test command help summary");                                                                                                // #654
+	    tz390.put_trace("  *           comment if * appears in column 1; current location otherwise");                                                    // #853
 	    tz390.put_trace("  addr=sdt    set memory value (i.e. 1r?=x'80' changes mem at (r1) 31 bit");                                                     // #654
 	    tz390.put_trace("  reg=sdt     set register value (i.e. 15r=8 changes reg 15 to 8)");                                                             // #654
 	    tz390.put_trace("  A addr      add/remove address stop (i.e. A FF348. or A *+4 etc.)");  // RPI 395                                               // #654

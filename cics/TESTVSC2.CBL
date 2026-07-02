@@ -16,6 +16,7 @@
       * You should have received a copy of the GNU General Public 
       * License along with this program; if not, see 
       * https://www.gnu.org/licenses.
+      *****************************************************************
       * Author - Don Higgins                                          *
       *****************************************************************
         IDENTIFICATION DIVISION.
@@ -720,4 +721,3 @@
             IF FDBK2 = X'10' THEN MOVE '10' TO FHFDBK2.
             IF FDBK2 = X'68' THEN MOVE '68' TO FHFDBK2.
       *  BR    R9                 RETURN
-

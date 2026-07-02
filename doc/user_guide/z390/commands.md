@@ -87,6 +87,7 @@ Run ez390 emulator to execute 390 load module.
 The ez390 emulator supports the following interactive test commands when the
 [TEST option](z390_options.md) is specified:
 
+- `*` comment if `*` appears in column 1; current location otherwise
 - `addr=sdt` – set memory value (i.e. `1r?=x'80'` changes mem at (r1) 31 bit
 - `reg=sdt` - set register value (i.e. `15r=8` changes reg 15 to 8)
 - `A addr` – set or reset up to 100 instruction address stops with hex address or relative expression such as `*+4`
