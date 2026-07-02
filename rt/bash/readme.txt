@@ -7,6 +7,7 @@ runasmtests - verifies assembler instruction execution
 runcbltests - verifies ZCOBOL instructions
 runrtbsam   - verifies BSAM support for READ/WRITE with/without large blocks over 32K
 runrtqsam   - verifies QSAM support for large blocks over 32K
+runscripts  - run scripted validations
 runsort     - verifies sort merge
 runzpar     - verify ZCOBOL Program Analysis Report
 zopcheck    - verify all z390 assembler instructions generate correct code
@@ -15,6 +16,7 @@ runtestopt  - verify indirection usage in options files
 runbr14owe  - verifies test IEFBR14 asm[l[g]] with Okay, Warning, Error variants
 runmfacc    - Run and verify all MFACC solution programs
 runmvstests - run and verify all mvs demo/test programs
+runvsam2    - run zVSAM V2 tests
 runcodepagetests - verifies usage of CODEPAGE issue #451
 runhlasmbiftests - run HLASM built-in function tests issue 509
 errora2btests    - verify A2B  error tests

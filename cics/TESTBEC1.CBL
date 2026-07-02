@@ -16,6 +16,7 @@
       * You should have received a copy of the GNU General Public 
       * License along with this program; if not, see 
       * https://www.gnu.org/licenses.
+      *****************************************************************
       * Author - Don Higgins                                          *
       *****************************************************************
         IDENTIFICATION DIVISION.
@@ -133,4 +134,3 @@
       * TEST XCTL WITH COMMAREA 3
                   EXEC CICS XCTL PROGRAM('TESTBED3') COMMAREA(COMM3)
                                  END-EXEC.
-
