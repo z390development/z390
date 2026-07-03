@@ -1,7 +1,17 @@
 name: Build z390
 on:
-  - push
-  - pull_request
+  push:
+    paths:
+      - '**'
+      - '!**/*.[mM][dD]'
+      - '!**/*.[tT][xX][tT]'
+      - 'version.txt'   # always counts as a code change
+  pull_request:
+    paths:
+      - '**'
+      - '!**/*.[mM][dD]'
+      - '!**/*.[tT][xX][tT]'
+      - 'version.txt'   # always counts as a code change
 
 env:
   JAVA_DISTRIBUTION: temurin
