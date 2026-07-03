@@ -2596,6 +2596,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#cbmr-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CBMR macro
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2707,6 +2718,17 @@
     <span class="md-ellipsis">
       
         ACBD macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cbmr-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CBMR macro
       
     </span>
   </a>
@@ -3220,7 +3242,7 @@ The default is <code>NONE</code>.</p>
 <h4 id="bstrno">BSTRNO=</h4>
 <p>Beginning number of concurrent requests allocated to this ACB when a path is opened. Specify a number between 1 and 255. The default is 1.</p>
 <h3 id="acbd-macro">ACBD macro</h3>
-<p>The ACBD macro maps the ACB. Its function depends on the ZVSAM option in effect:</p>
+<p>The ACBD macro maps the ACB. Its behaviour depends on the ZVSAM option in effect:</p>
 <table>
 <thead>
 <tr>
@@ -3244,9 +3266,8 @@ The default is <code>NONE</code>.</p>
 </tbody>
 </table>
 <p>The mappings defined in the ACBD1 and ACBD2 macros are very different.</p>
-<p>For details, please see the ACBD, ACBD1 and ACBD2 macros in the mac folder.</p>
-<p>The DSECT is always named <code>IHAACB</code>, <code>ACB_LEN</code> is EQUated to the ACB's length,
-and <code>ACBEND</code> points right after the <code>IHAACB</code>.</p>
+<p>For mapping details, please see the <a href="../zVSAM_V2_Design_Addenda/#zacb-description">zACB layout</a>
+or the <code>ACBD</code>, <code>ACBD1</code> and <code>ACBD2</code> macros in the mac folder.</p>
 <blockquote>
 <p>[!NOTE]
 The ACBD macro generates no executable code.</p>
@@ -3254,6 +3275,41 @@ The ACBD macro generates no executable code.</p>
 The ACBD macro can be invoked multiple times, but will generate the DSECT mapping
 only on its first invocation.</p>
 </blockquote>
+<h3 id="cbmr-macro">CBMR macro</h3>
+<p>A CBMR is generated for all forms of the '<code>GENCB</code>, <code>MODCB</code>, <code>SHOWCB</code>, and <code>TESTCB</code> macros.
+The CBMR is then used to direct the Control Block Management Program to carry out the
+request(s) encoded on the macro invocation.</p>
+<p>The CBMR macro maps the Control Block Management Request.
+The CBMR encodes a GENCB, MODCB, SHOWCB or TESTCB request
+and can be used with <code>BLK=ACB</code> to indicata an ACB-related Request,
+with <code>BLK=EXLST</code> to indicate an EXLST-related request, or with
+<code>BLK=RPL</code> to indicate an RPL-related request.</p>
+<p>The behaviour of the CBMR macro depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: requires zVSAM(2)</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>Error: requires zVSAM(2)</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>CBMR macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The CBMR is not available with zVSAM V1; it is implemented for zVSAM V2 only.</p>
+<p>For mapping details, please see the <a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR layout</a>
+or the <code>CBMR</code> macro in the mac folder.</p>
 
 
 
@@ -3326,7 +3382,7 @@ only on its first invocation.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-72-g1c32e65b"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-73-ga50b0762"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>

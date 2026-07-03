@@ -3512,27 +3512,6 @@ For details, please refer to the relevant IBM manual.</p>
 <h2 id="verify-macro">VERIFY macro</h2>
 <h2 id="gencb-modcb-testcb-and-showcb-macros">GENCB, MODCB, TESTCB and SHOWCB macros</h2>
 <h3 id="gencb-modcb-testcb-and-showcb-use-of-the-cbmr">GENCB, MODCB, TESTCB and SHOWCB use of the CBMR</h3>
-<p>A CBMR is generated for all forms of these macros.</p>
-<p>Direct access to subfields in the CBMR is discouraged. Use SHOWCB, TESTCB and/or MODCB to inspect,
-test, and/or modify the content of an ACB, EXLST, or RPL. Use the appropriate MF= parameter on any of
-these macros to modify and/or use a CBMR.</p>
-<p>The CBMR consists of three parts: a header, a body, and a tail. The header has a fixed layout. The body
-consists of request-dependent fields and a list of verb codes. The tail contains all the data fields that go with
-the verb codes. Data fields can be 0, 4 or 8 bytes in length.</p>
-<p>Verb codes X'01'-X'DF' have a 4-byte data field
-Verb codes X'E0'-X'FF' have an 8-byte data field</p>
-<p>All data fields in the tail are allocated consecutively, in the same order as the verbs that define their meaning</p>
-<h4 id="cbmr-header">CBMR – header</h4>
-<p>The CBMR header identifies the type (ACB, EXLST, RPL, GENCB, MODCB, SHOWCB or TESTCB)</p>
-<p>It also has details of any work area needed and a count of verbs in CBMRVRBS</p>
-<h4 id="cbmr-body">CBMR – body</h4>
-<p>Its length is determined by the CBMRVRBS fields in the CBMR header.
-It contains one verb code for each specified parameter.</p>
-<h4 id="cbmr-tail">CBMR – tail</h4>
-<p>The body is directly followed by the tail.
-It contains a data field of 4 or 8 bytes for each verb coded in the body, in the same sequence.</p>
-<p>The starting point of the tail can be found by adding the CBMRVRBS value to the end of the CBMR header.
-Its length can be calculated from the CBMRSIZE field, by subtracting both the header length and the CBMRVRBS field.</p>
 <h3 id="gencb-modcb-testcb-and-showcb-use-of-mf">GENCB, MODCB, TESTCB and SHOWCB use of MF=<a id="MFdetails" /></h3>
 <p>All forms except MF=L generate executable code.</p>
 <table>
@@ -6201,7 +6180,7 @@ z390_zVSAM_Catalog_User_Guide.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-72-g1c32e65b"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-73-ga50b0762"}</script>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
