@@ -120,7 +120,7 @@ public iz390()
             ivp_file      = new File(ivp_file_name);                                    // #857
             if (!ivp_file.isFile()){                                                    // #857
                 System.out.println("IVP zCics  component not built");                   // #857
-                ivp_rc = 4;                                                             // #857
+            //  ivp_rc = 4;       // **!! Treat as normal condition                     // #857
             } else {                                                                    // #857
                 System.out.println("IVP zCics  component operational");                 // #857
             }                                                                           // #857
