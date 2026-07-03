@@ -11,14 +11,17 @@ optable='optable(z390)'
 
 # -- test generated Q command when EOF is reached
 rtscript='rt\rt\BATCH.RT'
+export rtscript
 bash/asmlg demo/HELLO noloadhigh $sysmac 'test(rtscript)'          || test $? -eq 16
 
 # -- test normal termination when z command is executed
 rtscript='rt\rt\BATCHZ.RT'
+export rtscript
 bash/asmlg demo/HELLO noloadhigh $sysmac 'test(rtscript)'
 
 # -- other test scripts
 rtscript='rt\rt\OPCD_DOS.RT'
+export rtscript
 opt='@'rt/rt/OPCD_DOS.OPT
 bash/asmlg rt/rt/OPCD_DOS noloadhigh $sysmac $opt 'test(rtscript)'
 
@@ -31,6 +34,7 @@ opt='@'rt/rt/OPCD_UNI.OPT
 bash/asml  rt/rt/OPCD_UNI noloadhigh $sysmac $opt
 
 rtscript='rt\rt\OPCD_XA.RT'
+export rtscript
 opt='@'rt/rt/OPCD_XA.OPT
 bash/asmlg rt/rt/OPCD_XA noloadhigh $sysmac $opt 'test(rtscript)'
 
