@@ -23,11 +23,11 @@ The following macros for assembler programs implement functions to manage ACBs:
 |---------------|------------------------------------------------------|
 | ACB           | Create/instantiate an ACB during assembly            |
 | ACBD          | Describe ACB subfields                               |
-| CBMR          | Create/instatiate Control Block Modification Request |
 | GENCB BLK=ACB | Dynamically create/instantiate ACB(s)                |
 | MODCB ACB=    | Dynamically modify an ACB                            |
 | SHOWCB ACB=   | Extract ACB subfield(s) (generic getter method)      |
 | TESTCB ACB=   | Test ACB subfield(s) (generic tester method)         |
+| CBMR          | Create/instatiate Control Block Modification Request |
 
 **Note:** The ACB macro defines a statically allocated ACB.
 This macro is primarily intended for use in non-reentrant programs.
@@ -83,8 +83,9 @@ The structure and layout of the generated ACB are not part of the interface defi
 and are therefore not shown in this chapter. For details please see the ACB, ACB1 and ACB2 macros
 in the mac folder.
 
-Direct access to subfields in the ACB is discouraged. Use SHOWCB ACB=, TESTCB ACB= and/or
-MODCB ACB= to inspect, test, and/or modify the ACB's content.
+> [!NOTE]
+> Direct access to subfields in the ACB is strongly discouraged. Use SHOWCB ACB=, TESTCB ACB= and/or
+> MODCB ACB= to inspect, test, and/or modify the ACB's content.
 
 All keywords on the ACB macro are optional. Before the cluster is opened,
 all ACB values can be modified using MODCB ACB=, or by changing the ACB directly.
@@ -259,6 +260,90 @@ or the `ACBD`, `ACBD1` and `ACBD2` macros in the mac folder.
 > [!NOTE]
 > The ACBD macro can be invoked multiple times, but will generate the DSECT mapping
 > only on its first invocation.
+
+### GENCB ACB macro
+
+The GENCB macro with BLK=ACB will generate or manipulate ACBs and initialize or change them
+according to the parameters specified on the macro invocation. It is for this reason that
+all supported parameters and keywords of the ACB macro (as described above) are supported
+on the GENCB macro when BLK=ACB is specified.
+
+The GENCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                   |
+|----------|--------------------------|
+| ZVSAM(0) | Error: zVSAM disabled    |
+| ZVSAM(1) | GENCB1 macro is expanded |
+| ZVSAM(2) | GENCB2 macro is expanded |
+
+The structure and layout of the generated ACB are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zACB description](zVSAM_V2_Design_Addenda.md#zacb-description) or the ACB2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
+are  not part of the interface and are therefore not shown in this chapter.  For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the ACB or CBMR is strongly discouraged. Use SHOWCB ACB=, TESTCB ACB= and/or
+> MODCB ACB= to inspect, test, and/or modify the ACB's content.
+
+All keywords on the GENCB ACB macro are optional. Except BLK= which is required.
+
+The GENCB ACB macro can be coded as follows:
+
+| Opcode        | Operand                   | Remarks                                                                                                 |
+|---------------|---------------------------|---------------------------------------------------------------------------------------------------------|
+| [label] GENCB | BLK=ACB                   | Instructs GENCB to generate 1 or more ACBs                                                              |
+|               | [AM=VSAM]                 | Optional, no other values allowed; VSAM is the default                                                  |
+|               | [COPIES=nr]               | The number of identical ACBs to generate                                                                |
+|               | [WAREA=addr]              | The work area where the ACBs are to be constructed                                                      |
+|               | [LENGTH=nr]               | Length of the work area in bytes                                                                        |
+|               | [LOC=keyword]             | Where GENCB is to allocate dynamically acquired storage - if needed                                     |
+|               | **[other]**               | **Any parameter supported on the ACB macro**                                                            |
+|               | [MF=]                     | Use standard form of GENCB ACB; this is the default                                                     |
+|               | [MF=L/MF=(L,addr,[label]] | Use list form of GENCB ACB                                                                              |
+|               | [MF=(E,addr)]             | Use execute form of GENCB ACB                                                                           |
+|               | [MF=(G,addr,[label])]     | Use generate form of GENCB ACB                                                                          |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### BLK=
+
+Required parameter; specify ACB to generate 1 or more ACBs
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### COPIES=
+
+Number of identical ACBs to generate. Defaults to 1.
+
+#### WAREA=
+
+The work area where the ACBs are to be constructed.
+If not specified, they will be created in storage that VSAM allocates on behalf of your program.
+
+#### LENGTH=
+
+- If WAREA= is specified, this paramter is required and specifies the length of the area.
+- If WAREA= is not specified, this parameter is ignored. zVSAM determines how much storage to allocate.
+
+#### LOC=
+
+- If WAREA= is specified, this paramter is ignored.
+- If WAREA= is not specified, this parameter indicates where zVSAM is to allocate storage for the ACB or ACBs.
+
+#### Other keywords
+
+All parameters supported by the [ACB macro](#acb-macro) are supported here as well.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
 
 ### CBMR macro
 
