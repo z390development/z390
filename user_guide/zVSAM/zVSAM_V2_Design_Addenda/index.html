@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gencb-acb-macro-parameters" class="md-skip">
+        <a href="#modcb-acb-macro-parameters" class="md-skip">
           Skip to content
         </a>
       
@@ -1708,17 +1708,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#gencb-acb-macro-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GENCB ACB macro parameters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#modcb-acb-macro-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2944,17 +2933,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#gencb-acb-macro-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GENCB ACB macro parameters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#modcb-acb-macro-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3268,112 +3246,6 @@
 
   <h1>zVSAM V2 Design Addenda</h1>
 
-<h3 id="gencb-acb-macro-parameters">GENCB ACB macro parameters</h3>
-<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.</p>
-<p>For ease of access a short summary follows here:</p>
-<table>
-<thead>
-<tr>
-<th>Keyword</th>
-<th>Usage and implementation in zVSAM</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>BLK</code>=ACB</td>
-<td>required to indicate the ACB-supporting logic of the macro is being invoked</td>
-</tr>
-<tr>
-<td><code>COPIES</code>=</td>
-<td>Number of identical copies to generate. Specify a number between 1 and 65535. The default is 1.</td>
-</tr>
-<tr>
-<td><code>WAREA</code>=</td>
-<td>Address of a work area where the ACB/ACBs is/are to be constructed.</td>
-</tr>
-<tr>
-<td></td>
-<td>When <code>WAREA</code> is specified, <code>LENGTH</code> must be specified too.</td>
-</tr>
-<tr>
-<td></td>
-<td>When <code>WAREA</code> is not specified, the CBMR handler allocates an area of storage.</td>
-</tr>
-<tr>
-<td></td>
-<td>The address of this area is returned in R1; its length in R0.</td>
-</tr>
-<tr>
-<td><code>LENGTH</code>=</td>
-<td>Length in bytes of the area indicated by <code>WAREA</code>.</td>
-</tr>
-<tr>
-<td></td>
-<td>When <code>LENGTH</code> is specified, <code>WAREA</code> must be specified as well.</td>
-</tr>
-<tr>
-<td><code>LOC</code>=</td>
-<td>Where a work area for constructing the ACB/ACBs is to be allocated. Used only when <code>WAREA</code> and <code>LENGTH</code> are not specified. Supports the keywords <code>BELOW</code> and <code>ANY</code>, with <code>BELOW</code> being the default</td>
-</tr>
-<tr>
-<td>- <code>BELOW</code></td>
-<td>the work area is to be allocated below the line</td>
-</tr>
-<tr>
-<td>- <code>ANY</code></td>
-<td>the work area is to be allocated above the line if possible, below the line otherwise.</td>
-</tr>
-<tr>
-<td><em>other</em></td>
-<td>Any parameters and/or keywords supported by the ACB macro. Please see the description of the ACB macro for details.</td>
-</tr>
-<tr>
-<td></td>
-<td>Supported parameters and keywords on the ACB macro are supported on GENCB ACB as well. Likewise, unsupported parameters and keywords on the ACB macro are not supported on GENCB ACB either.</td>
-</tr>
-<tr>
-<td></td>
-<td>How the parameters can be specified differs per parameter.</td>
-</tr>
-<tr>
-<td></td>
-<td>For a complete list of options, please see the IBM manual “DFSMS Macro Instructions for Data Sets” or equivalent for the operating system and version that you are porting to/from.</td>
-</tr>
-<tr>
-<td>Please note:</td>
-<td>not supported are expressions like (S,scon) or (*,scon)</td>
-</tr>
-<tr>
-<td><code>MF</code>=</td>
-<td>When omitted, specifies the standard form of the GENCB to generate an inline CBMR and an inline call to the CBMR handler.</td>
-</tr>
-<tr>
-<td><code>MF=L</code></td>
-<td>Specifies the list form of the GENCB macro which generates an inline CBMR but no call to the CBMR handler.</td>
-</tr>
-<tr>
-<td><code>MF=(L,addr)</code></td>
-<td>Specifies the list form of the GENCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.</td>
-</tr>
-<tr>
-<td><code>MF=(L,addr,label)</code></td>
-<td>Same as <code>MF=(L,addr)</code> but label will be equated to the length of the CBMR.</td>
-</tr>
-<tr>
-<td><code>MF=(E,addr)</code></td>
-<td>Specifies the execute form of the GENCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.</td>
-</tr>
-<tr>
-<td><code>MF=(G,addr)</code></td>
-<td>Specifies the generate form of the GENCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.</td>
-</tr>
-<tr>
-<td><code>MF=(G,addr,label)</code></td>
-<td>Same as <code>MF=(G,addr)</code> but label will be equated to the length of the CBMR</td>
-</tr>
-</tbody>
-</table>
 <h3 id="modcb-acb-macro-parameters">MODCB ACB macro parameters</h3>
 <p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
 For details, please refer to the relevant IBM manual.</p>
@@ -5434,7 +5306,7 @@ where earlier drafts were corroborated and finalized.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-76-gc1c2d629"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-77-g2176f3be"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>

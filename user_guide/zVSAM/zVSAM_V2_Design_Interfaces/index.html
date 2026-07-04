@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gencb-acb-macro" class="md-skip">
+        <a href="#modcb-acb-macro" class="md-skip">
           Skip to content
         </a>
       
@@ -1624,17 +1624,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#gencb-acb-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GENCB ACB macro
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#modcb-acb-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2922,17 +2911,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#gencb-acb-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GENCB ACB macro
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#modcb-acb-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3224,87 +3202,6 @@
 
   <h1>zVSAM V2 Design Interfaces</h1>
 
-<h3 id="gencb-acb-macro">GENCB ACB macro</h3>
-<p>The GENCB macro with BLK=ACB will generate or manipulate ACBs and initialize or change them
-according to the parameters specified on the macro invocation. It is for this reason that
-all supported parameters and keywords of the ACB macro (as described above) are supported
-on the GENCB macro when BLK=ACB is specified.</p>
-<p>The structure and layout of the generated ACB are not part of the interface and are therefore not shown
-in this chapter. Direct access to subfields in the ACB is discouraged. Use SHOWCB ACB, TESTCB ACB and/or MODCB ACB
-to inspect, test, and/or modify the ACB's content.</p>
-<p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
-are  not part of the interface and are therefore not shown in this chapter. Direct access to subfields in the CBMR
-is strongly discouraged.</p>
-<p>The GENCB ACB macro can be coded as follows:</p>
-<table>
-<thead>
-<tr>
-<th>Opcode</th>
-<th>Operand</th>
-<th>Remarks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>GENCB</td>
-<td>BLK=ACB</td>
-<td>Instructs GENCB to generate 1 or more ACBs</td>
-</tr>
-<tr>
-<td></td>
-<td>[AM=VSAM]</td>
-<td>Optional, no other values allowed; VSAM is the default</td>
-</tr>
-<tr>
-<td></td>
-<td>[COPIES=nr]</td>
-<td>The number of identical ACBs to generate</td>
-</tr>
-<tr>
-<td></td>
-<td>[WAREA=addr]</td>
-<td>The work area where the ACBs are to be constructed</td>
-</tr>
-<tr>
-<td></td>
-<td>[LENGTH=nr]</td>
-<td>Length of the work area in bytes</td>
-</tr>
-<tr>
-<td></td>
-<td>[LOC=keyword]</td>
-<td>Where GENCB is to allocate dynamically acquired storage - if needed</td>
-</tr>
-<tr>
-<td></td>
-<td><strong>[other]</strong></td>
-<td><strong>Any parameter supported on the ACB macro</strong></td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=]</td>
-<td>Use standard form of GENCB ACB; this is the default</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=L/MF=(L,addr,[label]]</td>
-<td>Use list form of GENCB ACB</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=(E,addr)]</td>
-<td>Use execute form of GENCB ACB</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=(G,addr,[label])]</td>
-<td>Use generate form of GENCB ACB</td>
-</tr>
-</tbody>
-</table>
-<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.</p>
-<p>For ease of access a short summary can be found in the addenda.</p>
 <h3 id="modcb-acb-macro">MODCB ACB macro</h3>
 <p>The MODCB macro with ACB=addr will modify an ACB according to the parameters specified on the macro invocation.
 It is for this reason that all parameters and keywords of the ACB macro (as described above) are supported
@@ -5286,7 +5183,7 @@ in a future release.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-76-gc1c2d629"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-77-g2176f3be"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
