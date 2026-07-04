@@ -39,6 +39,20 @@ call bat\asmlg %z_TraceMode% rt\rt\OPCD_XA   sysmac(mac) noloadhigh test(rtscrip
 set  rtscript=rt\rt\OPCD_ZZZ.RT
 call bat\asmlg %z_TraceMode% rt\rt\OPCD_ZZZ  sysmac(mac) noloadhigh                @rt\rt\OPCD_ZZZ.OPT || goto error
 
+set  rtscript=rt\rt\RPI1540.RT
+call bat\asmlg %z_TraceMode% rt\rt\RPI1540   sysmac(mac) noloadhigh test(rtscript) || goto error
+
+set  rtscript=rt\rt\RPI1544.RT
+call bat\asmlg %z_TraceMode% rt\rt\RPI1544   sysmac(mac) noloadhigh test(rtscript) || goto error
+
+call bat\asmlg %z_TraceMode% rt\rt\RPI1609   sysmac(mac) noloadhigh
+     if %ERRORLEVEL% NEQ 12 goto error
+
+call bat\asmlg %z_TraceMode% rt\rt\RPI1625   sysmac(mac) noloadhigh
+     if %ERRORLEVEL% NEQ 12 goto error
+
+call bat\asmlg %z_TraceMode% rt\rt\RPI1641   sysmac(mac) noloadhigh zvsam(2)       || goto error
+
 rem -- all checks passed without issue
 set z_ReturnCode=0
 goto return

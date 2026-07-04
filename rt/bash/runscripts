@@ -41,6 +41,19 @@ bash/asmlg rt/rt/OPCD_XA noloadhigh $sysmac $opt 'test(rtscript)'
 opt='@'rt/rt/OPCD_ZZZ.OPT
 bash/asmlg rt/rt/OPCD_ZZZ noloadhigh $sysmac $opt
 
+rtscript='rt/rt/RPI1540.RT'
+export rtscript
+bash/asmlg rt/rt/RPI1540  noloadhigh $sysmac      'test(rtscript)'
+
+rtscript='rt/rt/RPI1544.RT'
+export rtscript
+bash/asmlg rt/rt/RPI1544  noloadhigh $sysmac      'test(rtscript)'
+
+bash/asmlg rt/rt/RPI1609  noloadhigh $sysmac                     || test $? -eq 12
+bash/asmlg rt/rt/RPI1625  noloadhigh $sysmac                     || test $? -eq 12
+bash/asmlg rt/rt/RPI1641  noloadhigh $sysmac 'zvsam(2)
+grep '^zVSAM version 2 in z390$' rt/rt/RPI1641.LOG || exit 1
+
 # if we get here, there were no errors
 echo "Verify tests ran without errors"
 exit 0
