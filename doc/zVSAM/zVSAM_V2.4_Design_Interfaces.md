@@ -91,40 +91,6 @@ For details, please refer to the relevant IBM manual.
 
 ### GENCB, MODCB, TESTCB and SHOWCB use of the CBMR
 
-A CBMR is generated for all forms of these macros.
-
-Direct access to subfields in the CBMR is discouraged. Use SHOWCB, TESTCB and/or MODCB to inspect,
-test, and/or modify the content of an ACB, EXLST, or RPL. Use the appropriate MF= parameter on any of
-these macros to modify and/or use a CBMR.
-
-The CBMR consists of three parts: a header, a body, and a tail. The header has a fixed layout. The body
-consists of request-dependent fields and a list of verb codes. The tail contains all the data fields that go with
-the verb codes. Data fields can be 0, 4 or 8 bytes in length.
-
-Verb codes X'01'-X'DF' have a 4-byte data field
-Verb codes X'E0'-X'FF' have an 8-byte data field
-
-All data fields in the tail are allocated consecutively, in the same order as the verbs that define their meaning
-
-#### CBMR – header
-
-The CBMR header identifies the type (ACB, EXLST, RPL, GENCB, MODCB, SHOWCB or TESTCB)
-
-It also has details of any work area needed and a count of verbs in CBMRVRBS
-
-#### CBMR – body
-
-Its length is determined by the CBMRVRBS fields in the CBMR header.
-It contains one verb code for each specified parameter.
-
-#### CBMR – tail
-
-The body is directly followed by the tail.
-It contains a data field of 4 or 8 bytes for each verb coded in the body, in the same sequence.
-
-The starting point of the tail can be found by adding the CBMRVRBS value to the end of the CBMR header.
-Its length can be calculated from the CBMRSIZE field, by subtracting both the header length and the CBMRVRBS field.
-
 ### GENCB, MODCB, TESTCB and SHOWCB use of MF=<a id="MFdetails" />
 
 All forms except MF=L generate executable code.

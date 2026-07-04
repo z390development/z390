@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# runvsam1: rebuild and test zVSAM(1) catalog and ESDS
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
+
+opt1='@'rt/vsam/RTVSAM1.OPT
+opt0='@'rt/vsam/RTVSAM0.OPT
+
+# build the catalog
+bash/asml rt/vsam/BLDCAT1 $opt1
+
+# create the ESDS_F VES file
+export MYESDS=rt/vsam/BLDCAT1.ESDS_F
+bash/asm rt/vsam/BLDESDS0 $opt0 || test $? -eq 15
+bash/asmlg rt/vsam/BLDESDS0 $opt1
+
+# if we get here, there were no errors
+echo "Verify all zVSAM(1) tests ok"
+exit 0

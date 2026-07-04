@@ -13,15 +13,19 @@ rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..\..
 
-call bat\asml %z_TraceMode% vsam2\mlc\Z390CAT2 trace sysmac(mac) noloadhigh zvsam(2) || goto error
-call bat\asml %z_TraceMode% vsam2\mlc\ZVSAM19C trace sysmac(mac) noloadhigh zvsam(2) || goto error
-call bat\asml %z_TraceMode% vsam2\mlc\TESTGNCB trace sysmac(mac) noloadhigh zvsam(2) || goto error
-call bat\asml %z_TraceMode% vsam2\mlc\TESTMDCB trace sysmac(mac) noloadhigh zvsam(2) || goto error
-call bat\asml %z_TraceMode% vsam2\mlc\TESTSHCB trace sysmac(mac) noloadhigh zvsam(2) || goto error
-call bat\asml %z_TraceMode% vsam2\mlc\TESTTSCB trace sysmac(mac) noloadhigh zvsam(2) || goto error
+rem
+rem build the catalog
+call bat\asml  %z_TraceMode% rt\vsam\BLDCAT1  @rt\vsam\RTVSAM1.opt || goto error
+
+rem
+rem create the ESDS_F VES file
+set myesds=rt\vsam\BLDCAT1.ESDS_F
+call bat\asm   %z_TraceMode% rt\vsam\BLDESDS0 @rt\vsam\RTVSAM0.opt
+     if %ERRORLEVEL% NEQ 15 goto error
+call bat\asmlg %z_TraceMode% rt\vsam\BLDESDS0 @rt\vsam\RTVSAM1.opt || goto error
 
 rem if we get here, there were no errors
-echo Verify all zVSAM(2) tests ok
+echo Verify all zVSAM(1) tests ok
 goto return
 
 :error
