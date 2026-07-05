@@ -65,6 +65,16 @@ rtscript='rt/rt/RPI2001B.RT'
 export rtscript
 bash/asmlg rt/rt/RPI2001B noloadhigh $sysmac 'test(rtscript)'
 
+rtscript='rt/rt/RPI2002A.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2002A noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2002B.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2002B noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2002C.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2002C noloadhigh $sysmac 'test(rtscript)'
+
 # if we get here, there were no errors
 echo "Verify tests ran without errors"
 exit 0

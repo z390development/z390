@@ -61,6 +61,13 @@ call bat\asmlg %z_TraceMode% rt\rt\RPI2001A  sysmac(mac) noloadhigh test(rtscrip
 set  rtscript=rt\rt\RPI2001B.RT
 call bat\asmlg %z_TraceMode% rt\rt\RPI2001B  sysmac(mac) noloadhigh test(rtscript) || goto error
 
+set  rtscript=rt\rt\RPI2002A.RT
+call bat\asmlg %z_TraceMode% rt\rt\RPI2002A  sysmac(mac) noloadhigh test(rtscript) || goto error
+set  rtscript=rt\rt\RPI2002B.RT
+call bat\asmlg %z_TraceMode% rt\rt\RPI2002B  sysmac(mac) noloadhigh test(rtscript) || goto error
+set  rtscript=rt\rt\RPI2002C.RT
+call bat\asmlg %z_TraceMode% rt\rt\RPI2002C  sysmac(mac) noloadhigh test(rtscript) || goto error
+
 rem -- all checks passed without issue
 set z_ReturnCode=0
 goto return

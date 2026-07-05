@@ -131,4 +131,25 @@ class RunScripts extends z390Test {
         this.printOutput()
         assert rc == 0
     }
+    @Test
+    void test_RPI2002A() {
+        env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2002A.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2002A"), *options, "test(RTSCRIPT)")
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_RPI2002B() {
+        env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2002B.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2002B"), *options, "test(RTSCRIPT)")
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_RPI2002C() {
+        env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2002C.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2002C"), *options, "test(RTSCRIPT)")
+        this.printOutput()
+        assert rc == 0
+    }
 }
