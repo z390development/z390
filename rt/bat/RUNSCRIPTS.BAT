@@ -68,6 +68,20 @@ call bat\asmlg %z_TraceMode% rt\rt\RPI2002B  sysmac(mac) noloadhigh test(rtscrip
 set  rtscript=rt\rt\RPI2002C.RT
 call bat\asmlg %z_TraceMode% rt\rt\RPI2002C  sysmac(mac) noloadhigh test(rtscript) || goto error
 
+set  rtscript=rt\rt\RPI2003.RT
+call bat\asmlg %z_TraceMode% rt\rt\RPI2003   sysmac(mac) noloadhigh test(rtscript) || goto error
+set  rtscript=rt\rt\RPI2004.RT
+call bat\asmlg %z_TraceMode% rt\rt\RPI2004   sysmac(mac) noloadhigh test(rtscript) || goto error
+set  rtscript=rt\rt\RPI2005.RT
+call bat\asmlg %z_TraceMode% rt\rt\RPI2005   sysmac(mac) noloadhigh test(rtscript) || goto error
+set  rtscript=rt\rt\RPI2006.RT
+rem  **!! Because of Issue #863 the RT script is temporarily disabled
+call bat\asmlg %z_TraceMode% rt\rt\RPI2006   sysmac(mac) noloadhigh                || goto error
+set  rtscript=rt\rt\RPI2007.RT
+call bat\asmlg %z_TraceMode% rt\rt\RPI2007   sysmac(mac) noloadhigh test(rtscript) || goto error
+set  rtscript=rt\rt\RPI2008.RT
+call bat\asmlg %z_TraceMode% rt\rt\RPI2008   sysmac(mac) noloadhigh test(rtscript) || goto error
+
 rem -- all checks passed without issue
 set z_ReturnCode=0
 goto return

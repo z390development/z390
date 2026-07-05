@@ -75,13 +75,13 @@ class RunScripts extends z390Test {
     }
     @Test
     void test_RPI1609() {
-        int rc = this.asmlg(basePath("rt", "rt", "RPI1609"))
+        int rc = this.asmlg(basePath("rt", "rt", "RPI1609"), *options)
         this.printOutput()
         assert rc == 12
     }
     @Test
     void test_RPI1625() {
-        int rc = this.asmlg(basePath("rt", "rt", "RPI1625"))
+        int rc = this.asmlg(basePath("rt", "rt", "RPI1625"), *options)
         this.printOutput()
         assert rc == 12
     }
@@ -149,6 +149,49 @@ class RunScripts extends z390Test {
     void test_RPI2002C() {
         env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2002C.RT")]
         int rc = this.asmlg(basePath("rt", "rt", "RPI2002C"), *options, "test(RTSCRIPT)")
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_RPI2003() {
+        env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2003.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2003"), *options, "test(RTSCRIPT)")
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_RPI2004() {
+        env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2004.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2004"), *options, "test(RTSCRIPT)")
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_RPI2005() {
+        env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2005.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2005"), *options, "test(RTSCRIPT)")
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_RPI2006() {
+        // **!! Because of Issue #863 the RT script is temporarily disabled
+        env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2006.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2006"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_RPI2007() {
+        env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2007.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2007"), *options, "test(RTSCRIPT)")
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_RPI2008() {
+        env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2008.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2008"), *options, "test(RTSCRIPT)")
         this.printOutput()
         assert rc == 0
     }
