@@ -2,7 +2,7 @@ P9       ZMFACC CODE,START,NAME='MELVYN MALTZ'
 * 
 * IMPROVED VERSION FROM SUGGESTION BY BINYAMIN DISSEN 
 * 
-         LA    R1,OUT1+5          PRESET CURRENCY SYMBOL IF ZERO 
+         LA    R1,OUT1+6          PRESET CURRENCY SYMBOL IF ZERO 
          MVC   OUT1,MASK          SET EDIT MASK 
          EDMK  OUT1,TEST1         EDIT 
          BCTR  R1,0               BACK OFF 1 FOR CURRENCY SYMBOL 
@@ -12,7 +12,7 @@ P9       ZMFACC CODE,START,NAME='MELVYN MALTZ'
          MVI   0(R1),C'('         SET BEG PAREN 
 * 
 NEXT1    DS    0H 
-         LA    R1,OUT2+5          PRESET CURRENCY SYMBOL IF ZERO 
+         LA    R1,OUT2+6          PRESET CURRENCY SYMBOL IF ZERO 
          MVC   OUT2,MASK          SET EDIT MASK 
          EDMK  OUT2,TEST2         EDIT 
          BCTR  R1,0               BACK OFF 1 FOR CURRENCY SYMBOL 
@@ -22,7 +22,7 @@ NEXT1    DS    0H
          MVI   0(R1),C'('         SET BEG PAREN 
 * 
 NEXT2    DS    0H 
-         LA    R1,OUT3+5          PRESET CURRENCY SYMBOL IF ZERO 
+         LA    R1,OUT3+6          PRESET CURRENCY SYMBOL IF ZERO 
          MVC   OUT3,MASK          SET EDIT MASK 
          EDMK  OUT3,TEST3         EDIT 
          BCTR  R1,0               BACK OFF 1 FOR CURRENCY SYMBOL 
@@ -32,7 +32,7 @@ NEXT2    DS    0H
          MVI   0(R1),C'('         SET BEG PAREN 
 * 
 NEXT3    DS    0H 
-         LA    R1,OUT4+5          PRESET CURRENCY SYMBOL IF ZERO 
+         LA    R1,OUT4+6          PRESET CURRENCY SYMBOL IF ZERO 
          MVC   OUT4,MASK          SET EDIT MASK 
          EDMK  OUT4,TEST4         EDIT 
          BCTR  R1,0               BACK OFF 1 FOR CURRENCY SYMBOL 
