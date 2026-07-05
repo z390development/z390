@@ -1,39 +1,3 @@
-### GENCB ACB macro
-
-The GENCB macro with BLK=ACB will generate or manipulate ACBs and initialize or change them
-according to the parameters specified on the macro invocation. It is for this reason that
-all supported parameters and keywords of the ACB macro (as described above) are supported
-on the GENCB macro when BLK=ACB is specified.
-
-The structure and layout of the generated ACB are not part of the interface and are therefore not shown
-in this chapter. Direct access to subfields in the ACB is discouraged. Use SHOWCB ACB, TESTCB ACB and/or MODCB ACB
-to inspect, test, and/or modify the ACB's content.
-
-Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
-are  not part of the interface and are therefore not shown in this chapter. Direct access to subfields in the CBMR
-is strongly discouraged.
-
-The GENCB ACB macro can be coded as follows:
-
-| Opcode | Operand                   | Remarks                                                             |
-|--------|---------------------------|---------------------------------------------------------------------|
-| GENCB  | BLK=ACB                   | Instructs GENCB to generate 1 or more ACBs                          |
-|        | [AM=VSAM]                 | Optional, no other values allowed; VSAM is the default              |
-|        | [COPIES=nr]               | The number of identical ACBs to generate                            |
-|        | [WAREA=addr]              | The work area where the ACBs are to be constructed                  |
-|        | [LENGTH=nr]               | Length of the work area in bytes                                    |
-|        | [LOC=keyword]             | Where GENCB is to allocate dynamically acquired storage - if needed |
-|        | **[other]**               | **Any parameter supported on the ACB macro**                        |
-|        | [MF=]                     | Use standard form of GENCB ACB; this is the default                 |
-|        | [MF=L/MF=(L,addr,[label]] | Use list form of GENCB ACB                                          |
-|        | [MF=(E,addr)]             | Use execute form of GENCB ACB                                       |
-|        | [MF=(G,addr,[label])]     | Use generate form of GENCB ACB                                      |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-For ease of access a short summary can be found in the addenda.
-
 ### MODCB ACB macro
 
 The MODCB macro with ACB=addr will modify an ACB according to the parameters specified on the macro invocation.

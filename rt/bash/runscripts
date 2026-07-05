@@ -9,8 +9,37 @@ cd ..               # up to z390
 sysmac='sysmac(mac)'
 optable='optable(z390)'
 
-rtscript='rt\rt\BATCH.RT'
-bash/asmlg demo/HELLO noloadhigh $sysmac test(rtscript) || test $? -eq 16
+# -- test generated Q command when EOF is reached
+rtscript='rt/rt/BATCH.RT'
+export rtscript
+bash/asmlg demo/HELLO noloadhigh $sysmac 'test(rtscript)'          || test $? -eq 16
+
+# -- test normal termination when z command is executed
+rtscript='rt/rt/BATCHZ.RT'
+export rtscript
+bash/asmlg demo/HELLO noloadhigh $sysmac 'test(rtscript)'
+
+# -- other test scripts
+rtscript='rt/rt/OPCD_DOS.RT'
+export rtscript
+opt='@'rt/rt/OPCD_DOS.OPT
+bash/asmlg rt/rt/OPCD_DOS noloadhigh $sysmac $opt 'test(rtscript)'
+
+opt='@'rt/rt/OPCD_ERR.OPT
+bash/asm   rt/rt/OPCD_ERR noloadhigh $sysmac $opt                || test $? -eq 12
+# Compare AZ390 diagnostic lines only (filter out MZ390 framing + FID= path)
+grep -v 'MZ390\|FID=' rt/rt/OPCD_ERR.ERR | diff - rt/rt/OPCD_ERR.TF1 || exit 1
+
+opt='@'rt/rt/OPCD_UNI.OPT
+bash/asml  rt/rt/OPCD_UNI noloadhigh $sysmac $opt
+
+rtscript='rt/rt/OPCD_XA.RT'
+export rtscript
+opt='@'rt/rt/OPCD_XA.OPT
+bash/asmlg rt/rt/OPCD_XA noloadhigh $sysmac $opt 'test(rtscript)'
+
+opt='@'rt/rt/OPCD_ZZZ.OPT
+bash/asmlg rt/rt/OPCD_ZZZ noloadhigh $sysmac $opt
 
 # if we get here, there were no errors
 echo "Verify tests ran without errors"
