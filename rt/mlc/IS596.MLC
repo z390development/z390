@@ -486,6 +486,16 @@ TRTT1     DS    0D                  First test
           DC    A(TRTR1CC0)         Expected GR1; 31-bit
           DC    A(TRTR1CC0)         Expected GR1; 64-bit
 *
+          DC    A(StrBeg)           Storage containing string
+          DC    A(L'StrBeg)         Length of storage
+          DC    A(LocSpace)         Translate table
+          DC    A(TRTPresetGR1)     Preset GR1
+          DC    F'1'                Expected CC
+          DC    A(TRTR2CC1)         Expected GR2
+          DC    A(TRT24R1CC1_B)     Expected GR1; 24-bit
+          DC    A(TRT31R1CC1_B)     Expected GR1; 31-bit
+          DC    A(TRT64R1CC1_B)     Expected GR1; 64-bit
+*
           DC    A(StrMid)           Storage containing string
           DC    A(L'StrMid)         Length of storage
           DC    A(LocSpace)         Translate table
@@ -531,15 +541,18 @@ TRTR2CC2       EQU   TRTR2CC1              Expected GR2 when CC=2
                DS    0D
 *
 TRT24R1CC0     EQU   TRTR1CC0
+TRT24R1CC1_B   DC    F'-1',X'FF',AL3(StrBeg+0)
 TRT24R1CC1     DC    F'-1',X'FF',AL3(StrMid+1)
 TRT24R1CC2     DC    F'-1',X'FF',AL3(StrEnd+L'StrEnd-1)
 *
 TRT31R1CC0     EQU   TRTR1CC0
-TRT31R1CC1     DC    F'-1',A(StrMid+1) 
+TRT31R1CC1_B   DC    F'-1',A(StrBeg+0)
+TRT31R1CC1     DC    F'-1',A(StrMid+1)
 TRT31R1CC2     DC    F'-1',A(StrEnd+L'StrEnd-1)
 *
 TRT64R1CC0     EQU   TRTR1CC0
-TRT64R1CC1     DC    F'0',A(StrMid+1) 
+TRT64R1CC1_B   DC    F'0',A(StrBeg+0)
+TRT64R1CC1     DC    F'0',A(StrMid+1)
 TRT64R1CC2     DC    F'0',A(StrEnd+L'StrEnd-1)
 *
          DROP  ,
@@ -856,6 +869,16 @@ TRTRT1    DS   0D                  First test
           DC   A(TRTRR1CC0)        Expected GR1; 31-bit
           DC   A(TRTRR1CC0)        Expected GR1; 64-bit
 *
+          DC   A(StrEnd)           Storage
+          DC   A(L'StrEnd)         Length of storage
+          DC   A(LocSpace)         Translate table
+          DC   A(TRTRPresetGR1)    Preset GR1
+          DC   F'1'                Expected CC
+          DC   A(TRTRR2CC1)        Expected GR2
+          DC   A(TRTR24R1CC1_E)    Expected GR1; 24-bit
+          DC   A(TRTR31R1CC1_E)    Expected GR1; 31-bit
+          DC   A(TRTR64R1CC1_E)    Expected GR1; 64-bit
+*
           DC   A(StrMid)           Storage
           DC   A(L'StrMid)         Length of storage
           DC   A(LocSpace)         Translate table
@@ -931,18 +954,21 @@ TRTRR2CC1               DC    F'-1',XL4'FFFFFFAA'
 TRTRR2CC2               EQU   TRTRR2CC1
 *
 TRTR24R1CC0             EQU   TRTRR1CC0
+TRTR24R1CC1_E           DC    F'-1',X'FF',AL3(StrEnd+L'StrEnd-1)
 TRTR24R1CC1             DC    F'-1',X'FF',AL3(StrMid+2)
 TRTR24R1CC2             DC    F'-1',X'FF',AL3(StrBeg)
 *
 TRTR31R1CC0             EQU   TRTRR1CC0
-TRTR31R1CC1             DC    F'-1',A(StrMid+2+X'80000000') 
+TRTR31R1CC1_E           DC    F'-1',X'80',AL3(StrEnd+L'StrEnd-1)
+TRTR31R1CC1             DC    F'-1',A(StrMid+2+X'80000000')
 TRTR31R1CC2             DC    F'-1',A(StrBeg+X'80000000')
 *
-TRTR31R1Bit32ZeroCC1    DC    F'-1',A(StrMid+2) 
+TRTR31R1Bit32ZeroCC1    DC    F'-1',A(StrMid+2)
 TRTR31R1Bit32ZeroCC2    DC    F'-1',A(StrBeg)
 *
 TRTR64R1CC0             EQU   TRTRR1CC0
-TRTR64R1CC1             DC    F'0',A(StrMid+2) 
+TRTR64R1CC1_E           DC    A(0),A(StrEnd+L'StrEnd-1)
+TRTR64R1CC1             DC    F'0',A(StrMid+2)
 TRTR64R1CC2             DC    F'0',A(StrBeg)
 *
          DROP  ,
@@ -2595,7 +2621,6 @@ StrNone  DC    C'abcd'
 StrMid   DC    C'a  d'
 StrEnd   DC    C'abc '
 StrBeg   DC    C' bcd'
-         DC    16X'00'         Needed to avoid S0C5 due to pz390 bug
 *
 STOREnd  DS    0D              End of STOR
 STORLen  EQU   *-STOR          Length of STOR
