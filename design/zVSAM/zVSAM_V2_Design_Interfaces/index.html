@@ -3414,10 +3414,15 @@ For details, please refer to the relevant IBM manual.</p>
 <h4 id="am_1">AM=</h4>
 <p>VSAM is the default and the only supported value.</p>
 <h4 id="copies">COPIES=</h4>
-<p>Number of identical ACBs to generate. Defaults to 1.</p>
+<p>Number of identical ACBs to generate ranging from 1 to 65535. Defaults to 1.</p>
 <h4 id="warea">WAREA=</h4>
-<p>The work area where the ACBs are to be constructed.
-If not specified, they will be created in storage that VSAM allocates on behalf of your program.</p>
+<p>The work area where the ACBs are to be constructed.</p>
+<ul>
+<li>When WAREA is specified, LENGTH must be specified too.</li>
+<li>When WAREA is not specified, the CBMR handler allocates an area of storage.</li>
+<li>The address of this area whether via GETMAIN or WAREA is returned in R1.</li>
+<li>The length of the generated ACB(s) is returned in R0.</li>
+</ul>
 <h4 id="length">LENGTH=</h4>
 <ul>
 <li>If WAREA= is specified, this paramter is required and specifies the length of the area.</li>
@@ -3428,11 +3433,46 @@ If not specified, they will be created in storage that VSAM allocates on behalf 
 <li>If WAREA= is specified, this paramter is ignored.</li>
 <li>If WAREA= is not specified, this parameter indicates where zVSAM is to allocate storage for the ACB or ACBs.</li>
 </ul>
+<p>Supported keywords:
+- BELOW = below 16M (addressable in Amode 24, 31, or 64)
+- ANY   = below 2G  (requires Amode 31 or 64 to address)</p>
 <h4 id="other-keywords">Other keywords</h4>
 <p>All parameters supported by the <a href="#acb-macro">ACB macro</a> are supported here as well.</p>
 <h4 id="mf">MF=</h4>
 <p>Indicates the Macro Format.
 If specified, the [label] subparameter is EQUated to the length of the CBMR.</p>
+<h4 id="return-and-reason-codes">Return and Reason Codes</h4>
+<table>
+<thead>
+<tr>
+<th>Return Code</th>
+<th>Reason Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R15=0</td>
+<td>Reason Code=n/a</td>
+<td>Successful</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=4</td>
+<td>Invalid control block</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=9</td>
+<td>WAREA is too small</td>
+</tr>
+<tr>
+<td>R15=8</td>
+<td>Reason Code=n/a</td>
+<td>An attempt was made to update a CBMR with a field not previously created</td>
+</tr>
+</tbody>
+</table>
 <h3 id="cbmr-macro">CBMR macro</h3>
 <p>A CBMR is generated for all forms of the '<code>GENCB</code>, <code>MODCB</code>, <code>SHOWCB</code>, and <code>TESTCB</code> macros.
 The CBMR is then used to direct the Control Block Management Program to carry out the
@@ -3540,7 +3580,7 @@ or the <code>CBMR</code> macro in the mac folder.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-77-g2176f3be"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.3-78-g7e1b4057"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
