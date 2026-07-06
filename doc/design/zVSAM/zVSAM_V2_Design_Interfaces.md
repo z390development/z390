@@ -281,12 +281,12 @@ and are therefore not shown in this chapter. For details please see the
 [zACB description](zVSAM_V2_Design_Addenda.md#zacb-description) or the ACB2 macro in the mac folder.
 
 Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
-are  not part of the interface and are therefore not shown in this chapter.  For details please see the
+are not part of the interface and are therefore not shown in this chapter. For details please see the
 [CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
 
 > [!NOTE]
-> Direct access to subfields in the ACB or CBMR is strongly discouraged. Use SHOWCB ACB=, TESTCB ACB= and/or
-> MODCB ACB= to inspect, test, and/or modify the ACB's content.
+> Direct access to subfields in the ACB or CBMR is strongly discouraged. Use GENCB BLK=ACB, SHOWCB ACB=,
+> TESTCB ACB= and/or MODCB ACB= to generate, inspect, test, and/or modify the ACB's content.
 
 All keywords on the GENCB ACB macro are optional. Except BLK= which is required.
 
@@ -361,6 +361,115 @@ If specified, the [label] subparameter is EQUated to the length of the CBMR.
 | R15=4       | Reason Code=4   | Invalid control block                                                    |
 | R15=4       | Reason Code=9   | WAREA is too small                                                       |
 | R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
+
+### MODCB ACB macro
+
+The MODCB macro with ACB=addr will modify an ACB according to the parameters specified on the macro invocation.
+It is for this reason that all parameters and keywords of the ACB macro (as described above) are supported
+on the MODCB macro when ACB=addr is specified.
+
+The MODCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                   |
+|----------|--------------------------|
+| ZVSAM(0) | Error: zVSAM disabled    |
+| ZVSAM(1) | MODCB1 macro is expanded |
+| ZVSAM(2) | MODCB2 macro is expanded |
+
+The structure and layout of the generated ACB are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zACB description](zVSAM_V2_Design_Addenda.md#zacb-description) or the ACB2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the ACB or CBMR is strongly discouraged. Use GENCB BLK=ACB, SHOWCB ACB=,
+> TESTCB ACB= and/or MODCB ACB= to generate, inspect, test, and/or modify the ACB's content.
+
+All keywords on the MODCB ACB macro are optional. Except ACB= which is required.
+
+The MODCB ACB macro can be coded as follows:
+
+| Opcode        | Operand                   | Remarks                                             |
+|---------------|---------------------------|-----------------------------------------------------|
+| [label] MODCB | ACB=address               | Points MODCB to the ACB to be modified              |
+|               | [AM=VSAM]                 | Optional, no other values allowed                   |
+|               | **[other]**               | **Any parameter supported on the ACB macro**        |
+|               | [MF=]                     | Use standard form of MODCB ACB; this is the default |
+|               | [MF=L/MF=(L,addr,[label]] | Use list form of MODCB ACB                          |
+|               | [MF=(E,addr)]             | Use execute form of MODCB ACB                       |
+|               | [MF=(G,addr,[label])]     | Use generate form of MODCB ACB                      |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+For ease of access a short summary can be found in the addenda.
+
+#### ACB=
+
+Required parameter; specify the address of the ACB to be modified.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### Other keywords
+
+All parameters supported by the [ACB macro](#acb-macro) are supported here as well.
+
+##### MACRF=
+
+MACRF is a special case of the "other keywords". This paragrqaph clarifies how MACRF works.
+
+All supported subparameters have their own bit in `CBMRACB_MACRF` (currently 16),
+Conflicts are `MNOTE`d, eg. bits for `NIS` and `SIS` cannot both be on.
+
+If MF=E is specified then the whole of `CBMRACB_MACRF` is replaced,
+
+When the ACB is modified:
+- For mutually exclusive parameters, the bit is turned on or off
+- For each non-exclusive parameter the appropriate bit is turned on, therefore it isn't possible to turn a nonexclusive
+  bit off using MODCB, this has to be done manually.
+- eg. When an ACB has MACRF=(OUT) which allows read and write functions it is not possible to change
+  the ACB to read-only using MODCB
+- if this is needed code the instruction `NI ACBMACR1,255-ACBOUT`
+
+> [!NOTE]
+> I do not entirely agree with how Melvyn has set this up, although I do like his extensive early error detection proposal.
+> There are basically two alternatives that I can see:
+> 1. every MACRF option has a separate verb code, we generate as many verb codes as we need, no data is needed
+> 2. We generate a single verb code for the MACRF modification, supplying two 2-byte masks in the data.
+>    One mask to indicate affected postions, the other to indicate the desired bit values for the selected postions.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+
+### Return (R15) and Reason (R0) Codes
+
+| Return Code | Reason Code     | Meaning                                                                  |
+|-------------|-----------------|--------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                               |
+| R15=4       | Reason Code=4   | Invalid control block                                                    |
+| R15=4       | Reason Code=12  | MODCB was attempted on an open ACB                                       |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### CBMR macro
 

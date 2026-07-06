@@ -1,33 +1,3 @@
-### MODCB ACB macro
-
-The MODCB macro with ACB=addr will modify an ACB according to the parameters specified on the macro invocation.
-It is for this reason that all parameters and keywords of the ACB macro (as described above) are supported
-on the MODCB macro when ACB=addr is specified.
-
-The structure and layout of the affected ACB are not part of the interface and are therefore not shown
-in this chapter. Direct access to subfields in the ACB is discouraged. Use SHOWCB ACB, TESTCB ACB
-and/or MODCB ACB to inspect, test, and/or modify the ACB's content.
-
-Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the MODCB request to the CBMR handler
-are  not part of the interface and are therefore not shown in this chapter.
-Direct access to subfields in the CBMR is strongly discouraged.
-
-The MODCB ACB macro can be coded as follows:
-
-| Opcode | Operand                   | Remarks                                             |
-|--------|---------------------------|-----------------------------------------------------|
-| MODCB  | ACB=address               | Points MODCB to the ACB to be modified              |
-|        | **[other]**               | **Any parameter supported on the ACB macro**        |
-|        | [MF=]                     | Use standard form of MODCB ACB; this is the default |
-|        | [MF=L/MF=(L,addr,[label]] | Use list form of MODCB ACB                          |
-|        | [MF=(E,addr)]             | Use execute form of MODCB ACB                       |
-|        | [MF=(G,addr,[label])]     | Use generate form of MODCB ACB                      |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-For ease of access a short summary can be found in the addenda.
-
 ### SHOWCB ACB macro
 
 The SHOWCB macro with ACB=addr will return ACB-related fields according to the parameters specified

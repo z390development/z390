@@ -241,55 +241,6 @@ When LENGTH is specified, WAREA must be specified as well
 | R15=4       | Reason Code=9   | WAREA is too small                                                       |
 | R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
 
-## MODCB ACB= macro
-
-The MODCB macro with ACB=address will modify an ACB according to the parameters specified on the
-macro invocation. It is for this reason that all parameters and keywords of the ACB macro (as described
-above) are supported on the MODCB macro when ACB=address is specified.
-
-Direct access to subfields in the ACB is discouraged. Use SHOWCB ACB=, TESTCB ACB= and/or
-MODCB ACB= to inspect, test, and/or modify the ACB's content.
-
-Direct access to subfields in the CBMR is strongly discouraged.
-
-The MODCB ACB macro can be coded as follows:
-
-| Opcode        | Operand           | Remarks                                                                                                                         |
-|---------------|-------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| [label] MODCB | ACB=address       | Points MODCB to the ACB to be modified                                                                                          |
-|               | [AM=VSAM]         | Optional, no other values allowed                                                                                               |
-|               | **[other]**       | **Any parameter supported on the ACB macro**                                                                                    |
-|               | [MF=]             | See the [description of MF=](#MFdetails)                                                                                        |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation. For details,
-please refer to the relevant IBM manual.
-
-### MACRF=
-
-To clarify how MACRF works...
-
-All supported subparameters have their own bit in `CBMRACB_MACRF` (currently 16),
-Conflicts are `MNOTE`d, eg. bits for NIS and SIS cannot both be on.
-
-If MF=E is specified then the whole of `CBMRACB_MACRF` is replaced
-
-When the ACB is modified:
-- For mutually exclusive parameters, the bit is turned on or off
-- For each non-exclusive parameter the appropriate bit is turned on, therefore it isn't possible to turn a nonexclusive
-  bit off using MODCB, this has to be done manually.
-- eg. When an ACB has MACRF=(OUT) which allows read and write functions it is not possible to change
-  the ACB to read-only using MODCB
-- if this is needed code the instruction `NI ACBMACR1,255-ACBOUT`
-
-### Return (R15) and Reason (R0) Codes
-
-| Return Code | Reason Code     | Meaning                                                                  |
-|-------------|-----------------|--------------------------------------------------------------------------|
-| R15=0       | Reason Code=n/a | Successful                                                               |
-| R15=4       | Reason Code=4   | Invalid control block                                                    |
-| R15=4       | Reason Code=12  | MODCB was attempted on an open ACB                                       |
-| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
-
 ## MODCB EXLST= macro
 
 The MODCB macro with EXLST=address will modify an EXLST according to the parameters specified on
