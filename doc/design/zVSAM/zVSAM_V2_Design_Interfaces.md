@@ -319,12 +319,16 @@ VSAM is the default and the only supported value.
 
 #### COPIES=
 
-Number of identical ACBs to generate. Defaults to 1.
+Number of identical ACBs to generate ranging from 1 to 65535. Defaults to 1.
 
 #### WAREA=
 
 The work area where the ACBs are to be constructed.
-If not specified, they will be created in storage that VSAM allocates on behalf of your program.
+
+- When WAREA is specified, LENGTH must be specified too.
+- When WAREA is not specified, the CBMR handler allocates an area of storage.
+- The address of this area whether via GETMAIN or WAREA is returned in R1.
+- The length of the generated ACB(s) is returned in R0.
 
 #### LENGTH=
 
@@ -336,6 +340,10 @@ If not specified, they will be created in storage that VSAM allocates on behalf 
 - If WAREA= is specified, this paramter is ignored.
 - If WAREA= is not specified, this parameter indicates where zVSAM is to allocate storage for the ACB or ACBs.
 
+Supported keywords:
+- BELOW = below 16M (addressable in Amode 24, 31, or 64)
+- ANY   = below 2G  (requires Amode 31 or 64 to address)
+
 #### Other keywords
 
 All parameters supported by the [ACB macro](#acb-macro) are supported here as well.
@@ -344,6 +352,15 @@ All parameters supported by the [ACB macro](#acb-macro) are supported here as we
 
 Indicates the Macro Format.
 If specified, the [label] subparameter is EQUated to the length of the CBMR.
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                  |
+|-------------|-----------------|--------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                               |
+| R15=4       | Reason Code=4   | Invalid control block                                                    |
+| R15=4       | Reason Code=9   | WAREA is too small                                                       |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
 
 ### CBMR macro
 
