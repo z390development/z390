@@ -102,6 +102,12 @@ class RunAsmTests extends z390Test {
         assert rc == 0
     }
     @Test
+    void test_IS596() {
+        int rc = this.asmlg(basePath("rt", "mlc", "IS596"), *optionsNoinitNoloadhigh)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
     void test_IS658() {
         int rc = this.asml(basePath("rt", "mlc", "IS658LD"), *options)
         this.printOutput()

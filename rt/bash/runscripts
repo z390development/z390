@@ -41,6 +41,60 @@ bash/asmlg rt/rt/OPCD_XA noloadhigh $sysmac $opt 'test(rtscript)'
 opt='@'rt/rt/OPCD_ZZZ.OPT
 bash/asmlg rt/rt/OPCD_ZZZ noloadhigh $sysmac $opt
 
+rtscript='rt/rt/RPI1540.RT'
+export rtscript
+bash/asmlg rt/rt/RPI1540  noloadhigh $sysmac      'test(rtscript)'
+
+rtscript='rt/rt/RPI1544.RT'
+export rtscript
+bash/asmlg rt/rt/RPI1544  noloadhigh $sysmac      'test(rtscript)'
+
+bash/asmlg rt/rt/RPI1609  noloadhigh $sysmac                     || test $? -eq 12
+bash/asmlg rt/rt/RPI1625  noloadhigh $sysmac                     || test $? -eq 12
+bash/asmlg rt/rt/RPI1641  noloadhigh $sysmac 'zvsam(2)'
+grep '^zVSAM version 2 in z390$' rt/rt/RPI1641.LOG || exit 1
+
+rtscript='rt/rt/RPI2000.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2000  noloadhigh $sysmac 'test(rtscript)'
+
+rtscript='rt/rt/RPI2001A.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2001A noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2001B.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2001B noloadhigh $sysmac 'test(rtscript)'
+
+rtscript='rt/rt/RPI2002A.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2002A noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2002B.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2002B noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2002C.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2002C noloadhigh $sysmac 'test(rtscript)'
+
+rtscript='rt/rt/RPI2003.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2003 noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2004.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2004 noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2005.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2005 noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2006.RT'
+export rtscript
+# **!! Because of Issue #863 the RT script is temporarily disabled
+bash/asmlg rt/rt/RPI2006 noloadhigh $sysmac
+rtscript='rt/rt/RPI2007.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2007 noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2008.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2008 noloadhigh $sysmac 'test(rtscript)'
+
 # if we get here, there were no errors
 echo "Verify tests ran without errors"
 exit 0

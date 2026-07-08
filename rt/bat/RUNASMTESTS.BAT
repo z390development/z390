@@ -24,6 +24,7 @@ call bat\asmlg %z_TraceMode% tests\testlits  trace sysmac(mac) noloadhigh optabl
 call bat\asmlg %z_TraceMode% tests\TEDIT     trace sysmac(mac) noloadhigh optable(z390)       || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TESTAMPS trace sysmac(mac) noloadhigh optable(z390)       || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\IS215    trace sysmac(mac) noloadhigh                     || goto error
+call bat\asmlg %z_TraceMode% rt\mlc\IS596    trace sysmac(mac) noloadhigh noinit              || goto error
 call bat\asml  %z_TraceMode% rt\mlc\IS658LD  trace sysmac(mac) noloadhigh                     || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\IS658    trace sysmac(mac) noloadhigh                     || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\IS658    trace sysmac(mac)                                || goto error
