@@ -175,9 +175,8 @@ class RunScripts extends z390Test {
     }
     @Test
     void test_RPI2006() {
-        // **!! Because of Issue #863 the RT script is temporarily disabled
         env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2006.RT")]
-        int rc = this.asmlg(basePath("rt", "rt", "RPI2006"), *options)
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2006"), *options, 'mem(32)', "test(RTSCRIPT)")
         this.printOutput()
         assert rc == 0
     }
