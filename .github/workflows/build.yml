@@ -1,15 +1,7 @@
 name: Build z390
 on:
-  push:
-    paths-ignore:
-      - 'doc/**'
-      - 'doc_overrides/**'
-      - 'mkdocs.yml'
-  pull_request:
-    paths-ignore:
-      - 'doc/**'
-      - 'doc_overrides/**'
-      - 'mkdocs.yml'
+  - push
+  - pull_request
 
 env:
   JAVA_DISTRIBUTION: temurin
