@@ -86,8 +86,7 @@ export rtscript
 bash/asmlg rt/rt/RPI2005 noloadhigh $sysmac 'test(rtscript)'
 rtscript='rt/rt/RPI2006.RT'
 export rtscript
-# **!! Because of Issue #863 the RT script is temporarily disabled
-bash/asmlg rt/rt/RPI2006 noloadhigh $sysmac
+bash/asmlg rt/rt/RPI2006 noloadhigh $sysmac 'mem(32)' 'test(rtscript)'
 rtscript='rt/rt/RPI2007.RT'
 export rtscript
 bash/asmlg rt/rt/RPI2007 noloadhigh $sysmac 'test(rtscript)'

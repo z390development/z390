@@ -7,7 +7,7 @@ on:
       - 'mkdocs.yml'
   pull_request:
     paths-ignore:
-      - 'docs/**'
+      - 'doc/**'
       - 'doc_overrides/**'
       - 'mkdocs.yml'
 
