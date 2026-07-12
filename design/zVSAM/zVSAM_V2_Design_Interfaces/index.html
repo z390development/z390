@@ -2608,6 +2608,61 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#modcb-acb-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MODCB ACB macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#showcb-acb-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SHOWCB ACB macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OBJECT=
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-acb-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TESTCB ACB macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return-and-reason-codes_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Return and Reason Codes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cbmr-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2740,6 +2795,61 @@
     <span class="md-ellipsis">
       
         GENCB ACB macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modcb-acb-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MODCB ACB macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#showcb-acb-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SHOWCB ACB macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OBJECT=
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-acb-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TESTCB ACB macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#return-and-reason-codes_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Return and Reason Codes
       
     </span>
   </a>
@@ -2903,6 +3013,7 @@ and TESTCB EXLST= can be used to validate specific fields of an EXLST.</p>
 <p><strong>Note:</strong> OPEN and CLOSE macros can be used to open and close either sequential files represented by a DCB
 and/or zVSAM files represented by an ACB.</p>
 <p>A description of these interfaces as implemented for z390 and zVSAM is detailed in the next chapters.</p>
+<p>======================</p>
 <h3 id="acb-macro">ACB macro</h3>
 <p>The ACB macro will generate an ACB and initialize it according to the parameters
 specified on the macro invocation.</p>
@@ -3266,6 +3377,7 @@ The default is <code>NONE</code>.</p>
 <p>Number of concurrent requests allowable for this ACB. Specify a number between 1 and 255. The default is 1.</p>
 <h4 id="bstrno">BSTRNO=</h4>
 <p>Beginning number of concurrent requests allocated to this ACB when a path is opened. Specify a number between 1 and 255. The default is 1.</p>
+<p>======================</p>
 <h3 id="acbd-macro">ACBD macro</h3>
 <p>The ACBD macro maps the ACB. Its behaviour depends on the ZVSAM option in effect:</p>
 <table>
@@ -3300,6 +3412,7 @@ The ACBD macro generates no executable code.</p>
 The ACBD macro can be invoked multiple times, but will generate the DSECT mapping
 only on its first invocation.</p>
 </blockquote>
+<p>======================</p>
 <h3 id="gencb-acb-macro">GENCB ACB macro</h3>
 <p>The GENCB macro with BLK=ACB will generate or manipulate ACBs and initialize or change them
 according to the parameters specified on the macro invocation. It is for this reason that
@@ -3328,16 +3441,16 @@ on the GENCB macro when BLK=ACB is specified.</p>
 </tr>
 </tbody>
 </table>
-<p>The structure and layout of the generated ACB are not part of the interface definition
+<p>The structure and layout of the ACB are not part of the interface definition
 and are therefore not shown in this chapter. For details please see the
 <a href="../zVSAM_V2_Design_Addenda/#zacb-description">zACB description</a> or the ACB2 macro in the mac folder.</p>
 <p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
-are  not part of the interface and are therefore not shown in this chapter.  For details please see the
+are not part of the interface and are therefore not shown in this chapter. For details please see the
 <a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR description</a> or the CBMR macro in the mac folder.</p>
 <blockquote>
 <p>[!NOTE]
-Direct access to subfields in the ACB or CBMR is strongly discouraged. Use SHOWCB ACB=, TESTCB ACB= and/or
-MODCB ACB= to inspect, test, and/or modify the ACB's content.</p>
+Direct access to subfields in the ACB or CBMR is strongly discouraged. Use GENCB BLK=ACB, SHOWCB ACB=,
+TESTCB ACB= and/or MODCB ACB= to generate, inspect, test, and/or modify the ACB's content.</p>
 </blockquote>
 <p>All keywords on the GENCB ACB macro are optional. Except BLK= which is required.</p>
 <p>The GENCB ACB macro can be coded as follows:</p>
@@ -3440,7 +3553,8 @@ For details, please refer to the relevant IBM manual.</p>
 <p>All parameters supported by the <a href="#acb-macro">ACB macro</a> are supported here as well.</p>
 <h4 id="mf">MF=</h4>
 <p>Indicates the Macro Format.
-If specified, the [label] subparameter is EQUated to the length of the CBMR.</p>
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See <a href="#mf-parameter">MF= parameter</a> for details.</p>
 <h4 id="return-and-reason-codes">Return and Reason Codes</h4>
 <table>
 <thead>
@@ -3473,6 +3587,1322 @@ If specified, the [label] subparameter is EQUated to the length of the CBMR.</p>
 </tr>
 </tbody>
 </table>
+<p>======================</p>
+<h3 id="modcb-acb-macro">MODCB ACB macro</h3>
+<p>The MODCB macro with ACB=addr will modify an ACB according to the parameters specified on the macro invocation.
+It is for this reason that all parameters and keywords of the ACB macro (as described above) are supported
+on the MODCB macro when ACB=addr is specified.</p>
+<p>The MODCB macro's function depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>MODCB1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>MODCB2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The structure and layout of the ACB are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#zacb-description">zACB description</a> or the ACB2 macro in the mac folder.</p>
+<p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the MODCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR description</a> or the CBMR macro in the mac folder.</p>
+<blockquote>
+<p>[!NOTE]
+Direct access to subfields in the ACB or CBMR is strongly discouraged. Use GENCB BLK=ACB, SHOWCB ACB=,
+TESTCB ACB= and/or MODCB ACB= to generate, inspect, test, and/or modify the ACB's content.</p>
+</blockquote>
+<p>All keywords on the MODCB ACB macro are optional. Except ACB= which is required.</p>
+<p>The MODCB ACB macro can be coded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Operand</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[label] MODCB</td>
+<td>ACB=address</td>
+<td>Points MODCB to the ACB to be modified</td>
+</tr>
+<tr>
+<td></td>
+<td>[AM=VSAM]</td>
+<td>Optional, no other values allowed</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>[other]</strong></td>
+<td><strong>Any parameter supported on the ACB macro</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=]</td>
+<td>Use standard form of MODCB ACB; this is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=L/MF=(L,addr,[label]]</td>
+<td>Use list form of MODCB ACB</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(E,addr)]</td>
+<td>Use execute form of MODCB ACB</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(G,addr,[label])]</td>
+<td>Use generate form of MODCB ACB</td>
+</tr>
+</tbody>
+</table>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<h4 id="acb">ACB=</h4>
+<p>Required parameter; specify the address of the ACB to be modified.</p>
+<h4 id="am_2">AM=</h4>
+<p>VSAM is the default and the only supported value.</p>
+<h4 id="other-keywords_1">Other keywords</h4>
+<p>All parameters supported by the <a href="#acb-macro">ACB macro</a> are supported here as well.</p>
+<p>Please note: not supported are expressions like <code>(S,scon)</code> or <code>(*,scon)</code></p>
+<h5 id="macrf_1">MACRF=</h5>
+<p>MACRF is a special case of the "other keywords". This paragrqaph clarifies how MACRF works.</p>
+<p>All supported subparameters have their own bit in <code>CBMRACB_MACRF</code> (currently 16),
+Conflicts are <code>MNOTE</code>d, eg. bits for <code>NIS</code> and <code>SIS</code> cannot both be on.</p>
+<p>If MF=E is specified then the whole of <code>CBMRACB_MACRF</code> is replaced,</p>
+<p>When the ACB is modified:
+- For mutually exclusive parameters, the bit is turned on or off
+- For each non-exclusive parameter the appropriate bit is turned on, therefore it isn't possible to turn a nonexclusive
+  bit off using MODCB, this has to be done manually.
+- eg. When an ACB has MACRF=(OUT) which allows read and write functions it is not possible to change
+  the ACB to read-only using MODCB
+- if this is needed code the instruction <code>NI ACBMACR1,255-ACBOUT</code></p>
+<blockquote>
+<p>[!NOTE]
+I do not entirely agree with how Melvyn has set this up, although I do like his extensive early error detection proposal.
+There are basically two alternatives that I can see:
+1. every MACRF option has a separate verb code, we generate as many verb codes as we need, no data is needed
+2. We generate a single verb code for the MACRF modification, supplying two 2-byte masks in the data.
+   One mask to indicate affected postions, the other to indicate the desired bit values for the selected postions.</p>
+</blockquote>
+<h4 id="mf_1">MF=</h4>
+<p>Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See <a href="#mf-parameter">MF= parameter</a> for details.</p>
+<h4 id="return-r15-and-reason-r0-codes">Return (R15) and Reason (R0) Codes</h4>
+<table>
+<thead>
+<tr>
+<th>Return Code</th>
+<th>Reason Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R15=0</td>
+<td>Reason Code=n/a</td>
+<td>Successful</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=4</td>
+<td>Invalid control block</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=12</td>
+<td>MODCB was attempted on an open ACB</td>
+</tr>
+<tr>
+<td>R15=8</td>
+<td>Reason Code=n/a</td>
+<td>An attempt was made to update a CBMR with a field not previously created</td>
+</tr>
+</tbody>
+</table>
+<p>======================</p>
+<h3 id="showcb-acb-macro">SHOWCB ACB macro</h3>
+<p>The SHOWCB macro with ACB=addr will return ACB-related fields according to the parameters specified
+on the macro invocation in the order they are specified. Duplicates are permitted.</p>
+<p>The SHOWCB macro's function depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>SHOWCB1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>SHOWCB2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The structure and layout of the ACB are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#zacb-description">zACB description</a> or the ACB2 macro in the mac folder.</p>
+<p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the SHOWCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR description</a> or the CBMR macro in the mac folder.</p>
+<blockquote>
+<p>[!NOTE]
+Direct access to subfields in the ACB or CBMR is strongly discouraged. Use GENCB BLK=ACB, SHOWCB ACB=,
+TESTCB ACB= and/or MODCB ACB= to generate, inspect, test, and/or modify the ACB's content.</p>
+</blockquote>
+<p>The SHOWCB ACB macro can be coded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Operand</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[label] SHOWCB</td>
+<td>ACB=address</td>
+<td>Points MODCB to the ACB to be queried</td>
+</tr>
+<tr>
+<td></td>
+<td>[AM=VSAM]</td>
+<td>Optional, no other values allowed</td>
+</tr>
+<tr>
+<td></td>
+<td>AREA=addr</td>
+<td>Address of return area</td>
+</tr>
+<tr>
+<td></td>
+<td>LENGTH=nr</td>
+<td>Size of return area in bytes</td>
+</tr>
+<tr>
+<td></td>
+<td>[OBJECT=DATA/INDEX]</td>
+<td>For KSDS: select data or index component; DATA is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>FIELDS=(keywd_list)</td>
+<td>List of keywords indicating which fields to return</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=]</td>
+<td>Use standard form of SHOWCB ACB; this is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=L/MF=(L,addr,[label]]</td>
+<td>Use list form of SHOWCB ACB</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(E,addr)]</td>
+<td>Use execute form of SHOWCB ACB</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(G,addr,[label])]</td>
+<td>Use generate form of SHOWCB ACB</td>
+</tr>
+</tbody>
+</table>
+<p>All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<h4 id="acb_1">ACB=</h4>
+<p>Required parameter; specify the address of the ACB to be queried.</p>
+<h4 id="am_3">AM=</h4>
+<p>VSAM is the default and the only supported value.</p>
+<h4 id="area">AREA=</h4>
+<p>Required parameter; specify the address of the return area.</p>
+<h4 id="length_1">LENGTH=</h4>
+<p>Required parameter; specify the length of the return area.</p>
+<h3 id="object">OBJECT=</h3>
+<p>Optional parameter; if specified must be <code>DATA</code>or <code>INDEX</code>. <code>DATA</code> is the default.</p>
+<h4 id="fields">FIELDS=</h4>
+<p>Specifies a list of keywords. Each keyword specified returns a field of 4 or 8 bytes. These return values are stored consecutively in the return area specified in the <code>AREA</code>= and <code>LENGTH</code>= parameters.
+Some keywords are valid only when the ACB is open. An error is returned when any of these keywords are used while the ACB is not open.</p>
+<p>Defined options for the FIELDS parameter are listed below:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Length</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ACBLEN</td>
+<td>4</td>
+<td>Size of ACB in bytes</td>
+</tr>
+<tr>
+<td>AVSPAC</td>
+<td>4</td>
+<td>Available space in component</td>
+</tr>
+<tr>
+<td>BFRFND</td>
+<td>4</td>
+<td>Nr of buffer hits for component (No I/O needed to satisfy read request)</td>
+</tr>
+<tr>
+<td>BSTRNO</td>
+<td>4</td>
+<td>Initial nr of strings</td>
+</tr>
+<tr>
+<td>BUFND</td>
+<td>4</td>
+<td>Nr of data buffers specified in ACB</td>
+</tr>
+<tr>
+<td>BUFNI</td>
+<td>4</td>
+<td>Nr of index buffers specified in ACB</td>
+</tr>
+<tr>
+<td>BUFNO</td>
+<td>4</td>
+<td>Number of buffers in use for component</td>
+</tr>
+<tr>
+<td>BUFNOL</td>
+<td>4</td>
+<td>Number of data/index buffers allocated for LSR processing</td>
+</tr>
+<tr>
+<td>BUFRDS</td>
+<td>4</td>
+<td>I/O count in buffers</td>
+</tr>
+<tr>
+<td>BUFSP</td>
+<td>4</td>
+<td>Buffer space in bytes specified in ACB</td>
+</tr>
+<tr>
+<td>BUFUSE</td>
+<td>4</td>
+<td>Number of data/index buffers actually in use</td>
+</tr>
+<tr>
+<td>CDTASIZE</td>
+<td>8</td>
+<td>Size of a compressed dataset (returns zero)</td>
+</tr>
+<tr>
+<td>CINV</td>
+<td>4</td>
+<td>Block size for component</td>
+</tr>
+<tr>
+<td>CIPCA</td>
+<td>4</td>
+<td>CI's in CA (returns zero)</td>
+</tr>
+<tr>
+<td>DDNAME</td>
+<td>8</td>
+<td>DDname specified in ACB</td>
+</tr>
+<tr>
+<td>ENDRBA</td>
+<td>4</td>
+<td>PFXHLRA, recalculated to RBA value of Block's last byte</td>
+</tr>
+<tr>
+<td>ERROR</td>
+<td>4</td>
+<td>Return code from last open/close operation</td>
+</tr>
+<tr>
+<td>EXLLEN</td>
+<td>4</td>
+<td>Length of EXLST in bytes</td>
+</tr>
+<tr>
+<td>EXLST</td>
+<td>4</td>
+<td>Ptr to EXLST, foxes if no EXLST applies</td>
+</tr>
+<tr>
+<td>FS</td>
+<td>4</td>
+<td>Nr of free blocks per 100 blocks in the component. Derived from PFXFRBLK and PFXFRINT values</td>
+</tr>
+<tr>
+<td>HALCRBA</td>
+<td>4</td>
+<td>Highest valid XLRA in the component, recalculated to an RBA value</td>
+</tr>
+<tr>
+<td>HLRBA</td>
+<td>4</td>
+<td>For OBJECT=INDEX only, highest index block RBA.</td>
+</tr>
+<tr>
+<td>KEYLEN</td>
+<td>4</td>
+<td>Length of key field</td>
+</tr>
+<tr>
+<td>LEVEL</td>
+<td>8</td>
+<td>Address (4 bytes) and length (4 bytes) of field containing zVSAM version number</td>
+</tr>
+<tr>
+<td>LOKEY</td>
+<td>8</td>
+<td>Ptr (4 bytes) to lowest key in the cluster + length (4 bytes) of key</td>
+</tr>
+<tr>
+<td>LRECL</td>
+<td>4</td>
+<td>Maximum record length; foxes if in excess of 4GB</td>
+</tr>
+<tr>
+<td>MAREA</td>
+<td>4</td>
+<td>Ptr to message area, foxes if not relevant</td>
+</tr>
+<tr>
+<td>MLEN</td>
+<td>4</td>
+<td>Length of message area, foxes if not relevant</td>
+</tr>
+<tr>
+<td>NCIS</td>
+<td>4</td>
+<td>Nr of Block splits in the data component. Foxes for index.</td>
+</tr>
+<tr>
+<td>NDELR</td>
+<td>4</td>
+<td>Nr of deleted records from data component. Foxes for index.</td>
+</tr>
+<tr>
+<td>NEXCP</td>
+<td>4</td>
+<td>Nr of I/O requests for the component</td>
+</tr>
+<tr>
+<td>NEXT</td>
+<td>4</td>
+<td>Nr of extents to the physical file. Foxes.</td>
+</tr>
+<tr>
+<td>NINSR</td>
+<td>4</td>
+<td>Nr of records inserted for the data component. Foxes for index.</td>
+</tr>
+<tr>
+<td>NIXL</td>
+<td>4</td>
+<td>Nr of index levels for index component. Foxes for data component.</td>
+</tr>
+<tr>
+<td>NLOGR</td>
+<td>4</td>
+<td>Nr of records in the component</td>
+</tr>
+<tr>
+<td>NRETR</td>
+<td>4</td>
+<td>Nr of records retrieved from the data component. Foxes for index.</td>
+</tr>
+<tr>
+<td>NSSS</td>
+<td>4</td>
+<td>Nr of control area splits. Foxes.</td>
+</tr>
+<tr>
+<td>NUIW</td>
+<td>4</td>
+<td>Nr of implicit write operations.</td>
+</tr>
+<tr>
+<td>NUPDR</td>
+<td>4</td>
+<td>Nr of updated records in the component</td>
+</tr>
+<tr>
+<td>PASSWD</td>
+<td>4</td>
+<td>Ptr to password, consisting of length (1 byte, binary) followed by actual password value</td>
+</tr>
+<tr>
+<td>RELEASE</td>
+<td>8</td>
+<td>Address (4 bytes) and length (4 bytes) of field containing zVSAM version number</td>
+</tr>
+<tr>
+<td>RKP</td>
+<td>4</td>
+<td>Relative Key Position, offset of key within logical record</td>
+</tr>
+<tr>
+<td>RMODE31</td>
+<td>4</td>
+<td>0=None, 1=Buff, 2=CB, 3=All.</td>
+</tr>
+<tr>
+<td>RPLLEN</td>
+<td>4</td>
+<td>Length of RPL in bytes</td>
+</tr>
+<tr>
+<td>SDTASIZE</td>
+<td>8</td>
+<td>Data size.</td>
+</tr>
+<tr>
+<td>SHRPOOL</td>
+<td>4</td>
+<td>SHRPOOL number</td>
+</tr>
+<tr>
+<td>STMST</td>
+<td>8</td>
+<td>System timestamp of last close</td>
+</tr>
+<tr>
+<td>STRMAX</td>
+<td>4</td>
+<td>Max nr of concurrently active strings</td>
+</tr>
+<tr>
+<td>STRNO</td>
+<td>4</td>
+<td>Max nr of allocated strings</td>
+</tr>
+<tr>
+<td>UIW</td>
+<td>4</td>
+<td>Nr of explicit writes for component</td>
+</tr>
+<tr>
+<td>XAVSPAC</td>
+<td>8</td>
+<td>AVSPAC when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XBFRFND</td>
+<td>8</td>
+<td>BFRFND when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XBUFNO</td>
+<td>8</td>
+<td>BUFNO when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XBUFRDS</td>
+<td>8</td>
+<td>BUFRDS when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XBUFUSE</td>
+<td>8</td>
+<td>BUFUSE when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XENDRBA</td>
+<td>8</td>
+<td>ENDRBA when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XHALCRBA</td>
+<td>8</td>
+<td>HALCRBA when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XHLRBA</td>
+<td>8</td>
+<td>HLRBA when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XNCIS</td>
+<td>8</td>
+<td>NCIS when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XNDELR</td>
+<td>8</td>
+<td>NDELR when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XNEXCP</td>
+<td>8</td>
+<td>NEXCP when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XNINSR</td>
+<td>8</td>
+<td>NINSR when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XNLOGR</td>
+<td>8</td>
+<td>NLOGR when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XNRETR</td>
+<td>8</td>
+<td>NRETR when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XNUIW</td>
+<td>8</td>
+<td>NNUIW when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XNUPDR</td>
+<td>8</td>
+<td>NUPDR when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XSTRMAX</td>
+<td>8</td>
+<td>STRMAX when value may exceed 4GB</td>
+</tr>
+<tr>
+<td>XUIW</td>
+<td>8</td>
+<td>UIW when value may exceed 4GB</td>
+</tr>
+</tbody>
+</table>
+<h4 id="mf_2">MF=</h4>
+<p>Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See <a href="#mf-parameter">MF= parameter</a> for details.</p>
+<h4 id="return-and-reason-codes_1">Return and Reason Codes</h4>
+<table>
+<thead>
+<tr>
+<th>Return Code</th>
+<th>Reason Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R15=0</td>
+<td>Reason Code=n/a</td>
+<td>Successful</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=1</td>
+<td>ACBPFX or ACBXPFX are zero</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>(X)HLRBA requested and OBJECT=DATA</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>4-byte version oif 8-byte field is requested but the 1<sup>st</sup> four bytes are not zero</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>CTRLOKEY@ is foxes for: non-KSDS / KSDS index / KSDS data but empty</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=4</td>
+<td>Invalid control block</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=9</td>
+<td>Length too small</td>
+</tr>
+<tr>
+<td>R15=8</td>
+<td>Reason Code=n/a</td>
+<td>An attempt was made to update a CBMR with a field not previously created</td>
+</tr>
+</tbody>
+</table>
+<p>======================</p>
+<h3 id="testcb-acb-macro">TESTCB ACB macro</h3>
+<p>The TESTCB macro with ACB=addr will test ACB-related fields according to the parameters specified
+on the macro invocation. Only a single test can be specified on each TESTCB invocation.
+TESTCB returns a PSW condition code of 8=Equal when the specified test is met, 7=NotEqual otherwise.</p>
+<p>The TESTCB macro's function depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>TESTCB1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>TESTCB2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The structure and layout of the ACB are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#zacb-description">zACB description</a> or the ACB2 macro in the mac folder.</p>
+<p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the TESTCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR description</a> or the CBMR macro in the mac folder.</p>
+<p>The TESTCB ACB macro can be coded as follows:</p>
+<blockquote>
+<p>[!NOTE]
+Direct access to subfields in the ACB or CBMR is strongly discouraged. Use GENCB BLK=ACB, SHOWCB ACB=,
+TESTCB ACB= and/or MODCB ACB= to generate, inspect, test, and/or modify the ACB's content.</p>
+</blockquote>
+<p>The SHOWCB ACB macro can be coded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Operand</th>
+<th>Remarks</th>
+<th>Conditions returned</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[label] TESTCB</td>
+<td>ACB=address</td>
+<td>Points TESTCB to the ACB to be tested</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[AM=VSAM]</td>
+<td>Optional, no other values allowed</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>ERET=addr</td>
+<td>Address of error handling routine</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[OBJECT=DATA/INDEX]</td>
+<td>For KSDS: select data or index component</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBLEN=nr</td>
+<td>length of ACB in bytes</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>ATRB=(keywd_list)</td>
+<td>List of keywords indicating attributes to test</td>
+<td>keyword dependent</td>
+</tr>
+<tr>
+<td></td>
+<td>AVSPAC=nr</td>
+<td>Available space in data/index</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>BFRFND=nr</td>
+<td>Buffer hits for data/index including LSR</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>BSTRNO=nr</td>
+<td>Initial value of strings for a path</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>BUFND=nr</td>
+<td>Nr of data buffers</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>BUFNI=nr</td>
+<td>Nr of index buffers</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>BUFNO=nr</td>
+<td>Nr of I/O Buffers</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>BUFRDS=nr</td>
+<td>Nr of data/index buffer reads</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>BUFSP=nr</td>
+<td>Buffer space in bytes</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>BUFUSE=nr</td>
+<td>Number of data/index buffers actually in use</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>CINV=nr</td>
+<td>Block size in bytes</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>DDNAME=string</td>
+<td>DDname</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>ENDRBA=nr</td>
+<td>High water mark XLRA</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>ERROR=nr</td>
+<td>Error code of last error</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLLEN=nr</td>
+<td>EXLST length in bytes</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLST=adr</td>
+<td>EXLST address</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>FS=nr</td>
+<td>Free Block per 100</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>HALCRBA=nr</td>
+<td>Highest allocated data/index RBA</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>HLRBA=nr</td>
+<td>For OBJECT=INDEX only, highest index block RBA.</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>KEYLEN=nr</td>
+<td>Length of key field in bytes</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>LRECL=nr</td>
+<td>Logical Record Length</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>MACRF=(keyword list)</td>
+<td>List of keywords for processing options. All subparms have to be true for EQ.</td>
+<td>EQ NE=HI</td>
+</tr>
+<tr>
+<td></td>
+<td>MAREA=adr</td>
+<td>Message area address</td>
+<td>??</td>
+</tr>
+<tr>
+<td></td>
+<td>MLEN=nr</td>
+<td>Length of message area in bytes</td>
+<td>??</td>
+</tr>
+<tr>
+<td></td>
+<td>NCIS=nr</td>
+<td>Nr of Block splits</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>NDELR=nr</td>
+<td>Nr of deleted records</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>NEXCP=nr</td>
+<td>Nr of I/O requests</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>NEXT=nr</td>
+<td>Nr of extents</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>NINSR=nr</td>
+<td>Nr of records inserted</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>NIXL=nr</td>
+<td>Nr of index levels</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>NLOGR=nr</td>
+<td>Nr of records</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>NRETR=nr</td>
+<td>Nr of records retrieved</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>NSSS=nr</td>
+<td>Nr of control area splits. Compares to zero.</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>NUIW=nr</td>
+<td>Nr of non-user writes</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>NUPDR=nr</td>
+<td>Nr of updates applied</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>OFLAGS=OPEN</td>
+<td>Opened successfully?</td>
+<td>EQ NE=HI</td>
+</tr>
+<tr>
+<td></td>
+<td>OPENOBJ=PATH/BASE/AIX</td>
+<td>ACB represents Path/Base/AIX?</td>
+<td>EQ NE=HI</td>
+</tr>
+<tr>
+<td></td>
+<td>PASSWD=adr</td>
+<td>Ptr to 1-byte length followed by password</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>RKP=nr</td>
+<td>Offset of key field within record</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLLEN=nr</td>
+<td>RPL length in bytes</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>SHRPOOL=nr</td>
+<td>SHRPOOL number</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>SDTASZ=adr</td>
+<td>Data size</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>STMST=adr</td>
+<td>Pointer to system timestamp field</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>STRMAX=nr</td>
+<td>Max. value of concurrently active strings</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>STRNO=nr</td>
+<td>Max. nr of parallel requests</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>UIW=nr</td>
+<td>value of user writes</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XAVSPAC=nr</td>
+<td>AVSPAC when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XBFRFND=nr</td>
+<td>BFRFND when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XBUFNO=nr</td>
+<td>BUFNO when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XBUFRDS=nr</td>
+<td>BUFRDS when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XBUFUSE=nr</td>
+<td>BUFUSE when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XENDRBA=nr</td>
+<td>ENDRBA when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XHALCRBA=nr</td>
+<td>HALCRBA when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XHLRBA=nr</td>
+<td>HLRBA when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XNCIS=nr</td>
+<td>NCIS when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XNDELR=nr</td>
+<td>NDELR when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XNEXCP=nr</td>
+<td>NEXCP when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XNEXT=nr</td>
+<td>NEXT when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XNINSR=nr</td>
+<td>NINSR when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XNLOGR=nr</td>
+<td>NLOGR when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XNRETR=nr</td>
+<td>NRETR when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XNUIW=nr</td>
+<td>NNUIW when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XNUPDR=nr</td>
+<td>NUPDR when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XSTRMAX=nr</td>
+<td>STRMAX when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>XUIW=nr</td>
+<td>UIW when value may exceed 4GB</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=]</td>
+<td>Use standard form of SHOWCB ACB; this is the default</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=L/MF=(L,addr,[label]]</td>
+<td>Use list form of SHOWCB ACB</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(E,addr)]</td>
+<td>Use execute form of SHOWCB ACB</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(G,addr,[label])]</td>
+<td>Use generate form of SHOWCB ACB</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table>
+<p>All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<h4 id="acb_2">ACB=</h4>
+<p>Required parameter; specify the address of the ACB to be tested.</p>
+<h4 id="am_4">AM=</h4>
+<p>VSAM is the default and the only supported value.</p>
+<h4 id="eret">ERET=</h4>
+<p>Optional address of error handling routine.</p>
+<h4 id="object_1">OBJECT=</h4>
+<p>Optional parameter; if specified must be <code>DATA</code>or <code>INDEX</code>. <code>DATA</code> is the default.</p>
+<h4 id="atrb">ATRB=</h4>
+<p>Defined options for the ATRB parameter are listed below:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>COMPRESS</td>
+<td>Compression on?</td>
+</tr>
+<tr>
+<td>ESDS</td>
+<td>Component is an ESDS?</td>
+</tr>
+<tr>
+<td>KSDS</td>
+<td>Component is a KSDS?</td>
+</tr>
+<tr>
+<td>LDS</td>
+<td>Component is a LDS?</td>
+</tr>
+<tr>
+<td>RRDS</td>
+<td>Component is a RRDS?</td>
+</tr>
+<tr>
+<td>REPL</td>
+<td>Always false for zVSAM</td>
+</tr>
+<tr>
+<td>SPAN</td>
+<td>Component may hold segmented records</td>
+</tr>
+<tr>
+<td>SSWD</td>
+<td>Always false for zVSAM.</td>
+</tr>
+<tr>
+<td>UNQ</td>
+<td>Path is defined on unique key?</td>
+</tr>
+<tr>
+<td>VRRDS</td>
+<td>Variable-length RRDS?</td>
+</tr>
+<tr>
+<td>VESDS</td>
+<td>Variable-length ESDS? (zVSAM extension)</td>
+</tr>
+<tr>
+<td>WCK</td>
+<td>Always false for zVSAM</td>
+</tr>
+<tr>
+<td>XADDR</td>
+<td>Extended format?</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>[!NOTE]
+All subparameters have to be true for EQ.
+The syntax rules for ATRB have been tightened in zVSAM V2:
+- ESDS, KSDS, LDS, RRDS and VRRDS are considered mutually exclusive
+- <code>PFXFFLGS</code> is tested.
+- For <code>SPAN</code> or <code>UNQ</code>, <code>PFXRFLGS</code> is tested.
+- If <code>COMPRESS</code>, <code>REPL</code>, <code>SSWD</code> or <code>WCK</code> are included then NE=HI is returned.</p>
+</blockquote>
+<h4 id="macrf_2">MACRF=</h4>
+<p>If any of the following keywords are used then NE=HI will be returned:
+- <code>CNV</code>, <code>CFX</code>, <code>NFX</code>, <code>DDN</code>, <code>DSN</code>, <code>LEW</code>, <code>NLW</code>, <code>NRS</code>, <code>RST</code>, <code>RLS</code>, <code>NUB</code>, <code>UBF</code>, <code>NCI</code>, <code>ICI</code>.</p>
+<h4 id="keywordnradr">Keyword=nr/adr</h4>
+<p>Remaining Keyword parameters specify a value, an address, or a keyword list to be tested.</p>
+<blockquote>
+<p>[!NOTE]
+Melvyn defined RBA values. We use LRSNs throughout. If we do not drop the RBA support,
+we'll need to find out why Melvyn introduced RBA values and how he plans to assign/maintain them.</p>
+<p>[!NOTE]
+Melvyn defined ERROR to return code from last open/close.
+I think it should be the error code from last operation that errorred.
+Whichever executable macro that might have been.</p>
+</blockquote>
+<h4 id="mf_3">MF=</h4>
+<p>Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See <a href="#mf-parameter">MF= parameter</a> for details.</p>
+<h3 id="return-and-reason-codes_2">Return and Reason Codes</h3>
+<table>
+<thead>
+<tr>
+<th>Return Code</th>
+<th>Reason Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R15=0</td>
+<td>Reason Code=n/a</td>
+<td>Successful</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=1</td>
+<td>This parameter requires the dataset to be open.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>(X)HLRBA requested and OBJECT=DATA</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>For fields that have 8-byte values the 4-byte version is requested but the 1<sup>st</sup> four bytes are not zero</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=4</td>
+<td>Invalid control block</td>
+</tr>
+<tr>
+<td>R15=8</td>
+<td>Reason Code=n/a</td>
+<td>An attempt was made to update a CBMR with a field not previously created</td>
+</tr>
+</tbody>
+</table>
+<p>======================</p>
 <h3 id="cbmr-macro">CBMR macro</h3>
 <p>A CBMR is generated for all forms of the '<code>GENCB</code>, <code>MODCB</code>, <code>SHOWCB</code>, and <code>TESTCB</code> macros.
 The CBMR is then used to direct the Control Block Management Program to carry out the
@@ -3580,7 +5010,7 @@ or the <code>CBMR</code> macro in the mac folder.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-3-gf71b8f88"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-4-g9dfb2058"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>

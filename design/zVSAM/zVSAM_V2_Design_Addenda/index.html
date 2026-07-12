@@ -2601,6 +2601,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#showcb-acb-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SHOWCB ACB details
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-acb-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TESTCB ACB details
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cbmr-description" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2743,6 +2765,28 @@
   
     <nav class="md-nav" aria-label="zACB description">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#showcb-acb-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SHOWCB ACB details
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-acb-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TESTCB ACB details
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#cbmr-description" class="md-nav__link">
@@ -3501,6 +3545,403 @@ Accessing subfields of the zACB directly may adversely impact portability of you
 Fields ACBPFX through ACBDTYPE are dataset-level fields and do not belong in the zACB,
 which is intended for cluster-level information. These fields need to be moved to another structure.</p>
 </blockquote>
+<h3 id="showcb-acb-details">SHOWCB ACB details</h3>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AVSPAC</td>
+<td>Count of available space in bytes – taken from prefix counter field <code>CTRAVSPAC</code></td>
+</tr>
+<tr>
+<td>BFRFND</td>
+<td>nr of times since this ACB was opened that a get/read request for this ACB was satisfied from a buffer, without doing any I/O. Derived from <code>CTRNBFRFND</code></td>
+</tr>
+<tr>
+<td>BSTRNO</td>
+<td>Initial value of strings for a path. Derived from <code>ACBBSTNO</code></td>
+</tr>
+<tr>
+<td>BUFND</td>
+<td>value of data buffers specified in ACB. Derived from <code>ACBBUFND</code></td>
+</tr>
+<tr>
+<td>BUFNI</td>
+<td>value of index buffers specified in ACB. Derived from <code>ACBBUFNI</code></td>
+</tr>
+<tr>
+<td>BUFNO</td>
+<td>Number of data/index buffers allocated (last 4 bytes) Derived from <code>CTRNBUFNO</code></td>
+</tr>
+<tr>
+<td>BUFNOL</td>
+<td>Number of data/index buffers allocated for LSR processing (returns zero)</td>
+</tr>
+<tr>
+<td>BUFRDS</td>
+<td>Number of data/index buffer reads (last 4 bytes). Derived from <code>CTRNBUFRDS</code></td>
+</tr>
+<tr>
+<td>BUFSP</td>
+<td>Buffer space in bytes specified in ACB. Derived from <code>ACBBUFSP</code></td>
+</tr>
+<tr>
+<td>BUFUSE</td>
+<td>Number of data/index buffers actually in use (last 4 bytes) Derived from <code>CTRNBUFUSE</code></td>
+</tr>
+<tr>
+<td>CDTASIZE</td>
+<td>Compressed data size. Since zVSAM does not support compression, this is the same as <code>SDTASIZE</code>. Taken from prefix counter field <code>CTRSDTA</code>.</td>
+</tr>
+<tr>
+<td>CINV</td>
+<td>Block size for data/index. Derived from <code>PFXBLKSZ</code></td>
+</tr>
+<tr>
+<td>CIPCA</td>
+<td>CI's in CA (returns zero)</td>
+</tr>
+<tr>
+<td>DDNAME</td>
+<td>DDNAME specified in ACB. Derived from <code>ACBDDNM</code></td>
+</tr>
+<tr>
+<td>ENDRBA</td>
+<td>high water mark of the component in bytes, discounting the prefix block. Taken from prefix counter field <code>CTRENDRBA</code>.</td>
+</tr>
+<tr>
+<td></td>
+<td>If the last block in the component is free, it's the starting XRBA of that block. If the last block holds the last record, it's the XRBA of that record's last byte.</td>
+</tr>
+<tr>
+<td></td>
+<td>Otherwise, it's the XRBA of the last byte of the last record on the block.</td>
+</tr>
+<tr>
+<td>ERROR</td>
+<td>Return code from last open/close operation. Derived from <code>ACBERFLG</code></td>
+</tr>
+<tr>
+<td>EXLLEN</td>
+<td>Length of EXLST in bytes</td>
+</tr>
+<tr>
+<td>EXLST</td>
+<td>address of EXLST, zero if none. Derived from <code>ACBEXLST</code></td>
+</tr>
+<tr>
+<td>FS</td>
+<td>For data component <code>PFXFRBLK</code> / (<code>PFXFRBLK</code> + <code>PFXFRINT</code>) * 100. Foxes for index.</td>
+</tr>
+<tr>
+<td>HALCRBA</td>
+<td>XRBA of the last byte of the last record. Taken from prefix counter field <code>CTRHALCRBA</code>.</td>
+</tr>
+<tr>
+<td>HLRBA</td>
+<td>For OBJECT=INDEX only, highest index block RBA. Derived from <code>CTRHLRBA</code></td>
+</tr>
+<tr>
+<td>KEYLEN</td>
+<td>length of key field. For KSDS this is the length of the key field. For RRDS/ESDS the value is always 8. Taken from prefix field <code>PFXKYLEN</code>.</td>
+</tr>
+<tr>
+<td>LEVEL</td>
+<td>Address (4 bytes) and length (4 bytes) of field containing zVSAM version. Derived from <code>ACBVER</code></td>
+</tr>
+<tr>
+<td>LOKEY</td>
+<td>Address (4 bytes) of lowest key in the cluster + length (4 bytes) of key. Derived from <code>CTRLOKEY@</code> and <code>PFXKYLEN</code></td>
+</tr>
+<tr>
+<td>LRECL</td>
+<td>Maximum data/index record length. Derived from <code>PFXRCLEN</code></td>
+</tr>
+<tr>
+<td>MAREA</td>
+<td>Message area (returns foxes)</td>
+</tr>
+<tr>
+<td>MLEN</td>
+<td>Message length (returns zero)</td>
+</tr>
+<tr>
+<td>NCIS</td>
+<td>value of Block splits in the data component (last 4 bytes) Zero for OBJECT=INDEX. Derived from <code>CTRNCIS</code></td>
+</tr>
+<tr>
+<td>NDELR</td>
+<td>value of deleted records from the data component (last 4 bytes) Zero for OBJECT=INDEX. Derived from <code>CTRNDELR</code></td>
+</tr>
+<tr>
+<td>NEXCP</td>
+<td>value of I/O requests for the data/index components (last 4 bytes) Derived from <code>CTRNEXCP</code></td>
+</tr>
+<tr>
+<td>NEXT</td>
+<td>value of extents of the data/index components (returns 1)</td>
+</tr>
+<tr>
+<td>NINSR</td>
+<td>value of records inserted for the data component (last 4 bytes) Zero for OBJECT=INDEX. Derived from <code>CTRNINSR</code></td>
+</tr>
+<tr>
+<td>NIXL</td>
+<td>value of index levels for index component. Zero for OBJECT=DATA. Derived from highest non-foxes <code>PFXBLVLn</code></td>
+</tr>
+<tr>
+<td>NLOGR</td>
+<td>nr of records in the component. Taken from prefix counter field <code>CTRNLOGR</code>.</td>
+</tr>
+<tr>
+<td>NRETR</td>
+<td>value of records retrieved from the data component (last 4 bytes). Zero for OBJECT=INDEX. Derived from <code>CTRNRETR</code></td>
+</tr>
+<tr>
+<td>NSSS</td>
+<td>value of control area splits for the data/index (returns zero)</td>
+</tr>
+<tr>
+<td>NUIW</td>
+<td>nr of times a block was written for this component by zVSAM rather than the user program. Taken from prefix counter field <code>CTRNNUIW</code>.</td>
+</tr>
+<tr>
+<td>NUPDR</td>
+<td>nr of times a record was updated for this component. Taken from prefix counter field <code>CTRNUPDR</code>.</td>
+</tr>
+<tr>
+<td>PASSWD</td>
+<td>address to password, consisting of length (1 byte, binary) followed by the actual password value. Derived from <code>ACBPASSW</code></td>
+</tr>
+<tr>
+<td>RELEASE</td>
+<td>Address (4 bytes) and length (4 bytes) of field containing zVSAM version. Derived from <code>ACBVER</code>. Same as LEVEL</td>
+</tr>
+<tr>
+<td>RKP</td>
+<td>Relative Key Position, offset of key within logical record. Derived from <code>PFXKYOFF</code></td>
+</tr>
+<tr>
+<td>RMODE31</td>
+<td>0=None, 1=Buff, 2=CB, 3=All. Derived from <code>ACBOFLGS</code></td>
+</tr>
+<tr>
+<td>RPLLEN</td>
+<td>Length of RPL in bytes</td>
+</tr>
+<tr>
+<td>SDTASIZE</td>
+<td>Total nr of data bytes currently stored in the component. Sum of all record lengths. Taken from prefix counter field <code>CTRSDTASZ</code>.</td>
+</tr>
+<tr>
+<td>SHRPOOL</td>
+<td>SHRPOOL number. Derived from <code>ACBSHRP</code></td>
+</tr>
+<tr>
+<td>STMST</td>
+<td>system timestamp of last close operation on the component. Taken from prefix counter field <code>CTRSTMST</code>.</td>
+</tr>
+<tr>
+<td>STRMAX</td>
+<td>Max value of concurrently active strings (last 4 bytes). Derived from <code>CTRSTRMAX</code></td>
+</tr>
+<tr>
+<td>STRNO</td>
+<td>Max value of allocated strings. Derived from <code>ACBSTRNO</code></td>
+</tr>
+<tr>
+<td>UIW</td>
+<td>nr of times a block was written for this component by the user program rather than zVSAM. Taken from prefix counter field <code>CTRNUIW</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Review notes:
+1. ENDRBA - current last sentence seems superfluous. Left-over from a prior version? Double-check and remove or rephrase.
+2. NSSS should be zero, rather than foxes - we never do CA splits.
+3. Melvyn declares CDTASIZE to always return zero. Do we want that?
+4. ENDRBA (and HALCRBA, HLRBA) - we do not have RBA values, only LRSN. How to redefine? Melvyn says to use <code>CTRENDRBA</code>
+5. Melvyn declares FS to always return zero. Do we want that?
+6. Melvyn declares NRETR to be zero for index components. I'm not sure why.</p>
+<h3 id="testcb-acb-details">TESTCB ACB details</h3>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Usage and implementation in zVSAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AVSPAC</td>
+<td>Available space in data/index (last 4 bytes) From <code>CTRAVSPAC</code></td>
+</tr>
+<tr>
+<td>BFRFND</td>
+<td>Buffer hits for data/index including LSR (last 4 bytes). From <code>CTRNBFRFND</code></td>
+</tr>
+<tr>
+<td>BSTRNO</td>
+<td>Initial value of strings for a path From <code>ACBBSTNO</code></td>
+</tr>
+<tr>
+<td>BUFND</td>
+<td>value of data buffers. From <code>ACBBUFND</code></td>
+</tr>
+<tr>
+<td>BUFNI</td>
+<td>value of index buffers. From <code>ACBBUFNI</code></td>
+</tr>
+<tr>
+<td>BUFNO</td>
+<td>value of I/O Buffers (last 4 bytes) From <code>CTRNBUFNO</code></td>
+</tr>
+<tr>
+<td>BUFRDS</td>
+<td>Number of data/index buffer reads (last 4 bytes). From <code>CTRNBUFRDS</code></td>
+</tr>
+<tr>
+<td>BUFSP</td>
+<td>Buffer space in bytes. From <code>ACBBUFSP</code></td>
+</tr>
+<tr>
+<td>BUFUSE</td>
+<td>Number of data/index buffers actually in use (last 4 bytes). From <code>CTRNBUFUSE</code></td>
+</tr>
+<tr>
+<td>CINV</td>
+<td>Block size in bytes. From <code>PFXBLKSZ</code></td>
+</tr>
+<tr>
+<td>DDNAME</td>
+<td>DDNAME. From <code>ACBDDNM</code></td>
+</tr>
+<tr>
+<td>ENDRBA</td>
+<td>Highest used RBA (last 4 bytes). From <code>CTRENDRBA</code></td>
+</tr>
+<tr>
+<td>ERROR</td>
+<td>Return code from last open/close operation From <code>ACBERFLG</code></td>
+</tr>
+<tr>
+<td>EXLST</td>
+<td>EXLST address. From <code>ACBEXLST</code></td>
+</tr>
+<tr>
+<td>FS</td>
+<td>????</td>
+</tr>
+<tr>
+<td>HALCRBA</td>
+<td>Highest allocated data/index RBA (last 4 bytes). From <code>CTRHALCRBA</code></td>
+</tr>
+<tr>
+<td>HLRBA</td>
+<td>For OBJECT=INDEX only, highest index block RBA. From <code>CTRHLRBA</code></td>
+</tr>
+<tr>
+<td>KEYLEN</td>
+<td>Length of key field. From <code>PFXKYLEN</code></td>
+</tr>
+<tr>
+<td>LRECL</td>
+<td>Logical Record Length. From <code>PFXRCLEN</code></td>
+</tr>
+<tr>
+<td>MACRF</td>
+<td>List of keywords for processing options. From <code>ACBMACRn</code>.</td>
+</tr>
+<tr>
+<td>NCIS</td>
+<td>value of block splits (last 4 bytes) Compares to zero for OBJECT=INDEX From <code>CTRNCIS</code></td>
+</tr>
+<tr>
+<td>NDELR</td>
+<td>value of deleted records (last 4 bytes) Compares to zero for OBJECT=INDEX From <code>CTRNDELR</code></td>
+</tr>
+<tr>
+<td>NEXCP</td>
+<td>value of I/O requests (last 4 bytes) From <code>CTRNEXCP</code></td>
+</tr>
+<tr>
+<td>NEXT</td>
+<td>value of extents (last 4 bytes) From <code>CTRNEXT</code> (always 1)</td>
+</tr>
+<tr>
+<td>NINSR</td>
+<td>value of inserted records (last 4 bytes) Compares to zero for OBJECT=INDEX From <code>CTRNINSR</code></td>
+</tr>
+<tr>
+<td>NIXL</td>
+<td>value of index levels Compares to zero for OBJECT=DATA From <code>PFXBLVLn</code></td>
+</tr>
+<tr>
+<td>NLOGR</td>
+<td>value of records (last 4 bytes) From <code>CTRNLOGR</code></td>
+</tr>
+<tr>
+<td>NRETR</td>
+<td>value of records retrieved (last 4 bytes) Compares to zero for OBJECT=INDEX From <code>CTRNRETR</code></td>
+</tr>
+<tr>
+<td>NSSS</td>
+<td>Compares to zero</td>
+</tr>
+<tr>
+<td>NUIW</td>
+<td>value of non-user writes (last 4 bytes). From <code>CTRNNUIW</code></td>
+</tr>
+<tr>
+<td>NUPDR</td>
+<td>value of updated records (last 4 bytes) From <code>CTRNUPDR</code></td>
+</tr>
+<tr>
+<td>OFLAGS</td>
+<td>Successful OPEN. From <code>ACBOFLGS</code></td>
+</tr>
+<tr>
+<td>OPENOBJ</td>
+<td>ACB represents Path, Base or AIX From <code>ACBDTYPE</code></td>
+</tr>
+<tr>
+<td>PASSWD</td>
+<td>address of 1-byte length, password From <code>ACBPASSW</code></td>
+</tr>
+<tr>
+<td>RKP</td>
+<td>offset of key field within record From <code>PFXKYOFF</code></td>
+</tr>
+<tr>
+<td>SHRPOOL</td>
+<td>SHRPOOL number. From <code>ACBSHRP</code></td>
+</tr>
+<tr>
+<td>SDTASZ</td>
+<td>Data size. From <code>CTRSDTASZ</code></td>
+</tr>
+<tr>
+<td>STMST</td>
+<td>Address of system timestamp field From <code>CTRSTMST</code></td>
+</tr>
+<tr>
+<td>STRMAX</td>
+<td>Max. value of concurrently active strings (last 4 bytes). Derived from <code>CTRSTRMAX</code></td>
+</tr>
+<tr>
+<td>STRNO</td>
+<td>Max. value of parallel requests From <code>ACBSTRNO</code></td>
+</tr>
+<tr>
+<td>UIW</td>
+<td>value of user writes (last 4 bytes). From <code>CTRNUIW</code></td>
+</tr>
+</tbody>
+</table>
 <h3 id="cbmr-description">CBMR description</h3>
 <p>The structure and layout of the CBMR are not formally part of the interface and may change in future releases.
 Therefore the CBMR layout is shown here only for the sake of completeness. Direct access to subfields in the CBMR is discouraged.
@@ -5104,7 +5545,7 @@ If they are issued before the ECB has been posted, unpredictable results may occ
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-3-gf71b8f88"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-4-g9dfb2058"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
