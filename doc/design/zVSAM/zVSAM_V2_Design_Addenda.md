@@ -123,6 +123,116 @@ Accessing subfields of the zACB directly may adversely impact portability of you
 > Fields ACBPFX through ACBDTYPE are dataset-level fields and do not belong in the zACB,
 > which is intended for cluster-level information. These fields need to be moved to another structure.
 
+### SHOWCB ACB details
+
+| Keyword  | Usage and implementation in zVSAM                                                                                                                                                                                       |
+|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| AVSPAC   | Count of available space in bytes – taken from prefix counter field `CTRAVSPAC`                                                                                                                                         |
+| BFRFND   | nr of times since this ACB was opened that a get/read request for this ACB was satisfied from a buffer, without doing any I/O. Derived from `CTRNBFRFND`                                                                |
+| BSTRNO   | Initial value of strings for a path. Derived from `ACBBSTNO`                                                                                                                                                            |
+| BUFND    | value of data buffers specified in ACB. Derived from `ACBBUFND`                                                                                                                                                         |
+| BUFNI    | value of index buffers specified in ACB. Derived from `ACBBUFNI`                                                                                                                                                        |
+| BUFNO    | Number of data/index buffers allocated (last 4 bytes) Derived from `CTRNBUFNO`                                                                                                                                          |
+| BUFNOL   | Number of data/index buffers allocated for LSR processing (returns zero)                                                                                                                                                |
+| BUFRDS   | Number of data/index buffer reads (last 4 bytes). Derived from `CTRNBUFRDS`                                                                                                                                             |
+| BUFSP    | Buffer space in bytes specified in ACB. Derived from `ACBBUFSP`                                                                                                                                                         |
+| BUFUSE   | Number of data/index buffers actually in use (last 4 bytes) Derived from `CTRNBUFUSE`                                                                                                                                   |
+| CDTASIZE | Compressed data size. Since zVSAM does not support compression, this is the same as `SDTASIZE`. Taken from prefix counter field `CTRSDTA`.                                                                              |
+| CINV     | Block size for data/index. Derived from `PFXBLKSZ`                                                                                                                                                                      |
+| CIPCA    | CI's in CA (returns zero)                                                                                                                                                                                               |
+| DDNAME   | DDNAME specified in ACB. Derived from `ACBDDNM`                                                                                                                                                                         |
+| ENDRBA   | high water mark of the component in bytes, discounting the prefix block. Taken from prefix counter field `CTRENDRBA`.                                                                                                   |
+|          | If the last block in the component is free, it's the starting XRBA of that block. If the last block holds the last record, it's the XRBA of that record's last byte.                                                    |
+|          | Otherwise, it's the XRBA of the last byte of the last record on the block.                                                                                                                                              |
+| ERROR    | Return code from last open/close operation. Derived from `ACBERFLG`                                                                                                                                                     |
+| EXLLEN   | Length of EXLST in bytes                                                                                                                                                                                                |
+| EXLST    | address of EXLST, zero if none. Derived from `ACBEXLST`                                                                                                                                                                 |
+| FS       | For data component `PFXFRBLK` / (`PFXFRBLK` + `PFXFRINT`) \* 100. Foxes for index.                                                                                                                                      |
+| HALCRBA  | XRBA of the last byte of the last record. Taken from prefix counter field `CTRHALCRBA`.                                                                                                                                 |
+| HLRBA    | For OBJECT=INDEX only, highest index block RBA. Derived from `CTRHLRBA`                                                                                                                                                 |
+| KEYLEN   | length of key field. For KSDS this is the length of the key field. For RRDS/ESDS the value is always 8. Taken from prefix field `PFXKYLEN`.                                                                             |
+| LEVEL    | Address (4 bytes) and length (4 bytes) of field containing zVSAM version. Derived from `ACBVER`                                                                                                                         |
+| LOKEY    | Address (4 bytes) of lowest key in the cluster + length (4 bytes) of key. Derived from `CTRLOKEY@` and `PFXKYLEN`                                                                                                       |
+| LRECL    | Maximum data/index record length. Derived from `PFXRCLEN`                                                                                                                                                               |
+| MAREA    | Message area (returns foxes)                                                                                                                                                                                            |
+| MLEN     | Message length (returns zero)                                                                                                                                                                                           |
+| NCIS     | value of Block splits in the data component (last 4 bytes) Zero for OBJECT=INDEX. Derived from `CTRNCIS`                                                                                                                |
+| NDELR    | value of deleted records from the data component (last 4 bytes) Zero for OBJECT=INDEX. Derived from `CTRNDELR`                                                                                                          |
+| NEXCP    | value of I/O requests for the data/index components (last 4 bytes) Derived from `CTRNEXCP`                                                                                                                              |
+| NEXT     | value of extents of the data/index components (returns 1)                                                                                                                                                               |
+| NINSR    | value of records inserted for the data component (last 4 bytes) Zero for OBJECT=INDEX. Derived from `CTRNINSR`                                                                                                          |
+| NIXL     | value of index levels for index component. Zero for OBJECT=DATA. Derived from highest non-foxes `PFXBLVLn`                                                                                                              |
+| NLOGR    | nr of records in the component. Taken from prefix counter field `CTRNLOGR`.                                                                                                                                             |
+| NRETR    | value of records retrieved from the data component (last 4 bytes). Zero for OBJECT=INDEX. Derived from `CTRNRETR`                                                                                                       |
+| NSSS     | value of control area splits for the data/index (returns zero)                                                                                                                                                          |
+| NUIW     | nr of times a block was written for this component by zVSAM rather than the user program. Taken from prefix counter field `CTRNNUIW`.                                                                                   |
+| NUPDR    | nr of times a record was updated for this component. Taken from prefix counter field `CTRNUPDR`.                                                                                                                        |
+| PASSWD   | address to password, consisting of length (1 byte, binary) followed by the actual password value. Derived from `ACBPASSW`                                                                                               |
+| RELEASE  | Address (4 bytes) and length (4 bytes) of field containing zVSAM version. Derived from `ACBVER`. Same as LEVEL                                                                                                          |
+| RKP      | Relative Key Position, offset of key within logical record. Derived from `PFXKYOFF`                                                                                                                                     |
+| RMODE31  | 0=None, 1=Buff, 2=CB, 3=All. Derived from `ACBOFLGS`                                                                                                                                                                    |
+| RPLLEN   | Length of RPL in bytes                                                                                                                                                                                                  |
+| SDTASIZE | Total nr of data bytes currently stored in the component. Sum of all record lengths. Taken from prefix counter field `CTRSDTASZ`.                                                                                       |
+| SHRPOOL  | SHRPOOL number. Derived from `ACBSHRP`                                                                                                                                                                                  |
+| STMST    | system timestamp of last close operation on the component. Taken from prefix counter field `CTRSTMST`.                                                                                                                  |
+| STRMAX   | Max value of concurrently active strings (last 4 bytes). Derived from `CTRSTRMAX`                                                                                                                                       |
+| STRNO    | Max value of allocated strings. Derived from `ACBSTRNO`                                                                                                                                                                 |
+| UIW      | nr of times a block was written for this component by the user program rather than zVSAM. Taken from prefix counter field `CTRNUIW`.                                                                                    |
+
+Review notes:
+1. ENDRBA - current last sentence seems superfluous. Left-over from a prior version? Double-check and remove or rephrase.
+2. NSSS should be zero, rather than foxes - we never do CA splits.
+3. Melvyn declares CDTASIZE to always return zero. Do we want that?
+4. ENDRBA (and HALCRBA, HLRBA) - we do not have RBA values, only LRSN. How to redefine? Melvyn says to use `CTRENDRBA`
+5. Melvyn declares FS to always return zero. Do we want that?
+6. Melvyn declares NRETR to be zero for index components. I'm not sure why.
+
+### TESTCB ACB details
+
+| Keyword  | Usage and implementation in zVSAM                                                                                                                                                                                       |
+|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| AVSPAC   | Available space in data/index (last 4 bytes) From `CTRAVSPAC`                                                                                                                                                           |
+| BFRFND   | Buffer hits for data/index including LSR (last 4 bytes). From `CTRNBFRFND`                                                                                                                                              |
+| BSTRNO   | Initial value of strings for a path From `ACBBSTNO`                                                                                                                                                                     |
+| BUFND    | value of data buffers. From `ACBBUFND`                                                                                                                                                                                  |
+| BUFNI    | value of index buffers. From `ACBBUFNI`                                                                                                                                                                                 |
+| BUFNO    | value of I/O Buffers (last 4 bytes) From `CTRNBUFNO`                                                                                                                                                                    |
+| BUFRDS   | Number of data/index buffer reads (last 4 bytes). From `CTRNBUFRDS`                                                                                                                                                     |
+| BUFSP    | Buffer space in bytes. From `ACBBUFSP`                                                                                                                                                                                  |
+| BUFUSE   | Number of data/index buffers actually in use (last 4 bytes). From `CTRNBUFUSE`                                                                                                                                          |
+| CINV     | Block size in bytes. From `PFXBLKSZ`                                                                                                                                                                                    |
+| DDNAME   | DDNAME. From `ACBDDNM`                                                                                                                                                                                                  |
+| ENDRBA   | Highest used RBA (last 4 bytes). From `CTRENDRBA`                                                                                                                                                                       |
+| ERROR    | Return code from last open/close operation From `ACBERFLG`                                                                                                                                                              |
+| EXLST    | EXLST address. From `ACBEXLST`                                                                                                                                                                                          |
+| FS       | ????                                                                                                                                                                                                                    |
+| HALCRBA  | Highest allocated data/index RBA (last 4 bytes). From `CTRHALCRBA`                                                                                                                                                      |
+| HLRBA    | For OBJECT=INDEX only, highest index block RBA. From `CTRHLRBA`                                                                                                                                                         |
+| KEYLEN   | Length of key field. From `PFXKYLEN`                                                                                                                                                                                    |
+| LRECL    | Logical Record Length. From `PFXRCLEN`                                                                                                                                                                                  |
+| MACRF    | List of keywords for processing options. From `ACBMACRn`.                                                                                                                                                               |
+| NCIS     | value of block splits (last 4 bytes) Compares to zero for OBJECT=INDEX From `CTRNCIS`                                                                                                                                   |
+| NDELR    | value of deleted records (last 4 bytes) Compares to zero for OBJECT=INDEX From `CTRNDELR`                                                                                                                               |
+| NEXCP    | value of I/O requests (last 4 bytes) From `CTRNEXCP`                                                                                                                                                                    |
+| NEXT     | value of extents (last 4 bytes) From `CTRNEXT` (always 1)                                                                                                                                                               |
+| NINSR    | value of inserted records (last 4 bytes) Compares to zero for OBJECT=INDEX From `CTRNINSR`                                                                                                                              |
+| NIXL     | value of index levels Compares to zero for OBJECT=DATA From `PFXBLVLn`                                                                                                                                                  |
+| NLOGR    | value of records (last 4 bytes) From `CTRNLOGR`                                                                                                                                                                         |
+| NRETR    | value of records retrieved (last 4 bytes) Compares to zero for OBJECT=INDEX From `CTRNRETR`                                                                                                                             |
+| NSSS     | Compares to zero                                                                                                                                                                                                        |
+| NUIW     | value of non-user writes (last 4 bytes). From `CTRNNUIW`                                                                                                                                                                |
+| NUPDR    | value of updated records (last 4 bytes) From `CTRNUPDR`                                                                                                                                                                 |
+| OFLAGS   | Successful OPEN. From `ACBOFLGS`                                                                                                                                                                                        |
+| OPENOBJ  | ACB represents Path, Base or AIX From `ACBDTYPE`                                                                                                                                                                        |
+| PASSWD   | address of 1-byte length, password From `ACBPASSW`                                                                                                                                                                      |
+| RKP      | offset of key field within record From `PFXKYOFF`                                                                                                                                                                       |
+| SHRPOOL  | SHRPOOL number. From `ACBSHRP`                                                                                                                                                                                          |
+| SDTASZ   | Data size. From `CTRSDTASZ`                                                                                                                                                                                             |
+| STMST    | Address of system timestamp field From `CTRSTMST`                                                                                                                                                                       |
+| STRMAX   | Max. value of concurrently active strings (last 4 bytes). Derived from `CTRSTRMAX`                                                                                                                                      |
+| STRNO    | Max. value of parallel requests From `ACBSTRNO`                                                                                                                                                                         |
+| UIW      | value of user writes (last 4 bytes). From `CTRNUIW`                                                                                                                                                                     |
+
 ### CBMR description
 
 The structure and layout of the CBMR are not formally part of the interface and may change in future releases.
