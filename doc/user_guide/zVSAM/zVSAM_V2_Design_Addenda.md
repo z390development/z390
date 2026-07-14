@@ -115,48 +115,6 @@ For ease of access a short summary follows here:
 | `MF=(G,addr)`       | Specifies the generate form of the TESTCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.                                                       |
 | `MF=(G,addr,label)` | Same as `MF=(G,addr)` but label will be equated to the length of the CBMR                                                                                                                                               |
 
-### OPEN macro parameters
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-For ease of access a short summary follows here:
-
-| Keyword             | Usage and implementation in zVSAM                                                                                                                                                                                       |
-|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| *entry*             | The OPEN macro accepts a list of entries. Each entry consists of two consecutive parameters: an address and an optional list of options.                                                                                |
-| *address*           | The address can be specified as an A-type address or as a register. If a register is coded the register number or name must be enclosed in parentheses.                                                                 |
-|                     | The address can be either the address of a DCB or the address of an ACB.                                                                                                                                                |
-| *options*           | For a DCB options may be encoded according to the z390_File_Access_Method_Guide.                                                                                                                                        |
-|                     | For an ACB the options list is ignored and should be coded as an omitted parameter. Any options (e.g. `IN`/`OUT`) are taken from the ACB, not the open parmlist.                                                        |
-| `MF`=               | If the MF parameter is omitted an open parmlist is generated inline, plus a call to the open SVC using the parmlist.                                                                                                    |
-| `MF=L`              | With MF=L an open parmlist is generated inline                                                                                                                                                                          |
-| `MF=(L,addr)`       | Code is generated to construct the open parmlist at run-time, rather than at assembly time, at the indicated address.                                                                                                   |
-|                     | If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.                                                                                                   |
-| `MF=(E,addr)`       | Code is generated to call the open SVC using the parmlist at the indicated address.                                                                                                                                     |
-|                     | If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.                                                                                                   |
-
-### CLOSE macro parameters
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-For ease of access a short summary follows here:
-
-| Keyword             | Usage and implementation in zVSAM                                                                                                                                                                                       |
-|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| *entry*             | The CLOSE macro accepts a list of entries. Each entry consists of two consecutive parameters: an address and an optional list of options.                                                                               |
-| *address*           | The address can be specified as an A-type address or as a register. If a register is coded the register number or name must be enclosed in parentheses.                                                                 |
-|                     | The address can be either the address of a DCB or the address of an ACB.                                                                                                                                                |
-| *options*           | For a DCB options may be encoded according to the z390_File_Access_Method_Guide.                                                                                                                                        |
-|                     | For an ACB the options list is ignored and should be coded as an omitted parameter.                                                                                                                                     |
-| `MF`=               | If the MF parameter is omitted a close parmlist is generated inline, plus a call to the close SVC using the parmlist.                                                                                                   |
-| `MF=L`              | With MF=L a close parmlist is generated inline                                                                                                                                                                          |
-| `MF=(L,addr)`       | Code is generated to construct the close parmlist at run-time, rather than at assembly time, at the indicated address.                                                                                                  |
-|                     | If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.                                                                                                   |
-| `MF=(E,addr)`       | Code is generated to call the close SVC using the parmlist at the indicated address.                                                                                                                                    |
-|                     | If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.                                                                                                   |
-
 ### zEXLST description
 The structure and layout of the zEXLST are not formally part of the interface and may change in future releases.
 Therefore the zEXLST layout is shown here only for the sake of completeness. Direct access to subfields in the zEXLST is discouraged.

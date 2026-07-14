@@ -7,6 +7,26 @@ MNOTEs. All macros will continue processing after an MNOTE except for the most s
 This may result in assembler errors. Once the reason for the MNOTE has been resolved the assembler errors
 will be eliminated.
 
+This document is divided into three major chapters: one for each control block (or object)
+involved in VSAM file handling.
+
+| [ACB](#acb-based-interfaces)    | EXLST        | RPL        | Other |
+|---------------------------------|--------------| -----------|-------|
+| [ACB](#acb-macro)               | EXLST        | RPL        | CBMR  |
+| [ACBD](#acbd-macro)             | EXLSTD       | RPLD       |       |
+| [GENCB ACB](#gencb-acb-macro)   | GENCB EXLST  | GENCB RPL  |       |
+| [MODCB ACB](#modcb-acb-macro)   | MODCB EXLST  | MODCB RPL  |       |
+| [SHOWCB ACB](#showcb-acb-macro) | SHOWCB EXLST | SHOWCB RPL |       |
+| [TESTCD ACB](#testcb-acb-macro) | TESTCD EXLST | TESTCD RPL |       |
+|---------------------------------|--------------|------------|-------|
+| [OPEN](#open-macro)             |              | POINT      |       |
+| [CLOSE](#close-macro)           |              | GET        |       |
+|                                 |              | PUT        |       |
+|                                 |              | ERASE      |       |
+|                                 |              | CHECK      |       |
+|                                 |              | ENDREQ     |       |
+|                                 |              | VERIFY     |       |
+
 ## ACB-based interfaces
 
 The ACB is the primary interface for operations at the cluster level.
@@ -66,7 +86,7 @@ and/or zVSAM files represented by an ACB.
 
 A description of these interfaces as implemented for z390 and zVSAM is detailed in the next chapters.
 
-======================
+================================================================================================================================================================================
 
 ### ACB macro
 
@@ -241,7 +261,7 @@ Number of concurrent requests allowable for this ACB. Specify a number between 1
 
 Beginning number of concurrent requests allocated to this ACB when a path is opened. Specify a number between 1 and 255. The default is 1.
 
-======================
+================================================================================================================================================================================
 
 ### ACBD macro
 
@@ -265,7 +285,7 @@ or the `ACBD`, `ACBD1` and `ACBD2` macros in the mac folder.
 > The ACBD macro can be invoked multiple times, but will generate the DSECT mapping
 > only on its first invocation.
 
-======================
+================================================================================================================================================================================
 
 ### GENCB ACB macro
 
@@ -369,7 +389,7 @@ See [MF= parameter](#mf-parameter) for details.
 | R15=4       | Reason Code=9   | WAREA is too small                                                       |
 | R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
 
-======================
+================================================================================================================================================================================
 
 ### MODCB ACB macro
 
@@ -467,7 +487,7 @@ See [MF= parameter](#mf-parameter) for details.
 | R15=4       | Reason Code=12  | MODCB was attempted on an open ACB                                       |
 | R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
 
-======================
+================================================================================================================================================================================
 
 ### SHOWCB ACB macro
 
@@ -629,7 +649,7 @@ See [MF= parameter](#mf-parameter) for details.
 | R15=4       | Reason Code=9   | Length too small                                                                 |
 | R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created         |
 
-======================
+================================================================================================================================================================================
 
 ### TESTCB ACB macro
 
@@ -659,7 +679,7 @@ The TESTCB ACB macro can be coded as follows:
 > Direct access to subfields in the ACB or CBMR is strongly discouraged. Use GENCB BLK=ACB, SHOWCB ACB=,
 > TESTCB ACB= and/or MODCB ACB= to generate, inspect, test, and/or modify the ACB's content.
 
-The SHOWCB ACB macro can be coded as follows:
+The TESTCB ACB macro can be coded as follows:
 
 | Opcode         | Operand                   | Remarks                                                                       | Conditions returned |
 |----------------|---------------------------|-------------------------------------------------------------------------------|---------------------|
@@ -809,7 +829,7 @@ Indicates the Macro Format.
 If specified, the [label] subparameter is EQUated to the length of the CBMR.
 See [MF= parameter](#mf-parameter) for details.
 
-### Return and Reason Codes
+#### Return and Reason Codes
 
 | Return Code | Reason Code     | Meaning                                                                                                |
 |-------------|-----------------|--------------------------------------------------------------------------------------------------------|
@@ -820,7 +840,154 @@ See [MF= parameter](#mf-parameter) for details.
 | R15=4       | Reason Code=4   | Invalid control block                                                                                  |
 | R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created                               |
 
-======================
+================================================================================================================================================================================
+
+### OPEN macro
+
+A cluster needs to be opened before it can be processed.
+Before OPEN is attempted the ACB (and EXLST, if applicable) must be set up correctly.
+
+When OPEN is used to open a sequential file, the DCB (and DCBE, of applicable) must be set up correctly.
+
+| Opcode        | Operand            | Remarks                                                    |
+|---------------|--------------------|------------------------------------------------------------|
+| [label] OPEN  | (entry[,entry]...) | Each cluster or file requires an entry of two parameters   |
+|               | [MODE=24/31]       | Residency mode of control blocks involved                  |
+|               | [MF=]              | Use standard form of OPEN; this is the default             |
+|               | [MF=L]             | Use list form of OPEN                                      |
+|               | [MF=(L,addr)]      | Use list form of OPEN                                      |
+|               | [MF=(E,addr)]      | Use execute form of OPEN                                   |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+> [!NOTE]
+> - One or more entries can be specified.
+> - Each entry can specify either a zVSAM cluster, or a sequential file.
+> - The open macro can be used to open 1 or more cluster(s) and/or 1 or more sequential file(s) in a single call.
+
+#### Entry format
+
+Each entry on the OPEN macro is coded as follows:
+
+| File Type  | Entry syntax               |
+|------------|----------------------------|
+| Sequential | DCB-address[,(options)]    |
+| zVSAM      | ACB-address                |
+
+For ACB omit the list of options - options are specified on the ACB, rather than on OPEN.
+
+##### Address
+
+The address can be specified as an A-type address or as a register.
+If a register is coded the register number or name must be enclosed in parentheses.
+
+##### Options
+
+For a DCB options may be encoded according to the relevant IBM manuals.
+
+For an ACB the options list is ignored and should be coded as an omitted parameter.
+Any options (e.g. `IN`/`OUT`) are taken from the ACB, not the open parmlist.
+
+#### MODE=
+
+Optional parameter. Specify 31 if any control block (ACB, EXLST, DCB, DCBE) reside above the 16MB line; 24 is the default.
+
+#### MF=
+
+The MF= parameter is optional. It can take the following forms:
+
+| Parameter     | Explanation                                                                                                                                                                                                             |
+|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `MF=`         | If the MF parameter is omitted an open parmlist is generated inline, plus a call to the open SVC using the parmlist.                                                                                                    |
+| `MF=L`        | With MF=L an open parmlist is generated inline                                                                                                                                                                          |
+| `MF=(L,addr)` | Code is generated to construct the open parmlist at run-time, at the indicated address. If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.           |
+| `MF=(E,addr)` | Code is generated to call the open SVC using the parmlist at the indicated address. If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.               |
+
+================================================================================================================================================================================
+
+### CLOSE macro
+
+A cluster or sequential file needs to be closed after it has been processed.
+
+| Opcode        | Operand            | Remarks                                                                                                   |
+|---------------|--------------------|-----------------------------------------------------------------------------------------------------------|
+| [label] CLOSE | (entry[,entry]...) | Each cluster or file requires an entry of two parameters                                                  |
+|               | [MODE=24/31]       | Residency mode of all control blocks involved.                                                            |
+|               | [TYPE=T]           | Not supported in z390                                                                                     |
+|               | [MF=]              | Use standard form of CLOSE; this is the default                                                           |
+|               | [MF=L]             | Use list form of CLOSE                                                                                    |
+|               | [MF=(L,addr)]      | Use list form of CLOSE                                                                                    |
+|               | [MF=(E,addr)]      | Use execute form of CLOSE                                                                                 |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+> [!NOTE]
+> - One or more entries can be specified.
+> - Each entry can specify either a zVSAM cluster, or a sequential file.
+> - The close macro can be used to close 1 or more cluster(s) and/or 1 or more sequential file(s) in a single call.
+
+#### Entry format
+
+Each entry on the CLOSE macro is coded as follows:
+
+| File Type  | Entry syntax               |
+|------------|----------------------------|
+| Sequential | DCB-address[,(options)]    |
+| zVSAM      | ACB-address                |
+
+For an ACB the options list is ignored and should not be coded.
+
+##### Address
+
+The address can be specified as an A-type address or as a register.
+If a register is coded the register number or name must be enclosed in parentheses.
+
+##### Options
+
+For a DCB options may be encoded according to the relevant IBM manuals.
+
+For an ACB the options list is ignored and should be coded as an omitted parameter.
+
+#### MODE=
+
+Optional parameter. Specify 31 if any control block (ACB, EXLST, DCB, DCBE) reside above the 16MB line; 24 is the default.
+
+#### TYPE=
+
+Optional and unsupported parameter. The keyword is flagged as ignored with a warning message.
+
+#### MF=
+
+The MF= parameter is optional. It can take the following forms:
+
+| Parameter     | Explanation                                                                                                                                                                                                             |
+|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `MF=`         | If the MF parameter is omitted a close parmlist is generated inline, plus a call to the close SVC using the parmlist.                                                                                                   |
+| `MF=L`        | With MF=L a close parmlist is generated inline                                                                                                                                                                          |
+| `MF=(L,addr)` | Code is generated to construct the close parmlist at run-time, at the indicated address. If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.          |
+| `MF=(E,addr)` | Code is generated to call the close SVC using the parmlist at the indicated address. If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.              |
+
+================================================================================================================================================================================
+
+### MF= parameter
+
+The MF= parameter as described here applies to its usage with the GENCB, MODCB, SHOWCB, and TESTCB macros.
+
+| Parameter            | Explanation                                        | Call handler | Label value |
+|----------------------|----------------------------------------------------|--------------|-------------|
+| MF=I or omitted      | Generates CBMR - this is the default               | Y            | --          |
+| MF=L                 | Generates CBMR inline                              | N            | --          |
+| MF=(L,address)       | Generates CBMR inline and then moves it to address | N            | --          |
+| MF=(L,address,label) | as above and generates label equ size              | N            | CBMR length |
+| MF=(E,address)       | Modifies the CBMR at address                       | Y            | --          |
+| MF=(G,address)       | Generates CBMR inline and then moves it to address | Y            | --          |
+| MF=(G,address,label) | Generates CBMR inline and then moves it to address | Y            | CBMR length |
+
+> [!NOTE]
+> - The address, if specified, can be a label or a register. Registers 0, 1, 14, and 15 are reserved.
+> - Specifying a register is not supported with any of the three MF=L variants.
 
 ### CBMR macro
 

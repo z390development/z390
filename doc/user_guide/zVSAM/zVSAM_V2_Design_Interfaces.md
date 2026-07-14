@@ -170,45 +170,6 @@ For details, please refer to the relevant IBM manual.
 
 For ease of access a short summary can be found in the addenda.
 
-### OPEN macro
-
-A cluster needs to be opened before it can be processed. The open macro is used to open 1 or more cluster(s)
-and/or 1 or more sequential file(s) in a single call.
-
-| Opcode        | Operand            | Remarks                                                                                                   |
-|---------------|--------------------|-----------------------------------------------------------------------------------------------------------|
-| OPEN          | (entry[,entry]...) | Each cluster or file requires an entry of two parameters                                                  |
-| Entry format: | address,(options)  | Address of ACB or DCB, followed by a list of options (for DCB only). For ACB omit the list of options     |
-|               | [MODE=24/31]       | Residency mode of all control blocks involved. Specify 31 if any reside above the line; 24 is the default |
-|               | [MF=]              | Use standard form of OPEN; this is the default                                                            |
-|               | [MF=L/MF=(L,addr)] | Use list form of OPEN                                                                                     |
-|               | [MF=(E,addr)]      | Use execute form of OPEN                                                                                  |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-For ease of access a short summary can be found in the addenda.
-
-### CLOSE macro
-
-A cluster needs to be closed after it has been processed. The close macro is used to close 1 or more cluster(s)
-and/or 1 or more sequential file(s) in a single call.
-
-| Opcode        | Operand            | Remarks                                                                                                    |
-|---------------|--------------------|------------------------------------------------------------------------------------------------------------|
-| CLOSE         | (entry[,entry]...) | Each cluster or file requires an entry of two parameters                                                   |
-| Entry format: | address,(options)  | Address of ACB or DCB, followed by a list of options (for DCB only). For ACB omit the list of options.     |
-|               | [MODE=24/31]       | Residency mode of all control blocks involved. Specify 31 if any resides above the line; 24 is the default |
-|               | [_TYPE=T_]         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)        |
-|               | [MF=]              | Use standard form of CLOSE; this is the default                                                            |
-|               | [MF=L/MF=(L,addr)] | Use list form of CLOSE                                                                                     |
-|               | [MF=(E,addr)]      | Use execute form of CLOSE                                                                                  |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-For ease of access a short summary can be found in the addenda.
-
 ## RPL-based interfaces
 
 The RPL is the primary interface for operations at the record level.
