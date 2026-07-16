@@ -1679,28 +1679,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#open-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OPEN macro
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#close-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLOSE macro
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#rpl-based-interfaces" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2933,28 +2911,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#open-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OPEN macro
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#close-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLOSE macro
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#rpl-based-interfaces" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3514,105 +3470,6 @@ Direct access to subfields in the CBMR is strongly discouraged.</p>
 </tbody>
 </table>
 <p>All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.</p>
-<p>For ease of access a short summary can be found in the addenda.</p>
-<h3 id="open-macro">OPEN macro</h3>
-<p>A cluster needs to be opened before it can be processed. The open macro is used to open 1 or more cluster(s)
-and/or 1 or more sequential file(s) in a single call.</p>
-<table>
-<thead>
-<tr>
-<th>Opcode</th>
-<th>Operand</th>
-<th>Remarks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>OPEN</td>
-<td>(entry[,entry]...)</td>
-<td>Each cluster or file requires an entry of two parameters</td>
-</tr>
-<tr>
-<td>Entry format:</td>
-<td>address,(options)</td>
-<td>Address of ACB or DCB, followed by a list of options (for DCB only). For ACB omit the list of options</td>
-</tr>
-<tr>
-<td></td>
-<td>[MODE=24/31]</td>
-<td>Residency mode of all control blocks involved. Specify 31 if any reside above the line; 24 is the default</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=]</td>
-<td>Use standard form of OPEN; this is the default</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=L/MF=(L,addr)]</td>
-<td>Use list form of OPEN</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=(E,addr)]</td>
-<td>Use execute form of OPEN</td>
-</tr>
-</tbody>
-</table>
-<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.</p>
-<p>For ease of access a short summary can be found in the addenda.</p>
-<h3 id="close-macro">CLOSE macro</h3>
-<p>A cluster needs to be closed after it has been processed. The close macro is used to close 1 or more cluster(s)
-and/or 1 or more sequential file(s) in a single call.</p>
-<table>
-<thead>
-<tr>
-<th>Opcode</th>
-<th>Operand</th>
-<th>Remarks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>CLOSE</td>
-<td>(entry[,entry]...)</td>
-<td>Each cluster or file requires an entry of two parameters</td>
-</tr>
-<tr>
-<td>Entry format:</td>
-<td>address,(options)</td>
-<td>Address of ACB or DCB, followed by a list of options (for DCB only). For ACB omit the list of options.</td>
-</tr>
-<tr>
-<td></td>
-<td>[MODE=24/31]</td>
-<td>Residency mode of all control blocks involved. Specify 31 if any resides above the line; 24 is the default</td>
-</tr>
-<tr>
-<td></td>
-<td>[<em>TYPE=T</em>]</td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=]</td>
-<td>Use standard form of CLOSE; this is the default</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=L/MF=(L,addr)]</td>
-<td>Use list form of CLOSE</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=(E,addr)]</td>
-<td>Use execute form of CLOSE</td>
-</tr>
-</tbody>
-</table>
-<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
 For details, please refer to the relevant IBM manual.</p>
 <p>For ease of access a short summary can be found in the addenda.</p>
 <h2 id="rpl-based-interfaces">RPL-based interfaces</h2>
@@ -4450,7 +4307,7 @@ in a future release.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-5-g86384b8d"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-6-g2cdcbeee"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>

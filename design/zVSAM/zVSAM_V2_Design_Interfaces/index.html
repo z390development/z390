@@ -2652,10 +2652,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#return-and-reason-codes_2" class="md-nav__link">
+  <a href="#open-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Return and Reason Codes
+        OPEN macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#close-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLOSE macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mf-parameter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MF= parameter
       
     </span>
   </a>
@@ -2846,10 +2868,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#return-and-reason-codes_2" class="md-nav__link">
+  <a href="#open-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Return and Reason Codes
+        OPEN macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#close-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLOSE macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mf-parameter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MF= parameter
       
     </span>
   </a>
@@ -2898,6 +2942,104 @@
 MNOTEs. All macros will continue processing after an MNOTE except for the most serious.
 This may result in assembler errors. Once the reason for the MNOTE has been resolved the assembler errors
 will be eliminated.</p>
+<p>This document is divided into three major chapters: one for each control block (or object)
+involved in VSAM file handling.</p>
+<table>
+<thead>
+<tr>
+<th><a href="#acb-based-interfaces">ACB</a></th>
+<th>EXLST</th>
+<th>RPL</th>
+<th>Other</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#acb-macro">ACB</a></td>
+<td>EXLST</td>
+<td>RPL</td>
+<td>CBMR</td>
+</tr>
+<tr>
+<td><a href="#acbd-macro">ACBD</a></td>
+<td>EXLSTD</td>
+<td>RPLD</td>
+<td></td>
+</tr>
+<tr>
+<td><a href="#gencb-acb-macro">GENCB ACB</a></td>
+<td>GENCB EXLST</td>
+<td>GENCB RPL</td>
+<td></td>
+</tr>
+<tr>
+<td><a href="#modcb-acb-macro">MODCB ACB</a></td>
+<td>MODCB EXLST</td>
+<td>MODCB RPL</td>
+<td></td>
+</tr>
+<tr>
+<td><a href="#showcb-acb-macro">SHOWCB ACB</a></td>
+<td>SHOWCB EXLST</td>
+<td>SHOWCB RPL</td>
+<td></td>
+</tr>
+<tr>
+<td><a href="#testcb-acb-macro">TESTCD ACB</a></td>
+<td>TESTCD EXLST</td>
+<td>TESTCD RPL</td>
+<td></td>
+</tr>
+<tr>
+<td>---------------------------------</td>
+<td>--------------</td>
+<td>------------</td>
+<td>-------</td>
+</tr>
+<tr>
+<td><a href="#open-macro">OPEN</a></td>
+<td></td>
+<td>POINT</td>
+<td></td>
+</tr>
+<tr>
+<td><a href="#close-macro">CLOSE</a></td>
+<td></td>
+<td>GET</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>PUT</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>ERASE</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>CHECK</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>ENDREQ</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>VERIFY</td>
+<td></td>
+</tr>
+</tbody>
+</table>
 <h2 id="acb-based-interfaces">ACB-based interfaces</h2>
 <p>The ACB is the primary interface for operations at the cluster level.
 Each cluster is represented by an ACB.</p>
@@ -3013,7 +3155,7 @@ and TESTCB EXLST= can be used to validate specific fields of an EXLST.</p>
 <p><strong>Note:</strong> OPEN and CLOSE macros can be used to open and close either sequential files represented by a DCB
 and/or zVSAM files represented by an ACB.</p>
 <p>A description of these interfaces as implemented for z390 and zVSAM is detailed in the next chapters.</p>
-<p>======================</p>
+<p>================================================================================================================================================================================</p>
 <h3 id="acb-macro">ACB macro</h3>
 <p>The ACB macro will generate an ACB and initialize it according to the parameters
 specified on the macro invocation.</p>
@@ -3377,7 +3519,7 @@ The default is <code>NONE</code>.</p>
 <p>Number of concurrent requests allowable for this ACB. Specify a number between 1 and 255. The default is 1.</p>
 <h4 id="bstrno">BSTRNO=</h4>
 <p>Beginning number of concurrent requests allocated to this ACB when a path is opened. Specify a number between 1 and 255. The default is 1.</p>
-<p>======================</p>
+<p>================================================================================================================================================================================</p>
 <h3 id="acbd-macro">ACBD macro</h3>
 <p>The ACBD macro maps the ACB. Its behaviour depends on the ZVSAM option in effect:</p>
 <table>
@@ -3412,7 +3554,7 @@ The ACBD macro generates no executable code.</p>
 The ACBD macro can be invoked multiple times, but will generate the DSECT mapping
 only on its first invocation.</p>
 </blockquote>
-<p>======================</p>
+<p>================================================================================================================================================================================</p>
 <h3 id="gencb-acb-macro">GENCB ACB macro</h3>
 <p>The GENCB macro with BLK=ACB will generate or manipulate ACBs and initialize or change them
 according to the parameters specified on the macro invocation. It is for this reason that
@@ -3587,7 +3729,7 @@ See <a href="#mf-parameter">MF= parameter</a> for details.</p>
 </tr>
 </tbody>
 </table>
-<p>======================</p>
+<p>================================================================================================================================================================================</p>
 <h3 id="modcb-acb-macro">MODCB ACB macro</h3>
 <p>The MODCB macro with ACB=addr will modify an ACB according to the parameters specified on the macro invocation.
 It is for this reason that all parameters and keywords of the ACB macro (as described above) are supported
@@ -3739,7 +3881,7 @@ See <a href="#mf-parameter">MF= parameter</a> for details.</p>
 </tr>
 </tbody>
 </table>
-<p>======================</p>
+<p>================================================================================================================================================================================</p>
 <h3 id="showcb-acb-macro">SHOWCB ACB macro</h3>
 <p>The SHOWCB macro with ACB=addr will return ACB-related fields according to the parameters specified
 on the macro invocation in the order they are specified. Duplicates are permitted.</p>
@@ -4262,7 +4404,7 @@ See <a href="#mf-parameter">MF= parameter</a> for details.</p>
 </tr>
 </tbody>
 </table>
-<p>======================</p>
+<p>================================================================================================================================================================================</p>
 <h3 id="testcb-acb-macro">TESTCB ACB macro</h3>
 <p>The TESTCB macro with ACB=addr will test ACB-related fields according to the parameters specified
 on the macro invocation. Only a single test can be specified on each TESTCB invocation.
@@ -4302,7 +4444,7 @@ are not part of the interface and are therefore not shown in this chapter. For d
 Direct access to subfields in the ACB or CBMR is strongly discouraged. Use GENCB BLK=ACB, SHOWCB ACB=,
 TESTCB ACB= and/or MODCB ACB= to generate, inspect, test, and/or modify the ACB's content.</p>
 </blockquote>
-<p>The SHOWCB ACB macro can be coded as follows:</p>
+<p>The TESTCB ACB macro can be coded as follows:</p>
 <table>
 <thead>
 <tr>
@@ -4860,7 +5002,7 @@ Whichever executable macro that might have been.</p>
 <p>Indicates the Macro Format.
 If specified, the [label] subparameter is EQUated to the length of the CBMR.
 See <a href="#mf-parameter">MF= parameter</a> for details.</p>
-<h3 id="return-and-reason-codes_2">Return and Reason Codes</h3>
+<h4 id="return-and-reason-codes_2">Return and Reason Codes</h4>
 <table>
 <thead>
 <tr>
@@ -4902,7 +5044,296 @@ See <a href="#mf-parameter">MF= parameter</a> for details.</p>
 </tr>
 </tbody>
 </table>
-<p>======================</p>
+<p>================================================================================================================================================================================</p>
+<h3 id="open-macro">OPEN macro</h3>
+<p>A cluster needs to be opened before it can be processed.
+Before OPEN is attempted the ACB (and EXLST, if applicable) must be set up correctly.</p>
+<p>When OPEN is used to open a sequential file, the DCB (and DCBE, of applicable) must be set up correctly.</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Operand</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[label] OPEN</td>
+<td>(entry[,entry]...)</td>
+<td>Each cluster or file requires an entry of two parameters</td>
+</tr>
+<tr>
+<td></td>
+<td>[MODE=24/31]</td>
+<td>Residency mode of control blocks involved</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=]</td>
+<td>Use standard form of OPEN; this is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=L]</td>
+<td>Use list form of OPEN</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(L,addr)]</td>
+<td>Use list form of OPEN</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(E,addr)]</td>
+<td>Use execute form of OPEN</td>
+</tr>
+</tbody>
+</table>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<blockquote>
+<p>[!NOTE]
+- One or more entries can be specified.
+- Each entry can specify either a zVSAM cluster, or a sequential file.
+- The open macro can be used to open 1 or more cluster(s) and/or 1 or more sequential file(s) in a single call.</p>
+</blockquote>
+<h4 id="entry-format">Entry format</h4>
+<p>Each entry on the OPEN macro is coded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>File Type</th>
+<th>Entry syntax</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sequential</td>
+<td>DCB-address[,(options)]</td>
+</tr>
+<tr>
+<td>zVSAM</td>
+<td>ACB-address</td>
+</tr>
+</tbody>
+</table>
+<p>For ACB omit the list of options - options are specified on the ACB, rather than on OPEN.</p>
+<h5 id="address">Address</h5>
+<p>The address can be specified as an A-type address or as a register.
+If a register is coded the register number or name must be enclosed in parentheses.</p>
+<h5 id="options">Options</h5>
+<p>For a DCB options may be encoded according to the relevant IBM manuals.</p>
+<p>For an ACB the options list is ignored and should be coded as an omitted parameter.
+Any options (e.g. <code>IN</code>/<code>OUT</code>) are taken from the ACB, not the open parmlist.</p>
+<h4 id="mode">MODE=</h4>
+<p>Optional parameter. Specify 31 if any control block (ACB, EXLST, DCB, DCBE) reside above the 16MB line; 24 is the default.</p>
+<h4 id="mf_4">MF=</h4>
+<p>The MF= parameter is optional. It can take the following forms:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MF=</code></td>
+<td>If the MF parameter is omitted an open parmlist is generated inline, plus a call to the open SVC using the parmlist.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>With MF=L an open parmlist is generated inline</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Code is generated to construct the open parmlist at run-time, at the indicated address. If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Code is generated to call the open SVC using the parmlist at the indicated address. If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.</td>
+</tr>
+</tbody>
+</table>
+<p>================================================================================================================================================================================</p>
+<h3 id="close-macro">CLOSE macro</h3>
+<p>A cluster or sequential file needs to be closed after it has been processed.</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Operand</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[label] CLOSE</td>
+<td>(entry[,entry]...)</td>
+<td>Each cluster or file requires an entry of two parameters</td>
+</tr>
+<tr>
+<td></td>
+<td>[MODE=24/31]</td>
+<td>Residency mode of all control blocks involved.</td>
+</tr>
+<tr>
+<td></td>
+<td>[TYPE=T]</td>
+<td>Not supported in z390</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=]</td>
+<td>Use standard form of CLOSE; this is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=L]</td>
+<td>Use list form of CLOSE</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(L,addr)]</td>
+<td>Use list form of CLOSE</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(E,addr)]</td>
+<td>Use execute form of CLOSE</td>
+</tr>
+</tbody>
+</table>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<blockquote>
+<p>[!NOTE]
+- One or more entries can be specified.
+- Each entry can specify either a zVSAM cluster, or a sequential file.
+- The close macro can be used to close 1 or more cluster(s) and/or 1 or more sequential file(s) in a single call.</p>
+</blockquote>
+<h4 id="entry-format_1">Entry format</h4>
+<p>Each entry on the CLOSE macro is coded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>File Type</th>
+<th>Entry syntax</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sequential</td>
+<td>DCB-address[,(options)]</td>
+</tr>
+<tr>
+<td>zVSAM</td>
+<td>ACB-address</td>
+</tr>
+</tbody>
+</table>
+<p>For an ACB the options list is ignored and should not be coded.</p>
+<h5 id="address_1">Address</h5>
+<p>The address can be specified as an A-type address or as a register.
+If a register is coded the register number or name must be enclosed in parentheses.</p>
+<h5 id="options_1">Options</h5>
+<p>For a DCB options may be encoded according to the relevant IBM manuals.</p>
+<p>For an ACB the options list is ignored and should be coded as an omitted parameter.</p>
+<h4 id="mode_1">MODE=</h4>
+<p>Optional parameter. Specify 31 if any control block (ACB, EXLST, DCB, DCBE) reside above the 16MB line; 24 is the default.</p>
+<h4 id="type">TYPE=</h4>
+<p>Optional and unsupported parameter. The keyword is flagged as ignored with a warning message.</p>
+<h4 id="mf_5">MF=</h4>
+<p>The MF= parameter is optional. It can take the following forms:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MF=</code></td>
+<td>If the MF parameter is omitted a close parmlist is generated inline, plus a call to the close SVC using the parmlist.</td>
+</tr>
+<tr>
+<td><code>MF=L</code></td>
+<td>With MF=L a close parmlist is generated inline</td>
+</tr>
+<tr>
+<td><code>MF=(L,addr)</code></td>
+<td>Code is generated to construct the close parmlist at run-time, at the indicated address. If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.</td>
+</tr>
+<tr>
+<td><code>MF=(E,addr)</code></td>
+<td>Code is generated to call the close SVC using the parmlist at the indicated address. If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.</td>
+</tr>
+</tbody>
+</table>
+<p>================================================================================================================================================================================</p>
+<h3 id="mf-parameter">MF= parameter</h3>
+<p>The MF= parameter as described here applies to its usage with the GENCB, MODCB, SHOWCB, and TESTCB macros.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Explanation</th>
+<th>Call handler</th>
+<th>Label value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MF=I or omitted</td>
+<td>Generates CBMR - this is the default</td>
+<td>Y</td>
+<td>--</td>
+</tr>
+<tr>
+<td>MF=L</td>
+<td>Generates CBMR inline</td>
+<td>N</td>
+<td>--</td>
+</tr>
+<tr>
+<td>MF=(L,address)</td>
+<td>Generates CBMR inline and then moves it to address</td>
+<td>N</td>
+<td>--</td>
+</tr>
+<tr>
+<td>MF=(L,address,label)</td>
+<td>as above and generates label equ size</td>
+<td>N</td>
+<td>CBMR length</td>
+</tr>
+<tr>
+<td>MF=(E,address)</td>
+<td>Modifies the CBMR at address</td>
+<td>Y</td>
+<td>--</td>
+</tr>
+<tr>
+<td>MF=(G,address)</td>
+<td>Generates CBMR inline and then moves it to address</td>
+<td>Y</td>
+<td>--</td>
+</tr>
+<tr>
+<td>MF=(G,address,label)</td>
+<td>Generates CBMR inline and then moves it to address</td>
+<td>Y</td>
+<td>CBMR length</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>[!NOTE]
+- The address, if specified, can be a label or a register. Registers 0, 1, 14, and 15 are reserved.
+- Specifying a register is not supported with any of the three MF=L variants.</p>
+</blockquote>
 <h3 id="cbmr-macro">CBMR macro</h3>
 <p>A CBMR is generated for all forms of the '<code>GENCB</code>, <code>MODCB</code>, <code>SHOWCB</code>, and <code>TESTCB</code> macros.
 The CBMR is then used to direct the Control Block Management Program to carry out the
@@ -5010,7 +5441,7 @@ or the <code>CBMR</code> macro in the mac folder.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-5-g86384b8d"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-6-g2cdcbeee"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>

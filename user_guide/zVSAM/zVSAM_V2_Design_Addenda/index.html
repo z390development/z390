@@ -1763,28 +1763,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#open-macro-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OPEN macro parameters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#close-macro-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLOSE macro parameters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#zexlst-description" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2955,28 +2933,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#open-macro-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OPEN macro parameters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#close-macro-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLOSE macro parameters
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#zexlst-description" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3505,122 +3461,6 @@ For details, please refer to the relevant IBM manual.</p>
 <tr>
 <td><code>MF=(G,addr,label)</code></td>
 <td>Same as <code>MF=(G,addr)</code> but label will be equated to the length of the CBMR</td>
-</tr>
-</tbody>
-</table>
-<h3 id="open-macro-parameters">OPEN macro parameters</h3>
-<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.</p>
-<p>For ease of access a short summary follows here:</p>
-<table>
-<thead>
-<tr>
-<th>Keyword</th>
-<th>Usage and implementation in zVSAM</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><em>entry</em></td>
-<td>The OPEN macro accepts a list of entries. Each entry consists of two consecutive parameters: an address and an optional list of options.</td>
-</tr>
-<tr>
-<td><em>address</em></td>
-<td>The address can be specified as an A-type address or as a register. If a register is coded the register number or name must be enclosed in parentheses.</td>
-</tr>
-<tr>
-<td></td>
-<td>The address can be either the address of a DCB or the address of an ACB.</td>
-</tr>
-<tr>
-<td><em>options</em></td>
-<td>For a DCB options may be encoded according to the z390_File_Access_Method_Guide.</td>
-</tr>
-<tr>
-<td></td>
-<td>For an ACB the options list is ignored and should be coded as an omitted parameter. Any options (e.g. <code>IN</code>/<code>OUT</code>) are taken from the ACB, not the open parmlist.</td>
-</tr>
-<tr>
-<td><code>MF</code>=</td>
-<td>If the MF parameter is omitted an open parmlist is generated inline, plus a call to the open SVC using the parmlist.</td>
-</tr>
-<tr>
-<td><code>MF=L</code></td>
-<td>With MF=L an open parmlist is generated inline</td>
-</tr>
-<tr>
-<td><code>MF=(L,addr)</code></td>
-<td>Code is generated to construct the open parmlist at run-time, rather than at assembly time, at the indicated address.</td>
-</tr>
-<tr>
-<td></td>
-<td>If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.</td>
-</tr>
-<tr>
-<td><code>MF=(E,addr)</code></td>
-<td>Code is generated to call the open SVC using the parmlist at the indicated address.</td>
-</tr>
-<tr>
-<td></td>
-<td>If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="close-macro-parameters">CLOSE macro parameters</h3>
-<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.</p>
-<p>For ease of access a short summary follows here:</p>
-<table>
-<thead>
-<tr>
-<th>Keyword</th>
-<th>Usage and implementation in zVSAM</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><em>entry</em></td>
-<td>The CLOSE macro accepts a list of entries. Each entry consists of two consecutive parameters: an address and an optional list of options.</td>
-</tr>
-<tr>
-<td><em>address</em></td>
-<td>The address can be specified as an A-type address or as a register. If a register is coded the register number or name must be enclosed in parentheses.</td>
-</tr>
-<tr>
-<td></td>
-<td>The address can be either the address of a DCB or the address of an ACB.</td>
-</tr>
-<tr>
-<td><em>options</em></td>
-<td>For a DCB options may be encoded according to the z390_File_Access_Method_Guide.</td>
-</tr>
-<tr>
-<td></td>
-<td>For an ACB the options list is ignored and should be coded as an omitted parameter.</td>
-</tr>
-<tr>
-<td><code>MF</code>=</td>
-<td>If the MF parameter is omitted a close parmlist is generated inline, plus a call to the close SVC using the parmlist.</td>
-</tr>
-<tr>
-<td><code>MF=L</code></td>
-<td>With MF=L a close parmlist is generated inline</td>
-</tr>
-<tr>
-<td><code>MF=(L,addr)</code></td>
-<td>Code is generated to construct the close parmlist at run-time, rather than at assembly time, at the indicated address.</td>
-</tr>
-<tr>
-<td></td>
-<td>If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.</td>
-</tr>
-<tr>
-<td><code>MF=(E,addr)</code></td>
-<td>Code is generated to call the close SVC using the parmlist at the indicated address.</td>
-</tr>
-<tr>
-<td></td>
-<td>If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.</td>
 </tr>
 </tbody>
 </table>
@@ -4957,7 +4797,7 @@ where earlier drafts were corroborated and finalized.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-5-g86384b8d"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-6-g2cdcbeee"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
