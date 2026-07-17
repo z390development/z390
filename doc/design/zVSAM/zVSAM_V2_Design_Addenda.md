@@ -244,7 +244,8 @@ Accessing subfields of the zEXLST directly may adversely impact portability of y
 
 | Label    | Equate       | Designation | Remarks                                                         |
 |----------|--------------|-------------|-----------------------------------------------------------------|
-| IFGEXLST |              | DSECT       |                                                                 |
+| IHAEXLST |              | DSECT       |                                                                 |
+|          | IFGEXLST     | DSECT       | Alternative DSECT name                                          |
 | EXLEYE   |              | CL4         | Eye catcher                                                     |
 |          | EXLZLST      | =C'zLST'    | Fixed value                                                     |
 | EXLLEN   |              | H           | Length of exit list                                             |
@@ -260,19 +261,16 @@ Accessing subfields of the zEXLST directly may adversely impact portability of y
 | EXLSYNF  |              | XL1         | Synad routine flags                                             |
 |          | EXLSYNS      | X'80'       | Present                                                         |
 |          | EXLSYNA      | X'40'       | Active                                                          |
+| --       |              | XL2         | Filler for alignment                                            |
 | EXLEODP  |              | AL4         | EODAD address                                                   |
 | EXLLERP  |              | AL4         | SYNAD address                                                   |
 | EXLSYNP  |              | AL4         | LERAD address                                                   |
+| EXLSTEND |              | --          | End label for DSECT                                             |
+|          | EXLSTLEN     | calculated  | Length of EXLST                                                 |
 
-
-
-
-
-
-
-
-
-
+> [!NOTE]
+> The pointer fields in the macro are coded in the wrong location, making them unaligned.
+> We'll have to investigate the impact of changing the macro to conform to the layout described here.
 
 ## CBMR description
 
