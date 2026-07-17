@@ -1,26 +1,3 @@
-### EXLST macro parameters
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-For ease of access a short summary follows here:
-
-| Keyword             | Usage and implementation in zVSAM                                                                                                                                                                                       |
-|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AM`=               | Optional parameter. AM=VSAM is the default. No other values are supported.                                                                                                                                              |
-| `EODAD`=            | Optional parameter to specify the entry address of an exit that handles an end-of-data condition during sequential access.                                                                                              |
-|                     | The routine address may be followed by a modifier. For details, please see below. The amode for the routine is encoded in the address using the common convention.                                                      |
-| `LERAD`=            | Optional parameter to specify the entry address of an exit that handles logic errors.                                                                                                                                   |
-|                     | The routine address may be followed by a modifier. For details, please see below. The amode for the routine is encoded in the address using the common convention.                                                      |
-| `SYNAD`=            | Optional parameter to specify the entry address of an exit that handles physical errors.                                                                                                                                |
-|                     | The routine address may be followed by a modifier. For details, please see below. The amode for the routine is encoded in the address using the common convention.                                                      |
-| *mod*               | modifier, can optionally be specified after each routine address. Values: A or N for Active or Not-active.                                                                                                              |
-|                     | As long as the routine is not active it will not be called by zVSAM.                                                                                                                                                    |
-|                     | The secondary modifier of L (for Load from Linklib) is not supported.                                                                                                                                                   |
-
-Review notes:
-1. We have no linklib, but we might load a module anyway using our existing support for SVC 6 (Load macro)
-
 ### GENCB EXLST macro parameters
 
 All supported parameters are implemented compatibly with IBM's VSAM implementation.
@@ -114,34 +91,6 @@ For ease of access a short summary follows here:
 | `MF=(E,addr)`       | Specifies the execute form of the TESTCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.                   |
 | `MF=(G,addr)`       | Specifies the generate form of the TESTCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.                                                       |
 | `MF=(G,addr,label)` | Same as `MF=(G,addr)` but label will be equated to the length of the CBMR                                                                                                                                               |
-
-### zEXLST description
-The structure and layout of the zEXLST are not formally part of the interface and may change in future releases.
-Therefore the zEXLST layout is shown here only for the sake of completeness. Direct access to subfields in the zEXLST is discouraged.
-Use SHOWCB EXLST, TESTCB EXLST and/or MODCB EXLST to inspect, test, and/or modify the zEXLST's content.
-Accessing subfields of the zEXLST directly may adversely impact portability of your programs.
-
-| Label    | Equate       | Designation | Remarks                                                         |
-|----------|--------------|-------------|-----------------------------------------------------------------|
-| IFGEXLST |              | DSECT       |                                                                 |
-| EXLEYE   |              | CL4         | Eye catcher                                                     |
-|          | EXLZLST      | =C'zLST'    | Fixed value                                                     |
-| EXLLEN   |              | H           | Length of exit list                                             |
-| EXLLEN2  |              |             | Synonym of EXLLEN                                               |
-| EXLSTYP  |              | XL1         | Subtype                                                         |
-|          | EXLSVSAM     | =X'10'      | zVSAM                                                           |
-| EXLEODF  |              | XL1         | Eodad routine flags                                             |
-|          | EXLEODS      | =X'80'      | Present                                                         |
-|          | EXLEODA      | =X'40'      | Active                                                          |
-| EXLLERF  |              | XL1         | Lerad routine flags                                             |
-|          | EXLLERS      | =X'80'      | Present                                                         |
-|          | EXLLERA      | =X'40'      | Active                                                          |
-| EXLSYNF  |              | XL1         | Synad routine flags                                             |
-|          | EXLSYNS      | X'80'       | Present                                                         |
-|          | EXLSYNA      | X'40'       | Active                                                          |
-| EXLEODP  |              | AL4         | EODAD address                                                   |
-| EXLLERP  |              | AL4         | SYNAD address                                                   |
-| EXLSYNP  |              | AL4         | LERAD address                                                   |
 
 ## RPL-based interfaces
 

@@ -1,38 +1,3 @@
-## OPEN macro
-
-A cluster needs to be opened before it can be processed. The open macro is used to open one or more clusters
-and/or one or more sequential files in a single call.
-
-| Opcode        | Operand            | Remarks                                                                                               |
-|---------------|--------------------|-------------------------------------------------------------------------------------------------------|
-| [label] OPEN  | (entry[,entry]...) | Each cluster or file requires an entry of two parameters                                              |
-|               | [MODE=24/31]       | Residency mode of all control blocks involved. Specify 31 if any resides above the line               |
-| Entry format: | address,(options)  | Address of ACB or DCB, followed by a list of options (for DCB only). For ACB omit the list of options |
-|               | [MF=I or omitted]  | Use standard form of OPEN                                                                             |
-|               | [MF=L]             | Use list form of OPEN                                                                                 |
-|               | [MF=(E,address)]   | Use execute form of OPEN                                                                              |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation. For details,
-please refer to the relevant IBM manual
-
-### OPEN macro parameters
-
-| Parameter       | Explanation                                                                                                                                                                                                                                  |
-|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| entry           | The OPEN macro accepts a list of entries. Each entry consists of two consecutive parameters: an address and an optional list of options                                                                                                      |
-| address         | The address can be specified as an A-type address or as a register. If a register is coded the register number or name must be enclosed in parentheses. The address can be either the address of a DCB or the address of an ACB              |
-| options         | For a DCB options may be encoded according to the z390_File_Access_Method_Guide. For an ACB the options list is ignored and should be coded as an omitted parameter. Any options (e.g. IN/OUT) are taken from the ACB, not the open parmlist |
-| MF=I or omitted | An open parmlist is generated inline, plus a call to the OPEN SVC using the parmlist                                                                                                                                                         |
-| MF=L            | An open parmlist is generated inline                                                                                                                                                                                                         |
-| MF=(E,address)  | Code to modify/populate the open parameter list at the indicated address, which may be a relocatable constant or a (register), plus a call to the OPEN SVC using the parmlist                                                                |
-
-*Note:* IBMs OPEN allows an MF=L to be built which can then be overwritten with an MF=E
-containing more entries than were originally created, thus causing a storage violation.
-zVSAM V2 will return R15=8 if this is attempted.
-
-IBMs OPEN allows an MF=E to modify an MF=L with a different mode causing damage to the list.
-zVSAM V2 will return R15=8 if this is attempted
-
 ### OPEN logic
 
 Open logic has two major components: the open macro and the actual run-time logic to execute a request to
@@ -193,60 +158,6 @@ This table has the permutations of component types, indented entries are implied
 3. All AIXs on the upgrade set are opened for in/out by zVSAM and may be updated
 4. A PATH to an AIX ignores MACRF=IN/OUT
 
-## EXLST macro
-
-The EXLST macro will generate an Exit List control block and initialize it according to the parameters
-specified on the macro invocation.
-
-The structure and layout of the generated EXLST are not part of the interface and are therefore not shown in
-this chapter. Direct access to subfields in the EXLST is discouraged. Use SHOWCB EXLST=, TESTCB
-EXLST= and/or MODCB EXLST= to inspect, test, and/or modify the EXLST's content.
-
-All keywords on the EXLST macro are optional. Before the cluster is opened, all EXLST values can be
-modified using MODCB EXLST=, or by changing the EXLST directly. The latter is not recommended, as it
-is not guaranteed to be portable or compatible with future versions of zVSAM.
-
-The table below shows how the EXLST macro can be coded:
-
-| Opcode        | Operand                   | Remarks                                                  |
-|---------------|---------------------------|----------------------------------------------------------|
-| [label] EXLST | [AM=VSAM]                 | Designates this EXLST as a zVSAM EXLST                   |
-|               | [EODAD=(address[,mod]])   | End-of-data exit routine                                 |
-|               | [LERAD=(address[,mod]])   | Logical error analysis routine                           |
-|               | [SYNAD=(address[,mod]])   | Physical error analysis routine                          |
-|               | [JRNAD=(address[,mod]])   | Not supported. Keyword is flagged with a warning message |
-|               | [UPAD=(address[,mod]])    | Not supported. Keyword is flagged with a warning message |
-|               | [RLSWAIT=(address[,mod]]) | Not supported. Keyword is flagged with a warning message |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-For GENCB MF=I, L or G, a missing address will generate zero and no error, whereas IBM displays an error.
-It is assumed that the address will be made valid by a MODCB EXLST= macro invocation.
-A missing mod will generate A
-
-For GENCB MF=E, a missing address or mod means don't modify that parameter in the CBMR.
-
-*Note:* Although a null address may be set in the EXLST, you cannot change an address to null with MODCB.
-
-### EXLST macro parameters
-
-| Parameter | Explanation                                                                                                               |
-|-----------|---------------------------------------------------------------------------------------------------------------------------|
-| EODAD=    | Optional parameter to specify the entry address of an exit that handles an end-of-data condition during sequential access |
-|           | The routine address may be followed by a modifier. For details, please see below                                          |
-|           | The AMODE for the routine is encoded in the address using the common convention                                           |
-| LERAD=    | Optional parameter to specify the entry address of an exit that handles logic errors.                                     |
-|           | The routine address may be followed by a modifier. For details, please see below                                          |
-|           | The AMODE for the routine is encoded in the address using the common convention                                           |
-| SYNAD=    | Optional parameter to specify the entry address of an exit that handles physical errors.                                  |
-|           | The routine address may be followed by a modifier. For details, please see below                                          |
-|           | The AMODE for the routine is encoded in the address using the common convention                                           |
-| mod       | modifier, can optionally be specified after each routine address                                                          |
-|           | Values: A or N for Active or Not-active. These are mutually exclusive                                                     |
-|           | As long as the routine is not active it will not be called by zVSAM                                                       |
-|           | The secondary modifier of L (for Load from Linklib) is not supported                                                      |
-
 ### Exit logic
 
 This logic is only entered if any of the following conditions are raised:
@@ -260,46 +171,6 @@ This logic is only entered if any of the following conditions are raised:
 | Check that the exit is active      | No action if inactive |
 | Check that the address is not zero | No action if zero     |
 | Branch to the exit address         |                       |
-
-## CLOSE macro
-
-A cluster needs to be closed after it has been processed. The close macro is used to close one or more clusters
-and/or one or more sequential files in a single call.
-
-| Opcode        | Operand            | Remarks                                                                                |
-|---------------|--------------------|----------------------------------------------------------------------------------------|
-| [label] CLOSE | (entry[,entry]...) | Each cluster or file requires an entry of two parameters                               |
-|               | [MODE=24/31]       | Residency mode of all control blocks involved. Specify 31 if any reside above the line |
-|               | [TYPE=T]           | Not supported – future option. Keyword is flagged as ignored with a warning message    |
-| Entry format: | address,,          | Address of ACB or DCB, followed by two commas to show that options are omitted         |
-|               | [MF=I or omitted]  | Use standard form of CLOSE                                                             |
-|               | [MF=L]             | Use list form of CLOSE                                                                 |
-|               | [MF=(E,address)]   | Use execute form of CLOSE                                                              |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manua.l
-
-### CLOSE macro parameters
-
-For ease of access a short summary follows here:
-
-| Parameter       | Explanation                                                                                                                                                                     |
-|-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| entry           | The CLOSE macro accepts a list of entries. Each entry consists of two consecutive parameters: an address and an optional list of options                                        |
-| address         | The address can be specified as an A-type address or as a register.                                                                                                             |
-|                 | If a register is coded the register number or name must be enclosed in parentheses.                                                                                             |
-|                 | The address can be either the address of a DCB or the address of an ACB                                                                                                         |
-| options         | Code as an omitted parameter                                                                                                                                                    |
-| MF=I or omitted | If the MF parameter is omitted a close parmlist is generated inline, plus a call to the CLOSE SVC using the parmlist.                                                           |
-| MF=L            | With MF=L a close parmlist is generated inline                                                                                                                                  |
-| MF=(E,address)  | Code to modify/populate the close parameter list at the indicated address, which may be a relocatable constant or a (register), plus a call to the CLOSE SVC using the parmlist |
-
-*Note:* IBMs CLOSE allows an MF=L to be built which can then be overwritten with an MF=E containing
-more entries than were originally created, thus causing storage violation.
-zVSAM V2 will return R15=8 if this is attempted.
-
-IBMs CLOSE allows an MF=E to modify an MF=L with a different mode causing damage to the list.
-zVSAM V2 will return R15=8 if this is attempted.
 
 ### CLOSE logic
 

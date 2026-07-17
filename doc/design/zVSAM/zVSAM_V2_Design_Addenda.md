@@ -123,7 +123,7 @@ Accessing subfields of the zACB directly may adversely impact portability of you
 > Fields ACBPFX through ACBDTYPE are dataset-level fields and do not belong in the zACB,
 > which is intended for cluster-level information. These fields need to be moved to another structure.
 
-### SHOWCB ACB details
+## SHOWCB ACB details
 
 | Keyword  | Usage and implementation in zVSAM                                                                                                                                                                                       |
 |----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -187,7 +187,7 @@ Review notes:
 5. Melvyn declares FS to always return zero. Do we want that?
 6. Melvyn declares NRETR to be zero for index components. I'm not sure why.
 
-### TESTCB ACB details
+## TESTCB ACB details
 
 | Keyword  | Usage and implementation in zVSAM                                                                                                                                                                                       |
 |----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -233,7 +233,48 @@ Review notes:
 | STRNO    | Max. value of parallel requests From `ACBSTRNO`                                                                                                                                                                         |
 | UIW      | value of user writes (last 4 bytes). From `CTRNUIW`                                                                                                                                                                     |
 
-### CBMR description
+## zEXLST description
+
+The zEXLST is the internal structure (control block, object) that constitutes the EXLST.
+
+The structure and layout of the zEXLST are not formally part of the interface and may change in future releases.
+Therefore the zEXLST layout for zVSAM V2 is shown here only for the sake of completeness.
+Direct access to subfields in the zEXLST is discouraged. Use SHOWCB EXLST, TESTCB EXLST and/or MODCB EXLST to inspect, test, and/or modify the zEXLST's content.
+Accessing subfields of the zEXLST directly may adversely impact portability of your programs.
+
+| Label    | Equate       | Designation | Remarks                                                         |
+|----------|--------------|-------------|-----------------------------------------------------------------|
+| IFGEXLST |              | DSECT       |                                                                 |
+| EXLEYE   |              | CL4         | Eye catcher                                                     |
+|          | EXLZLST      | =C'zLST'    | Fixed value                                                     |
+| EXLLEN   |              | H           | Length of exit list                                             |
+| EXLLEN2  |              |             | Synonym of EXLLEN                                               |
+| EXLSTYP  |              | XL1         | Subtype                                                         |
+|          | EXLSVSAM     | =X'10'      | zVSAM                                                           |
+| EXLEODF  |              | XL1         | Eodad routine flags                                             |
+|          | EXLEODS      | =X'80'      | Present                                                         |
+|          | EXLEODA      | =X'40'      | Active                                                          |
+| EXLLERF  |              | XL1         | Lerad routine flags                                             |
+|          | EXLLERS      | =X'80'      | Present                                                         |
+|          | EXLLERA      | =X'40'      | Active                                                          |
+| EXLSYNF  |              | XL1         | Synad routine flags                                             |
+|          | EXLSYNS      | X'80'       | Present                                                         |
+|          | EXLSYNA      | X'40'       | Active                                                          |
+| EXLEODP  |              | AL4         | EODAD address                                                   |
+| EXLLERP  |              | AL4         | SYNAD address                                                   |
+| EXLSYNP  |              | AL4         | LERAD address                                                   |
+
+
+
+
+
+
+
+
+
+
+
+## CBMR description
 
 The structure and layout of the CBMR are not formally part of the interface and may change in future releases.
 Therefore the CBMR layout is shown here only for the sake of completeness. Direct access to subfields in the CBMR is discouraged.

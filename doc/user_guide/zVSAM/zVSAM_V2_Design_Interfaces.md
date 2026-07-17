@@ -1,33 +1,3 @@
-### EXLST macro
-
-The EXLST macro will generate an Exit_List control block and initialize it according to the parameters specified
-on the macro invocation.
-
-The structure and layout of the generated EXLST are not part of the interface and are therefore not shown in this chapter.
-Direct access to subfields in the EXLST is discouraged. Use SHOWCB EXLST, TESTCB EXLST and/or MODCB EXLST
-to inspect, test, and/or modify the EXLST's content.
-
-All keywords on the EXLST macro are optional. Before the cluster is opened,
-all EXLST values can be modified using MODCB EXLST, or by changing the EXLST directly.
-The latter is not recommended, as it is not guaranteed to be portable or compatible with future versions of zVSAM.
-
-The table below shows how the EXLST macro can be coded.
-
-| Opcode | Operand                | Remarks                                                                                             |
-|--------|------------------------|-----------------------------------------------------------------------------------------------------|
-| EXLST  | [AM=VSAM]              | Designates this EXLST as a zVSAM EXLST; VSAM is the default                                         |
-|        | [EODAD=addr[,mod]]     | End-of-data exit routine                                                                            |
-|        | [LERAD=addr[,mod]]     | Logical error analysis routine                                                                      |
-|        | [SYNAD=addr[,mod]]     | Physical error analysis routine                                                                     |
-|        | [_JRNAD_=addr[,mod]]   | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
-|        | [_UPAD_=addr[,mod]]    | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
-|        | [_RLSWAIT_=addr[,mod]] | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-For ease of access a short summary can be found in the addenda.
-
 ### GENCB EXLST macro
 
 The GENCB macro with BLK=EXLST will generate or manipulate Exit Lists for use with ACBs and initialize or change them

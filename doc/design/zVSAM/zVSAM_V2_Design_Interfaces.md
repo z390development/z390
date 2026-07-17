@@ -10,22 +10,22 @@ will be eliminated.
 This document is divided into three major chapters: one for each control block (or object)
 involved in VSAM file handling.
 
-| [ACB](#acb-based-interfaces)    | EXLST        | RPL        | Other |
-|---------------------------------|--------------| -----------|-------|
-| [ACB](#acb-macro)               | EXLST        | RPL        | CBMR  |
-| [ACBD](#acbd-macro)             | EXLSTD       | RPLD       |       |
-| [GENCB ACB](#gencb-acb-macro)   | GENCB EXLST  | GENCB RPL  |       |
-| [MODCB ACB](#modcb-acb-macro)   | MODCB EXLST  | MODCB RPL  |       |
-| [SHOWCB ACB](#showcb-acb-macro) | SHOWCB EXLST | SHOWCB RPL |       |
-| [TESTCD ACB](#testcb-acb-macro) | TESTCD EXLST | TESTCD RPL |       |
-|---------------------------------|--------------|------------|-------|
-| [OPEN](#open-macro)             |              | POINT      |       |
-| [CLOSE](#close-macro)           |              | GET        |       |
-|                                 |              | PUT        |       |
-|                                 |              | ERASE      |       |
-|                                 |              | CHECK      |       |
-|                                 |              | ENDREQ     |       |
-|                                 |              | VERIFY     |       |
+| [ACB](#acb-based-interfaces)    | [EXLST](#exlst-based-interfaces) | RPL        | Other |
+|---------------------------------|----------------------------------| -----------|-------|
+| [ACB](#acb-macro)               | [EXLST](#exlst-macro)            | RPL        | CBMR  |
+| [ACBD](#acbd-macro)             | [EXLSTD](#exlstd-macro)          | RPLD       |       |
+| [GENCB ACB](#gencb-acb-macro)   | GENCB EXLST                      | GENCB RPL  |       |
+| [MODCB ACB](#modcb-acb-macro)   | MODCB EXLST                      | MODCB RPL  |       |
+| [SHOWCB ACB](#showcb-acb-macro) | SHOWCB EXLST                     | SHOWCB RPL |       |
+| [TESTCB ACB](#testcb-acb-macro) | TESTCB EXLST                     | TESTCB RPL |       |
+|---------------------------------|----------------------------------|------------|-------|
+| [OPEN](#open-macro)             |                                  | POINT      |       |
+| [CLOSE](#close-macro)           |                                  | GET        |       |
+|                                 |                                  | PUT        |       |
+|                                 |                                  | ERASE      |       |
+|                                 |                                  | CHECK      |       |
+|                                 |                                  | ENDREQ     |       |
+|                                 |                                  | VERIFY     |       |
 
 ## ACB-based interfaces
 
@@ -55,24 +55,6 @@ GENCB BLK=ACB should be used to create an ACB in dynamically acquired storage,
 or in private static storage. MODCB ACB= can be used to modify an existing ACB,
 whereas SHOWCB ACB= can be used to query specific fields of an ACB
 and TESTCB ACB= can be used to validate specific fields of an ACB.
-
-The following macros for assembler programs implement functions to manage EXLSTs:
-
-| Macro           | Function                                             |
-|-----------------|------------------------------------------------------|
-| EXLST           | Create/instantiate an EXLST during assembly          |
-| EXLSTD          | Describe EXLST subfields                             |
-| GENCB BLK=EXLST | Dynamically create/instantiate EXLST(s)              |
-| MODCB EXLST=    | Dynamically modify an EXLST                          |
-| SHOWCB EXLST=   | Extract EXLST subfield(s) (generic getter method)    |
-| TESTCB EXLST=   | Test EXLST subfield(s) (generic tester method)       |
-
-**Note:** The EXLST macro defines a statically allocated EXLST.
-This macro is primarily intended for use in non-reentrant programs.
-GENCB BLK=EXLST should be used to create an EXLST in dynamically acquired storage,
-or in private static storage. MODCB EXLST= can be used to modify an existing EXLST,
-whereas SHOWCB EXLST= can be used to query specific fields of an EXLST
-and TESTCB EXLST= can be used to validate specific fields of an EXLST.
 
 The following macros for assembler programs implement data manipulation functions for ACB-defined clusters:
 
@@ -865,6 +847,8 @@ For details, please refer to the relevant IBM manual.
 > - One or more entries can be specified.
 > - Each entry can specify either a zVSAM cluster, or a sequential file.
 > - The open macro can be used to open 1 or more cluster(s) and/or 1 or more sequential file(s) in a single call.
+> - When MF=E specifies more entries than created with MF=L zVSAM V2 will return an error (R15=8).
+> - When MF=E specifies a different MODE= parameter than created with MF=L zVSAM V2 will return an error (R15=8).
 
 #### Entry format
 
@@ -943,6 +927,8 @@ For an ACB the options list is ignored and should not be coded.
 
 The address can be specified as an A-type address or as a register.
 If a register is coded the register number or name must be enclosed in parentheses.
+The address can be either the address of an ACB to close a cluster,
+or the address of a DCB to close a sequential file.
 
 ##### Options
 
@@ -968,6 +954,188 @@ The MF= parameter is optional. It can take the following forms:
 | `MF=L`        | With MF=L a close parmlist is generated inline                                                                                                                                                                          |
 | `MF=(L,addr)` | Code is generated to construct the close parmlist at run-time, at the indicated address. If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.          |
 | `MF=(E,addr)` | Code is generated to call the close SVC using the parmlist at the indicated address. If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.              |
+
+================================================================================================================================================================================
+
+## EXLST-based interfaces
+
+The EXLST serves as an extension to the [ACB](acb-based-interfaces).
+
+The EXLST interface consists of an EXLST control block, usually associated with an ACB,
+and a set of macros to manage and manipulate the ACB and EXLST control blocks.
+These macros can be used in your assembler programs. For zCobol and/or other higher-level languages,
+these macros will be generated from specifications for the files as appropriate in the host language's syntax.
+
+The following macros for assembler programs implement functions to manage EXLSTs:
+
+| Macro           | Function                                             |
+|-----------------|------------------------------------------------------|
+| EXLST           | Create/instantiate an EXLST during assembly          |
+| EXLSTD          | Describe EXLST subfields                             |
+| GENCB BLK=EXLST | Dynamically create/instantiate EXLST(s)              |
+| MODCB EXLST=    | Dynamically modify an EXLST                          |
+| SHOWCB EXLST=   | Extract EXLST subfield(s) (generic getter method)    |
+| TESTCB EXLST=   | Test EXLST subfield(s) (generic tester method)       |
+
+**Note:** The EXLST macro defines a statically allocated EXLST.
+This macro is primarily intended for use in non-reentrant programs.
+GENCB BLK=EXLST should be used to create an EXLST in dynamically acquired storage,
+or in private static storage. MODCB EXLST= can be used to modify an existing EXLST,
+whereas SHOWCB EXLST= can be used to query specific fields of an EXLST
+and TESTCB EXLST= can be used to validate specific fields of an EXLST.
+
+A description of these interfaces as implemented for z390 and zVSAM is detailed in the next chapters.
+
+================================================================================================================================================================================
+
+### EXLST macro
+
+The EXLST macro will generate an Exit List control block and initialize it according to the parameters specified
+on the macro invocation.
+
+The EXLST macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                   |
+|----------|--------------------------|
+| ZVSAM(0) | Error: zVSAM disabled    |
+| ZVSAM(1) | EXLST1 macro is expanded |
+| ZVSAM(2) | EXLST2 macro is expanded |
+
+> [!NOTE]
+> zVSAM V1 did not support EXLST. We currently have only the EXLST macro implementing the V2 EXLST.
+> This needs to be revised to have consistent structure across zVSAM control block macros.
+
+The structure and layout of the generated EXLST are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the EXLST, EXLST1 and EXLST2 macros
+in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the EXLST is strongly discouraged. Use SHOWCB EXLST=, TESTCB EXLST= and/or
+> MODCB EXLST= to inspect, test, and/or modify the EXLST's content.
+
+All keywords on the EXLST macro are optional. Before the cluster is opened,
+all EXLST values can be modified using MODCB EXLST=, or by changing the EXLST directly.
+The latter is not recommended, as it is not guaranteed to be portable or compatible
+with future versions of zVSAM.
+
+The table below shows how the EXLST macro can be coded.
+
+| Opcode        | Operand                | Remarks                                                                                             |
+|---------------|------------------------|-----------------------------------------------------------------------------------------------------|
+| [label] EXLST | [AM=VSAM]              | Designates this EXLST as a zVSAM EXLST; VSAM is the default                                         |
+|               | [EODAD=addr[,A/N]]     | End-of-data exit routine                                                                            |
+|               | [LERAD=addr[,A/N]]     | Logical error analysis routine                                                                      |
+|               | [SYNAD=addr[,A/N]]     | Physical error analysis routine                                                                     |
+|               | [JRNAD=addr[,A/N]]     | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+|               | [UPAD=addr[,A/N]]      | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+|               | [RLSWAIT=addr[,A/N]]   | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+> [!NOTE]
+> There is no MF= parameter defined for the EXLST macro.
+> Use GENCB to generate EXLSTs in dynamically acquired storage.
+
+For each exit routine, a modifier of `A` or `N` is supported. The default is `A`.
+The modifier value `L` (for Load from Linklib) is not supported.
+
+> [!NOTE]
+> - Review note: We have no linklib, but we might load a module anyway using our existing support for SVC 6 (Load macro)
+
+For GENCB EXLST with MF=I, L or G, a missing address will generate zero and no error,
+whereas IBM displays an error. It is assumed that the address will be made valid
+by a MODCB EXLST= macro invocation.
+
+For GENCB EXLST with MF=E, a missing address or modifier means don't modify that parameter in the CBMR.
+
+Although a null address may be set in the EXLST, you cannot change an address to null with MODCB EXLST=.
+Intead set the exit to Non-active.
+
+#### AM=
+
+Optional parameter. `AM=VSAM` is the default. No other values are supported.
+
+#### EODAD=
+
+Optional parameter to specify the entry address of an exit that handles an end-of-data condition during sequential access.
+The amode for the routine is encoded in the first bit of the 32-bit address:
+- when the bit is off the exit is called in amode 24;
+- when the bit is on the exit is called in amode 31.
+
+The routine address may be followed by a modifier, which can only be `A` or `N`.
+The `A` indicates the routine is to be marked Active, the `N` indicates Non-active.
+
+The exit will be invoked only when it has been marked Active.
+Use Non-active mode to define an exit for delayed activation.
+
+#### LERAD=
+
+Optional parameter to specify the entry address of an exit that handles logic errors.
+The amode for the routine is encoded in the first bit of the 32-bit address:
+- when the bit is off the exit is called in amode 24;
+- when the bit is on the exit is called in amode 31.
+
+The routine address may be followed by a modifier, which can only be `A` or `N`.
+The `A` indicates the routine is to be marked Active, the `N` indicates Non-active.
+
+The exit will be invoked only when it has been marked Active.
+Use Non-active mode to define an exit for delayed activation.
+
+#### SYNAD=
+
+Optional parameter to specify the entry address of an exit that handles physical errors.
+The amode for the routine is encoded in the first bit of the 32-bit address:
+- when the bit is off the exit is called in amode 24;
+- when the bit is on the exit is called in amode 31.
+
+The routine address may be followed by a modifier, which can only be `A` or `N`.
+The `A` indicates the routine is to be marked Active, the `N` indicates Non-active.
+
+The exit will be invoked only when it has been marked Active.
+Use Non-active mode to define an exit for delayed activation.
+
+================================================================================================================================================================================
+
+### EXLSTD macro
+
+The EXLSTD macro maps the EXLST. Its behaviour depends on the ZVSAM option in effect:
+
+| Option   | Effect                    |
+|----------|---------------------------|
+| ZVSAM(0) | Error: zVSAM disabled     |
+| ZVSAM(1) | EXLSTD1 macro is expanded |
+| ZVSAM(2) | EXLSTD2 macro is expanded |
+
+There is no mapping in EXLSTD1 since zVSAM V1 does not support the EXLST.
+
+For mapping details, please see the [zEXLST layout](zVSAM_V2_Design_Addenda.md#zexlst-description)
+or the `EXLSTD`, `EXLSTD1` and `EXLSTD2` macros in the mac folder.
+
+> [!NOTE]
+> The EXLSTD macro generates no executable code.
+
+> [!NOTE]
+> The EXLSTD macro can be invoked multiple times, but will generate the DSECT mapping
+> only on its first invocation.
+
+================================================================================================================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ================================================================================================================================================================================
 
