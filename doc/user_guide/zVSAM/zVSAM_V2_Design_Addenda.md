@@ -1,34 +1,3 @@
-### GENCB EXLST macro parameters
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-For ease of access a short summary follows here:
-
-| Keyword             | Usage and implementation in zVSAM                                                                                                                                                                                       |
-|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `BLK=EXLST`         | required to indicate the EXLST-supporting logic of the macro is being invoked                                                                                                                                           |
-| `COPIES`=           | Number of identical copies to generate. Specify a number between 1 and 65535. The default is 1.                                                                                                                         |
-| `WAREA`=            | Address of a work area where the EXLST/EXLSTs is/are to be constructed.                                                                                                                                                 |
-|                     | When `WAREA` is specified, `LENGTH` must be specified too.                                                                                                                                                              |
-|                     | When `WAREA` is not specified, the CBMR handler allocates an area of storage. The address of this area is returned in R1; its length in R0.                                                                             |
-| `LENGTH`=           | Length in bytes of the area indicated by `WAREA`. When `LENGTH` is specified, `WAREA` must be specified as well.                                                                                                        |
-| `LOC=`              | Where a work area for constructing the EXLST/EXLSTs is to be allocated. Used only when `WAREA` and `LENGTH` are not specified. Supports the keywords `BELOW` and `ANY`, with `BELOW` being the default                  |
-| - `BELOW`           | the work area is to be allocated below the line                                                                                                                                                                         |
-| - `ANY`             | the work area is to be allocated above the line if possible, below the line otherwise.                                                                                                                                  |
-| *other*             | Any parameters and/or keywords supported by the EXLST macro. Please see the description of the EXLST macro for details.                                                                                                 |
-|                     | Supported parameters and keywords on the EXLST macro are supported on GENCB EXLST as well. Likewise, unsupported parameters and keywords on the EXLST macro are not supported on GENCB EXLST either.                    |
-|                     | How the parameters can be specified differs per parameter.                                                                                                                                                              |
-|                     | For a complete list of options, please see the IBM manual “DFSMS Macro Instructions for Data Sets” or equivalent for the operating system and version that you are porting to/from.                                     |
-| Please note:        | not supported are expressions like (S,scon) or (\*,scon)                                                                                                                                                                |
-| `MF`=               | When omitted, specifies the standard form of the GENCB to generate an inline CBMR and an inline call to the CBMR handler.                                                                                               |
-| `MF=L`              | Specifies the list form of the GENCB macro which generates an inline CBMR but no call to the CBMR handler.                                                                                                              |
-| `MF=(L,addr)`       | Specifies the list form of the GENCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.                                                                               |
-| `MF=(L,addr,label)` | Same as `MF=(L,addr)` but label will be equated to the length of the CBMR.                                                                                                                                              |
-| `MF=(E,addr)`       | Specifies the execute form of the GENCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.                    |
-| `MF=(G,addr)`       | Specifies the generate form of the GENCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.                                                        |
-| `MF=(G,addr,label)` | Same as `MF=(G,addr)` but label will be equated to the length of the CBMR                                                                                                                                               |
-
 ### MODCB EXLST macro parameters
 
 All supported parameters are implemented compatibly with IBM's VSAM implementation.

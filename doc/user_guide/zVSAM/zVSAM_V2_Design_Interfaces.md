@@ -1,39 +1,3 @@
-### GENCB EXLST macro
-
-The GENCB macro with BLK=EXLST will generate or manipulate Exit Lists for use with ACBs and initialize or change them
-according to the parameters specified on the macro invocation.
-It is for this reason that all supported parameters and keywords of the EXLST macro (as described above)
-are supported on the GENCB macro when BLK=EXLST is specified.
-
-The structure and layout of the generated EXLST are not part of the interface and are therefore not shown in this chapter.
-Direct access to subfields in the EXLST is discouraged. Use SHOWCB EXLST, TESTCB EXLST and/or MODCB EXLST
-to inspect, test, and/or modify the EXLST's content.
-
-Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
-are  not part of the interface and are therefore not shown in this chapter.
-Direct access to subfields in the CBMR is strongly discouraged.
-
-The GENCB EXLST macro can be coded as follows:
-
-| Opcode | Operand                   | Remarks                                                             |
-|--------|---------------------------|-------------------------------------------------------------------- |
-| GENCB  | BLK=EXLST                 | Instructs GENCB to generate 1 or more EXLSTs                        |
-|        | [AM=VSAM]                 | Optional, no other values allowed; VSAM is the default              |
-|        | [COPIES=nr]               | The number of identical EXLSTs to generate                          |
-|        | [WAREA=addr]              | The work area where the EXLSTs are to be constructed                |
-|        | [LENGTH=nr]               | Length of the work area in bytes                                    |
-|        | [LOC=keyword]             | Where GENCB is to allocate dynamically acquired storage - if needed |
-|        | **[other]**               | **Any parameter supported on the EXLST macro**                      |
-|        | [MF=]                     | Use standard form of GENCB EXLST; this is the default               |
-|        | [MF=L/MF=(L,addr,[label]] | Use list form of GENCB EXLST                                        |
-|        | [MF=(E,addr)]             | Use execute form of GENCB EXLST                                     |
-|        | [MF=(G,addr,[label])]     | Use generate form of GENCB EXLST                                    |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-For ease of access a short summary can be found in the addenda.
-
 ### MODCB EXLST macro
 
 The MODCB macro with EXLST=addr will modify an EXLST according to the parameters specified on the macro invocation.

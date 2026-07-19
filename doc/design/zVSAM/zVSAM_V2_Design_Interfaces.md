@@ -10,22 +10,22 @@ will be eliminated.
 This document is divided into three major chapters: one for each control block (or object)
 involved in VSAM file handling.
 
-| [ACB](#acb-based-interfaces)    | [EXLST](#exlst-based-interfaces) | RPL        | Other |
-|---------------------------------|----------------------------------| -----------|-------|
-| [ACB](#acb-macro)               | [EXLST](#exlst-macro)            | RPL        | CBMR  |
-| [ACBD](#acbd-macro)             | [EXLSTD](#exlstd-macro)          | RPLD       |       |
-| [GENCB ACB](#gencb-acb-macro)   | GENCB EXLST                      | GENCB RPL  |       |
-| [MODCB ACB](#modcb-acb-macro)   | MODCB EXLST                      | MODCB RPL  |       |
-| [SHOWCB ACB](#showcb-acb-macro) | SHOWCB EXLST                     | SHOWCB RPL |       |
-| [TESTCB ACB](#testcb-acb-macro) | TESTCB EXLST                     | TESTCB RPL |       |
-|---------------------------------|----------------------------------|------------|-------|
-| [OPEN](#open-macro)             |                                  | POINT      |       |
-| [CLOSE](#close-macro)           |                                  | GET        |       |
-|                                 |                                  | PUT        |       |
-|                                 |                                  | ERASE      |       |
-|                                 |                                  | CHECK      |       |
-|                                 |                                  | ENDREQ     |       |
-|                                 |                                  | VERIFY     |       |
+| [ACB](#acb-based-interfaces)    | [EXLST](#exlst-based-interfaces)    | RPL        | Other |
+|---------------------------------|-------------------------------------| -----------|-------|
+| [ACB](#acb-macro)               | [EXLST](#exlst-macro)               | RPL        | CBMR  |
+| [ACBD](#acbd-macro)             | [EXLSTD](#exlstd-macro)             | RPLD       |       |
+| [GENCB ACB](#gencb-acb-macro)   | [GENCB EXLST](#gencb-exlst-macro)   | GENCB RPL  |       |
+| [MODCB ACB](#modcb-acb-macro)   | [MODCB EXLST](#modcb-exlst-macro)   | MODCB RPL  |       |
+| [SHOWCB ACB](#showcb-acb-macro) | [SHOWCB EXLST](#showcb-exlst-macro) | SHOWCB RPL |       |
+| [TESTCB ACB](#testcb-acb-macro) | [TESTCB EXLST](#testcb-exlst-macro) | TESTCB RPL |       |
+|---------------------------------|-------------------------------------|------------|-------|
+| [OPEN](#open-macro)             |                                     | POINT      |       |
+| [CLOSE](#close-macro)           |                                     | GET        |       |
+|                                 |                                     | PUT        |       |
+|                                 |                                     | ERASE      |       |
+|                                 |                                     | CHECK      |       |
+|                                 |                                     | ENDREQ     |       |
+|                                 |                                     | VERIFY     |       |
 
 ## ACB-based interfaces
 
@@ -1121,6 +1121,109 @@ or the `EXLSTD`, `EXLSTD1` and `EXLSTD2` macros in the mac folder.
 
 ================================================================================================================================================================================
 
+### GENCB EXLST macro
+
+The GENCB macro with BLK=EXLST will generate or manipulate EXLSTs and initialize or change them
+according to the parameters specified on the macro invocation. It is for this reason that
+all supported parameters and keywords of the EXLST macro (as described above) are supported
+on the GENCB macro when BLK=EXLST is specified.
+
+The GENCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                   |
+|----------|--------------------------|
+| ZVSAM(0) | Error: zVSAM disabled    |
+| ZVSAM(1) | GENCB1 macro is expanded |
+| ZVSAM(2) | GENCB2 macro is expanded |
+
+The structure and layout of the EXLST are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zEXLST description](zVSAM_V2_Design_Addenda.md#zacb-description) or the EXLST2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the EXLST or CBMR is strongly discouraged. Use GENCB BLK=EXLST, SHOWCB EXLST=,
+> TESTCB EXLST= and/or MODCB EXLST= to generate, inspect, test, and/or modify the EXLST's content.
+
+All keywords on the GENCB EXLST macro are optional. Except BLK= which is required.
+
+The GENCB EXLST macro can be coded as follows:
+
+| Opcode        | Operand                   | Remarks                                                                                                 |
+|---------------|---------------------------|---------------------------------------------------------------------------------------------------------|
+| [label] GENCB | BLK=EXLST                 | Instructs GENCB to generate 1 or more EXLSTs                                                            |
+|               | [AM=VSAM]                 | Optional, no other values allowed; VSAM is the default                                                  |
+|               | [COPIES=nr]               | The number of identical EXLSTs to generate                                                              |
+|               | [WAREA=addr]              | The work area where the EXLSTs are to be constructed                                                    |
+|               | [LENGTH=nr]               | Length of the work area in bytes                                                                        |
+|               | [LOC=keyword]             | Where GENCB is to allocate dynamically acquired storage - if needed                                     |
+|               | **[other]**               | **Any parameter supported on the EXLST macro**                                                          |
+|               | [MF=]                     | Use standard form of GENCB EXLST; this is the default                                                   |
+|               | [MF=L/MF=(L,addr,[label]] | Use list form of GENCB EXLST                                                                            |
+|               | [MF=(E,addr)]             | Use execute form of GENCB EXLST                                                                         |
+|               | [MF=(G,addr,[label])]     | Use generate form of GENCB EXLST                                                                        |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### BLK=
+
+Required parameter; specify EXLST to generate 1 or more EXLSTs
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### COPIES=
+
+Number of identical EXLSTs to generate ranging from 1 to 65535. Defaults to 1.
+
+#### WAREA=
+
+The work area where the EXLSTs are to be constructed.
+
+- When WAREA is specified, LENGTH must be specified too.
+- When WAREA is not specified, the CBMR handler allocates an area of storage.
+- The address of this area whether via GETMAIN or WAREA is returned in R1.
+- The length of the generated EXLST(s) is returned in R0.
+
+#### LENGTH=
+
+- If WAREA= is specified, this paramter is required and specifies the length of the area.
+- If WAREA= is not specified, this parameter is ignored. zVSAM determines how much storage to allocate.
+
+#### LOC=
+
+- If WAREA= is specified, this paramter is ignored.
+- If WAREA= is not specified, this parameter indicates where zVSAM is to allocate storage for the EXLST or EXLSTs.
+
+Supported keywords:
+- BELOW = below 16M (addressable in Amode 24, 31, or 64)
+- ANY   = below 2G  (requires Amode 31 or 64 to address)
+
+#### Other keywords
+
+All parameters supported by the [EXLST macro](#acb-macro) are supported here as well.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                  |
+|-------------|-----------------|--------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                               |
+| R15=4       | Reason Code=4   | Invalid control block                                                    |
+| R15=4       | Reason Code=9   | WAREA is too small                                                       |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
+
+================================================================================================================================================================================
 
 
 
