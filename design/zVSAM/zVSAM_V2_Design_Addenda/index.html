@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -2597,10 +2597,9 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="zACB description">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
+</li>
+      
+        <li class="md-nav__item">
   <a href="#showcb-acb-details" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2610,8 +2609,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#testcb-acb-details" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2621,8 +2620,19 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
+  <a href="#zexlst-description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        zEXLST description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#cbmr-description" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2631,7 +2641,8 @@
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="CBMR description">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#cbmr-header" class="md-nav__link">
@@ -2763,10 +2774,9 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="zACB description">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
+</li>
+      
+        <li class="md-nav__item">
   <a href="#showcb-acb-details" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2776,8 +2786,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#testcb-acb-details" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2787,8 +2797,19 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
+  <a href="#zexlst-description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        zEXLST description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#cbmr-description" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2797,7 +2818,8 @@
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="CBMR description">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#cbmr-header" class="md-nav__link">
@@ -3545,7 +3567,7 @@ Accessing subfields of the zACB directly may adversely impact portability of you
 Fields ACBPFX through ACBDTYPE are dataset-level fields and do not belong in the zACB,
 which is intended for cluster-level information. These fields need to be moved to another structure.</p>
 </blockquote>
-<h3 id="showcb-acb-details">SHOWCB ACB details</h3>
+<h2 id="showcb-acb-details">SHOWCB ACB details</h2>
 <table>
 <thead>
 <tr>
@@ -3767,7 +3789,7 @@ which is intended for cluster-level information. These fields need to be moved t
 4. ENDRBA (and HALCRBA, HLRBA) - we do not have RBA values, only LRSN. How to redefine? Melvyn says to use <code>CTRENDRBA</code>
 5. Melvyn declares FS to always return zero. Do we want that?
 6. Melvyn declares NRETR to be zero for index components. I'm not sure why.</p>
-<h3 id="testcb-acb-details">TESTCB ACB details</h3>
+<h2 id="testcb-acb-details">TESTCB ACB details</h2>
 <table>
 <thead>
 <tr>
@@ -3942,7 +3964,168 @@ which is intended for cluster-level information. These fields need to be moved t
 </tr>
 </tbody>
 </table>
-<h3 id="cbmr-description">CBMR description</h3>
+<h2 id="zexlst-description">zEXLST description</h2>
+<p>The zEXLST is the internal structure (control block, object) that constitutes the EXLST.</p>
+<p>The structure and layout of the zEXLST are not formally part of the interface and may change in future releases.
+Therefore the zEXLST layout for zVSAM V2 is shown here only for the sake of completeness.
+Direct access to subfields in the zEXLST is discouraged. Use SHOWCB EXLST, TESTCB EXLST and/or MODCB EXLST to inspect, test, and/or modify the zEXLST's content.
+Accessing subfields of the zEXLST directly may adversely impact portability of your programs.</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Equate</th>
+<th>Designation</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IHAEXLST</td>
+<td></td>
+<td>DSECT</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>IFGEXLST</td>
+<td>DSECT</td>
+<td>Alternative DSECT name</td>
+</tr>
+<tr>
+<td>EXLEYE</td>
+<td></td>
+<td>CL4</td>
+<td>Eye catcher</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLZLST</td>
+<td>=C'zLST'</td>
+<td>Fixed value</td>
+</tr>
+<tr>
+<td>EXLLEN</td>
+<td></td>
+<td>H</td>
+<td>Length of exit list</td>
+</tr>
+<tr>
+<td>EXLLEN2</td>
+<td></td>
+<td></td>
+<td>Synonym of EXLLEN</td>
+</tr>
+<tr>
+<td>EXLSTYP</td>
+<td></td>
+<td>XL1</td>
+<td>Subtype</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLSVSAM</td>
+<td>=X'10'</td>
+<td>zVSAM</td>
+</tr>
+<tr>
+<td>EXLEODF</td>
+<td></td>
+<td>XL1</td>
+<td>Eodad routine flags</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLEODS</td>
+<td>=X'80'</td>
+<td>Present</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLEODA</td>
+<td>=X'40'</td>
+<td>Active</td>
+</tr>
+<tr>
+<td>EXLLERF</td>
+<td></td>
+<td>XL1</td>
+<td>Lerad routine flags</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLLERS</td>
+<td>=X'80'</td>
+<td>Present</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLLERA</td>
+<td>=X'40'</td>
+<td>Active</td>
+</tr>
+<tr>
+<td>EXLSYNF</td>
+<td></td>
+<td>XL1</td>
+<td>Synad routine flags</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLSYNS</td>
+<td>X'80'</td>
+<td>Present</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLSYNA</td>
+<td>X'40'</td>
+<td>Active</td>
+</tr>
+<tr>
+<td>--</td>
+<td></td>
+<td>XL2</td>
+<td>Filler for alignment</td>
+</tr>
+<tr>
+<td>EXLEODP</td>
+<td></td>
+<td>AL4</td>
+<td>EODAD address</td>
+</tr>
+<tr>
+<td>EXLLERP</td>
+<td></td>
+<td>AL4</td>
+<td>SYNAD address</td>
+</tr>
+<tr>
+<td>EXLSYNP</td>
+<td></td>
+<td>AL4</td>
+<td>LERAD address</td>
+</tr>
+<tr>
+<td>EXLSTEND</td>
+<td></td>
+<td>--</td>
+<td>End label for DSECT</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLSTLEN</td>
+<td>calculated</td>
+<td>Length of EXLST</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>[!NOTE]
+The pointer fields in the macro are coded in the wrong location, making them unaligned.
+We'll have to investigate the impact of changing the macro to conform to the layout described here.</p>
+</blockquote>
+<h2 id="cbmr-description">CBMR description</h2>
 <p>The structure and layout of the CBMR are not formally part of the interface and may change in future releases.
 Therefore the CBMR layout is shown here only for the sake of completeness. Direct access to subfields in the CBMR is discouraged.
 Use SHOWCB, TESTCB and/or MODCB to inspect, test, and/or modify the content of an ACB, EXLST, or RPL.
@@ -5545,10 +5728,10 @@ If they are issued before the ECB has been posted, unpredictable results may occ
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-6-g2cdcbeee"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-7-gded3f8cc"}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

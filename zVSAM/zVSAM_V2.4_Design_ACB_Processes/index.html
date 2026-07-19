@@ -16,14 +16,14 @@
         <link rel="prev" href="../../user_guide/zVSAM/zVSAM_V2_Design_RPL_Processes/">
       
       
-        <link rel="next" href="../zVSAM_V2.4_Design_Addenda/">
+        <link rel="next" href="../zVSAM_V2.4_Design_File_Structure/">
       
       
         
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#open-macro" class="md-skip">
+        <a href="#open-logic" class="md-skip">
           Skip to content
         </a>
       
@@ -2575,29 +2575,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#open-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OPEN macro
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="OPEN macro">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#open-macro-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        OPEN macro parameters
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#open-logic" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2607,8 +2584,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#open-execution-logic" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2618,36 +2595,8 @@
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
-  <a href="#exlst-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        EXLST macro
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="EXLST macro">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#exlst-macro-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        EXLST macro parameters
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#exit-logic" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2657,36 +2606,8 @@
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
-  <a href="#close-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLOSE macro
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="CLOSE macro">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#close-macro-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLOSE macro parameters
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#close-logic" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2696,8 +2617,8 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
+      
+        <li class="md-nav__item">
   <a href="#close-execution-logic" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2705,11 +2626,6 @@
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2735,92 +2651,6 @@
 
   <h1>zVSAM V2.4 Design ACB Processes</h1>
 
-<h2 id="open-macro">OPEN macro</h2>
-<p>A cluster needs to be opened before it can be processed. The open macro is used to open one or more clusters
-and/or one or more sequential files in a single call.</p>
-<table>
-<thead>
-<tr>
-<th>Opcode</th>
-<th>Operand</th>
-<th>Remarks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[label] OPEN</td>
-<td>(entry[,entry]...)</td>
-<td>Each cluster or file requires an entry of two parameters</td>
-</tr>
-<tr>
-<td></td>
-<td>[MODE=24/31]</td>
-<td>Residency mode of all control blocks involved. Specify 31 if any resides above the line</td>
-</tr>
-<tr>
-<td>Entry format:</td>
-<td>address,(options)</td>
-<td>Address of ACB or DCB, followed by a list of options (for DCB only). For ACB omit the list of options</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=I or omitted]</td>
-<td>Use standard form of OPEN</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=L]</td>
-<td>Use list form of OPEN</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=(E,address)]</td>
-<td>Use execute form of OPEN</td>
-</tr>
-</tbody>
-</table>
-<p>All supported parameters are implemented compatibly with IBM's VSAM implementation. For details,
-please refer to the relevant IBM manual</p>
-<h3 id="open-macro-parameters">OPEN macro parameters</h3>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Explanation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>entry</td>
-<td>The OPEN macro accepts a list of entries. Each entry consists of two consecutive parameters: an address and an optional list of options</td>
-</tr>
-<tr>
-<td>address</td>
-<td>The address can be specified as an A-type address or as a register. If a register is coded the register number or name must be enclosed in parentheses. The address can be either the address of a DCB or the address of an ACB</td>
-</tr>
-<tr>
-<td>options</td>
-<td>For a DCB options may be encoded according to the z390_File_Access_Method_Guide. For an ACB the options list is ignored and should be coded as an omitted parameter. Any options (e.g. IN/OUT) are taken from the ACB, not the open parmlist</td>
-</tr>
-<tr>
-<td>MF=I or omitted</td>
-<td>An open parmlist is generated inline, plus a call to the OPEN SVC using the parmlist</td>
-</tr>
-<tr>
-<td>MF=L</td>
-<td>An open parmlist is generated inline</td>
-</tr>
-<tr>
-<td>MF=(E,address)</td>
-<td>Code to modify/populate the open parameter list at the indicated address, which may be a relocatable constant or a (register), plus a call to the OPEN SVC using the parmlist</td>
-</tr>
-</tbody>
-</table>
-<p><em>Note:</em> IBMs OPEN allows an MF=L to be built which can then be overwritten with an MF=E
-containing more entries than were originally created, thus causing a storage violation.
-zVSAM V2 will return R15=8 if this is attempted.</p>
-<p>IBMs OPEN allows an MF=E to modify an MF=L with a different mode causing damage to the list.
-zVSAM V2 will return R15=8 if this is attempted</p>
 <h3 id="open-logic">OPEN logic</h3>
 <p>Open logic has two major components: the open macro and the actual run-time logic to execute a request to
 open a file or a number of files.</p>
@@ -3209,132 +3039,6 @@ The ddname variable may only contain one dot</p>
 2. The Base is opened by zVSAM for input but has no associated ACB as it hasn't been opened by the application
 3. All AIXs on the upgrade set are opened for in/out by zVSAM and may be updated
 4. A PATH to an AIX ignores MACRF=IN/OUT</p>
-<h2 id="exlst-macro">EXLST macro</h2>
-<p>The EXLST macro will generate an Exit List control block and initialize it according to the parameters
-specified on the macro invocation.</p>
-<p>The structure and layout of the generated EXLST are not part of the interface and are therefore not shown in
-this chapter. Direct access to subfields in the EXLST is discouraged. Use SHOWCB EXLST=, TESTCB
-EXLST= and/or MODCB EXLST= to inspect, test, and/or modify the EXLST's content.</p>
-<p>All keywords on the EXLST macro are optional. Before the cluster is opened, all EXLST values can be
-modified using MODCB EXLST=, or by changing the EXLST directly. The latter is not recommended, as it
-is not guaranteed to be portable or compatible with future versions of zVSAM.</p>
-<p>The table below shows how the EXLST macro can be coded:</p>
-<table>
-<thead>
-<tr>
-<th>Opcode</th>
-<th>Operand</th>
-<th>Remarks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[label] EXLST</td>
-<td>[AM=VSAM]</td>
-<td>Designates this EXLST as a zVSAM EXLST</td>
-</tr>
-<tr>
-<td></td>
-<td>[EODAD=(address[,mod]])</td>
-<td>End-of-data exit routine</td>
-</tr>
-<tr>
-<td></td>
-<td>[LERAD=(address[,mod]])</td>
-<td>Logical error analysis routine</td>
-</tr>
-<tr>
-<td></td>
-<td>[SYNAD=(address[,mod]])</td>
-<td>Physical error analysis routine</td>
-</tr>
-<tr>
-<td></td>
-<td>[JRNAD=(address[,mod]])</td>
-<td>Not supported. Keyword is flagged with a warning message</td>
-</tr>
-<tr>
-<td></td>
-<td>[UPAD=(address[,mod]])</td>
-<td>Not supported. Keyword is flagged with a warning message</td>
-</tr>
-<tr>
-<td></td>
-<td>[RLSWAIT=(address[,mod]])</td>
-<td>Not supported. Keyword is flagged with a warning message</td>
-</tr>
-</tbody>
-</table>
-<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.</p>
-<p>For GENCB MF=I, L or G, a missing address will generate zero and no error, whereas IBM displays an error.
-It is assumed that the address will be made valid by a MODCB EXLST= macro invocation.
-A missing mod will generate A</p>
-<p>For GENCB MF=E, a missing address or mod means don't modify that parameter in the CBMR.</p>
-<p><em>Note:</em> Although a null address may be set in the EXLST, you cannot change an address to null with MODCB.</p>
-<h3 id="exlst-macro-parameters">EXLST macro parameters</h3>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Explanation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>EODAD=</td>
-<td>Optional parameter to specify the entry address of an exit that handles an end-of-data condition during sequential access</td>
-</tr>
-<tr>
-<td></td>
-<td>The routine address may be followed by a modifier. For details, please see below</td>
-</tr>
-<tr>
-<td></td>
-<td>The AMODE for the routine is encoded in the address using the common convention</td>
-</tr>
-<tr>
-<td>LERAD=</td>
-<td>Optional parameter to specify the entry address of an exit that handles logic errors.</td>
-</tr>
-<tr>
-<td></td>
-<td>The routine address may be followed by a modifier. For details, please see below</td>
-</tr>
-<tr>
-<td></td>
-<td>The AMODE for the routine is encoded in the address using the common convention</td>
-</tr>
-<tr>
-<td>SYNAD=</td>
-<td>Optional parameter to specify the entry address of an exit that handles physical errors.</td>
-</tr>
-<tr>
-<td></td>
-<td>The routine address may be followed by a modifier. For details, please see below</td>
-</tr>
-<tr>
-<td></td>
-<td>The AMODE for the routine is encoded in the address using the common convention</td>
-</tr>
-<tr>
-<td>mod</td>
-<td>modifier, can optionally be specified after each routine address</td>
-</tr>
-<tr>
-<td></td>
-<td>Values: A or N for Active or Not-active. These are mutually exclusive</td>
-</tr>
-<tr>
-<td></td>
-<td>As long as the routine is not active it will not be called by zVSAM</td>
-</tr>
-<tr>
-<td></td>
-<td>The secondary modifier of L (for Load from Linklib) is not supported</td>
-</tr>
-</tbody>
-</table>
 <h3 id="exit-logic">Exit logic</h3>
 <p>This logic is only entered if any of the following conditions are raised:
 - End-of-data (EODAD)
@@ -3366,106 +3070,6 @@ A missing mod will generate A</p>
 </tr>
 </tbody>
 </table>
-<h2 id="close-macro">CLOSE macro</h2>
-<p>A cluster needs to be closed after it has been processed. The close macro is used to close one or more clusters
-and/or one or more sequential files in a single call.</p>
-<table>
-<thead>
-<tr>
-<th>Opcode</th>
-<th>Operand</th>
-<th>Remarks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[label] CLOSE</td>
-<td>(entry[,entry]...)</td>
-<td>Each cluster or file requires an entry of two parameters</td>
-</tr>
-<tr>
-<td></td>
-<td>[MODE=24/31]</td>
-<td>Residency mode of all control blocks involved. Specify 31 if any reside above the line</td>
-</tr>
-<tr>
-<td></td>
-<td>[TYPE=T]</td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message</td>
-</tr>
-<tr>
-<td>Entry format:</td>
-<td>address,,</td>
-<td>Address of ACB or DCB, followed by two commas to show that options are omitted</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=I or omitted]</td>
-<td>Use standard form of CLOSE</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=L]</td>
-<td>Use list form of CLOSE</td>
-</tr>
-<tr>
-<td></td>
-<td>[MF=(E,address)]</td>
-<td>Use execute form of CLOSE</td>
-</tr>
-</tbody>
-</table>
-<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manua.l</p>
-<h3 id="close-macro-parameters">CLOSE macro parameters</h3>
-<p>For ease of access a short summary follows here:</p>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Explanation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>entry</td>
-<td>The CLOSE macro accepts a list of entries. Each entry consists of two consecutive parameters: an address and an optional list of options</td>
-</tr>
-<tr>
-<td>address</td>
-<td>The address can be specified as an A-type address or as a register.</td>
-</tr>
-<tr>
-<td></td>
-<td>If a register is coded the register number or name must be enclosed in parentheses.</td>
-</tr>
-<tr>
-<td></td>
-<td>The address can be either the address of a DCB or the address of an ACB</td>
-</tr>
-<tr>
-<td>options</td>
-<td>Code as an omitted parameter</td>
-</tr>
-<tr>
-<td>MF=I or omitted</td>
-<td>If the MF parameter is omitted a close parmlist is generated inline, plus a call to the CLOSE SVC using the parmlist.</td>
-</tr>
-<tr>
-<td>MF=L</td>
-<td>With MF=L a close parmlist is generated inline</td>
-</tr>
-<tr>
-<td>MF=(E,address)</td>
-<td>Code to modify/populate the close parameter list at the indicated address, which may be a relocatable constant or a (register), plus a call to the CLOSE SVC using the parmlist</td>
-</tr>
-</tbody>
-</table>
-<p><em>Note:</em> IBMs CLOSE allows an MF=L to be built which can then be overwritten with an MF=E containing
-more entries than were originally created, thus causing storage violation.
-zVSAM V2 will return R15=8 if this is attempted.</p>
-<p>IBMs CLOSE allows an MF=E to modify an MF=L with a different mode causing damage to the list.
-zVSAM V2 will return R15=8 if this is attempted.</p>
 <h3 id="close-logic">CLOSE logic</h3>
 <p>The close macro generates a close parameter list and/or an SVC 20 instruction to invoke the close routine.</p>
 <p>The macro generates the following code:</p>
@@ -3680,10 +3284,10 @@ This logic consists of the following elements:</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-6-g2cdcbeee"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-7-gded3f8cc"}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

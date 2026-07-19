@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
       
 
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#exlst-macro" class="md-skip">
+        <a href="#gencb-exlst-macro" class="md-skip">
           Skip to content
         </a>
       
@@ -1624,17 +1624,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#exlst-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        EXLST macro
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#gencb-exlst-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2856,17 +2845,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#exlst-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        EXLST macro
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#gencb-exlst-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3092,65 +3070,6 @@
 
   <h1>zVSAM V2 Design Interfaces</h1>
 
-<h3 id="exlst-macro">EXLST macro</h3>
-<p>The EXLST macro will generate an Exit_List control block and initialize it according to the parameters specified
-on the macro invocation.</p>
-<p>The structure and layout of the generated EXLST are not part of the interface and are therefore not shown in this chapter.
-Direct access to subfields in the EXLST is discouraged. Use SHOWCB EXLST, TESTCB EXLST and/or MODCB EXLST
-to inspect, test, and/or modify the EXLST's content.</p>
-<p>All keywords on the EXLST macro are optional. Before the cluster is opened,
-all EXLST values can be modified using MODCB EXLST, or by changing the EXLST directly.
-The latter is not recommended, as it is not guaranteed to be portable or compatible with future versions of zVSAM.</p>
-<p>The table below shows how the EXLST macro can be coded.</p>
-<table>
-<thead>
-<tr>
-<th>Opcode</th>
-<th>Operand</th>
-<th>Remarks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>EXLST</td>
-<td>[AM=VSAM]</td>
-<td>Designates this EXLST as a zVSAM EXLST; VSAM is the default</td>
-</tr>
-<tr>
-<td></td>
-<td>[EODAD=addr[,mod]]</td>
-<td>End-of-data exit routine</td>
-</tr>
-<tr>
-<td></td>
-<td>[LERAD=addr[,mod]]</td>
-<td>Logical error analysis routine</td>
-</tr>
-<tr>
-<td></td>
-<td>[SYNAD=addr[,mod]]</td>
-<td>Physical error analysis routine</td>
-</tr>
-<tr>
-<td></td>
-<td>[<em>JRNAD</em>=addr[,mod]]</td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-<tr>
-<td></td>
-<td>[<em>UPAD</em>=addr[,mod]]</td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-<tr>
-<td></td>
-<td>[<em>RLSWAIT</em>=addr[,mod]]</td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
-</tr>
-</tbody>
-</table>
-<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.</p>
-<p>For ease of access a short summary can be found in the addenda.</p>
 <h3 id="gencb-exlst-macro">GENCB EXLST macro</h3>
 <p>The GENCB macro with BLK=EXLST will generate or manipulate Exit Lists for use with ACBs and initialize or change them
 according to the parameters specified on the macro invocation.
@@ -4307,10 +4226,10 @@ in a future release.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-6-g2cdcbeee"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-7-gded3f8cc"}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
