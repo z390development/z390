@@ -1123,7 +1123,7 @@ or the `EXLSTD`, `EXLSTD1` and `EXLSTD2` macros in the mac folder.
 
 ### GENCB EXLST macro
 
-The GENCB macro with BLK=EXLST will generate or manipulate EXLSTs and initialize or change them
+The GENCB macro with BLK=EXLST will generate or manipulate EXLSTs for use with ACBs and initialize or change them
 according to the parameters specified on the macro invocation. It is for this reason that
 all supported parameters and keywords of the EXLST macro (as described above) are supported
 on the GENCB macro when BLK=EXLST is specified.
@@ -1224,6 +1224,333 @@ See [MF= parameter](#mf-parameter) for details.
 | R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
 
 ================================================================================================================================================================================
+
+### MODCB EXLST macro
+
+The MODCB macro with EXLST=addr will modify an EXLST according to the parameters specified on the macro invocation.
+It is for this reason that all parameters and keywords of the EXLST macro (as described above) are supported
+on the MODCB macro when EXLST=addr is specified.
+
+The MODCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                   |
+|----------|--------------------------|
+| ZVSAM(0) | Error: zVSAM disabled    |
+| ZVSAM(1) | MODCB1 macro is expanded |
+| ZVSAM(2) | MODCB2 macro is expanded |
+
+The structure and layout of the EXLST are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zEXLST description](zVSAM_V2_Design_Addenda.md#zexlst-description) or the EXLST2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the MODCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the EXLST or CBMR is strongly discouraged. Use GENCB BLK=EXLST, SHOWCB EXLST=,
+> TESTCB EXLST= and/or MODCB EXLST= to generate, inspect, test, and/or modify the EXLST's content.
+
+All keywords on the MODCB EXLST macro are optional. Except EXLST= which is required.
+
+The MODCB EXLST macro can be coded as follows:
+
+| Opcode        | Operand                   | Remarks                                               |
+|---------------|---------------------------|-------------------------------------------------------|
+| [label] MODCB | EXLST=address             | Points MODCB to the EXLST to be modified              |
+|               | [AM=VSAM]                 | Optional, no other values allowed                     |
+|               | **[other]**               | **Any parameter supported on the EXLST macro**        |
+|               | [MF=]                     | Use standard form of MODCB EXLST; this is the default |
+|               | [MF=L/MF=(L,addr,[label]] | Use list form of MODCB EXLST                          |
+|               | [MF=(E,addr)]             | Use execute form of MODCB EXLST                       |
+|               | [MF=(G,addr,[label])]     | Use generate form of MODCB EXLST                      |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### EXLST=
+
+Required parameter; specify the address of the EXLST to be modified.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### Other keywords
+
+All parameters supported by the [EXLST macro](#exlst-macro) are supported here as well.
+
+Please note: not supported are expressions like `(S,scon)` or `(*,scon)`
+
+##### MACRF=
+
+MACRF is a special case of the "other keywords". This paragrqaph clarifies how MACRF works.
+
+All supported subparameters have their own bit in `CBMREXLST_MACRF` (currently 16),
+Conflicts are `MNOTE`d, eg. bits for `NIS` and `SIS` cannot both be on.
+
+If MF=E is specified then the whole of `CBMREXLST_MACRF` is replaced,
+
+When the EXLST is modified:
+- For mutually exclusive parameters, the bit is turned on or off
+- For each non-exclusive parameter the appropriate bit is turned on, therefore it isn't possible to turn a nonexclusive
+  bit off using MODCB, this has to be done manually.
+- eg. When an EXLST has MACRF=(OUT) which allows read and write functions it is not possible to change
+  the EXLST to read-only using MODCB
+- if this is needed code the instruction `NI EXLSTMACR1,255-EXLSTOUT`
+
+> [!NOTE]
+> I do not entirely agree with how Melvyn has set this up, although I do like his extensive early error detection proposal.
+> There are basically two alternatives that I can see:
+> 1. every MACRF option has a separate verb code, we generate as many verb codes as we need, no data is needed
+> 2. We generate a single verb code for the MACRF modification, supplying two 2-byte masks in the data.
+>    One mask to indicate affected postions, the other to indicate the desired bit values for the selected postions.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return (R15) and Reason (R0) Codes
+
+| Return Code | Reason Code     | Meaning                                                                  |
+|-------------|-----------------|--------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                               |
+| R15=4       | Reason Code=4   | Invalid control block                                                    |
+| R15=4       | Reason Code=4   | EXLST= does not point to an EXLST                                        |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
+
+> [!NOTE]
+> For RC=4 two RSN=4 causes are documented by Melvyn. We'll have to find out whether this is intentional or a typo.
+
+================================================================================================================================================================================
+
+### SHOWCB EXLST macro
+
+The SHOWCB macro with EXLST=addr will return EXLST-related fields according to the parameters specified
+on the macro invocation in the order they are specified. Duplicates are permitted.
+
+The SHOWCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                    |
+|----------|---------------------------|
+| ZVSAM(0) | Error: zVSAM disabled     |
+| ZVSAM(1) | SHOWCB1 macro is expanded |
+| ZVSAM(2) | SHOWCB2 macro is expanded |
+
+The structure and layout of the EXLST are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zEXLST description](zVSAM_V2_Design_Addenda.md#zexlst-description) or the EXLST2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the SHOWCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the EXLST or CBMR is strongly discouraged. Use GENCB BLK=EXLST, SHOWCB EXLST=,
+> TESTCB EXLST= and/or MODCB EXLST= to generate, inspect, test, and/or modify the EXLST's content.
+
+The SHOWCB EXLST macro can be coded as follows:
+
+| Opcode         | Operand                    | Remarks                                                       |
+|----------------|----------------------------|---------------------------------------------------------------|
+| [label] SHOWCB | EXLST=address              | Points MODCB to the EXLST to be queried                       |
+|                | [AM=VSAM]                  | Optional, no other values allowed                             |
+|                | AREA=addr                  | Address of return area                                        |
+|                | LENGTH=nr                  | Size of return area in bytes                                  |
+|                | [OBJECT=DATA/INDEX]        | For KSDS: select data or index component; DATA is the default |
+|                | FIELDS=(keywd_list)        | List of keywords indicating which fields to return            |
+|                | [MF=]                      | Use standard form of SHOWCB EXLST; this is the default        |
+|                | [MF=L/MF=(L,addr,[label]]  | Use list form of SHOWCB EXLST                                 |
+|                | [MF=(E,addr)]              | Use execute form of SHOWCB EXLST                              |
+|                | [MF=(G,addr,[label])]      | Use generate form of SHOWCB EXLST                             |
+
+All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### EXLST=
+
+Required parameter; specify the address of the EXLST to be queried.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### AREA=
+
+Required parameter; specify the address of the return area.
+
+#### LENGTH=
+
+Required parameter; specify the length of the return area.
+
+### OBJECT=
+
+Optional parameter; if specified must be `DATA`or `INDEX`. `DATA` is the default.
+
+#### FIELDS=
+
+Specifies a list of keywords. Each keyword specified returns a field of 4 or 8 bytes. These return values are stored consecutively in the return area specified in the `AREA`= and `LENGTH`= parameters.
+Some keywords are valid only when the EXLST is open. An error is returned when any of these keywords are used while the EXLST is not open.
+
+Defined options for the FIELDS parameter are listed below:
+
+| Keyword  | Length | Remarks                                                                                             |
+|----------|--------|-----------------------------------------------------------------------------------------------------|
+| ACBLEN   | 4      | Size of ACB in bytes                                                                                |
+| EODAD    | 4      | End-of-data exit routine address                                                                    |
+| EXLLEN   | 4      | Length of EXLST in bytes                                                                            |
+| JRNAD    | 4      | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+| LERAD    | 4      | Logical error analysis routine address                                                              |
+| RPLLEN   | 4      | Length of RPL in bytes                                                                              |
+| SYNAD    | 4      | Physical error analysis routine address                                                             |
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                          |
+|-------------|-----------------|----------------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                                       |
+| R15=4       | Reason Code=4   | Invalid control block                                                            |
+| R15=4       | Reason Code=9   | Length too small                                                                 |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created         |
+
+================================================================================================================================================================================
+
+### TESTCB EXLST macro
+
+The TESTCB macro with EXLST=addr will test EXLST-related fields according to the parameters specified
+on the macro invocation. Only a single test can be specified on each TESTCB invocation.
+TESTCB returns a PSW condition code of 8=Equal when the specified test is met, 7=NotEqual otherwise.
+
+The TESTCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                    |
+|----------|---------------------------|
+| ZVSAM(0) | Error: zVSAM disabled     |
+| ZVSAM(1) | TESTCB1 macro is expanded |
+| ZVSAM(2) | TESTCB2 macro is expanded |
+
+The structure and layout of the EXLST are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zEXLST description](zVSAM_V2_Design_Addenda.md#zexlst-description) or the EXLST2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the TESTCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+The TESTCB EXLST macro can be coded as follows:
+
+> [!NOTE]
+> Direct access to subfields in the EXLST or CBMR is strongly discouraged. Use GENCB BLK=EXLST, SHOWCB EXLST=,
+> TESTCB EXLST= and/or MODCB EXLST= to generate, inspect, test, and/or modify the EXLST's content.
+
+The TESTCB EXLST macro can be coded as follows:
+
+| Opcode         | Operand                    | Remarks                                                                                             | Conditions returned |
+|----------------|----------------------------|-----------------------------------------------------------------------------------------------------|---------------------|
+| [label] TESTCB | EXLST=address              | Points TESTCB to the EXLST to be tested                                                             | n/a                 |
+|                | [AM=VSAM]                  | Optional, no other values allowed                                                                   | n/a                 |
+|                | ERET=addr                  | Address of error handling routine                                                                   | n/a                 |
+|                | [OBJECT=DATA/INDEX]        | For KSDS: select data or index component                                                            | n/a                 |
+|                | ACBLEN=nr                  | ACB length in bytes                                                                                 | EQ LO HI            |
+|                | EXLLEN=nr                  | EXLST length in bytes                                                                               | EQ LO HI            |
+|                | RPLLEN=nr                  | RPL length in bytes                                                                                 | EQ LO HI            |
+|                | EODAD=addr[,mod]           | End-of-data exit routine address                                                                    | depends             |
+|                | JRNAD=addr[,mod]           | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) | depends             |
+|                | LERAD=addr[,mod]           | Logical error analysis routine address                                                              | depends             |
+|                | SYNAD=addr[,mod]           | Physical error analysis routine address                                                             | depends             |
+|                | [MF=]                      | Use standard form of SHOWCB EXLST; this is the default                                              | n/a                 |
+|                | [MF=L/MF=(L,addr,[label]]  | Use list form of SHOWCB EXLST                                                                       | n/a                 |
+|                | [MF=(E,addr)]              | Use execute form of SHOWCB EXLST                                                                    | n/a                 |
+|                | [MF=(G,addr,[label])]      | Use generate form of SHOWCB EXLST                                                                   | n/a                 |
+
+All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### EXLST=
+
+Required parameter; specify the address of the EXLST to be tested.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### ERET=
+
+Optional address of error handling routine.
+
+#### OBJECT=
+
+Optional parameter; if specified must be `DATA`or `INDEX`. `DATA` is the default.
+
+#### Keyword=nr/adr
+
+Remaining Keyword parameters specify a value, an address, or a keyword list to be tested.
+
+For the keywords `EODAD`, `JRNAD`, `LERAD`, `SYNAD` the address can be omitted, or it can be specified as an address.
+Zero address values carry special meaning. A modifier can optionally be added, as defined on the [EXLST macro description](#exlst-macro).
+
+**Note:** This 'special meaning' needs clarification!
+
+For these 4 keywords the following the conditions returned are defined as follows:
+
+| Parameter subfields                                      | Conditions returned |
+|----------------------------------------------------------|---------------------|
+| If a modifier of `L` is speciefied                       | NE=LO               |
+| If address is zero or omitted and no modifier specified  | EQ                  |
+| If address is zero and non-L modifier is specified       | EQ NE=LO            |
+| If address is not zero and no modifier specified         | EQ LO HI            |
+| If address is.not zero and non-L modifier is specified   | EQ NE=LO            |
+
+> [!NOTE]
+> Melvyn documented JRNAD as allowed, but not supported, always returning NE=LO.
+> I think we should consider adding a bit more compatibility, if we reasonably can.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                                                |
+|-------------|-----------------|--------------------------------------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                                                             |
+| R15=4       | Reason Code=4   | Invalid control block                                                                                  |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created                               |
+
+================================================================================================================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

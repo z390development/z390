@@ -144,55 +144,6 @@ address means 'don't test the address'
 The lack of proper syntax checking in the IBM macro can cause access to low storage or
 environmental destruction, so the following syntaxes are not allowed: `(*,*)` and `(*,n)`.
 
-## GENCB BLK=EXLST macro
-
-The GENCB macro with BLK=EXLST will generate or manipulate Exit Lists for use with ACBs and
-initialize or change them according to the parameters specified on the macro invocation. It is for this reason
-that all supported parameters and keywords of the EXLST macro (as described above) are supported on the
-GENCB macro when BLK=EXLST is specified.
-
-Direct access to subfields in the EXLST is discouraged. Use SHOWCB EXLST=, TESTCB EXLST= and/or
-MODCB EXLST= to inspect, test, and/or modify the EXLST's content.
-
-Direct access to subfields in the CBMR is strongly discouraged.
-
-The GENCB EXLST macro can be coded as follows:
-
-| Opcode        | Operand           | Remarks                                                                                                                         |
-|---------------|-------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| [label] GENCB | BLK=EXLST         | Instructs GENCB to generate one or more EXLSTs                                                                                  |
-|               | [AM=VSAM]         | Optional, no other values allowed                                                                                               |
-|               | [COPIES=1]        | The number of identical EXLSTs to generate. Specify a number between 1 and 65535                                                |
-|               | [WAREA=address]   | The work area where the EXLSTs are to be constructed                                                                            |
-|               | [LENGTH=value]    | Length of the work area in bytes. If WAREA/LENGTH are omitted then storage is dynamically acquired and LOC=BELOW is the default |
-|               | [LOC=BELOW | ANY] | Where GENCB is to allocate dynamically acquired storage if needed                                                               |
-|               | **[other]**       | **Any parameter supported on the EXLST macro**                                                                                  |
-|               | [MF=]             | See the [description of MF=](#MFdetails)                                                                                        |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation
-For details, please refer to the relevant IBM manual.
-
-### WAREA=
-
-- When WAREA is specified, LENGTH must be specified too
-- When WAREA is not specified, the CBMR handler allocates an area of storage
-- The address of this area whether via GETMAIN or WAREA is returned in R1
-- The length of the generated EXLST(s) is returned in R0
-
-### LENGTH=
-
-Length in bytes of the area indicated by WAREA.
-When LENGTH is specified, WAREA must be specified as well
-
-### Return (R15) and Reason (R0) Codes
-
-| Return Code | Reason Code     | Meaning                                                                  |
-|-------------|-----------------|--------------------------------------------------------------------------|
-| R15=0       | Reason Code=n/a | Successful                                                               |
-| R15=4       | Reason Code=4   | Invalid control block                                                    |
-| R15=4       | Reason Code=9   | WAREA is too small                                                       |
-| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
-
 ## GENCB BLK=RPL macro
 
 The GENCB BLK=RPL macro generates or manipulates RPLs and initializes or changes them according to
@@ -239,38 +190,6 @@ When LENGTH is specified, WAREA must be specified as well
 | R15=0       | Reason Code=n/a | Successful                                                               |
 | R15=4       | Reason Code=4   | Invalid control block                                                    |
 | R15=4       | Reason Code=9   | WAREA is too small                                                       |
-| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
-
-## MODCB EXLST= macro
-
-The MODCB macro with EXLST=address will modify an EXLST according to the parameters specified on
-the macro invocation. It is for this reason that all parameters and keywords of the EXLST macro (as
-described above) are supported on the MODCB macro when EXLST=address is specified.
-
-Direct access to subfields in the EXLST is discouraged. Use SHOWCB EXLST=, TESTCB EXLST= and/or
-MODCB EXLST= to inspect, test, and/or modify the EXLST's content.
-
-Direct access to subfields in the CBMR is strongly discouraged.
-
-The MODCB EXLST macro can be coded as follows:
-
-| Opcode        | Operand           | Remarks                                                                                                                         |
-|---------------|-------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| [label] MODCB | EXLST=address     | Points MODCB to the EXLST to be modified                                                                                        |
-|               | [AM=VSAM]         | Optional, no other values allowed                                                                                               |
-|               | **[other]**       | **Any parameter supported on the EXLST macro**                                                                                  |
-|               | [MF=]             | See the [description of MF=](#MFdetails)                                                                                        |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-### Return (R15) and Reason (R0) Codes
-
-| Return Code | Reason Code     | Meaning                                                                  |
-|-------------|-----------------|--------------------------------------------------------------------------|
-| R15=0       | Reason Code=n/a | Successful                                                               |
-| R15=4       | Reason Code=4   | Invalid control block                                                    |
-| R15=4       | Reason Code=4   | EXLST= does not point to an EXLST                                        |
 | R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
 
 ## MODCB RPL= macro
@@ -353,51 +272,6 @@ For details, please refer to the relevant IBM manual.
 | R15=4       | Reason Code=4   | Invalid control block                                                    |
 | R15=4       | Reason Code=9   | Length too small                                                         |
 | R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
-
-## SHOWCB EXLST= macro
-
-The SHOWCB macro with EXLST=address will return EXLST-related fields according to the parameters
-specified on the macro invocation in the order they are specified. Duplicates are permitted
-
-Direct access to subfields in the EXLST is discouraged. Use SHOWCB EXLST=, TESTCB= EXLST and/or
-MODCB EXLST= to inspect, test, and/or modify the EXLST's content.
-
-Direct access to subfields in the CBMR is strongly discouraged.
-
-The SHOWCB EXLST= macro can be coded as follows:
-
-| Opcode         | Operand               | Remarks                                                  |
-|----------------|-----------------------|----------------------------------------------------------|
-| [label] SHOWCB | EXLST=address         | Points SHOWCB to the EXLST to be queried                 |
-|                | [AM=VSAM]             | Optional, no other values allowed                        |
-|                | AREA=address          | Address of return area                                   |
-|                | LENGTH=value          | Size of return area in bytes                             |
-|                | FIELDS=(keyword list) | List of keywords indicating which fields to return       |
-|                | [MF=]                 | See the [description of MF=](#MFdetails)                 |
-
-Supported options for the FIELDS parameter are listed below:
-
-| Keyword | Length | Remarks                                                                                                                         |
-|---------|--------|---------------------------------------------------------------------------------------------------------------------------------|
-| ACBLEN  | 4      | Length of ACB in bytes                                                                                                          |
-| EODAD   | 4      | End-of-data exit routine address                                                                                                |
-| EXLLEN  | 4      | Length of EXLST in bytes                                                                                                        |
-| JRNAD   | 4      | Supported here, but as it's not supported by other macros, zero is returned                                                     |
-| LERAD   | 4      | Logical error analysis routine address                                                                                          |
-| RPLLEN  | 4      | Length of RPL in bytes                                                                                                          |
-| SYNAD   | 4      | Physical error analysis routine address                                                                                         |
-
-All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-### Return (R15) and Reason (R0) Codes
-
-| Return Code | Reason Code     | Meaning                                                                          |
-|-------------|-----------------|----------------------------------------------------------------------------------|
-| R15=0       | Reason Code=n/a | Successful                                                                       |
-| R15=4       | Reason Code=4   | Invalid control block                                                            |
-| R15=4       | Reason Code=9   | Length too small                                                                 |
-| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created         |
 
 ## SHOWCB RPL= macro
 
@@ -507,46 +381,6 @@ The TESTCB without a block macro can be coded as follows:
 | R15=0       | Reason Code=n/a | Successful                                                                       |
 | R15=4       | Reason Code=4   | Invalid control block                                                            |
 | R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created         |
-
-## TESTCB EXLST= macro
-
-If mod L is specified then NE=LO is returned.
-
-The TESTCB EXLST macro can be coded as follows:
-
-| Opcode         | Operand               | Remarks                                                  | Conditions returned |
-|----------------|-----------------------|----------------------------------------------------------|---------------------|
-| [label] TESTCB | EXLST=address         | Points TESTCB to the EXLST to be tested                  |                     |
-|                | [AM=VSAM]             | Optional, no other values allowed                        |                     |
-|                | ERET=address          | Address of error handling routine                        |                     |
-|                | ACBLEN=value          | ACB length                                               | EQ LO HI            |
-|                | **RPLLEN=value**      | RPL length                                               | EQ LO HI            |
-|                | **EXLLEN=value**      | EXLST length                                             | EQ LO HI            |
-|                | EODAD=(address[,mod]) | End-of-data exit address                                 |                     |
-|                |                       | If address is zero or omitted and no mod                 | EQ                  |
-|                |                       | If address is zero and mod (only mod is tested)          | EQ NE=LO            |
-|                |                       | If address is not zero and no mod                        | EQ LO HI            |
-|                |                       | If address is.not zero and mod                           | EQ NE=LO            |
-|                | JRNAD=                | Journal exit address (allowed but not supported)         | NE=LO               |
-|                | LERAD=(address[,mod]) | Logical error analysis address                           |                     |
-|                |                       | If address is zero or omitted and no mod                 | EQ                  |
-|                |                       | If address is zero and mod (only mod is tested)          | EQ NE=LO            |
-|                |                       | If address is not zero and no mod                        | EQ LO HI            |
-|                |                       | If address is.not zero and mod                           | EQ NE=LO            |
-|                | SYNAD=(address[,mod]) | Physical error analysis address                          |                     |
-|                |                       | If address is zero or omitted and no mod                 | EQ                  |
-|                |                       | If address is zero and mod (only mod is tested)          | EQ NE=LO            |
-|                |                       | If address is not zero and no mod                        | EQ LO HI            |
-|                |                       | If address is.not zero and mod                           | EQ NE=LO            |
-|                | [MF=]                 | See the [description of MF=](#MFdetails)                 |                     |
-
-### Return (R15) and Reason (R0) Codes
-
-| Return Code | Reason Code     | Meaning                                                                                                |
-|-------------|-----------------|--------------------------------------------------------------------------------------------------------|
-| R15=0       | Reason Code=n/a | Successful                                                                                             |
-| R15=4       | Reason Code=4   | Invalid control block                                                                                  |
-| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created                               |
 
 ## TESTCB RPL= macro
 
