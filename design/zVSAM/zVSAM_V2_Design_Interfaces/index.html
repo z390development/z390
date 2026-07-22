@@ -2713,6 +2713,61 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#gencb-exlst-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GENCB EXLST macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modcb-exlst-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MODCB EXLST macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#showcb-exlst-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SHOWCB EXLST macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OBJECT=
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-exlst-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TESTCB EXLST macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mf-parameter" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2968,6 +3023,61 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#gencb-exlst-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GENCB EXLST macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modcb-exlst-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MODCB EXLST macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#showcb-exlst-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SHOWCB EXLST macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OBJECT=
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-exlst-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TESTCB EXLST macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mf-parameter" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3046,31 +3156,31 @@ involved in VSAM file handling.</p>
 </tr>
 <tr>
 <td><a href="#gencb-acb-macro">GENCB ACB</a></td>
-<td>GENCB EXLST</td>
+<td><a href="#gencb-exlst-macro">GENCB EXLST</a></td>
 <td>GENCB RPL</td>
 <td></td>
 </tr>
 <tr>
 <td><a href="#modcb-acb-macro">MODCB ACB</a></td>
-<td>MODCB EXLST</td>
+<td><a href="#modcb-exlst-macro">MODCB EXLST</a></td>
 <td>MODCB RPL</td>
 <td></td>
 </tr>
 <tr>
 <td><a href="#showcb-acb-macro">SHOWCB ACB</a></td>
-<td>SHOWCB EXLST</td>
+<td><a href="#showcb-exlst-macro">SHOWCB EXLST</a></td>
 <td>SHOWCB RPL</td>
 <td></td>
 </tr>
 <tr>
 <td><a href="#testcb-acb-macro">TESTCB ACB</a></td>
-<td>TESTCB EXLST</td>
+<td><a href="#testcb-exlst-macro">TESTCB EXLST</a></td>
 <td>TESTCB RPL</td>
 <td></td>
 </tr>
 <tr>
 <td>---------------------------------</td>
-<td>----------------------------------</td>
+<td>-------------------------------------</td>
 <td>------------</td>
 <td>-------</td>
 </tr>
@@ -5537,6 +5647,760 @@ The EXLSTD macro can be invoked multiple times, but will generate the DSECT mapp
 only on its first invocation.</p>
 </blockquote>
 <p>================================================================================================================================================================================</p>
+<h3 id="gencb-exlst-macro">GENCB EXLST macro</h3>
+<p>The GENCB macro with BLK=EXLST will generate or manipulate EXLSTs for use with ACBs and initialize or change them
+according to the parameters specified on the macro invocation. It is for this reason that
+all supported parameters and keywords of the EXLST macro (as described above) are supported
+on the GENCB macro when BLK=EXLST is specified.</p>
+<p>The GENCB macro's function depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>GENCB1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>GENCB2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The structure and layout of the EXLST are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#zacb-description">zEXLST description</a> or the EXLST2 macro in the mac folder.</p>
+<p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR description</a> or the CBMR macro in the mac folder.</p>
+<blockquote>
+<p>[!NOTE]
+Direct access to subfields in the EXLST or CBMR is strongly discouraged. Use GENCB BLK=EXLST, SHOWCB EXLST=,
+TESTCB EXLST= and/or MODCB EXLST= to generate, inspect, test, and/or modify the EXLST's content.</p>
+</blockquote>
+<p>All keywords on the GENCB EXLST macro are optional. Except BLK= which is required.</p>
+<p>The GENCB EXLST macro can be coded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Operand</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[label] GENCB</td>
+<td>BLK=EXLST</td>
+<td>Instructs GENCB to generate 1 or more EXLSTs</td>
+</tr>
+<tr>
+<td></td>
+<td>[AM=VSAM]</td>
+<td>Optional, no other values allowed; VSAM is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>[COPIES=nr]</td>
+<td>The number of identical EXLSTs to generate</td>
+</tr>
+<tr>
+<td></td>
+<td>[WAREA=addr]</td>
+<td>The work area where the EXLSTs are to be constructed</td>
+</tr>
+<tr>
+<td></td>
+<td>[LENGTH=nr]</td>
+<td>Length of the work area in bytes</td>
+</tr>
+<tr>
+<td></td>
+<td>[LOC=keyword]</td>
+<td>Where GENCB is to allocate dynamically acquired storage - if needed</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>[other]</strong></td>
+<td><strong>Any parameter supported on the EXLST macro</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=]</td>
+<td>Use standard form of GENCB EXLST; this is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=L/MF=(L,addr,[label]]</td>
+<td>Use list form of GENCB EXLST</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(E,addr)]</td>
+<td>Use execute form of GENCB EXLST</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(G,addr,[label])]</td>
+<td>Use generate form of GENCB EXLST</td>
+</tr>
+</tbody>
+</table>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<h4 id="blk_1">BLK=</h4>
+<p>Required parameter; specify EXLST to generate 1 or more EXLSTs</p>
+<h4 id="am_6">AM=</h4>
+<p>VSAM is the default and the only supported value.</p>
+<h4 id="copies_1">COPIES=</h4>
+<p>Number of identical EXLSTs to generate ranging from 1 to 65535. Defaults to 1.</p>
+<h4 id="warea_1">WAREA=</h4>
+<p>The work area where the EXLSTs are to be constructed.</p>
+<ul>
+<li>When WAREA is specified, LENGTH must be specified too.</li>
+<li>When WAREA is not specified, the CBMR handler allocates an area of storage.</li>
+<li>The address of this area whether via GETMAIN or WAREA is returned in R1.</li>
+<li>The length of the generated EXLST(s) is returned in R0.</li>
+</ul>
+<h4 id="length_2">LENGTH=</h4>
+<ul>
+<li>If WAREA= is specified, this paramter is required and specifies the length of the area.</li>
+<li>If WAREA= is not specified, this parameter is ignored. zVSAM determines how much storage to allocate.</li>
+</ul>
+<h4 id="loc_1">LOC=</h4>
+<ul>
+<li>If WAREA= is specified, this paramter is ignored.</li>
+<li>If WAREA= is not specified, this parameter indicates where zVSAM is to allocate storage for the EXLST or EXLSTs.</li>
+</ul>
+<p>Supported keywords:
+- BELOW = below 16M (addressable in Amode 24, 31, or 64)
+- ANY   = below 2G  (requires Amode 31 or 64 to address)</p>
+<h4 id="other-keywords_2">Other keywords</h4>
+<p>All parameters supported by the <a href="#acb-macro">EXLST macro</a> are supported here as well.</p>
+<h4 id="mf_6">MF=</h4>
+<p>Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See <a href="#mf-parameter">MF= parameter</a> for details.</p>
+<h4 id="return-and-reason-codes_3">Return and Reason Codes</h4>
+<table>
+<thead>
+<tr>
+<th>Return Code</th>
+<th>Reason Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R15=0</td>
+<td>Reason Code=n/a</td>
+<td>Successful</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=4</td>
+<td>Invalid control block</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=9</td>
+<td>WAREA is too small</td>
+</tr>
+<tr>
+<td>R15=8</td>
+<td>Reason Code=n/a</td>
+<td>An attempt was made to update a CBMR with a field not previously created</td>
+</tr>
+</tbody>
+</table>
+<p>================================================================================================================================================================================</p>
+<h3 id="modcb-exlst-macro">MODCB EXLST macro</h3>
+<p>The MODCB macro with EXLST=addr will modify an EXLST according to the parameters specified on the macro invocation.
+It is for this reason that all parameters and keywords of the EXLST macro (as described above) are supported
+on the MODCB macro when EXLST=addr is specified.</p>
+<p>The MODCB macro's function depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>MODCB1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>MODCB2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The structure and layout of the EXLST are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#zexlst-description">zEXLST description</a> or the EXLST2 macro in the mac folder.</p>
+<p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the MODCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR description</a> or the CBMR macro in the mac folder.</p>
+<blockquote>
+<p>[!NOTE]
+Direct access to subfields in the EXLST or CBMR is strongly discouraged. Use GENCB BLK=EXLST, SHOWCB EXLST=,
+TESTCB EXLST= and/or MODCB EXLST= to generate, inspect, test, and/or modify the EXLST's content.</p>
+</blockquote>
+<p>All keywords on the MODCB EXLST macro are optional. Except EXLST= which is required.</p>
+<p>The MODCB EXLST macro can be coded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Operand</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[label] MODCB</td>
+<td>EXLST=address</td>
+<td>Points MODCB to the EXLST to be modified</td>
+</tr>
+<tr>
+<td></td>
+<td>[AM=VSAM]</td>
+<td>Optional, no other values allowed</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>[other]</strong></td>
+<td><strong>Any parameter supported on the EXLST macro</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=]</td>
+<td>Use standard form of MODCB EXLST; this is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=L/MF=(L,addr,[label]]</td>
+<td>Use list form of MODCB EXLST</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(E,addr)]</td>
+<td>Use execute form of MODCB EXLST</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(G,addr,[label])]</td>
+<td>Use generate form of MODCB EXLST</td>
+</tr>
+</tbody>
+</table>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<h4 id="exlst_1">EXLST=</h4>
+<p>Required parameter; specify the address of the EXLST to be modified.</p>
+<h4 id="am_7">AM=</h4>
+<p>VSAM is the default and the only supported value.</p>
+<h4 id="other-keywords_3">Other keywords</h4>
+<p>All parameters supported by the <a href="#exlst-macro">EXLST macro</a> are supported here as well.</p>
+<p>Please note: not supported are expressions like <code>(S,scon)</code> or <code>(*,scon)</code></p>
+<h5 id="macrf_3">MACRF=</h5>
+<p>MACRF is a special case of the "other keywords". This paragrqaph clarifies how MACRF works.</p>
+<p>All supported subparameters have their own bit in <code>CBMREXLST_MACRF</code> (currently 16),
+Conflicts are <code>MNOTE</code>d, eg. bits for <code>NIS</code> and <code>SIS</code> cannot both be on.</p>
+<p>If MF=E is specified then the whole of <code>CBMREXLST_MACRF</code> is replaced,</p>
+<p>When the EXLST is modified:
+- For mutually exclusive parameters, the bit is turned on or off
+- For each non-exclusive parameter the appropriate bit is turned on, therefore it isn't possible to turn a nonexclusive
+  bit off using MODCB, this has to be done manually.
+- eg. When an EXLST has MACRF=(OUT) which allows read and write functions it is not possible to change
+  the EXLST to read-only using MODCB
+- if this is needed code the instruction <code>NI EXLSTMACR1,255-EXLSTOUT</code></p>
+<blockquote>
+<p>[!NOTE]
+I do not entirely agree with how Melvyn has set this up, although I do like his extensive early error detection proposal.
+There are basically two alternatives that I can see:
+1. every MACRF option has a separate verb code, we generate as many verb codes as we need, no data is needed
+2. We generate a single verb code for the MACRF modification, supplying two 2-byte masks in the data.
+   One mask to indicate affected postions, the other to indicate the desired bit values for the selected postions.</p>
+</blockquote>
+<h4 id="mf_7">MF=</h4>
+<p>Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See <a href="#mf-parameter">MF= parameter</a> for details.</p>
+<h4 id="return-r15-and-reason-r0-codes_1">Return (R15) and Reason (R0) Codes</h4>
+<table>
+<thead>
+<tr>
+<th>Return Code</th>
+<th>Reason Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R15=0</td>
+<td>Reason Code=n/a</td>
+<td>Successful</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=4</td>
+<td>Invalid control block</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=4</td>
+<td>EXLST= does not point to an EXLST</td>
+</tr>
+<tr>
+<td>R15=8</td>
+<td>Reason Code=n/a</td>
+<td>An attempt was made to update a CBMR with a field not previously created</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>[!NOTE]
+For RC=4 two RSN=4 causes are documented by Melvyn. We'll have to find out whether this is intentional or a typo.</p>
+</blockquote>
+<p>================================================================================================================================================================================</p>
+<h3 id="showcb-exlst-macro">SHOWCB EXLST macro</h3>
+<p>The SHOWCB macro with EXLST=addr will return EXLST-related fields according to the parameters specified
+on the macro invocation in the order they are specified. Duplicates are permitted.</p>
+<p>The SHOWCB macro's function depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>SHOWCB1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>SHOWCB2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The structure and layout of the EXLST are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#zexlst-description">zEXLST description</a> or the EXLST2 macro in the mac folder.</p>
+<p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the SHOWCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR description</a> or the CBMR macro in the mac folder.</p>
+<blockquote>
+<p>[!NOTE]
+Direct access to subfields in the EXLST or CBMR is strongly discouraged. Use GENCB BLK=EXLST, SHOWCB EXLST=,
+TESTCB EXLST= and/or MODCB EXLST= to generate, inspect, test, and/or modify the EXLST's content.</p>
+</blockquote>
+<p>The SHOWCB EXLST macro can be coded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Operand</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[label] SHOWCB</td>
+<td>EXLST=address</td>
+<td>Points MODCB to the EXLST to be queried</td>
+</tr>
+<tr>
+<td></td>
+<td>[AM=VSAM]</td>
+<td>Optional, no other values allowed</td>
+</tr>
+<tr>
+<td></td>
+<td>AREA=addr</td>
+<td>Address of return area</td>
+</tr>
+<tr>
+<td></td>
+<td>LENGTH=nr</td>
+<td>Size of return area in bytes</td>
+</tr>
+<tr>
+<td></td>
+<td>[OBJECT=DATA/INDEX]</td>
+<td>For KSDS: select data or index component; DATA is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>FIELDS=(keywd_list)</td>
+<td>List of keywords indicating which fields to return</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=]</td>
+<td>Use standard form of SHOWCB EXLST; this is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=L/MF=(L,addr,[label]]</td>
+<td>Use list form of SHOWCB EXLST</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(E,addr)]</td>
+<td>Use execute form of SHOWCB EXLST</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(G,addr,[label])]</td>
+<td>Use generate form of SHOWCB EXLST</td>
+</tr>
+</tbody>
+</table>
+<p>All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<h4 id="exlst_2">EXLST=</h4>
+<p>Required parameter; specify the address of the EXLST to be queried.</p>
+<h4 id="am_8">AM=</h4>
+<p>VSAM is the default and the only supported value.</p>
+<h4 id="area_1">AREA=</h4>
+<p>Required parameter; specify the address of the return area.</p>
+<h4 id="length_3">LENGTH=</h4>
+<p>Required parameter; specify the length of the return area.</p>
+<h3 id="object_2">OBJECT=</h3>
+<p>Optional parameter; if specified must be <code>DATA</code>or <code>INDEX</code>. <code>DATA</code> is the default.</p>
+<h4 id="fields_1">FIELDS=</h4>
+<p>Specifies a list of keywords. Each keyword specified returns a field of 4 or 8 bytes. These return values are stored consecutively in the return area specified in the <code>AREA</code>= and <code>LENGTH</code>= parameters.
+Some keywords are valid only when the EXLST is open. An error is returned when any of these keywords are used while the EXLST is not open.</p>
+<p>Defined options for the FIELDS parameter are listed below:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Length</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ACBLEN</td>
+<td>4</td>
+<td>Size of ACB in bytes</td>
+</tr>
+<tr>
+<td>EODAD</td>
+<td>4</td>
+<td>End-of-data exit routine address</td>
+</tr>
+<tr>
+<td>EXLLEN</td>
+<td>4</td>
+<td>Length of EXLST in bytes</td>
+</tr>
+<tr>
+<td>JRNAD</td>
+<td>4</td>
+<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
+</tr>
+<tr>
+<td>LERAD</td>
+<td>4</td>
+<td>Logical error analysis routine address</td>
+</tr>
+<tr>
+<td>RPLLEN</td>
+<td>4</td>
+<td>Length of RPL in bytes</td>
+</tr>
+<tr>
+<td>SYNAD</td>
+<td>4</td>
+<td>Physical error analysis routine address</td>
+</tr>
+</tbody>
+</table>
+<h4 id="mf_8">MF=</h4>
+<p>Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See <a href="#mf-parameter">MF= parameter</a> for details.</p>
+<h4 id="return-and-reason-codes_4">Return and Reason Codes</h4>
+<table>
+<thead>
+<tr>
+<th>Return Code</th>
+<th>Reason Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R15=0</td>
+<td>Reason Code=n/a</td>
+<td>Successful</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=4</td>
+<td>Invalid control block</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=9</td>
+<td>Length too small</td>
+</tr>
+<tr>
+<td>R15=8</td>
+<td>Reason Code=n/a</td>
+<td>An attempt was made to update a CBMR with a field not previously created</td>
+</tr>
+</tbody>
+</table>
+<p>================================================================================================================================================================================</p>
+<h3 id="testcb-exlst-macro">TESTCB EXLST macro</h3>
+<p>The TESTCB macro with EXLST=addr will test EXLST-related fields according to the parameters specified
+on the macro invocation. Only a single test can be specified on each TESTCB invocation.
+TESTCB returns a PSW condition code of 8=Equal when the specified test is met, 7=NotEqual otherwise.</p>
+<p>The TESTCB macro's function depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>TESTCB1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>TESTCB2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The structure and layout of the EXLST are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#zexlst-description">zEXLST description</a> or the EXLST2 macro in the mac folder.</p>
+<p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the TESTCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR description</a> or the CBMR macro in the mac folder.</p>
+<p>The TESTCB EXLST macro can be coded as follows:</p>
+<blockquote>
+<p>[!NOTE]
+Direct access to subfields in the EXLST or CBMR is strongly discouraged. Use GENCB BLK=EXLST, SHOWCB EXLST=,
+TESTCB EXLST= and/or MODCB EXLST= to generate, inspect, test, and/or modify the EXLST's content.</p>
+</blockquote>
+<p>The TESTCB EXLST macro can be coded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Operand</th>
+<th>Remarks</th>
+<th>Conditions returned</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[label] TESTCB</td>
+<td>EXLST=address</td>
+<td>Points TESTCB to the EXLST to be tested</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[AM=VSAM]</td>
+<td>Optional, no other values allowed</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>ERET=addr</td>
+<td>Address of error handling routine</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[OBJECT=DATA/INDEX]</td>
+<td>For KSDS: select data or index component</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBLEN=nr</td>
+<td>ACB length in bytes</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLLEN=nr</td>
+<td>EXLST length in bytes</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLLEN=nr</td>
+<td>RPL length in bytes</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>EODAD=addr[,mod]</td>
+<td>End-of-data exit routine address</td>
+<td>depends</td>
+</tr>
+<tr>
+<td></td>
+<td>JRNAD=addr[,mod]</td>
+<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
+<td>depends</td>
+</tr>
+<tr>
+<td></td>
+<td>LERAD=addr[,mod]</td>
+<td>Logical error analysis routine address</td>
+<td>depends</td>
+</tr>
+<tr>
+<td></td>
+<td>SYNAD=addr[,mod]</td>
+<td>Physical error analysis routine address</td>
+<td>depends</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=]</td>
+<td>Use standard form of SHOWCB EXLST; this is the default</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=L/MF=(L,addr,[label]]</td>
+<td>Use list form of SHOWCB EXLST</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(E,addr)]</td>
+<td>Use execute form of SHOWCB EXLST</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(G,addr,[label])]</td>
+<td>Use generate form of SHOWCB EXLST</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table>
+<p>All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<h4 id="exlst_3">EXLST=</h4>
+<p>Required parameter; specify the address of the EXLST to be tested.</p>
+<h4 id="am_9">AM=</h4>
+<p>VSAM is the default and the only supported value.</p>
+<h4 id="eret_1">ERET=</h4>
+<p>Optional address of error handling routine.</p>
+<h4 id="object_3">OBJECT=</h4>
+<p>Optional parameter; if specified must be <code>DATA</code>or <code>INDEX</code>. <code>DATA</code> is the default.</p>
+<h4 id="keywordnradr_1">Keyword=nr/adr</h4>
+<p>Remaining Keyword parameters specify a value, an address, or a keyword list to be tested.</p>
+<p>For the keywords <code>EODAD</code>, <code>JRNAD</code>, <code>LERAD</code>, <code>SYNAD</code> the address can be omitted, or it can be specified as an address.
+Zero address values carry special meaning. A modifier can optionally be added, as defined on the <a href="#exlst-macro">EXLST macro description</a>.</p>
+<p><strong>Note:</strong> This 'special meaning' needs clarification!</p>
+<p>For these 4 keywords the following the conditions returned are defined as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter subfields</th>
+<th>Conditions returned</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>If a modifier of <code>L</code> is speciefied</td>
+<td>NE=LO</td>
+</tr>
+<tr>
+<td>If address is zero or omitted and no modifier specified</td>
+<td>EQ</td>
+</tr>
+<tr>
+<td>If address is zero and non-L modifier is specified</td>
+<td>EQ NE=LO</td>
+</tr>
+<tr>
+<td>If address is not zero and no modifier specified</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td>If address is.not zero and non-L modifier is specified</td>
+<td>EQ NE=LO</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>[!NOTE]
+Melvyn documented JRNAD as allowed, but not supported, always returning NE=LO.
+I think we should consider adding a bit more compatibility, if we reasonably can.</p>
+</blockquote>
+<h4 id="mf_9">MF=</h4>
+<p>Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See <a href="#mf-parameter">MF= parameter</a> for details.</p>
+<h4 id="return-and-reason-codes_5">Return and Reason Codes</h4>
+<table>
+<thead>
+<tr>
+<th>Return Code</th>
+<th>Reason Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R15=0</td>
+<td>Reason Code=n/a</td>
+<td>Successful</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=4</td>
+<td>Invalid control block</td>
+</tr>
+<tr>
+<td>R15=8</td>
+<td>Reason Code=n/a</td>
+<td>An attempt was made to update a CBMR with a field not previously created</td>
+</tr>
+</tbody>
+</table>
+<p>================================================================================================================================================================================</p>
 <p>================================================================================================================================================================================</p>
 <h3 id="mf-parameter">MF= parameter</h3>
 <p>The MF= parameter as described here applies to its usage with the GENCB, MODCB, SHOWCB, and TESTCB macros.</p>
@@ -5706,7 +6570,7 @@ or the <code>CBMR</code> macro in the mac folder.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-7-gded3f8cc"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-8-g3f7e124d"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
