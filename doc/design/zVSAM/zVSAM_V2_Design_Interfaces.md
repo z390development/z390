@@ -10,22 +10,22 @@ will be eliminated.
 This document is divided into three major chapters: one for each control block (or object)
 involved in VSAM file handling.
 
-| [ACB](#acb-based-interfaces)    | [EXLST](#exlst-based-interfaces)    | RPL        | Other |
-|---------------------------------|-------------------------------------| -----------|-------|
-| [ACB](#acb-macro)               | [EXLST](#exlst-macro)               | RPL        | CBMR  |
-| [ACBD](#acbd-macro)             | [EXLSTD](#exlstd-macro)             | RPLD       |       |
-| [GENCB ACB](#gencb-acb-macro)   | [GENCB EXLST](#gencb-exlst-macro)   | GENCB RPL  |       |
-| [MODCB ACB](#modcb-acb-macro)   | [MODCB EXLST](#modcb-exlst-macro)   | MODCB RPL  |       |
-| [SHOWCB ACB](#showcb-acb-macro) | [SHOWCB EXLST](#showcb-exlst-macro) | SHOWCB RPL |       |
-| [TESTCB ACB](#testcb-acb-macro) | [TESTCB EXLST](#testcb-exlst-macro) | TESTCB RPL |       |
-|---------------------------------|-------------------------------------|------------|-------|
-| [OPEN](#open-macro)             |                                     | POINT      |       |
-| [CLOSE](#close-macro)           |                                     | GET        |       |
-|                                 |                                     | PUT        |       |
-|                                 |                                     | ERASE      |       |
-|                                 |                                     | CHECK      |       |
-|                                 |                                     | ENDREQ     |       |
-|                                 |                                     | VERIFY     |       |
+| [ACB](#acb-based-interfaces)    | [EXLST](#exlst-based-interfaces)    | [RPL](#rpl-based-interfaces) | Other |
+|---------------------------------|-------------------------------------| -----------------------------|-------|
+| [ACB](#acb-macro)               | [EXLST](#exlst-macro)               | [RPL](#rpl-macro)            | CBMR  |
+| [ACBD](#acbd-macro)             | [EXLSTD](#exlstd-macro)             | [RPLD](#rpld-macro)          |       |
+| [GENCB ACB](#gencb-acb-macro)   | [GENCB EXLST](#gencb-exlst-macro)   | GENCB RPL                    |       |
+| [MODCB ACB](#modcb-acb-macro)   | [MODCB EXLST](#modcb-exlst-macro)   | MODCB RPL                    |       |
+| [SHOWCB ACB](#showcb-acb-macro) | [SHOWCB EXLST](#showcb-exlst-macro) | SHOWCB RPL                   |       |
+| [TESTCB ACB](#testcb-acb-macro) | [TESTCB EXLST](#testcb-exlst-macro) | TESTCB RPL                   |       |
+|---------------------------------|-------------------------------------|------------------------------|-------|
+| [OPEN](#open-macro)             |                                     | POINT                        |       |
+| [CLOSE](#close-macro)           |                                     | GET                          |       |
+|                                 |                                     | PUT                          |       |
+|                                 |                                     | ERASE                        |       |
+|                                 |                                     | CHECK                        |       |
+|                                 |                                     | ENDREQ                       |       |
+|                                 |                                     | VERIFY                       |       |
 
 ## ACB-based interfaces
 
@@ -1529,10 +1529,226 @@ See [MF= parameter](#mf-parameter) for details.
 
 ================================================================================================================================================================================
 
+## RPL-based interfaces
 
+The RPL is the primary interface for operations at the record level.
+A program can use multiple RPLs.
+An RPL must always point to an open ACB in order to specify a valid operation.
 
+The RPL interface consists of an RPL control block and a set of macros to manage and manipulate the RPL control block.
+These macros can be used in your assembler programs. For zCobol and/or other higher-level languages,
+these macros will be generated from specifications for the files as appropriate in the host language's syntax.
 
+The following macros for assembler programs implement functions to manage RPLs:
 
+| Macro         | Function                                             |
+|---------------|------------------------------------------------------|
+| RPL           | Create/instantiate an RPL during assembly            |
+| RPLD          | Describe RPL subfields                               |
+| GENCB BLK=RPL | Dynamically create/instantiate RPL(s)                |
+| MODCB RPL=    | Dynamically modify an RPL                            |
+| SHOWCB RPL=   | Extract RPL subfield(s) (generic getter method)      |
+| TESTCB RPL=   | Test RPL subfield(s) (generic tester method)         |
+| CBMR          | Create/instatiate Control Block Modification Request |
+
+**Note:** The RPL macro defines a statically allocated RPL.
+This macro is primarily intended for use in non-reentrant programs.
+GENCB BLK=RPL should be used to create an RPL in dynamically acquired storage,
+or in private static storage. MODCB RPL= can be used to modify an existing RPL,
+whereas SHOWCB RPL= can be used to query specific fields of an RPL
+and TESTCB RPL= can be used to validate specific fields of an RPL.
+
+The following macros for assembler programs implement data manipulation functions for RPL-defined clusters:
+
+| Macro           | Function                                             |
+|-----------------|------------------------------------------------------|
+| POINT           | Position for subsequent sequential I/O               |
+| GET             | Retrieve a record                                    |
+| PUT             | Write (add or update) a record                       |
+| ERASE           | Remove a record                                      |
+| CHECK           | Wait for completion of an asynchronous I/O request   |
+| ENDREQ          | Terminate a request                                  |
+| VERIFY          | Synchronize end-of-data                              |
+
+A description of these interfaces as implemented for z390 and zVSAM is detailed in the next chapters.
+
+================================================================================================================================================================================
+
+### RPL macro
+
+The RPL macro will generate an RPL and initialize it according to the parameters specified on the macro invocation.
+
+The RPL macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                  |
+|----------|-------------------------|
+| ZVSAM(0) | Error: zVSAM disabled   |
+| ZVSAM(1) | ACB1 macro is expanded  |
+| ZVSAM(2) | ACB2 macro is expanded  |
+
+The structure and layout of the generated RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the RPL, RPL1 and RPL2 macros
+in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the RPL is strongly discouraged. Use SHOWCB RPL=, TESTCB RPL= and/or
+> MODCB RPL= to inspect, test, and/or modify the RPL's content.
+
+All keywords on the RPL macro are optional. Before a request is issued, all RPL values can be modified
+using MODCB RPL=, or by changing the RPL directly.
+The latter is not recommended, as it is not guaranteed to be portable or compatible with future versions of zVSAM.
+
+The table below shows how the RPL macro can be coded.
+
+| Opcode      | Operand                | Remarks                                                                                                 |
+|-------------|------------------------|---------------------------------------------------------------------------------------------------------|
+| [label] RPL | [AM=VSAM]              | Designates this ACB as a zVSAM ACB; VSAM is the default                                                 |
+|             | [ACB=ptr]              | Pointer to ACB                                                                                          |
+|             | [AREA=ptr]             | Pointer to record area or record pointer                                                                |
+|             | [AREALEN=nr]           | Length of record area or record pointer                                                                 |
+|             | [ARG=ptr]              | Pointer to search argument                                                                              |
+|             | [KEYLEN=nr]            | Length of search argument                                                                               |
+|             | [ECB=]                 | Pointer to ECB                                                                                          |
+|             | [MSGAREA=addr]         | Pointer to message area                                                                                 |
+|             | [MSGLEN=nr]            | Length of message area                                                                                  |
+|             | [NXTRPL=ptr]           | Pointer to next RPL when chaining requests                                                              |
+|             | [OPTCD=(keywd_list)]   | List of keywords specifying processing options. See table below for valid keywords                      |
+|             | [RECLEN=nr]            | Max amount of storage (in bytes) to use for buffers                                                     |
+|             | [TIMEOUT=nr]           | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)     |
+|             | [TRANSID=nr]           | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)     |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+> [!NOTE]
+> There is no MF= parameter defined for the RPL macro.
+> Use GENCB to generate RPLs in dynamically acquired storage.
+
+#### AM=
+
+Optional parameter. `AM=VSAM` is the default. No other values are supported.
+
+#### ACB=
+
+Pointer to an open ACB that represents the clusteer to be accessed.
+
+#### AREA=
+
+Record area pointer. In Move mode reading a record implies moving the record into this area. In locate mode a pointer to the record is moved into the area instead.
+
+#### AREALEN=
+
+Length of record area.
+
+#### ARG=
+
+Pointer to search argument. This is a key, a relative record number, or a RBA.
+
+> [!NOTE]
+> Melvyn mentions RBA - I think this should be an XLRSN instead. Unless we decide to support RBAs as well.
+
+#### KEYLEN=
+
+Length of key value specified in ARG= when a generic key search is requested.
+
+#### ECB=
+
+Pointer to ECB. Used with Asynchronous requests.
+
+Note: If ECB= is specified the indicated external ECB will be used.
+If ECB= is omitted, an internal ECB will be used.
+The bit `RPLOPT2_ECB` is set for an external ECB.
+
+#### MSGAREA=
+
+Pointer to a message area where error information may be returned.
+
+#### MSGLEN=
+
+Length of messagea area.
+
+#### NXTRPL=
+
+Pointer to next RPL in the chain. RPLs can be chained together to request a series of operations in a single call to zVSAM.
+
+#### RECLEN=
+
+Record length. Required when updating or adding records.
+
+When updating a record that has not changed its length, the parameter can be omitted if the immediately preceding operation on the RPL was the read for the record being updated.
+
+#### OPTCD=
+
+List of keywords specifying how the request is to be handled.
+
+Defined options for the OPTCD parameter are listed below:
+
+| Keyword subset   | Keyword | Remarks                                                                                             |
+|------------------|---------|-----------------------------------------------------------------------------------------------------|
+| [ADR/KEY/CNV]    |         | Mutually exclusive keywords indicating access by key or by address . KEY is the default.            |
+|                  | ADR     | Addressed access to ESDS                                                                            |
+|                  | KEY     | Keyed access to KSDS or RRDS                                                                        |
+|                  | CNV     | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+| [DIR/SEQ/SKP]    |         | Mutually exclusive keywords indicating random, or (skip-)sequential access. SEQ is the default.     |
+|                  | DIR     | Direct access to ESDS, KSDS, or RRDS                                                                |
+|                  | SEQ     | Sequential access to ESDS, KSDS or RRDS                                                             |
+|                  | SKP     | Skip sequential access to KSDS or RRDS                                                              |
+| [ARD/LRD]        |         | Mutually exclusive keywords indicating positioning method. ARD is the default.                      |
+|                  | ARD     | Access user-defined record location                                                                 |
+|                  | LRD     | Access last record in the cluster                                                                   |
+| [FWD/BWD]        |         | Mutually exclusive keywords indicating reading direction. FWD is the default.                       |
+|                  | FWD     | Forward processing                                                                                  |
+|                  | BWD     | Backward processing                                                                                 |
+| [SYN/ASY]        |         | Mutually exclusive keywords indicating synch/asynch processing. SYN is the default.                 |
+|                  | SYN     | Synchronous request                                                                                 |
+|                  | ASY     | Asynchronous request                                                                                |
+| [NUP/UPD/NSP]    |         | Mutually exclusive keywords indicating locking option. NUP is the default.                          |
+|                  | NUP     | Not for update                                                                                      |
+|                  | UPD     | For update. Updates are allowed if the cluster was opened with the OUT option specified.            |
+|                  | NSP     | Retain positioning for next sequential access. Used only with OPTCD=DIR: retain file position       |
+| [KEQ/KGE]        |         | Mutually exclusive keywords indicating exact/inexact key match. KEQ is the default.                 |
+|                  | KEQ     | Locate record with exact key match                                                                  |
+|                  | KGE     | Locate record with exact key match, or next higher value                                            |
+| [FKS/GEN]        |         | Mutually exclusive keywords indicating full key / partial key search. FKS is the default.           |
+|                  | FKS     | Full key search                                                                                     |
+|                  | GEN     | Generic key search. KEYLEN required.                                                                |
+| [MVE/LOC]        | MVE     | Mutually exclusive keywords indicating move/locate mode. MVE is the default.                        |
+|                  | MVE     | Move mode. zVSAM moves record between user record buffer and zVSAM buffer.                          |
+|                  | LOC     | Locate mode. Record is not moved, data are processed in the zVSAM buffer, zVSAM provides pointer.   |
+| [RBA/XRBA]       |         | Mutually exclusive keywords indicating 4-byte or 8-byte RBAs. RBA is the default.                   |
+|                  | RBA     | 4-byte RBA values                                                                                   |
+|                  | XRBA    | 8-byte extended RBA values                                                                          |
+| [NWAITX/WAITX  ] |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+| [CR/NRI]         |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+
+> [!NOTE]
+> RBA/XRBA - Melvyn assumed RBA support. Maybe we should use LRSN/XLRSN instead?
+
+================================================================================================================================================================================
+
+### RPLD macro
+
+The RPLD macro maps the RPL. Its behaviour depends on the ZVSAM option in effect:
+
+| Option   | Effect                  |
+|----------|-------------------------|
+| ZVSAM(0) | Error: zVSAM disabled   |
+| ZVSAM(1) | RPLD1 macro is expanded |
+| ZVSAM(2) | RPLD2 macro is expanded |
+
+The mappings defined in the RPLD1 and RPLD2 macros are very different.
+
+For mapping details, please see the [zRPL layout](zVSAM_V2_Design_Addenda.md#zacb-description)
+or the `RPLD`, `RPLD1` and `RPLD2` macros in the mac folder.
+
+> [!NOTE]
+> The RPLD macro generates no executable code.
+
+> [!NOTE]
+> The RPLD macro can be invoked multiple times, but will generate the DSECT mapping
+> only on its first invocation.
+
+================================================================================================================================================================================
 
 
 
