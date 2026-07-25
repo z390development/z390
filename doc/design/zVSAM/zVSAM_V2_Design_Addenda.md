@@ -272,6 +272,85 @@ Accessing subfields of the zEXLST directly may adversely impact portability of y
 > The pointer fields in the macro are coded in the wrong location, making them unaligned.
 > We'll have to investigate the impact of changing the macro to conform to the layout described here.
 
+## zRPL description
+
+The zRPL is the internal structure (control block, object) that constitutes the RPL.
+
+The structure and layout of the zRPL are not formally part of the interface and may change in future releases.
+Therefore the zRPL layout for zVSAM V1 is not included and the zRPL layout for zVSAM V2 is shown here only for the sake of completeness.
+Direct access to subfields in the zRPL is discouraged. Use SHOWCB RPL, TESTCB RPL and/or MODCB RPL to inspect, test, and/or modify the zRPL's content.
+Accessing subfields of the zRPL directly may adversely impact portability of your programs.
+
+| Label     | Equate       | Designation | Remarks                                                         |
+|-----------|--------------|-------------|-----------------------------------------------------------------|
+| IHARPL    |              | DSECT       |                                                                 |
+| IFGRPL    |              |             | Synonym of IHARPL                                               |
+| RPLEYE    |              | CL4         | Eye catcher                                                     |
+|           | RPLZRPL      | =C'zRPL'    | Fixed value                                                     |
+| RPLDACB   |              | AL4         | Pointer to ACB                                                  |
+| RPLAREA   |              | AL4         | Pointer to record area                                          |
+| RPLAREAL  |              | XL4         | Length of record area                                           |
+| RPLARG    |              | AL4         | Pointer to argument                                             |
+| RPLECB    |              | AL4         | Pointer to ECB                                                  |
+|           | RPLWAIT      | =X'80'      | - request has been issued                                       |
+|           | RPLPOST      | =X'40'      | - request has been completed                                    |
+| RPLMSGAR  |              | AL4         | Pointer to message area                                         |
+| RPLNXTRP  |              | AL4         | Pointer to next chained RPL                                     |
+| RPLRECLN  |              | XL4         | Length of record read or of record to be written                |
+| RPLMSGLN  |              | XL2         | Length of message area                                          |
+| RPLKEYLN  |              | XL1         | Key length                                                      |
+| RPLOPTCD  |              | 0XL2        | Option codes                                                    |
+| RPLOPTCD1 |              | XL1         | Option byte 1                                                   |
+|           | RPLOPT_KEY   | =X'80'      | 0: OPTCD=ADR 1: OPTCD=KEY                                       |
+|           | RPLOPT_SEQ   | =X'40'      | 0: OPTCD=DIR 1: OPTCD=SEQ                                       |
+|           | RPLOPT_SKP   | =X'20'      | 0: OPTCD=SEQ/DIR 1: OPTCD=SKP                                   |
+|           | RPLOPT_ARD   | =X'10'      | 0: OPTCD=LRD 1: OPTCD=ARD                                       |
+|           | RPLOPT_FWD   | =X'08'      | 0: OPTCD=BWD 1: OPTCD=FWD                                       |
+|           | RPLOPT_SYN   | =X'04'      | 0: OPTCD=ASY 1: OPTCD=SYN                                       |
+|           | RPLOPT_NUP   | =X'02'      | 0: OPTCD=UPD 1: OPTCD=NUP                                       |
+|           | RPLOPT_NSP   | =X'01'      | 0: OPTCD=NUP/UPD 1: OPTCD=NSP                                   |
+| RPLOPTCD2 |              | XL1         | Option byte 2                                                   |
+|           | RPLOPT_KEQ   | =X'80'      | 0: OPTCD=KGE 1: OPTCD=KEQ                                       |
+|           | RPLOPT_FKS   | =X'40'      | 0: OPTCD=GEN 1: OPTCD=FKS                                       |
+|           | RPLOPT_MVE   | =X'20'      | 0: OPTCD=LOC 1: OPTCD=MVE                                       |
+|           | RPLOPT_RBA   | =X'10'      | 0: OPTCD=XRBA 1: OPTCD=RBA                                      |
+|           | RPLOPT_ECB   | =X'08'      | 0: internal 1: external ECB                                     |
+| RPLFEEDB  |              | 0XL4        | Feedback code                                                   |
+| RPLFUNCD  |              | XL1         | RPL function code                                               |
+| RPLRTNCD  |              | XL1         | RPL return code                                                 |
+| RPLCMPON  |              | XL1         | RPL component code                                              |
+| RPLERRCD  |              | XL1         | RPL reason code                                                 |
+| RPLCXRBA  |              | XL8         | XRBA of current record                                          |
+| RPLAIXID  |              | XL1         | AIX pointer type                                                |
+|           | RPLAXPKP     | =X'80'      | 0: KEY 1: RBA                                                   |
+|           |              | XL2         | Reserved for alignment                                          |
+|           | RPLEND       | \*          | End of RPL marker                                               |
+|           | RPLLEN       | \*-RPLEYE   | Length of RPL                                                   |
+|-----------|--------------|-------------|-------------- Not needed ? -------------------------------------|
+| RPLID     | ?            | XL1         | Identifier                                                      |
+|           | ??           |             | Fixed value for RPL                                             |
+| RPLSTYPE  | ?            | XL1         | RPL Subtype                                                     |
+|           | ??           |             | Fixed value for VSAM                                            |
+|           | ???          |             | Which codes do we support?                                      |
+| RPLNEXT   |              | A           | Ptr to next RPL                                                 |
+| RPLLXRBBA |              | XL8         | XRBA of last record                                             |
+| RPLOPENC  |              | F           | Unique ACB Open count                                           |
+| RPLFLAG   |              | 0XL4        | Processing flags                                                |
+| RPLFLG1   |              | XL1         | Processing flags                                                |
+|           | RPLF1GOK     | =X'80'      | Previous GET ok                                                 |
+|           | RPLF1GNF     | =X'40'      | Previous GET not found                                          |
+| RPLFLG2   |              | XL1         | Processing flags                                                |
+| RPLFLG3   |              | XL1         | Processing flags                                                |
+| RPLFLG4   |              | XL1         | Processing flags                                                |
+
+> [!NOTE]
+> Review notes:
+> - `RPLID` and next entry - Reason for ? in column 2 not clear. Need to double check.
+> - `RPLSTYPE` and next entry - Reason for ? in column 2 not clear. Need to double check.
+> - `RPLFEEDB` and next entry - Determine feedback codes we need to support and document them here.
+> - `RPLNEXT` - Describe purpose of this chain.
+> - Melvyn marked the trailing part of the list as possibly not needed. Requires re-investigation.
+
 ## CBMR description
 
 The structure and layout of the CBMR are not formally part of the interface and may change in future releases.
