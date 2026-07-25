@@ -27,7 +27,7 @@
     
     
       
-        <title>zVSAM V2 - RPL-based interfaces - z390</title>
+        <title>zVSAM V2.4 Design Interfaces - z390</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#zvsam-v2-rpl-based-interfaces" class="md-skip">
+        <a href="#point-macro" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              zVSAM V2 - RPL-based interfaces
+              zVSAM V2.4 Design Interfaces
             
           </span>
         </div>
@@ -2567,25 +2567,12 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#rpl-macro" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        RPL macro
-      
-    </span>
-  </a>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#point-macro" class="md-nav__link">
@@ -2979,251 +2966,8 @@
   
 
 
-<h1 id="zvsam-v2-rpl-based-interfaces">zVSAM V2 - RPL-based interfaces</h1>
-<p>The RPL is the primary interface for operations at the record level.
-A program can use multiple RPLs.
-An RPL must always point to an open ACB in order to specify a valid operation.</p>
-<h2 id="rpl-macro">RPL macro</h2>
-<p>The RPL macro will generate an RPL and initialize it according to the parameters specified on the macro invocation.</p>
-<p>Direct access to subfields in the RPL is discouraged. Use SHOWCB RPL=, TESTCB RPL= and/or MODCB
-RPL= to inspect, test, and/or modify the RPL's content.</p>
-<p>All keywords on the RPL macro are optional. Before a request is issued, all RPL values can be modified
-using MODCB RPL=, or by changing the RPL directly. The latter is not recommended, as it is not
-guaranteed to be portable or compatible with future versions of zVSAM.</p>
-<p>The table below shows how the RPL macro can be coded</p>
-<table>
-<thead>
-<tr>
-<th>Opcode</th>
-<th>Operand</th>
-<th>Remarks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[label] RPL</td>
-<td>[AM=VSAM]</td>
-<td>Designates this RPL as a zVSAM RPL</td>
-</tr>
-<tr>
-<td></td>
-<td>[ACB=address]</td>
-<td>Address of an open ACB</td>
-</tr>
-<tr>
-<td></td>
-<td>[AREA=address]</td>
-<td>Address of a record area</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>- In Move mode the record is read into the area</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>- In Locate mode a to the record is moved into the area</td>
-</tr>
-<tr>
-<td></td>
-<td>[AREALEN=value]</td>
-<td>Length of record area or record</td>
-</tr>
-<tr>
-<td></td>
-<td>[ARG=address]</td>
-<td>Address of the search argument. This is a key, a relative record number, or an RBA.</td>
-</tr>
-<tr>
-<td></td>
-<td>[ECB=address]</td>
-<td>Address of an ECB. Used with asynchronous requests. See note below.</td>
-</tr>
-<tr>
-<td></td>
-<td>[KEYLEN=value]</td>
-<td>Length of key value in ARG when a generic key search is requested</td>
-</tr>
-<tr>
-<td></td>
-<td>[MSGAREA=address]</td>
-<td>Address of message area</td>
-</tr>
-<tr>
-<td></td>
-<td>[MSGLEN=value]</td>
-<td>Length of message area</td>
-</tr>
-<tr>
-<td></td>
-<td>[NXTRPL=address]</td>
-<td>Address of the next RPL in the chain.</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td>RPLs can be chained together to request a series ofoperations in a single call to zVSAM</td>
-</tr>
-<tr>
-<td></td>
-<td>[OPTCD=(keyword list)]</td>
-<td>List of keywords specifying processing options. See table below for valid keywords</td>
-</tr>
-<tr>
-<td></td>
-<td>[RECLEN=value]</td>
-<td>Record length. Required when updating or adding records</td>
-</tr>
-<tr>
-<td></td>
-<td>[TRANSID=value]</td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message</td>
-</tr>
-</tbody>
-</table>
-<p><em>ECB note:</em>
-RPLECB is an internal ECB if ECB= is not specified, or an external one if it is.
-The bit RPLOPT2_ECB is set for an external ECB.</p>
-<p>Supported options for the OPTCD parameter are listed below:</p>
-<table>
-<thead>
-<tr>
-<th>Keyword subset</th>
-<th>Keyword</th>
-<th>Remarks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[ADR</td>
-<td>KEY]</td>
-<td>ADR</td>
-</tr>
-<tr>
-<td></td>
-<td>KEY</td>
-<td>Keyed access to KSDS or RRDS</td>
-</tr>
-<tr>
-<td></td>
-<td>CNV</td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message</td>
-</tr>
-<tr>
-<td>[DIR</td>
-<td>SEQ</td>
-<td>SKP]</td>
-</tr>
-<tr>
-<td></td>
-<td>SEQ</td>
-<td>Sequential access to ESDS, KSDS or RRDS</td>
-</tr>
-<tr>
-<td></td>
-<td>SKP</td>
-<td>Skip sequential access to KSDS or RRDS</td>
-</tr>
-<tr>
-<td>[ARD</td>
-<td>LRD]</td>
-<td>ARD</td>
-</tr>
-<tr>
-<td></td>
-<td>LRD</td>
-<td>Access last record in the cluster</td>
-</tr>
-<tr>
-<td>[FWD</td>
-<td>BWD]</td>
-<td>FWD</td>
-</tr>
-<tr>
-<td></td>
-<td>BWD</td>
-<td>Backward processing</td>
-</tr>
-<tr>
-<td>[SYN</td>
-<td>ASY]</td>
-<td>SYN</td>
-</tr>
-<tr>
-<td></td>
-<td>ASY</td>
-<td>Asynchronous request</td>
-</tr>
-<tr>
-<td>[NUP</td>
-<td>UPD</td>
-<td>NSP]</td>
-</tr>
-<tr>
-<td></td>
-<td>UPD</td>
-<td>For update</td>
-</tr>
-<tr>
-<td></td>
-<td>NSP</td>
-<td>Retain positioning for next sequential access</td>
-</tr>
-<tr>
-<td>[KEQ</td>
-<td>KGE]</td>
-<td>KEQ</td>
-</tr>
-<tr>
-<td></td>
-<td>KGE</td>
-<td>Locate record with exact key match, or next higher value</td>
-</tr>
-<tr>
-<td>[FKS</td>
-<td>GEN]</td>
-<td>FKS</td>
-</tr>
-<tr>
-<td></td>
-<td>GEN</td>
-<td>Generic key search. KEYLEN required</td>
-</tr>
-<tr>
-<td>[MVE</td>
-<td>LOC]</td>
-<td>MVE</td>
-</tr>
-<tr>
-<td></td>
-<td>LOC</td>
-<td>Locate mode</td>
-</tr>
-<tr>
-<td>[RBA</td>
-<td>XRBA]</td>
-<td>RBA</td>
-</tr>
-<tr>
-<td></td>
-<td>XRBA</td>
-<td>8-byte extended RBA values</td>
-</tr>
-<tr>
-<td>[NWAITX/WAITX]</td>
-<td></td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message</td>
-</tr>
-<tr>
-<td>[CR/NRI]</td>
-<td></td>
-<td>Not supported – future option. Keyword is flagged as ignored with a warning message</td>
-</tr>
-</tbody>
-</table>
-<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.</p>
+  <h1>zVSAM V2.4 Design Interfaces</h1>
+
 <h2 id="point-macro">POINT macro</h2>
 <h2 id="get-macro">GET macro</h2>
 <h2 id="put-macro">PUT macro</h2>
@@ -4249,7 +3993,7 @@ z390_zVSAM_Catalog_User_Guide.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-8-g3f7e124d"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-9-g703e28cc"}</script>
     
     
       <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>

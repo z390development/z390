@@ -2633,6 +2633,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#zrpl-description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        zRPL description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#cbmr-description" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2803,6 +2814,17 @@
     <span class="md-ellipsis">
       
         zEXLST description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zrpl-description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        zRPL description
       
     </span>
   </a>
@@ -4124,6 +4146,387 @@ Accessing subfields of the zEXLST directly may adversely impact portability of y
 <p>[!NOTE]
 The pointer fields in the macro are coded in the wrong location, making them unaligned.
 We'll have to investigate the impact of changing the macro to conform to the layout described here.</p>
+</blockquote>
+<h2 id="zrpl-description">zRPL description</h2>
+<p>The zRPL is the internal structure (control block, object) that constitutes the RPL.</p>
+<p>The structure and layout of the zRPL are not formally part of the interface and may change in future releases.
+Therefore the zRPL layout for zVSAM V1 is not included and the zRPL layout for zVSAM V2 is shown here only for the sake of completeness.
+Direct access to subfields in the zRPL is discouraged. Use SHOWCB RPL, TESTCB RPL and/or MODCB RPL to inspect, test, and/or modify the zRPL's content.
+Accessing subfields of the zRPL directly may adversely impact portability of your programs.</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Equate</th>
+<th>Designation</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IHARPL</td>
+<td></td>
+<td>DSECT</td>
+<td></td>
+</tr>
+<tr>
+<td>IFGRPL</td>
+<td></td>
+<td></td>
+<td>Synonym of IHARPL</td>
+</tr>
+<tr>
+<td>RPLEYE</td>
+<td></td>
+<td>CL4</td>
+<td>Eye catcher</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLZRPL</td>
+<td>=C'zRPL'</td>
+<td>Fixed value</td>
+</tr>
+<tr>
+<td>RPLDACB</td>
+<td></td>
+<td>AL4</td>
+<td>Pointer to ACB</td>
+</tr>
+<tr>
+<td>RPLAREA</td>
+<td></td>
+<td>AL4</td>
+<td>Pointer to record area</td>
+</tr>
+<tr>
+<td>RPLAREAL</td>
+<td></td>
+<td>XL4</td>
+<td>Length of record area</td>
+</tr>
+<tr>
+<td>RPLARG</td>
+<td></td>
+<td>AL4</td>
+<td>Pointer to argument</td>
+</tr>
+<tr>
+<td>RPLECB</td>
+<td></td>
+<td>AL4</td>
+<td>Pointer to ECB</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLWAIT</td>
+<td>=X'80'</td>
+<td>- request has been issued</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLPOST</td>
+<td>=X'40'</td>
+<td>- request has been completed</td>
+</tr>
+<tr>
+<td>RPLMSGAR</td>
+<td></td>
+<td>AL4</td>
+<td>Pointer to message area</td>
+</tr>
+<tr>
+<td>RPLNXTRP</td>
+<td></td>
+<td>AL4</td>
+<td>Pointer to next chained RPL</td>
+</tr>
+<tr>
+<td>RPLRECLN</td>
+<td></td>
+<td>XL4</td>
+<td>Length of record read or of record to be written</td>
+</tr>
+<tr>
+<td>RPLMSGLN</td>
+<td></td>
+<td>XL2</td>
+<td>Length of message area</td>
+</tr>
+<tr>
+<td>RPLKEYLN</td>
+<td></td>
+<td>XL1</td>
+<td>Key length</td>
+</tr>
+<tr>
+<td>RPLOPTCD</td>
+<td></td>
+<td>0XL2</td>
+<td>Option codes</td>
+</tr>
+<tr>
+<td>RPLOPTCD1</td>
+<td></td>
+<td>XL1</td>
+<td>Option byte 1</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_KEY</td>
+<td>=X'80'</td>
+<td>0: OPTCD=ADR 1: OPTCD=KEY</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_SEQ</td>
+<td>=X'40'</td>
+<td>0: OPTCD=DIR 1: OPTCD=SEQ</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_SKP</td>
+<td>=X'20'</td>
+<td>0: OPTCD=SEQ/DIR 1: OPTCD=SKP</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_ARD</td>
+<td>=X'10'</td>
+<td>0: OPTCD=LRD 1: OPTCD=ARD</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_FWD</td>
+<td>=X'08'</td>
+<td>0: OPTCD=BWD 1: OPTCD=FWD</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_SYN</td>
+<td>=X'04'</td>
+<td>0: OPTCD=ASY 1: OPTCD=SYN</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_NUP</td>
+<td>=X'02'</td>
+<td>0: OPTCD=UPD 1: OPTCD=NUP</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_NSP</td>
+<td>=X'01'</td>
+<td>0: OPTCD=NUP/UPD 1: OPTCD=NSP</td>
+</tr>
+<tr>
+<td>RPLOPTCD2</td>
+<td></td>
+<td>XL1</td>
+<td>Option byte 2</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_KEQ</td>
+<td>=X'80'</td>
+<td>0: OPTCD=KGE 1: OPTCD=KEQ</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_FKS</td>
+<td>=X'40'</td>
+<td>0: OPTCD=GEN 1: OPTCD=FKS</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_MVE</td>
+<td>=X'20'</td>
+<td>0: OPTCD=LOC 1: OPTCD=MVE</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_RBA</td>
+<td>=X'10'</td>
+<td>0: OPTCD=XRBA 1: OPTCD=RBA</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLOPT_ECB</td>
+<td>=X'08'</td>
+<td>0: internal 1: external ECB</td>
+</tr>
+<tr>
+<td>RPLFEEDB</td>
+<td></td>
+<td>0XL4</td>
+<td>Feedback code</td>
+</tr>
+<tr>
+<td>RPLFUNCD</td>
+<td></td>
+<td>XL1</td>
+<td>RPL function code</td>
+</tr>
+<tr>
+<td>RPLRTNCD</td>
+<td></td>
+<td>XL1</td>
+<td>RPL return code</td>
+</tr>
+<tr>
+<td>RPLCMPON</td>
+<td></td>
+<td>XL1</td>
+<td>RPL component code</td>
+</tr>
+<tr>
+<td>RPLERRCD</td>
+<td></td>
+<td>XL1</td>
+<td>RPL reason code</td>
+</tr>
+<tr>
+<td>RPLCXRBA</td>
+<td></td>
+<td>XL8</td>
+<td>XRBA of current record</td>
+</tr>
+<tr>
+<td>RPLAIXID</td>
+<td></td>
+<td>XL1</td>
+<td>AIX pointer type</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLAXPKP</td>
+<td>=X'80'</td>
+<td>0: KEY 1: RBA</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>XL2</td>
+<td>Reserved for alignment</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLEND</td>
+<td>*</td>
+<td>End of RPL marker</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLLEN</td>
+<td>*-RPLEYE</td>
+<td>Length of RPL</td>
+</tr>
+<tr>
+<td>-----------</td>
+<td>--------------</td>
+<td>-------------</td>
+<td>-------------- Not needed ? -------------------------------------</td>
+</tr>
+<tr>
+<td>RPLID</td>
+<td>?</td>
+<td>XL1</td>
+<td>Identifier</td>
+</tr>
+<tr>
+<td></td>
+<td>??</td>
+<td></td>
+<td>Fixed value for RPL</td>
+</tr>
+<tr>
+<td>RPLSTYPE</td>
+<td>?</td>
+<td>XL1</td>
+<td>RPL Subtype</td>
+</tr>
+<tr>
+<td></td>
+<td>??</td>
+<td></td>
+<td>Fixed value for VSAM</td>
+</tr>
+<tr>
+<td></td>
+<td>???</td>
+<td></td>
+<td>Which codes do we support?</td>
+</tr>
+<tr>
+<td>RPLNEXT</td>
+<td></td>
+<td>A</td>
+<td>Ptr to next RPL</td>
+</tr>
+<tr>
+<td>RPLLXRBBA</td>
+<td></td>
+<td>XL8</td>
+<td>XRBA of last record</td>
+</tr>
+<tr>
+<td>RPLOPENC</td>
+<td></td>
+<td>F</td>
+<td>Unique ACB Open count</td>
+</tr>
+<tr>
+<td>RPLFLAG</td>
+<td></td>
+<td>0XL4</td>
+<td>Processing flags</td>
+</tr>
+<tr>
+<td>RPLFLG1</td>
+<td></td>
+<td>XL1</td>
+<td>Processing flags</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLF1GOK</td>
+<td>=X'80'</td>
+<td>Previous GET ok</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLF1GNF</td>
+<td>=X'40'</td>
+<td>Previous GET not found</td>
+</tr>
+<tr>
+<td>RPLFLG2</td>
+<td></td>
+<td>XL1</td>
+<td>Processing flags</td>
+</tr>
+<tr>
+<td>RPLFLG3</td>
+<td></td>
+<td>XL1</td>
+<td>Processing flags</td>
+</tr>
+<tr>
+<td>RPLFLG4</td>
+<td></td>
+<td>XL1</td>
+<td>Processing flags</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>[!NOTE]
+Review notes:
+- <code>RPLID</code> and next entry - Reason for ? in column 2 not clear. Need to double check.
+- <code>RPLSTYPE</code> and next entry - Reason for ? in column 2 not clear. Need to double check.
+- <code>RPLFEEDB</code> and next entry - Determine feedback codes we need to support and document them here.
+- <code>RPLNEXT</code> - Describe purpose of this chain.
+- Melvyn marked the trailing part of the list as possibly not needed. Requires re-investigation.</p>
 </blockquote>
 <h2 id="cbmr-description">CBMR description</h2>
 <p>The structure and layout of the CBMR are not formally part of the interface and may change in future releases.
@@ -5728,7 +6131,7 @@ If they are issued before the ECB has been posted, unpredictable results may occ
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-8-g3f7e124d"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-9-g703e28cc"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>

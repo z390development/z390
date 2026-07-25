@@ -2767,6 +2767,45 @@
   
 </li>
         
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rpl-based-interfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RPL-based interfaces
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RPL-based interfaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rpl-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RPL macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rpld-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RPLD macro
+      
+    </span>
+  </a>
+  
+</li>
+        
           <li class="md-nav__item">
   <a href="#mf-parameter" class="md-nav__link">
     <span class="md-ellipsis">
@@ -3077,6 +3116,45 @@
   
 </li>
         
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rpl-based-interfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RPL-based interfaces
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RPL-based interfaces">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rpl-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RPL macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rpld-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RPLD macro
+      
+    </span>
+  </a>
+  
+</li>
+        
           <li class="md-nav__item">
   <a href="#mf-parameter" class="md-nav__link">
     <span class="md-ellipsis">
@@ -3137,7 +3215,7 @@ involved in VSAM file handling.</p>
 <tr>
 <th><a href="#acb-based-interfaces">ACB</a></th>
 <th><a href="#exlst-based-interfaces">EXLST</a></th>
-<th>RPL</th>
+<th><a href="#rpl-based-interfaces">RPL</a></th>
 <th>Other</th>
 </tr>
 </thead>
@@ -3145,13 +3223,13 @@ involved in VSAM file handling.</p>
 <tr>
 <td><a href="#acb-macro">ACB</a></td>
 <td><a href="#exlst-macro">EXLST</a></td>
-<td>RPL</td>
+<td><a href="#rpl-macro">RPL</a></td>
 <td>CBMR</td>
 </tr>
 <tr>
 <td><a href="#acbd-macro">ACBD</a></td>
 <td><a href="#exlstd-macro">EXLSTD</a></td>
-<td>RPLD</td>
+<td><a href="#rpld-macro">RPLD</a></td>
 <td></td>
 </tr>
 <tr>
@@ -3181,7 +3259,7 @@ involved in VSAM file handling.</p>
 <tr>
 <td>---------------------------------</td>
 <td>-------------------------------------</td>
-<td>------------</td>
+<td>------------------------------</td>
 <td>-------</td>
 </tr>
 <tr>
@@ -6401,6 +6479,483 @@ See <a href="#mf-parameter">MF= parameter</a> for details.</p>
 </tbody>
 </table>
 <p>================================================================================================================================================================================</p>
+<h2 id="rpl-based-interfaces">RPL-based interfaces</h2>
+<p>The RPL is the primary interface for operations at the record level.
+A program can use multiple RPLs.
+An RPL must always point to an open ACB in order to specify a valid operation.</p>
+<p>The RPL interface consists of an RPL control block and a set of macros to manage and manipulate the RPL control block.
+These macros can be used in your assembler programs. For zCobol and/or other higher-level languages,
+these macros will be generated from specifications for the files as appropriate in the host language's syntax.</p>
+<p>The following macros for assembler programs implement functions to manage RPLs:</p>
+<table>
+<thead>
+<tr>
+<th>Macro</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RPL</td>
+<td>Create/instantiate an RPL during assembly</td>
+</tr>
+<tr>
+<td>RPLD</td>
+<td>Describe RPL subfields</td>
+</tr>
+<tr>
+<td>GENCB BLK=RPL</td>
+<td>Dynamically create/instantiate RPL(s)</td>
+</tr>
+<tr>
+<td>MODCB RPL=</td>
+<td>Dynamically modify an RPL</td>
+</tr>
+<tr>
+<td>SHOWCB RPL=</td>
+<td>Extract RPL subfield(s) (generic getter method)</td>
+</tr>
+<tr>
+<td>TESTCB RPL=</td>
+<td>Test RPL subfield(s) (generic tester method)</td>
+</tr>
+<tr>
+<td>CBMR</td>
+<td>Create/instatiate Control Block Modification Request</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> The RPL macro defines a statically allocated RPL.
+This macro is primarily intended for use in non-reentrant programs.
+GENCB BLK=RPL should be used to create an RPL in dynamically acquired storage,
+or in private static storage. MODCB RPL= can be used to modify an existing RPL,
+whereas SHOWCB RPL= can be used to query specific fields of an RPL
+and TESTCB RPL= can be used to validate specific fields of an RPL.</p>
+<p>The following macros for assembler programs implement data manipulation functions for RPL-defined clusters:</p>
+<table>
+<thead>
+<tr>
+<th>Macro</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POINT</td>
+<td>Position for subsequent sequential I/O</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>Retrieve a record</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>Write (add or update) a record</td>
+</tr>
+<tr>
+<td>ERASE</td>
+<td>Remove a record</td>
+</tr>
+<tr>
+<td>CHECK</td>
+<td>Wait for completion of an asynchronous I/O request</td>
+</tr>
+<tr>
+<td>ENDREQ</td>
+<td>Terminate a request</td>
+</tr>
+<tr>
+<td>VERIFY</td>
+<td>Synchronize end-of-data</td>
+</tr>
+</tbody>
+</table>
+<p>A description of these interfaces as implemented for z390 and zVSAM is detailed in the next chapters.</p>
+<p>================================================================================================================================================================================</p>
+<h3 id="rpl-macro">RPL macro</h3>
+<p>The RPL macro will generate an RPL and initialize it according to the parameters specified on the macro invocation.</p>
+<p>The RPL macro's function depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>ACB1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>ACB2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The structure and layout of the generated RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the RPL, RPL1 and RPL2 macros
+in the mac folder.</p>
+<blockquote>
+<p>[!NOTE]
+Direct access to subfields in the RPL is strongly discouraged. Use SHOWCB RPL=, TESTCB RPL= and/or
+MODCB RPL= to inspect, test, and/or modify the RPL's content.</p>
+</blockquote>
+<p>All keywords on the RPL macro are optional. Before a request is issued, all RPL values can be modified
+using MODCB RPL=, or by changing the RPL directly.
+The latter is not recommended, as it is not guaranteed to be portable or compatible with future versions of zVSAM.</p>
+<p>The table below shows how the RPL macro can be coded.</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Operand</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[label] RPL</td>
+<td>[AM=VSAM]</td>
+<td>Designates this ACB as a zVSAM ACB; VSAM is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>[ACB=ptr]</td>
+<td>Pointer to ACB</td>
+</tr>
+<tr>
+<td></td>
+<td>[AREA=ptr]</td>
+<td>Pointer to record area or record pointer</td>
+</tr>
+<tr>
+<td></td>
+<td>[AREALEN=nr]</td>
+<td>Length of record area or record pointer</td>
+</tr>
+<tr>
+<td></td>
+<td>[ARG=ptr]</td>
+<td>Pointer to search argument</td>
+</tr>
+<tr>
+<td></td>
+<td>[KEYLEN=nr]</td>
+<td>Length of search argument</td>
+</tr>
+<tr>
+<td></td>
+<td>[ECB=]</td>
+<td>Pointer to ECB</td>
+</tr>
+<tr>
+<td></td>
+<td>[MSGAREA=addr]</td>
+<td>Pointer to message area</td>
+</tr>
+<tr>
+<td></td>
+<td>[MSGLEN=nr]</td>
+<td>Length of message area</td>
+</tr>
+<tr>
+<td></td>
+<td>[NXTRPL=ptr]</td>
+<td>Pointer to next RPL when chaining requests</td>
+</tr>
+<tr>
+<td></td>
+<td>[OPTCD=(keywd_list)]</td>
+<td>List of keywords specifying processing options. See table below for valid keywords</td>
+</tr>
+<tr>
+<td></td>
+<td>[RECLEN=nr]</td>
+<td>Max amount of storage (in bytes) to use for buffers</td>
+</tr>
+<tr>
+<td></td>
+<td>[TIMEOUT=nr]</td>
+<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
+</tr>
+<tr>
+<td></td>
+<td>[TRANSID=nr]</td>
+<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
+</tr>
+</tbody>
+</table>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<blockquote>
+<p>[!NOTE]
+There is no MF= parameter defined for the RPL macro.
+Use GENCB to generate RPLs in dynamically acquired storage.</p>
+</blockquote>
+<h4 id="am_10">AM=</h4>
+<p>Optional parameter. <code>AM=VSAM</code> is the default. No other values are supported.</p>
+<h4 id="acb_3">ACB=</h4>
+<p>Pointer to an open ACB that represents the clusteer to be accessed.</p>
+<h4 id="area_2">AREA=</h4>
+<p>Record area pointer. In Move mode reading a record implies moving the record into this area. In locate mode a pointer to the record is moved into the area instead.</p>
+<h4 id="arealen">AREALEN=</h4>
+<p>Length of record area.</p>
+<h4 id="arg">ARG=</h4>
+<p>Pointer to search argument. This is a key, a relative record number, or a RBA.</p>
+<blockquote>
+<p>[!NOTE]
+Melvyn mentions RBA - I think this should be an XLRSN instead. Unless we decide to support RBAs as well.</p>
+</blockquote>
+<h4 id="keylen">KEYLEN=</h4>
+<p>Length of key value specified in ARG= when a generic key search is requested.</p>
+<h4 id="ecb">ECB=</h4>
+<p>Pointer to ECB. Used with Asynchronous requests.</p>
+<p>Note: If ECB= is specified the indicated external ECB will be used.
+If ECB= is omitted, an internal ECB will be used.
+The bit <code>RPLOPT2_ECB</code> is set for an external ECB.</p>
+<h4 id="msgarea">MSGAREA=</h4>
+<p>Pointer to a message area where error information may be returned.</p>
+<h4 id="msglen">MSGLEN=</h4>
+<p>Length of messagea area.</p>
+<h4 id="nxtrpl">NXTRPL=</h4>
+<p>Pointer to next RPL in the chain. RPLs can be chained together to request a series of operations in a single call to zVSAM.</p>
+<h4 id="reclen">RECLEN=</h4>
+<p>Record length. Required when updating or adding records.</p>
+<p>When updating a record that has not changed its length, the parameter can be omitted if the immediately preceding operation on the RPL was the read for the record being updated.</p>
+<h4 id="optcd">OPTCD=</h4>
+<p>List of keywords specifying how the request is to be handled.</p>
+<p>Defined options for the OPTCD parameter are listed below:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword subset</th>
+<th>Keyword</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[ADR/KEY/CNV]</td>
+<td></td>
+<td>Mutually exclusive keywords indicating access by key or by address . KEY is the default.</td>
+</tr>
+<tr>
+<td></td>
+<td>ADR</td>
+<td>Addressed access to ESDS</td>
+</tr>
+<tr>
+<td></td>
+<td>KEY</td>
+<td>Keyed access to KSDS or RRDS</td>
+</tr>
+<tr>
+<td></td>
+<td>CNV</td>
+<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
+</tr>
+<tr>
+<td>[DIR/SEQ/SKP]</td>
+<td></td>
+<td>Mutually exclusive keywords indicating random, or (skip-)sequential access. SEQ is the default.</td>
+</tr>
+<tr>
+<td></td>
+<td>DIR</td>
+<td>Direct access to ESDS, KSDS, or RRDS</td>
+</tr>
+<tr>
+<td></td>
+<td>SEQ</td>
+<td>Sequential access to ESDS, KSDS or RRDS</td>
+</tr>
+<tr>
+<td></td>
+<td>SKP</td>
+<td>Skip sequential access to KSDS or RRDS</td>
+</tr>
+<tr>
+<td>[ARD/LRD]</td>
+<td></td>
+<td>Mutually exclusive keywords indicating positioning method. ARD is the default.</td>
+</tr>
+<tr>
+<td></td>
+<td>ARD</td>
+<td>Access user-defined record location</td>
+</tr>
+<tr>
+<td></td>
+<td>LRD</td>
+<td>Access last record in the cluster</td>
+</tr>
+<tr>
+<td>[FWD/BWD]</td>
+<td></td>
+<td>Mutually exclusive keywords indicating reading direction. FWD is the default.</td>
+</tr>
+<tr>
+<td></td>
+<td>FWD</td>
+<td>Forward processing</td>
+</tr>
+<tr>
+<td></td>
+<td>BWD</td>
+<td>Backward processing</td>
+</tr>
+<tr>
+<td>[SYN/ASY]</td>
+<td></td>
+<td>Mutually exclusive keywords indicating synch/asynch processing. SYN is the default.</td>
+</tr>
+<tr>
+<td></td>
+<td>SYN</td>
+<td>Synchronous request</td>
+</tr>
+<tr>
+<td></td>
+<td>ASY</td>
+<td>Asynchronous request</td>
+</tr>
+<tr>
+<td>[NUP/UPD/NSP]</td>
+<td></td>
+<td>Mutually exclusive keywords indicating locking option. NUP is the default.</td>
+</tr>
+<tr>
+<td></td>
+<td>NUP</td>
+<td>Not for update</td>
+</tr>
+<tr>
+<td></td>
+<td>UPD</td>
+<td>For update. Updates are allowed if the cluster was opened with the OUT option specified.</td>
+</tr>
+<tr>
+<td></td>
+<td>NSP</td>
+<td>Retain positioning for next sequential access. Used only with OPTCD=DIR: retain file position</td>
+</tr>
+<tr>
+<td>[KEQ/KGE]</td>
+<td></td>
+<td>Mutually exclusive keywords indicating exact/inexact key match. KEQ is the default.</td>
+</tr>
+<tr>
+<td></td>
+<td>KEQ</td>
+<td>Locate record with exact key match</td>
+</tr>
+<tr>
+<td></td>
+<td>KGE</td>
+<td>Locate record with exact key match, or next higher value</td>
+</tr>
+<tr>
+<td>[FKS/GEN]</td>
+<td></td>
+<td>Mutually exclusive keywords indicating full key / partial key search. FKS is the default.</td>
+</tr>
+<tr>
+<td></td>
+<td>FKS</td>
+<td>Full key search</td>
+</tr>
+<tr>
+<td></td>
+<td>GEN</td>
+<td>Generic key search. KEYLEN required.</td>
+</tr>
+<tr>
+<td>[MVE/LOC]</td>
+<td>MVE</td>
+<td>Mutually exclusive keywords indicating move/locate mode. MVE is the default.</td>
+</tr>
+<tr>
+<td></td>
+<td>MVE</td>
+<td>Move mode. zVSAM moves record between user record buffer and zVSAM buffer.</td>
+</tr>
+<tr>
+<td></td>
+<td>LOC</td>
+<td>Locate mode. Record is not moved, data are processed in the zVSAM buffer, zVSAM provides pointer.</td>
+</tr>
+<tr>
+<td>[RBA/XRBA]</td>
+<td></td>
+<td>Mutually exclusive keywords indicating 4-byte or 8-byte RBAs. RBA is the default.</td>
+</tr>
+<tr>
+<td></td>
+<td>RBA</td>
+<td>4-byte RBA values</td>
+</tr>
+<tr>
+<td></td>
+<td>XRBA</td>
+<td>8-byte extended RBA values</td>
+</tr>
+<tr>
+<td>[NWAITX/WAITX  ]</td>
+<td></td>
+<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
+</tr>
+<tr>
+<td>[CR/NRI]</td>
+<td></td>
+<td>Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>[!NOTE]
+RBA/XRBA - Melvyn assumed RBA support. Maybe we should use LRSN/XLRSN instead?</p>
+</blockquote>
+<p>================================================================================================================================================================================</p>
+<h3 id="rpld-macro">RPLD macro</h3>
+<p>The RPLD macro maps the RPL. Its behaviour depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>RPLD1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>RPLD2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The mappings defined in the RPLD1 and RPLD2 macros are very different.</p>
+<p>For mapping details, please see the <a href="../zVSAM_V2_Design_Addenda/#zacb-description">zRPL layout</a>
+or the <code>RPLD</code>, <code>RPLD1</code> and <code>RPLD2</code> macros in the mac folder.</p>
+<blockquote>
+<p>[!NOTE]
+The RPLD macro generates no executable code.</p>
+<p>[!NOTE]
+The RPLD macro can be invoked multiple times, but will generate the DSECT mapping
+only on its first invocation.</p>
+</blockquote>
+<p>================================================================================================================================================================================</p>
 <p>================================================================================================================================================================================</p>
 <h3 id="mf-parameter">MF= parameter</h3>
 <p>The MF= parameter as described here applies to its usage with the GENCB, MODCB, SHOWCB, and TESTCB macros.</p>
@@ -6570,7 +7125,7 @@ or the <code>CBMR</code> macro in the mac folder.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-8-g3f7e124d"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-9-g703e28cc"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
