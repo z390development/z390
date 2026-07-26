@@ -69,54 +69,6 @@ address means 'don't test the address'
 The lack of proper syntax checking in the IBM macro can cause access to low storage or
 environmental destruction, so the following syntaxes are not allowed: `(*,*)` and `(*,n)`.
 
-## MODCB RPL= macro
-
-The MODCB macro with RPL=address will modify an RPL according to the parameters specified on the
-macro invocation. It is for this reason that all parameters and keywords of the RPL macro (as described
-above) are supported on the MODCB macro when RPL=address is specified.
-
-Direct access to subfields in the RPL is discouraged. Use SHOWCB RPL=, TESTCB RPL= and/or MODCB
-RPL= to inspect, test, and/or modify the RPL's content.
-
-Direct access to subfields in the CBMR is strongly discouraged.
-
-The MODCB RPL macro can be coded as follows:
-
-| Opcode        | Operand           | Remarks                                                                                                                         |
-|---------------|-------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| [label] MODCB | RPL=address       | Points MODCB to the RPL to be modified                                                                                          |
-|               | [AM=VSAM]         | Optional, no other values allowed                                                                                               |
-|               | **[other]**       | **Any parameter supported on the RPL macro**                                                                                    |
-|               | [MF=]             | See the [description of MF=](#MFdetails)                                                                                        |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-### ECB=
-
-ECB= can be modified to zero or an address
-- If it's zero then RPLOPT2_ECB is reset (internal ECB)
-- If it's non-zero then RPLOPT2_ECB is set (external ECB)
-
-### OPTCD=
-
-To clarify how OPTCD works...
-
-All supported subparameters have their own bit in `CBMRRPL_OPTCD` (currently 22),
-Conflicts are `MNOTEd`, eg. bits for FWD and BWD cannot both be on.
-
-If MF=E is specified then the whole of `CBMRRPL_OPTCD` is replaced.
-
-When the RPL is modified, then for each subset, RPLOPTn bits are turned on or off as appropriate
-
-### Return (R15) and Reason (R0) Codes
-
-| Return Code | Reason Code     | Meaning                                                                  |
-|-------------|-----------------|--------------------------------------------------------------------------|
-| R15=0       | Reason Code=n/a | Successful                                                               |
-| R15=4       | Reason Code=4   | Invalid control block                                                    |
-| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
-
 ## SHOWCB with no specified block type macro
 
 The SHOWCB macro without a block will return length fields according to the parameters specified on the

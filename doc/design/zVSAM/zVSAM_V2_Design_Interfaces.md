@@ -1855,7 +1855,7 @@ See [MF= parameter](#mf-parameter) for details.
 |                     | For a complete list of options, please see the IBM manual “DFSMS Macro Instructions for Data Sets” or equivalent for the operating system and version that you are porting to/from.                                     |
 | Please note:        | not supported are expressions like (S,scon) or (\*,scon)                                                                                                                                                                |
 
-## Return (R15) and Reason (R0) Codes
+#### Return (R15) and Reason (R0) Codes
 
 | Return Code | Reason Code     | Meaning                                                                  |
 |-------------|-----------------|--------------------------------------------------------------------------|
@@ -1866,14 +1866,102 @@ See [MF= parameter](#mf-parameter) for details.
 
 ================================================================================================================================================================================
 
+### MODCB RPL macro
 
+The MODCB macro with RPL=addr will modify an RPL according to the parameters specified on the macro invocation.
+It is for this reason that all parameters and keywords of the RPL macro (as described above) are supported
+on the MODCB macro when RPL=addr is specified.
 
+The MODCB macro's function depends on the ZVSAM option in effect:
 
+| Option   | Effect                   |
+|----------|--------------------------|
+| ZVSAM(0) | Error: zVSAM disabled    |
+| ZVSAM(1) | MODCB1 macro is expanded |
+| ZVSAM(2) | MODCB2 macro is expanded |
 
+The structure and layout of the RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zRPL description](zVSAM_V2_Design_Addenda.md#zrpl-description) or the RPL2 macro in the mac folder.
 
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the MODCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
 
+> [!NOTE]
+> Direct access to subfields in the RPL or CBMR is strongly discouraged. Use GENCB BLK=RPL, SHOWCB RPL=,
+> TESTCB RPL= and/or MODCB RPL= to generate, inspect, test, and/or modify the RPL's content.
 
+All keywords on the MODCB RPL macro are optional. Except RPL= which is required.
 
+The MODCB RPL macro can be coded as follows:
+
+| Opcode        | Operand                   | Remarks                                             |
+|---------------|---------------------------|-----------------------------------------------------|
+| [label] MODCB | RPL=address               | Points MODCB to the RPL to be modified              |
+|               | [AM=VSAM]                 | Optional, no other values allowed                   |
+|               | **[other]**               | **Any parameter supported on the RPL macro**        |
+|               | [MF=]                     | Use standard form of MODCB RPL; this is the default |
+|               | [MF=L/MF=(L,addr,[label]] | Use list form of MODCB RPL                          |
+|               | [MF=(E,addr)]             | Use execute form of MODCB RPL                       |
+|               | [MF=(G,addr,[label])]     | Use generate form of MODCB RPL                      |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### RPL=
+
+Required parameter; specify the address of the RPL to be modified.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### Other keywords
+
+All parameters supported by the [RPL macro](#rpl-macro) are supported here as well.
+
+Please note: not supported are expressions like `(S,scon)` or `(*,scon)`
+
+#### ECB=
+
+ECB= can be modified to zero or an address
+- If it's zero then RPLOPT2_ECB is reset (internal ECB)
+- If it's non-zero then RPLOPT2_ECB is set (external ECB)
+
+#### OPTCD=
+
+To clarify how OPTCD works:
+
+All supported subparameters have their own bit in `CBMRRPL_OPTCD` (currently 22),
+Conflicts are `MNOTEd`, eg. bits for FWD and BWD cannot both be on.
+
+If MF=E is specified then the whole of `CBMRRPL_OPTCD` is replaced.
+
+When the RPL is modified, then for each subset, RPLOPTn bits are turned on or off as appropriate
+
+> [!NOTE]
+> I do not entirely agree with how Melvyn has set this up, although I do like his extensive early error detection proposal.
+> There are basically two alternatives that I can see:
+> 1. every OPTCD option has a separate verb code, we generate as many verb codes as we need, no data is needed
+> 2. We generate a single verb code for the OPTCD modification, supplying two 4-byte masks in the data.
+>    One mask to indicate affected postions, the other to indicate the desired bit values for the selected postions.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return (R15) and Reason (R0) Codes
+
+| Return Code | Reason Code     | Meaning                                                                  |
+|-------------|-----------------|--------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                               |
+| R15=4       | Reason Code=4   | Invalid control block                                                    |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
+
+===============================================================================
 
 
 

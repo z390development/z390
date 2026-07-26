@@ -1,26 +1,3 @@
-### MODCB RPL macro parameters
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-For ease of access a short summary follows here:
-
-| Keyword             | Usage and implementation in zVSAM                                                                                                                                                                                       |
-|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `RPL`=addr          | required to indicate the RPL to be modified                                                                                                                                                                             |
-| *other*             | Any parameters and/or keywords supported by the RPL macro. Please see the description of the RPL macro for details.                                                                                                     |
-|                     | Supported parameters and keywords on the RPL macro are supported on MODCB RPL as well. Likewise, unsupported parameters and keywords on the RPL macro are not supported on MODCB RPL either.                            |
-|                     | How the parameters can be specified differs per parameter.                                                                                                                                                              |
-|                     | For a complete list of options, please see the IBM manual “DFSMS Macro Instructions for Data Sets” or equivalent for the operating system and version that you are porting to/from.                                     |
-| Please note:        | not supported are expressions like (S,scon) or (\*,scon)                                                                                                                                                                |
-| `MF`=               | When omitted, specifies the standard form of the MODCB to generate an inline CBMR and an inline call to the CBMR handler.                                                                                               |
-| `MF=L`              | Specifies the list form of the MODCB macro which generates an inline CBMR but no call to the CBMR handler.                                                                                                              |
-| `MF=(L,addr)`       | Specifies the list form of the MODCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.                                                                               |
-| `MF=(L,addr,label)` | Same as `MF=(L,addr)` but label will be equated to the length of the CBMR.                                                                                                                                              |
-| `MF=(E,addr)`       | Specifies the execute form of the MODCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.                    |
-| `MF=(G,addr)`       | Specifies the generate form of the MODCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.                                                        |
-| `MF=(G,addr,label)` | Same as `MF=(G,addr)` but label will be equated to the length of the CBMR                                                                                                                                               |
-
 ### SHOWCB RPL macro parameters
 
 All supported parameters are implemented compatibly with IBM's VSAM implementation.
