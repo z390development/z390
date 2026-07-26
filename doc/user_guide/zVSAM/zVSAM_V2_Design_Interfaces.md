@@ -1,38 +1,3 @@
-### GENCB RPL macro
-
-The GENCB macro with BLK=RPL will generate or manipulate RPLs and initialize or change them according to
-the parameters specified on the macro invocation. It is for this reason that all supported parameters
-and keywords of the RPL macro (as described above) are supported on the GENCB macro when BLK=RPL is specified.
-
-The structure and layout of the generated RPL are not part of the interface and are therefore not shown in this chapter.
-Direct access to subfields in the RPL is discouraged. Use SHOWCB RPL, TESTCB RPL and/or MODCB RPL
-to inspect, test, and/or modify the RPL's content.
-
-Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
-are not part of the interface and are therefore not shown in this chapter.
-Direct access to subfields in the CBMR is strongly discouraged.
-
-The GENCB RPL macro can be coded as follows:
-
-| Opcode | Operand                   | Remarks                                                             |
-|--------|---------------------------|---------------------------------------------------------------------|
-| GENCB  | BLK=RPL                   | Instructs GENCB to generate 1 or more RPLs                          |
-|        | [AM=VSAM]                 | Optional, no other values allowed; VSAM is the default              |
-|        | [COPIES=nr]               | The number of identical RPLs to generate                            |
-|        | [WAREA=addr]              | The work area where the RPLs are to be constructed                  |
-|        | [LENGTH=nr]               | Length of the work area in bytes                                    |
-|        | [LOC=keyword]             | Where GENCB is to allocate dynamically acquired storage - if needed |
-|        | **[other]**               | **Any parameter supported on the RPL macro**                        |
-|        | [MF=]                     | Use standard form of GENCB RPL; this is the default                 |
-|        | [MF=L/MF=(L,addr,[label]] | Use list form of GENCB RPL                                          |
-|        | [MF=(E,addr)]             | Use execute form of GENCB RPL                                       |
-|        | [MF=(G,addr,[label])]     | Use generate form of GENCB RPL                                      |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-For ease of access a short summary can be found in the addenda.
-
 ### MODCB RPL macro
 
 The MODCB macro with RPL=addr will modify an RPL according to the parameters specified on the macro invocation.

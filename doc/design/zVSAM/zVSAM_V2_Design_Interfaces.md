@@ -10,22 +10,22 @@ will be eliminated.
 This document is divided into three major chapters: one for each control block (or object)
 involved in VSAM file handling.
 
-| [ACB](#acb-based-interfaces)    | [EXLST](#exlst-based-interfaces)    | [RPL](#rpl-based-interfaces) | Other |
-|---------------------------------|-------------------------------------| -----------------------------|-------|
-| [ACB](#acb-macro)               | [EXLST](#exlst-macro)               | [RPL](#rpl-macro)            | CBMR  |
-| [ACBD](#acbd-macro)             | [EXLSTD](#exlstd-macro)             | [RPLD](#rpld-macro)          |       |
-| [GENCB ACB](#gencb-acb-macro)   | [GENCB EXLST](#gencb-exlst-macro)   | GENCB RPL                    |       |
-| [MODCB ACB](#modcb-acb-macro)   | [MODCB EXLST](#modcb-exlst-macro)   | MODCB RPL                    |       |
-| [SHOWCB ACB](#showcb-acb-macro) | [SHOWCB EXLST](#showcb-exlst-macro) | SHOWCB RPL                   |       |
-| [TESTCB ACB](#testcb-acb-macro) | [TESTCB EXLST](#testcb-exlst-macro) | TESTCB RPL                   |       |
-|---------------------------------|-------------------------------------|------------------------------|-------|
-| [OPEN](#open-macro)             |                                     | POINT                        |       |
-| [CLOSE](#close-macro)           |                                     | GET                          |       |
-|                                 |                                     | PUT                          |       |
-|                                 |                                     | ERASE                        |       |
-|                                 |                                     | CHECK                        |       |
-|                                 |                                     | ENDREQ                       |       |
-|                                 |                                     | VERIFY                       |       |
+| [ACB](#acb-based-interfaces)    | [EXLST](#exlst-based-interfaces)    | [RPL](#rpl-based-interfaces)    | Other |
+|---------------------------------|-------------------------------------| --------------------------------|-------|
+| [ACB](#acb-macro)               | [EXLST](#exlst-macro)               | [RPL](#rpl-macro)               | CBMR  |
+| [ACBD](#acbd-macro)             | [EXLSTD](#exlstd-macro)             | [RPLD](#rpld-macro)             |       |
+| [GENCB ACB](#gencb-acb-macro)   | [GENCB EXLST](#gencb-exlst-macro)   | [GENCB RPL](#gencb-rpl-macro)   |       |
+| [MODCB ACB](#modcb-acb-macro)   | [MODCB EXLST](#modcb-exlst-macro)   | [MODCB RPL](#modcb-rpl-macro)   |       |
+| [SHOWCB ACB](#showcb-acb-macro) | [SHOWCB EXLST](#showcb-exlst-macro) | [SHOWCB RPL](#showcb-rpl-macro) |       |
+| [TESTCB ACB](#testcb-acb-macro) | [TESTCB EXLST](#testcb-exlst-macro) | [TESTCB RPL](#testcb-rpl-macro) |       |
+|---------------------------------|-------------------------------------|---------------------------------|-------|
+| [OPEN](#open-macro)             |                                     | POINT                           |       |
+| [CLOSE](#close-macro)           |                                     | GET                             |       |
+|                                 |                                     | PUT                             |       |
+|                                 |                                     | ERASE                           |       |
+|                                 |                                     | CHECK                           |       |
+|                                 |                                     | ENDREQ                          |       |
+|                                 |                                     | VERIFY                          |       |
 
 ## ACB-based interfaces
 
@@ -355,6 +355,8 @@ Supported keywords:
 #### Other keywords
 
 All parameters supported by the [ACB macro](#acb-macro) are supported here as well.
+
+Please note: not supported are expressions like `(S,scon)` or `(*,scon)`
 
 #### MF=
 
@@ -1208,6 +1210,8 @@ Supported keywords:
 
 All parameters supported by the [EXLST macro](#acb-macro) are supported here as well.
 
+Please note: not supported are expressions like `(S,scon)` or `(*,scon)`
+
 #### MF=
 
 Indicates the Macro Format.
@@ -1747,6 +1751,118 @@ or the `RPLD`, `RPLD1` and `RPLD2` macros in the mac folder.
 > [!NOTE]
 > The RPLD macro can be invoked multiple times, but will generate the DSECT mapping
 > only on its first invocation.
+
+================================================================================================================================================================================
+
+### GENCB RPL macro
+
+The GENCB macro with BLK=RPL will generate or manipulate RPLs and initialize or change them
+according to the parameters specified on the macro invocation. It is for this reason that
+all supported parameters and keywords of the RPL macro (as described above) are supported
+on the GENCB macro when BLK=RPL is specified.
+
+The GENCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                   |
+|----------|--------------------------|
+| ZVSAM(0) | Error: zVSAM disabled    |
+| ZVSAM(1) | GENCB1 macro is expanded |
+| ZVSAM(2) | GENCB2 macro is expanded |
+
+The structure and layout of the RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zRPL description](zVSAM_V2_Design_Addenda.md#zrpl-description) or the RPL2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the RPL or CBMR is strongly discouraged. Use GENCB BLK=RPL, SHOWCB RPL=,
+> TESTCB RPL= and/or MODCB RPL= to generate, inspect, test, and/or modify the RPL's content.
+
+All keywords on the GENCB RPL macro are optional. Except BLK= which is required.
+
+The GENCB RPL macro can be coded as follows:
+
+| Opcode        | Operand                   | Remarks                                                                                                 |
+|---------------|---------------------------|---------------------------------------------------------------------------------------------------------|
+| [label] GENCB | BLK=RPL                   | Instructs GENCB to generate 1 or more RPLs                                                              |
+|               | [AM=VSAM]                 | Optional, no other values allowed; VSAM is the default                                                  |
+|               | [COPIES=nr]               | The number of identical RPLs to generate                                                                |
+|               | [WAREA=addr]              | The work area where the RPLs are to be constructed                                                      |
+|               | [LENGTH=nr]               | Length of the work area in bytes                                                                        |
+|               | [LOC=keyword]             | Where GENCB is to allocate dynamically acquired storage - if needed                                     |
+|               | **[other]**               | **Any parameter supported on the RPL macro**                                                            |
+|               | [MF=]                     | Use standard form of GENCB RPL; this is the default                                                     |
+|               | [MF=L/MF=(L,addr,[label]] | Use list form of GENCB RPL                                                                              |
+|               | [MF=(E,addr)]             | Use execute form of GENCB RPL                                                                           |
+|               | [MF=(G,addr,[label])]     | Use generate form of GENCB RPL                                                                          |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### BLK=
+
+Required parameter; specify RPL to generate 1 or more RPLs
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### COPIES=
+
+Number of identical RPLs to generate ranging from 1 to 65535. Defaults to 1.
+
+#### WAREA=
+
+The work area where the RPLs are to be constructed.
+
+- When WAREA is specified, LENGTH must be specified too.
+- When WAREA is not specified, the CBMR handler allocates an area of storage.
+- The address of this area whether via GETMAIN or WAREA is returned in R1.
+- The length of the generated RPL(s) is returned in R0.
+
+#### LENGTH=
+
+- If WAREA= is specified, this paramter is required and specifies the length of the area.
+- If WAREA= is not specified, this parameter is ignored. zVSAM determines how much storage to allocate.
+
+#### LOC=
+
+- If WAREA= is specified, this paramter is ignored.
+- If WAREA= is not specified, this parameter indicates where zVSAM is to allocate storage for the RPL or RPLs.
+
+Supported keywords:
+- BELOW = below 16M (addressable in Amode 24, 31, or 64)
+- ANY   = below 2G  (requires Amode 31 or 64 to address)
+
+#### Other keywords
+
+All parameters supported by the [RPL macro](#rpl-macro) are supported here as well.
+
+Please note: not supported are expressions like `(S,scon)` or `(*,scon)`
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+| *other*             | Any parameters and/or keywords supported by the RPL macro. Please see the description of the RPL macro for details.                                                                                                     |
+|                     | Supported parameters and keywords on the RPL macro are supported on GENCB RPL as well. Likewise, unsupported parameters and keywords on the RPL macro are not supported on GENCB RPL either.                            |
+|                     | How the parameters can be specified differs per parameter.                                                                                                                                                              |
+|                     | For a complete list of options, please see the IBM manual “DFSMS Macro Instructions for Data Sets” or equivalent for the operating system and version that you are porting to/from.                                     |
+| Please note:        | not supported are expressions like (S,scon) or (\*,scon)                                                                                                                                                                |
+
+## Return (R15) and Reason (R0) Codes
+
+| Return Code | Reason Code     | Meaning                                                                  |
+|-------------|-----------------|--------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                               |
+| R15=4       | Reason Code=4   | Invalid control block                                                    |
+| R15=4       | Reason Code=9   | WAREA is too small                                                       |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
 
 ================================================================================================================================================================================
 

@@ -69,54 +69,6 @@ address means 'don't test the address'
 The lack of proper syntax checking in the IBM macro can cause access to low storage or
 environmental destruction, so the following syntaxes are not allowed: `(*,*)` and `(*,n)`.
 
-## GENCB BLK=RPL macro
-
-The GENCB BLK=RPL macro generates or manipulates RPLs and initializes or changes them according to
-the parameters specified on the macro invocation. It is for this reason that all supported parameters and
-keywords of the RPL macro (as described above) are supported on the GENCB macro.
-
-Direct access to subfields in the RPL is discouraged. Use SHOWCB RPL=, TESTCB RPL= and/or MODCB
-RPL= to inspect, test, and/or modify the RPL's content.
-
-Direct access to subfields in the CBMR is strongly discouraged.
-
-The GENCB RPL macro can be coded as follows:
-
-| Opcode        | Operand           | Remarks                                                                                                                         |
-|---------------|-------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| [label] GENCB | BLK=RPL           | Instructs GENCB to generate 1 or more RPLs                                                                                      |
-|               | [AM=VSAM]         | Optional, no other values allowed                                                                                               |
-|               | [COPIES=1]        | The number of identical RPLs to generate. Specify a number between 1 and 65535.                                                 |
-|               | [WAREA=address]   | The work area where the RPLs are to be constructed                                                                              |
-|               | [LENGTH=value]    | Length of the work area in bytes. If WAREA/LENGTH are omitted then storage is dynamically acquired and LOC=BELOW is the default |
-|               | [LOC=BELOW | ANY] | Where GENCB is to allocate dynamically acquired storage if needed                                                               |
-|               | **[other]**       | **Any parameter supported on the RPL macro**                                                                                    |
-|               | [MF=]             | See the [description of MF=](#MFdetails)                                                                                        |
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation
-For details, please refer to the relevant IBM manual.
-
-### WAREA=
-
-- When WAREA is specified, LENGTH must be specified too
-- When WAREA is not specified, the CBMR handler allocates an area of storage
-- The address of this area whether via GETMAIN or WAREA is returned in R1
-- The length of the generated RPL(s) is returned in R0
-
-### LENGTH=
-
-Length in bytes of the area indicated by WAREA.
-When LENGTH is specified, WAREA must be specified as well
-
-## Return (R15) and Reason (R0) Codes
-
-| Return Code | Reason Code     | Meaning                                                                  |
-|-------------|-----------------|--------------------------------------------------------------------------|
-| R15=0       | Reason Code=n/a | Successful                                                               |
-| R15=4       | Reason Code=4   | Invalid control block                                                    |
-| R15=4       | Reason Code=9   | WAREA is too small                                                       |
-| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
-
 ## MODCB RPL= macro
 
 The MODCB macro with RPL=address will modify an RPL according to the parameters specified on the
