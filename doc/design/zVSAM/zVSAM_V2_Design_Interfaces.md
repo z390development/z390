@@ -1961,12 +1961,121 @@ See [MF= parameter](#mf-parameter) for details.
 | R15=4       | Reason Code=4   | Invalid control block                                                    |
 | R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
 
-===============================================================================
+================================================================================================================================================================================
 
+### SHOWCB RPL macro
 
+The SHOWCB macro with RPL=addr will return RPL-related fields according to the parameters specified
+on the macro invocation in the order they are specified. Duplicates are permitted.
 
+The SHOWCB macro's function depends on the ZVSAM option in effect:
 
+| Option   | Effect                    |
+|----------|---------------------------|
+| ZVSAM(0) | Error: zVSAM disabled     |
+| ZVSAM(1) | SHOWCB1 macro is expanded |
+| ZVSAM(2) | SHOWCB2 macro is expanded |
 
+The structure and layout of the RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zRPL description](zVSAM_V2_Design_Addenda.md#zrpl-description) or the RPL2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the SHOWCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the RPL or CBMR is strongly discouraged. Use GENCB BLK=RPL, SHOWCB RPL=,
+> TESTCB RPL= and/or MODCB RPL= to generate, inspect, test, and/or modify the RPL's content.
+
+The SHOWCB RPL macro can be coded as follows:
+
+| Opcode         | Operand                    | Remarks                                                       |
+|----------------|----------------------------|---------------------------------------------------------------|
+| [label] SHOWCB | RPL=address                | Points MODCB to the RPL to be queried                         |
+|                | [AM=VSAM]                  | Optional, no other values allowed                             |
+|                | AREA=addr                  | Address of return area                                        |
+|                | LENGTH=nr                  | Size of return area in bytes                                  |
+|                | [OBJECT=DATA/INDEX]        | For KSDS: select data or index component; DATA is the default |
+|                | FIELDS=(keywd_list)        | List of keywords indicating which fields to return            |
+|                | [MF=]                      | Use standard form of SHOWCB RPL; this is the default          |
+|                | [MF=L/MF=(L,addr,[label]]  | Use list form of SHOWCB RPL                                   |
+|                | [MF=(E,addr)]              | Use execute form of SHOWCB RPL                                |
+|                | [MF=(G,addr,[label])]      | Use generate form of SHOWCB RPL                               |
+
+All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### RPL=
+
+Required parameter; specify the address of the RPL to be queried.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### AREA=
+
+Required parameter; specify the address of the return area.
+
+#### LENGTH=
+
+Required parameter; specify the length of the return area.
+
+### OBJECT=
+
+Optional parameter; if specified must be `DATA`or `INDEX`. `DATA` is the default.
+
+#### FIELDS=
+
+Specifies a list of keywords. Each keyword specified returns a field of 4 or 8 bytes.
+These return values are stored consecutively in the return area specified in the `AREA`= and `LENGTH`= parameters.
+
+Defined options for the FIELDS parameter are listed below:
+
+| Keyword | Length | Remarks                                        |
+|---------|--------|------------------------------------------------|
+| ACB     | 4      | Pointer to ACB                                 |
+| ACBLEN  | 4      | Length of ACB in bytes                         |
+| AIXPC   | 4      | Alternate index pointer count                  |
+| AREA    | 4      | Pointer to record buffer                       |
+| AREALEN | 4      | Size of record buffer in bytes                 |
+| ARG     | 4      | Pointer to last used search argument field     |
+| ECB     | 4      | Pointer to user-supplied ECB                   |
+| EXLLEN  | 4      | Length of EXLST in bytes                       |
+| FDBK    | 4      | Feedback code for the last request             |
+| FTNCD   | 4      | Function code                                  |
+| KEYLEN  | 4      | Length of key, for use with OPTCD=GEN          |
+| MSGAREA | 4      | Pointer to message area, foxes if not relevant |
+| MSGLEN  | 4      | Length of message area, foxes if not relevant  |
+| NXTRPL  | 4      | Pointer to next RPL, if any                    |
+| RBA     | 4      | 4-byte RBA of last record processed            |
+| RECLEN  | 4      | Length of current record                       |
+| RPLLEN  | 4      | Length of RPL                                  |
+| TRANSID | 4      | Transaction_id; always foxes                   |
+| XRBA    | 8      | 8-byte RBA of last record processed            |
+
+> [!NOTE]
+> Review notes:
+> - `AIXPC` - What info is this indicating? Value will be taken from `PFXAIXN` (to be defined)? Need to validate this decision.
+> - `RBA`/`XRBA` - How to determine??? zVSAM supports these keywords only for ESDS. For any other type of cluster a value of foxes will be returned by default. Need to validate this decision.
+
+Overview of differences with IBM VSAM:
+
+FIELDS=RBA/XRBA – zVSAM supports these keywords only for ESDS.
+For any other type of cluster a value of foxes will be returned by default.
+
+#### Return (R15) and Reason (R0) Codes
+
+| Return Code | Reason Code     | Meaning                                                                          |
+|-------------|-----------------|----------------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                                       |
+| R15=4       | Reason Code=1   | AIXPC or RPLDACB are zero                                                        |
+| R15=4       | Reason Code=4   | Invalid control block                                                            |
+| R15=4       | Reason Code=9   | Length too small                                                                 |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created         |
+
+================================================================================================================================================================================
 
 
 

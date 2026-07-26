@@ -102,64 +102,6 @@ For details, please refer to the relevant IBM manual.
 | R15=4       | Reason Code=9   | Length too small                                                         |
 | R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
 
-## SHOWCB RPL= macro
-
-The SHOWCB macro with RPL=address will return RPL-related fields according to the parameters specified
-on the macro invocation in the order they are specified. Duplicates are permitted.
-
-Direct access to subfields in the RPL is discouraged. Use SHOWCB RPL=, TESTCB RPL= and/or MODCB
-RPL= to inspect, test, and/or modify the RPL's content.
-
-Direct access to subfields in the CBMR is strongly discouraged.
-
-The SHOWCB RPL= macro can be coded as follows:
-
-| Opcode         | Operand               | Remarks                                                  |
-|----------------|-----------------------|----------------------------------------------------------|
-| [label] SHOWCB | RPL=address           | Points SHOWCB to the RPL to be queried                   |
-|                | [AM=VSAM]             | Optional, no other values allowed                        |
-|                | AREA=address          | Address of return area                                   |
-|                | LENGTH=value          | Size of return area in bytes                             |
-|                | FIELDS=(keyword list) | List of keywords indicating which fields to return       |
-|                | [MF=]                 | See the [description of MF=](#MFdetails)                 |
-
-Supported options for the FIELDS parameter are listed below:
-
-| Keyword | Length | Remarks                                                                                                                         |
-|---------|--------|---------------------------------------------------------------------------------------------------------------------------------|
-| ACB     | 4      | Address of ACB                                                                                                                  |
-| ACBLEN  | 4      | Length of ACB in bytes                                                                                                          |
-| AIXPC   | 4      | Alternate index count. Derived from `PFXAIXN`                                                                                   |
-| AREA    | 4      | Address of record buffer                                                                                                        |
-| AREALEN | 4      | Size of record buffer in bytes                                                                                                  |
-| ARG     | 4      | Address of search argument field                                                                                                |
-| ECB     | 4      | Address of ECB                                                                                                                  |
-| EXLLEN  | 4      | Length of EXLST in bytes                                                                                                        |
-| FDBK    | 4      | Feedback code for the last request                                                                                              |
-| FTNCD   | 4      | Function code                                                                                                                   |
-| KEYLEN  | 4      | Length of key, for use with OPTCD=GEN                                                                                           |
-| MSGAREA | 4      | Address of message area (returns foxes)                                                                                         |
-| MSGLEN  | 4      | Length of message area (returns zero)                                                                                           |
-| NXTRPL  | 4      | Address of next RPL                                                                                                             |
-| RBA     | 4      | 4-byte RBA of last record processed (ESDS ony, otherwise zero)                                                                  |
-| RECLEN  | 4      | Length of current record                                                                                                        |
-| RPLLEN  | 4      | Length of RPL in bytes                                                                                                          |
-| TRANSID | 4      | Transaction id (returns foxes)                                                                                                  |
-| XRBA    | 8      | 8-byte RBA of last record processed (ESDS only, otherwise zero)                                                                 |
-
-All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-### Return (R15) and Reason (R0) Codes
-
-| Return Code | Reason Code     | Meaning                                                                          |
-|-------------|-----------------|----------------------------------------------------------------------------------|
-| R15=0       | Reason Code=n/a | Successful                                                                       |
-| R15=4       | Reason Code=1   | AIXPC or RPLDACB are zero                                                        |
-| R15=4       | Reason Code=4   | Invalid control block                                                            |
-| R15=4       | Reason Code=9   | Length too small                                                                 |
-| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created         |
-
 ## TESTCB Introduction
 
 Only a single test can be specified on each TESTCB invocation.
