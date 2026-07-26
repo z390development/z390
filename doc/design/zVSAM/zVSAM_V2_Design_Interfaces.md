@@ -657,8 +657,6 @@ Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the T
 are not part of the interface and are therefore not shown in this chapter. For details please see the
 [CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
 
-The TESTCB ACB macro can be coded as follows:
-
 > [!NOTE]
 > Direct access to subfields in the ACB or CBMR is strongly discouraged. Use GENCB BLK=ACB, SHOWCB ACB=,
 > TESTCB ACB= and/or MODCB ACB= to generate, inspect, test, and/or modify the ACB's content.
@@ -1449,8 +1447,6 @@ Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the T
 are not part of the interface and are therefore not shown in this chapter. For details please see the
 [CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
 
-The TESTCB EXLST macro can be coded as follows:
-
 > [!NOTE]
 > Direct access to subfields in the EXLST or CBMR is strongly discouraged. Use GENCB BLK=EXLST, SHOWCB EXLST=,
 > TESTCB EXLST= and/or MODCB EXLST= to generate, inspect, test, and/or modify the EXLST's content.
@@ -2076,6 +2072,136 @@ For any other type of cluster a value of foxes will be returned by default.
 | R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created         |
 
 ================================================================================================================================================================================
+
+### TESTCB RPL macro
+
+The TESTCB macro with RPL=addr will test RPL-related fields according to the parameters specified
+on the macro invocation. Only a single test can be specified on each TESTCB invocation.
+TESTCB returns a PSW condition code of 8=Equal when the specified test is met, 7=NotEqual otherwise.
+
+The TESTCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                    |
+|----------|---------------------------|
+| ZVSAM(0) | Error: zVSAM disabled     |
+| ZVSAM(1) | TESTCB1 macro is expanded |
+| ZVSAM(2) | TESTCB2 macro is expanded |
+
+The structure and layout of the RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zRPL description](zVSAM_V2_Design_Addenda.md#zacb-description) or the RPL2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the TESTCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the RPL or CBMR is strongly discouraged. Use GENCB BLK=RPL, SHOWCB RPL=,
+> TESTCB RPL= and/or MODCB RPL= to generate, inspect, test, and/or modify the RPL's content.
+
+The TESTCB RPL macro can be coded as follows:
+
+| Opcode         | Operand                   | Remarks                                                                       | Conditions returned          |
+|----------------|---------------------------|-------------------------------------------------------------------------------|------------------------------|
+| [label] TESTCB | RPL=address               | Points TESTCB to the RPL to be tested                                         | n/a                          |
+|                | [AM=VSAM]                 | Optional, no other values allowed                                             | n/a                          |
+|                | ERET=addr                 | Address of error handling routine                                             | n/a                          |
+|                | [OBJECT=DATA/INDEX]       | For KSDS: select data or index component                                      | n/a                          |
+|                | ACB=address               | ACB address                                                                   | EQ LO HI                     |
+|                | ACBLEN=value              | length of ACB in bytes                                                        | EQ LO HI                     |
+|                | AIXFLAG=AIXPKP            | AIX pointer type. From `RPLAIXID`                                             | EQ is RBA; NE=HI is Key      |
+|                | AIXPC=value               | no. of AIXs in upgrade set. From `PFXAIXN`                                    | EQ LO HI                     |
+|                | AREA=address              | address of record area. From `RPLAREA`                                        | EQ LO HI                     |
+|                | AREALEN=value             | length of record area. From `RPLAREAL`                                        | EQ LO HI                     |
+|                | ARG=address               | Address of ARG. From `RPLARG`                                                 | EQ LO HI                     |
+|                | ECB=address               | Address of ECB. From `RPLECB`                                                 | EQ LO HI                     |
+|                | EXLLEN=value              | EXLST length                                                                  | EQ LO HI                     |
+|                | FDBK=value                | Feedback code of the last request. From `RPLERRCD`                            | EQ LO HI                     |
+|                | FTNCD=value               | Function code. From `RPLCMPON`                                                | EQ LO HI                     |
+|                | IO=COMPLETE               | I/O is complete. From `RPLECB`,`RPLPOST`                                      | EQ is complete; NE=LO is not |
+|                | KEYLEN=value              | Length of key field                                                           | EQ LO HI                     |
+|                | MSGAREA=address           | Address of message area. From `RPLMSGAR`                                      | EQ LO HI                     |
+|                | MSGLEN=value              | Length of message area. From `RPLMSGLN`                                       | EQ LO HI                     |
+|                | NXTRPL=address            | Address of next RPL. From `RPLNXTRP`                                          | EQ LO HI                     |
+|                | OPTCD=(keyword list)      | List of keywords indicating attributes to test                                | EQ NE=HI                     |
+|                |                           | All subparameters have to be true for EQ. From `RPLOPTn`                      |                              |
+|                | RBA=value                 | Current RBA (last 4 bytes). From `RPLCXRBA`                                   | EQ LO HI                     |
+|                | RECLEN=value              | Record Length. From `RPLRECLN`                                                | EQ LO HI                     |
+|                | RPLLEN=value              | RPL length                                                                    | EQ LO HI                     |
+|                | RPLLEN=nr                 |                                                                               | EQ LO HI                     |
+|                | TRANSID=value             | Allowed but not supported                                                     | EQ                           |
+|                | XRBA=value                | Current RBA. From `RPLCXRBA`                                                  | EQ LO HI                     |
+|                | [MF=]                     | Use standard form of SHOWCB RPL; this is the default                          | n/a                          |
+|                | [MF=L/MF=(L,addr,[label]] | Use list form of SHOWCB RPL                                                   | n/a                          |
+|                | [MF=(E,addr)]             | Use execute form of SHOWCB RPL                                                | n/a                          |
+|                | [MF=(G,addr,[label])]     | Use generate form of SHOWCB RPL                                               | n/a                          |
+
+All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+> [!NOTE]
+> Overview of differences with IBM VSAM:
+> - RBA=nr – zVSAM supports this keyword only for ESDS. For any other type of
+>   cluster a value of foxes will be assumed by default.
+
+#### RPL=
+
+Required parameter; specify the address of the RPL to be tested.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### ERET=
+
+Optional address of error handling routine.
+
+#### OBJECT=
+
+Optional parameter; if specified must be `DATA`or `INDEX`. `DATA` is the default.
+
+#### OPTCD=
+
+> [!NOTE]
+> List of supported keywords is missing.
+
+> [!NOTE]
+> All subparameters have to be true for EQ.
+
+#### Keyword=nr/adr
+
+Remaining Keyword parameters specify a value, an address, or a keyword list to be tested.
+
+> [!NOTE]
+> Melvyn defined RBA values. We use LRSNs throughout. If we do not drop the RBA support,
+> we'll need to find out why Melvyn introduced RBA values and how he plans to assign/maintain them.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return (R15) and Reason (R0) Codes
+
+| Return Code | Reason Code     | Meaning                                                                                                           |
+|-------------|-----------------|-------------------------------------------------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                                                                        |
+| R15=4       | Reason Code=1   | This parameter requires the dataset to be open.                                                                   |
+|             |                 | For fields that have 8-byte values (eg. XRBA) the 4-byte version is requested but the 1st four bytes are not zero |
+| R15=4       | Reason Code=4   | Invalid control block                                                                                             |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created                                          |
+
+================================================================================================================================================================================
+
+
+
+
+
+
+
+
+
 
 
 

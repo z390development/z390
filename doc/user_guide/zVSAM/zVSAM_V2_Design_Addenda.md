@@ -1,23 +1,3 @@
-### TESTCB RPL macro parameters
-
-All supported parameters are implemented compatibly with IBM's VSAM implementation.
-For details, please refer to the relevant IBM manual.
-
-For ease of access a short summary follows here:
-
-| Keyword             | Usage and implementation in zVSAM                                                                                                                                                                                       |
-|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `RPL`=addr          | required to indicate the RPL to be tested                                                                                                                                                                               |
-| `FTNCD`=nr          | Values used for `FTNCD` and their meaning can be found in the IBM manual “DFSMS Macro Instructions for Datasets”, chapter “Return and Reason Codes”, section “Component Codes”                                          |
-| `RBA`=nr            | zVSAM supports this keyword only for ESDS. For any other type of cluster a value of foxes will be assumed by default.                                                                                                   |
-| `MF`=               | When omitted, specifies the standard form of the TESTCB to generate an inline CBMR and an inline call to the CBMR handler.                                                                                              |
-| `MF=L`              | Specifies the list form of the TESTCB macro which generates an inline CBMR but no call to the CBMR handler.                                                                                                             |
-| `MF=(L,addr)`       | Specifies the list form of the TESTCB macro to generate a remote CBMR at the indicated location. No call to the CBMR handler is generated.                                                                              |
-| `MF=(L,addr,label)` | Same as `MF=(L,addr)` but label will be equated to the length of the CBMR.                                                                                                                                              |
-| `MF=(E,addr)`       | Specifies the execute form of the TESTCB macro to generate code that will dynamically modify the CBMR at the indicated address according to the parameters specified before calling the CBMR handler.                   |
-| `MF=(G,addr)`       | Specifies the generate form of the TESTCB macro to generates code to modify the indicated CBMR as specified by the other parameters and to call the CBMR handler.                                                       |
-| `MF=(G,addr,label)` | Same as `MF=(G,addr)` but label will be equated to the length of the CBMR                                                                                                                                               |
-
 ### POINT macro parameters
 
 ### GET macro parameters

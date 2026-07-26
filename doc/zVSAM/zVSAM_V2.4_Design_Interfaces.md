@@ -153,50 +153,6 @@ The TESTCB without a block macro can be coded as follows:
 | R15=4       | Reason Code=4   | Invalid control block                                                            |
 | R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created         |
 
-## TESTCB RPL= macro
-
-The TESTCB RPL macro can be coded as follows:
-
-| Opcode         | Operand               | Remarks                                                  | Conditions returned          |
-|----------------|-----------------------|----------------------------------------------------------|------------------------------|
-| [label] TESTCB | RPL=address           | Points TESTCB to the RPL to be tested                    |                              |
-|                | [AM=VSAM]             | Optional, no other values allowed                        |                              |
-|                | ERET=address          | Address of error handling routine                        |                              |
-|                | ACBLEN=value          | ACB length                                               | EQ LO HI                     |
-|                | **RPLLEN=value**      | RPL length                                               | EQ LO HI                     |
-|                | **EXLLEN=value**      | EXLST length                                             | EQ LO HI                     |
-|                | ACB=address           | ACB address                                              | EQ LO HI                     |
-|                | AIXFLAG=AIXPKP        | AIX pointer type. From `RPLAIXID`                        | EQ is RBA; NE=HI is Key      |
-|                | AIXPC=value           | no. of AIXs in upgrade set. From `PFXAIXN`               | EQ LO HI                     |
-|                | AREA=address          | address of record area. From `RPLAREA`                   | EQ LO HI                     |
-|                | AREALEN=value         | length of record area. From `RPLAREAL`                   | EQ LO HI                     |
-|                | ARG=address           | Address of ARG. From `RPLARG`                            | EQ LO HI                     |
-|                | ECB=address           | Address of ECB. From `RPLECB`                            | EQ LO HI                     |
-|                | FDBK=value            | Feedback code of the last request. From `RPLERRCD`       | EQ LO HI                     |
-|                | FTNCD=value           | Function code. From `RPLCMPON`                           | EQ LO HI                     |
-|                | IO=COMPLETE           | I/O is complete. From `RPLECB`,`RPLPOST`                 | EQ is complete; NE=LO is not |
-|                | KEYLEN=value          | Length of key field                                      | EQ LO HI                     |
-|                | MSGAREA=address       | Address of message area. From `RPLMSGAR`                 | EQ LO HI                     |
-|                | MSGLEN=value          | Length of message area. From `RPLMSGLN`                  | EQ LO HI                     |
-|                | NXTRPL=address        | Address of next RPL. From `RPLNXTRP`                     | EQ LO HI                     |
-|                | OPTCD=(keyword list)  | List of keywords indicating attributes to test           |                              |
-|                |                       | All subparameters have to be true for EQ. From `RPLOPTn` | EQ NE=HI                     |
-|                | RBA=value             | Current RBA (last 4 bytes). From `RPLCXRBA`              | EQ LO HI                     |
-|                | RECLEN=value          | Record Length. From `RPLRECLN`                           | EQ LO HI                     |
-|                | TRANSID=value         | Allowed but not supported                                | EQ                           |
-|                | **XRBA=value**        | Current RBA. From `RPLCXRBA`                             | EQ LO HI                     |
-|                | [MF=]                 | See the [description of MF=](#MFdetails)                 |                              |
-
-### Return (R15) and Reason (R0) Codes
-
-| Return Code | Reason Code     | Meaning                                                                                                           |
-|-------------|-----------------|-------------------------------------------------------------------------------------------------------------------|
-| R15=0       | Reason Code=n/a | Successful                                                                                                        |
-| R15=4       | Reason Code=1   | This parameter requires the dataset to be open.                                                                   |
-|             |                 | For fields that have 8-byte values (eg. XRBA) the 4-byte version is requested but the 1st four bytes are not zero |
-| R15=4       | Reason Code=4   | Invalid control block                                                                                             |
-| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created                                          |
-
 ## Catalog management
 
 This is where all meta-data about the zVSAM components are kept and where the relations between zVSAM
