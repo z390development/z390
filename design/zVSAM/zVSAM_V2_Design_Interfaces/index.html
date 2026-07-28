@@ -2807,6 +2807,61 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#gencb-rpl-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GENCB RPL macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modcb-rpl-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MODCB RPL macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#showcb-rpl-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SHOWCB RPL macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OBJECT=
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-rpl-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TESTCB RPL macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mf-parameter" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3156,6 +3211,61 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#gencb-rpl-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GENCB RPL macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modcb-rpl-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MODCB RPL macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#showcb-rpl-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SHOWCB RPL macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#object_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OBJECT=
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testcb-rpl-macro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TESTCB RPL macro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mf-parameter" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3235,31 +3345,31 @@ involved in VSAM file handling.</p>
 <tr>
 <td><a href="#gencb-acb-macro">GENCB ACB</a></td>
 <td><a href="#gencb-exlst-macro">GENCB EXLST</a></td>
-<td>GENCB RPL</td>
+<td><a href="#gencb-rpl-macro">GENCB RPL</a></td>
 <td></td>
 </tr>
 <tr>
 <td><a href="#modcb-acb-macro">MODCB ACB</a></td>
 <td><a href="#modcb-exlst-macro">MODCB EXLST</a></td>
-<td>MODCB RPL</td>
+<td><a href="#modcb-rpl-macro">MODCB RPL</a></td>
 <td></td>
 </tr>
 <tr>
 <td><a href="#showcb-acb-macro">SHOWCB ACB</a></td>
 <td><a href="#showcb-exlst-macro">SHOWCB EXLST</a></td>
-<td>SHOWCB RPL</td>
+<td><a href="#showcb-rpl-macro">SHOWCB RPL</a></td>
 <td></td>
 </tr>
 <tr>
 <td><a href="#testcb-acb-macro">TESTCB ACB</a></td>
 <td><a href="#testcb-exlst-macro">TESTCB EXLST</a></td>
-<td>TESTCB RPL</td>
+<td><a href="#testcb-rpl-macro">TESTCB RPL</a></td>
 <td></td>
 </tr>
 <tr>
 <td>---------------------------------</td>
 <td>-------------------------------------</td>
-<td>------------------------------</td>
+<td>---------------------------------</td>
 <td>-------</td>
 </tr>
 <tr>
@@ -3918,6 +4028,7 @@ For details, please refer to the relevant IBM manual.</p>
 - ANY   = below 2G  (requires Amode 31 or 64 to address)</p>
 <h4 id="other-keywords">Other keywords</h4>
 <p>All parameters supported by the <a href="#acb-macro">ACB macro</a> are supported here as well.</p>
+<p>Please note: not supported are expressions like <code>(S,scon)</code> or <code>(*,scon)</code></p>
 <h4 id="mf">MF=</h4>
 <p>Indicates the Macro Format.
 If specified, the [label] subparameter is EQUated to the length of the CBMR.
@@ -4663,7 +4774,6 @@ and are therefore not shown in this chapter. For details please see the
 <p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the TESTCB request to the CBMR handler
 are not part of the interface and are therefore not shown in this chapter. For details please see the
 <a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR description</a> or the CBMR macro in the mac folder.</p>
-<p>The TESTCB ACB macro can be coded as follows:</p>
 <blockquote>
 <p>[!NOTE]
 Direct access to subfields in the ACB or CBMR is strongly discouraged. Use GENCB BLK=ACB, SHOWCB ACB=,
@@ -5863,6 +5973,7 @@ For details, please refer to the relevant IBM manual.</p>
 - ANY   = below 2G  (requires Amode 31 or 64 to address)</p>
 <h4 id="other-keywords_2">Other keywords</h4>
 <p>All parameters supported by the <a href="#acb-macro">EXLST macro</a> are supported here as well.</p>
+<p>Please note: not supported are expressions like <code>(S,scon)</code> or <code>(*,scon)</code></p>
 <h4 id="mf_6">MF=</h4>
 <p>Indicates the Macro Format.
 If specified, the [label] subparameter is EQUated to the length of the CBMR.
@@ -6287,7 +6398,6 @@ and are therefore not shown in this chapter. For details please see the
 <p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the TESTCB request to the CBMR handler
 are not part of the interface and are therefore not shown in this chapter. For details please see the
 <a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR description</a> or the CBMR macro in the mac folder.</p>
-<p>The TESTCB EXLST macro can be coded as follows:</p>
 <blockquote>
 <p>[!NOTE]
 Direct access to subfields in the EXLST or CBMR is strongly discouraged. Use GENCB BLK=EXLST, SHOWCB EXLST=,
@@ -6956,6 +7066,915 @@ The RPLD macro can be invoked multiple times, but will generate the DSECT mappin
 only on its first invocation.</p>
 </blockquote>
 <p>================================================================================================================================================================================</p>
+<h3 id="gencb-rpl-macro">GENCB RPL macro</h3>
+<p>The GENCB macro with BLK=RPL will generate or manipulate RPLs and initialize or change them
+according to the parameters specified on the macro invocation. It is for this reason that
+all supported parameters and keywords of the RPL macro (as described above) are supported
+on the GENCB macro when BLK=RPL is specified.</p>
+<p>The GENCB macro's function depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>GENCB1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>GENCB2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The structure and layout of the RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#zrpl-description">zRPL description</a> or the RPL2 macro in the mac folder.</p>
+<p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR description</a> or the CBMR macro in the mac folder.</p>
+<blockquote>
+<p>[!NOTE]
+Direct access to subfields in the RPL or CBMR is strongly discouraged. Use GENCB BLK=RPL, SHOWCB RPL=,
+TESTCB RPL= and/or MODCB RPL= to generate, inspect, test, and/or modify the RPL's content.</p>
+</blockquote>
+<p>All keywords on the GENCB RPL macro are optional. Except BLK= which is required.</p>
+<p>The GENCB RPL macro can be coded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Operand</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[label] GENCB</td>
+<td>BLK=RPL</td>
+<td>Instructs GENCB to generate 1 or more RPLs</td>
+</tr>
+<tr>
+<td></td>
+<td>[AM=VSAM]</td>
+<td>Optional, no other values allowed; VSAM is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>[COPIES=nr]</td>
+<td>The number of identical RPLs to generate</td>
+</tr>
+<tr>
+<td></td>
+<td>[WAREA=addr]</td>
+<td>The work area where the RPLs are to be constructed</td>
+</tr>
+<tr>
+<td></td>
+<td>[LENGTH=nr]</td>
+<td>Length of the work area in bytes</td>
+</tr>
+<tr>
+<td></td>
+<td>[LOC=keyword]</td>
+<td>Where GENCB is to allocate dynamically acquired storage - if needed</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>[other]</strong></td>
+<td><strong>Any parameter supported on the RPL macro</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=]</td>
+<td>Use standard form of GENCB RPL; this is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=L/MF=(L,addr,[label]]</td>
+<td>Use list form of GENCB RPL</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(E,addr)]</td>
+<td>Use execute form of GENCB RPL</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(G,addr,[label])]</td>
+<td>Use generate form of GENCB RPL</td>
+</tr>
+</tbody>
+</table>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<h4 id="blk_2">BLK=</h4>
+<p>Required parameter; specify RPL to generate 1 or more RPLs</p>
+<h4 id="am_11">AM=</h4>
+<p>VSAM is the default and the only supported value.</p>
+<h4 id="copies_2">COPIES=</h4>
+<p>Number of identical RPLs to generate ranging from 1 to 65535. Defaults to 1.</p>
+<h4 id="warea_2">WAREA=</h4>
+<p>The work area where the RPLs are to be constructed.</p>
+<ul>
+<li>When WAREA is specified, LENGTH must be specified too.</li>
+<li>When WAREA is not specified, the CBMR handler allocates an area of storage.</li>
+<li>The address of this area whether via GETMAIN or WAREA is returned in R1.</li>
+<li>The length of the generated RPL(s) is returned in R0.</li>
+</ul>
+<h4 id="length_4">LENGTH=</h4>
+<ul>
+<li>If WAREA= is specified, this paramter is required and specifies the length of the area.</li>
+<li>If WAREA= is not specified, this parameter is ignored. zVSAM determines how much storage to allocate.</li>
+</ul>
+<h4 id="loc_2">LOC=</h4>
+<ul>
+<li>If WAREA= is specified, this paramter is ignored.</li>
+<li>If WAREA= is not specified, this parameter indicates where zVSAM is to allocate storage for the RPL or RPLs.</li>
+</ul>
+<p>Supported keywords:
+- BELOW = below 16M (addressable in Amode 24, 31, or 64)
+- ANY   = below 2G  (requires Amode 31 or 64 to address)</p>
+<h4 id="other-keywords_4">Other keywords</h4>
+<p>All parameters supported by the <a href="#rpl-macro">RPL macro</a> are supported here as well.</p>
+<p>Please note: not supported are expressions like <code>(S,scon)</code> or <code>(*,scon)</code></p>
+<h4 id="mf_10">MF=</h4>
+<p>Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See <a href="#mf-parameter">MF= parameter</a> for details.</p>
+<p>| <em>other</em>             | Any parameters and/or keywords supported by the RPL macro. Please see the description of the RPL macro for details.                                                                                                     |
+|                     | Supported parameters and keywords on the RPL macro are supported on GENCB RPL as well. Likewise, unsupported parameters and keywords on the RPL macro are not supported on GENCB RPL either.                            |
+|                     | How the parameters can be specified differs per parameter.                                                                                                                                                              |
+|                     | For a complete list of options, please see the IBM manual “DFSMS Macro Instructions for Data Sets” or equivalent for the operating system and version that you are porting to/from.                                     |
+| Please note:        | not supported are expressions like (S,scon) or (*,scon)                                                                                                                                                                |</p>
+<h4 id="return-r15-and-reason-r0-codes_2">Return (R15) and Reason (R0) Codes</h4>
+<table>
+<thead>
+<tr>
+<th>Return Code</th>
+<th>Reason Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R15=0</td>
+<td>Reason Code=n/a</td>
+<td>Successful</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=4</td>
+<td>Invalid control block</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=9</td>
+<td>WAREA is too small</td>
+</tr>
+<tr>
+<td>R15=8</td>
+<td>Reason Code=n/a</td>
+<td>An attempt was made to update a CBMR with a field not previously created</td>
+</tr>
+</tbody>
+</table>
+<p>================================================================================================================================================================================</p>
+<h3 id="modcb-rpl-macro">MODCB RPL macro</h3>
+<p>The MODCB macro with RPL=addr will modify an RPL according to the parameters specified on the macro invocation.
+It is for this reason that all parameters and keywords of the RPL macro (as described above) are supported
+on the MODCB macro when RPL=addr is specified.</p>
+<p>The MODCB macro's function depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>MODCB1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>MODCB2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The structure and layout of the RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#zrpl-description">zRPL description</a> or the RPL2 macro in the mac folder.</p>
+<p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the MODCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR description</a> or the CBMR macro in the mac folder.</p>
+<blockquote>
+<p>[!NOTE]
+Direct access to subfields in the RPL or CBMR is strongly discouraged. Use GENCB BLK=RPL, SHOWCB RPL=,
+TESTCB RPL= and/or MODCB RPL= to generate, inspect, test, and/or modify the RPL's content.</p>
+</blockquote>
+<p>All keywords on the MODCB RPL macro are optional. Except RPL= which is required.</p>
+<p>The MODCB RPL macro can be coded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Operand</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[label] MODCB</td>
+<td>RPL=address</td>
+<td>Points MODCB to the RPL to be modified</td>
+</tr>
+<tr>
+<td></td>
+<td>[AM=VSAM]</td>
+<td>Optional, no other values allowed</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>[other]</strong></td>
+<td><strong>Any parameter supported on the RPL macro</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=]</td>
+<td>Use standard form of MODCB RPL; this is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=L/MF=(L,addr,[label]]</td>
+<td>Use list form of MODCB RPL</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(E,addr)]</td>
+<td>Use execute form of MODCB RPL</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(G,addr,[label])]</td>
+<td>Use generate form of MODCB RPL</td>
+</tr>
+</tbody>
+</table>
+<p>All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<h4 id="rpl">RPL=</h4>
+<p>Required parameter; specify the address of the RPL to be modified.</p>
+<h4 id="am_12">AM=</h4>
+<p>VSAM is the default and the only supported value.</p>
+<h4 id="other-keywords_5">Other keywords</h4>
+<p>All parameters supported by the <a href="#rpl-macro">RPL macro</a> are supported here as well.</p>
+<p>Please note: not supported are expressions like <code>(S,scon)</code> or <code>(*,scon)</code></p>
+<h4 id="ecb_1">ECB=</h4>
+<p>ECB= can be modified to zero or an address
+- If it's zero then RPLOPT2_ECB is reset (internal ECB)
+- If it's non-zero then RPLOPT2_ECB is set (external ECB)</p>
+<h4 id="optcd_1">OPTCD=</h4>
+<p>To clarify how OPTCD works:</p>
+<p>All supported subparameters have their own bit in <code>CBMRRPL_OPTCD</code> (currently 22),
+Conflicts are <code>MNOTEd</code>, eg. bits for FWD and BWD cannot both be on.</p>
+<p>If MF=E is specified then the whole of <code>CBMRRPL_OPTCD</code> is replaced.</p>
+<p>When the RPL is modified, then for each subset, RPLOPTn bits are turned on or off as appropriate</p>
+<blockquote>
+<p>[!NOTE]
+I do not entirely agree with how Melvyn has set this up, although I do like his extensive early error detection proposal.
+There are basically two alternatives that I can see:
+1. every OPTCD option has a separate verb code, we generate as many verb codes as we need, no data is needed
+2. We generate a single verb code for the OPTCD modification, supplying two 4-byte masks in the data.
+   One mask to indicate affected postions, the other to indicate the desired bit values for the selected postions.</p>
+</blockquote>
+<h4 id="mf_11">MF=</h4>
+<p>Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See <a href="#mf-parameter">MF= parameter</a> for details.</p>
+<h4 id="return-r15-and-reason-r0-codes_3">Return (R15) and Reason (R0) Codes</h4>
+<table>
+<thead>
+<tr>
+<th>Return Code</th>
+<th>Reason Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R15=0</td>
+<td>Reason Code=n/a</td>
+<td>Successful</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=4</td>
+<td>Invalid control block</td>
+</tr>
+<tr>
+<td>R15=8</td>
+<td>Reason Code=n/a</td>
+<td>An attempt was made to update a CBMR with a field not previously created</td>
+</tr>
+</tbody>
+</table>
+<p>================================================================================================================================================================================</p>
+<h3 id="showcb-rpl-macro">SHOWCB RPL macro</h3>
+<p>The SHOWCB macro with RPL=addr will return RPL-related fields according to the parameters specified
+on the macro invocation in the order they are specified. Duplicates are permitted.</p>
+<p>The SHOWCB macro's function depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>SHOWCB1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>SHOWCB2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The structure and layout of the RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#zrpl-description">zRPL description</a> or the RPL2 macro in the mac folder.</p>
+<p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the SHOWCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR description</a> or the CBMR macro in the mac folder.</p>
+<blockquote>
+<p>[!NOTE]
+Direct access to subfields in the RPL or CBMR is strongly discouraged. Use GENCB BLK=RPL, SHOWCB RPL=,
+TESTCB RPL= and/or MODCB RPL= to generate, inspect, test, and/or modify the RPL's content.</p>
+</blockquote>
+<p>The SHOWCB RPL macro can be coded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Operand</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[label] SHOWCB</td>
+<td>RPL=address</td>
+<td>Points MODCB to the RPL to be queried</td>
+</tr>
+<tr>
+<td></td>
+<td>[AM=VSAM]</td>
+<td>Optional, no other values allowed</td>
+</tr>
+<tr>
+<td></td>
+<td>AREA=addr</td>
+<td>Address of return area</td>
+</tr>
+<tr>
+<td></td>
+<td>LENGTH=nr</td>
+<td>Size of return area in bytes</td>
+</tr>
+<tr>
+<td></td>
+<td>[OBJECT=DATA/INDEX]</td>
+<td>For KSDS: select data or index component; DATA is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>FIELDS=(keywd_list)</td>
+<td>List of keywords indicating which fields to return</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=]</td>
+<td>Use standard form of SHOWCB RPL; this is the default</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=L/MF=(L,addr,[label]]</td>
+<td>Use list form of SHOWCB RPL</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(E,addr)]</td>
+<td>Use execute form of SHOWCB RPL</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(G,addr,[label])]</td>
+<td>Use generate form of SHOWCB RPL</td>
+</tr>
+</tbody>
+</table>
+<p>All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<h4 id="rpl_1">RPL=</h4>
+<p>Required parameter; specify the address of the RPL to be queried.</p>
+<h4 id="am_13">AM=</h4>
+<p>VSAM is the default and the only supported value.</p>
+<h4 id="area_3">AREA=</h4>
+<p>Required parameter; specify the address of the return area.</p>
+<h4 id="length_5">LENGTH=</h4>
+<p>Required parameter; specify the length of the return area.</p>
+<h3 id="object_4">OBJECT=</h3>
+<p>Optional parameter; if specified must be <code>DATA</code>or <code>INDEX</code>. <code>DATA</code> is the default.</p>
+<h4 id="fields_2">FIELDS=</h4>
+<p>Specifies a list of keywords. Each keyword specified returns a field of 4 or 8 bytes.
+These return values are stored consecutively in the return area specified in the <code>AREA</code>= and <code>LENGTH</code>= parameters.</p>
+<p>Defined options for the FIELDS parameter are listed below:</p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Length</th>
+<th>Remarks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ACB</td>
+<td>4</td>
+<td>Pointer to ACB</td>
+</tr>
+<tr>
+<td>ACBLEN</td>
+<td>4</td>
+<td>Length of ACB in bytes</td>
+</tr>
+<tr>
+<td>AIXPC</td>
+<td>4</td>
+<td>Alternate index pointer count</td>
+</tr>
+<tr>
+<td>AREA</td>
+<td>4</td>
+<td>Pointer to record buffer</td>
+</tr>
+<tr>
+<td>AREALEN</td>
+<td>4</td>
+<td>Size of record buffer in bytes</td>
+</tr>
+<tr>
+<td>ARG</td>
+<td>4</td>
+<td>Pointer to last used search argument field</td>
+</tr>
+<tr>
+<td>ECB</td>
+<td>4</td>
+<td>Pointer to user-supplied ECB</td>
+</tr>
+<tr>
+<td>EXLLEN</td>
+<td>4</td>
+<td>Length of EXLST in bytes</td>
+</tr>
+<tr>
+<td>FDBK</td>
+<td>4</td>
+<td>Feedback code for the last request</td>
+</tr>
+<tr>
+<td>FTNCD</td>
+<td>4</td>
+<td>Function code</td>
+</tr>
+<tr>
+<td>KEYLEN</td>
+<td>4</td>
+<td>Length of key, for use with OPTCD=GEN</td>
+</tr>
+<tr>
+<td>MSGAREA</td>
+<td>4</td>
+<td>Pointer to message area, foxes if not relevant</td>
+</tr>
+<tr>
+<td>MSGLEN</td>
+<td>4</td>
+<td>Length of message area, foxes if not relevant</td>
+</tr>
+<tr>
+<td>NXTRPL</td>
+<td>4</td>
+<td>Pointer to next RPL, if any</td>
+</tr>
+<tr>
+<td>RBA</td>
+<td>4</td>
+<td>4-byte RBA of last record processed</td>
+</tr>
+<tr>
+<td>RECLEN</td>
+<td>4</td>
+<td>Length of current record</td>
+</tr>
+<tr>
+<td>RPLLEN</td>
+<td>4</td>
+<td>Length of RPL</td>
+</tr>
+<tr>
+<td>TRANSID</td>
+<td>4</td>
+<td>Transaction_id; always foxes</td>
+</tr>
+<tr>
+<td>XRBA</td>
+<td>8</td>
+<td>8-byte RBA of last record processed</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>[!NOTE]
+Review notes:
+- <code>AIXPC</code> - What info is this indicating? Value will be taken from <code>PFXAIXN</code> (to be defined)? Need to validate this decision.
+- <code>RBA</code>/<code>XRBA</code> - How to determine??? zVSAM supports these keywords only for ESDS. For any other type of cluster a value of foxes will be returned by default. Need to validate this decision.</p>
+</blockquote>
+<p>Overview of differences with IBM VSAM:</p>
+<p>FIELDS=RBA/XRBA – zVSAM supports these keywords only for ESDS.
+For any other type of cluster a value of foxes will be returned by default.</p>
+<h4 id="return-r15-and-reason-r0-codes_4">Return (R15) and Reason (R0) Codes</h4>
+<table>
+<thead>
+<tr>
+<th>Return Code</th>
+<th>Reason Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R15=0</td>
+<td>Reason Code=n/a</td>
+<td>Successful</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=1</td>
+<td>AIXPC or RPLDACB are zero</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=4</td>
+<td>Invalid control block</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=9</td>
+<td>Length too small</td>
+</tr>
+<tr>
+<td>R15=8</td>
+<td>Reason Code=n/a</td>
+<td>An attempt was made to update a CBMR with a field not previously created</td>
+</tr>
+</tbody>
+</table>
+<p>================================================================================================================================================================================</p>
+<h3 id="testcb-rpl-macro">TESTCB RPL macro</h3>
+<p>The TESTCB macro with RPL=addr will test RPL-related fields according to the parameters specified
+on the macro invocation. Only a single test can be specified on each TESTCB invocation.
+TESTCB returns a PSW condition code of 8=Equal when the specified test is met, 7=NotEqual otherwise.</p>
+<p>The TESTCB macro's function depends on the ZVSAM option in effect:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAM(0)</td>
+<td>Error: zVSAM disabled</td>
+</tr>
+<tr>
+<td>ZVSAM(1)</td>
+<td>TESTCB1 macro is expanded</td>
+</tr>
+<tr>
+<td>ZVSAM(2)</td>
+<td>TESTCB2 macro is expanded</td>
+</tr>
+</tbody>
+</table>
+<p>The structure and layout of the RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#zacb-description">zRPL description</a> or the RPL2 macro in the mac folder.</p>
+<p>Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the TESTCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+<a href="../zVSAM_V2_Design_Addenda/#cbmr-description">CBMR description</a> or the CBMR macro in the mac folder.</p>
+<blockquote>
+<p>[!NOTE]
+Direct access to subfields in the RPL or CBMR is strongly discouraged. Use GENCB BLK=RPL, SHOWCB RPL=,
+TESTCB RPL= and/or MODCB RPL= to generate, inspect, test, and/or modify the RPL's content.</p>
+</blockquote>
+<p>The TESTCB RPL macro can be coded as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Opcode</th>
+<th>Operand</th>
+<th>Remarks</th>
+<th>Conditions returned</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[label] TESTCB</td>
+<td>RPL=address</td>
+<td>Points TESTCB to the RPL to be tested</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[AM=VSAM]</td>
+<td>Optional, no other values allowed</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>ERET=addr</td>
+<td>Address of error handling routine</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[OBJECT=DATA/INDEX]</td>
+<td>For KSDS: select data or index component</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>ACB=address</td>
+<td>ACB address</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>ACBLEN=value</td>
+<td>length of ACB in bytes</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>AIXFLAG=AIXPKP</td>
+<td>AIX pointer type. From <code>RPLAIXID</code></td>
+<td>EQ is RBA; NE=HI is Key</td>
+</tr>
+<tr>
+<td></td>
+<td>AIXPC=value</td>
+<td>no. of AIXs in upgrade set. From <code>PFXAIXN</code></td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>AREA=address</td>
+<td>address of record area. From <code>RPLAREA</code></td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>AREALEN=value</td>
+<td>length of record area. From <code>RPLAREAL</code></td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>ARG=address</td>
+<td>Address of ARG. From <code>RPLARG</code></td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>ECB=address</td>
+<td>Address of ECB. From <code>RPLECB</code></td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>EXLLEN=value</td>
+<td>EXLST length</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>FDBK=value</td>
+<td>Feedback code of the last request. From <code>RPLERRCD</code></td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>FTNCD=value</td>
+<td>Function code. From <code>RPLCMPON</code></td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>IO=COMPLETE</td>
+<td>I/O is complete. From <code>RPLECB</code>,<code>RPLPOST</code></td>
+<td>EQ is complete; NE=LO is not</td>
+</tr>
+<tr>
+<td></td>
+<td>KEYLEN=value</td>
+<td>Length of key field</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>MSGAREA=address</td>
+<td>Address of message area. From <code>RPLMSGAR</code></td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>MSGLEN=value</td>
+<td>Length of message area. From <code>RPLMSGLN</code></td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>NXTRPL=address</td>
+<td>Address of next RPL. From <code>RPLNXTRP</code></td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>OPTCD=(keyword list)</td>
+<td>List of keywords indicating attributes to test</td>
+<td>EQ NE=HI</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>All subparameters have to be true for EQ. From <code>RPLOPTn</code></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>RBA=value</td>
+<td>Current RBA (last 4 bytes). From <code>RPLCXRBA</code></td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>RECLEN=value</td>
+<td>Record Length. From <code>RPLRECLN</code></td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLLEN=value</td>
+<td>RPL length</td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>RPLLEN=nr</td>
+<td></td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>TRANSID=value</td>
+<td>Allowed but not supported</td>
+<td>EQ</td>
+</tr>
+<tr>
+<td></td>
+<td>XRBA=value</td>
+<td>Current RBA. From <code>RPLCXRBA</code></td>
+<td>EQ LO HI</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=]</td>
+<td>Use standard form of SHOWCB RPL; this is the default</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=L/MF=(L,addr,[label]]</td>
+<td>Use list form of SHOWCB RPL</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(E,addr)]</td>
+<td>Use execute form of SHOWCB RPL</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td>[MF=(G,addr,[label])]</td>
+<td>Use generate form of SHOWCB RPL</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table>
+<p>All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.</p>
+<blockquote>
+<p>[!NOTE]
+Overview of differences with IBM VSAM:
+- RBA=nr – zVSAM supports this keyword only for ESDS. For any other type of
+  cluster a value of foxes will be assumed by default.</p>
+</blockquote>
+<h4 id="rpl_2">RPL=</h4>
+<p>Required parameter; specify the address of the RPL to be tested.</p>
+<h4 id="am_14">AM=</h4>
+<p>VSAM is the default and the only supported value.</p>
+<h4 id="eret_2">ERET=</h4>
+<p>Optional address of error handling routine.</p>
+<h4 id="object_5">OBJECT=</h4>
+<p>Optional parameter; if specified must be <code>DATA</code>or <code>INDEX</code>. <code>DATA</code> is the default.</p>
+<h4 id="optcd_2">OPTCD=</h4>
+<blockquote>
+<p>[!NOTE]
+List of supported keywords is missing.</p>
+<p>[!NOTE]
+All subparameters have to be true for EQ.</p>
+</blockquote>
+<h4 id="keywordnradr_2">Keyword=nr/adr</h4>
+<p>Remaining Keyword parameters specify a value, an address, or a keyword list to be tested.</p>
+<blockquote>
+<p>[!NOTE]
+Melvyn defined RBA values. We use LRSNs throughout. If we do not drop the RBA support,
+we'll need to find out why Melvyn introduced RBA values and how he plans to assign/maintain them.</p>
+</blockquote>
+<h4 id="mf_12">MF=</h4>
+<p>Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See <a href="#mf-parameter">MF= parameter</a> for details.</p>
+<h4 id="return-r15-and-reason-r0-codes_5">Return (R15) and Reason (R0) Codes</h4>
+<table>
+<thead>
+<tr>
+<th>Return Code</th>
+<th>Reason Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R15=0</td>
+<td>Reason Code=n/a</td>
+<td>Successful</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=1</td>
+<td>This parameter requires the dataset to be open.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>For fields that have 8-byte values (eg. XRBA) the 4-byte version is requested but the 1<sup>st</sup> four bytes are not zero</td>
+</tr>
+<tr>
+<td>R15=4</td>
+<td>Reason Code=4</td>
+<td>Invalid control block</td>
+</tr>
+<tr>
+<td>R15=8</td>
+<td>Reason Code=n/a</td>
+<td>An attempt was made to update a CBMR with a field not previously created</td>
+</tr>
+</tbody>
+</table>
+<p>================================================================================================================================================================================</p>
 <p>================================================================================================================================================================================</p>
 <h3 id="mf-parameter">MF= parameter</h3>
 <p>The MF= parameter as described here applies to its usage with the GENCB, MODCB, SHOWCB, and TESTCB macros.</p>
@@ -7125,7 +8144,7 @@ or the <code>CBMR</code> macro in the mac folder.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-9-g703e28cc"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-10-g202eea18"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
