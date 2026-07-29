@@ -1,17 +1,3 @@
-## POINT macro
-
-## GET macro
-
-## PUT macro
-
-## ERASE macro
-
-## CHECK macro
-
-## ENDREQ macro
-
-## VERIFY macro
-
 ## GENCB, MODCB, TESTCB and SHOWCB macros
 
 ### GENCB, MODCB, TESTCB and SHOWCB use of the CBMR

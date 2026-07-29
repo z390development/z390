@@ -10,22 +10,22 @@ will be eliminated.
 This document is divided into three major chapters: one for each control block (or object)
 involved in VSAM file handling.
 
-| [ACB](#acb-based-interfaces)    | [EXLST](#exlst-based-interfaces)    | [RPL](#rpl-based-interfaces)    | Other |
-|---------------------------------|-------------------------------------| --------------------------------|-------|
-| [ACB](#acb-macro)               | [EXLST](#exlst-macro)               | [RPL](#rpl-macro)               | CBMR  |
-| [ACBD](#acbd-macro)             | [EXLSTD](#exlstd-macro)             | [RPLD](#rpld-macro)             |       |
-| [GENCB ACB](#gencb-acb-macro)   | [GENCB EXLST](#gencb-exlst-macro)   | [GENCB RPL](#gencb-rpl-macro)   |       |
-| [MODCB ACB](#modcb-acb-macro)   | [MODCB EXLST](#modcb-exlst-macro)   | [MODCB RPL](#modcb-rpl-macro)   |       |
-| [SHOWCB ACB](#showcb-acb-macro) | [SHOWCB EXLST](#showcb-exlst-macro) | [SHOWCB RPL](#showcb-rpl-macro) |       |
-| [TESTCB ACB](#testcb-acb-macro) | [TESTCB EXLST](#testcb-exlst-macro) | [TESTCB RPL](#testcb-rpl-macro) |       |
-|---------------------------------|-------------------------------------|---------------------------------|-------|
-| [OPEN](#open-macro)             |                                     | POINT                           |       |
-| [CLOSE](#close-macro)           |                                     | GET                             |       |
-|                                 |                                     | PUT                             |       |
-|                                 |                                     | ERASE                           |       |
-|                                 |                                     | CHECK                           |       |
-|                                 |                                     | ENDREQ                          |       |
-|                                 |                                     | VERIFY                          |       |
+| [ACB](#acb-based-interfaces)    | [EXLST](#exlst-based-interfaces)    | [RPL](#rpl-based-interfaces)    | [Other](#other-interfaces) |
+|---------------------------------|-------------------------------------| --------------------------------|----------------------------|
+| [ACB](#acb-macro)               | [EXLST](#exlst-macro)               | [RPL](#rpl-macro)               | [CBMR](#cbmr-macro)        |
+| [ACBD](#acbd-macro)             | [EXLSTD](#exlstd-macro)             | [RPLD](#rpld-macro)             | [CBMRD](#cbmrd-macro)      |
+| [GENCB ACB](#gencb-acb-macro)   | [GENCB EXLST](#gencb-exlst-macro)   | [GENCB RPL](#gencb-rpl-macro)   | --                         |
+| [MODCB ACB](#modcb-acb-macro)   | [MODCB EXLST](#modcb-exlst-macro)   | [MODCB RPL](#modcb-rpl-macro)   | --                         |
+| [SHOWCB ACB](#showcb-acb-macro) | [SHOWCB EXLST](#showcb-exlst-macro) | [SHOWCB RPL](#showcb-rpl-macro) | [SHOWCB](#showcb-macro)    |
+| [TESTCB ACB](#testcb-acb-macro) | [TESTCB EXLST](#testcb-exlst-macro) | [TESTCB RPL](#testcb-rpl-macro) | [TESTCB](#testcb-macro)    |
+|---------------------------------|-------------------------------------|---------------------------------|----------------------------|
+| [OPEN](#open-macro)             |                                     | [POINT](point#-macro)           |                            |
+| [CLOSE](#close-macro)           |                                     | [GET](get#-macro)               |                            |
+|                                 |                                     | [PUT](put#-macro)               |                            |
+|                                 |                                     | [ERASE](erase#-macro)           |                            |
+|                                 |                                     | [CHECK](check#-macro)           |                            |
+|                                 |                                     | [ENDREQ](endreq#-macro)         |                            |
+|                                 |                                     | [VERIFY](verify#-macro)         |                            |
 
 ## ACB-based interfaces
 
@@ -2194,10 +2194,113 @@ See [MF= parameter](#mf-parameter) for details.
 
 ================================================================================================================================================================================
 
+### POINT macro
 
+description to be supplied later.
 
+================================================================================================================================================================================
 
+### GET macro
 
+description to be supplied later.
+
+================================================================================================================================================================================
+
+### PUT macro
+
+description to be supplied later.
+
+================================================================================================================================================================================
+
+### ERASE macro
+
+description to be supplied later.
+
+================================================================================================================================================================================
+
+### CHECK macro
+
+description to be supplied later.
+
+================================================================================================================================================================================
+
+### ENDREQ macro
+
+description to be supplied later.
+
+================================================================================================================================================================================
+
+### VERIFY macro
+
+description to be supplied later.
+
+================================================================================================================================================================================
+
+## Other interfaces
+
+The remaining paragraphs describe interfaces that are not directly tied
+to one of the three major control structures: ACB, EXLST, RPL.
+
+================================================================================================================================================================================
+
+### CBMR macro
+
+A CBMR is generated for all forms of the '`GENCB`, `MODCB`, `SHOWCB`, and `TESTCB` macros.
+The CBMR is then used to direct the Control Block Management Program to carry out the
+request(s) encoded on the macro invocation.
+
+The CBMR macro maps the Control Block Management Request.
+The CBMR encodes a GENCB, MODCB, SHOWCB or TESTCB request
+and can be used with `BLK=ACB` to indicata an ACB-related Request,
+with `BLK=EXLST` to indicate an EXLST-related request, or with
+`BLK=RPL` to indicate an RPL-related request.
+
+The CBMR macro will generate a CBMR and initialize it according to the parameters
+specified on the macro invocation.
+
+The CBMR macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                    |
+|----------|---------------------------|
+| ZVSAM(0) | Error: zVSAM disabled     |
+| ZVSAM(1) | Error: CBMR not available |
+| ZVSAM(2) | CBMR2 macro is expanded   |
+
+The structure and layout of the generated CBMR are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the CBMR2 macro
+in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the CBMR is strongly discouraged, as it is not guaranteed
+> to be portable or compatible with future versions of zVSAM.
+
+All keywords on the CBMR macro are optional.
+
+The table below shows how the CBMR macro can be coded:
+
+to be filled in later.
+
+### CBMRD macro
+
+The CBMRD macro maps the CBMR. Its behaviour depends on the ZVSAM option in effect:
+
+| Option   | Effect                    |
+|----------|---------------------------|
+| ZVSAM(0) | Error: zVSAM disabled     |
+| ZVSAM(1) | Error: CBMR not available |
+| ZVSAM(2) | CBMRD2 macro is expanded  |
+
+For mapping details, please see the [CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description)
+or the `CBMRD2` macro in the mac folder.
+
+> [!NOTE]
+> The CBMRD macro generates no executable code.
+
+> [!NOTE]
+> The CBMRD macro can be invoked multiple times, but will generate the DSECT mapping
+> only on its first invocation.
+
+================================================================================================================================================================================
 
 
 
@@ -2242,27 +2345,3 @@ The MF= parameter as described here applies to its usage with the GENCB, MODCB, 
 > - The address, if specified, can be a label or a register. Registers 0, 1, 14, and 15 are reserved.
 > - Specifying a register is not supported with any of the three MF=L variants.
 
-### CBMR macro
-
-A CBMR is generated for all forms of the '`GENCB`, `MODCB`, `SHOWCB`, and `TESTCB` macros.
-The CBMR is then used to direct the Control Block Management Program to carry out the
-request(s) encoded on the macro invocation.
-
-The CBMR macro maps the Control Block Management Request.
-The CBMR encodes a GENCB, MODCB, SHOWCB or TESTCB request
-and can be used with `BLK=ACB` to indicata an ACB-related Request,
-with `BLK=EXLST` to indicate an EXLST-related request, or with
-`BLK=RPL` to indicate an RPL-related request.
-
-The behaviour of the CBMR macro depends on the ZVSAM option in effect:
-
-| Option   | Effect                   |
-|----------|--------------------------|
-| ZVSAM(0) | Error: requires zVSAM(2) |
-| ZVSAM(1) | Error: requires zVSAM(2) |
-| ZVSAM(2) | CBMR macro is expanded   |
-
-The CBMR is not available with zVSAM V1; it is implemented for zVSAM V2 only.
-
-For mapping details, please see the [CBMR layout](zVSAM_V2_Design_Addenda.md#cbmr-description)
-or the `CBMR` macro in the mac folder.
