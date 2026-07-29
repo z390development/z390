@@ -19,13 +19,17 @@ involved in VSAM file handling.
 | [SHOWCB ACB](#showcb-acb-macro) | [SHOWCB EXLST](#showcb-exlst-macro) | [SHOWCB RPL](#showcb-rpl-macro) | [SHOWCB](#showcb-macro)    |
 | [TESTCB ACB](#testcb-acb-macro) | [TESTCB EXLST](#testcb-exlst-macro) | [TESTCB RPL](#testcb-rpl-macro) | [TESTCB](#testcb-macro)    |
 |---------------------------------|-------------------------------------|---------------------------------|----------------------------|
-| [OPEN](#open-macro)             |                                     | [POINT](point#-macro)           |                            |
-| [CLOSE](#close-macro)           |                                     | [GET](get#-macro)               |                            |
-|                                 |                                     | [PUT](put#-macro)               |                            |
-|                                 |                                     | [ERASE](erase#-macro)           |                            |
-|                                 |                                     | [CHECK](check#-macro)           |                            |
-|                                 |                                     | [ENDREQ](endreq#-macro)         |                            |
-|                                 |                                     | [VERIFY](verify#-macro)         |                            |
+| [OPEN](#open-macro)             |                                     | [POINT](#point-macro)           | [BLDVRP](#bldvrp-macro)    |
+| [CLOSE](#close-macro)           |                                     | [GET](#get-macro)               | [DLVRP](#dlvrp-macro)      |
+| [SHOWCAT](#showcat-macro)       |                                     | [PUT](#put-macro)               |                            |
+|                                 |                                     | [ERASE](#erase-macro)           |                            |
+|                                 |                                     | [CHECK](#check-macro)           |                            |
+|                                 |                                     | [ENDREQ](#endreq-macro)         |                            |
+|                                 |                                     | [VERIFY](#verify-macro)         |                            |
+|                                 |                                     | [IDALKADD](#idalkadd-macro)     |                            |
+|                                 |                                     | [MRKBFR](#mrkbfr-macro)         |                            |
+|                                 |                                     | [SRCHBFR](#srchbfr-macro)       |                            |
+|                                 |                                     | [WRTBFR](#wrtbfr-macro)         |                            |
 
 ## ACB-based interfaces
 
@@ -356,7 +360,7 @@ Supported keywords:
 
 All parameters supported by the [ACB macro](#acb-macro) are supported here as well.
 
-Please note: not supported are expressions like `(S,scon)` or `(*,scon)`
+See [supported parameter types](#supported-parameter-types) for details.
 
 #### MF=
 
@@ -430,7 +434,7 @@ VSAM is the default and the only supported value.
 
 All parameters supported by the [ACB macro](#acb-macro) are supported here as well.
 
-Please note: not supported are expressions like `(S,scon)` or `(*,scon)`
+See [supported parameter types](#supported-parameter-types) for details.
 
 ##### MACRF=
 
@@ -462,7 +466,7 @@ Indicates the Macro Format.
 If specified, the [label] subparameter is EQUated to the length of the CBMR.
 See [MF= parameter](#mf-parameter) for details.
 
-#### Return (R15) and Reason (R0) Codes
+#### Return and Reason Codes
 
 | Return Code | Reason Code     | Meaning                                                                  |
 |-------------|-----------------|--------------------------------------------------------------------------|
@@ -740,6 +744,8 @@ The TESTCB ACB macro can be coded as follows:
 |                | [MF=(E,addr)]             | Use execute form of SHOWCB ACB                                                | n/a                 |
 |                | [MF=(G,addr,[label])]     | Use generate form of SHOWCB ACB                                               | n/a                 |
 
+Only a single test can be specified on each TESTCB invocation. See [TESTCB Introduction](#testcb-introduction) for details.
+
 All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
 For details, please refer to the relevant IBM manual.
 
@@ -795,6 +801,8 @@ If any of the following keywords are used then NE=HI will be returned:
 #### Keyword=nr/adr
 
 Remaining Keyword parameters specify a value, an address, or a keyword list to be tested.
+
+See [supported parameter types](#supported-parameter-types) for details.
 
 > [!NOTE]
 > Melvyn defined RBA values. We use LRSNs throughout. If we do not drop the RBA support,
@@ -954,6 +962,12 @@ The MF= parameter is optional. It can take the following forms:
 | `MF=L`        | With MF=L a close parmlist is generated inline                                                                                                                                                                          |
 | `MF=(L,addr)` | Code is generated to construct the close parmlist at run-time, at the indicated address. If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.          |
 | `MF=(E,addr)` | Code is generated to call the close SVC using the parmlist at the indicated address. If the address is specified within parentheses, it is assumed to indicate a register pointing to the desired address.              |
+
+================================================================================================================================================================================
+
+### SHOWCAT macro
+
+The SHOWCAT macro is not supported by zVSAM V2.
 
 ================================================================================================================================================================================
 
@@ -1208,7 +1222,7 @@ Supported keywords:
 
 All parameters supported by the [EXLST macro](#acb-macro) are supported here as well.
 
-Please note: not supported are expressions like `(S,scon)` or `(*,scon)`
+See [supported parameter types](#supported-parameter-types) for details.
 
 #### MF=
 
@@ -1282,7 +1296,7 @@ VSAM is the default and the only supported value.
 
 All parameters supported by the [EXLST macro](#exlst-macro) are supported here as well.
 
-Please note: not supported are expressions like `(S,scon)` or `(*,scon)`
+See [supported parameter types](#supported-parameter-types) for details.
 
 ##### MACRF=
 
@@ -1314,7 +1328,7 @@ Indicates the Macro Format.
 If specified, the [label] subparameter is EQUated to the length of the CBMR.
 See [MF= parameter](#mf-parameter) for details.
 
-#### Return (R15) and Reason (R0) Codes
+#### Return and Reason Codes
 
 | Return Code | Reason Code     | Meaning                                                                  |
 |-------------|-----------------|--------------------------------------------------------------------------|
@@ -1471,6 +1485,8 @@ The TESTCB EXLST macro can be coded as follows:
 |                | [MF=(E,addr)]              | Use execute form of SHOWCB EXLST                                                                    | n/a                 |
 |                | [MF=(G,addr,[label])]      | Use generate form of SHOWCB EXLST                                                                   | n/a                 |
 
+Only a single test can be specified on each TESTCB invocation. See [TESTCB Introduction](#testcb-introduction) for details.
+
 All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
 For details, please refer to the relevant IBM manual.
 
@@ -1493,6 +1509,8 @@ Optional parameter; if specified must be `DATA`or `INDEX`. `DATA` is the default
 #### Keyword=nr/adr
 
 Remaining Keyword parameters specify a value, an address, or a keyword list to be tested.
+
+See [supported parameter types](#supported-parameter-types) for details.
 
 For the keywords `EODAD`, `JRNAD`, `LERAD`, `SYNAD` the address can be omitted, or it can be specified as an address.
 Zero address values carry special meaning. A modifier can optionally be added, as defined on the [EXLST macro description](#exlst-macro).
@@ -1837,7 +1855,7 @@ Supported keywords:
 
 All parameters supported by the [RPL macro](#rpl-macro) are supported here as well.
 
-Please note: not supported are expressions like `(S,scon)` or `(*,scon)`
+See [supported parameter types](#supported-parameter-types) for details.
 
 #### MF=
 
@@ -1851,7 +1869,7 @@ See [MF= parameter](#mf-parameter) for details.
 |                     | For a complete list of options, please see the IBM manual “DFSMS Macro Instructions for Data Sets” or equivalent for the operating system and version that you are porting to/from.                                     |
 | Please note:        | not supported are expressions like (S,scon) or (\*,scon)                                                                                                                                                                |
 
-#### Return (R15) and Reason (R0) Codes
+#### Return and Reason Codes
 
 | Return Code | Reason Code     | Meaning                                                                  |
 |-------------|-----------------|--------------------------------------------------------------------------|
@@ -1917,7 +1935,7 @@ VSAM is the default and the only supported value.
 
 All parameters supported by the [RPL macro](#rpl-macro) are supported here as well.
 
-Please note: not supported are expressions like `(S,scon)` or `(*,scon)`
+See [supported parameter types](#supported-parameter-types) for details.
 
 #### ECB=
 
@@ -1949,7 +1967,7 @@ Indicates the Macro Format.
 If specified, the [label] subparameter is EQUated to the length of the CBMR.
 See [MF= parameter](#mf-parameter) for details.
 
-#### Return (R15) and Reason (R0) Codes
+#### Return and Reason Codes
 
 | Return Code | Reason Code     | Meaning                                                                  |
 |-------------|-----------------|--------------------------------------------------------------------------|
@@ -2061,7 +2079,7 @@ Overview of differences with IBM VSAM:
 FIELDS=RBA/XRBA – zVSAM supports these keywords only for ESDS.
 For any other type of cluster a value of foxes will be returned by default.
 
-#### Return (R15) and Reason (R0) Codes
+#### Return and Reason Codes
 
 | Return Code | Reason Code     | Meaning                                                                          |
 |-------------|-----------------|----------------------------------------------------------------------------------|
@@ -2136,6 +2154,8 @@ The TESTCB RPL macro can be coded as follows:
 |                | [MF=(E,addr)]             | Use execute form of SHOWCB RPL                                                | n/a                          |
 |                | [MF=(G,addr,[label])]     | Use generate form of SHOWCB RPL                                               | n/a                          |
 
+Only a single test can be specified on each TESTCB invocation. See [TESTCB Introduction](#testcb-introduction) for details.
+
 All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
 For details, please refer to the relevant IBM manual.
 
@@ -2172,6 +2192,8 @@ Optional parameter; if specified must be `DATA`or `INDEX`. `DATA` is the default
 
 Remaining Keyword parameters specify a value, an address, or a keyword list to be tested.
 
+See [supported parameter types](#supported-parameter-types) for details.
+
 > [!NOTE]
 > Melvyn defined RBA values. We use LRSNs throughout. If we do not drop the RBA support,
 > we'll need to find out why Melvyn introduced RBA values and how he plans to assign/maintain them.
@@ -2182,7 +2204,7 @@ Indicates the Macro Format.
 If specified, the [label] subparameter is EQUated to the length of the CBMR.
 See [MF= parameter](#mf-parameter) for details.
 
-#### Return (R15) and Reason (R0) Codes
+#### Return and Reason Codes
 
 | Return Code | Reason Code     | Meaning                                                                                                           |
 |-------------|-----------------|-------------------------------------------------------------------------------------------------------------------|
@@ -2233,6 +2255,30 @@ description to be supplied later.
 ### VERIFY macro
 
 description to be supplied later.
+
+================================================================================================================================================================================
+
+### IDALKADD macro
+
+The IDALKADD macro is not supported by zVSAM V2.
+
+================================================================================================================================================================================
+
+### MRKBFR macro
+
+The MRKBFR macro is not supported by zVSAM V2.
+
+================================================================================================================================================================================
+
+### SRCHBFR macro
+
+The SRCHBFR macro is not supported by zVSAM V2.
+
+================================================================================================================================================================================
+
+### WRTBFR macro
+
+The WRTBFR macro is not supported by zVSAM V2.
 
 ================================================================================================================================================================================
 
@@ -2302,28 +2348,196 @@ or the `CBMRD2` macro in the mac folder.
 
 ================================================================================================================================================================================
 
+### SHOWCB macro
 
+In addition to the `SHOWCB ACB=`, `SHOWCB EXLST=`, `SHOWCB RPL=` macro invocations, the SHOWCB macro also
+supports being called with no specified block type.
 
+The SHOWCB macro without a block will return length fields according to the parameters specified on the
+macro invocation in the order they are specified. Duplicates are permitted.
 
+| Opcode         | Operand               | Remarks                                                  |
+|----------------|-----------------------|----------------------------------------------------------|
+| [label] SHOWCB | [AM=VSAM]             | Optional, no other values allowed                        |
+|                | AREA=address          | Address of return area                                   |
+|                | LENGTH=value          | Size of return area in bytes                             |
+|                | FIELDS=(keyword list) | List of keywords indicating which fields to return       |
+|                | [MF=]                 | See the [description of MF=](#mf-parameter)              |
 
+All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
 
+#### AM=
 
+VSAM is the default and the only supported value.
 
+#### AREA=
 
+Required parameter; specify the address of the return area.
 
+#### LENGTH=
 
+Required parameter; specify the length of the return area.
 
+#### FIELDS=
 
+Specifies a list of keywords. Each keyword specified returns a field of 4 or 8 bytes. These return values are stored consecutively in the return area specified in the `AREA`= and `LENGTH`= parameters.
 
+Supported options for the FIELDS parameter are listed below:
 
+| Keyword | Length | Remarks                    |
+|---------|--------|----------------------------|
+| ACBLEN  | 4      | Length of ACB in bytes     |
+| EXLLEN  | 4      | Length of EXLST in bytes   |
+| RPLLEN  | 4      | Length of RPL in bytes     |
 
+#### MF=
 
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
 
+#### Return and Reason Codes
 
+| Return Code | Reason Code     | Meaning                                                                  |
+|-------------|-----------------|--------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                               |
+| R15=4       | Reason Code=4   | Invalid control block                                                    |
+| R15=4       | Reason Code=9   | Length too small                                                         |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
 
+================================================================================================================================================================================
 
+### TESTCB macro
 
+In addition to the `TESTCB ACB=`, `TESTCB EXLST=`, `TESTCB RPL=` macro invocations, the TESTCB macro also
+supports being called with no specified block type.
 
+The TESTCB macro without a block will test length fields according to the parameters specified on the
+macro invocation in the order they are specified. Duplicates are permitted.
+| Opcode         | Operand               | Remarks                                                  | Conditions returned |
+|----------------|-----------------------|----------------------------------------------------------|---------------------|
+| [label] TESTCB | [AM=VSAM]             | Optional, no other values allowed                        |                     |
+|                | [ERET=address]        | Address of error handling routine                        |                     |
+|                | ACBLEN=value          | ACB length                                               | EQ LO HI            |
+|                | RPLLEN=value          | RPL length                                               | EQ LO HI            |
+|                | EXLLEN=value          | EXLST length                                             | EQ LO HI            |
+|                | [MF=]                 | See the [description of MF=](#mf-parameter               |                     |
+
+All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### ERET=
+
+Optional address of error handling routine.
+
+#### Keyword=value
+
+Remaining Keyword parameters specify a value to be tested.
+
+See [supported parameter types](#supported-parameter-types) for details.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                          |
+|-------------|-----------------|----------------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                                       |
+| R15=4       | Reason Code=4   | Invalid control block                                                            |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created         |
+
+================================================================================================================================================================================
+
+### BLDVRP macro
+
+The BLDVRP macro is not supported by zVSAM V2.
+
+================================================================================================================================================================================
+
+### DLVRP macro
+
+The DLVRP macro is not supported by zVSAM V2.
+
+================================================================================================================================================================================
+
+### TESTCB Introduction
+
+Only a single test can be specified on each TESTCB invocation.
+In all cases the value or address supplied in the macro is compared to a constant or a value in a control block.
+Many parameters have been added in zVSAM V2 to bring it in line with SHOWCB.
+
+An extra column is provided in the charts to indicate the type of condition code that could be returned.
+the notation NE=LO (etc) is used to indicate that although LO may be returned the preferred test is for EQ/NE.
+
+Where a parameter may have subparameters, all must be true for an EQ to be returned. If unsupported parameters
+or subparameters are specified then NE=LO is returned.
+
+It is highly recommended that a branch table is placed after the TESTCB to capture any error conditions, the
+condition code is unpredictable if an error does occur.
+
+Example:
+```
+         TESTCB ACB=MYACB,NCIS=20,MF=I
+         B     *+4(R15)
+         J     OK
+         J     ERR04
+         J     ERR08
+OK       DS    0H
+```
+
+> [!NOTE]
+> IBMs TESTCB macro is very badly syntax checked, zVSAM V2 has tightened the rules.
+> Should imported code result in unexpected errors, please notify the z390 support team.
+
+================================================================================================================================================================================
+
+### Supported parameter types
+
+The parameter types described here apply to parameter specification on the GENCB, MODCB, SHOWCB, and TESTCB macros.
+
+For abs expression (called value in the macro definitions):
+
+| Parameter type        | For MF=I/G/L                   | For MF=E                       |
+|-----------------------|--------------------------------|--------------------------------|
+| n                     | Permitted                      | Permitted                      |
+| EQUated numeric value | Permitted, but not for LENGTH= | Permitted, but not for LENGTH= |
+
+For addresses:
+
+| Parameter type               | For MF=I/G/L                        | For MF=E                                | Notes |
+|------------------------------|-------------------------------------|-----------------------------------------|-------|
+| n                            | Permitted.                          | Permitted, but not for ERET=            | 1, 2  |
+| EQUated numeric value        | Permitted, but not for LENGTH=      | Permitted, but not for LENGTH=          | 1     |
+| ADCON-type address           | Permitted                           | Permitted                               | 4     |
+| Register form (reg)          | Permitted, but not regs 0,1,14,15   | Permitted, but not regs 0,1,14,15       |       |
+| Indirect form with ADCON     | Permitted for certain 8-byte fields | Permitted for certain 8-byte fields     | 4     |
+| (\*,address)                 | See Note 3                          | See Note 3                              | 3     |
+| Indirect form with disp(reg) | Permitted for certain 8-byte fields | Permitted for certain 8-byte fields     |       |
+| (\*,n(reg))                  | reg cannot be 0,1,14,15             | reg cannot be 0,1,14,15                 | 3     |
+
+> [!NOTE]
+> Note 1: The use of numeric values instead of an address may lead to accessing low storage and should be avoided.
+
+> [!NOTE]
+> Note 2: An exception is TESTCB EXLST= where a zero value for EODAD, JRNAD, LERAD and SYNAD means "don't test the address".
+
+> [!NOTE]
+> Note 3: The following fields only support the indirect form in TESTCB:
+> - `SDTASZ`, `STMST` and all `X*` fields.
+> - The lack of proper syntax checking in the IBM macro can cause access to low storage or
+>   environmental destruction, so the following syntaxes are not allowed: `(*,*)` and `(*,n)`.
+
+> [!NOTE]
+> Note 4: not supported are expressions like `(S,scon)` or `(*,scon)`
 
 ================================================================================================================================================================================
 
