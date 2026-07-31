@@ -70,6 +70,33 @@
            MOVE 16 TO RETURN-CODE
            DISPLAY 'ERROR AT PD'.
        PE.
+           MOVE 2 TO IZ1
+           GO TO PG PH DEPENDING IZ1
+           MOVE 16 TO RETURN-CODE
+           DISPLAY 'ERROR BEFORE PG'.
+       PG.
+           MOVE 16 TO RETURN-CODE
+           DISPLAY 'ERROR AT PG'.
+       PH.
+           MOVE 1 TO IZ1
+           GO TO PJ DEPENDING IZ1
+           MOVE 16 TO RETURN-CODE
+           DISPLAY 'ERROR BEFORE PJ'.
+       PJ.
+           MOVE 3 TO IZ1
+           GO TO 3 4 5 DEPENDING ON IZ1
+           MOVE 16 TO RETURN-CODE
+           DISPLAY 'ERROR NUMERIC TARGETS IGNORED'
+           STOP RUN.
+       3.
+           MOVE 16 TO RETURN-CODE
+           DISPLAY 'ERROR AT PARAGRAPH 3'
+           STOP RUN.
+       4.
+           MOVE 16 TO RETURN-CODE
+           DISPLAY 'ERROR AT PARAGRAPH 4'
+           STOP RUN.
+       5.
            DISPLAY 'TESTGO1 ENDED OK'
            STOP RUN.
        PF.
