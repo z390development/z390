@@ -1,17 +1,3 @@
-### POINT macro
-
-### GET macro
-
-### PUT macro
-
-### ERASE macro
-
-### CHECK macro
-
-### ENDREQ macro
-
-### VERIFY macro
-
 ## Catalog management
 
 This is where all meta-data about the zVSAM components are kept and where the relations between zVSAM components are defined.
