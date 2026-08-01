@@ -10,22 +10,26 @@ will be eliminated.
 This document is divided into three major chapters: one for each control block (or object)
 involved in VSAM file handling.
 
-| [ACB](#acb-based-interfaces)    | EXLST        | RPL        | Other |
-|---------------------------------|--------------| -----------|-------|
-| [ACB](#acb-macro)               | EXLST        | RPL        | CBMR  |
-| [ACBD](#acbd-macro)             | EXLSTD       | RPLD       |       |
-| [GENCB ACB](#gencb-acb-macro)   | GENCB EXLST  | GENCB RPL  |       |
-| [MODCB ACB](#modcb-acb-macro)   | MODCB EXLST  | MODCB RPL  |       |
-| [SHOWCB ACB](#showcb-acb-macro) | SHOWCB EXLST | SHOWCB RPL |       |
-| [TESTCD ACB](#testcb-acb-macro) | TESTCD EXLST | TESTCD RPL |       |
-|---------------------------------|--------------|------------|-------|
-| [OPEN](#open-macro)             |              | POINT      |       |
-| [CLOSE](#close-macro)           |              | GET        |       |
-|                                 |              | PUT        |       |
-|                                 |              | ERASE      |       |
-|                                 |              | CHECK      |       |
-|                                 |              | ENDREQ     |       |
-|                                 |              | VERIFY     |       |
+| [ACB](#acb-based-interfaces)    | [EXLST](#exlst-based-interfaces)    | [RPL](#rpl-based-interfaces)    | [Other](#other-interfaces) |
+|---------------------------------|-------------------------------------| --------------------------------|----------------------------|
+| [ACB](#acb-macro)               | [EXLST](#exlst-macro)               | [RPL](#rpl-macro)               | [CBMR](#cbmr-macro)        |
+| [ACBD](#acbd-macro)             | [EXLSTD](#exlstd-macro)             | [RPLD](#rpld-macro)             | [CBMRD](#cbmrd-macro)      |
+| [GENCB ACB](#gencb-acb-macro)   | [GENCB EXLST](#gencb-exlst-macro)   | [GENCB RPL](#gencb-rpl-macro)   | --                         |
+| [MODCB ACB](#modcb-acb-macro)   | [MODCB EXLST](#modcb-exlst-macro)   | [MODCB RPL](#modcb-rpl-macro)   | --                         |
+| [SHOWCB ACB](#showcb-acb-macro) | [SHOWCB EXLST](#showcb-exlst-macro) | [SHOWCB RPL](#showcb-rpl-macro) | [SHOWCB](#showcb-macro)    |
+| [TESTCB ACB](#testcb-acb-macro) | [TESTCB EXLST](#testcb-exlst-macro) | [TESTCB RPL](#testcb-rpl-macro) | [TESTCB](#testcb-macro)    |
+|---------------------------------|-------------------------------------|---------------------------------|----------------------------|
+| [OPEN](#open-macro)             |                                     | [POINT](#point-macro)           | [BLDVRP](#bldvrp-macro)    |
+| [CLOSE](#close-macro)           |                                     | [GET](#get-macro)               | [DLVRP](#dlvrp-macro)      |
+| [SHOWCAT](#showcat-macro)       |                                     | [PUT](#put-macro)               |                            |
+|                                 |                                     | [ERASE](#erase-macro)           |                            |
+|                                 |                                     | [CHECK](#check-macro)           |                            |
+|                                 |                                     | [ENDREQ](#endreq-macro)         |                            |
+|                                 |                                     | [VERIFY](#verify-macro)         |                            |
+|                                 |                                     | [IDALKADD](#idalkadd-macro)     |                            |
+|                                 |                                     | [MRKBFR](#mrkbfr-macro)         |                            |
+|                                 |                                     | [SRCHBFR](#srchbfr-macro)       |                            |
+|                                 |                                     | [WRTBFR](#wrtbfr-macro)         |                            |
 
 ## ACB-based interfaces
 
@@ -55,24 +59,6 @@ GENCB BLK=ACB should be used to create an ACB in dynamically acquired storage,
 or in private static storage. MODCB ACB= can be used to modify an existing ACB,
 whereas SHOWCB ACB= can be used to query specific fields of an ACB
 and TESTCB ACB= can be used to validate specific fields of an ACB.
-
-The following macros for assembler programs implement functions to manage EXLSTs:
-
-| Macro           | Function                                             |
-|-----------------|------------------------------------------------------|
-| EXLST           | Create/instantiate an EXLST during assembly          |
-| EXLSTD          | Describe EXLST subfields                             |
-| GENCB BLK=EXLST | Dynamically create/instantiate EXLST(s)              |
-| MODCB EXLST=    | Dynamically modify an EXLST                          |
-| SHOWCB EXLST=   | Extract EXLST subfield(s) (generic getter method)    |
-| TESTCB EXLST=   | Test EXLST subfield(s) (generic tester method)       |
-
-**Note:** The EXLST macro defines a statically allocated EXLST.
-This macro is primarily intended for use in non-reentrant programs.
-GENCB BLK=EXLST should be used to create an EXLST in dynamically acquired storage,
-or in private static storage. MODCB EXLST= can be used to modify an existing EXLST,
-whereas SHOWCB EXLST= can be used to query specific fields of an EXLST
-and TESTCB EXLST= can be used to validate specific fields of an EXLST.
 
 The following macros for assembler programs implement data manipulation functions for ACB-defined clusters:
 
@@ -374,6 +360,8 @@ Supported keywords:
 
 All parameters supported by the [ACB macro](#acb-macro) are supported here as well.
 
+See [supported parameter types](#supported-parameter-types) for details.
+
 #### MF=
 
 Indicates the Macro Format.
@@ -446,7 +434,7 @@ VSAM is the default and the only supported value.
 
 All parameters supported by the [ACB macro](#acb-macro) are supported here as well.
 
-Please note: not supported are expressions like `(S,scon)` or `(*,scon)`
+See [supported parameter types](#supported-parameter-types) for details.
 
 ##### MACRF=
 
@@ -478,7 +466,7 @@ Indicates the Macro Format.
 If specified, the [label] subparameter is EQUated to the length of the CBMR.
 See [MF= parameter](#mf-parameter) for details.
 
-#### Return (R15) and Reason (R0) Codes
+#### Return and Reason Codes
 
 | Return Code | Reason Code     | Meaning                                                                  |
 |-------------|-----------------|--------------------------------------------------------------------------|
@@ -673,8 +661,6 @@ Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the T
 are not part of the interface and are therefore not shown in this chapter. For details please see the
 [CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
 
-The TESTCB ACB macro can be coded as follows:
-
 > [!NOTE]
 > Direct access to subfields in the ACB or CBMR is strongly discouraged. Use GENCB BLK=ACB, SHOWCB ACB=,
 > TESTCB ACB= and/or MODCB ACB= to generate, inspect, test, and/or modify the ACB's content.
@@ -758,6 +744,8 @@ The TESTCB ACB macro can be coded as follows:
 |                | [MF=(E,addr)]             | Use execute form of SHOWCB ACB                                                | n/a                 |
 |                | [MF=(G,addr,[label])]     | Use generate form of SHOWCB ACB                                               | n/a                 |
 
+Only a single test can be specified on each TESTCB invocation. See [TESTCB Introduction](#testcb-introduction) for details.
+
 All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
 For details, please refer to the relevant IBM manual.
 
@@ -814,6 +802,8 @@ If any of the following keywords are used then NE=HI will be returned:
 
 Remaining Keyword parameters specify a value, an address, or a keyword list to be tested.
 
+See [supported parameter types](#supported-parameter-types) for details.
+
 > [!NOTE]
 > Melvyn defined RBA values. We use LRSNs throughout. If we do not drop the RBA support,
 > we'll need to find out why Melvyn introduced RBA values and how he plans to assign/maintain them.
@@ -865,6 +855,8 @@ For details, please refer to the relevant IBM manual.
 > - One or more entries can be specified.
 > - Each entry can specify either a zVSAM cluster, or a sequential file.
 > - The open macro can be used to open 1 or more cluster(s) and/or 1 or more sequential file(s) in a single call.
+> - When MF=E specifies more entries than created with MF=L zVSAM V2 will return an error (R15=8).
+> - When MF=E specifies a different MODE= parameter than created with MF=L zVSAM V2 will return an error (R15=8).
 
 #### Entry format
 
@@ -943,6 +935,8 @@ For an ACB the options list is ignored and should not be coded.
 
 The address can be specified as an A-type address or as a register.
 If a register is coded the register number or name must be enclosed in parentheses.
+The address can be either the address of an ACB to close a cluster,
+or the address of a DCB to close a sequential file.
 
 ##### Options
 
@@ -971,6 +965,1582 @@ The MF= parameter is optional. It can take the following forms:
 
 ================================================================================================================================================================================
 
+### SHOWCAT macro
+
+The SHOWCAT macro is not supported by zVSAM V2.
+
+================================================================================================================================================================================
+
+## EXLST-based interfaces
+
+The EXLST serves as an extension to the [ACB](acb-based-interfaces).
+
+The EXLST interface consists of an EXLST control block, usually associated with an ACB,
+and a set of macros to manage and manipulate the ACB and EXLST control blocks.
+These macros can be used in your assembler programs. For zCobol and/or other higher-level languages,
+these macros will be generated from specifications for the files as appropriate in the host language's syntax.
+
+The following macros for assembler programs implement functions to manage EXLSTs:
+
+| Macro           | Function                                             |
+|-----------------|------------------------------------------------------|
+| EXLST           | Create/instantiate an EXLST during assembly          |
+| EXLSTD          | Describe EXLST subfields                             |
+| GENCB BLK=EXLST | Dynamically create/instantiate EXLST(s)              |
+| MODCB EXLST=    | Dynamically modify an EXLST                          |
+| SHOWCB EXLST=   | Extract EXLST subfield(s) (generic getter method)    |
+| TESTCB EXLST=   | Test EXLST subfield(s) (generic tester method)       |
+
+**Note:** The EXLST macro defines a statically allocated EXLST.
+This macro is primarily intended for use in non-reentrant programs.
+GENCB BLK=EXLST should be used to create an EXLST in dynamically acquired storage,
+or in private static storage. MODCB EXLST= can be used to modify an existing EXLST,
+whereas SHOWCB EXLST= can be used to query specific fields of an EXLST
+and TESTCB EXLST= can be used to validate specific fields of an EXLST.
+
+A description of these interfaces as implemented for z390 and zVSAM is detailed in the next chapters.
+
+================================================================================================================================================================================
+
+### EXLST macro
+
+The EXLST macro will generate an Exit List control block and initialize it according to the parameters specified
+on the macro invocation.
+
+The EXLST macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                   |
+|----------|--------------------------|
+| ZVSAM(0) | Error: zVSAM disabled    |
+| ZVSAM(1) | EXLST1 macro is expanded |
+| ZVSAM(2) | EXLST2 macro is expanded |
+
+> [!NOTE]
+> zVSAM V1 did not support EXLST. We currently have only the EXLST macro implementing the V2 EXLST.
+> This needs to be revised to have consistent structure across zVSAM control block macros.
+
+The structure and layout of the generated EXLST are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the EXLST, EXLST1 and EXLST2 macros
+in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the EXLST is strongly discouraged. Use SHOWCB EXLST=, TESTCB EXLST= and/or
+> MODCB EXLST= to inspect, test, and/or modify the EXLST's content.
+
+All keywords on the EXLST macro are optional. Before the cluster is opened,
+all EXLST values can be modified using MODCB EXLST=, or by changing the EXLST directly.
+The latter is not recommended, as it is not guaranteed to be portable or compatible
+with future versions of zVSAM.
+
+The table below shows how the EXLST macro can be coded.
+
+| Opcode        | Operand                | Remarks                                                                                             |
+|---------------|------------------------|-----------------------------------------------------------------------------------------------------|
+| [label] EXLST | [AM=VSAM]              | Designates this EXLST as a zVSAM EXLST; VSAM is the default                                         |
+|               | [EODAD=addr[,A/N]]     | End-of-data exit routine                                                                            |
+|               | [LERAD=addr[,A/N]]     | Logical error analysis routine                                                                      |
+|               | [SYNAD=addr[,A/N]]     | Physical error analysis routine                                                                     |
+|               | [JRNAD=addr[,A/N]]     | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+|               | [UPAD=addr[,A/N]]      | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+|               | [RLSWAIT=addr[,A/N]]   | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+> [!NOTE]
+> There is no MF= parameter defined for the EXLST macro.
+> Use GENCB to generate EXLSTs in dynamically acquired storage.
+
+For each exit routine, a modifier of `A` or `N` is supported. The default is `A`.
+The modifier value `L` (for Load from Linklib) is not supported.
+
+> [!NOTE]
+> - Review note: We have no linklib, but we might load a module anyway using our existing support for SVC 6 (Load macro)
+
+For GENCB EXLST with MF=I, L or G, a missing address will generate zero and no error,
+whereas IBM displays an error. It is assumed that the address will be made valid
+by a MODCB EXLST= macro invocation.
+
+For GENCB EXLST with MF=E, a missing address or modifier means don't modify that parameter in the CBMR.
+
+Although a null address may be set in the EXLST, you cannot change an address to null with MODCB EXLST=.
+Intead set the exit to Non-active.
+
+#### AM=
+
+Optional parameter. `AM=VSAM` is the default. No other values are supported.
+
+#### EODAD=
+
+Optional parameter to specify the entry address of an exit that handles an end-of-data condition during sequential access.
+The amode for the routine is encoded in the first bit of the 32-bit address:
+- when the bit is off the exit is called in amode 24;
+- when the bit is on the exit is called in amode 31.
+
+The routine address may be followed by a modifier, which can only be `A` or `N`.
+The `A` indicates the routine is to be marked Active, the `N` indicates Non-active.
+
+The exit will be invoked only when it has been marked Active.
+Use Non-active mode to define an exit for delayed activation.
+
+#### LERAD=
+
+Optional parameter to specify the entry address of an exit that handles logic errors.
+The amode for the routine is encoded in the first bit of the 32-bit address:
+- when the bit is off the exit is called in amode 24;
+- when the bit is on the exit is called in amode 31.
+
+The routine address may be followed by a modifier, which can only be `A` or `N`.
+The `A` indicates the routine is to be marked Active, the `N` indicates Non-active.
+
+The exit will be invoked only when it has been marked Active.
+Use Non-active mode to define an exit for delayed activation.
+
+#### SYNAD=
+
+Optional parameter to specify the entry address of an exit that handles physical errors.
+The amode for the routine is encoded in the first bit of the 32-bit address:
+- when the bit is off the exit is called in amode 24;
+- when the bit is on the exit is called in amode 31.
+
+The routine address may be followed by a modifier, which can only be `A` or `N`.
+The `A` indicates the routine is to be marked Active, the `N` indicates Non-active.
+
+The exit will be invoked only when it has been marked Active.
+Use Non-active mode to define an exit for delayed activation.
+
+================================================================================================================================================================================
+
+### EXLSTD macro
+
+The EXLSTD macro maps the EXLST. Its behaviour depends on the ZVSAM option in effect:
+
+| Option   | Effect                    |
+|----------|---------------------------|
+| ZVSAM(0) | Error: zVSAM disabled     |
+| ZVSAM(1) | EXLSTD1 macro is expanded |
+| ZVSAM(2) | EXLSTD2 macro is expanded |
+
+There is no mapping in EXLSTD1 since zVSAM V1 does not support the EXLST.
+
+For mapping details, please see the [zEXLST layout](zVSAM_V2_Design_Addenda.md#zexlst-description)
+or the `EXLSTD`, `EXLSTD1` and `EXLSTD2` macros in the mac folder.
+
+> [!NOTE]
+> The EXLSTD macro generates no executable code.
+
+> [!NOTE]
+> The EXLSTD macro can be invoked multiple times, but will generate the DSECT mapping
+> only on its first invocation.
+
+================================================================================================================================================================================
+
+### GENCB EXLST macro
+
+The GENCB macro with BLK=EXLST will generate or manipulate EXLSTs for use with ACBs and initialize or change them
+according to the parameters specified on the macro invocation. It is for this reason that
+all supported parameters and keywords of the EXLST macro (as described above) are supported
+on the GENCB macro when BLK=EXLST is specified.
+
+The GENCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                   |
+|----------|--------------------------|
+| ZVSAM(0) | Error: zVSAM disabled    |
+| ZVSAM(1) | GENCB1 macro is expanded |
+| ZVSAM(2) | GENCB2 macro is expanded |
+
+The structure and layout of the EXLST are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zEXLST description](zVSAM_V2_Design_Addenda.md#zacb-description) or the EXLST2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the EXLST or CBMR is strongly discouraged. Use GENCB BLK=EXLST, SHOWCB EXLST=,
+> TESTCB EXLST= and/or MODCB EXLST= to generate, inspect, test, and/or modify the EXLST's content.
+
+All keywords on the GENCB EXLST macro are optional. Except BLK= which is required.
+
+The GENCB EXLST macro can be coded as follows:
+
+| Opcode        | Operand                   | Remarks                                                                                                 |
+|---------------|---------------------------|---------------------------------------------------------------------------------------------------------|
+| [label] GENCB | BLK=EXLST                 | Instructs GENCB to generate 1 or more EXLSTs                                                            |
+|               | [AM=VSAM]                 | Optional, no other values allowed; VSAM is the default                                                  |
+|               | [COPIES=nr]               | The number of identical EXLSTs to generate                                                              |
+|               | [WAREA=addr]              | The work area where the EXLSTs are to be constructed                                                    |
+|               | [LENGTH=nr]               | Length of the work area in bytes                                                                        |
+|               | [LOC=keyword]             | Where GENCB is to allocate dynamically acquired storage - if needed                                     |
+|               | **[other]**               | **Any parameter supported on the EXLST macro**                                                          |
+|               | [MF=]                     | Use standard form of GENCB EXLST; this is the default                                                   |
+|               | [MF=L/MF=(L,addr,[label]] | Use list form of GENCB EXLST                                                                            |
+|               | [MF=(E,addr)]             | Use execute form of GENCB EXLST                                                                         |
+|               | [MF=(G,addr,[label])]     | Use generate form of GENCB EXLST                                                                        |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### BLK=
+
+Required parameter; specify EXLST to generate 1 or more EXLSTs
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### COPIES=
+
+Number of identical EXLSTs to generate ranging from 1 to 65535. Defaults to 1.
+
+#### WAREA=
+
+The work area where the EXLSTs are to be constructed.
+
+- When WAREA is specified, LENGTH must be specified too.
+- When WAREA is not specified, the CBMR handler allocates an area of storage.
+- The address of this area whether via GETMAIN or WAREA is returned in R1.
+- The length of the generated EXLST(s) is returned in R0.
+
+#### LENGTH=
+
+- If WAREA= is specified, this paramter is required and specifies the length of the area.
+- If WAREA= is not specified, this parameter is ignored. zVSAM determines how much storage to allocate.
+
+#### LOC=
+
+- If WAREA= is specified, this paramter is ignored.
+- If WAREA= is not specified, this parameter indicates where zVSAM is to allocate storage for the EXLST or EXLSTs.
+
+Supported keywords:
+- BELOW = below 16M (addressable in Amode 24, 31, or 64)
+- ANY   = below 2G  (requires Amode 31 or 64 to address)
+
+#### Other keywords
+
+All parameters supported by the [EXLST macro](#acb-macro) are supported here as well.
+
+See [supported parameter types](#supported-parameter-types) for details.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                  |
+|-------------|-----------------|--------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                               |
+| R15=4       | Reason Code=4   | Invalid control block                                                    |
+| R15=4       | Reason Code=9   | WAREA is too small                                                       |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
+
+================================================================================================================================================================================
+
+### MODCB EXLST macro
+
+The MODCB macro with EXLST=addr will modify an EXLST according to the parameters specified on the macro invocation.
+It is for this reason that all parameters and keywords of the EXLST macro (as described above) are supported
+on the MODCB macro when EXLST=addr is specified.
+
+The MODCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                   |
+|----------|--------------------------|
+| ZVSAM(0) | Error: zVSAM disabled    |
+| ZVSAM(1) | MODCB1 macro is expanded |
+| ZVSAM(2) | MODCB2 macro is expanded |
+
+The structure and layout of the EXLST are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zEXLST description](zVSAM_V2_Design_Addenda.md#zexlst-description) or the EXLST2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the MODCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the EXLST or CBMR is strongly discouraged. Use GENCB BLK=EXLST, SHOWCB EXLST=,
+> TESTCB EXLST= and/or MODCB EXLST= to generate, inspect, test, and/or modify the EXLST's content.
+
+All keywords on the MODCB EXLST macro are optional. Except EXLST= which is required.
+
+The MODCB EXLST macro can be coded as follows:
+
+| Opcode        | Operand                   | Remarks                                               |
+|---------------|---------------------------|-------------------------------------------------------|
+| [label] MODCB | EXLST=address             | Points MODCB to the EXLST to be modified              |
+|               | [AM=VSAM]                 | Optional, no other values allowed                     |
+|               | **[other]**               | **Any parameter supported on the EXLST macro**        |
+|               | [MF=]                     | Use standard form of MODCB EXLST; this is the default |
+|               | [MF=L/MF=(L,addr,[label]] | Use list form of MODCB EXLST                          |
+|               | [MF=(E,addr)]             | Use execute form of MODCB EXLST                       |
+|               | [MF=(G,addr,[label])]     | Use generate form of MODCB EXLST                      |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### EXLST=
+
+Required parameter; specify the address of the EXLST to be modified.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### Other keywords
+
+All parameters supported by the [EXLST macro](#exlst-macro) are supported here as well.
+
+See [supported parameter types](#supported-parameter-types) for details.
+
+##### MACRF=
+
+MACRF is a special case of the "other keywords". This paragrqaph clarifies how MACRF works.
+
+All supported subparameters have their own bit in `CBMREXLST_MACRF` (currently 16),
+Conflicts are `MNOTE`d, eg. bits for `NIS` and `SIS` cannot both be on.
+
+If MF=E is specified then the whole of `CBMREXLST_MACRF` is replaced,
+
+When the EXLST is modified:
+- For mutually exclusive parameters, the bit is turned on or off
+- For each non-exclusive parameter the appropriate bit is turned on, therefore it isn't possible to turn a nonexclusive
+  bit off using MODCB, this has to be done manually.
+- eg. When an EXLST has MACRF=(OUT) which allows read and write functions it is not possible to change
+  the EXLST to read-only using MODCB
+- if this is needed code the instruction `NI EXLSTMACR1,255-EXLSTOUT`
+
+> [!NOTE]
+> I do not entirely agree with how Melvyn has set this up, although I do like his extensive early error detection proposal.
+> There are basically two alternatives that I can see:
+> 1. every MACRF option has a separate verb code, we generate as many verb codes as we need, no data is needed
+> 2. We generate a single verb code for the MACRF modification, supplying two 2-byte masks in the data.
+>    One mask to indicate affected postions, the other to indicate the desired bit values for the selected postions.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                  |
+|-------------|-----------------|--------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                               |
+| R15=4       | Reason Code=4   | Invalid control block                                                    |
+| R15=4       | Reason Code=4   | EXLST= does not point to an EXLST                                        |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
+
+> [!NOTE]
+> For RC=4 two RSN=4 causes are documented by Melvyn. We'll have to find out whether this is intentional or a typo.
+
+================================================================================================================================================================================
+
+### SHOWCB EXLST macro
+
+The SHOWCB macro with EXLST=addr will return EXLST-related fields according to the parameters specified
+on the macro invocation in the order they are specified. Duplicates are permitted.
+
+The SHOWCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                    |
+|----------|---------------------------|
+| ZVSAM(0) | Error: zVSAM disabled     |
+| ZVSAM(1) | SHOWCB1 macro is expanded |
+| ZVSAM(2) | SHOWCB2 macro is expanded |
+
+The structure and layout of the EXLST are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zEXLST description](zVSAM_V2_Design_Addenda.md#zexlst-description) or the EXLST2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the SHOWCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the EXLST or CBMR is strongly discouraged. Use GENCB BLK=EXLST, SHOWCB EXLST=,
+> TESTCB EXLST= and/or MODCB EXLST= to generate, inspect, test, and/or modify the EXLST's content.
+
+The SHOWCB EXLST macro can be coded as follows:
+
+| Opcode         | Operand                    | Remarks                                                       |
+|----------------|----------------------------|---------------------------------------------------------------|
+| [label] SHOWCB | EXLST=address              | Points MODCB to the EXLST to be queried                       |
+|                | [AM=VSAM]                  | Optional, no other values allowed                             |
+|                | AREA=addr                  | Address of return area                                        |
+|                | LENGTH=nr                  | Size of return area in bytes                                  |
+|                | [OBJECT=DATA/INDEX]        | For KSDS: select data or index component; DATA is the default |
+|                | FIELDS=(keywd_list)        | List of keywords indicating which fields to return            |
+|                | [MF=]                      | Use standard form of SHOWCB EXLST; this is the default        |
+|                | [MF=L/MF=(L,addr,[label]]  | Use list form of SHOWCB EXLST                                 |
+|                | [MF=(E,addr)]              | Use execute form of SHOWCB EXLST                              |
+|                | [MF=(G,addr,[label])]      | Use generate form of SHOWCB EXLST                             |
+
+All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### EXLST=
+
+Required parameter; specify the address of the EXLST to be queried.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### AREA=
+
+Required parameter; specify the address of the return area.
+
+#### LENGTH=
+
+Required parameter; specify the length of the return area.
+
+### OBJECT=
+
+Optional parameter; if specified must be `DATA`or `INDEX`. `DATA` is the default.
+
+#### FIELDS=
+
+Specifies a list of keywords. Each keyword specified returns a field of 4 or 8 bytes. These return values are stored consecutively in the return area specified in the `AREA`= and `LENGTH`= parameters.
+Some keywords are valid only when the EXLST is open. An error is returned when any of these keywords are used while the EXLST is not open.
+
+Defined options for the FIELDS parameter are listed below:
+
+| Keyword  | Length | Remarks                                                                                             |
+|----------|--------|-----------------------------------------------------------------------------------------------------|
+| ACBLEN   | 4      | Size of ACB in bytes                                                                                |
+| EODAD    | 4      | End-of-data exit routine address                                                                    |
+| EXLLEN   | 4      | Length of EXLST in bytes                                                                            |
+| JRNAD    | 4      | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+| LERAD    | 4      | Logical error analysis routine address                                                              |
+| RPLLEN   | 4      | Length of RPL in bytes                                                                              |
+| SYNAD    | 4      | Physical error analysis routine address                                                             |
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                          |
+|-------------|-----------------|----------------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                                       |
+| R15=4       | Reason Code=4   | Invalid control block                                                            |
+| R15=4       | Reason Code=9   | Length too small                                                                 |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created         |
+
+================================================================================================================================================================================
+
+### TESTCB EXLST macro
+
+The TESTCB macro with EXLST=addr will test EXLST-related fields according to the parameters specified
+on the macro invocation. Only a single test can be specified on each TESTCB invocation.
+TESTCB returns a PSW condition code of 8=Equal when the specified test is met, 7=NotEqual otherwise.
+
+The TESTCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                    |
+|----------|---------------------------|
+| ZVSAM(0) | Error: zVSAM disabled     |
+| ZVSAM(1) | TESTCB1 macro is expanded |
+| ZVSAM(2) | TESTCB2 macro is expanded |
+
+The structure and layout of the EXLST are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zEXLST description](zVSAM_V2_Design_Addenda.md#zexlst-description) or the EXLST2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the TESTCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the EXLST or CBMR is strongly discouraged. Use GENCB BLK=EXLST, SHOWCB EXLST=,
+> TESTCB EXLST= and/or MODCB EXLST= to generate, inspect, test, and/or modify the EXLST's content.
+
+The TESTCB EXLST macro can be coded as follows:
+
+| Opcode         | Operand                    | Remarks                                                                                             | Conditions returned |
+|----------------|----------------------------|-----------------------------------------------------------------------------------------------------|---------------------|
+| [label] TESTCB | EXLST=address              | Points TESTCB to the EXLST to be tested                                                             | n/a                 |
+|                | [AM=VSAM]                  | Optional, no other values allowed                                                                   | n/a                 |
+|                | ERET=addr                  | Address of error handling routine                                                                   | n/a                 |
+|                | [OBJECT=DATA/INDEX]        | For KSDS: select data or index component                                                            | n/a                 |
+|                | ACBLEN=nr                  | ACB length in bytes                                                                                 | EQ LO HI            |
+|                | EXLLEN=nr                  | EXLST length in bytes                                                                               | EQ LO HI            |
+|                | RPLLEN=nr                  | RPL length in bytes                                                                                 | EQ LO HI            |
+|                | EODAD=addr[,mod]           | End-of-data exit routine address                                                                    | depends             |
+|                | JRNAD=addr[,mod]           | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) | depends             |
+|                | LERAD=addr[,mod]           | Logical error analysis routine address                                                              | depends             |
+|                | SYNAD=addr[,mod]           | Physical error analysis routine address                                                             | depends             |
+|                | [MF=]                      | Use standard form of SHOWCB EXLST; this is the default                                              | n/a                 |
+|                | [MF=L/MF=(L,addr,[label]]  | Use list form of SHOWCB EXLST                                                                       | n/a                 |
+|                | [MF=(E,addr)]              | Use execute form of SHOWCB EXLST                                                                    | n/a                 |
+|                | [MF=(G,addr,[label])]      | Use generate form of SHOWCB EXLST                                                                   | n/a                 |
+
+Only a single test can be specified on each TESTCB invocation. See [TESTCB Introduction](#testcb-introduction) for details.
+
+All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### EXLST=
+
+Required parameter; specify the address of the EXLST to be tested.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### ERET=
+
+Optional address of error handling routine.
+
+#### OBJECT=
+
+Optional parameter; if specified must be `DATA`or `INDEX`. `DATA` is the default.
+
+#### Keyword=nr/adr
+
+Remaining Keyword parameters specify a value, an address, or a keyword list to be tested.
+
+See [supported parameter types](#supported-parameter-types) for details.
+
+For the keywords `EODAD`, `JRNAD`, `LERAD`, `SYNAD` the address can be omitted, or it can be specified as an address.
+Zero address values carry special meaning. A modifier can optionally be added, as defined on the [EXLST macro description](#exlst-macro).
+
+**Note:** This 'special meaning' needs clarification!
+
+For these 4 keywords the following the conditions returned are defined as follows:
+
+| Parameter subfields                                      | Conditions returned |
+|----------------------------------------------------------|---------------------|
+| If a modifier of `L` is speciefied                       | NE=LO               |
+| If address is zero or omitted and no modifier specified  | EQ                  |
+| If address is zero and non-L modifier is specified       | EQ NE=LO            |
+| If address is not zero and no modifier specified         | EQ LO HI            |
+| If address is.not zero and non-L modifier is specified   | EQ NE=LO            |
+
+> [!NOTE]
+> Melvyn documented JRNAD as allowed, but not supported, always returning NE=LO.
+> I think we should consider adding a bit more compatibility, if we reasonably can.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                                                |
+|-------------|-----------------|--------------------------------------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                                                             |
+| R15=4       | Reason Code=4   | Invalid control block                                                                                  |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created                               |
+
+================================================================================================================================================================================
+
+## RPL-based interfaces
+
+The RPL is the primary interface for operations at the record level.
+A program can use multiple RPLs.
+An RPL must always point to an open ACB in order to specify a valid operation.
+
+The RPL interface consists of an RPL control block and a set of macros to manage and manipulate the RPL control block.
+These macros can be used in your assembler programs. For zCobol and/or other higher-level languages,
+these macros will be generated from specifications for the files as appropriate in the host language's syntax.
+
+The following macros for assembler programs implement functions to manage RPLs:
+
+| Macro         | Function                                             |
+|---------------|------------------------------------------------------|
+| RPL           | Create/instantiate an RPL during assembly            |
+| RPLD          | Describe RPL subfields                               |
+| GENCB BLK=RPL | Dynamically create/instantiate RPL(s)                |
+| MODCB RPL=    | Dynamically modify an RPL                            |
+| SHOWCB RPL=   | Extract RPL subfield(s) (generic getter method)      |
+| TESTCB RPL=   | Test RPL subfield(s) (generic tester method)         |
+| CBMR          | Create/instatiate Control Block Modification Request |
+
+**Note:** The RPL macro defines a statically allocated RPL.
+This macro is primarily intended for use in non-reentrant programs.
+GENCB BLK=RPL should be used to create an RPL in dynamically acquired storage,
+or in private static storage. MODCB RPL= can be used to modify an existing RPL,
+whereas SHOWCB RPL= can be used to query specific fields of an RPL
+and TESTCB RPL= can be used to validate specific fields of an RPL.
+
+The following macros for assembler programs implement data manipulation functions for RPL-defined clusters:
+
+| Macro           | Function                                             |
+|-----------------|------------------------------------------------------|
+| POINT           | Position for subsequent sequential I/O               |
+| GET             | Retrieve a record                                    |
+| PUT             | Write (add or update) a record                       |
+| ERASE           | Remove a record                                      |
+| CHECK           | Wait for completion of an asynchronous I/O request   |
+| ENDREQ          | Terminate a request                                  |
+| VERIFY          | Synchronize end-of-data                              |
+
+A description of these interfaces as implemented for z390 and zVSAM is detailed in the next chapters.
+
+================================================================================================================================================================================
+
+### RPL macro
+
+The RPL macro will generate an RPL and initialize it according to the parameters specified on the macro invocation.
+
+The RPL macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                  |
+|----------|-------------------------|
+| ZVSAM(0) | Error: zVSAM disabled   |
+| ZVSAM(1) | ACB1 macro is expanded  |
+| ZVSAM(2) | ACB2 macro is expanded  |
+
+The structure and layout of the generated RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the RPL, RPL1 and RPL2 macros
+in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the RPL is strongly discouraged. Use SHOWCB RPL=, TESTCB RPL= and/or
+> MODCB RPL= to inspect, test, and/or modify the RPL's content.
+
+All keywords on the RPL macro are optional. Before a request is issued, all RPL values can be modified
+using MODCB RPL=, or by changing the RPL directly.
+The latter is not recommended, as it is not guaranteed to be portable or compatible with future versions of zVSAM.
+
+The table below shows how the RPL macro can be coded.
+
+| Opcode      | Operand                | Remarks                                                                                                 |
+|-------------|------------------------|---------------------------------------------------------------------------------------------------------|
+| [label] RPL | [AM=VSAM]              | Designates this ACB as a zVSAM ACB; VSAM is the default                                                 |
+|             | [ACB=ptr]              | Pointer to ACB                                                                                          |
+|             | [AREA=ptr]             | Pointer to record area or record pointer                                                                |
+|             | [AREALEN=nr]           | Length of record area or record pointer                                                                 |
+|             | [ARG=ptr]              | Pointer to search argument                                                                              |
+|             | [KEYLEN=nr]            | Length of search argument                                                                               |
+|             | [ECB=]                 | Pointer to ECB                                                                                          |
+|             | [MSGAREA=addr]         | Pointer to message area                                                                                 |
+|             | [MSGLEN=nr]            | Length of message area                                                                                  |
+|             | [NXTRPL=ptr]           | Pointer to next RPL when chaining requests                                                              |
+|             | [OPTCD=(keywd_list)]   | List of keywords specifying processing options. See table below for valid keywords                      |
+|             | [RECLEN=nr]            | Max amount of storage (in bytes) to use for buffers                                                     |
+|             | [TIMEOUT=nr]           | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)     |
+|             | [TRANSID=nr]           | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote)     |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+> [!NOTE]
+> There is no MF= parameter defined for the RPL macro.
+> Use GENCB to generate RPLs in dynamically acquired storage.
+
+#### AM=
+
+Optional parameter. `AM=VSAM` is the default. No other values are supported.
+
+#### ACB=
+
+Pointer to an open ACB that represents the clusteer to be accessed.
+
+#### AREA=
+
+Record area pointer. In Move mode reading a record implies moving the record into this area. In locate mode a pointer to the record is moved into the area instead.
+
+#### AREALEN=
+
+Length of record area.
+
+#### ARG=
+
+Pointer to search argument. This is a key, a relative record number, or a RBA.
+
+> [!NOTE]
+> Melvyn mentions RBA - I think this should be an XLRSN instead. Unless we decide to support RBAs as well.
+
+#### KEYLEN=
+
+Length of key value specified in ARG= when a generic key search is requested.
+
+#### ECB=
+
+Pointer to ECB. Used with Asynchronous requests.
+
+Note: If ECB= is specified the indicated external ECB will be used.
+If ECB= is omitted, an internal ECB will be used.
+The bit `RPLOPT2_ECB` is set for an external ECB.
+
+#### MSGAREA=
+
+Pointer to a message area where error information may be returned.
+
+#### MSGLEN=
+
+Length of messagea area.
+
+#### NXTRPL=
+
+Pointer to next RPL in the chain. RPLs can be chained together to request a series of operations in a single call to zVSAM.
+
+#### RECLEN=
+
+Record length. Required when updating or adding records.
+
+When updating a record that has not changed its length, the parameter can be omitted if the immediately preceding operation on the RPL was the read for the record being updated.
+
+#### OPTCD=
+
+List of keywords specifying how the request is to be handled.
+
+Defined options for the OPTCD parameter are listed below:
+
+| Keyword subset   | Keyword | Remarks                                                                                             |
+|------------------|---------|-----------------------------------------------------------------------------------------------------|
+| [ADR/KEY/CNV]    |         | Mutually exclusive keywords indicating access by key or by address . KEY is the default.            |
+|                  | ADR     | Addressed access to ESDS                                                                            |
+|                  | KEY     | Keyed access to KSDS or RRDS                                                                        |
+|                  | CNV     | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+| [DIR/SEQ/SKP]    |         | Mutually exclusive keywords indicating random, or (skip-)sequential access. SEQ is the default.     |
+|                  | DIR     | Direct access to ESDS, KSDS, or RRDS                                                                |
+|                  | SEQ     | Sequential access to ESDS, KSDS or RRDS                                                             |
+|                  | SKP     | Skip sequential access to KSDS or RRDS                                                              |
+| [ARD/LRD]        |         | Mutually exclusive keywords indicating positioning method. ARD is the default.                      |
+|                  | ARD     | Access user-defined record location                                                                 |
+|                  | LRD     | Access last record in the cluster                                                                   |
+| [FWD/BWD]        |         | Mutually exclusive keywords indicating reading direction. FWD is the default.                       |
+|                  | FWD     | Forward processing                                                                                  |
+|                  | BWD     | Backward processing                                                                                 |
+| [SYN/ASY]        |         | Mutually exclusive keywords indicating synch/asynch processing. SYN is the default.                 |
+|                  | SYN     | Synchronous request                                                                                 |
+|                  | ASY     | Asynchronous request                                                                                |
+| [NUP/UPD/NSP]    |         | Mutually exclusive keywords indicating locking option. NUP is the default.                          |
+|                  | NUP     | Not for update                                                                                      |
+|                  | UPD     | For update. Updates are allowed if the cluster was opened with the OUT option specified.            |
+|                  | NSP     | Retain positioning for next sequential access. Used only with OPTCD=DIR: retain file position       |
+| [KEQ/KGE]        |         | Mutually exclusive keywords indicating exact/inexact key match. KEQ is the default.                 |
+|                  | KEQ     | Locate record with exact key match                                                                  |
+|                  | KGE     | Locate record with exact key match, or next higher value                                            |
+| [FKS/GEN]        |         | Mutually exclusive keywords indicating full key / partial key search. FKS is the default.           |
+|                  | FKS     | Full key search                                                                                     |
+|                  | GEN     | Generic key search. KEYLEN required.                                                                |
+| [MVE/LOC]        | MVE     | Mutually exclusive keywords indicating move/locate mode. MVE is the default.                        |
+|                  | MVE     | Move mode. zVSAM moves record between user record buffer and zVSAM buffer.                          |
+|                  | LOC     | Locate mode. Record is not moved, data are processed in the zVSAM buffer, zVSAM provides pointer.   |
+| [RBA/XRBA]       |         | Mutually exclusive keywords indicating 4-byte or 8-byte RBAs. RBA is the default.                   |
+|                  | RBA     | 4-byte RBA values                                                                                   |
+|                  | XRBA    | 8-byte extended RBA values                                                                          |
+| [NWAITX/WAITX  ] |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+| [CR/NRI]         |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
+
+> [!NOTE]
+> RBA/XRBA - Melvyn assumed RBA support. Maybe we should use LRSN/XLRSN instead?
+
+================================================================================================================================================================================
+
+### RPLD macro
+
+The RPLD macro maps the RPL. Its behaviour depends on the ZVSAM option in effect:
+
+| Option   | Effect                  |
+|----------|-------------------------|
+| ZVSAM(0) | Error: zVSAM disabled   |
+| ZVSAM(1) | RPLD1 macro is expanded |
+| ZVSAM(2) | RPLD2 macro is expanded |
+
+The mappings defined in the RPLD1 and RPLD2 macros are very different.
+
+For mapping details, please see the [zRPL layout](zVSAM_V2_Design_Addenda.md#zacb-description)
+or the `RPLD`, `RPLD1` and `RPLD2` macros in the mac folder.
+
+> [!NOTE]
+> The RPLD macro generates no executable code.
+
+> [!NOTE]
+> The RPLD macro can be invoked multiple times, but will generate the DSECT mapping
+> only on its first invocation.
+
+================================================================================================================================================================================
+
+### GENCB RPL macro
+
+The GENCB macro with BLK=RPL will generate or manipulate RPLs and initialize or change them
+according to the parameters specified on the macro invocation. It is for this reason that
+all supported parameters and keywords of the RPL macro (as described above) are supported
+on the GENCB macro when BLK=RPL is specified.
+
+The GENCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                   |
+|----------|--------------------------|
+| ZVSAM(0) | Error: zVSAM disabled    |
+| ZVSAM(1) | GENCB1 macro is expanded |
+| ZVSAM(2) | GENCB2 macro is expanded |
+
+The structure and layout of the RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zRPL description](zVSAM_V2_Design_Addenda.md#zrpl-description) or the RPL2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the GENCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the RPL or CBMR is strongly discouraged. Use GENCB BLK=RPL, SHOWCB RPL=,
+> TESTCB RPL= and/or MODCB RPL= to generate, inspect, test, and/or modify the RPL's content.
+
+All keywords on the GENCB RPL macro are optional. Except BLK= which is required.
+
+The GENCB RPL macro can be coded as follows:
+
+| Opcode        | Operand                   | Remarks                                                                                                 |
+|---------------|---------------------------|---------------------------------------------------------------------------------------------------------|
+| [label] GENCB | BLK=RPL                   | Instructs GENCB to generate 1 or more RPLs                                                              |
+|               | [AM=VSAM]                 | Optional, no other values allowed; VSAM is the default                                                  |
+|               | [COPIES=nr]               | The number of identical RPLs to generate                                                                |
+|               | [WAREA=addr]              | The work area where the RPLs are to be constructed                                                      |
+|               | [LENGTH=nr]               | Length of the work area in bytes                                                                        |
+|               | [LOC=keyword]             | Where GENCB is to allocate dynamically acquired storage - if needed                                     |
+|               | **[other]**               | **Any parameter supported on the RPL macro**                                                            |
+|               | [MF=]                     | Use standard form of GENCB RPL; this is the default                                                     |
+|               | [MF=L/MF=(L,addr,[label]] | Use list form of GENCB RPL                                                                              |
+|               | [MF=(E,addr)]             | Use execute form of GENCB RPL                                                                           |
+|               | [MF=(G,addr,[label])]     | Use generate form of GENCB RPL                                                                          |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### BLK=
+
+Required parameter; specify RPL to generate 1 or more RPLs
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### COPIES=
+
+Number of identical RPLs to generate ranging from 1 to 65535. Defaults to 1.
+
+#### WAREA=
+
+The work area where the RPLs are to be constructed.
+
+- When WAREA is specified, LENGTH must be specified too.
+- When WAREA is not specified, the CBMR handler allocates an area of storage.
+- The address of this area whether via GETMAIN or WAREA is returned in R1.
+- The length of the generated RPL(s) is returned in R0.
+
+#### LENGTH=
+
+- If WAREA= is specified, this paramter is required and specifies the length of the area.
+- If WAREA= is not specified, this parameter is ignored. zVSAM determines how much storage to allocate.
+
+#### LOC=
+
+- If WAREA= is specified, this paramter is ignored.
+- If WAREA= is not specified, this parameter indicates where zVSAM is to allocate storage for the RPL or RPLs.
+
+Supported keywords:
+- BELOW = below 16M (addressable in Amode 24, 31, or 64)
+- ANY   = below 2G  (requires Amode 31 or 64 to address)
+
+#### Other keywords
+
+All parameters supported by the [RPL macro](#rpl-macro) are supported here as well.
+
+See [supported parameter types](#supported-parameter-types) for details.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+| *other*             | Any parameters and/or keywords supported by the RPL macro. Please see the description of the RPL macro for details.                                                                                                     |
+|                     | Supported parameters and keywords on the RPL macro are supported on GENCB RPL as well. Likewise, unsupported parameters and keywords on the RPL macro are not supported on GENCB RPL either.                            |
+|                     | How the parameters can be specified differs per parameter.                                                                                                                                                              |
+|                     | For a complete list of options, please see the IBM manual “DFSMS Macro Instructions for Data Sets” or equivalent for the operating system and version that you are porting to/from.                                     |
+| Please note:        | not supported are expressions like (S,scon) or (\*,scon)                                                                                                                                                                |
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                  |
+|-------------|-----------------|--------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                               |
+| R15=4       | Reason Code=4   | Invalid control block                                                    |
+| R15=4       | Reason Code=9   | WAREA is too small                                                       |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
+
+================================================================================================================================================================================
+
+### MODCB RPL macro
+
+The MODCB macro with RPL=addr will modify an RPL according to the parameters specified on the macro invocation.
+It is for this reason that all parameters and keywords of the RPL macro (as described above) are supported
+on the MODCB macro when RPL=addr is specified.
+
+The MODCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                   |
+|----------|--------------------------|
+| ZVSAM(0) | Error: zVSAM disabled    |
+| ZVSAM(1) | MODCB1 macro is expanded |
+| ZVSAM(2) | MODCB2 macro is expanded |
+
+The structure and layout of the RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zRPL description](zVSAM_V2_Design_Addenda.md#zrpl-description) or the RPL2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the MODCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the RPL or CBMR is strongly discouraged. Use GENCB BLK=RPL, SHOWCB RPL=,
+> TESTCB RPL= and/or MODCB RPL= to generate, inspect, test, and/or modify the RPL's content.
+
+All keywords on the MODCB RPL macro are optional. Except RPL= which is required.
+
+The MODCB RPL macro can be coded as follows:
+
+| Opcode        | Operand                   | Remarks                                             |
+|---------------|---------------------------|-----------------------------------------------------|
+| [label] MODCB | RPL=address               | Points MODCB to the RPL to be modified              |
+|               | [AM=VSAM]                 | Optional, no other values allowed                   |
+|               | **[other]**               | **Any parameter supported on the RPL macro**        |
+|               | [MF=]                     | Use standard form of MODCB RPL; this is the default |
+|               | [MF=L/MF=(L,addr,[label]] | Use list form of MODCB RPL                          |
+|               | [MF=(E,addr)]             | Use execute form of MODCB RPL                       |
+|               | [MF=(G,addr,[label])]     | Use generate form of MODCB RPL                      |
+
+All supported parameters are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### RPL=
+
+Required parameter; specify the address of the RPL to be modified.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### Other keywords
+
+All parameters supported by the [RPL macro](#rpl-macro) are supported here as well.
+
+See [supported parameter types](#supported-parameter-types) for details.
+
+#### ECB=
+
+ECB= can be modified to zero or an address
+- If it's zero then RPLOPT2_ECB is reset (internal ECB)
+- If it's non-zero then RPLOPT2_ECB is set (external ECB)
+
+#### OPTCD=
+
+To clarify how OPTCD works:
+
+All supported subparameters have their own bit in `CBMRRPL_OPTCD` (currently 22),
+Conflicts are `MNOTEd`, eg. bits for FWD and BWD cannot both be on.
+
+If MF=E is specified then the whole of `CBMRRPL_OPTCD` is replaced.
+
+When the RPL is modified, then for each subset, RPLOPTn bits are turned on or off as appropriate
+
+> [!NOTE]
+> I do not entirely agree with how Melvyn has set this up, although I do like his extensive early error detection proposal.
+> There are basically two alternatives that I can see:
+> 1. every OPTCD option has a separate verb code, we generate as many verb codes as we need, no data is needed
+> 2. We generate a single verb code for the OPTCD modification, supplying two 4-byte masks in the data.
+>    One mask to indicate affected postions, the other to indicate the desired bit values for the selected postions.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                  |
+|-------------|-----------------|--------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                               |
+| R15=4       | Reason Code=4   | Invalid control block                                                    |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
+
+================================================================================================================================================================================
+
+### SHOWCB RPL macro
+
+The SHOWCB macro with RPL=addr will return RPL-related fields according to the parameters specified
+on the macro invocation in the order they are specified. Duplicates are permitted.
+
+The SHOWCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                    |
+|----------|---------------------------|
+| ZVSAM(0) | Error: zVSAM disabled     |
+| ZVSAM(1) | SHOWCB1 macro is expanded |
+| ZVSAM(2) | SHOWCB2 macro is expanded |
+
+The structure and layout of the RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zRPL description](zVSAM_V2_Design_Addenda.md#zrpl-description) or the RPL2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the SHOWCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the RPL or CBMR is strongly discouraged. Use GENCB BLK=RPL, SHOWCB RPL=,
+> TESTCB RPL= and/or MODCB RPL= to generate, inspect, test, and/or modify the RPL's content.
+
+The SHOWCB RPL macro can be coded as follows:
+
+| Opcode         | Operand                    | Remarks                                                       |
+|----------------|----------------------------|---------------------------------------------------------------|
+| [label] SHOWCB | RPL=address                | Points MODCB to the RPL to be queried                         |
+|                | [AM=VSAM]                  | Optional, no other values allowed                             |
+|                | AREA=addr                  | Address of return area                                        |
+|                | LENGTH=nr                  | Size of return area in bytes                                  |
+|                | [OBJECT=DATA/INDEX]        | For KSDS: select data or index component; DATA is the default |
+|                | FIELDS=(keywd_list)        | List of keywords indicating which fields to return            |
+|                | [MF=]                      | Use standard form of SHOWCB RPL; this is the default          |
+|                | [MF=L/MF=(L,addr,[label]]  | Use list form of SHOWCB RPL                                   |
+|                | [MF=(E,addr)]              | Use execute form of SHOWCB RPL                                |
+|                | [MF=(G,addr,[label])]      | Use generate form of SHOWCB RPL                               |
+
+All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### RPL=
+
+Required parameter; specify the address of the RPL to be queried.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### AREA=
+
+Required parameter; specify the address of the return area.
+
+#### LENGTH=
+
+Required parameter; specify the length of the return area.
+
+### OBJECT=
+
+Optional parameter; if specified must be `DATA`or `INDEX`. `DATA` is the default.
+
+#### FIELDS=
+
+Specifies a list of keywords. Each keyword specified returns a field of 4 or 8 bytes.
+These return values are stored consecutively in the return area specified in the `AREA`= and `LENGTH`= parameters.
+
+Defined options for the FIELDS parameter are listed below:
+
+| Keyword | Length | Remarks                                        |
+|---------|--------|------------------------------------------------|
+| ACB     | 4      | Pointer to ACB                                 |
+| ACBLEN  | 4      | Length of ACB in bytes                         |
+| AIXPC   | 4      | Alternate index pointer count                  |
+| AREA    | 4      | Pointer to record buffer                       |
+| AREALEN | 4      | Size of record buffer in bytes                 |
+| ARG     | 4      | Pointer to last used search argument field     |
+| ECB     | 4      | Pointer to user-supplied ECB                   |
+| EXLLEN  | 4      | Length of EXLST in bytes                       |
+| FDBK    | 4      | Feedback code for the last request             |
+| FTNCD   | 4      | Function code                                  |
+| KEYLEN  | 4      | Length of key, for use with OPTCD=GEN          |
+| MSGAREA | 4      | Pointer to message area, foxes if not relevant |
+| MSGLEN  | 4      | Length of message area, foxes if not relevant  |
+| NXTRPL  | 4      | Pointer to next RPL, if any                    |
+| RBA     | 4      | 4-byte RBA of last record processed            |
+| RECLEN  | 4      | Length of current record                       |
+| RPLLEN  | 4      | Length of RPL                                  |
+| TRANSID | 4      | Transaction_id; always foxes                   |
+| XRBA    | 8      | 8-byte RBA of last record processed            |
+
+> [!NOTE]
+> Review notes:
+> - `AIXPC` - What info is this indicating? Value will be taken from `PFXAIXN` (to be defined)? Need to validate this decision.
+> - `RBA`/`XRBA` - How to determine??? zVSAM supports these keywords only for ESDS. For any other type of cluster a value of foxes will be returned by default. Need to validate this decision.
+
+Overview of differences with IBM VSAM:
+
+FIELDS=RBA/XRBA – zVSAM supports these keywords only for ESDS.
+For any other type of cluster a value of foxes will be returned by default.
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                          |
+|-------------|-----------------|----------------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                                       |
+| R15=4       | Reason Code=1   | AIXPC or RPLDACB are zero                                                        |
+| R15=4       | Reason Code=4   | Invalid control block                                                            |
+| R15=4       | Reason Code=9   | Length too small                                                                 |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created         |
+
+================================================================================================================================================================================
+
+### TESTCB RPL macro
+
+The TESTCB macro with RPL=addr will test RPL-related fields according to the parameters specified
+on the macro invocation. Only a single test can be specified on each TESTCB invocation.
+TESTCB returns a PSW condition code of 8=Equal when the specified test is met, 7=NotEqual otherwise.
+
+The TESTCB macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                    |
+|----------|---------------------------|
+| ZVSAM(0) | Error: zVSAM disabled     |
+| ZVSAM(1) | TESTCB1 macro is expanded |
+| ZVSAM(2) | TESTCB2 macro is expanded |
+
+The structure and layout of the RPL are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the
+[zRPL description](zVSAM_V2_Design_Addenda.md#zacb-description) or the RPL2 macro in the mac folder.
+
+Likewise, the structure and layout of the CBMR that zVSAM uses to transfer the TESTCB request to the CBMR handler
+are not part of the interface and are therefore not shown in this chapter. For details please see the
+[CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description) or the CBMR macro in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the RPL or CBMR is strongly discouraged. Use GENCB BLK=RPL, SHOWCB RPL=,
+> TESTCB RPL= and/or MODCB RPL= to generate, inspect, test, and/or modify the RPL's content.
+
+The TESTCB RPL macro can be coded as follows:
+
+| Opcode         | Operand                   | Remarks                                                                       | Conditions returned          |
+|----------------|---------------------------|-------------------------------------------------------------------------------|------------------------------|
+| [label] TESTCB | RPL=address               | Points TESTCB to the RPL to be tested                                         | n/a                          |
+|                | [AM=VSAM]                 | Optional, no other values allowed                                             | n/a                          |
+|                | ERET=addr                 | Address of error handling routine                                             | n/a                          |
+|                | [OBJECT=DATA/INDEX]       | For KSDS: select data or index component                                      | n/a                          |
+|                | ACB=address               | ACB address                                                                   | EQ LO HI                     |
+|                | ACBLEN=value              | length of ACB in bytes                                                        | EQ LO HI                     |
+|                | AIXFLAG=AIXPKP            | AIX pointer type. From `RPLAIXID`                                             | EQ is RBA; NE=HI is Key      |
+|                | AIXPC=value               | no. of AIXs in upgrade set. From `PFXAIXN`                                    | EQ LO HI                     |
+|                | AREA=address              | address of record area. From `RPLAREA`                                        | EQ LO HI                     |
+|                | AREALEN=value             | length of record area. From `RPLAREAL`                                        | EQ LO HI                     |
+|                | ARG=address               | Address of ARG. From `RPLARG`                                                 | EQ LO HI                     |
+|                | ECB=address               | Address of ECB. From `RPLECB`                                                 | EQ LO HI                     |
+|                | EXLLEN=value              | EXLST length                                                                  | EQ LO HI                     |
+|                | FDBK=value                | Feedback code of the last request. From `RPLERRCD`                            | EQ LO HI                     |
+|                | FTNCD=value               | Function code. From `RPLCMPON`                                                | EQ LO HI                     |
+|                | IO=COMPLETE               | I/O is complete. From `RPLECB`,`RPLPOST`                                      | EQ is complete; NE=LO is not |
+|                | KEYLEN=value              | Length of key field                                                           | EQ LO HI                     |
+|                | MSGAREA=address           | Address of message area. From `RPLMSGAR`                                      | EQ LO HI                     |
+|                | MSGLEN=value              | Length of message area. From `RPLMSGLN`                                       | EQ LO HI                     |
+|                | NXTRPL=address            | Address of next RPL. From `RPLNXTRP`                                          | EQ LO HI                     |
+|                | OPTCD=(keyword list)      | List of keywords indicating attributes to test                                | EQ NE=HI                     |
+|                |                           | All subparameters have to be true for EQ. From `RPLOPTn`                      |                              |
+|                | RBA=value                 | Current RBA (last 4 bytes). From `RPLCXRBA`                                   | EQ LO HI                     |
+|                | RECLEN=value              | Record Length. From `RPLRECLN`                                                | EQ LO HI                     |
+|                | RPLLEN=value              | RPL length                                                                    | EQ LO HI                     |
+|                | RPLLEN=nr                 |                                                                               | EQ LO HI                     |
+|                | TRANSID=value             | Allowed but not supported                                                     | EQ                           |
+|                | XRBA=value                | Current RBA. From `RPLCXRBA`                                                  | EQ LO HI                     |
+|                | [MF=]                     | Use standard form of SHOWCB RPL; this is the default                          | n/a                          |
+|                | [MF=L/MF=(L,addr,[label]] | Use list form of SHOWCB RPL                                                   | n/a                          |
+|                | [MF=(E,addr)]             | Use execute form of SHOWCB RPL                                                | n/a                          |
+|                | [MF=(G,addr,[label])]     | Use generate form of SHOWCB RPL                                               | n/a                          |
+
+Only a single test can be specified on each TESTCB invocation. See [TESTCB Introduction](#testcb-introduction) for details.
+
+All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+> [!NOTE]
+> Overview of differences with IBM VSAM:
+> - RBA=nr – zVSAM supports this keyword only for ESDS. For any other type of
+>   cluster a value of foxes will be assumed by default.
+
+#### RPL=
+
+Required parameter; specify the address of the RPL to be tested.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### ERET=
+
+Optional address of error handling routine.
+
+#### OBJECT=
+
+Optional parameter; if specified must be `DATA`or `INDEX`. `DATA` is the default.
+
+#### OPTCD=
+
+> [!NOTE]
+> List of supported keywords is missing.
+
+> [!NOTE]
+> All subparameters have to be true for EQ.
+
+#### Keyword=nr/adr
+
+Remaining Keyword parameters specify a value, an address, or a keyword list to be tested.
+
+See [supported parameter types](#supported-parameter-types) for details.
+
+> [!NOTE]
+> Melvyn defined RBA values. We use LRSNs throughout. If we do not drop the RBA support,
+> we'll need to find out why Melvyn introduced RBA values and how he plans to assign/maintain them.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                                                           |
+|-------------|-----------------|-------------------------------------------------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                                                                        |
+| R15=4       | Reason Code=1   | This parameter requires the dataset to be open.                                                                   |
+|             |                 | For fields that have 8-byte values (eg. XRBA) the 4-byte version is requested but the 1st four bytes are not zero |
+| R15=4       | Reason Code=4   | Invalid control block                                                                                             |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created                                          |
+
+================================================================================================================================================================================
+
+### POINT macro
+
+description to be supplied later.
+
+================================================================================================================================================================================
+
+### GET macro
+
+description to be supplied later.
+
+================================================================================================================================================================================
+
+### PUT macro
+
+description to be supplied later.
+
+================================================================================================================================================================================
+
+### ERASE macro
+
+description to be supplied later.
+
+================================================================================================================================================================================
+
+### CHECK macro
+
+description to be supplied later.
+
+================================================================================================================================================================================
+
+### ENDREQ macro
+
+description to be supplied later.
+
+================================================================================================================================================================================
+
+### VERIFY macro
+
+description to be supplied later.
+
+================================================================================================================================================================================
+
+### IDALKADD macro
+
+The IDALKADD macro is not supported by zVSAM V2.
+
+================================================================================================================================================================================
+
+### MRKBFR macro
+
+The MRKBFR macro is not supported by zVSAM V2.
+
+================================================================================================================================================================================
+
+### SRCHBFR macro
+
+The SRCHBFR macro is not supported by zVSAM V2.
+
+================================================================================================================================================================================
+
+### WRTBFR macro
+
+The WRTBFR macro is not supported by zVSAM V2.
+
+================================================================================================================================================================================
+
+## Other interfaces
+
+The remaining paragraphs describe interfaces that are not directly tied
+to one of the three major control structures: ACB, EXLST, RPL.
+
+================================================================================================================================================================================
+
+### CBMR macro
+
+A CBMR is generated for all forms of the '`GENCB`, `MODCB`, `SHOWCB`, and `TESTCB` macros.
+The CBMR is then used to direct the Control Block Management Program to carry out the
+request(s) encoded on the macro invocation.
+
+The CBMR macro maps the Control Block Management Request.
+The CBMR encodes a GENCB, MODCB, SHOWCB or TESTCB request
+and can be used with `BLK=ACB` to indicata an ACB-related Request,
+with `BLK=EXLST` to indicate an EXLST-related request, or with
+`BLK=RPL` to indicate an RPL-related request.
+
+The CBMR macro will generate a CBMR and initialize it according to the parameters
+specified on the macro invocation.
+
+The CBMR macro's function depends on the ZVSAM option in effect:
+
+| Option   | Effect                    |
+|----------|---------------------------|
+| ZVSAM(0) | Error: zVSAM disabled     |
+| ZVSAM(1) | Error: CBMR not available |
+| ZVSAM(2) | CBMR2 macro is expanded   |
+
+The structure and layout of the generated CBMR are not part of the interface definition
+and are therefore not shown in this chapter. For details please see the CBMR2 macro
+in the mac folder.
+
+> [!NOTE]
+> Direct access to subfields in the CBMR is strongly discouraged, as it is not guaranteed
+> to be portable or compatible with future versions of zVSAM.
+
+All keywords on the CBMR macro are optional.
+
+The table below shows how the CBMR macro can be coded:
+
+to be filled in later.
+
+### CBMRD macro
+
+The CBMRD macro maps the CBMR. Its behaviour depends on the ZVSAM option in effect:
+
+| Option   | Effect                    |
+|----------|---------------------------|
+| ZVSAM(0) | Error: zVSAM disabled     |
+| ZVSAM(1) | Error: CBMR not available |
+| ZVSAM(2) | CBMRD2 macro is expanded  |
+
+For mapping details, please see the [CBMR description](zVSAM_V2_Design_Addenda.md#cbmr-description)
+or the `CBMRD2` macro in the mac folder.
+
+> [!NOTE]
+> The CBMRD macro generates no executable code.
+
+> [!NOTE]
+> The CBMRD macro can be invoked multiple times, but will generate the DSECT mapping
+> only on its first invocation.
+
+================================================================================================================================================================================
+
+### SHOWCB macro
+
+In addition to the `SHOWCB ACB=`, `SHOWCB EXLST=`, `SHOWCB RPL=` macro invocations, the SHOWCB macro also
+supports being called with no specified block type.
+
+The SHOWCB macro without a block will return length fields according to the parameters specified on the
+macro invocation in the order they are specified. Duplicates are permitted.
+
+| Opcode         | Operand               | Remarks                                                  |
+|----------------|-----------------------|----------------------------------------------------------|
+| [label] SHOWCB | [AM=VSAM]             | Optional, no other values allowed                        |
+|                | AREA=address          | Address of return area                                   |
+|                | LENGTH=value          | Size of return area in bytes                             |
+|                | FIELDS=(keyword list) | List of keywords indicating which fields to return       |
+|                | [MF=]                 | See the [description of MF=](#mf-parameter)              |
+
+All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### AREA=
+
+Required parameter; specify the address of the return area.
+
+#### LENGTH=
+
+Required parameter; specify the length of the return area.
+
+#### FIELDS=
+
+Specifies a list of keywords. Each keyword specified returns a field of 4 or 8 bytes. These return values are stored consecutively in the return area specified in the `AREA`= and `LENGTH`= parameters.
+
+Supported options for the FIELDS parameter are listed below:
+
+| Keyword | Length | Remarks                    |
+|---------|--------|----------------------------|
+| ACBLEN  | 4      | Length of ACB in bytes     |
+| EXLLEN  | 4      | Length of EXLST in bytes   |
+| RPLLEN  | 4      | Length of RPL in bytes     |
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                  |
+|-------------|-----------------|--------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                               |
+| R15=4       | Reason Code=4   | Invalid control block                                                    |
+| R15=4       | Reason Code=9   | Length too small                                                         |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created |
+
+================================================================================================================================================================================
+
+### TESTCB macro
+
+In addition to the `TESTCB ACB=`, `TESTCB EXLST=`, `TESTCB RPL=` macro invocations, the TESTCB macro also
+supports being called with no specified block type.
+
+The TESTCB macro without a block will test length fields according to the parameters specified on the
+macro invocation in the order they are specified. Duplicates are permitted.
+| Opcode         | Operand               | Remarks                                                  | Conditions returned |
+|----------------|-----------------------|----------------------------------------------------------|---------------------|
+| [label] TESTCB | [AM=VSAM]             | Optional, no other values allowed                        |                     |
+|                | [ERET=address]        | Address of error handling routine                        |                     |
+|                | ACBLEN=value          | ACB length                                               | EQ LO HI            |
+|                | RPLLEN=value          | RPL length                                               | EQ LO HI            |
+|                | EXLLEN=value          | EXLST length                                             | EQ LO HI            |
+|                | [MF=]                 | See the [description of MF=](#mf-parameter               |                     |
+
+All supported parameters and keywords are implemented compatibly with IBM's VSAM implementation.
+For details, please refer to the relevant IBM manual.
+
+#### AM=
+
+VSAM is the default and the only supported value.
+
+#### ERET=
+
+Optional address of error handling routine.
+
+#### Keyword=value
+
+Remaining Keyword parameters specify a value to be tested.
+
+See [supported parameter types](#supported-parameter-types) for details.
+
+#### MF=
+
+Indicates the Macro Format.
+If specified, the [label] subparameter is EQUated to the length of the CBMR.
+See [MF= parameter](#mf-parameter) for details.
+
+#### Return and Reason Codes
+
+| Return Code | Reason Code     | Meaning                                                                          |
+|-------------|-----------------|----------------------------------------------------------------------------------|
+| R15=0       | Reason Code=n/a | Successful                                                                       |
+| R15=4       | Reason Code=4   | Invalid control block                                                            |
+| R15=8       | Reason Code=n/a | An attempt was made to update a CBMR with a field not previously created         |
+
+================================================================================================================================================================================
+
+### BLDVRP macro
+
+The BLDVRP macro is not supported by zVSAM V2.
+
+================================================================================================================================================================================
+
+### DLVRP macro
+
+The DLVRP macro is not supported by zVSAM V2.
+
+================================================================================================================================================================================
+
+### TESTCB Introduction
+
+Only a single test can be specified on each TESTCB invocation.
+In all cases the value or address supplied in the macro is compared to a constant or a value in a control block.
+Many parameters have been added in zVSAM V2 to bring it in line with SHOWCB.
+
+An extra column is provided in the charts to indicate the type of condition code that could be returned.
+the notation NE=LO (etc) is used to indicate that although LO may be returned the preferred test is for EQ/NE.
+
+Where a parameter may have subparameters, all must be true for an EQ to be returned. If unsupported parameters
+or subparameters are specified then NE=LO is returned.
+
+It is highly recommended that a branch table is placed after the TESTCB to capture any error conditions, the
+condition code is unpredictable if an error does occur.
+
+Example:
+```
+         TESTCB ACB=MYACB,NCIS=20,MF=I
+         B     *+4(R15)
+         J     OK
+         J     ERR04
+         J     ERR08
+OK       DS    0H
+```
+
+> [!NOTE]
+> IBMs TESTCB macro is very badly syntax checked, zVSAM V2 has tightened the rules.
+> Should imported code result in unexpected errors, please notify the z390 support team.
+
+================================================================================================================================================================================
+
+### Supported parameter types
+
+The parameter types described here apply to parameter specification on the GENCB, MODCB, SHOWCB, and TESTCB macros.
+
+For abs expression (called value in the macro definitions):
+
+| Parameter type        | For MF=I/G/L                   | For MF=E                       |
+|-----------------------|--------------------------------|--------------------------------|
+| n                     | Permitted                      | Permitted                      |
+| EQUated numeric value | Permitted, but not for LENGTH= | Permitted, but not for LENGTH= |
+
+For addresses:
+
+| Parameter type               | For MF=I/G/L                        | For MF=E                                | Notes |
+|------------------------------|-------------------------------------|-----------------------------------------|-------|
+| n                            | Permitted.                          | Permitted, but not for ERET=            | 1, 2  |
+| EQUated numeric value        | Permitted, but not for LENGTH=      | Permitted, but not for LENGTH=          | 1     |
+| ADCON-type address           | Permitted                           | Permitted                               | 4     |
+| Register form (reg)          | Permitted, but not regs 0,1,14,15   | Permitted, but not regs 0,1,14,15       |       |
+| Indirect form with ADCON     | Permitted for certain 8-byte fields | Permitted for certain 8-byte fields     | 4     |
+| (\*,address)                 | See Note 3                          | See Note 3                              | 3     |
+| Indirect form with disp(reg) | Permitted for certain 8-byte fields | Permitted for certain 8-byte fields     |       |
+| (\*,n(reg))                  | reg cannot be 0,1,14,15             | reg cannot be 0,1,14,15                 | 3     |
+
+> [!NOTE]
+> Note 1: The use of numeric values instead of an address may lead to accessing low storage and should be avoided.
+
+> [!NOTE]
+> Note 2: An exception is TESTCB EXLST= where a zero value for EODAD, JRNAD, LERAD and SYNAD means "don't test the address".
+
+> [!NOTE]
+> Note 3: The following fields only support the indirect form in TESTCB:
+> - `SDTASZ`, `STMST` and all `X*` fields.
+> - The lack of proper syntax checking in the IBM macro can cause access to low storage or
+>   environmental destruction, so the following syntaxes are not allowed: `(*,*)` and `(*,n)`.
+
+> [!NOTE]
+> Note 4: not supported are expressions like `(S,scon)` or `(*,scon)`
+
+================================================================================================================================================================================
+
 ### MF= parameter
 
 The MF= parameter as described here applies to its usage with the GENCB, MODCB, SHOWCB, and TESTCB macros.
@@ -989,27 +2559,3 @@ The MF= parameter as described here applies to its usage with the GENCB, MODCB, 
 > - The address, if specified, can be a label or a register. Registers 0, 1, 14, and 15 are reserved.
 > - Specifying a register is not supported with any of the three MF=L variants.
 
-### CBMR macro
-
-A CBMR is generated for all forms of the '`GENCB`, `MODCB`, `SHOWCB`, and `TESTCB` macros.
-The CBMR is then used to direct the Control Block Management Program to carry out the
-request(s) encoded on the macro invocation.
-
-The CBMR macro maps the Control Block Management Request.
-The CBMR encodes a GENCB, MODCB, SHOWCB or TESTCB request
-and can be used with `BLK=ACB` to indicata an ACB-related Request,
-with `BLK=EXLST` to indicate an EXLST-related request, or with
-`BLK=RPL` to indicate an RPL-related request.
-
-The behaviour of the CBMR macro depends on the ZVSAM option in effect:
-
-| Option   | Effect                   |
-|----------|--------------------------|
-| ZVSAM(0) | Error: requires zVSAM(2) |
-| ZVSAM(1) | Error: requires zVSAM(2) |
-| ZVSAM(2) | CBMR macro is expanded   |
-
-The CBMR is not available with zVSAM V1; it is implemented for zVSAM V2 only.
-
-For mapping details, please see the [CBMR layout](zVSAM_V2_Design_Addenda.md#cbmr-description)
-or the `CBMR` macro in the mac folder.

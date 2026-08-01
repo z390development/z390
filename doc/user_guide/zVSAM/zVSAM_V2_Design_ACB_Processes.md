@@ -2,26 +2,6 @@
 
 This document describes the logical processes for ACB-based requests to be implemented in zVSAM V2.
 
-## ACB
-
-## GENCB ACB
-
-## MODCB ACB
-
-## SHOWCB ACB
-
-## TESTCB ACB
-
-## EXLST
-
-## GENCB EXLST
-
-## MODCB EXLST
-
-## SHOWCB EXLST
-
-## TESTCB EXLST
-
 ## Open
 
 Open logic has two major components: the open macro and the actual run-time logic to execute a request to open a file or a number of files.
