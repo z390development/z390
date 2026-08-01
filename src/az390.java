@@ -5907,6 +5907,7 @@ private void process_bal_op(){
  *    for update of mac_call_gen,
  *    call reformating, and delay flags
  *    mac_call_first and mac_call_last.
+ * If you change this routine, change list_bal_line_error() too.  RPI 877
  */
 private void list_bal_line(){
     if (!check_list_bal_line()){ // RPI 484 RPI 891
@@ -5921,6 +5922,53 @@ private void list_bal_line(){
     	cur_line_type     = xref_file_type[bal_line_xref_file_num[bal_line_index]];
     	cur_line_file_num = bal_line_xref_file_num[bal_line_index];
     	put_prn_line(tz390.get_hex(list_obj_loc,6)
+		  + " " + list_obj_code.substring(0,16) 
+		  + " " + hex_bddd1_loc 
+		  + " " + hex_bddd2_loc 
+		  + " " + tz390.get_cur_bal_line_id(cur_line_file_num,
+                  bal_line_xref_file_line[bal_line_index],
+                  bal_line_num[bal_line_index],
+                  mac_call_gen, // RPI 891 
+                  cur_line_type) 
+		  + bal_line);
+    }
+    force_list_bal = false;   // RPI 285
+    update_list_bal_line();
+    if (list_use){
+    	list_use();
+    	list_use = false;
+    }
+}
+
+
+
+/**
+ * list bal line with first 8 bytes of
+ * object code if any 
+ * and turn off list_bal_line request
+ * <br />
+ * Note:
+ *    See comments processing case 0
+ *    for update of mac_call_gen,
+ *    call reformating, and delay flags
+ *    mac_call_first and mac_call_last.
+ * This routine is a clone of list_bal_line but
+ * excludes the PC from the listing.  RPI 877
+ * If you change this routine, change list_bal_line() too.
+ */
+private void list_bal_line_error(){
+    if (!check_list_bal_line()){ // RPI 484 RPI 891
+    	update_list_bal_line();
+    	return;
+    }
+    if (list_obj_code.length() < 16){
+    	list_obj_code = list_obj_code.concat("                ").substring(0,16);
+    } 
+    list_obj_loc = loc_start;
+    if (gen_obj_code){ // RPI 581
+    	cur_line_type     = xref_file_type[bal_line_xref_file_num[bal_line_index]];
+    	cur_line_file_num = bal_line_xref_file_num[bal_line_index];
+    	put_prn_line("      "       // Do not diplay the PC on error lines  RPI 877
 		  + " " + list_obj_code.substring(0,16) 
 		  + " " + hex_bddd1_loc 
 		  + " " + hex_bddd2_loc 
@@ -8258,7 +8306,10 @@ private void log_error(int error,String msg){
 	  if (gen_obj_code){ // RPI 484
 		 if (!mz390_abort){ // RPI 433 don't duplicate mz error line
 			 force_list_bal = true;  // RPI 285
-			 list_bal_line();
+             list_obj_code = "";             // RPI 877
+             hex_bddd1_loc = "      ";       // RPI 877
+             hex_bddd2_loc = "      ";       // RPI 877
+			 list_bal_line_error();          // RPI 877
 		 }
    	     force_list_bal = true;  // RPI 285
          set_file_line_xref();
