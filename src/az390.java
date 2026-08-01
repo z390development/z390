@@ -5953,7 +5953,7 @@ private void list_bal_line(){
  *    call reformating, and delay flags
  *    mac_call_first and mac_call_last.
  * This routine is a clone of list_bal_line but
- * excludes the PC and object code from the listing.  RPI 877
+ * excludes the PC and object code from the listing.   RPI 877
  * If you change this routine, change list_bal_line() too.
  */
 private void list_bal_line_error(){
