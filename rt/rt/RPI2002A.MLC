@@ -52,7 +52,7 @@ RPI20020 DS    0H
 * Set up working storage areas
 *
 ***********************************************************************
-         MVC   WAEYE,=CL8'RPI2002A'    Set eyecatcher
+*        MVC   WAEYE,=CL8'RPI2002A'    Set eyecatcher
 ***********************************************************************
 *
 * 0D = BASR - Branch and Save

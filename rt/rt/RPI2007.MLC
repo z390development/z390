@@ -52,7 +52,7 @@ RPI2007A DS    0H
 * Set up working storage areas
 *
 ***********************************************************************
-         MVC   WAEYE,=CL8'RPI2007'     Set eyecatcher
+*        MVC   WAEYE,=CL8'RPI2007'     Set eyecatcher
 ***********************************************************************
 *
 * Set addressing modes and initial GG1

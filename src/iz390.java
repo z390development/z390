@@ -59,6 +59,7 @@ public iz390()
 	    * 10/20/07 RPI  713 change file name case for Linux
 	    * 09/25/09 RPI 1080 replace init_tables with init_tz390
         * 2025-09-14 AFK  Add/fix javadoc comments
+        * 2026-07-03 AFK  #857 IVP behaviour inconsistent
 	    ****************************************************
 	    *                                       last RPI
 	    *                                        
@@ -84,84 +85,86 @@ public iz390()
         System.out.println("IVP OS   version = " + os_ver);
         System.out.println("IVP J2SE version = " + j2se_ver);
         System.out.println("IVP z390 version = " + z390_ver);
-	    ivp_file_name = z390_dir + File.separator + "Z390.IVP"; // RPI 713
-        ivp_file      = new File(ivp_file_name);
-	    if (ivp_file.isFile()){
-        	try {
-				ivp_buff = new BufferedReader(new FileReader(ivp_file_name));
-				ivp_ver = ivp_buff.readLine();
-				if (ivp_ver.length() < 7 || !ivp_ver.substring(0,7).equals(z390_ver.substring(0,7))){
-					System.out.println("IVP z390 base install not equal z390.jar PTF version");
-					ivp_rc = 8;
-				}
-        	} catch (Exception e){
-        		System.out.println("IVP I/O error - " + e.toString());
-        		ivp_rc = 16;
-        	}
-	    } else if (z390_base_ver.compareTo("V1.3.03") > 0) {
-	    	System.out.println("IVP z390 base version file Z390.IVP not found");
-	    	ivp_rc = 8;
-	    }
-	    if (j2se_ver.length() < 3 || j2se_ver.substring(0,3).compareTo("1.5") < 0){
-	    	System.out.println("IVP J2SE 1.5+ required for z390");
-	    	ivp_rc = 16;
-	    }
-	    /*
-	     * check if RT optional installs ok
-	     */
-	    ivp_file_name = z390_dir + File.separator + "rt";
-        ivp_file      = new File(ivp_file_name);
-	    if (!ivp_file.isDirectory()){
-	    	System.out.println("IVP RT optional  zip not installed");
-	    	ivp_rc = 4;
-	    } else {
-	    	ivp_file_name = z390_dir + File.separator + "rt" + File.separator + "Z390.IVP";
-	    	ivp_file      = new File(ivp_file_name);
-	    	if (ivp_file.isFile()){
-	    		try {
-	    			ivp_buff = new BufferedReader(new FileReader(ivp_file_name));
-	    			ivp_ver = ivp_buff.readLine();
-	    			System.out.println("IVP z390 install = " + ivp_ver);
-	    			if (ivp_ver.length() < 7 || !ivp_ver.substring(0,7).equals(z390_ver.substring(0,7))){
-	    				System.out.println("IVP z390 RT.zip install not equal base version");
-	    				ivp_rc = 8;
-	    			} else {
-	    				System.out.println("IVP RT   install = " + ivp_ver);
-	    			}
-	    		} catch (Exception e){
-	    			System.out.println("IVP I/O error - " + e.toString());
-	    			ivp_rc = 8;
-	    		}
-	    	}
-	    }
-	    /*
-	     * check if MVS optional install ok
-	     */
-	    ivp_file_name = z390_dir + File.separator + "mvs";
-        ivp_file      = new File(ivp_file_name);
-	    if (!ivp_file.isDirectory()){
-	    	System.out.println("IVP MVS optional  zip not installed");
-	    	ivp_rc = 4;
-	    } else {
-	    	ivp_file_name = z390_dir + File.separator + "mvs" + File.separator + "Z390.IVP";
-	    	ivp_file      = new File(ivp_file_name);
-	    	if (ivp_file.isFile()){
-	    		try {
-	    			ivp_buff = new BufferedReader(new FileReader(ivp_file_name));
-	    			ivp_ver = ivp_buff.readLine();
-	    			System.out.println("IVP z390 install = " + ivp_ver);
-	    			if (ivp_ver.length() < 7 || !ivp_ver.substring(0,7).equals(z390_ver.substring(0,7))){
-	    				System.out.println("IVP z390 MVS.zip install not equal base version");
-	    				ivp_rc = 8;
-	    			} else {
-	    				System.out.println("IVP MVS  install = " + ivp_ver);
-	    			}
-	    		} catch (Exception e){
-	    			System.out.println("IVP I/O error - " + e.toString());
-	    			ivp_rc = 8;
-	    		}
-	    	}
-	    }
+        /*                                                                              // #857
+         * when this program runs - the jar must be okay!                               // #857
+         */                                                                             // #857
+        System.out.println("IVP z390   assembler operational");                         // #857
+        /*                                                                              // #857
+         * check if zCobol install is ok                                                // #857
+         */                                                                             // #857
+        ivp_file_name = z390_dir + File.separator + "zcobol" + File.separator + "lib";  // #857
+        ivp_file      = new File(ivp_file_name);                                        // #857
+        if (!ivp_file.isDirectory()){                                                   // #857
+            System.out.println("IVP zCobol component not installed");                   // #857
+            ivp_rc = 4;                                                                 // #857
+        } else {                                                                        // #857
+            ivp_file_name = ivp_file_name + File.separator + "ZC390LIB.390";            // #857
+            ivp_file      = new File(ivp_file_name);                                    // #857
+            if (!ivp_file.isFile()){                                                    // #857
+                System.out.println("IVP zCobol component not built");                   // #857
+                ivp_rc = 4;                                                             // #857
+            } else {                                                                    // #857
+                System.out.println("IVP zCobol component operational");                 // #857
+            }                                                                           // #857
+        }                                                                               // #857
+        /*                                                                              // #857
+         * check if zCics install is ok                                                 // #857
+         */                                                                             // #857
+        ivp_file_name = z390_dir + File.separator + "cics";                             // #857
+        ivp_file      = new File(ivp_file_name);                                        // #857
+        if (!ivp_file.isDirectory()){                                                   // #857
+            System.out.println("IVP zCics  component not installed");                   // #857
+            ivp_rc = 4;                                                                 // #857
+        } else {                                                                        // #857
+            ivp_file_name = ivp_file_name + File.separator + "Z390KCP.390";             // #857
+            ivp_file      = new File(ivp_file_name);                                    // #857
+            if (!ivp_file.isFile()){                                                    // #857
+                System.out.println("IVP zCics  component not built");                   // #857
+            //  ivp_rc = 4;       // **!! Treat as normal condition                     // #857
+            } else {                                                                    // #857
+                System.out.println("IVP zCics  component operational");                 // #857
+            }                                                                           // #857
+        }                                                                               // #857
+        /*                                                                              // #857
+         * check if zSort install is ok                                                 // #857
+         */                                                                             // #857
+        ivp_file_name = z390_dir + File.separator + "linklib";                          // #857
+        ivp_file      = new File(ivp_file_name);                                        // #857
+        if (!ivp_file.isDirectory()){                                                   // #857
+            System.out.println("IVP zSort  component not installed");                   // #857
+            ivp_rc = 4;                                                                 // #857
+        } else {                                                                        // #857
+            ivp_file_name = ivp_file_name + File.separator + "SORT.390";                // #857
+            ivp_file      = new File(ivp_file_name);                                    // #857
+            if (!ivp_file.isFile()){                                                    // #857
+                System.out.println("IVP zSort  component not built");                   // #857
+                ivp_rc = 4;                                                             // #857
+            } else {                                                                    // #857
+                System.out.println("IVP zSort  component operational");                 // #857
+            }                                                                           // #857
+        }                                                                               // #857
+        /*                                                                              // #857
+         * zVSAM v1 built into z390 - always operational!                               // #857
+         */                                                                             // #857
+        System.out.println("IVP zVSAM  component operational");                         // #857
+        /*                                                                              // #857
+         * check if RT suite is available                                               // #857
+         */                                                                             // #857
+        ivp_file_name = z390_dir + File.separator + "z390test";                         // #857
+        ivp_file      = new File(ivp_file_name);                                        // #857
+        if (!ivp_file.isDirectory()){                                                   // #857
+            System.out.println("IVP Regr. test suite not installed");                   // #857
+            ivp_rc = 4;                                                                 // #857
+        } else {                                                                        // #857
+            ivp_file_name = ivp_file_name + File.separator + "gradlew.bat";             // #857
+            ivp_file      = new File(ivp_file_name);                                    // #857
+            if (!ivp_file.isFile()){                                                    // #857
+                System.out.println("IVP Regr. test suite not built");                   // #857
+                ivp_rc = 4;                                                             // #857
+            } else {                                                                    // #857
+                System.out.println("IVP Regr. test suite operational");                 // #857
+            }                                                                           // #857
+        }                                                                               // #857
 	    /*
 	     * check return code and exit
 	     */

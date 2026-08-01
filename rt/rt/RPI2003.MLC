@@ -83,7 +83,7 @@ RPI2003A DS    0H
          ST    R1,WAPARM@              Save pointer to parameter list
          STMH  R12,R12,WAR12H          Save high half of R12
          LLGTR R12,R12                 Ensure high half of R12 is zero
-         MVC   WAEYE,=CL8'RPI2003'     Set eyecatcher
+*        MVC   WAEYE,=CL8'RPI2003'     Set eyecatcher
 ***********************************************************************
 *
 * 9A = LAM - Load Access Multiple
