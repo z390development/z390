@@ -1,12 +1,19 @@
 package org.z390.test
 
+//
+// This groovy script is to run as early as possible because it tests our groovy procedures
+// If any of the below tests fail, further tetsing is pointless
+//
+
 import org.junit.jupiter.api.Test
 
-class TestZ390Test extends z390Test {
+class BeginZ390Test extends z390Test {
 
     var sysmac = basePath("mac")
     var options = ['trace', 'noloadhigh', "SYSMAC(${sysmac})"]
-
+//
+// validate groovy version of asm/asml/asmlg scripts
+//
     @Test
     void testAsm() {
         int rc = this.asm(basePath("tests", "TESTINS1"), *options)
@@ -27,7 +34,9 @@ class TestZ390Test extends z390Test {
         this.printOutput()
         assert rc == 0
     }
-
+//
+// validate groovy script to assemble inline code
+//
     @Test
     void testInlineSource() {
 
@@ -51,7 +60,21 @@ class TestZ390Test extends z390Test {
         assert rc == 12   // Check return code
         assert this.fileData['ERR'] =~ /AZ390 AZ390I invalid relative offset expression/  // check error present
     }
-
+//
+// validate groovy version of cblc/cblcl/cblclg scripts
+//
+    @Test
+    void testCblc() {
+        int rc = this.cblc(basePath("zcobol", "demo", "HELLO"))
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void testCblcl() {
+        int rc = this.cblcl(basePath("zcobol", "demo", "HELLO"))
+        this.printOutput()
+        assert rc == 0
+    }
     @Test
     void testCblclg() {
         int rc = this.cblclg(basePath("zcobol", "demo", "HELLO"))
