@@ -321,7 +321,7 @@ In addition to the offset, the RPTR contains flags to identify the type and stat
 
 The records are allocated from the other end of the block (preceding the Footer area) to consolidate free space at the centre.
 
-![Diagram showing layout of a Data Block](zVSAM_V2_Drawing_Block_Type_Data.jpg)
+![Diagram showing layout of a Data Block](img/zVSAM_V2_Drawing_Block_Type_Data.jpg)
 
 It is possible to reserve an amount of freespace at load time which also applies if a block is split.
 It is specified in the catalog as `DATAFREESPACE=nn`, where nn is a percentage of the available space.
@@ -341,7 +341,7 @@ outlined in the picture below. Please note that all depicted pointers are block 
 indicated field, and ends at the block it points to. The location where the arrows attach has no meaning since
 it's a block pointer.
 
-![Diagram showing layout of a Data Block Chain](zVSAM_V2_Drawing_Chain_Data_Blocks.jpg)
+![Diagram showing layout of a Data Block Chain](img/zVSAM_V2_Drawing_Chain_Data_Blocks.jpg)
 
 #### Data Block Structure (SPANNED=YES)
 
@@ -356,7 +356,7 @@ The picture shows the prefix area's pointer to start/end block of both the data 
 It also shows the first and second block pointer on each chain pointing to one another. Same thing for the second and
 third block pointer on each chain.
 
-![Diagram showing layout of a Segmented Data Block Chain](zVSAM_V2_Drawing_Chain_Segmented_Data_Blocks.jpg)
+![Diagram showing layout of a Segmented Data Block Chain](img/zVSAM_V2_Drawing_Chain_Segmented_Data_Blocks.jpg)
 
 All depicted pointers are block pointers.
 Each originates with the indicated field, and ends at the block it points to.
