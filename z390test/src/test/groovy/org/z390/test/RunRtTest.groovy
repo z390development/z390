@@ -1,11 +1,59 @@
 package org.z390.test
 
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.Test
+import static org.junit.jupiter.api.DynamicTest.dynamicTest
 
-class RunRtTests extends z390Test {
+class RunRtTest extends z390Test {
     var sysmac = basePath("mac")
     var syscpy = basePath("mac")
     var libs = ["SYSMAC(+${sysmac})", "SYSCPY(+${syscpy})"]
+    var options  = ['noloadhigh bal notiming stats', *libs]
+
+    void test_module(String moduleName) {
+        int rc = this.asmlg(basePath("rt", "test", moduleName), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @TestFactory
+    Collection<DynamicTest> test_pgms() {
+        var tests = []
+        var modules = [
+                'TESTACT1', 'TESTAIN1', 'TESTAIN2', 'TESTAIN3', 'TESTASM1', 'TESTASM2', 'TESTCAL1', 'TESTCAL2'
+        ]
+        modules.each {
+            module -> tests.add(
+                    dynamicTest("test RT program ${module}", () -> test_module(module)))
+        }
+        return tests
+    }
+
+    @Test
+    void test_TESTBLD1() {
+        // Prerequisites for BLDL/LOAD: TESTSUB1 and DEMO load modules
+        int rc = this.asml(basePath("rt", "test", "TESTSUB1"), *rt1Options)
+        this.printOutput()
+        assert rc == 0
+        // the next step duplicates the DEMO assembly - that's easier than synchronizing with RunMvsTests
+        rc = this.asml(basePath("mvs", "demo", "DEMO"), *rt1Options)
+        this.printOutput()
+        assert rc == 0
+        
+        var sys390 = "SYS390(${basePath('rt', 'test')}+${basePath('mvs', 'demo')})"
+        rc = this.asmlg(basePath("rt", "test", "TESTBLD1"), *options, sys390)
+        this.printOutput()
+        assert rc == 0
+    }
+
+
+
+
+
+    // The below is pre-existing code that we will need to validate/revamp later
+
     // rt1 = asmlg
     var rt1Options = ['bal', 'notiming', 'stats', *libs]
     // rt3 = mz390
