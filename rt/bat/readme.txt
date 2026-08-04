@@ -5,6 +5,7 @@ The current regression test commands are:
 RUNASMTESTS - verifies assembler instruction execution
 RUNBR14OWE  - verifies test IEFBR14 asm[l[g]] with Okay, Warning, Error variants
 RUNCBLTESTS - verifies zcobol instructions
+RUNCMDPROC  - verifies internal command processor (shell calls)
 RUNCODEPAGETESTS - verifies usage of CODEPAGE issue #451
 RUNMFACC    - verify MainFrame Assembler Coding Contest solutions
 RUNMVSTEST  - verify MVS 3.8 maclib usage
@@ -20,6 +21,7 @@ RUNTESTOPT  - verify indirection usage in options files
 RUNVSAM1    - verify zVSAM V1 testcases
 RUNVSAM2    - verify zVSAM V2 macro code
 RUNZPAR     - verify Zcobol Program Analysis Report
+TESTCMD1    - for use by RUNCMDPROC, testcase for TESTCMD1
 ZOPCHECK    - verify all z390 assembler instructions generate correct code
 
 End regression test commands

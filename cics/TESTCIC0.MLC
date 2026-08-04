@@ -1,4 +1,4 @@
-         TITLE 'TESTCIC1 - TEST CICS DFHRESP LITERALS'
+         TITLE 'TESTCIC0 - TEST CICS DFHRESP LITERALS'
 *********************************************************************
 * z390 - Mainframe assembler emulator and run-time engine
 * Copyright (C) 2021 z390 Assembler LLC
@@ -33,8 +33,12 @@
 * 11/18/08 RPI 951  ADD DFHRESP ENQBUSY=F'55'                        
 * 06/14/09 RPI 1057 ADD DFHRESP(SUPPRESSED)=F'72' AND END=F'83'        
 * 09/02/09 RPI 1079 ADD DFHRESP(NOTALLOC)=F'61'                        
+* 08/03/26 AFK      Fix comparisons being assembled compare against
+*                       self - operand 1 and 2 being the same
+*                   Rename TESTCIC1 to TESTCIC0 and move from rt\test
+*                       to cics folder
 *********************************************************************
-TESTCIC1 RT1   MAIN
+TESTCIC0 RT1   MAIN
          EQUREGS
 X        DS    F
          RT1   START
@@ -69,90 +73,91 @@ X        DS    F
          MVC   X,DFHRESP(NOTALLOC)      RPI 1079
          MVC   X,DFHRESP(SUPPRESSED)    RPI 1057
          MVC   X,DFHRESP(END)           RPI 1057
-         CLC   =F'0',DFHRESP(NORMAL)      
+         CLC   =FL4'0',DFHRESP(NORMAL)      
          RT1   CCE
-         CLC   =F'1',DFHRESP(ERROR)       
+         CLC   =FL4'1',DFHRESP(ERROR)       
          RT1   CCE
-         CLC   =F'11',DFHRESP(TERMIDERR)    RPI 928      
+         CLC   =FL4'11',DFHRESP(TERMIDERR)    RPI 928      
          RT1   CCE
-         CLC   =F'12',DFHRESP(FILENOTFOUND) RPI 687      
+         CLC   =FL4'12',DFHRESP(FILENOTFOUND) RPI 687      
          RT1   CCE
-         CLC   =F'12',DFHRESP(DSIDERR)      RPI 905      
+         CLC   =FL4'12',DFHRESP(DSIDERR)      RPI 905      
          RT1   CCE
-         CLC   =F'13',DFHRESP(NOTFND)       RPI 687 RPI 690
+         CLC   =FL4'13',DFHRESP(NOTFND)       RPI 687 RPI 690
          RT1   CCE
-         CLC   =F'14',DFHRESP(DUPREC)       RPI 687
+         CLC   =FL4'14',DFHRESP(DUPREC)       RPI 687
          RT1   CCE
-         CLC   =F'15',DFHRESP(DUPKEY)       RPI 687      
+         CLC   =FL4'15',DFHRESP(DUPKEY)       RPI 687      
          RT1   CCE
-         CLC   =F'16',DFHRESP(INVREQ)    
+         CLC   =FL4'16',DFHRESP(INVREQ)    
          RT1   CCE
-         CLC   =F'17',DFHRESP(IOERR)        RPI 928      
+         CLC   =FL4'17',DFHRESP(IOERR)        RPI 928      
          RT1   CCE
-         CLC   =F'18',DFHRESP(NOSPACE)      RPI 687      
+         CLC   =FL4'18',DFHRESP(NOSPACE)      RPI 687      
          RT1   CCE
-         CLC   =F'19',DFHRESP(NOTOPEN)      RPI 687      
+         CLC   =FL4'19',DFHRESP(NOTOPEN)      RPI 687      
          RT1   CCE
-         CLC   =F'20',DFHRESP(ENDFILE)      RPI 687      
+         CLC   =FL4'20',DFHRESP(ENDFILE)      RPI 687      
          RT1   CCE
-         CLC   =F'21',DFHRESP(ILLOGIC)      RPI 729      
+         CLC   =FL4'21',DFHRESP(ILLOGIC)      RPI 729      
          RT1   CCE
-         CLC   =F'22',DFHRESP(LENGERR)   
+         CLC   =FL4'22',DFHRESP(LENGERR)   
          RT1   CCE
-         CLC   =F'26',DFHRESP(ITEMERR)   RPI 662
+         CLC   =FL4'26',DFHRESP(ITEMERR)   RPI 662
          RT1   CCE
-         CLC   =F'27',DFHRESP(PGMIDERR)  
+         CLC   =FL4'27',DFHRESP(PGMIDERR)  
          RT1   CCE
-         CLC   =F'28',DFHRESP(TRANSIDERR)   RPI 928      
+         CLC   =FL4'28',DFHRESP(TRANSIDERR)   RPI 928      
          RT1   CCE
-         CLC   =F'29',DFHRESP(ENDDATA)      RPI 928      
+         CLC   =FL4'29',DFHRESP(ENDDATA)      RPI 928      
          RT1   CCE
-         CLC   =F'31',DFHRESP(EXPIRED)   RPI 751
+         CLC   =FL4'31',DFHRESP(EXPIRED)   RPI 751
          RT1   CCE
-         CLC   =F'36',DFHRESP(MAPFAIL)   RPI 841
+         CLC   =FL4'36',DFHRESP(MAPFAIL)   RPI 841
          RT1   CCE
-         CLC   =F'38',DFHRESP(INVMPSZ)   RPI 841
+         CLC   =FL4'38',DFHRESP(INVMPSZ)   RPI 841
          RT1   CCE
-         CLC   =F'40',DFHRESP(OVERFLOW)  RPI 841
+         CLC   =FL4'40',DFHRESP(OVERFLOW)  RPI 841
          RT1   CCE
-         CLC   =F'44',DFHRESP(QIDERR)    RPI 662
+         CLC   =FL4'44',DFHRESP(QIDERR)    RPI 662
          RT1   CCE
-         CLC   =F'55',DFHRESP(ENQBUSY)   RPI 951      
+         CLC   =FL4'55',DFHRESP(ENQBUSY)   RPI 951      
          RT1   CCE
-         CLC   =F'56',DFHRESP(ENVDEFERR) RPI 928      
+         CLC   =FL4'56',DFHRESP(ENVDEFERR) RPI 928      
          RT1   CCE
-         CLC   =F'61',DFHRESP(NOTALLOC)  RPI 1079
-         CLC   =F'84',DFHRESP(DISABLED)  RPI 687      
+         CLC   =FL4'61',DFHRESP(NOTALLOC)  RPI 1079
          RT1   CCE
-         RT1   CCE,=F'0',DFHRESP(NORMAL) 
-         RT1   CCE,=F'1',DFHRESP(ERROR)
-         RT1   CCE,=F'11',DFHRESP(TERMIDERR)    RPI 928      
-         RT1   CCE,=F'12',DFHRESP(FILENOTFOUND) RPI 687
-         RT1   CCE,=F'12',DFHRESP(DSIDERR)      RPI 905
-         RT1   CCE,=F'13',DFHRESP(NOTFND)       RPI 687 RPI 690
-         RT1   CCE,=F'14',DFHRESP(DUPREC)       RPI 687
-         RT1   CCE,=F'15',DFHRESP(DUPKEY)       RPI 687
-         RT1   CCE,=F'16',DFHRESP(INVREQ)
-         RT1   CCE,=F'17',DFHRESP(IOERR)        RPI 928      
-         RT1   CCE,=F'18',DFHRESP(NOSPACE)      RPI 687
-         RT1   CCE,=F'19',DFHRESP(NOTOPEN)      RPI 687
-         RT1   CCE,=F'20',DFHRESP(ENDFILE)      RPI 687
-         RT1   CCE,=F'21',DFHRESP(ILLOGIC)      RPI 729
-         RT1   CCE,=F'22',DFHRESP(LENGERR)
-         RT1   CCE,=F'26',DFHRESP(ITEMERR)      RPI 662
-         RT1   CCE,=F'27',DFHRESP(PGMIDERR)
-         RT1   CCE,=F'28',DFHRESP(TRANSIDERR)   RPI 928      
-         RT1   CCE,=F'29',DFHRESP(ENDDATA)      RPI 928      
-         RT1   CCE,=F'31',DFHRESP(EXPIRED)      RPI 751
-         RT1   CCE,=F'36',DFHRESP(MAPFAIL)      RPI 841
-         RT1   CCE,=F'38',DFHRESP(INVMPSZ)      RPI 841
-         RT1   CCE,=F'40',DFHRESP(OVERFLOW)     RPI 841
-         RT1   CCE,=F'44',DFHRESP(QIDERR)       RPI 662
-         RT1   CCE,=F'55',DFHRESP(ENQBUSY)      RPI 951      
-         RT1   CCE,=F'56',DFHRESP(ENVDEFERR)    RPI 928      
-         RT1   CCE,=F'61',DFHRESP(NOTALLOC)     RPI 1079     
-         RT1   CCE,=F'72',DFHRESP(SUPPRESSED)   RPI 1057     
-         RT1   CCE,=F'83',DFHRESP(END)          RPI 1057     
-         RT1   CCE,=F'84',DFHRESP(DISABLED)     RPI 687
+         CLC   =FL4'84',DFHRESP(DISABLED)  RPI 687      
+         RT1   CCE
+         RT1   CCE,=FL4'0',DFHRESP(NORMAL) 
+         RT1   CCE,=FL4'1',DFHRESP(ERROR)
+         RT1   CCE,=FL4'11',DFHRESP(TERMIDERR)    RPI 928      
+         RT1   CCE,=FL4'12',DFHRESP(FILENOTFOUND) RPI 687
+         RT1   CCE,=FL4'12',DFHRESP(DSIDERR)      RPI 905
+         RT1   CCE,=FL4'13',DFHRESP(NOTFND)       RPI 687 RPI 690
+         RT1   CCE,=FL4'14',DFHRESP(DUPREC)       RPI 687
+         RT1   CCE,=FL4'15',DFHRESP(DUPKEY)       RPI 687
+         RT1   CCE,=FL4'16',DFHRESP(INVREQ)
+         RT1   CCE,=FL4'17',DFHRESP(IOERR)        RPI 928      
+         RT1   CCE,=FL4'18',DFHRESP(NOSPACE)      RPI 687
+         RT1   CCE,=FL4'19',DFHRESP(NOTOPEN)      RPI 687
+         RT1   CCE,=FL4'20',DFHRESP(ENDFILE)      RPI 687
+         RT1   CCE,=FL4'21',DFHRESP(ILLOGIC)      RPI 729
+         RT1   CCE,=FL4'22',DFHRESP(LENGERR)
+         RT1   CCE,=FL4'26',DFHRESP(ITEMERR)      RPI 662
+         RT1   CCE,=FL4'27',DFHRESP(PGMIDERR)
+         RT1   CCE,=FL4'28',DFHRESP(TRANSIDERR)   RPI 928      
+         RT1   CCE,=FL4'29',DFHRESP(ENDDATA)      RPI 928      
+         RT1   CCE,=FL4'31',DFHRESP(EXPIRED)      RPI 751
+         RT1   CCE,=FL4'36',DFHRESP(MAPFAIL)      RPI 841
+         RT1   CCE,=FL4'38',DFHRESP(INVMPSZ)      RPI 841
+         RT1   CCE,=FL4'40',DFHRESP(OVERFLOW)     RPI 841
+         RT1   CCE,=FL4'44',DFHRESP(QIDERR)       RPI 662
+         RT1   CCE,=FL4'55',DFHRESP(ENQBUSY)      RPI 951      
+         RT1   CCE,=FL4'56',DFHRESP(ENVDEFERR)    RPI 928      
+         RT1   CCE,=FL4'61',DFHRESP(NOTALLOC)     RPI 1079     
+         RT1   CCE,=FL4'72',DFHRESP(SUPPRESSED)   RPI 1057     
+         RT1   CCE,=FL4'83',DFHRESP(END)          RPI 1057     
+         RT1   CCE,=FL4'84',DFHRESP(DISABLED)     RPI 687
          RT1   END
          END         
