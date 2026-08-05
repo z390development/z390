@@ -22,7 +22,8 @@ class RunRtTest extends z390Test {
     Collection<DynamicTest> test_pgms() {
         var tests = []
         var modules = [
-                'TESTACT1', 'TESTAIN1', 'TESTAIN2', 'TESTAIN3', 'TESTASM1', 'TESTASM2', 'TESTCAL1', 'TESTCAL2'
+                'TESTACT1', 'TESTAIN1', 'TESTAIN2', 'TESTAIN3', 'TESTASM1', 'TESTASM2', 'TESTCAL1', 'TESTCAL2',
+                'TESTCFD1'
         ]
         modules.each {
             module -> tests.add(
@@ -47,6 +48,18 @@ class RunRtTest extends z390Test {
         this.printOutput()
         assert rc == 0
     }
+
+    @Test
+    void test_TESTCDE1() {
+        int rc = this.asmlg(basePath("rt", "test", "TESTCDE1"), *options)
+        this.printOutput()
+        assert rc == 0
+        loadFile(basePath('rt', 'test', "TESTCDE1.TF1"), 'TF1')  // load reference file
+        def expected = extractSnapLines(fileData.get('TF1'))     // extract SNAP lines
+        def actual   = extractSnapLines(fileData.get('LOG'))     // actual SNAP lines
+        assert expected == actual
+    }
+
 
 
 

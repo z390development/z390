@@ -12,6 +12,7 @@ errorslatests    - verify SLA error tests
 runasmtests      - verifies assembler instruction execution
 runbr14owe       - verifies test IEFBR14 asm[l[g]] with Okay, Warning, Error variants
 runcbltests      - verifies ZCOBOL instructions
+runcmdproc       - verifies internal command processor (shell calls)
 runcodepagetests - verifies usage of CODEPAGE issue #451
 runhlasmbiftests - run HLASM built-in function tests issue 509
 runmfacc         - run and verify all MFACC solution programs
@@ -28,6 +29,7 @@ runtestopt       - verify indirection usage in options files
 runvsam1         - run zVSAM V1 tests
 runvsam2         - run zVSAM V2 tests
 runzpar          - verify ZCOBOL Program Analysis Report
+testcmd1         - for use by runcmdproc, testcase for testcmd1
 x00c2bdxtests    - verify C2B, C2D, C2X tests that have X'00' in argument
 zopcheck         - verify all z390 assembler instructions generate correct code
 

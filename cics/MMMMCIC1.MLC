@@ -23,11 +23,13 @@
 * 09/15/08 RPI 905 ALLOW COMMA-SPACE FOLLOWED BY COMMENTS ON CONTINUED
 *                  LINES, MERGE KEYWORD AND (...) INTO SINGLE OPERAND,
 *                  GENERATE LABEL ON EXEC STMT IF FOUND. GEN EQUREGS
+* 08/03/26 AFK     Rename TESTCIC2 to MMMMCIC1 and move from rt\test
+*                      to cics folder
 *********************************************************************
 DFHEISTG DSECT       DSA STORAGE
 MSGSBA   DS   CL4
 SENDMSG  DS   CL100  MESSAGE BUFFER
-MMMMCIC2 CSECT
+MMMMCIC1 CSECT
 *
 * SEND MSG1 TO GUAM TN3270 TERMINAL
 *
@@ -52,7 +54,7 @@ GETTIME  EQU   *
          BR    R14
 *
 SBA11    TN3270 WCC_KD,(SBA,1,1)
-MSG1     DC    C'  HH:MM:SS.TT HELLO FROM MMMMCIC2'
+MSG1     DC    C'  HH:MM:SS.TT HELLO FROM MMMMCIC1'
 *
 TIME     DS    CL4                HHMMSSTT
          DS    CL8                SPACE FOR DATE
