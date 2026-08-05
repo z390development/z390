@@ -329,4 +329,38 @@ class z390Test {
         this.getOutput(cobFilenameNoExt)
         return rc
     }
+
+    /** Helper for SNAP comparison: True for SNAP header lines. */
+    static boolean isSnapHeader(String line) {
+        line ==~ /(?i)SNAP DUMP.*/
+    }
+
+    /** Helper for SNAP comparison: True for standard SNAP hex dump lines (keeps load address). */
+    static boolean isSnapDataLine(String line) {
+        line ==~ /^\s+[0-9A-Fa-f]{8}\s+\*.*/
+    }
+
+    /**
+     * This function extracts the SNAP data part from a .LOG file for comparison against a reference file
+     * From LOG text: from first SNAP header through last SNAP data line.
+     * Stops at first line that is neither header nor data (EZ390 trailer, errors, etc.).
+     */
+    static List<String> extractSnapLines(String logText) {
+        def lines = logText.readLines()
+        int start = lines.findIndexOf { isSnapHeader(it) }
+        if (start < 0) {
+            return []
+        }
+        def result = []
+        for (int i = start; i < lines.size(); i++) {
+            def line = lines[i]
+            if (isSnapHeader(line) || isSnapDataLine(line)) {
+                result << line
+            } else {
+                break   // trailer / non-SNAP — do not include
+            }
+        }
+        return result
+    }
+
 }

@@ -21,6 +21,8 @@ call bat\ASMLG %z_TraceMode% rt\test\TESTASM1 notiming stats bal noloadhigh %1 %
 call bat\ASMLG %z_TraceMode% rt\test\TESTASM2 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% rt\test\TESTCAL1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% rt\test\TESTCAL2 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% rt\test\TESTCDE1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% rt\test\TESTCFD1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 
 call bat\ASML  %z_TraceMode% rt\test\TESTSUB1 notiming stats bal            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 

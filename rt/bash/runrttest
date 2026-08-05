@@ -17,6 +17,8 @@ bash/asmlg rt/test/TESTASM1 notiming stats bal noloadhigh
 bash/asmlg rt/test/TESTASM2 notiming stats bal noloadhigh
 bash/asmlg rt/test/TESTCAL1 notiming stats bal noloadhigh
 bash/asmlg rt/test/TESTCAL2 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTCDE1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTCFD1 notiming stats bal noloadhigh
 
 bash/asml  rt/test/TESTSUB1 notiming stats bal
 
