@@ -2164,6 +2164,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#install-lfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install lfs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#clone-the-code" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2870,6 +2881,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#install-lfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install lfs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#clone-the-code" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3111,6 +3133,24 @@ javac 21.0.0   # you should receive a message like this
 to download the appropriate version for your system.</p>
 <p>You can find a quick reference for some frequently used git commands
 the bottom of this document.</p>
+<h3 id="install-lfs">Install lfs</h3>
+<p>LFS is a git feature for Large File Support. z390 uses lfs for storing
+binary files (e.g. jpg, png) without bloating the repository itself.</p>
+<p>The installation depends on your host operating system.</p>
+<p>For Linux:
+<div class="highlight"><pre><span></span><code>sudo apt update
+sudo apt install git-lfs
+git lfs install
+cd /mnt/c/z390dev/wrk_rt
+git lfs pull
+</code></pre></div></p>
+<p>On Windows:
+1. Download the Windows installer from https://git-lfs.com (or the GitHub releases page).
+2. Run the installer.
+3. issue:
+<div class="highlight"><pre><span></span><code>git lfs install
+git lfs pull
+</code></pre></div></p>
 <h3 id="clone-the-code">Clone the code</h3>
 <p>Start with a clone of the main repository.</p>
 <div class="highlight"><pre><span></span><code>shell&gt; git clone https://github.com/z390development/z390.git
@@ -3607,7 +3647,7 @@ git documentation:https://git-scm.com/doc</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-15-g6bc42631"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-16-g73c34d23"}</script>
     
     
       <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
