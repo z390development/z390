@@ -19,15 +19,20 @@ with this program; if not, see <https://www.gnu.org/licenses/>.
 
 
 
+/* *************************************************** Maintenance
+ * 2016-12-28 initial coding
+ * 2026-03-23 AFK Fix/Add javadoc comments
+ * 2026-08-06 AFK Fix linter issues
+ * 2026-08-07 #807 Fix issues flagged by linter
+ *****************************************************/
+
+
+
 /**
  * The zCatVAIX object is the Java-level representation of a Catalog definition
  * for a zVSAM Alternate IndeX
  */
-public class zCatVAIX
-{/* *************************************************** Maintenance
-  * 2016-12-28 initial coding 
-  * 2026-03-23 AFK Fix/Add javadoc comments
-  *****************************************************/
+public class zCatVAIX {
     /** ID C'VAIX'                               */ private String  VAIXID;   // DS    CL4   ID C'VAIX'
     /** NAME OF ALTERNATE INDEX                  */ private String  VAIXNAME; // DS    CL8   NAME OF ALTERNATE INDEX
     /** NAME OF RELATED VCLR BASE CLUSTER        */ private String  VAIXRELN; // DS    CL8   NAME OF RELATED VCLR BASE CLUSTER
@@ -54,34 +59,36 @@ public class zCatVAIX
     /** INDEX CA PERCENT                         */ private int     VAIXICA;  // DS    AL1   INDEX CA PERCENT
     /** INDEX CI PERCENT                         */ private int     VAIXICI;  // DS    AL1   INDEX CI PERCENT
 
-/**
- * Constructor for new AIX definition
- *
- * @param sz390 instance of svc-handling code
- * @param VAIX_ptr pointer to VAIX
- */
-  public zCatVAIX(sz390 sz390, int VAIX_ptr)
-   {VAIXID   = sz390.get_ascii_string(VAIX_ptr + 0, 4, true);
-    VAIXNAME = null;
-    VAIXRELN = null;
-    VAIXRUSE = false;
-    VAIXUKEY = false;
-    VAIXUAIX = false;
-    VAIXSPAN = false;
-    VAIXDADJ = false;
-    VAIXIADJ = false;
-    VAIXKLEN = 0;
-    VAIXKOFF = 0;
-    VAIXDTA  = null;
-    VAIXIDX  = null;
-    VAIXDBS  = 0;
-    VAIXIBS  = 0;
-    VAIXDCA  = 0;
-    VAIXDCI  = 0;
-    VAIXICA  = 0;
-    VAIXICI  = 0;
-    System.out.println("zCatVAIX constructed");
+    /**
+     * Constructor for new AIX definition
+     *
+     * @param sz390 instance of svc-handling code
+     * @param VAIX_ptr pointer to VAIX
+     */
+    public zCatVAIX(sz390 sz390, int VAIX_ptr) {
+        VAIXID   = sz390.get_ascii_string(VAIX_ptr + 0, 4, true);
+        VAIXNAME = null;
+        VAIXRELN = null;
+        VAIXRUSE = false;
+        VAIXUKEY = false;
+        VAIXUAIX = false;
+        VAIXSPAN = false;
+        VAIXDADJ = false;
+        VAIXIADJ = false;
+        VAIXKLEN = 0;
+        VAIXKOFF = 0;
+        VAIXDTA  = null;
+        VAIXIDX  = null;
+        VAIXDBS  = 0;
+        VAIXIBS  = 0;
+        VAIXDCA  = 0;
+        VAIXDCI  = 0;
+        VAIXICA  = 0;
+        VAIXICI  = 0;
+        System.out.println("zCatVAIX constructed");
     }
 
- /* end of module zCatVAIX */
- }
+
+
+    /* end of module zCatVAIX */
+}
