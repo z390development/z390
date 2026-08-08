@@ -1,0 +1,27 @@
+@if /I "%1" == "tron" (echo on) else (echo off)
+rem run MVS demo and test programs
+
+setlocal
+if /I "%1" == "tron" (set z_TraceMode=tron
+                      shift /1
+              ) else (if /I "%1" == "troff" (set z_TraceMode=troff
+                                             shift /1
+                                     ) else (set z_TraceMode=)
+                      )
+set /A z_NestLevel=%z_NestLevel%+1
+rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
+
+pushd %~dps0..\..
+call bat\ASMLG %z_TraceMode% rt\test\TESTCMD1 notiming stats bal noloadhigh sysmac(mac) parm("rt\bat\TESTCMD1.BAT") %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+findstr /c:"HELLO FOR LAST TIME" rt\test\TESTCMD1.LOG >nul || goto error
+set z_ReturnCode=0
+goto return
+
+:error
+if %ERRORLEVEL% EQU 0 (set z_ReturnCode=6
+               ) else (set z_ReturnCode=%ERRORLEVEL%)
+echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
+:return
+popd
+rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
+exit /b %z_ReturnCode%

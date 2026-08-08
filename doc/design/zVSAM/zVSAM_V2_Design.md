@@ -103,15 +103,18 @@ This has the following consequences:
 
 1. IBM VSAM documentation with regards to macros and interfaces applies to zVSAM
    with the exception of parameters and options not supported by zVSAM.
+   Equally, z390 may introduce additional options not supported by IBM VSAM.
    Where zVSAM differs in behaviour this is noted in this document.
    Please refer to the macro descriptions in [the Interfaces section](zVSAM_V2_Design_Interfaces.md) for details.
 2. Control Blocks (such as ACB, RPL and some others) are not compatible.
    zVSAM has its own structures. A side effect of this may be that a program's
    assembled object code may be different in size than on your IBM operating system.
    On rare occasions you may need an additional base register when porting your program either way.
-3. As a rule of thumb, a program using VSAM can be ported to z390 and should be able to assemble,
+3. As a rule of thumb, a program using VSAM can be ported to or from z390 and should be able to assemble,
    link and run without modification – provided it uses only the VSAM features and options that zVSAM supports.
    And provided the program does not run out of addressability due to different control block lengths.
+4. The file structure of stored data on z390/zVSAM is entirely different from IBM VSAM clusters.
+   Data can be ported only as unloaded sequential files.
 
 ### zVSAM V2 compatibility with zVSAM V1
 
@@ -126,24 +129,18 @@ We have taken the following measures to facilitate the transition from zVSAM V1 
    For maximum compatibility the default is set to ZVSAM(1) to enable zVSAM v1.
    The default will be changed to ZVSAM(2) in a future release of z390.
    The parameter takes the following forms:
-   1. ZVSAM(0) – zVSAM usage is disallowed
-   2. ZVSAM(1) – zVSAM V1 is enabled, zVSAM V2 is disabled
-   3. ZVSAM(2) – zVSAM V2 is enabled, zVSAM V1 is disabled
-2. To convert your zVSAM V1 clusters to zVSAM V2 you'll have to take the following steps:
-   1. unload the existing data from their clusters using REPRO. \
-      For details on how to use REPRO, please refer to the "z390_VSAM_User_Guide"
-   2. reload your data from your unload files, using ZREPRO. \
-      For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"
-3. For zVSAM V1 and zVSAM V2 there are distinct macro libraries.
-   To use the correct zVSAM maclib, specify the correct version in your maclib concatenation.
-
-### Alternative approach
-
-Instead of enabling either zVSAM V1 or zVSAM V2 exclusively,
-I think we can also allow a hybrid approach. For zVSAM 0 and 1 the behaviour is as descriebd above.
-For zVSAM 2 we will assemble the V2 logic, yet during execution, when we encounter an existing V1 cluster
-during open processing, we will handle that cluster using the existing zVSAM V1 logic.
-
-Since the new V2 logic will go into a completely different module the old logic in vz390.java
-should be able to remain as is, (almost) completely unchanged.
-
+    1. ZVSAM(0) – zVSAM usage is disallowed
+    2. ZVSAM(1) – zVSAM V1 is enabled, zVSAM V2 is disabled
+    3. ZVSAM(2) – zVSAM V2 is enabled, zVSAM V1 is disabled
+2. Any assembly involving zVSAM must use either zVSAM V1 or zVSAM V2,
+   the cannot be mixed. However, modules using zVSAM V1 and zVSAM V2 can be linked
+   and executed in the z390. This should allow for a gradual transition from zVSAM V1 to V2.
+3. To convert your zVSAM V1 clusters to zVSAM V2 you'll have to take the following steps:
+    1. unload the existing data from their clusters using REPRO. \
+       For details on how to use REPRO, please refer to the "z390_VSAM_User_Guide"
+    2. reload your data from your unload files, using ZREPRO. \
+       For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"
+4. All macros supporting zVSAM will be modified to make them version-aware.
+   The ZVSAM option value described above will be propagated into a sytem SETC variable &SYSZVSAM.
+   This variable can be tested to choose the correct expansion of these macros.
+   Your own code can also test this system variable.

@@ -12,8 +12,26 @@ class RunCmdProc extends z390Test {
      * the tests.
      */
      
-    var options = ["SYSMAC(${basePath("mac")})"]
+    var options = ['noloadhigh', 'notiming', 'bal', 'stats',
+                   "SYSMAC(${basePath("mac")})",
+                   "SYSCPY(${basePath("mac")})"]
     var os = System.getProperty("os.name")
+
+    @Test
+    void test_TESTCMD1() {
+        // Absolute path required: gradle cwd is not the repo root,
+        // so the MLC default relative script path will not work.
+        String cmdfile
+        if (os.startsWith('Windows')) {
+            cmdfile = basePath('rt', 'bat', 'TESTCMD1.BAT')
+        } else {
+            cmdfile = basePath('rt', 'bash', 'testcmd1')
+        }
+        int rc = this.asmlg(basePath("rt", "test", "TESTCMD1"), *options,  "parm(\"${cmdfile}\)")
+        this.printOutput()
+        assert rc == 0
+        assert this.fileData['LOG'] =~ /HELLO FOR LAST TIME/
+    }
 
     @Test
     void test_TESTCMD3() {

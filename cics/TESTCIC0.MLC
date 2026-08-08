@@ -1,0 +1,163 @@
+         TITLE 'TESTCIC0 - TEST CICS DFHRESP LITERALS'
+*********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License 
+* along with this program; if not, see https://www.gnu.org/licenses.
+*********************************************************************
+* Author - Don Higgins                                              *
+* Date   - 05/31/07                                                 *
+*********************************************************************
+* 05/31/07 RPI 501  TEST LITERAL-ABS EXPRESSION                             
+* 07/20/07 RPI 662  TEST ADDITIONAL ITEMERR AND QIDERR FOR DFHRESP          
+* 08/25/07 RPI 687  TEST ADDITIONAL CICS VSAM DFHRESP CODES    
+* 08/25/07 RPI 690  CORRECT NOTEND TO NOTFND                   
+* 10/30/07 RPI 729  ADD DFHRESP ILLOGIC=F'21'                  
+* 12/06/07 RPI 751  ADD DFHRESP EXPIRED=F'31'                  
+* 04/28/08 RPI 841  ADD DFHRESP MAPFAIL,INVMPSZ,OVERFLOW       
+* 09/19/08 RPI 905  ADD DFHRESP DSIDERR=F'12'                  
+* 10/27/08 RPI 928  ADD DFHRESP TERMIDER,TRANSIDERR,IOERR,ENDDATA,
+*                      ENVDEFERR
+* 11/18/08 RPI 951  ADD DFHRESP ENQBUSY=F'55'                        
+* 06/14/09 RPI 1057 ADD DFHRESP(SUPPRESSED)=F'72' AND END=F'83'        
+* 09/02/09 RPI 1079 ADD DFHRESP(NOTALLOC)=F'61'                        
+* 08/03/26 AFK      Fix comparisons being assembled compare against
+*                       self - operand 1 and 2 being the same
+*                   Rename TESTCIC1 to TESTCIC0 and move from rt\test
+*                       to cics folder
+*********************************************************************
+TESTCIC0 RT1   MAIN
+         EQUREGS
+X        DS    F
+         RT1   START
+         MVC   X,DFHRESP(NORMAL)      
+         MVC   X,DFHRESP(NORMAL)     X   TEST COMMENTS
+         MVC   X,DFHRESP(ERROR)      
+         MVC   X,DFHRESP(TERMIDERR)     RPI 928
+         MVC   X,DFHRESP(FILENOTFOUND)  RPI 687
+         MVC   X,DFHRESP(DSIDERR)       RPI 905
+         MVC   X,DFHRESP(NOTFND)        RPI 687 RPI 690
+         MVC   X,DFHRESP(DUPREC)        RPI 687
+         MVC   X,DFHRESP(DUPKEY)        RPI 687
+         MVC   X,DFHRESP(INVREQ)      
+         MVC   X,DFHRESP(IOERR)         RPI 928
+         MVC   X,DFHRESP(NOSPACE)       RPI 687
+         MVC   X,DFHRESP(NOTOPEN)       RPI 687
+         MVC   X,DFHRESP(ENDFILE)       RPI 687
+         MVC   X,DFHRESP(LENGERR)      
+         MVC   X,DFHRESP(PGMIDERR)      
+         MVC   X,DFHRESP(TRANSIDERR)    RPI 928
+         MVC   X,DFHRESP(ENDDATA)       RPI 928
+         MVC   X,DFHRESP(ITEMERR)       RPI 662
+         MVC   X,DFHRESP(QIDERR)        RPI 662
+         MVC   X,DFHRESP(ENVDEFERR)     RPI 928
+         MVC   X,DFHRESP(EXPIRED)       RPI 751
+         MVC   X,DFHRESP(MAPFAIL)       RPI 841
+         MVC   X,DFHRESP(INVMPSZ)       RPI 841
+         MVC   X,DFHRESP(OVERFLOW)       RPI 841
+         MVC   X,DFHRESP(ENQBUSY)       RPI 951
+         MVC   X,DFHRESP(DISABLED)      RPI 687
+         MVC   X,DFHRESP(ILLOGIC)       RPI 729
+         MVC   X,DFHRESP(NOTALLOC)      RPI 1079
+         MVC   X,DFHRESP(SUPPRESSED)    RPI 1057
+         MVC   X,DFHRESP(END)           RPI 1057
+         CLC   =FL4'0',DFHRESP(NORMAL)      
+         RT1   CCE
+         CLC   =FL4'1',DFHRESP(ERROR)       
+         RT1   CCE
+         CLC   =FL4'11',DFHRESP(TERMIDERR)    RPI 928      
+         RT1   CCE
+         CLC   =FL4'12',DFHRESP(FILENOTFOUND) RPI 687      
+         RT1   CCE
+         CLC   =FL4'12',DFHRESP(DSIDERR)      RPI 905      
+         RT1   CCE
+         CLC   =FL4'13',DFHRESP(NOTFND)       RPI 687 RPI 690
+         RT1   CCE
+         CLC   =FL4'14',DFHRESP(DUPREC)       RPI 687
+         RT1   CCE
+         CLC   =FL4'15',DFHRESP(DUPKEY)       RPI 687      
+         RT1   CCE
+         CLC   =FL4'16',DFHRESP(INVREQ)    
+         RT1   CCE
+         CLC   =FL4'17',DFHRESP(IOERR)        RPI 928      
+         RT1   CCE
+         CLC   =FL4'18',DFHRESP(NOSPACE)      RPI 687      
+         RT1   CCE
+         CLC   =FL4'19',DFHRESP(NOTOPEN)      RPI 687      
+         RT1   CCE
+         CLC   =FL4'20',DFHRESP(ENDFILE)      RPI 687      
+         RT1   CCE
+         CLC   =FL4'21',DFHRESP(ILLOGIC)      RPI 729      
+         RT1   CCE
+         CLC   =FL4'22',DFHRESP(LENGERR)   
+         RT1   CCE
+         CLC   =FL4'26',DFHRESP(ITEMERR)   RPI 662
+         RT1   CCE
+         CLC   =FL4'27',DFHRESP(PGMIDERR)  
+         RT1   CCE
+         CLC   =FL4'28',DFHRESP(TRANSIDERR)   RPI 928      
+         RT1   CCE
+         CLC   =FL4'29',DFHRESP(ENDDATA)      RPI 928      
+         RT1   CCE
+         CLC   =FL4'31',DFHRESP(EXPIRED)   RPI 751
+         RT1   CCE
+         CLC   =FL4'36',DFHRESP(MAPFAIL)   RPI 841
+         RT1   CCE
+         CLC   =FL4'38',DFHRESP(INVMPSZ)   RPI 841
+         RT1   CCE
+         CLC   =FL4'40',DFHRESP(OVERFLOW)  RPI 841
+         RT1   CCE
+         CLC   =FL4'44',DFHRESP(QIDERR)    RPI 662
+         RT1   CCE
+         CLC   =FL4'55',DFHRESP(ENQBUSY)   RPI 951      
+         RT1   CCE
+         CLC   =FL4'56',DFHRESP(ENVDEFERR) RPI 928      
+         RT1   CCE
+         CLC   =FL4'61',DFHRESP(NOTALLOC)  RPI 1079
+         RT1   CCE
+         CLC   =FL4'84',DFHRESP(DISABLED)  RPI 687      
+         RT1   CCE
+         RT1   CCE,=FL4'0',DFHRESP(NORMAL) 
+         RT1   CCE,=FL4'1',DFHRESP(ERROR)
+         RT1   CCE,=FL4'11',DFHRESP(TERMIDERR)    RPI 928      
+         RT1   CCE,=FL4'12',DFHRESP(FILENOTFOUND) RPI 687
+         RT1   CCE,=FL4'12',DFHRESP(DSIDERR)      RPI 905
+         RT1   CCE,=FL4'13',DFHRESP(NOTFND)       RPI 687 RPI 690
+         RT1   CCE,=FL4'14',DFHRESP(DUPREC)       RPI 687
+         RT1   CCE,=FL4'15',DFHRESP(DUPKEY)       RPI 687
+         RT1   CCE,=FL4'16',DFHRESP(INVREQ)
+         RT1   CCE,=FL4'17',DFHRESP(IOERR)        RPI 928      
+         RT1   CCE,=FL4'18',DFHRESP(NOSPACE)      RPI 687
+         RT1   CCE,=FL4'19',DFHRESP(NOTOPEN)      RPI 687
+         RT1   CCE,=FL4'20',DFHRESP(ENDFILE)      RPI 687
+         RT1   CCE,=FL4'21',DFHRESP(ILLOGIC)      RPI 729
+         RT1   CCE,=FL4'22',DFHRESP(LENGERR)
+         RT1   CCE,=FL4'26',DFHRESP(ITEMERR)      RPI 662
+         RT1   CCE,=FL4'27',DFHRESP(PGMIDERR)
+         RT1   CCE,=FL4'28',DFHRESP(TRANSIDERR)   RPI 928      
+         RT1   CCE,=FL4'29',DFHRESP(ENDDATA)      RPI 928      
+         RT1   CCE,=FL4'31',DFHRESP(EXPIRED)      RPI 751
+         RT1   CCE,=FL4'36',DFHRESP(MAPFAIL)      RPI 841
+         RT1   CCE,=FL4'38',DFHRESP(INVMPSZ)      RPI 841
+         RT1   CCE,=FL4'40',DFHRESP(OVERFLOW)     RPI 841
+         RT1   CCE,=FL4'44',DFHRESP(QIDERR)       RPI 662
+         RT1   CCE,=FL4'55',DFHRESP(ENQBUSY)      RPI 951      
+         RT1   CCE,=FL4'56',DFHRESP(ENVDEFERR)    RPI 928      
+         RT1   CCE,=FL4'61',DFHRESP(NOTALLOC)     RPI 1079     
+         RT1   CCE,=FL4'72',DFHRESP(SUPPRESSED)   RPI 1057     
+         RT1   CCE,=FL4'83',DFHRESP(END)          RPI 1057     
+         RT1   CCE,=FL4'84',DFHRESP(DISABLED)     RPI 687
+         RT1   END
+         END         

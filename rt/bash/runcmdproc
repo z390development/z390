@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# runmvstests: Run the MVS demo and test programs
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
+
+bash/asmlg rt/test/TESTCMD1 notiming stats bal noloadhigh "sysmac(mac)" 'parm("rt/bash/testcmd1")'
+grep -q "HELLO FOR LAST TIME" rt/test/TESTCMD1.LOG || exit 1
+
+# if we get here, there were no errors
+echo "Command Processor tests ran without errors"
+exit 0

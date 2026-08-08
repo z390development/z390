@@ -1,5 +1,4 @@
       *****************************************************************
-
       * z390 - Mainframe assembler emulator and run-time engine
       * Copyright (C) 2021 z390 Assembler LLC
       *
@@ -17,7 +16,7 @@
       * You should have received a copy of the GNU General Public 
       * License along with this program; if not, see 
       * https://www.gnu.org/licenses.
-
+      *****************************************************************
       * Author - Don Higgins                                          *
       *****************************************************************
         IDENTIFICATION DIVISION.
