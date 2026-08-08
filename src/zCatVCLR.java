@@ -24,6 +24,7 @@ import java.util.LinkedList;
  * 2016-12-28 initial coding
  * 2026-03-23 AFK Fix/Add javadoc comments
  * 2026-08-06 AFK Fix linter issues
+ * 2026-08-07 #807 Fix issues flagged by linter
  *****************************************************/
 
 

@@ -79,6 +79,7 @@ import javax.swing.JTextArea;
  * 2026-01-01 #728 afk zCobol fails on multiple programs within a single source file
  * 2026-01-10 #742 zh  Implement COBOL REPLACE statement per FIPS PUB 21-2
  * 2026-03-08 AFK Fix/Add javadoc comments
+ * 2026-08-07 #807 Fix issues flagged by linter
  ****************************************************
  *                                         last RPI *
  ****************************************************/
