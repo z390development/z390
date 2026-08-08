@@ -33,7 +33,7 @@
 .* value and increments until a WHEN condition matches or end-of-table.
 .*
 .* Uses IE (If/Evaluate) block tracking system - see ZC_WS.CPY:
-.*   IE_TYPE 15 = SEARCH (added to existing types 1-14)
+.*   IE_TYPE 16 = SEARCH (15 = RETURN; added to existing types 1-14)
 .*   IE_SRC_* variables store SEARCH-specific context for END_SEARCH
 .*
 .* Generated label structure:
@@ -129,7 +129,7 @@
 .* This allows nested SEARCH/IF/EVALUATE and proper END_SEARCH matching
 .*
 .* IE_LVL   - Current nesting depth (incremented for each block)
-.* IE_TYPE  - Block type identifier (15 = SEARCH, see ZC_WS.CPY:254)
+.* IE_TYPE  - Block type identifier (16 = SEARCH, see ZC_WS.CPY)
 .* IE_TCNT  - Label counter for unique label generation
 .*
 .* IE_SRC_* variables hold SEARCH context for WHEN and END_SEARCH:
@@ -142,7 +142,7 @@
 .*
          :&SRC_LAB SETA &SRC_LAB+1
          :&IE_LVL SETA &IE_LVL+1
-         :&IE_TYPE(&IE_LVL) SETA 15
+         :&IE_TYPE(&IE_LVL) SETA 16
          :&IE_TCNT(&IE_LVL) SETA &SRC_LAB
          :&IE_SRC_TBL(&IE_LVL) SETC '&TBL_NAME'
          :&IE_SRC_IDX(&IE_LVL) SETC '&IDX_NAME'
