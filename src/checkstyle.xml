@@ -30,6 +30,10 @@
       <property name="lineWrappingIndentation" value="4"/>
       <property name="arrayInitIndent" value="4"/>
     </module>
+    <!-- Javadoc (and other block comments) must match surrounding code indent -->
+    <module name="CommentsIndentation">
+      <property name="tokens" value="BLOCK_COMMENT_BEGIN"/>
+    </module>
     <!-- Three blank lines required before each class and method/function -->
     <module name="EmptyLineSeparator">
       <property name="tokens" value="CLASS_DEF, METHOD_DEF, CTOR_DEF"/>
@@ -56,12 +60,31 @@
     <!-- JavadocMethod allows more specific and stricter checks -->
     <!--     For now, we'll use the two below checks -->
     <!-- Require Javadoc on member fields (all access levels) -->
-    <module name="JavadocVariable">
-      <property name="accessModifiers" value="public, protected, package, private"/>
+    <!-- <module name="JavadocVariable">
+           <property name="accessModifiers" value="public, protected, package, private"/>
+         </module> -->
+    <!-- Flag field lines that lack a leading Javadoc on the same source line -->
+    <module name="RegexpSinglelineJava">
+      <property name="format"
+        value="^\s*(private|protected|public)\s+(static\s+)?(final\s+)?[\w.&lt;&gt;\[\],\s]+\s+\w+\s*[=;]"/>
+      <property name="message"
+        value="Field must begin with a same-line /** … */ Javadoc."/>
+      <property name="ignoreComments" value="false"/>
     </module>
     <!-- Require Javadoc on methods and constructors (all access levels) -->
     <module name="MissingJavadocMethod">
       <property name="scope" value="private"/>
+    </module>
+    <!-- use module separatorWrap to flag a break between an object and the method applied to it  -->
+    <!-- Ban: receiver<newline>.method -->
+    <module name="SeparatorWrap">
+      <property name="tokens" value="DOT"/>
+      <property name="option" value="eol"/>
+    </module>
+    <!-- Ban: receiver.<newline>method -->
+    <module name="SeparatorWrap">
+      <property name="tokens" value="DOT"/>
+      <property name="option" value="nl"/>
     </module>
   </module>
 
