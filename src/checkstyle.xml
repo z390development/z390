@@ -45,7 +45,7 @@
       <property name="option" value="eol"/>
     </module>
     <module name="WhitespaceAround">
-      <property name="tokens" value="LCURLY"/>
+      <property name="tokens" value="LCURLY, SLIST"/>
       <property name="allowEmptyMethods" value="false"/>
       <property name="allowEmptyConstructors" value="true"/>
       <property name="allowEmptyTypes" value="false"/>
