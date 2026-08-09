@@ -1977,7 +1977,7 @@ public class vz390 {
             return;
         }
         if ((cur_rpl_opt & rpl_opt_gen) != 0) {
-            System.arraycopy(pz390.mem_byte, cur_rpl_area + cur_vclr_koff,
+            System.arraycopy(pz390.mem_byte, cur_rpl_area + cur_vclr_koff, // RPI 779
                        pz390.mem_byte, cur_rpl_arg, cur_vclr_klen);
         }
         set_rpl_cxrba(cur_vx0_xrba);
