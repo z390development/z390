@@ -69,9 +69,9 @@ public class test_screen {
         JFrame main_frame = new JFrame("Test z390 gz390_screen graphic2d panel class");
         main_frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-                System.exit(0);}
+                System.exit(0);
             }
-        );
+        });
         JScrollPane main_view = new JScrollPane(tn_scn);
         main_view.setPreferredSize(tn_scn.scn_size);
         main_view.createVerticalScrollBar();
