@@ -948,9 +948,11 @@ public  class  tz390 {
      * dfp_exp_bcd_to_cf5 returns CF5 5 bit
      * combination field using index made up of
      * high 2 bits of bias exponent
-     * plus 4 bit BCDnibble for first digit.
+     * plus 4 bit BCDnibble for first digit.<br />
+     * <br />
+     * indexed by high 2 bits of exp + fisrt digit
      */
-    byte[] dfp_exp_bcd_to_cf5 = {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0,0,0,0,0,0, //0d // RPI 407 indexed by high 2 bits of exp + fisrt digit
+    byte[] dfp_exp_bcd_to_cf5 = {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0,0,0,0,0,0, //0d
                                  0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x1A,0x1B,0,0,0,0,0,0, //1d
                                  0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x1C,0x1D,0,0,0,0,0,0, //2d
     };
@@ -1082,9 +1084,11 @@ public  class  tz390 {
 
     /**
      * dfp_cf5_to_bcd returns decimal digit 0-9
-     * indexed by 5 bit combination field value
+     * indexed by 5 bit combination field value<br />
+     * <br />
+     * index this array with a cf5 value to extract the encoded bcd.
      */
-    long[] dfp_cf5_to_bcd = {0,1,2,3,4,5,6,7,  //00-07 //cf5 value
+    long[] dfp_cf5_to_bcd = {0,1,2,3,4,5,6,7,  //00-07
                              0,1,2,3,4,5,6,7,  //08-0F
                              0,1,2,3,4,5,6,7,  //10-17
                              8,9,              //18-19
@@ -1104,6 +1108,7 @@ public  class  tz390 {
      *  <li>Java interprets leading 08 as octal number like 0x is hex so any leading 0's should be removed</li>
      * </ol>
      */
+    // to satisfy the linter, the short numbers in the first column are awkwardly left-aligned. Sorry :-(
     long[] dfp_dpd_to_bcd = {0,    1,  2,  3,  4,  5,  6,  7,  8,  9, 80, 81,800,801,880,881,    // 00
                              10,  11, 12, 13, 14, 15, 16, 17, 18, 19, 90, 91,810,811,890,891,    // 01
                              20,  21, 22, 23, 24, 25, 26, 27, 28, 29, 82, 83,820,821,808,809,    // 02
