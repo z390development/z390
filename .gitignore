@@ -93,7 +93,6 @@ tests/codepage/mlcwork/*
 **/[dD][iI][fF][fF]/
 **/[sS][aA][vV][eE]/
 **/*.[bB][mM][kK]
-**/*.[hH][tT][mM]
 **/*.[hH][tT][mM][lL]
 **/*.[oO][tT][1-9]
 # *.RLE / *.RLG / *.RUE / *.RUG
@@ -231,8 +230,6 @@ rt/test/save/ZSTRMAC2.[mM][lL][cC]
 **/*.[dD][oO][cC]
 **/*.[dD][oO][cC][xX]
 **/*.[gG][iI][fF]
-**/*.[iI][cC][oO]
-**/*.[jJ][pP][gG]
 **/*.[pP][dD][fF]
 **/*.[pP][nN][gG]
 **/*.[pP][pP][tT]
