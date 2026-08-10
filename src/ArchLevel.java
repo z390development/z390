@@ -16,11 +16,15 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along
 with this program; if not, see <https://www.gnu.org/licenses/>.
 */
-   /* ***************************************************
-    * Maintenance
-    * ***************************************************
-    * 2025-10-28 #656 AFK Created new
-    */
+
+
+
+/* ***************************************************
+ * Maintenance
+ * ***************************************************
+ * 2025-10-28 #656 AFK Created new
+ * 2026-08-10 #807 Fix issues flagged by linter
+*/
 
 
 
@@ -59,26 +63,30 @@ public enum ArchLevel {
 
 
 
-/**
-  * Constructor
-  *
-  * @param value assigned sequence number for architecture level
-  */
+    /**
+     * Constructor
+     *
+     * @param value assigned sequence number for architecture level
+     */
     ArchLevel(int value) {
         this.value = value;
     }
 
 
 
-/**
- * convert enum reference to an integer
- * This is required to be able to check architecture ranges
- * Most instructions are valid from a starting architecture level
- * Some are defined from/to certain levels.
- *
- * @return assigned sequence number of architecture level
- */
+    /**
+     * convert enum reference to an integer
+     * This is required to be able to check architecture ranges
+     * Most instructions are valid from a starting architecture level
+     * Some are defined from/to certain levels.
+     *
+     * @return assigned sequence number of architecture level
+     */
     public int getValue() {
         return value;
     }
+
+
+
+    /* end of module ArchLevel */
 }
