@@ -2721,6 +2721,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#counters-area" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Counters Area
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2903,6 +2914,17 @@
     <span class="md-ellipsis">
       
         CBMR - body and tail for RPL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#counters-area" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Counters Area
       
     </span>
   </a>
@@ -6059,6 +6081,224 @@ If they are issued before the ECB has been posted, unpredictable results may occ
 <p>Additional notes:
 - <code>CBMRRPL_CNV</code> – TESTCB only, always false
 - <code>CBMRRPL_TRANSID</code> – Always foxes</p>
+<h3 id="counters-area">Counters Area</h3>
+<p>All fields are 8 bytes except <code>CTRAVGRL</code> which is 4 bytes.</p>
+<table>
+<thead>
+<tr>
+<th>Counter</th>
+<th>Data/Index</th>
+<th>Initialized by zREPRO</th>
+<th>Maintenance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CTRAVGRL</td>
+<td>Both</td>
+<td>Yes. For fixed, =<code>PFXRECLN</code> even if the dataset is empty.</td>
+<td>For variable files only:</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>For variable, calculated or zero if the dataset is empty.</td>
+<td>At CLOSE, calculate <code>CTRTOTRL</code>/<code>CTRNLOGR</code></td>
+</tr>
+<tr>
+<td>CTRAVSPAC</td>
+<td>Both</td>
+<td>Yes.</td>
+<td>For every block update use the old and new <code>BHDRFREE</code> to increase/decrease this value</td>
+</tr>
+<tr>
+<td>CTRHALCRBA</td>
+<td>Both</td>
+<td>Yes.</td>
+<td>Updated when blocks are added to the end of the dataset component</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td>or when the existing <code>HALCRBA</code> block has all records deleted. It's the</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td>block RBA+1 (XLRA+256) of the last data or level 0 index block containing records.</td>
+</tr>
+<tr>
+<td>CTRHLRBA</td>
+<td>Index only</td>
+<td>Yes.</td>
+<td>Block RBA of <code>PFXROOT</code>. Update if it changes</td>
+</tr>
+<tr>
+<td>CTRENDRBA</td>
+<td>Both</td>
+<td>Yes.</td>
+<td>Updated when blocks are added to the end of the dataset component.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td>It's the block RBA+1 (XLRA+256) of the last data or level 0 index block</td>
+</tr>
+<tr>
+<td>CTRNBFRFND</td>
+<td>Both</td>
+<td>No</td>
+<td>+1 for each LSR buffer read</td>
+</tr>
+<tr>
+<td>CTRNBUFNO</td>
+<td>Both</td>
+<td>No</td>
+<td>+1 for each buffer allocated</td>
+</tr>
+<tr>
+<td>CTRBUFUSE</td>
+<td>Both</td>
+<td>No</td>
+<td>+1 for each buffer used</td>
+</tr>
+<tr>
+<td>CTRBUFRDS</td>
+<td>Both</td>
+<td>No</td>
+<td>+1 for each buffer read</td>
+</tr>
+<tr>
+<td>CTRNCIS</td>
+<td>Both</td>
+<td>No</td>
+<td>+1 for each block split</td>
+</tr>
+<tr>
+<td>CTRNDELR</td>
+<td>Both</td>
+<td>No</td>
+<td>KSDS or RRDS: +1 for each record delete</td>
+</tr>
+<tr>
+<td>CTRNEXCP</td>
+<td>Both</td>
+<td>No</td>
+<td>+1 for each physical block read/write</td>
+</tr>
+<tr>
+<td>CTRNEXT</td>
+<td>Both</td>
+<td>Yes</td>
+<td>Always 1, not maintained</td>
+</tr>
+<tr>
+<td>CTRNINSR</td>
+<td>Both</td>
+<td>No</td>
+<td>+1 for each record added. For RRDS, any empty slots added to the end are not counted</td>
+</tr>
+<tr>
+<td>CTRNLOGR</td>
+<td>Both</td>
+<td>Yes</td>
+<td>+1 for each record added; -1 for each record deleted.</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td>For RRDS, any empty slots added to the end are not counted</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td>For Index, all records in all levels are counted</td>
+</tr>
+<tr>
+<td>CTRNRETR</td>
+<td>Both</td>
+<td>No</td>
+<td>+1 for each record read</td>
+</tr>
+<tr>
+<td>CTRNNUIW</td>
+<td>Both</td>
+<td>No</td>
+<td>+1 for each maintenance write for block splits, chain repair, segment, spacemap</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td>and ELIX block management</td>
+</tr>
+<tr>
+<td>CTRNUPDR</td>
+<td>Both</td>
+<td>No</td>
+<td>+1 for each record update</td>
+</tr>
+<tr>
+<td>CTRSDTASZ</td>
+<td>Both</td>
+<td>Yes</td>
+<td>+block size for each block added</td>
+</tr>
+<tr>
+<td>CTRSTMST</td>
+<td>Both</td>
+<td>Yes</td>
+<td>Write STCK value at CLOSE</td>
+</tr>
+<tr>
+<td>CTRSTRMAX</td>
+<td>Both</td>
+<td>No</td>
+<td>+1 for each string created</td>
+</tr>
+<tr>
+<td>CTRNUIW</td>
+<td>Both</td>
+<td>No</td>
+<td>+1 for each user-requested block write</td>
+</tr>
+<tr>
+<td>CTRTOTRL</td>
+<td>Data only</td>
+<td>Yes</td>
+<td>Maintained for variable files only:</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td>+record size for each record added; -record size for each record deleted</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td>SPX is not included; RLF is included; Adjusted for change to variable length</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td>For RRDS, empty slots are not included</td>
+</tr>
+<tr>
+<td>CTRLOKEY</td>
+<td>Data only</td>
+<td>Yes</td>
+<td>KSDS only. Update when a lower key is added or this key is deleted</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -6131,7 +6371,7 @@ If they are issued before the ECB has been posted, unpredictable results may occ
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-24-g8fbc12b4"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-25-g7100a9ad"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
