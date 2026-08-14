@@ -155,11 +155,11 @@ import javax.swing.JTextArea;
  * 04/12/06 RPI 279 use correct version of max_time_seconds
  * 04/12/06 RPI 280 increase tz390.opt_maxsym to 50,000
  * 04/17/06 RPI 284 and opt_max???? for init_arryas()
- * 04/21/06 RPI 288 fix ENTRY for CSECT and supress SPACE, EJECT
+ * 04/21/06 RPI 288 fix ENTRY for CSECT and suppress SPACE, EJECT
  * 04/23/06 RPI 285 force printing MNOTE errors and az390 errors
  * 04/28/06 RPI 301 use esd_base to handle loctr bases
  * 04/28/06 RPI 304 add NOPRINT support for PRINT
- * 04/30/06 RPI 306 update OPSYN support, supress copy stmt
+ * 04/30/06 RPI 306 update OPSYN support, suppress copy stmt
  * 05/09/06 RPI 312 add name to return code message
  * 05/11/06 RPI 313 change MNOTE to set max return code
  *          but do not issue error and fix exp parser
@@ -469,11 +469,11 @@ public  class  az390 implements Runnable {
     /** variable      */ String mz390_started_msg = ""; // RPI 755
     /** variable      */ boolean mz390_abort = false;
     /** variable      */ boolean az390_recursive_abort = false; // RPI 935
-    /** variable      */ int mz390_rc     = 0; // RPI 415 passed from mz390 if option asm
+    /** variable      */ int mz390_rc = 0; // RPI 415 passed from mz390 if option asm
     /** variable      */ int cur_pass = 1;
     /** variable      */ Date cur_date = new Date();
     /** variable      */ long tod_start = cur_date.getTime();
-    /** variable      */ long tod_end   = 0;
+    /** variable      */ long tod_end = 0;
     /** variable      */ long tot_sec = 0;
     /** variable      */ boolean stats_to_obj = false;
     /** variable      */ int tot_obj_bytes = 0;
@@ -485,32 +485,32 @@ public  class  az390 implements Runnable {
     /** variable      */ String bal_line = null;
     /** variable      */ String mnote_warning_msg = ""; // RPI 1056
     /** variable      */ int mcall_bal_index = 22;
-    /** variable      */ int mcall_lv_index  = 16;
+    /** variable      */ int mcall_lv_index = 16;
     /** variable      */ String bal_xref_file_name = null;
     /** variable      */ char   bal_xref_file_type = ' ';
-    /** variable      */ char   cur_line_type  = ' '; // RPI 581
+    /** variable      */ char   cur_line_type = ' '; // RPI 581
     /** variable      */ int    cur_line_file_num = 0;
     /** variable      */ String bal_xref_file_path = null;
-    /** variable      */ int    bal_xref_file_num  = 0;
+    /** variable      */ int    bal_xref_file_num = 0;
     /** variable      */ int    bal_xref_file_line = 0;
     /** variable      */ int    tot_xref_files = 0;
     /** variable      */ String[] xref_file_name = null;
     /** variable      */ String[] xref_file_path = null; // RPI 425
-    /** variable      */ int[]    xref_file_errors = null;
-    /** variable      */ char[]   xref_file_type   = null; // RPI 540 '+' macro '=' copy
+    /** variable      */ int[]  xref_file_errors = null;
+    /** variable      */ char[] xref_file_type = null; // RPI 540 '+' macro '=' copy
     /** variable      */ int    mz390_xref_file = 0;
     /** variable      */ int    mz390_xref_line = 0;
-    /** variable      */ String bal_label   = null;
+    /** variable      */ String bal_label = null;
     /** variable      */ String opsyn_label = null;
     /** variable      */ String bal_op = null;
     /** variable      */ boolean bal_op_ok = false;
     /** variable      */ boolean bal_label_ok = false; // RPI 451
     /** variable      */ String bal_parms = null;
-    /** variable      */ boolean list_use      = false;
-    /** variable      */ int      mac_inline_level = 0;      // rpi 581
-    /** variable      */ int      mac_inline_op_macro = 220; // rpi 581
-    /** variable      */ int      mac_inline_op_mend  = 221; // rpi 581
-    /** variable      */ int      mac_inline_op_other = 226; // rpi 581
+    /** variable      */ boolean list_use = false;
+    /** variable      */ int mac_inline_level = 0;      // rpi 581
+    /** variable      */ int mac_inline_op_macro = 220; // rpi 581
+    /** variable      */ int mac_inline_op_mend  = 221; // rpi 581
+    /** variable      */ int mac_inline_op_other = 226; // rpi 581
 
     /** variable      */ boolean bal_abort = false;
     /** variable      */ int bal_op_index = 0;
@@ -519,20 +519,22 @@ public  class  az390 implements Runnable {
     /** variable      */ boolean report_equ_changes = true;   // RPI 605
     /** variable      */ boolean bal_eof = false;
     /** variable      */ boolean end_found = false;
-    /** variable      */ String end_entry = "";                // RPI 1197
-    /** variable      */ int    end_entry_sid = 0;            // RPI 1197
+    /** variable      */ String end_entry = "";    // RPI 1197
+    /** variable      */ int    end_entry_sid = 0; // RPI 1197
     /** variable      */ boolean end_entry_found = false; // RPI 1197
     /** variable      */ SimpleDateFormat mmddyy = new SimpleDateFormat("MM/dd/yy");
     /** variable      */ SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
     /** variable      */ boolean log_tod = true;
     /** variable      */ JTextArea z390_log_text = null;
     /*
+     *************************************************
      * semaphores used to synchronize mz390 and az390
+     *************************************************
      */
-    /** variable      */ Thread  az390_thread = null;    // RPI 415
-    /** variable      */ boolean az390_running = false;  // RPI 415
-    /** variable      */ boolean mz390_call = false;     // RPI 415
-    /** variable      */ boolean lookahead_mode  = false;     // RPI 415
+    /** variable      */ Thread  az390_thread = null;     // RPI 415
+    /** variable      */ boolean az390_running = false;   // RPI 415
+    /** variable      */ boolean mz390_call = false;      // RPI 415
+    /** variable      */ boolean lookahead_mode  = false; // RPI 415
     /** variable      */ boolean sym_lock = false;
     /** variable      */ String  sym_lock_desc = null;
     /** variable      */ final Lock      lock            = new ReentrantLock();
@@ -548,8 +550,11 @@ public  class  az390 implements Runnable {
     /** variable      */ boolean pass_bal_eof = false;
     /** variable      */ boolean az390_waiting = false;
     /** variable      */ boolean az390_private_sect = false; // RPI 995
+
     /*
+     ********************************************************
      * static limits
+     ********************************************************
      */
     /** variable      */ int sort_index_bias = 100000; // must be > tz390.opt_maxsym and tz390.opt_maxsym
     /** variable      */ int sort_index_len  = 6;      // digits in key_index_bias
@@ -558,56 +563,60 @@ public  class  az390 implements Runnable {
     /** variable      */ int max_hh = 0x7ffff; // RPI 387
     /** variable      */ int min_hh = 0xfff80000; // RPI 387
     /** variable      */ int max_text_buff_len = 16;
-    /** variable      */ long[] max_fh = {
-        ((long)(-1) >>> 57),
-        ((long)(-1) >>> 49),
-        ((long)(-1) >>> 41),
-        ((long)(-1) >>> 33),
-        ((long)(-1) >>> 25),
-        ((long)(-1) >>> 17),
-        ((long)(-1) >>> 9),
-        ((long)(-1) >>> 1),
-    };
-    /** variable      */ long[] min_fh = {
-        ((long)(-1) << 7),
-        ((long)(-1) << 15),
-        ((long)(-1) << 23),
-        ((long)(-1) << 31),
-        ((long)(-1) << 39),
-        ((long)(-1) << 47),
-        ((long)(-1) << 55),
-        ((long)(-1) << 63),
-    };
+    /** variable      */
+    long[] max_fh = { ((long)(-1) >>> 57),
+                      ((long)(-1) >>> 49),
+                      ((long)(-1) >>> 41),
+                      ((long)(-1) >>> 33),
+                      ((long)(-1) >>> 25),
+                      ((long)(-1) >>> 17),
+                      ((long)(-1) >>>  9),
+                      ((long)(-1) >>>  1),
+                    };
+    /** variable      */
+    long[] min_fh = { ((long)(-1) <<  7),
+                      ((long)(-1) << 15),
+                      ((long)(-1) << 23),
+                      ((long)(-1) << 31),
+                      ((long)(-1) << 39),
+                      ((long)(-1) << 47),
+                      ((long)(-1) << 55),
+                      ((long)(-1) << 63),
+                    };
     /*
+     ********************************************************
      * bal file global variables
+     ********************************************************
      */
-    /** variable      */ long    tod_time_limit = 0;
+    /** variable      */ long tod_time_limit = 0;
     /** variable      */ int tot_bal_line = 1;
     /** variable      */ int tot_mac_copy = 0;
     /** variable      */ int tot_mnote_warning = 0;
     /** variable      */ int tot_mnote_errors  = 0;
     /** variable      */ int max_mnote_level   = 0;
-    /** variable      */ String[]  bal_line_text = null; //logical bal line from 1 or more physical lines
-    /** variable      */ int[]     bal_line_num  = null; //starting generated BAL physical line #
-    /** variable      */ int[]     bal_line_xref_file_num  = null;
-    /** variable      */ int[]     bal_line_xref_file_line = null;
+    /** variable      */ String[] bal_line_text = null; // logical bal line from 1 or more physical lines
+    /** variable      */ int[]    bal_line_num  = null; // starting generated BAL physical line #
+    /** variable      */ int[]    bal_line_xref_file_num  = null;
+    /** variable      */ int[]    bal_line_xref_file_line = null;
     /** variable      */ boolean bal_line_gen = true;
     /** variable      */ String trace_pfx = null;
     /** variable      */ String parm_name = null;
     /** variable      */ String parm_value = null;
-    /** variable      */ int bal_line_index = 1; //current mac line index
-    /** variable      */ Pattern exp_pattern = null;
-    /** variable      */ Matcher exp_match   = null;
+    /** variable      */ int bal_line_index = 1; // current mac line index
+    /** variable      */ Pattern exp_pattern   = null;
+    /** variable      */ Matcher exp_match     = null;
     /** variable      */ Pattern label_pattern = null;
     /** variable      */ Matcher label_match   = null;
     /** variable      */ Pattern extrn_pattern = null;
     /** variable      */ Matcher extrn_match   = null;
-    /** variable      */ Pattern dcc_sq_pattern = null;  // EBCDIC or ASCII
-    /** variable      */ Pattern dcc_dq_pattern = null;  //RPI5  C".." ASCII
-    /** variable      */ Pattern dcc_eq_pattern = null;  //RPI73 C!..! EBCDIC
-    /** variable      */ Matcher dcc_match   = null;
+    /** variable      */ Pattern dcc_sq_pattern = null; // EBCDIC or ASCII
+    /** variable      */ Pattern dcc_dq_pattern = null; // RPI5  C".." ASCII
+    /** variable      */ Pattern dcc_eq_pattern = null; // RPI73 C!..! EBCDIC
+    /** variable      */ Matcher dcc_match = null;
     /*
+     ********************************************************
      * location counter and ESD tables
+     ********************************************************
      */
     /** variable      */ int loc_ctr = 0;
     /** variable      */ int loc_start = 0;
@@ -616,16 +625,18 @@ public  class  az390 implements Runnable {
     /** variable      */ int cur_esd_sid = 0;
     /** variable      */ int tot_esd = 0;
     /** variable      */ int cur_esd = 0;
-    /** variable      */ int cur_esd_base = 0;   // RPI 301 first section
+    /** variable      */ int cur_esd_base = 0; // RPI 301 first section
     /** variable      */ int first_cst_esd = 0;
     /** variable      */ int esd_sdt = 0;
     /** variable      */ int esd_cpx_rld = -1;
-    /** variable      */ int[]     esd_sid  = null;
-    /** variable      */ int[]     esd_base = null; // RPI 301
-    /** variable      */ int[]     esd_loc  = null; // RPI 778 current loc within section
-    /** variable      */ int tot_loc_stmt   = 0;    // RPI 920
+    /** variable      */ int[] esd_sid  = null;
+    /** variable      */ int[] esd_base = null; // RPI 301
+    /** variable      */ int[] esd_loc  = null; // RPI 778 current loc within section
+    /** variable      */ int tot_loc_stmt = 0;  // RPI 920
     /*
+     ********************************************************
      * using global data
+     ********************************************************
      */
     /** variable      */ int cur_use_start = 0;
     /** variable      */ int cur_use_end   = 0;
@@ -651,38 +662,44 @@ public  class  az390 implements Runnable {
     /** variable      */ int[]    use_reg_loc  = null;
     /** variable      */ int      use_domain_tot = 0; // rpi 776
     /*
+     ************************************************
      * push, pop, and, print data
+     ************************************************
      */
     /** variable      */ int using_level = 0;
     /** variable      */ int print_level = 0;
-    /** variable      */ int[]     using_start = null;
-    /** variable      */ int[]     using_end   = null;
-    /** variable      */ boolean[] print_on    = null;
-    /** variable      */ boolean[] print_gen   = null;
-    /** variable      */ boolean[] print_data  = null;
-    /** variable      */ boolean  force_list_bal = false; // RPI 285 RPI 891 force msg on PRN
-    /** variable      */ boolean  list_bal_line  = true; // RPI 891 assume all BAL on PRN
+    /** variable      */ int[]     using_start  = null;
+    /** variable      */ int[]     using_end    = null;
+    /** variable      */ boolean[] print_on     = null;
+    /** variable      */ boolean[] print_gen    = null;
+    /** variable      */ boolean[] print_data   = null;
+    /** variable      */ boolean force_list_bal = false; // RPI 285 RPI 891 force msg on PRN
+    /** variable      */ boolean list_bal_line  = true;  // RPI 891 assume all BAL on PRN
     /*
+     ********************************************************
      * set mac_call_gen on after printing
      * *MCALL LV= 1 and set off after
      * print *MEXIT LV= 1
+     ********************************************************
      */
-    /** variable      */ boolean  mac_call_gen   = false;
-    /** variable      */ boolean  mac_call_first = false;
-    /** variable      */ boolean  mac_call_last  = false;
+    /** variable      */ boolean mac_call_gen   = false;
+    /** variable      */ boolean mac_call_first = false;
+    /** variable      */ boolean mac_call_last  = false;
     /*
+     ********************************************************
      * symbol table global variables
+     ********************************************************
      */
-    /** variable      */ byte sym_sdt   = 0;  // dec, b'', c'', h''
-    /** variable      */ byte sym_cst   = 1;  // CSECT )alias REL)
-    /** variable      */ byte sym_dst   = 2;  // DSECT (alias REL)
-    /** variable      */ byte sym_ent   = 3;  // ENTRY (alias REL)
-    /** variable      */ byte sym_ext   = 4;  // EXTRN external link
-    /** variable      */ byte sym_rel   = 5;  // RX (CST.DST,ENT)_
-    /** variable      */ byte sym_rld   = 6;  // complex rld exp
-    /** variable      */ byte sym_lct   = 7;  // loctr (changed to cst/dst).
-    /** variable      */ byte sym_wxt   = 8;  // WXTRN weak external link RPI182
-    /** variable      */ byte sym_und   = 9;  // undefined symbol RPI 694
+    /** variable      */ byte sym_sdt = 0; // dec, b'', c'', h''
+    /** variable      */ byte sym_cst = 1; // CSECT )alias REL)
+    /** variable      */ byte sym_dst = 2; // DSECT (alias REL)
+    /** variable      */ byte sym_ent = 3; // ENTRY (alias REL)
+    /** variable      */ byte sym_ext = 4; // EXTRN external link
+    /** variable      */ byte sym_rel = 5; // RX (CST.DST,ENT)_
+    /** variable      */ byte sym_rld = 6; // complex rld exp
+    /** variable      */ byte sym_lct = 7; // loctr (changed to cst/dst).
+    /** variable      */ byte sym_wxt = 8; // WXTRN weak external link RPI182
+    /** variable      */ byte sym_und = 9; // undefined symbol RPI 694
     /** variable      */ int tot_sym = 0;
     /** variable      */ int tot_sym_find = 0;
     /** variable      */ int tot_sym_comp = 0;
@@ -693,133 +710,143 @@ public  class  az390 implements Runnable {
     /** variable      */ boolean sect_change = false;
     /** variable      */ byte prev_sect_type = sym_cst;
     /** variable      */ String private_csect = "$PRIVATE"; // RPI 995
-    /** variable      */ String[] sym_type_desc = {"ABS","CST","DST","ENT","EXT","REL","RLD","LCT","WXT","UND"}; //RPI182 RPI 694
-    /** variable      */ String[]  sym_name         = null;
-    /** variable      */ int[]     sym_def          = null;
-    /** variable      */ byte[]    sym_type         = null;
-    /** variable      */ byte[]    sym_dc_type      = null; // RPI 790
-    /** variable      */ byte[]    sym_dc_type_sfx  = null; // RPI 790
-    /** variable      */ byte[]    sym_attr         = null; // RPI 340
-    /** variable      */ byte[]    sym_attr_elt     = null; // RPI 415 explicit length type attribute
-    /** variable      */ int[]     sym_scale        = null; // scale factor for int or fp exp
-    /** variable      */ int[]     sym_attrp        = null; // equ 4th program attribute 4 ebcdic char stored as int
-    /** variable      */ String[]  sym_attra        = null; // equ 5th assember attribute int RPI 415
-    /** variable      */ int[]     sym_esd          = null;
-    /** variable      */ int[]     sym_loc          = null;
-    /** variable      */ int[]     sym_max_loc      = null;
-    /** variable      */ int[]     sym_len          = null;
-    /** variable      */ int[]     sym_sect_type    = null;
-    /** variable      */ int[]     sym_sect_prev    = null;
-    /** variable      */ int[]     sym_sect_next    = null;
+    /** variable      */ String[] sym_type_desc = { "ABS", "CST", "DST", "ENT", "EXT", "REL", "RLD", "LCT", "WXT", "UND" }; // RPI182 RPI 694
+    /** variable      */ String[] sym_name        = null;
+    /** variable      */ int[]    sym_def         = null;
+    /** variable      */ byte[]   sym_type        = null;
+    /** variable      */ byte[]   sym_dc_type     = null; // RPI 790
+    /** variable      */ byte[]   sym_dc_type_sfx = null; // RPI 790
+    /** variable      */ byte[]   sym_attr        = null; // RPI 340
+    /** variable      */ byte[]   sym_attr_elt    = null; // RPI 415 explicit length type attribute
+    /** variable      */ int[]    sym_scale       = null; // scale factor for int or fp exp
+    /** variable      */ int[]    sym_attrp       = null; // equ 4th program attribute 4 ebcdic char stored as int
+    /** variable      */ String[] sym_attra       = null; // equ 5th assember attribute int RPI 415
+    /** variable      */ int[]    sym_esd         = null;
+    /** variable      */ int[]    sym_loc         = null;
+    /** variable      */ int[]    sym_max_loc     = null;
+    /** variable      */ int[]    sym_len         = null;
+    /** variable      */ int[]    sym_sect_type   = null;
+    /** variable      */ int[]    sym_sect_prev   = null;
+    /** variable      */ int[]    sym_sect_next   = null;
     /** variable      */ TreeSet<Integer>[] sym_xref = null;
     /** variable      */ int last_xref_index = 0;
     /** variable      */ int last_xref_line  = 0;
-    /** variable      */ int sym_def_ref       = 0;  // symbol referenced but not defined
+    /** variable      */ int sym_def_ref     = 0;    // symbol referenced but not defined
     /** variable      */ int sym_def_lookahead = -1; // symbol defined during lookahead
     /*
+     ********************************************************
      * vector registers v1-v4 rxb extended high bits
      *   get_hex_vreg(int vreg) sets corresponding bits
      *   get_hex_vreg_rxb appends rxb bits to code and resets vreg_rxb
+     ********************************************************
      */
     /** variable      */ int vreg_rxb = 0;
     /*
+     ********************************************************
      * ERRSUM critical error data
+     ********************************************************
      */
-    /** variable      */ int max_missing = 1000;  // rpi 2202 raised from 100 for testins6 debugging
+    /** variable      */ int max_missing = 1000; // rpi 2202 raised from 100 for testins6 debugging
     /** variable      */ int tot_missing_copy = 0;
     /** variable      */ int tot_missing_macro = 0;
     /** variable      */ int tot_missing_sym = 0;
     /** variable      */ String missing_copy[] = new String[max_missing];
     /** variable      */ String missing_macro[] = new String[max_missing];
     /*
+     ********************************************************
      * DS/DC type and attribute tables
+     ********************************************************
      */
     /** variable      */ String dc_type_table    = "ABCDEFHLPSVXYZ";
     /** variable      */ String dc_type_explicit = "RBCKKGGKPRVXRZ";
-    /** variable      */ int[] dc_type_len = {
-        4,  // A
-        1,  // B
-        1,  // C
-        8,  // D
-        4,  // E
-        4,  // F
-        2,  // H
-        16, // L
-        1,  // P
-        2,  // S
-        4,  // V
-        1,  // X
-        2,  // Y
-        1   // Z
-    };
-    /** variable      */ int[] dc_type_align = {
-        4,  // A
-        0,  // B
-        0,  // C
-        8,  // D
-        4,  // E
-        4,  // F
-        2,  // H
-        8,  // L
-        0,  // P
-        2,  // S
-        4,  // V
-        0,  // X
-        2,  // Y
-        0   // Z
-    };
-    /** variable      */ char[] dc_type_delimiter = {
-        '(',  // A
-        '\'', // B
-        '\'', // C
-        '\'', // D
-        '\'', // E
-        '\'', // F
-        '\'', // H
-        '\'', // L
-        '\'', // P
-        '(',  // S
-        '(',  // V
-        '\'', // X
-        '(',  // Y
-        '\''  // Z
-    };
-    /** variable      */ String[] sym_attra_type = {
-        "AR",   // Register - Access
-        "CR",   // CR Register - Control
-        "CR32", // Register - Control 32-bit
-        "CR64", // Register - Control 64-bit
-        "FPR",  // Register - Floating-Point
-        "GR",   // Register - General
-        "GR32", // Register - General 32-bit
-        "GR64"  // Register - General 64-bit
-    };
-    /** variable      */ byte    bal_lab_attr = 0;
-    /** variable      */ byte    sym_attr_elt_def = 0; // null char
-    /** variable      */ byte    bal_lab_attr_elt = sym_attr_elt_def; // RPI 415 explicit length attr
+    /** variable      */
+    int[] dc_type_len = { 4,  // A
+                          1,  // B
+                          1,  // C
+                          8,  // D
+                          4,  // E
+                          4,  // F
+                          2,  // H
+                          16, // L
+                          1,  // P
+                          2,  // S
+                          4,  // V
+                          1,  // X
+                          2,  // Y
+                          1   // Z
+                        };
+    /** variable      */
+    int[] dc_type_align = { 4,  // A
+                            0,  // B
+                            0,  // C
+                            8,  // D
+                            4,  // E
+                            4,  // F
+                            2,  // H
+                            8,  // L
+                            0,  // P
+                            2,  // S
+                            4,  // V
+                            0,  // X
+                            2,  // Y
+                            0   // Z
+                          };
+    /** variable      */
+    char[] dc_type_delimiter = { '(',  // A
+                                 '\'', // B
+                                 '\'', // C
+                                 '\'', // D
+                                 '\'', // E
+                                 '\'', // F
+                                 '\'', // H
+                                 '\'', // L
+                                 '\'', // P
+                                 '(',  // S
+                                 '(',  // V
+                                 '\'', // X
+                                 '(',  // Y
+                                 '\''  // Z
+                               };
+    /** variable      */
+    String[] sym_attra_type = { "AR",   // Register - Access
+                                "CR",   // CR Register - Control
+                                "CR32", // Register - Control 32-bit
+                                "CR64", // Register - Control 64-bit
+                                "FPR",  // Register - Floating-Point
+                                "GR",   // Register - General
+                                "GR32", // Register - General 32-bit
+                                "GR64"  // Register - General 64-bit
+                              };
+    /** variable      */ byte bal_lab_attr = 0;
+    /** variable      */ byte sym_attr_elt_def = 0; // null char
+    /** variable      */ byte bal_lab_attr_elt = sym_attr_elt_def; // RPI 415 explicit length attr
     /*
+     ********************************************************
      * literal table for next pool at LTORG or END
+     ********************************************************
      */
     /** variable      */ int tot_lit = 0;
     /** variable      */ int cur_lit = 0;
     /** variable      */ boolean lit_loc_ref = false;
     /** variable      */ int cur_lit_pool = 1;
-    /** variable      */ String[]  lit_name         = null;
-    /** variable      */ int[]     lit_pool         = null;
-    /** variable      */ int[]     lit_line         = null;
-    /** variable      */ int[]     lit_line_loc     = null;
-    /** variable      */ int[]     lit_esd          = null;
-    /** variable      */ int[]     lit_loc          = null;
-    /** variable      */ int[]     lit_len          = null;
-    /** variable      */ int[]     lit_dup          = null;  // RPI 1200 use dup*len for alignment sizing
-    /** variable      */ int[]     lit_scale        = null;  // RPI 790
-    /** variable      */ byte[]    lit_dc_type      = null;  // RPI 790
-    /** variable      */ byte[]    lit_dc_type_sfx  = null;  // RPI 790
-    /** variable      */ byte[]    lit_gen          = null;
-    /** variable      */ int[]     lit_def          = null;
+    /** variable      */ String[] lit_name        = null;
+    /** variable      */ int[]    lit_pool        = null;
+    /** variable      */ int[]    lit_line        = null;
+    /** variable      */ int[]    lit_line_loc    = null;
+    /** variable      */ int[]    lit_esd         = null;
+    /** variable      */ int[]    lit_loc         = null;
+    /** variable      */ int[]    lit_len         = null;
+    /** variable      */ int[]    lit_dup         = null; // RPI 1200 use dup*len for alignment sizing
+    /** variable      */ int[]    lit_scale       = null; // RPI 790
+    /** variable      */ byte[]   lit_dc_type     = null; // RPI 790
+    /** variable      */ byte[]   lit_dc_type_sfx = null; // RPI 790
+    /** variable      */ byte[]   lit_gen         = null;
+    /** variable      */ int[]    lit_def         = null;
     /** variable      */ TreeSet<Integer>[] lit_xref = null;
     /*
+     ********************************************************
      * bal operation code data and tables
+     ********************************************************
      */
     /** variable      */ String hex_tab   = "0123456789ABCDEF";
     /** variable      */ String hex_op    = null;
@@ -834,8 +861,10 @@ public  class  az390 implements Runnable {
     /** variable      */ String hex_bddd1_loc = null;
     /** variable      */ String hex_bddd2_loc = null;
     /*
+     ********************************************************
      * expression global variables
      * including polish notation var and op stacks
+     ********************************************************
      */
     /** variable      */ String  exp_text  = ""; // expression text
     /** variable      */ int     exp_index = 0;  // current starting index
@@ -848,7 +877,7 @@ public  class  az390 implements Runnable {
     /** variable      */ int     exp_level = 0;
     /** variable      */ String  exp_use_lab = null;
     /** variable      */ boolean exp_term = false;
-    /** variable      */ boolean exp_eot  = false;  // end of text terminator
+    /** variable      */ boolean exp_eot  = false; // end of text terminator
     /** variable      */ String  exp_term_op = "~";
     /** variable      */ String  exp_start_op = exp_term_op;
     /** variable      */ String  exp_token = null;
@@ -860,7 +889,7 @@ public  class  az390 implements Runnable {
     /** variable      */ int     sym_val1  = 0;
     /** variable      */ int     sym_val2  = 0;
     /** variable      */ String  exp_prev_op = exp_start_op;
-    /** variable      */ int     exp_sym_index = -1;  // symbol index
+    /** variable      */ int     exp_sym_index = -1; // symbol index
     /** variable      */ boolean exp_sym_pushed = false;
     /** variable      */ boolean exp_sym_last = false;
     /** variable      */ boolean exp_first_sym_len = true; // is this first exp sym len
@@ -869,59 +898,71 @@ public  class  az390 implements Runnable {
     /** variable      */ int exp_len = 1;
     /** variable      */ int tot_exp_stk_sym = 0;
     /** variable      */ int tot_exp_stk_op  = 0;
-    /** variable      */ int[]     exp_stk_sym_esd  = (int[])Array.newInstance(int.class,max_exp_stk);
-    /** variable      */ int[]     exp_stk_sym_val  = (int[])Array.newInstance(int.class,max_exp_stk);
-    /** variable      */ String[]  exp_stk_op   = new String[max_exp_stk];
-    /** variable      */ int[]     exp_op_class = (int[])Array.newInstance(int.class,256);
+    /** variable      */ int[]    exp_stk_sym_esd = (int[]) Array.newInstance(int.class, max_exp_stk);
+    /** variable      */ int[]    exp_stk_sym_val = (int[]) Array.newInstance(int.class, max_exp_stk);
+    /** variable      */ String[] exp_stk_op   = new String[max_exp_stk];
+    /** variable      */ int[]    exp_op_class = (int[]) Array.newInstance(int.class, 256);
     /*
+     ********************************************************
      * define exp actions based on last and
      * next operator class
      *    1 2 3 4 5 6
      *   +-* /( ) ?'~             col = next_op
      *                            row = prev_op
+     ********************************************************
      */
     /** variable      */ int tot_classes = 6;
-    /** variable      */ int[] exp_action = {
-        1,3,3,1,3,1,   // 1 +-  prev add/sub
-        2,2,3,2,3,2,   // 2 * / prev mpy/div
-        3,3,3,4,3,0,   // 3 (   prev open
-        0,0,0,0,3,0,   // 4 )   prev close
-        5,5,3,5,3,5,   // 5 ?'  prev pfx oper L' U+/= RPI 313 RPI 991 pfx/pfx=3
-        3,3,7,6,3,6,   // 6 ~   prev terminator
-    };
-    /* action code routines:
+    /** variable      */
+    int[] exp_action = { 1,3,3,1,3,1,   // 1 +-  prev add/sub
+                         2,2,3,2,3,2,   // 2 * / prev mpy/div
+                         3,3,3,4,3,0,   // 3 (   prev open
+                         0,0,0,0,3,0,   // 4 )   prev close
+                         5,5,3,5,3,5,   // 5 ?'  prev pfx oper L' U+/= RPI 313 RPI 991 pfx/pfx=3
+                         3,3,7,6,3,6,   // 6 ~   prev terminator
+                       };
+    /*
+     ********************************************************
+     *  action code routines:
      *   0 error
      *   1 add/sub
      *   2 mpy/div
      *   3 push op
      *   4 POP  op
-     *   5 length attribute of symbol or * instr.
+     *   5 length attribute of symbol or * instr
      *   6 exit with result of expression
      *   7 check ( for terminator if last_val
+     ********************************************************
      */
+
     /*
+     ********************************************************
      * expression relocation definitions RLDS
+     ********************************************************
      */
     /** variable      */ int     exp_rld_mod_val = 0;     // RPI 632
     /** variable      */ boolean exp_rld_mod_set = false; // RPI 632
-    /** variable      */ byte exp_rld_len = 0;  // gen rlds if 3 or 4
+    /** variable      */ byte exp_rld_len = 0; // gen rlds if 3 or 4
     /** variable      */ int tot_exp_rld_add = 0;
     /** variable      */ int tot_exp_rld_sub = 0;
-    /** variable      */ int[]     exp_rld_add_esd = (int[])Array.newInstance(int.class,max_exp_rld);
-    /** variable      */ int[]     exp_rld_sub_esd = (int[])Array.newInstance(int.class,max_exp_rld);
+    /** variable      */ int[] exp_rld_add_esd = (int[]) Array.newInstance(int.class, max_exp_rld);
+    /** variable      */ int[] exp_rld_sub_esd = (int[]) Array.newInstance(int.class, max_exp_rld);
     /*
+     ********************************************************
      * global relocation definitions RLDS
+     ********************************************************
      */
     /** variable      */ int tot_rld = 0;
     /** variable      */ char rld_add = '+';
     /** variable      */ char rld_sub = '-';
-    /** variable      */ int[]     rld_fld_esd = null;
-    /** variable      */ int[]     rld_fld_loc = null;
-    /** variable      */ byte[]    rld_fld_len = null;
-    /** variable      */ char[]    rld_fld_sgn = null;
-    /** variable      */ int[]     rld_xrf_esd = null;
+    /** variable      */ int[]  rld_fld_esd = null;
+    /** variable      */ int[]  rld_fld_loc = null;
+    /** variable      */ byte[] rld_fld_len = null;
+    /** variable      */ char[] rld_fld_sgn = null;
+    /** variable      */ int[]  rld_xrf_esd = null;
     /*
+     ********************************************************
      * object code text buffer variables
+     ********************************************************
      */
     /** variable      */ boolean gen_obj_code = false;
     /** variable      */ String obj_code = "";
@@ -932,24 +973,28 @@ public  class  az390 implements Runnable {
     /** variable      */ int cur_text_len = 0;
     /** variable      */ int cur_text_esd = 0;
     /*
+     ********************************************************
      * binary obj file buffer and layouts
+     ********************************************************
      */
     /** variable      */ byte[] bin_byte = new byte[80];
     /** variable      */ byte obj_bin_id = 0x02; // first bin obj byte
-    /** variable      */ byte[] bin_esd_type = {'E','S','D'};
-    /** variable      */ byte[] bin_txt_type = {'T','X','T'};
-    /** variable      */ byte[] bin_rld_type = {'R','L','D'};
-    /** variable      */ byte[] bin_end_type = {'E','N','D'};
+    /** variable      */ byte[] bin_esd_type = { 'E', 'S', 'D' };
+    /** variable      */ byte[] bin_txt_type = { 'T', 'X', 'T' };
+    /** variable      */ byte[] bin_rld_type = { 'R', 'L', 'D' };
+    /** variable      */ byte[] bin_end_type = { 'E', 'N', 'D' };
     /*
+     ********************************************************
      * DS/DC global variables
+     ********************************************************
      */
-    /** variable      */ boolean dc_op   = false;  // ds vs dc bal op
-    /** variable      */ boolean dc_eod  = false;  // ds/dc end of fields
+    /** variable      */ boolean dc_op  = false; // ds vs dc bal op
+    /** variable      */ boolean dc_eod = false; // ds/dc end of fields
     /** variable      */ boolean dc_len_explicit = false;
     /** variable      */ boolean dc_scale_explicit = false; // RPI 777
     /** variable      */ boolean dc_exp_explicit = false;   // RPI 777
-    /** variable      */ boolean dc_bit_len  = false;  // RPI 417
-    /** variable      */ boolean dc_unsigned = false;  // RPI 893
+    /** variable      */ boolean dc_bit_len  = false; // RPI 417
+    /** variable      */ boolean dc_unsigned = false; // RPI 893
     /** variable      */ BigInteger dc_bit_buff  = null;
     /** variable      */ byte[]     dc_bit_bytes = null;
     /** variable      */ long       dc_bit_value = 0;
@@ -962,210 +1007,216 @@ public  class  az390 implements Runnable {
     /** variable      */ String  dcb_bin = null;
     /** variable      */ String  dcc_text = null;
     /** variable      */ char    dcc_quote = ' ';
-    /** variable      */ int     dcc_len  = 0;
-    /** variable      */ int     dcp_len  = 0;
+    /** variable      */ int     dcc_len = 0;
+    /** variable      */ int     dcp_len = 0;
     /** variable      */ char    dcp_sign;
-    /** variable      */ int     dcx_len  = 0;
-    /** variable      */ boolean dc_first_field = true;  // is this first dc field
+    /** variable      */ int     dcx_len = 0;
+    /** variable      */ boolean dc_first_field = true; // is this first dc field
     /** variable      */ boolean dc_lit_ref = false;
     /** variable      */ boolean dc_lit_gen = false;
     /** variable      */ int     dc_lit_index_start = 0;
-    /** variable      */ String dc_field = null;
-    /** variable      */ char   dc_type  = ' '; // ds/ds field type char
+    /** variable      */ String  dc_field = null;
+    /** variable      */ char    dc_type = ' '; // ds/ds field type char
     /** variable      */ byte    dc_attr_elt = sym_attr_elt_def; // ds/dc explicit length field type char
     /** variable      */ boolean dcv_type = false;
     /** variable      */ boolean dca_ignore_refs = false;
-    /** variable      */ char   dc_type_sfx = ' ';
-    /** variable      */ String fp_text  = null; // RPI 790 fp text for use by DFP
-    /** variable      */ double fp_log2  = Math.log(2);
-    /** variable      */ double fp_log10 = Math.log(10);
+    /** variable      */ char    dc_type_sfx = ' ';
+    /** variable      */ String  fp_text = null; // RPI 790 fp text for use by DFP
+    /** variable      */ double  fp_log2 = Math.log(2);
+    /** variable      */ double  fp_log10 = Math.log(10);
     /** variable      */ MathContext fp_context = null;
     /** variable      */ BigDecimal fp_big_dec1 = BigDecimal.ZERO;
     /** variable      */ BigDecimal fp_big_dec2 = BigDecimal.ZERO;
     /** variable      */ BigDecimal fp_big_dec3 = BigDecimal.ZERO;
-    /** variable      */ BigDecimal fp_bd_two  = BigDecimal.valueOf(2);
+    /** variable      */ BigDecimal fp_bd_two   = BigDecimal.valueOf(2);
     /** variable      */ byte[] fp_big_byte = null;
     /** variable      */ byte[] fp_data_byte = new byte[16];
-    /** variable      */ ByteBuffer fp_data_buff = ByteBuffer.wrap(fp_data_byte,0,16);
+    /** variable      */ ByteBuffer fp_data_buff = ByteBuffer.wrap(fp_data_byte, 0, 16);
     /** variable      */ BigInteger fp_big_int1 = BigInteger.ZERO;
     /** variable      */ BigInteger fp_big_int2 = BigInteger.ZERO;
     /** variable      */ BigInteger fp_big_int_one_bits = BigInteger.ONE.shiftLeft(113).subtract(BigInteger.ONE);
     /** variable      */ BigInteger fp_big_int_lx_man_bits = BigInteger.ONE.shiftLeft(112).subtract(BigInteger.ONE); // RPI 821
     /** variable      */ BigInteger fp_big_int_dh_man_bits = BigInteger.ONE.shiftLeft(56).subtract(BigInteger.ONE);  // RPI 821
-    /** variable      */ int    fp_int1 = 0;
-    /** variable      */ int    fp_round_bit = 0;
-    /** variable      */ int fp_int_eb_one_bits  = 0xffffff;
-    /** variable      */ int fp_int_eb_man_bits  = 0x7fffff;
-    /** variable      */ int fp_int_eh_man_bits  = 0xffffff;
-    /** variable      */ long   fp_long1 = 0;
-    /** variable      */ long fp_long_db_one_bits = ((long)(1) << 53) - 1;
-    /** variable      */ long fp_long_db_man_bits = ((long)(1) << 52) - 1;
-    /** variable      */ long fp_long_dh_man_bits = ((long)(1) << 56) - 1;
-    /** variable      */ int    dc_index = 0;
-    /** variable      */ int    dc_data_start = 0;
-    /** variable      */ int    dc_dup   = 0;
-    /** variable      */ int    dc_dup_loc = 0; // rel offset for dup of a/v/s data with loc_ctr
-    /** variable      */ int    dc_len   = 0;
-    /** variable      */ int    dc_scale = 0;
-    /** variable      */ String  dc_digits = "";       // rpi 777 digits in P or Z value
+    /** variable      */ int fp_int1 = 0;
+    /** variable      */ int fp_round_bit = 0;
+    /** variable      */ int fp_int_eb_one_bits = 0xffffff;
+    /** variable      */ int fp_int_eb_man_bits = 0x7fffff;
+    /** variable      */ int fp_int_eh_man_bits = 0xffffff;
+    /** variable      */ long fp_long1 = 0;
+    /** variable      */ long fp_long_db_one_bits = ((long) (1) << 53) - 1;
+    /** variable      */ long fp_long_db_man_bits = ((long) (1) << 52) - 1;
+    /** variable      */ long fp_long_dh_man_bits = ((long) (1) << 56) - 1;
+    /** variable      */ int dc_index = 0;
+    /** variable      */ int dc_data_start = 0;
+    /** variable      */ int dc_dup     = 0;
+    /** variable      */ int dc_dup_loc = 0; // rel offset for dup of a/v/s data with loc_ctr
+    /** variable      */ int dc_len     = 0;
+    /** variable      */ int dc_scale   = 0;
+    /** variable      */ String dc_digits = "";        // rpi 777 digits in P or Z value
     /** variable      */ boolean dc_dec_point = false; // rpi 777 decimal point found in P/Z
-    /** variable      */ int     dc_dec_scale = 0;     // rpi 777 decimals to right of poind
-    /** variable      */ int    dc_exp   = 0;
-    /** variable      */ int    dc_first_len = 0;
-    /** variable      */ int    dc_first_dup = 9; // RPI 1200
-    /** variable      */ int    dc_first_loc = 0;
-    /** variable      */ char   dc_first_type = ' ';  // dc first field type char
-    /** variable      */ char   dc_first_type_sfx = ' '; // dc first type suffix  RPI 790
-    /** variable      */ int    dc_first_scale = 0;   // RPI 481
-    /** variable      */ byte   dc_first_attr_elt = ' '; // dc first explicit length field type char
+    /** variable      */ int dc_dec_scale = 0;         // rpi 777 decimals to right of poind
+    /** variable      */ int dc_exp       = 0;
+    /** variable      */ int dc_first_len = 0;
+    /** variable      */ int dc_first_dup = 9; // RPI 1200
+    /** variable      */ int dc_first_loc = 0;
+    /** variable      */ char dc_first_type = ' ';     // dc first field type char
+    /** variable      */ char dc_first_type_sfx = ' '; // dc first type suffix RPI 790
+    /** variable      */ int dc_first_scale = 0;       // RPI 481
+    /** variable      */ byte dc_first_attr_elt = ' '; // dc first explicit length field type char
     /** variable      */ String dc_hex = null;
-    /** variable      */ byte[]     dc_data_byte = (byte[])Array.newInstance(byte.class,256);
-    /** variable      */ ByteBuffer dc_data = ByteBuffer.wrap(dc_data_byte,0,256);
+    /** variable      */ byte[] dc_data_byte = (byte[]) Array.newInstance(byte.class, 256);
+    /** variable      */ ByteBuffer dc_data = ByteBuffer.wrap(dc_data_byte, 0, 256);
     /** variable      */ int dc_type_index = 0;
-    /** variable      */ BigDecimal  dc_bd_val = null;
-    /** variable      */ BigInteger  dc_bi_val = null;
-    /** variable      */ byte[]      dc_byte_val = null;
-    /** variable      */ boolean     dcc_ascii_req = false;
+    /** variable      */ BigDecimal dc_bd_val = null;
+    /** variable      */ BigInteger dc_bi_val = null;
+    /** variable      */ byte[] dc_byte_val = null;
+    /** variable      */ boolean dcc_ascii_req = false;
     /** variable      */ byte ascii_lf = 0x0a;
     /** variable      */ byte ascii_cr = 0x0d;
-    /** variable      */ byte ascii_period =  (int)'.';
+    /** variable      */ byte ascii_period = (int) '.';
     /** variable      */ byte ascii_space = (int) ' ';
     /** variable      */ byte ebcdic_period = 0x4B;
     /** variable      */ byte ebcdic_space = 0x40;
     /*
+     ********************************************************
      * EXEC CICS DFHRESP(type) literal data substitution per RPI 626
+     ********************************************************
      */
-    /** variable      */ String[] dfhresp_type = {
-        "NORMAL)",          // 1 - =F'0'
-        "ERROR)",           // 2 - =F'1'
-        "TERMIDERR)",       // 3 - =F'11' RPI 928
-        "FILENOTFOUND)",    // 4 - =F'12' RPI 687
-        "DSIDERR)",         // 5 - =F'12' RPI 905
-        "NOTFND)",          // 6 - =F'13' RPI 687, RPI 690
-        "DUPREC)",          // 7 - =F'14' RPI 687
-        "DUPKEY)",          // 8 - =F'15' RPI 687
-        "INVREQ)",          // 9 - =F'16'
-        "IOERR)",           //10 - =F'17' RPI 928
-        "NOSPACE)",         //11 - =F'18' RPI 687
-        "NOTOPEN)",         //12 - =F'19' RPI 687
-        "ENDFILE)",         //13 - =F'20' RPI 687
-        "ILLOGIC)",         //14 - =F'21' RPI 729
-        "LENGERR)",         //15 - =F'22'
-        "ITEMERR)",         //16 - =F'26' RPI 662
-        "PGMIDERR)",        //17 - =F'27'
-        "TRANSIDERR)",      //18 - =F'28' RPI 928
-        "ENDDATA)",         //19 - =F'29' RPI 928
-        "EXPIRED)",         //20 - =F'31' RPI 751
-        "MAPFAIL)",         //21 - =F'36' RPI 841
-        "INVMPSZ)",         //22 - =F'38' RPI 841
-        "OVERFLOW)",        //23 - =F'40' RPI 841
-        "QIDERR)",          //24 - =F'44' RPI 662
-        "ENQBUSY)",         //25 - =F'55' RPI 951
-        "ENVDEFERR)",       //26 - =F'56' RPI 928
-        "NOTALLOC)",        //27 - =F'61' RPI 1079
-        "SUPPRESSED)",      //28 - =F'72' RPI 1057
-        "END)",             //29 - =F'83' RPI 1057
-        "DISABLED)",        //30 - =F'84' RPI 687
-        "ACTIVITYERR)",     //31 - =F'109' RPI 1168
-        "CONTAINERERR)",    //32 - =F'110' RPI 1168
-        "TOKENERR)",        //33 - =F'112' RPI 1168
-        "CHANNELERR)",      //34 - =F'122' RPI 1168
-    };
-    /** variable      */ String[] dfhresp_lit = {
-        "=F'0'",           // 1 "NORMAL)"
-        "=F'1'",           // 2 "ERROR)"
-        "=F'11'",          // 3 "TERMIDERR"     RPI 928
-        "=F'12'",          // 4 "FILENOTFOUND)" RPI 687
-        "=F'12'",          // 5 "DSIDERR"       RPI 905
-        "=F'13'",          // 6 "NOTFND)" RPI 687, RPI 690
-        "=F'14'",          // 7 "DUPREC)" RPI 687
-        "=F'15'",          // 8 "DUPKEY)" RPI 687
-        "=F'16'",          // 9 "INVREQ)"
-        "=F'17'",          //10 "IOERR"    RPI 928
-        "=F'18'",          //11 "NOSPACE)" RPI 687
-        "=F'19'",          //12 "NOTOPEN)" RPI 687
-        "=F'20'",          //13 "ENDFILE)" RPI 687
-        "=F'21'",          //14 "ILLOGIC)" RPI 729
-        "=F'22'",          //15 "LENGERR)"
-        "=F'26'",          //16 "ITEMERR)" RPI 662
-        "=F'27'",          //17 "PGMIDERR)"
-        "=F'28'",          //18 "TRANSIDERR"  RPI 928
-        "=F'29'",          //19 "ENDDATA"     RPI 928
-        "=F'31'",          //20 "EXPIRED)"  RPI 751
-        "=F'36'",          //21 "MAPFAIL)"  RPI 841
-        "=F'38'",          //22 "INVMPSZ)"  RPI 841
-        "=F'40'",          //23 "OVERFLOW)" RPI 841
-        "=F'44'",          //24 "QIDERR)"   RPI 662
-        "=F'55'",          //25 "ENQBUSY)"  RPI 951
-        "=F'56'",          //26 "ENVDEFERR)" RPI 928
-        "=F'61'",          //27 "NOTALLOC)"  RPI 1079
-        "=F'72'",          //28 "SUPPRESSED)" RPI 1057
-        "=F'83'",          //29 "END)"      RPI 1057
-        "=F'84'",          //30 "DISABLED)" RPI 687
-        "=F'109'",         //31 "ACTIVITYERR)"  RPI 1168
-        "=F'110'",         //32 "CONTAINERERR)" RPI 1168
-        "=F'112'",         //33 "TOKENERR)"     RPI 1168
-        "=F'122'",         //33 "CHANNELERR)",  RPI 1168
-    };
+    /** variable      */
+    String[] dfhresp_type = { "NORMAL)",          // 1 - =F'0'
+                              "ERROR)",           // 2 - =F'1'
+                              "TERMIDERR)",       // 3 - =F'11' RPI 928
+                              "FILENOTFOUND)",    // 4 - =F'12' RPI 687
+                              "DSIDERR)",         // 5 - =F'12' RPI 905
+                              "NOTFND)",          // 6 - =F'13' RPI 687, RPI 690
+                              "DUPREC)",          // 7 - =F'14' RPI 687
+                              "DUPKEY)",          // 8 - =F'15' RPI 687
+                              "INVREQ)",          // 9 - =F'16'
+                              "IOERR)",           //10 - =F'17' RPI 928
+                              "NOSPACE)",         //11 - =F'18' RPI 687
+                              "NOTOPEN)",         //12 - =F'19' RPI 687
+                              "ENDFILE)",         //13 - =F'20' RPI 687
+                              "ILLOGIC)",         //14 - =F'21' RPI 729
+                              "LENGERR)",         //15 - =F'22'
+                              "ITEMERR)",         //16 - =F'26' RPI 662
+                              "PGMIDERR)",        //17 - =F'27'
+                              "TRANSIDERR)",      //18 - =F'28' RPI 928
+                              "ENDDATA)",         //19 - =F'29' RPI 928
+                              "EXPIRED)",         //20 - =F'31' RPI 751
+                              "MAPFAIL)",         //21 - =F'36' RPI 841
+                              "INVMPSZ)",         //22 - =F'38' RPI 841
+                              "OVERFLOW)",        //23 - =F'40' RPI 841
+                              "QIDERR)",          //24 - =F'44' RPI 662
+                              "ENQBUSY)",         //25 - =F'55' RPI 951
+                              "ENVDEFERR)",       //26 - =F'56' RPI 928
+                              "NOTALLOC)",        //27 - =F'61' RPI 1079
+                              "SUPPRESSED)",      //28 - =F'72' RPI 1057
+                              "END)",             //29 - =F'83' RPI 1057
+                              "DISABLED)",        //30 - =F'84' RPI 687
+                              "ACTIVITYERR)",     //31 - =F'109' RPI 1168
+                              "CONTAINERERR)",    //32 - =F'110' RPI 1168
+                              "TOKENERR)",        //33 - =F'112' RPI 1168
+                              "CHANNELERR)",      //34 - =F'122' RPI 1168
+                            };
+    /** variable      */
+    String[] dfhresp_lit = { "=F'0'",           // 1 "NORMAL)"
+                             "=F'1'",           // 2 "ERROR)"
+                             "=F'11'",          // 3 "TERMIDERR"     RPI 928
+                             "=F'12'",          // 4 "FILENOTFOUND)" RPI 687
+                             "=F'12'",          // 5 "DSIDERR"       RPI 905
+                             "=F'13'",          // 6 "NOTFND)" RPI 687, RPI 690
+                             "=F'14'",          // 7 "DUPREC)" RPI 687
+                             "=F'15'",          // 8 "DUPKEY)" RPI 687
+                             "=F'16'",          // 9 "INVREQ)"
+                             "=F'17'",          //10 "IOERR"    RPI 928
+                             "=F'18'",          //11 "NOSPACE)" RPI 687
+                             "=F'19'",          //12 "NOTOPEN)" RPI 687
+                             "=F'20'",          //13 "ENDFILE)" RPI 687
+                             "=F'21'",          //14 "ILLOGIC)" RPI 729
+                             "=F'22'",          //15 "LENGERR)"
+                             "=F'26'",          //16 "ITEMERR)" RPI 662
+                             "=F'27'",          //17 "PGMIDERR)"
+                             "=F'28'",          //18 "TRANSIDERR"  RPI 928
+                             "=F'29'",          //19 "ENDDATA"     RPI 928
+                             "=F'31'",          //20 "EXPIRED)"  RPI 751
+                             "=F'36'",          //21 "MAPFAIL)"  RPI 841
+                             "=F'38'",          //22 "INVMPSZ)"  RPI 841
+                             "=F'40'",          //23 "OVERFLOW)" RPI 841
+                             "=F'44'",          //24 "QIDERR)"   RPI 662
+                             "=F'55'",          //25 "ENQBUSY)"  RPI 951
+                             "=F'56'",          //26 "ENVDEFERR)" RPI 928
+                             "=F'61'",          //27 "NOTALLOC)"  RPI 1079
+                             "=F'72'",          //28 "SUPPRESSED)" RPI 1057
+                             "=F'83'",          //29 "END)"      RPI 1057
+                             "=F'84'",          //30 "DISABLED)" RPI 687
+                             "=F'109'",         //31 "ACTIVITYERR)"  RPI 1168
+                             "=F'110'",         //32 "CONTAINERERR)" RPI 1168
+                             "=F'112'",         //33 "TOKENERR)"     RPI 1168
+                             "=F'122'",         //33 "CHANNELERR)",  RPI 1168
+                           };
     /*
+     ********************************************************
      * EXEC CICS DFHVALUE(type) literal substitution
+     ********************************************************
      */
-    /** variable      */ String[] dfhvalue_type = {
-        "NOTAPPLIC)",       // 1 - =F'1'
-        "VSAM)",            // 2 - =F'3'
-        "ESDS)",            // 3 - =F'5'
-        "KSDS)",            // 4 - =F'6'
-        "RRDS)",            // 5 - =F'7'
-        "BASE)",            // 6 - =F'10'
-        "PATH)",            // 7 - =F'11'
-        "FIXED)",           // 8 - =F'12'
-        "VARIABLE)",        // 9 - =F'13'
-        "OPEN)",            //10 - =F'18'
-        "CLOSED)",          //11 - =F'19'
-        "ENABLED)",         //12 - =F'23'
-        "DISABLED)",        //13 - =F'24'
-        "UNENABLED)",       //14 - =F'33'
-        "READABLE)",        //15 - =F'35'
-        "NOTREADABLE)",     //16 - =F'36'
-        "UPDATABLE)",       //17 - =F'37'
-        "NOTUPDATABLE)",    //18 - =F'38'
-        "BROWSABLE)",       //19 - =F'39'
-        "NOTBROWSABLE)",    //20 - =F'40'
-        "ADDABLE)",         //21 - =F'41'
-        "NOTADDABLE)",      //22 - =F'42'
-        "DELETABLE)",       //23 - =F'43'
-        "NOTDELETABLE)",    //24 - =F'44'
-        "VRRDS)",           //25 - =F'732'
-    };
-    /** variable      */ String[] dfhvalue_lit = {
-        "=F'1'",            // 1 "NOTAPPLIC)"
-        "=F'3'",            // 2 "VSAM)"
-        "=F'5'",            // 3 "ESDS)"
-        "=F'6'",            // 4 "KSDS)"
-        "=F'7'",            // 5 "RRDS)"
-        "=F'10'",           // 6 "BASE)"
-        "=F'11'",           // 7 "PATH)"
-        "=F'12'",           // 8 "FIXED)"
-        "=F'13'",           // 9 "VARIABLE)"
-        "=F'18'",           //10 "OPEN)"
-        "=F'19'",           //11 "CLOSED)"
-        "=F'23'",           //12 "ENABLED)"
-        "=F'24'",           //13 "DISABLED)"
-        "=F'33'",           //14 "UNENABLED)"
-        "=F'35'",           //15 "READABLE)"
-        "=F'36'",           //16 "NOTREADABLE)"
-        "=F'37'",           //17 "UPDATABLE)"
-        "=F'38'",           //18 "NOTUPDATABLE)"
-        "=F'39'",           //19 "BROWSABLE)"
-        "=F'40'",           //20 "NOTBROWSABLE)"
-        "=F'41'",           //21 "ADDABLE)"
-        "=F'42'",           //22 "NOTADDABLE)"
-        "=F'43'",           //23 "DELETABLE)"
-        "=F'44'",           //24 "NOTDELETABLE)"
-        "=F'732'",          //25 "VRRDS)"
-    };
+    /** variable      */
+    String[] dfhvalue_type = { "NOTAPPLIC)",       // 1 - =F'1'
+                               "VSAM)",            // 2 - =F'3'
+                               "ESDS)",            // 3 - =F'5'
+                               "KSDS)",            // 4 - =F'6'
+                               "RRDS)",            // 5 - =F'7'
+                               "BASE)",            // 6 - =F'10'
+                               "PATH)",            // 7 - =F'11'
+                               "FIXED)",           // 8 - =F'12'
+                               "VARIABLE)",        // 9 - =F'13'
+                               "OPEN)",            //10 - =F'18'
+                               "CLOSED)",          //11 - =F'19'
+                               "ENABLED)",         //12 - =F'23'
+                               "DISABLED)",        //13 - =F'24'
+                               "UNENABLED)",       //14 - =F'33'
+                               "READABLE)",        //15 - =F'35'
+                               "NOTREADABLE)",     //16 - =F'36'
+                               "UPDATABLE)",       //17 - =F'37'
+                               "NOTUPDATABLE)",    //18 - =F'38'
+                               "BROWSABLE)",       //19 - =F'39'
+                               "NOTBROWSABLE)",    //20 - =F'40'
+                               "ADDABLE)",         //21 - =F'41'
+                               "NOTADDABLE)",      //22 - =F'42'
+                               "DELETABLE)",       //23 - =F'43'
+                               "NOTDELETABLE)",    //24 - =F'44'
+                               "VRRDS)",           //25 - =F'732'
+                             };
+    /** variable      */
+    String[] dfhvalue_lit = { "=F'1'",            // 1 "NOTAPPLIC)"
+                              "=F'3'",            // 2 "VSAM)"
+                              "=F'5'",            // 3 "ESDS)"
+                              "=F'6'",            // 4 "KSDS)"
+                              "=F'7'",            // 5 "RRDS)"
+                              "=F'10'",           // 6 "BASE)"
+                              "=F'11'",           // 7 "PATH)"
+                              "=F'12'",           // 8 "FIXED)"
+                              "=F'13'",           // 9 "VARIABLE)"
+                              "=F'18'",           //10 "OPEN)"
+                              "=F'19'",           //11 "CLOSED)"
+                              "=F'23'",           //12 "ENABLED)"
+                              "=F'24'",           //13 "DISABLED)"
+                              "=F'33'",           //14 "UNENABLED)"
+                              "=F'35'",           //15 "READABLE)"
+                              "=F'36'",           //16 "NOTREADABLE)"
+                              "=F'37'",           //17 "UPDATABLE)"
+                              "=F'38'",           //18 "NOTUPDATABLE)"
+                              "=F'39'",           //19 "BROWSABLE)"
+                              "=F'40'",           //20 "NOTBROWSABLE)"
+                              "=F'41'",           //21 "ADDABLE)"
+                              "=F'42'",           //22 "NOTADDABLE)"
+                              "=F'43'",           //23 "DELETABLE)"
+                              "=F'44'",           //24 "NOTDELETABLE)"
+                              "=F'732'",          //25 "VRRDS)"
+                            };
     /*
+     ********************************************************
      * end of global az390 class data and start of procs
+     ********************************************************
      */
 
 
@@ -1174,21 +1225,21 @@ public  class  az390 implements Runnable {
      * Dummy constructor - no initialization needed
      */
     public az390() {
-       // dummy constructor - no initialization needed.
+        // dummy constructor - no initialization needed.
     }
 
 
 
     /**
      * main is entry when executed from command line
-     * Create instance of az390 class and pass
-     * parms to az390 like z390 does.
+     * Create instance of az390 class
+     * and pass parms to az390 like z390 does.
      *
      * @param args argument string - same as z390
      */
     public static void main(String[] args) {
         az390 pgm = new az390();
-        pgm.init_az390(args,null,null,null);
+        pgm.init_az390(args, null, null, null);
         pgm.process_az390();
     }
 
@@ -1204,18 +1255,19 @@ public  class  az390 implements Runnable {
      * @param mz390_systerm_file file handle for systerm
      * @param mz390_stats_file   file handle for statistics
      */
-    public void start_az390_thread(String[] args,JTextArea z390_log, RandomAccessFile mz390_systerm_file,RandomAccessFile mz390_stats_file) {
+    public void start_az390_thread(String[] args, JTextArea z390_log, RandomAccessFile mz390_systerm_file,
+            RandomAccessFile mz390_stats_file) {
         mz390_call = true;
         init_az390(args, null, mz390_systerm_file, mz390_stats_file);
         az390_thread = new Thread(this);
         az390_running = true;
         az390_thread.start();
-        set_sym_lock("az390 startup");    // proceed to waiting for bal and lock sym table
-        lookahead_mode  = true; // lookahead done during mz390 load_mac
-        reset_sym_lock();  // allow use of DS/DC/EQU during lookahead RPI 448
+        set_sym_lock("az390 startup"); // proceed to waiting for bal and lock sym table
+        lookahead_mode = true; // lookahead done during mz390 load_mac
+        reset_sym_lock(); // allow use of DS/DC/EQU during lookahead RPI 448
         cur_esd = tz390.opt_maxesd - 1; // lookahead dummy section # for all ds/dc/equ
-        cur_esd_sid = tz390.opt_maxsym-1;
-        sym_type[tz390.opt_maxsym-1] = sym_cst;
+        cur_esd_sid = tz390.opt_maxsym - 1;
+        sym_type[tz390.opt_maxsym - 1] = sym_cst;
     }
 
 
@@ -1227,7 +1279,7 @@ public  class  az390 implements Runnable {
      * @param mac_file_path   file path for macros
      * @param mac_file_errors macro error data
      */
-    public void finish_az390(String[] mac_file_path,int[] mac_file_errors) {
+    public void finish_az390(String[] mac_file_path, int[] mac_file_errors) {
         xref_file_path = mac_file_path;
         xref_file_errors = mac_file_errors;
     }
@@ -1237,13 +1289,14 @@ public  class  az390 implements Runnable {
     /**
      * run the assembler
      */
+    @Override
     public void run() {
         if (az390_thread == Thread.currentThread()) {
             if (tz390.opt_trap) { // RPI 423
                 try {
                     process_az390();
                 } catch (Exception e) {
-                    abort_error(158,"internal system exception - " + e.toString());
+                    abort_error(158, "internal system exception - " + e.toString());
                 }
             } else {
                 process_az390();
@@ -1253,7 +1306,7 @@ public  class  az390 implements Runnable {
                 az390_running = false;
                 lock_condition.signalAll();
             } catch (Exception e) {
-                abort_error(159,"thread ending interruption");
+                abort_error(159, "thread ending interruption");
             } finally {
                 lock.unlock();
             }
@@ -1263,29 +1316,25 @@ public  class  az390 implements Runnable {
 
 
     /**
-     *  assemble bal source file into
-     *  relocatable OBJ file and
-     *  generate optional PRN file.
+     * assemble bal source file into
+     * relocatable OBJ file and
+     * generate optional PRN file.
      *
      * <br />
      * Notes:
      * <ol>
      *  <li>az390 may be called from:
      *   <ol>
-     *    <li> z390 GUI Windows command via main();</li>
-     *    <li> Windows command prompt via main();</li>
-     *    <li> mz390 call via process_az390_call();</li>
+     *    <li>z390 GUI Windows command via main();</li>
+     *    <li>Windows command prompt via main();</li>
+     *    <li>mz390 call via process_az390_call();</li>
      *   </ol>
      *  </li>
-     *  <li>If called from z390 GUI Windows command, the
-     *    console output will be redirected to
-     *    to the z390 GUI log.</li>
-     *  <li>If called from mz390 via process_az390_call,
-     *    az390 process will run on separate
-     *    thread and the get_bal_line and
-     *    receive_bal_line methods will
-     *    synchronize passing bal record
-     *    from mz390 to az390 process.</li>
+     *  <li>If called from z390 GUI Windows command, the console output will be
+     *   redirected to the z390 GUI log.</li>
+     *  <li>If called from mz390 via process_az390_call, az390 process will run on
+     *   separate thread and the get_bal_line and receive_bal_line methods will
+     *   synchronize passing bal record from mz390 to az390 process.</li>
      * </ol>
      */
     private void process_az390() {
@@ -1294,7 +1343,7 @@ public  class  az390 implements Runnable {
                 load_bal();
                 process_bal();
             } catch (Exception e) {
-                abort_error(79,"internal system exception - " + e.toString());
+                abort_error(79, "internal system exception - " + e.toString());
             }
         } else {
             load_bal();
@@ -1307,11 +1356,11 @@ public  class  az390 implements Runnable {
 
     /**
      * <ol>
-     *  <li> initialize log routing</li>
-     *  <li> set options</li>
-     *  <li> compile regular expression parsers</li>
-     *  <li> open bal and obj buffered I/O files</li>
-     *  <li> Init ascii/ebcdic translation table</li>
+     *  <li>initialize log routing</li>
+     *  <li>set options</li>
+     *  <li>compile regular expression parsers</li>
+     *  <li>open bal and obj buffered I/O files</li>
+     *  <li>Init ascii/ebcdic translation table</li>
      * </ol>
      *
      * @param args     argumebnt string
@@ -1319,31 +1368,28 @@ public  class  az390 implements Runnable {
      * @param systerm  file handle for systerm
      * @param stats    file handle for statistics
      */
-    private void init_az390(String[] args, JTextArea log_text,
-                            RandomAccessFile systerm,
-                            RandomAccessFile stats) {
-        if  (log_text != null) {
+    private void init_az390(String[] args, JTextArea log_text, RandomAccessFile systerm, RandomAccessFile stats) {
+        if (log_text != null) {
             z390_log_text = log_text;
         }
         tz390 = new tz390();
-        tz390.init_tz390();  // RPI 1080
+        tz390.init_tz390(); // RPI 1080
         if (!tz390.check_java_version()) { // RPI 1175
-            abort_error(88,"unknown java version "
-                + tz390.java_vendor + " " + tz390.java_version);
+            abort_error(88, "unknown java version " + tz390.java_vendor + " " + tz390.java_version);
         }
-        tz390.init_options(args,tz390.bal_type);
-        tz390.systerm_file = systerm;  // share the mz390 ERR file
-        tz390.stats_file = stats;  // RPI 737
-        tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " AZ390 ";
+        tz390.init_options(args, tz390.bal_type);
+        tz390.systerm_file = systerm; // share the mz390 ERR file
+        tz390.stats_file = stats; // RPI 737
+        tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name, 9) + " AZ390 ";
         if (!mz390_call) {
             tz390.open_systerm("AZ390");
         } else {
             tz390.systerm_start = System.currentTimeMillis();
             tz390.started_msg = mz390_started_msg;
         }
-        tz390.init_codepage(tz390.codepage);  // RPI 1069
+        tz390.init_codepage(tz390.codepage); // RPI 1069
         if (!tz390.init_opcode_name_keys()) {
-            abort_error(87,"opcode key search table exceeded");
+            abort_error(87, "opcode key search table exceeded");
         }
         init_arrays();
         init_push_pop();
@@ -1366,7 +1412,7 @@ public  class  az390 implements Runnable {
      */
     private void init_push_pop() {
         using_start[0] = 0;
-        using_end[0]   = 0;
+        using_end[0] = 0;
         print_on[0] = true;
         print_gen[0] = true;
         print_data[0] = false;
@@ -1382,79 +1428,79 @@ public  class  az390 implements Runnable {
         /*
          * opt_maxcall - maximum call/push/using
          */
-        push_cur_use_start = (int[])Array.newInstance(int.class,tz390.opt_maxcall);
-        push_cur_use_end   = (int[])Array.newInstance(int.class,tz390.opt_maxcall);
+        push_cur_use_start = (int[]) Array.newInstance(int.class, tz390.opt_maxcall);
+        push_cur_use_end   = (int[]) Array.newInstance(int.class, tz390.opt_maxcall);
         use_lab      = new String[tz390.opt_maxcall];
-        use_base_esd = (int[])Array.newInstance(int.class,tz390.opt_maxcall);
-        use_base_loc = (int[])Array.newInstance(int.class,tz390.opt_maxcall);
-        use_base_len = (int[])Array.newInstance(int.class,tz390.opt_maxcall);
-        use_reg      = (int[])Array.newInstance(int.class,tz390.opt_maxcall);
-        use_reg_loc  = (int[])Array.newInstance(int.class,tz390.opt_maxcall);
-        using_start = (int[])Array.newInstance(int.class,tz390.opt_maxcall);
-        using_end   = (int[])Array.newInstance(int.class,tz390.opt_maxcall);
-        print_on   = (boolean[])Array.newInstance(boolean.class,tz390.opt_maxcall);
-        print_gen  = (boolean[])Array.newInstance(boolean.class,tz390.opt_maxcall);
-        print_data = (boolean[])Array.newInstance(boolean.class,tz390.opt_maxcall);
-        xref_file_name   = new String[tz390.opt_maxfile];
-        xref_file_type   = new char[tz390.opt_maxfile]; // RPI 549 + or =
-        xref_file_path   = new String[tz390.opt_maxfile];  // RPI 425
-        xref_file_errors = (int[])Array.newInstance(int.class,tz390.opt_maxfile);
+        use_base_esd = (int[]) Array.newInstance(int.class, tz390.opt_maxcall);
+        use_base_loc = (int[]) Array.newInstance(int.class, tz390.opt_maxcall);
+        use_base_len = (int[]) Array.newInstance(int.class, tz390.opt_maxcall);
+        use_reg      = (int[]) Array.newInstance(int.class, tz390.opt_maxcall);
+        use_reg_loc  = (int[]) Array.newInstance(int.class, tz390.opt_maxcall);
+        using_start  = (int[]) Array.newInstance(int.class, tz390.opt_maxcall);
+        using_end    = (int[]) Array.newInstance(int.class, tz390.opt_maxcall);
+        print_on     = (boolean[]) Array.newInstance(boolean.class, tz390.opt_maxcall);
+        print_gen    = (boolean[]) Array.newInstance(boolean.class, tz390.opt_maxcall);
+        print_data   = (boolean[]) Array.newInstance(boolean.class, tz390.opt_maxcall);
+        xref_file_name = new String[tz390.opt_maxfile];
+        xref_file_type = new char[tz390.opt_maxfile];   // RPI 549 + or =
+        xref_file_path = new String[tz390.opt_maxfile]; // RPI 425
+        xref_file_errors = (int[]) Array.newInstance(int.class, tz390.opt_maxfile);
         /*
          * opt_maxesd - maximum sections
          */
-        esd_sid   = (int[])Array.newInstance(int.class,tz390.opt_maxesd);
-        esd_base  = (int[])Array.newInstance(int.class,tz390.opt_maxesd); // RPI 301
-        esd_loc   = (int[])Array.newInstance(int.class,tz390.opt_maxesd); // RPI 778 cur loc within section for continue
+        esd_sid  = (int[]) Array.newInstance(int.class, tz390.opt_maxesd);
+        esd_base = (int[]) Array.newInstance(int.class, tz390.opt_maxesd); // RPI 301
+        esd_loc  = (int[]) Array.newInstance(int.class, tz390.opt_maxesd); // RPI 778 cur loc within section for continue
         /*
          * opt_maxline - maximum BAL loaded in memory
          */
-        bal_line_text = new String[tz390.opt_maxline]; //logical bal line from 1 or more physical lines
-        bal_line_num = (int[])Array.newInstance(int.class,tz390.opt_maxline); //starting physical line #
-        bal_line_xref_file_num  = (int[])Array.newInstance(int.class,tz390.opt_maxline); //starting physical line #
-        bal_line_xref_file_line = (int[])Array.newInstance(int.class,tz390.opt_maxline); //starting physical line #
+        bal_line_text = new String[tz390.opt_maxline]; // logical bal line from 1 or more physical lines
+        bal_line_num = (int[]) Array.newInstance(int.class, tz390.opt_maxline); // starting physical line #
+        bal_line_xref_file_num  = (int[]) Array.newInstance(int.class, tz390.opt_maxline); // starting physical line #
+        bal_line_xref_file_line = (int[]) Array.newInstance(int.class, tz390.opt_maxline); // starting physical line #
         /*
          * opt_maxrld - relocation definitions
          */
-        rld_fld_esd = (int[])Array.newInstance(int.class,tz390.opt_maxrld);
-        rld_fld_loc = (int[])Array.newInstance(int.class,tz390.opt_maxrld);
-        rld_fld_len = (byte[])Array.newInstance(byte.class,tz390.opt_maxrld);
-        rld_fld_sgn = (char[])Array.newInstance(char.class,tz390.opt_maxrld);
-        rld_xrf_esd = (int[])Array.newInstance(int.class,tz390.opt_maxrld);
+        rld_fld_esd = (int[]) Array.newInstance(int.class, tz390.opt_maxrld);
+        rld_fld_loc = (int[]) Array.newInstance(int.class, tz390.opt_maxrld);
+        rld_fld_len = (byte[]) Array.newInstance(byte.class, tz390.opt_maxrld);
+        rld_fld_sgn = (char[]) Array.newInstance(char.class, tz390.opt_maxrld);
+        rld_xrf_esd = (int[]) Array.newInstance(int.class, tz390.opt_maxrld);
         /*
          * opt_maxsym - symbols and literals
          */
-        sym_name         = new String[tz390.opt_maxsym];
-        sym_def          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        sym_type         = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym);
-        sym_dc_type      = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym); // RPI 790
-        sym_dc_type_sfx  = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym); // RPI 790
-        sym_attr         = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym);
-        sym_attr_elt     = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym);
-        sym_attrp        = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        sym_scale        = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        sym_attra        = new String[tz390.opt_maxsym];
-        sym_esd          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        sym_loc          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        sym_max_loc      = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        sym_len          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        sym_sect_type    = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        sym_sect_prev    = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        sym_sect_next    = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        sym_xref = (TreeSet<Integer>[])Array.newInstance(TreeSet.class,tz390.opt_maxsym);
-        lit_name         = new String[tz390.opt_maxsym];
-        lit_pool         = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        lit_line         = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        lit_line_loc     = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        lit_esd          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        lit_loc          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        lit_len          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        lit_dup          = (int[])Array.newInstance(int.class,tz390.opt_maxsym); // RPI 1200
-        lit_scale        = (int[])Array.newInstance(int.class,tz390.opt_maxsym); // RPI 790
-        lit_dc_type      = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym); // RPI 790
-        lit_dc_type_sfx  = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym); // RPI 790
-        lit_gen          = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym);
-        lit_def          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
-        lit_xref = (TreeSet<Integer>[])Array.newInstance(TreeSet.class,tz390.opt_maxsym);
+        sym_name        = new String[tz390.opt_maxsym];
+        sym_def         = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        sym_type        = (byte[]) Array.newInstance(byte.class, tz390.opt_maxsym);
+        sym_dc_type     = (byte[]) Array.newInstance(byte.class, tz390.opt_maxsym); // RPI 790
+        sym_dc_type_sfx = (byte[]) Array.newInstance(byte.class, tz390.opt_maxsym); // RPI 790
+        sym_attr        = (byte[]) Array.newInstance(byte.class, tz390.opt_maxsym);
+        sym_attr_elt    = (byte[]) Array.newInstance(byte.class, tz390.opt_maxsym);
+        sym_attrp       = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        sym_scale       = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        sym_attra       = new String[tz390.opt_maxsym];
+        sym_esd         = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        sym_loc         = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        sym_max_loc     = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        sym_len         = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        sym_sect_type   = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        sym_sect_prev   = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        sym_sect_next   = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        sym_xref = (TreeSet<Integer>[]) Array.newInstance(TreeSet.class, tz390.opt_maxsym);
+        lit_name        = new String[tz390.opt_maxsym];
+        lit_pool        = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        lit_line        = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        lit_line_loc    = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        lit_esd         = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        lit_loc         = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        lit_len         = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        lit_dup         = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);   // RPI 1200
+        lit_scale       = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);   // RPI 790
+        lit_dc_type     = (byte[]) Array.newInstance(byte.class, tz390.opt_maxsym); // RPI 790
+        lit_dc_type_sfx = (byte[]) Array.newInstance(byte.class, tz390.opt_maxsym); // RPI 790
+        lit_gen         = (byte[]) Array.newInstance(byte.class, tz390.opt_maxsym);
+        lit_def         = (int[]) Array.newInstance(int.class, tz390.opt_maxsym);
+        lit_xref = (TreeSet<Integer>[]) Array.newInstance(TreeSet.class, tz390.opt_maxsym);
     }
 
 
@@ -1464,14 +1510,13 @@ public  class  az390 implements Runnable {
      */
     private void compile_patterns() {
         /*
-         * label_pattern  .lll
+         * label_pattern .lll
          */
         try {
-            label_pattern = Pattern.compile(
-                "([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"   // RPI 253
+            label_pattern = Pattern.compile("([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)" // RPI 253
             );
         } catch (Exception e) {
-            abort_error(1,"label pattern errror - " + e.toString());
+            abort_error(1, "label pattern errror - " + e.toString());
         }
         /*
          * extrn and entry pattern
@@ -1479,32 +1524,32 @@ public  class  az390 implements Runnable {
         try {
             extrn_pattern = Pattern.compile(
                 "([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)" // RPI 253
-              + "|([,\\s])" //RPI181
+              + "|([,\\s])" // RPI181
             );
         } catch (Exception e) {
-            abort_error(1,"extrn pattern errror - " + e.toString());
+            abort_error(1, "extrn pattern errror - " + e.toString());
         }
         /*
          * expression pattern
          *   1. B'01', C'ABC', X'0F' sdts
          *   2. USING label.
-         *   3. symbolst
-         *   3. + - * / ( ) L'
+         *   3. symbols
+         *   4. + - * / ( ) L'
          */
         try {
             exp_pattern = Pattern.compile(
                 "([0-9]+([.][0-9]*)*([eE]([\\+]|[\\-])*[0-9]+)*)" // RPI 232 fp/int
-              + "|([\\s,'\\+\\-\\*\\/\\(\\)=])"        // RPI 159, RPI181
-              + "|([bB]['][0|1]+['])"                  // sdt B'01'
-              +    "|([cC][aAeE]*[']([^']|(['][']))*['])" // ebcdic/ascii mode //RPI 270
-              +    "|([cC][!]([^!]|([!][!]))*[!])"        // ebcdic always
-              +    "|([cC][\"]([^\"]|([\"][\"]))*[\"])"   // ascii  always
-              +    "|([xX]['][0-9a-fA-F]+['])"            // sdt X'1F'
-              + "|([iIlLsS]['])"                       // length op  RPI9 RPI 790 add I',S' ops
-              +    "|([a-zA-Z$@#_][a-zA-Z0-9$@#_]*[\\.]?)" // labeled using or symbol  RPI 253
+              + "|([\\s,'\\+\\-\\*\\/\\(\\)=])"         // RPI 159, RPI181
+              + "|([bB]['][0|1]+['])"                   // sdt B'01'
+              + "|([cC][aAeE]*[']([^']|(['][']))*['])"  // ebcdic/ascii mode //RPI 270
+              + "|([cC][!]([^!]|([!][!]))*[!])"         // ebcdic always
+              + "|([cC][\"]([^\"]|([\"][\"]))*[\"])"    // ascii always
+              + "|([xX]['][0-9a-fA-F]+['])"             // sdt X'1F'
+              + "|([iIlLsS]['])"                        // length op RPI9 RPI 790 add I',S' ops
+              + "|([a-zA-Z$@#_][a-zA-Z0-9$@#_]*[\\.]?)" // labeled using or symbol RPI 253
             );
         } catch (Exception e) {
-            abort_error(2,"expression pattern errror - " + e.toString());
+            abort_error(2, "expression pattern errror - " + e.toString());
         }
         /*
          * define exp_class with operator
@@ -1518,55 +1563,55 @@ public  class  az390 implements Runnable {
         exp_op_class['('] = 3;
         exp_op_class[')'] = 4;
         exp_op_class['I'] = 5; // Integer pfx // RPI 790
-        exp_op_class['L'] = 5; // length  pfx
-        exp_op_class['S'] = 5; // Scale   pfx // RPI 790
-        exp_op_class['U'] = 5; // unary   pfx
+        exp_op_class['L'] = 5; // length pfx
+        exp_op_class['S'] = 5; // Scale pfx   // RPI 790
+        exp_op_class['U'] = 5; // unary pfx
         exp_op_class[' '] = 6;
         exp_op_class[','] = 6;
         exp_op_class['~'] = 6;
         /*
          * dcc_sq_pattern for quoted string:
-         *   1.  '...''...'
-         * */
+         *   1. '...''...'
+         */
         try {
             dcc_sq_pattern = Pattern.compile(
                 "([']['])"
-              + "|([&][&])" //RPI192
-             + "|(['&])"   //RPI192
-             + "|([^'&]+)"
-             );
+              + "|([&][&])" // RPI192
+              + "|(['&])"   // RPI192
+              + "|([^'&]+)"
+            );
         } catch (Exception e) {
-            abort_error(1,"dcc pattern errror - " + e.toString());
+            abort_error(1, "dcc pattern errror - " + e.toString());
         }
         /*
          * dcc_dq_pattern for quoted string:
-         *   1.  "...""..."
-         * */
+         *   1. "...""..."
+         */
         try {
             dcc_dq_pattern = Pattern.compile(
                 "([\"][\"])"
-              + "|([']['])"    //RPI192
-              + "|([&][&])" //RPI192
-              + "|([\"'&])" //RPI192
+              + "|([']['])" // RPI192
+              + "|([&][&])" // RPI192
+              + "|([\"'&])" // RPI192
               + "|([^\"]+)"
-              );
+            );
         } catch (Exception e) {
-            abort_error(1,"dcc pattern errror - " + e.toString());
+            abort_error(1, "dcc pattern errror - " + e.toString());
         }
         /*
          * dcc_eq_pattern for quoted string:
-         *   1.  !...!!...!
-         * */
+         *   1. !...!!...!
+         */
         try {
             dcc_eq_pattern = Pattern.compile(
                 "([!][!])"
-              + "|([']['])"    //RPI192
-              + "|([&][&])" //RPI192
-              + "|([!'&])"  //RPI192
+              + "|([']['])" // RPI192
+              + "|([&][&])" // RPI192
+              + "|([!'&])"  // RPI192
               + "|([^!]+)"
-              );
+            );
         } catch (Exception e) {
-            abort_error(1,"dcc pattern errror - " + e.toString());
+            abort_error(1, "dcc pattern errror - " + e.toString());
         }
     }
 
@@ -1576,25 +1621,25 @@ public  class  az390 implements Runnable {
      * Set trace file name; then open obj and prn files
      */
     private void open_files() {
-        if (tz390.trace_file_name == null) {  // RPI 719
+        if (tz390.trace_file_name == null) { // RPI 719
             tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.tra_type;
         } else {
             tz390.trace_file_name = tz390.trace_file_name + tz390.tra_type;
         }
-        if (tz390.opt_obj) {  // RPI 694
+        if (tz390.opt_obj) { // RPI 694
             try {
-                obj_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.obj_type,"rw");
+                obj_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.obj_type, "rw");
             } catch (Exception e) {
-                abort_error(4,"I/O error on obj open - " + e.toString());
+                abort_error(4, "I/O error on obj open - " + e.toString());
             }
         }
         if (tz390.opt_list) {
-            String prn_file_name = tz390.get_file_name(tz390.dir_prn,tz390.pgm_name,tz390.prn_type); // RPI 866
+            String prn_file_name = tz390.get_file_name(tz390.dir_prn, tz390.pgm_name, tz390.prn_type); // RPI 866
             try {
                 prn_file = new File(prn_file_name); // RPI 908 catch null error
                 prn_file_buff = tz390.getWriterForDefaultCharset(prn_file);
             } catch (Exception e) {
-                abort_error(4,"I/O error on prn open - " + e.toString());
+                abort_error(4, "I/O error on prn open - " + e.toString());
             }
         }
     }
@@ -1602,8 +1647,7 @@ public  class  az390 implements Runnable {
 
 
     /**
-     * assemble bal source into obj relocatable
-     * object code file
+     * assemble bal source into obj relocatable object code file
      */
     private void process_bal() {
         resolve_symbols();
@@ -1611,33 +1655,31 @@ public  class  az390 implements Runnable {
         gen_obj_esds();
         gen_obj_text();
         gen_obj_rlds();
-        gen_obj_end();   // RPI 1197
+        gen_obj_end(); // RPI 1197
         if (tz390.opt_list) {
             list_bal_line = true; // RPI 891
             gen_sym_list();
-            gen_lit_xref_list(); //RPI198
+            gen_lit_xref_list(); // RPI198
         }
     }
 
 
 
     /**
-     * if errors occurred during loading of bal
-     * repeat symbol update passes until there
-     * are no errors or minimum error or max
-     * passes are reached.
+     * if errors occurred during loading of bal repeat symbol update passes until
+     * there are no errors or minimum error or max passes are reached.
      */
     private void resolve_symbols() {
         reset_lits();
         tz390.reset_opsyn();
         if (az390_errors > 0 || sect_change) { // RPI 605
             int prev_az390_errors = az390_errors + 1;
-            while (    cur_pass <= tz390.opt_maxpass + tot_loc_stmt // RPI 920
-                   && (sect_change
-                       || (az390_errors > 0 && az390_errors < prev_az390_errors) // RPI 632 repeat until 0 or no change
-                       || cur_pass <= 1  // RPI 264, RPI 632 was <=2
+            while (cur_pass <= tz390.opt_maxpass + tot_loc_stmt // RPI 920
+                    && (sect_change
+                        || (az390_errors > 0 && az390_errors < prev_az390_errors) // RPI 632 repeat until 0 or no change
+                        || cur_pass <= 1 // RPI 264, RPI 632 was <=2
                        )
-                   ) {
+                  ) {
                 report_label_changes = true; // RPI 632
                 report_equ_changes   = true; // RPI 632
                 prev_az390_errors = az390_errors;
@@ -1654,10 +1696,10 @@ public  class  az390 implements Runnable {
                 tz390.reset_opsyn();
             }
         }
-        az390_errors = 0;  // RPI 920 restore from prev.
+        az390_errors = 0; // RPI 920 restore from prev.
         az390_rc = 0; // RPI 1062
         bal_abort = false; // RPI 920 prevent obj ESD error
-        cur_pass++;  // incr to last pass
+        cur_pass++; // incr to last pass
     }
 
 
@@ -1738,7 +1780,7 @@ public  class  az390 implements Runnable {
         while (index <= tot_esd) {
             cur_sid = esd_sid[index];
             if (sym_type[cur_sid] == sym_cst
-                && sym_sect_prev[cur_sid] == 0) {
+                    && sym_sect_prev[cur_sid] == 0) {
                 // new CSECT/RSECT aligned to double word
                 if (!tz390.opt_thread) {
                     cst_ctr = 0; // RPI 1186 NOTHREAD starts all CSECTS at 0
@@ -1749,9 +1791,9 @@ public  class  az390 implements Runnable {
                     sect_change_error();;
                     bal_abort = false; // force all change errors
                     log_error(91,"csect start change error - "
-                                  + sym_name[cur_sid]
-                                  + " old start=" + tz390.get_hex(sym_loc[cur_sid],6)
-                                  + " new start=" + tz390.get_hex(loc_ctr,6));
+                            + sym_name[cur_sid]
+                            + " old start=" + tz390.get_hex(sym_loc[cur_sid],6)
+                            + " new start=" + tz390.get_hex(loc_ctr,6));
                 }
                 sym_loc[cur_sid] = loc_ctr;
                 if (sym_sect_next[cur_sid] == 0) {
@@ -1760,20 +1802,20 @@ public  class  az390 implements Runnable {
                     loc_ctr = loc_ctr + sym_len[cur_sid];
                 }
                 if (sym_max_loc[cur_sid] != loc_ctr
-                    && tot_esd > 1) {
+                        && tot_esd > 1) {
                     sect_change_error();
                     bal_abort = false; // force all change errors
                     log_error(92,"csect end   change error - "
-                                 + sym_name[cur_sid]
-                                 + " old end =" + tz390.get_hex(sym_max_loc[cur_sid],6)
-                                 + " new end =" + tz390.get_hex(loc_ctr,6));
+                            + sym_name[cur_sid]
+                            + " old end =" + tz390.get_hex(sym_max_loc[cur_sid],6)
+                            + " new end =" + tz390.get_hex(loc_ctr,6));
                 }
                 sym_max_loc[cur_sid] = loc_ctr;
                 sym_len[cur_sid] = loc_ctr - sym_loc[cur_sid];
                 update_loctrs();
                 sym_len[cur_sid] = 0;
                 cst_ctr = loc_ctr; // save end of CSECT
-            } else if (sym_type[cur_sid] == sym_dst
+            } else if (   sym_type[cur_sid] == sym_dst
                        && sym_sect_prev[cur_sid] == 0) {
                 loc_ctr = 0;
                 sym_loc[esd_sid[index]] = loc_ctr;
@@ -1783,9 +1825,9 @@ public  class  az390 implements Runnable {
                     sect_change_error();
                     bal_abort = false; // force all change errors
                     log_error(93,"dsect end   change error - "
-                                 + sym_name[cur_sid]
-                                 + " old end  =" + tz390.get_hex(sym_max_loc[cur_sid],6)
-                                 + " new end  =" + tz390.get_hex(loc_ctr,6));
+                            + sym_name[cur_sid]
+                            + " old end  =" + tz390.get_hex(sym_max_loc[cur_sid],6)
+                            + " new end  =" + tz390.get_hex(loc_ctr,6));
                 }
                 sym_max_loc[cur_sid] = loc_ctr;
                 sym_len[cur_sid] = loc_ctr - sym_loc[cur_sid];
@@ -1823,9 +1865,10 @@ public  class  az390 implements Runnable {
                 sect_change_error();
                 bal_abort = false; // force all change errors
                 log_error(94,"loctr section start change error - "
-                    + sym_name[index]
-                    + " old start=" + tz390.get_hex(sym_loc[cur_sid],6)
-                    + " new start=" + tz390.get_hex(loc_ctr,6));
+                        + sym_name[index]
+                        + " old start=" + tz390.get_hex(sym_loc[cur_sid],6)
+                        + " new start=" + tz390.get_hex(loc_ctr,6)
+                        );
             }
             sym_loc[index] = loc_ctr;
             esd_loc[sym_esd[index]] = loc_ctr; // RPI 778
@@ -1834,9 +1877,10 @@ public  class  az390 implements Runnable {
                 sect_change_error();
                 bal_abort = false; // force all change errors
                 log_error(95,"loctr section end   change error - "
-                    + sym_name[index]
-                    + " old end  =" + tz390.get_hex(sym_max_loc[cur_sid],6)
-                    + " new end  =" + tz390.get_hex(loc_ctr,6));
+                        + sym_name[index]
+                        + " old end  =" + tz390.get_hex(sym_max_loc[cur_sid],6)
+                        + " new end  =" + tz390.get_hex(loc_ctr,6)
+                        );
             }
             sym_max_loc[index] = loc_ctr;
             sym_len[index] = 0;
@@ -1864,189 +1908,191 @@ public  class  az390 implements Runnable {
      *  <li>The report entries are sorted</li>
      *  <li>The sorted entries are printed (three on a print line) preceded by a header line</li>
      * </ol>
-     */                                                                                 // #500
+     */                                                                                // #500
     private void gen_list_mnemonics() { // Routine added for RPI 1209A
         int     index;
         String  entry;
         String[] report_entries = null; // See process_opcodes() RPI 1209G
         /* Create Array of strings listing the opcodes supported by current optable */
-        /* each entry consists of four subfields: Mnemonic Format HexOP Operands    */         // #500
-        /* The logic breaks down into three sections:                               */         // #500
-        /* 1. for each instruction select the proper value for each subfield        */         // #500
-        /*    internal instructions are suppressed                                  */         // #500
-        /* 2. for each instruction format the four subfields into a complete entry  */         // #500
-        /* 3. sort the entries, then print three entries per line                   */         // #500
-        String my_mnemonic;                                                                    // #500
-        String my_format;                                                                      // #500
-        String my_hexop;                                                                       // #500
-        String my_operands;                                                                    // #500
-        String my_hdr = "Mnemonic Frmt HexOP Operands           ";                             // #500
-        String my_spc = "                                       ";                             // #500
-        int    mnem_len   =8;                   // length of mnemonic column                   // #500
-        int    format_len =4;                   // length of format   column                   // #500
-        int    hexop_len  =4;                   // length of hexop    column                   // #500
-        int    operand_len=20;                  // length of operands column                   // #500
-        String my_prn_line;                     // print line being constructed                // #500
-        int    my_entry_count;                  // nr of entries on current print line         // #500
-        int    short_op;                        // short or full opcode                        // #554
+        /* each entry consists of four subfields: Mnemonic Format HexOP Operands    */ // #500
+        /* The logic breaks down into three sections:                               */ // #500
+        /* 1. for each instruction select the proper value for each subfield        */ // #500
+        /*    internal instructions are suppressed                                  */ // #500
+        /* 2. for each instruction format the four subfields into a complete entry  */ // #500
+        /* 3. sort the entries, then print three entries per line                   */ // #500
+        String my_mnemonic;                                                            // #500
+        String my_format;                                                              // #500
+        String my_hexop;                                                               // #500
+        String my_operands;                                                            // #500
+        String my_hdr = "Mnemonic Frmt HexOP Operands           ";                     // #500
+        String my_spc = "                                       ";                     // #500
+        int    mnem_len   =8;                   // length of mnemonic column           // #500
+        int    format_len =4;                   // length of format   column           // #500
+        int    hexop_len  =4;                   // length of hexop    column           // #500
+        int    operand_len=20;                  // length of operands column           // #500
+        String my_prn_line;                     // print line being constructed        // #500
+        int    my_entry_count;                  // nr of entries on current print line // #500
+        int    short_op;                        // short or full opcode                // #554
         report_entries = new String[tz390.op_name.length];
         index=0;
         while (index < tz390.op_name.length) {
-            if (tz390.op_type[index] >= 100) {                                                 // #500
-                my_mnemonic=tz390.op_name[index];                                              // #500
-                my_format="HLASM";                                                             // #500
-                my_hexop="";                                                                   // #500
-                my_operands="";                                                                // #500
-                my_mnemonic=(my_mnemonic+my_spc).substring(0,mnem_len   );                     // #500
-                entry=my_mnemonic+" "+my_format+" "+my_hexop+" "+my_operands;                  // #500
+            if (tz390.op_type[index] >= 100) {                                         // #500
+                my_mnemonic=tz390.op_name[index];                                      // #500
+                my_format="HLASM";                                                     // #500
+                my_hexop="";                                                           // #500
+                my_operands="";                                                        // #500
+                my_mnemonic=(my_mnemonic+my_spc).substring(0,mnem_len   );             // #500
+                entry=my_mnemonic+" "+my_format+" "+my_hexop+" "+my_operands;          // #500
                 entry=(entry+my_spc).substring(0,mnem_len+format_len+hexop_len+operand_len+3); // #500
-            } else { // types 0-99 are for normal instructions                                 // #500
-                my_mnemonic=tz390.op_name[index];                                              // #500
-                my_format="";                                                                  // #500
-                my_hexop=tz390.op_code[index];                                                 // #500
-                my_operands="";                                                                // #500
-                switch (tz390.op_type[index]) {                                                // #500
+            } else { // types 0-99 are for normal instructions                         // #500
+                my_mnemonic=tz390.op_name[index];                                      // #500
+                my_format="";                                                          // #500
+                my_hexop=tz390.op_code[index];                                         // #500
+                my_operands="";                                                        // #500
+                switch (tz390.op_type[index]) {                                        // #500
                 case 0: // comment lines
                     break;
                 case 1:
-                    my_format="E";                                                         // #500
+                    my_format="E";                                                     // #500
                     break;
                 case 2:
-                    my_format="RR";                                                        // #500
-                    my_operands="R1,R2";                                                   // #500
-                    if (my_mnemonic.equals("SPM")) {                                       // #500
-                        my_operands="R1";                                                  // #500
+                    my_format="RR";                                                    // #500
+                    my_operands="R1,R2";                                               // #500
+                    if (my_mnemonic.equals("SPM")) {                                   // #500
+                        my_operands="R1";                                              // #500
                     } else if (tz390.op_trace_type[index]==30) {
-                        my_operands="R2";                                                  // #500
-                        my_hexop=my_hexop+".";                                             // #500
+                        my_operands="R2";                                              // #500
+                        my_hexop=my_hexop+".";                                         // #500
                     }
                     break;
                 case 3:
-                    my_format="RR";                                                        // #500
-                    my_operands="M1,R2";                                                   // #500
+                    my_format="RR";                                                    // #500
+                    my_operands="M1,R2";                                               // #500
                     break;
                 case 4:
-                    my_format="RR";                                                        // #500
-                    my_operands="I1";                                                      // #500
+                    my_format="RR";                                                    // #500
+                    my_operands="I1";                                                  // #500
                     break;
                 case 5:
-                    my_format="RX";                                                        // #500
-                    if (my_mnemonic.equals("BC")) {                                        // #500
-                        my_operands="M1,D2(X2,B2)";                                        // #500
+                    my_format="RX";                                                    // #500
+                    if (my_mnemonic.equals("BC")) {                                    // #500
+                        my_operands="M1,D2(X2,B2)";                                    // #500
                     } else {
-                        my_operands="R1,D2(X2,B2)";                                        // #500
+                        my_operands="R1,D2(X2,B2)";                                    // #500
                     }
                     break;
                 case 6:
-                    my_format="RX";                                                        // #500
-                    my_hexop=my_hexop+".";                                                 // #500
-                    my_operands="D2(X2,B2)";                                               // #500
+                    my_format="RX";                                                    // #500
+                    my_hexop=my_hexop+".";                                             // #500
+                    my_operands="D2(X2,B2)";                                           // #500
                     break;
                 case 7:
-                    my_format="S";                                                         // #500
-                    if (   my_mnemonic.equals("IPK")                                       // #500
-                        || my_mnemonic.equals("PTLB")                                      // #500 #543
-                        || my_mnemonic.equals("CSCH")                                      // #543
-                        || my_mnemonic.equals("HSCH")                                      // #543
-                        || my_mnemonic.equals("RCHP")                                      // #543
-                        || my_mnemonic.equals("RSCH")                                      // #543
-                        || my_mnemonic.equals("SAL")                                       // #543
-                        || my_mnemonic.equals("SCHM")                                      // #543 #554
-                        || my_mnemonic.equals("TEND")                                      // #613
-                        || my_mnemonic.equals("XSCH")                                      // #554
-                        ) {                                                                // #554
-                        my_operands="";                                                    // #500
-                    } else if (   my_mnemonic.equals("LPSW")                               // #500
-                               || my_mnemonic.equals("SSM")                                // #500
-                               || my_mnemonic.equals("TS")) {                              // #500
-                        my_format="SI";                                                    // #500
-                        my_hexop=my_hexop.substring(0,2);                                  // #500
-                        my_operands="D1(B1)";                                              // #500
-                    } else {                                                               // #500
-                        my_operands="D2(B2)";                                              // #500
+                    my_format="S";                                                     // #500
+                    if (   my_mnemonic.equals("IPK")                                   // #500
+                        || my_mnemonic.equals("PTLB")                                  // #500 #543
+                        || my_mnemonic.equals("CSCH")                                  // #543
+                        || my_mnemonic.equals("HSCH")                                  // #543
+                        || my_mnemonic.equals("RCHP")                                  // #543
+                        || my_mnemonic.equals("RSCH")                                  // #543
+                        || my_mnemonic.equals("SAL")                                   // #543
+                        || my_mnemonic.equals("SCHM")                                  // #543 #554
+                        || my_mnemonic.equals("TEND")                                  // #613
+                        || my_mnemonic.equals("XSCH")                                  // #554
+                        ) {                                                            // #554
+                        my_operands="";                                                // #500
+                    } else if (   my_mnemonic.equals("LPSW")                           // #500
+                               || my_mnemonic.equals("SSM")                            // #500
+                               || my_mnemonic.equals("TS")) {                          // #500
+                        my_format="SI";                                                // #500
+                        my_hexop=my_hexop.substring(0,2);                              // #500
+                        my_operands="D1(B1)";                                          // #500
+                    } else {                                                           // #500
+                        my_operands="D2(B2)";                                          // #500
                     }
                     break;
                 case 8: // Diagnose instruction
-                    my_format="DM";                                                        // #500
+                    my_format="DM";                                                    // #500
                     break;
                 case 9:
-                    my_format="RSI";                                                       // #500
-                    my_operands="R1,R3,I2";                                                // #500
+                    my_format="RSI";                                                   // #500
+                    my_operands="R1,R3,I2";                                            // #500
                     break;
                 case 10:
-                    my_format="RS";                                                        // #500
-                    my_operands="R1,R3,I2";                                                // #500
+                    my_format="RS";                                                    // #500
+                    my_operands="R1,R3,I2";                                            // #500
                     if (tz390.op_trace_type[index]==101) {
-                        my_operands="R1,M3,D2(B2)";                                        // #500
+                        my_operands="R1,M3,D2(B2)";                                    // #500
                     } else if (tz390.op_trace_type[index]==102) {
-                        my_operands="R1,D2(B2)";                                           // #500
+                        my_operands="R1,D2(B2)";                                       // #500
                     } else {
-                        my_operands="R1,R3,D2(B2)";                                        // #500
+                        my_operands="R1,R3,D2(B2)";                                    // #500
                     }
                     break;
                 case 11:
-                    my_format="SI";                                                        // #500
-                    my_operands="D1(B1),I2";                                               // #500
-                    if (my_mnemonic.equals("LPSW")) {                                      // #500
-                        my_operands="D1(B1)";                                              // #500
-                    }                                                                      // #500
+                    my_format="SI";                                                    // #500
+                    my_operands="D1(B1),I2";                                           // #500
+                    if (my_mnemonic.equals("LPSW")) {                                  // #500
+                        my_operands="D1(B1)";                                          // #500
+                    }                                                                  // #500
                     break;
                 case 12:
-                    my_format="RI";                                                        // #500
-                    my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2);            // #500
-                    my_operands="R1,I2";                                                   // #554
+                    my_format="RI";                                                    // #500
+                    my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2);        // #500
+                    my_operands="R1,I2";                                               // #554
                     break;
                 case 13:
                     // Our op_code table has the last two nibbles swapped
-                    my_format="RI";                                                        // #500
-                    if (my_hexop.length() == 3) { // mask excluded?                        // #554
-                        my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2,3);      // #554
-                        short_op = 1;           // mark short opcode                       // #554
-                    } else {                    // mask included!                          // #554
+                    my_format="RI";                                                    // #500
+                    if (my_hexop.length() == 3) { // mask excluded?                    // #554
+                        my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2,3);  // #554
+                        short_op = 1;           // mark short opcode                   // #554
+                    } else {                    // mask included!                      // #554
                         my_hexop=my_hexop.substring(0,2)+my_hexop.substring(3)+my_hexop.substring(2,3); // #554
-                        short_op = 0;           // mark full opcode                        // #554
-                    }                                                                      // #554
-                    if (tz390.op_trace_type[index]==130) {                                 // #554
-                        if (short_op == 1)      // short opcode                            // #554
-                            my_operands="M1,RI2";                                          // #554
-                        else                    // full opcode                             // #554
-                            my_operands="RI2";  // mask implied by mnemonic                // #554
-                    } else {                                                               // #554
-                        my_operands="R1,RI2";                                              // #554
-                    }                                                                      // #554
+                        short_op = 0;           // mark full opcode                    // #554
+                    }                                                                  // #554
+                    if (tz390.op_trace_type[index]==130) {                             // #554
+                        if (short_op == 1) { // short opcode                           // #554
+                            my_operands="M1,RI2";                                      // #554
+                        }
+                        else { // full opcode                                          // #554
+                            my_operands="RI2"; // mask implied by mnemonic             // #554
+                        }
+                    } else {                                                           // #554
+                        my_operands="R1,RI2";                                          // #554
+                    }                                                                  // #554
                     break;
                 case 14:
-                    my_format="RRE";                                                       // #500
-                    my_operands="R1,R2";                                                   // #500
-                    if (tz390.op_trace_type[index]==140) {                                 // #500
+                    my_format="RRE";                                                   // #500
+                    my_operands="R1,R2";                                               // #500
+                    if (tz390.op_trace_type[index]==140) {                             // #500
                         if (   tz390.op_name[index].equals("EPAR")
                             || tz390.op_name[index].equals("ESAR")
-                            || tz390.op_name[index].equals("ETND")                         // #613
+                            || tz390.op_name[index].equals("ETND")                     // #613
                             || tz390.op_name[index].equals("IAC")
                             || tz390.op_name[index].equals("SSAR")
                             || tz390.op_name[index].equals("IPM")
                             || tz390.op_name[index].equals("MSTA")
                             ) {
-                            my_operands="R1";                                              // #500
+                            my_operands="R1";                                          // #500
                         } else if (tz390.op_name[index].equals("PALB")) {
-                            my_operands="";                                                // #554
+                            my_operands="";                                            // #554
                         } else if (tz390.op_name[index].equals("IPTE")) {
                             if (tz390.opt_optable_optb_nr >= ArchLevel.ARCH_Z12.getValue()) { // ZS6=Z12 and above // #613 #631 #656
-                                my_format="RRF";                                           // #613
-                                my_operands="R1,R2<,R3<,M4>>";                             // #613
-                            }                                                              // #613
-                        } else if (   tz390.op_name[index].equals("CUTFU")                 // #573
-                                   || tz390.op_name[index].equals("CUUTF")                 // #573
-                                   || tz390.op_name[index].equals("CU12")                  // #573
-                                   || tz390.op_name[index].equals("CU21")                  // #573
-                                   || tz390.op_name[index].equals("SSKE")                  // #573
-                                   || tz390.op_name[index].equals("KIMD")    // from z17   // #661
-                                   || tz390.op_name[index].equals("KLMD")) { // from z17   // #661
+                                my_format="RRF";                                       // #613
+                                my_operands="R1,R2<,R3<,M4>>";                         // #613
+                            }                                                          // #613
+                        } else if (   tz390.op_name[index].equals("CUTFU")               // #573
+                                   || tz390.op_name[index].equals("CUUTF")               // #573
+                                   || tz390.op_name[index].equals("CU12")                // #573
+                                   || tz390.op_name[index].equals("CU21")                // #573
+                                   || tz390.op_name[index].equals("SSKE")                // #573
+                                   || tz390.op_name[index].equals("KIMD")    // from z17 // #661
+                                   || tz390.op_name[index].equals("KLMD")) { // from z17 // #661
                             if (tz390.opt_optable_optb_nr >= ArchLevel.ARCH_Z9.getValue()) { // Z9 and above // #573 #631 #656
-                                my_format="RRF";                                           // #573
-                                my_operands="R1,R2<,M3>";                                  // #573
-                            }                                                              // #573
-                        }                                                                  // #573
+                                my_format="RRF";                                       // #573
+                                my_operands="R1,R2<,M3>";                              // #573
+                            }                                                          // #573
+                        }                                                              // #573
                     } else if (tz390.op_trace_type[index]==142) {
                         if (   tz390.op_name[index].equals("EFPC")
                             || tz390.op_name[index].equals("LZDR")
@@ -2055,855 +2101,865 @@ public  class  az390 implements Runnable {
                             || tz390.op_name[index].equals("SFPC")
                             || tz390.op_name[index].equals("SFASR")
                             ) {
-                            my_operands="R1";                                              // #500
+                            my_operands="R1";                                          // #500
                         }
-                    } else if (tz390.op_trace_type[index]==143) {                          // #573
-                        if (   tz390.op_name[index].equals("TROO")                         // #573
-                            || tz390.op_name[index].equals("TROT")                         // #573
-                            || tz390.op_name[index].equals("TRTO")                         // #573
-                            || tz390.op_name[index].equals("TRTT")                         // #573
-                            ) {                                                            // #573
+                    } else if (tz390.op_trace_type[index]==143) {                      // #573
+                        if (   tz390.op_name[index].equals("TROO")                     // #573
+                            || tz390.op_name[index].equals("TROT")                     // #573
+                            || tz390.op_name[index].equals("TRTO")                     // #573
+                            || tz390.op_name[index].equals("TRTT")                     // #573
+                            ) {                                                        // #573
                             if (tz390.opt_optable_optb_nr >= ArchLevel.ARCH_Z9.getValue()) { // Z9 and above // #573 #631 #656
-                                my_format="RRF";                                           // #573
-                                my_operands="R1,R2<,M3>";                                  // #573
-                            }                                                              // #573
-                        }                                                                  // #573
+                                my_format="RRF";                                       // #573
+                                my_operands="R1,R2<,M3>";                              // #573
+                            }                                                          // #573
+                        }                                                              // #573
                     } else if (tz390.op_trace_type[index]==144) {
                         if (   tz390.op_name[index].equals("ESEA")
                             || tz390.op_name[index].equals("EPAIR")
                             || tz390.op_name[index].equals("ESAIR")
                             || tz390.op_name[index].equals("SSAIR")
-                            ) {
-                            my_operands="R1";                                              // #500
+                           ) {
+                            my_operands="R1";                                          // #500
                         } else if (tz390.op_name[index].equals("LPTEA")) {
-                            my_operands="R1,R3,R2,M4";                                     // #500
+                            my_operands="R1,R3,R2,M4";                                 // #500
                         } else if (   tz390.op_name[index].equals("PCC")
                                    || tz390.op_name[index].equals("PCKMO")
-                                   || tz390.op_name[index].equals("NNPA")                  // #617
-                                   ) {
-                            my_operands="";                                                // #500
-                        } else if (   tz390.op_name[index].equals("CU14")                  // #573
-                                   || tz390.op_name[index].equals("CU24")) {               // #573
+                                   || tz390.op_name[index].equals("NNPA")              // #617
+                                  ) {
+                            my_operands="";                                            // #500
+                        } else if (   tz390.op_name[index].equals("CU14")              // #573
+                                   || tz390.op_name[index].equals("CU24")) {           // #573
                             if (tz390.opt_optable_optb_nr >= ArchLevel.ARCH_Z9.getValue()) { // Z9 and above // #573 #631 #656
-                                my_format="RRF";                                           // #573
-                                my_operands="R1,R2<,M3>";                                  // #573
-                            }                                                              // #573
-                        }                                                                  // #573
+                                my_format="RRF";                                       // #573
+                                my_operands="R1,R2<,M3>";                              // #573
+                            }                                                          // #573
+                        }                                                              // #573
                     } else if (tz390.op_trace_type[index]==147) {
-                        my_operands="R1";                                                  // #500
+                        my_operands="R1";                                              // #500
                     }
                     break;
                 case 15:
-                    my_format="RRD";                                                       // #500 #554
-                    my_operands="R1,R3,R2";                                                // #500
+                    my_format="RRD";                                                   // #500 #554
+                    my_operands="R1,R3,R2";                                            // #500
                     break;
                 case 16:
-                    my_format="RIL";                                                       // #500
-                    if (my_hexop.length() == 3) { // mask excluded?                        // #554
-                        my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2,3);      // #554
-                        short_op = 1;           // mark short opcode                       // #554
-                    } else {                    // mask included!                          // #554
-                        short_op = 0;           // mark full opcode                        // #554
-                    }                                                                      // #554
-                    if (   tz390.op_trace_type[index]==330                                 // #554 #602
-                        || tz390.op_trace_type[index]==169) {                              // #554 #602
-                        if (short_op == 1)      // short opcode                            // #554
-                            my_operands="M1,RI2";                                          // #554
-                        else                    // full opcode                             // #554
-                            my_operands="RI2";  // mask implied by mnemonic                // #554
-                    } else if (   tz390.op_trace_type[index]==160                          // #573
-                               || tz390.op_trace_type[index]==161) {                       // #573
-                        my_operands="R1,I2";                                               // #573
-                    } else if (tz390.op_trace_type[index]==163) {                          // #554
-                        my_operands="R1,RI2";                                              // #554
-                    } else if(tz390.opt_optable_optb_nr >= ArchLevel.ARCH_ESA.getValue())  // ESA and above// #554 #631 #656
-                        my_operands="R1,RI2";                                              // #554
-                    else                                                                   // #554
-                        my_operands="R1,I2";                                               // #500
+                    my_format="RIL";                                                   // #500
+                    if (my_hexop.length() == 3) { // mask excluded?                    // #554
+                        my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2,3);  // #554
+                        short_op = 1;           // mark short opcode                   // #554
+                    } else {                    // mask included!                      // #554
+                        short_op = 0;           // mark full opcode                    // #554
+                    }                                                                  // #554
+                    if (   tz390.op_trace_type[index]==330                             // #554 #602
+                        || tz390.op_trace_type[index]==169) {                          // #554 #602
+                        if (short_op == 1) { // short opcode                           // #554
+                            my_operands="M1,RI2";                                      // #554
+                        }
+                        else { // full opcode                                          // #554
+                            my_operands="RI2"; // mask implied by mnemonic             // #554
+                        }
+                    } else if (   tz390.op_trace_type[index]==160                      // #573
+                               || tz390.op_trace_type[index]==161) {                   // #573
+                        my_operands="R1,I2";                                           // #573
+                    } else if (tz390.op_trace_type[index]==163) {                      // #554
+                        my_operands="R1,RI2";                                          // #554
+                    } else                                                             // #554
+                        if(tz390.opt_optable_optb_nr >= ArchLevel.ARCH_ESA.getValue()) { // ESA and above// #554 #631 #656
+                            my_operands="R1,RI2";                                      // #554
+                        }
+                        else { // ESA and above                                        // #554 #631 #656
+                            my_operands="R1,I2";                                       // #500
+                        }
                     break;
                 case 17:
-                    my_format="SS";                                                        // #500
+                    my_format="SS";                                                    // #500
                     if (tz390.op_name[index].equals("PKU")) {
-                        my_operands="D1(B1),D2(L2,B2)";                                    // #500
-                    } else if (   tz390.op_name[index].equals("MVCK")
-                               || tz390.op_name[index].equals("MVCP")
-                               || tz390.op_name[index].equals("MVCS")) {
-                        my_operands="D1(R1,B1),D2(B2),R3";                                 // #500
+                        my_operands="D1(B1),D2(L2,B2)";                                // #500
+                    }
+                    else if (   tz390.op_name[index].equals("MVCK")
+                             || tz390.op_name[index].equals("MVCP")
+                             || tz390.op_name[index].equals("MVCS")) {
+                        my_operands="D1(R1,B1),D2(B2),R3";                             // #500
                     } else {
-                        my_operands="D1(L,B1),D2(B2)";                                     // #500
+                        my_operands="D1(L,B1),D2(B2)";                                 // #500
                     }
                     break;
                 case 18:
-                    my_format="RXY";                                                       // #500
-                    if (   tz390.opt_optable_optb_nr == ArchLevel.ARCH_ESA.getValue()      // ESA or ZOP use RXE, but   //      #568 #631 #656
-                        || tz390.opt_optable_optb_nr == ArchLevel.ARCH_ZOP.getValue()) {   // YOP ff. revert to RXY     // #554 #568 #631 #656
-                        my_format="RXE";                                                   // #554
-                    }                                                                      // #554
+                    my_format="RXY";                                                   // #500
+                    if (   tz390.opt_optable_optb_nr == ArchLevel.ARCH_ESA.getValue()  // ESA or ZOP use RXE, but   //      #568 #631 #656
+                        || tz390.opt_optable_optb_nr == ArchLevel.ARCH_ZOP.getValue()) { // YOP ff. revert to RXY     // #554 #568 #631 #656
+                        my_format="RXE";                                               // #554
+                    }                                                                  // #554
                     if (tz390.op_trace_type[index]==189) {
-                        my_operands="M1,D2(X2,B2)";                                        // #500
-                        if (   tz390.op_name[index].equals("LLXAB")                        // #661
-                            || tz390.op_name[index].equals("LLXAF")                        // #661
-                            || tz390.op_name[index].equals("LLXAG")                        // #661
-                            || tz390.op_name[index].equals("LLXAH")                        // #661
-                            || tz390.op_name[index].equals("LLXAQ")                        // #661
-                            || tz390.op_name[index].equals("LXAB")                         // #661
-                            || tz390.op_name[index].equals("LXAF")                         // #661
-                            || tz390.op_name[index].equals("LXAG")                         // #661
-                            || tz390.op_name[index].equals("LXAH")                         // #661
-                            || tz390.op_name[index].equals("LXAQ")                         // #661
-                            ) {                                                            // #661
-                            my_operands="R1,DX2(X2,B2)";                                   // #661
-                        }                                                                  // #661
+                        my_operands="M1,D2(X2,B2)";                                    // #500
+                        if (   tz390.op_name[index].equals("LLXAB")                    // #661
+                            || tz390.op_name[index].equals("LLXAF")                    // #661
+                            || tz390.op_name[index].equals("LLXAG")                    // #661
+                            || tz390.op_name[index].equals("LLXAH")                    // #661
+                            || tz390.op_name[index].equals("LLXAQ")                    // #661
+                            || tz390.op_name[index].equals("LXAB")                     // #661
+                            || tz390.op_name[index].equals("LXAF")                     // #661
+                            || tz390.op_name[index].equals("LXAG")                     // #661
+                            || tz390.op_name[index].equals("LXAH")                     // #661
+                            || tz390.op_name[index].equals("LXAQ")                     // #661
+                            ) {                                                        // #661
+                            my_operands="R1,DX2(X2,B2)";                               // #661
+                        }                                                              // #661
                     } else {
-                        my_operands="R1,D2(X2,B2)";                                        // #500
-                        if (tz390.op_name[index].length() >= 2) {                          // #615
-                            if (tz390.op_name[index].substring(0,2).equals("BI")) {        // #615
-                                if (tz390.op_name[index].equals("BIC")) {                  // #615
-                                    my_operands="M1,D2(X2,B2)";                            // #615
-                                } else {                                                   // #615
-                                    my_operands="D2(X2,B2)";                               // #615
-                                }                                                          // #615
-                            }                                                              // #615
-                        }                                                                  // #615
+                        my_operands="R1,D2(X2,B2)";                                    // #500
+                        if (tz390.op_name[index].length() >= 2) {                      // #615
+                            if (tz390.op_name[index].substring(0,2).equals("BI")) {    // #615
+                                if (tz390.op_name[index].equals("BIC")) {              // #615
+                                    my_operands="M1,D2(X2,B2)";                        // #615
+                                } else {                                               // #615
+                                    my_operands="D2(X2,B2)";                           // #615
+                                }                                                      // #615
+                            }                                                          // #615
+                        }                                                              // #615
                     }
                     break;
                 case 19:
-                    my_format="SSE";                                                       // #500
-                    my_operands="D1(B1),D2(B2)";                                           // #500
+                    my_format="SSE";                                                   // #500
+                    my_operands="D1(B1),D2(B2)";                                       // #500
                     break;
                 case 20:
-                    my_format="RSE";                                                       // #500 #554
-                    my_operands="D1(B1),D2(B2)";                                           // #500
-                    if(tz390.opt_optable_optb_nr >= ArchLevel.ARCH_YOP.getValue()) {       // YOP ff. change to RSY // #568 #631 #656
-                        my_format="RSY";                                                   // #568
-                    }                                                                      // #568
-                    if (tz390.op_trace_type[index]==201) {                                 //      #613
-                        if (   tz390.op_name[index].equals("CLGT")                         //      #613
-                            || tz390.op_name[index].equals("CLMH")                         //      #613
-                            || tz390.op_name[index].equals("CLT")                          //      #613
-                            || tz390.op_name[index].equals("ICMH")                         //      #613
-                            || tz390.op_name[index].equals("STCMH")                        //      #613
-                            ) {                                                            //      #613
-                            my_operands="R1,M3,D2(B2)";                                    //      #613
-                        } else {                                                           //      #613
-                            my_operands="R1,D2(B2)";                                       // #500 #613
-                        }                                                                  //      #613
-                    } else if (tz390.op_trace_type[index]==202) {                          //      #613
-                        my_operands="R1,M3,D2(B2)";                                        // #500
+                    my_format="RSE";                                                   // #500 #554
+                    my_operands="D1(B1),D2(B2)";                                       // #500
+                    if(tz390.opt_optable_optb_nr >= ArchLevel.ARCH_YOP.getValue()) {   // YOP ff. change to RSY // #568 #631 #656
+                        my_format="RSY";                                               // #568
+                    }                                                                  // #568
+                    if (tz390.op_trace_type[index]==201) {                             //      #613
+                        if (   tz390.op_name[index].equals("CLGT")                     //      #613
+                            || tz390.op_name[index].equals("CLMH")                     //      #613
+                            || tz390.op_name[index].equals("CLT")                      //      #613
+                            || tz390.op_name[index].equals("ICMH")                     //      #613
+                            || tz390.op_name[index].equals("STCMH")                    //      #613
+                            ) {                                                        //      #613
+                            my_operands="R1,M3,D2(B2)";                                //      #613
+                        } else {                                                       //      #613
+                            my_operands="R1,D2(B2)";                                   // #500 #613
+                        }                                                              //      #613
+                    } else if (tz390.op_trace_type[index]==202) {                      //      #613
+                        my_operands="R1,M3,D2(B2)";                                    // #500
                     } else {
-                        my_operands="R1,R3,D2(B2)";                                        // #500 #554
+                        my_operands="R1,R3,D2(B2)";                                    // #500 #554
                     }
                     break;
                 case 21:
-                    my_format="SIY";                                                       // #500
-                    if (tz390.op_name[index].equals("LPSWEY")) {                           //      #617
-                        my_operands="D1(B1)";                                              //      #617
-                    } else {                                                               //      #617
-                        my_operands="D1(B1),I2";                                           // #500 #617
-                    }                                                                      //      #617
+                    my_format="SIY";                                                   // #500
+                    if (tz390.op_name[index].equals("LPSWEY")) {                       //      #617
+                        my_operands="D1(B1)";                                          //      #617
+                    } else {                                                           //      #617
+                        my_operands="D1(B1),I2";                                       // #500 #617
+                    }                                                                  //      #617
                     break;
                 case 22:
-                    my_format="RSL";                                                       // #500
-                    my_operands="D1(L1,B1)";                                               // #500
-                    if (tz390.op_trace_type[index]==230) {                                 // #613
-                        my_operands="R1,D2(L2,B2),M3";                                     // #613
-                    }                                                                      // #613
+                    my_format="RSL";                                                   // #500
+                    my_operands="D1(L1,B1)";                                           // #500
+                    if (tz390.op_trace_type[index]==230) {                             // #613
+                        my_operands="R1,D2(L2,B2),M3";                                 // #613
+                    }                                                                  // #613
                     break;
                 case 23:
-                    my_format="RIE";                                                       // #500
-                    my_operands="R1,R3,RI2";                                               // #500 #561
-                    if (tz390.op_trace_type[index]==230) {                                 // #614
-                        if (   tz390.op_name[index].equals("LOCGHI")                       // #614
-                            || tz390.op_name[index].equals("LOCHHI")                       // #614
-                            || tz390.op_name[index].equals("LOCHI")                        // #614
-                            ) {                                                            // #614
-                            my_operands="R1,I2,M3";                                        // #614
-                        } else if (tz390.op_name[index].length() >= 6) {                   // #614
-                            if (   tz390.op_name[index].substring(0,6).equals("LOCGHI")    // #614
-                                || tz390.op_name[index].substring(0,6).equals("LOCHHI")    // #614
-                                || tz390.op_name[index].substring(0,5).equals("LOCHI")     // #614
-                                ) {                                                        // #614
-                                my_operands="R1,I2";                                       // #614
-                            }                                                              // #614
-                        }                                                                  // #614
-                    }                                                                      // #614
+                    my_format="RIE";                                                   // #500
+                    my_operands="R1,R3,RI2";                                           // #500 #561
+                    if (tz390.op_trace_type[index]==230) {                             // #614
+                        if (   tz390.op_name[index].equals("LOCGHI")                   // #614
+                            || tz390.op_name[index].equals("LOCHHI")                   // #614
+                            || tz390.op_name[index].equals("LOCHI")                    // #614
+                            ) {                                                        // #614
+                            my_operands="R1,I2,M3";                                    // #614
+                        } else if (tz390.op_name[index].length() >= 6) {               // #614
+                            if (   tz390.op_name[index].substring(0,6).equals("LOCGHI") // #614
+                                || tz390.op_name[index].substring(0,6).equals("LOCHHI") // #614
+                                || tz390.op_name[index].substring(0,5).equals("LOCHI")  // #614
+                               ) {                                                     // #614
+                                my_operands="R1,I2";                                   // #614
+                            }                                                          // #614
+                        }                                                              // #614
+                    }                                                                  // #614
                     break;
                 case 24:
-                    my_format="RXE";                                                       // #500
-                    my_operands="R1,D2(X2,B2)";                                            // #500
-                    if (tz390.op_trace_type[index]==240) {                                 // #614
-                        if (tz390.op_name[index].equals("LCBB")                            // #614
-                            ) {                                                            // #614
-                            my_operands="R1,D2(X2,B2),M3";                                 // #614
-                        }                                                                  // #614
-                    }                                                                      // #614
+                    my_format="RXE";                                                   // #500
+                    my_operands="R1,D2(X2,B2)";                                        // #500
+                    if (tz390.op_trace_type[index]==240) {                             // #614
+                        if (tz390.op_name[index].equals("LCBB")) {                     // #614
+                            my_operands="R1,D2(X2,B2),M3";                             // #614
+                        }                                                              // #614
+                    }                                                                  // #614
                     break;
                 case 25:
-                    my_format="RXF";                                                       // #500
-                    my_operands="R1,R3,D2(X2,B2)";                                         // #500
+                    my_format="RXF";                                                   // #500
+                    my_operands="R1,R3,D2(X2,B2)";                                     // #500
                     break;
                 case 26:
-                    my_format="SS";                                                        // #500
-                    my_operands="D1(L1,B1),D2(L2,B2)";                                     // #500
+                    my_format="SS";                                                    // #500
+                    my_operands="D1(L1,B1),D2(L2,B2)";                                 // #500
                     break;
                 case 27:
-                    my_format="SS";                                                        // #500
-                    my_operands="R1,D2(B2),R3,D4(B4)";                                     // #500
+                    my_format="SS";                                                    // #500
+                    my_operands="R1,D2(B2),R3,D4(B4)";                                 // #500
                     break;
                 case 28:
-                    my_format="SS";                                                        // #500
-                    my_operands="R1,R3,D2(B2),D4(B4)";                                     // #500
+                    my_format="SS";                                                    // #500
+                    my_operands="R1,R3,D2(B2),D4(B4)";                                 // #500
                     break;
                 case 29:
-                    my_format="SS";                                                        // #500
-                    my_operands="D1(L1,B1),D2(B2),I3";                                     // #500
+                    my_format="SS";                                                    // #500
+                    my_operands="D1(L1,B1),D2(B2),I3";                                 // #500
                     break;
                 case 30:
-                    my_format="RRF";                                                       // #500
-                    my_operands="R1,R3,R2,M4";                                             // #554
-                    if (   tz390.op_trace_type[index]==300                                 // #617
-                        && tz390.op_name[index].equals("RDP")                              // #617
-                        ) {                                                                // #617
-                        my_operands="R1,R3,R2<,M4>";                                       // #617
-                    } else if (   tz390.op_trace_type[index]==301                          // #573 #612 #617
-                               || tz390.op_trace_type[index]==303                          //      #612
-                               || tz390.op_trace_type[index]==304                          //      #612
-                               || tz390.op_trace_type[index]==305                          //      #612
-                               || tz390.op_trace_type[index]==306                          //      #612
-                               || tz390.op_trace_type[index]==342                          //      #612
-                               ) {                                                         //      #612
-                        my_operands="R1,M3,R2,M4";                                         // #573
-                    }                                                                      // #573
+                    my_format="RRF";                                                   // #500
+                    my_operands="R1,R3,R2,M4";                                         // #554
+                    if (   tz390.op_trace_type[index]==300                             // #617
+                        && tz390.op_name[index].equals("RDP")                          // #617
+                       ) {                                                             // #617
+                        my_operands="R1,R3,R2<,M4>";                                   // #617
+                    } else if (   tz390.op_trace_type[index]==301                      // #573 #612 #617
+                               || tz390.op_trace_type[index]==303                      //      #612
+                               || tz390.op_trace_type[index]==304                      //      #612
+                               || tz390.op_trace_type[index]==305                      //      #612
+                               || tz390.op_trace_type[index]==306                      //      #612
+                               || tz390.op_trace_type[index]==342                      //      #612
+                              ) {                                                      //      #612
+                        my_operands="R1,M3,R2,M4";                                     // #573
+                    }                                                                  // #573
                     break;
                 case 31:
-                    my_format="SS";                                                        // #500
-                    my_operands="D1(B1),D2(L2,B2)";                                        // #500
+                    my_format="SS";                                                    // #500
+                    my_operands="D1(B1),D2(L2,B2)";                                    // #500
                     break;
                 case 32:
-                    my_format="SSF";                                                       // #500
-                    my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2);            // #500
-                    my_operands="D1(B1),D2(B2),R3";                                        // #500
+                    my_format="SSF";                                                   // #500
+                    my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2);        // #500
+                    my_operands="D1(B1),D2(B2),R3";                                    // #500
                     break;
                 case 33:
                     // Our op_code table has the last two nibbles swapped
-                    my_format="RIL";                                                       // #500
-                    if (my_hexop.length() == 3) { // mask excluded?                        // #561
-                        my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2,3);      // #561
-                        short_op = 1;           // mark short opcode                       // #561
-                    } else {                    // mask included!                          // #561
+                    my_format="RIL";                                                   // #500
+                    if (my_hexop.length() == 3) { // mask excluded?                    // #561
+                        my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2,3);  // #561
+                        short_op = 1;           // mark short opcode                   // #561
+                    } else {                    // mask included!                      // #561
                         my_hexop=my_hexop.substring(0,2)+my_hexop.substring(3)+my_hexop.substring(2,3); // #500 #561
-                        short_op = 0;           // mark full opcode                        // #561
-                    }                                                                      // #561
-                    if (short_op == 1)          // short opcode                            // #561
-                        my_operands="M1,RI2";                                              // #561
-                    else                        // full opcode                             // #561
-                        my_operands="RI2";      // mask implied by mnemonic                // #561
+                        short_op = 0;           // mark full opcode                    // #561
+                    }                                                                  // #561
+                    if (short_op == 1) { // short opcode                               // #561
+                        my_operands="M1,RI2";                                          // #561
+                    }
+                    else {                      // full opcode                         // #561
+                        my_operands="RI2";      // mask implied by mnemonic            // #561
+                    }
                     break;
                 case 34:
-                    my_format="RRF";                                                       // #500
-                    my_operands="R1,M3,R2";                                                // #500
+                    my_format="RRF";                                                   // #500
+                    my_operands="R1,M3,R2";                                            // #500
                     if (tz390.op_trace_type[index]==340) {
                         if (   tz390.op_name[index].equals("IDTE")
                             || tz390.op_name[index].equals("CPSDR")
                             ) {
-                            my_operands="R1,R3,R2";                                        // #500
+                            my_operands="R1,R3,R2";                                    // #500
                         }
                     } else if (tz390.op_trace_type[index]==343) {
-                        my_operands="R1,R3,R2";                                            // #500
+                        my_operands="R1,R3,R2";                                        // #500
                     }
                     break;
                 case 35:
-                    my_format="RRF";                                                       // #500
-                    my_operands="R1,R2,M4";                                                // #500
+                    my_format="RRF";                                                   // #500
+                    my_operands="R1,R2,M4";                                            // #500
                     break;
                 case 36:
                     // Alternate formats have mnemonics ending in 'A'
-                    if (my_mnemonic.substring(my_mnemonic.length()-1).equals("A")) {       // #500
-                        my_format="RRF";                                                   // #500 #573
-                        my_operands="R1,R2,R3,M4";                                         // #500
+                    if (my_mnemonic.substring(my_mnemonic.length()-1).equals("A")) {   // #500
+                        my_format="RRF";                                               // #500 #573
+                        my_operands="R1,R2,R3,M4";                                     // #500
                     } else {
-                        my_format="RRF";                                                   // #500 #573
-                        my_operands="R1,R2,R3";                                            // #500
+                        my_format="RRF";                                               // #500 #573
+                        my_operands="R1,R2,R3";                                        // #500
                     }
                     break;
                 case 37: // ASSIST instructions
-                    my_format="RX";                                                        // #500
-                    my_operands="R1,S2";                                                   // #500
+                    my_format="RX";                                                    // #500
+                    my_operands="R1,S2";                                               // #500
                     break;
                 case 38: // ASSIST instructions
-                    my_format="RXSS";                                                      // #500
-                    my_operands="S1(X1),S2";                                               // #500
+                    my_format="RXSS";                                                  // #500
+                    my_operands="S1(X1),S2";                                           // #500
                     break;
                 case 39:
                     if (tz390.op_trace_type[index]==140) {
-                        my_format="RRE";                                                   // #500
-                        my_operands="R1,R2";                                               // #500
-                    } else if (tz390.op_trace_type[index]==141) {                          // #612
-                        if (tz390.op_name[index].equals("LOCGR")) {                        // #612
-                            my_format="RRF";                                               // #612
-                            my_operands="R1,R2,M3";                                        // #612
-                        } else {                                                           // #612
-                            my_format="RRF";                                               // #612
-                            my_operands="R1,R2";                                           // #612
-                        }                                                                  // #612
-                    }  else if (tz390.op_trace_type[index]==142) {                         // #612
-                        if (tz390.op_name[index].equals("LOCR")) {                         // #612
-                            my_format="RRF";                                               // #612
-                            my_operands="R1,R2,M3";                                        // #612
-                        } else {                                                           // #612
-                            my_format="RRF";                                               // #612
-                            my_operands="R1,R2";                                           // #612
-                        }                                                                  // #612
-                    } else if (tz390.op_trace_type[index]==144) {
+                        my_format="RRE";                                               // #500
+                        my_operands="R1,R2";                                           // #500
+                    } else if (tz390.op_trace_type[index]==141) {                      // #612
+                        if (tz390.op_name[index].equals("LOCGR")) {                    // #612
+                            my_format="RRF";                                           // #612
+                            my_operands="R1,R2,M3";                                    // #612
+                        } else {                                                       // #612
+                            my_format="RRF";                                           // #612
+                            my_operands="R1,R2";                                       // #612
+                        }                                                              // #612
+                    }                                                                  // #612
+                    else if (tz390.op_trace_type[index]==142) {                        // #612
+                        if (tz390.op_name[index].equals("LOCR")) {                     // #612
+                            my_format="RRF";                                           // #612
+                            my_operands="R1,R2,M3";                                    // #612
+                        } else {                                                       // #612
+                            my_format="RRF";                                           // #612
+                            my_operands="R1,R2";                                       // #612
+                        }                                                              // #612
+                    }                                                                  // #612
+                    else if (tz390.op_trace_type[index]==144) {
                         if (tz390.op_name[index].equals("CHLR")) {
-                            my_format="RRE";                                               // #500
-                            my_operands="R1,R2";                                           // #500
+                            my_format="RRE";                                           // #500
+                            my_operands="R1,R2";                                       // #500
                         } else {
-                            my_format="RRF";                                               // #500
-                            my_operands="R1,R2<,M3>";                                      // #500
+                            my_format="RRF";                                           // #500
+                            my_operands="R1,R2<,M3>";                                  // #500
                         }
-                    } else if (tz390.op_trace_type[index]==151) {                          // #612
-                        if (tz390.op_name[index].equals("POPCNT")) {                       // #612
-                            // Introduced with ZS5=Z11; changed in ZS9=Z15                 // #616
+                    }
+                    else if (tz390.op_trace_type[index]==151) {                        // #612
+                        if (tz390.op_name[index].equals("POPCNT")) {                   // #612
+                            // Introduced with ZS5=Z11; changed in ZS9=Z15             // #616
                             if (tz390.opt_optable_optb_nr < ArchLevel.ARCH_Z15.getValue()) { // 15=ZS9/Z15   // #616 #631 #656
-                                my_format="RRE";          // z11 thru z14                  // #612 #616
-                                my_operands="R1,R2";                                       // #612
-                            } else {                                                       // #616
-                                my_format="RRF";          // z15 and higher                // #616
-                                my_operands="R1,R2<,M3>";                                  // #616
-                            }                                                              // #616
-                        } else {                                                           // #612
-                            my_format="RRF";                                               // #612
-                            my_operands="R1,R2,M3";                                        // #612
-                        }                                                                  // #612
-                    } else if (tz390.op_trace_type[index]==153) {                          // #612 #614
-                        if (tz390.op_name[index].equals("LOCFHR")) {                       // #612 #614
-                            my_format="RRF";                                               // #612 #614
-                            my_operands="R1,R2,M3";                                        // #612 #614
-                        } else if (tz390.op_name[index].equals("NOTGR")) {                 //      #616
-                            my_format="RRF";                                               //      #616
-                            my_operands="R1,R2";                                           //      #616
-                        } else if (   tz390.op_name[index].length() >= 6                   //      #614
-                                   && tz390.op_name[index].substring(0,6).equals("LOCFHR") //      #614
-                                   ) {                                                     //      #614
-                            my_format="RRF";                                               //      #614
-                            my_operands="R1,R2";                                           //      #614
-                        } else {                                                           // #612 #614
-                            my_format="RRF";                                               // #612 #614
-                            my_operands="R1,R2,R3";                                        // #612 #614
-                        }                                                                  // #612 #614
-                    } else if (   tz390.op_trace_type[index]==154                          // #612 #614
-                               || tz390.op_trace_type[index]==410                          // #612
-                               ) {
-                        my_format="RRF";                                                   // #612
-                        my_operands="R1,R2,R3";                                            // #612
-                        if (tz390.op_name[index].equals("NOTR")) {                         //      #616
-                            my_format="RRF";                                               //      #616
-                            my_operands="R1,R2";                                           //      #616
-                        }                                                                  //      #616
+                                my_format="RRE";          // z11 thru z14              // #612 #616
+                                my_operands="R1,R2";                                   // #612
+                            } else {                                                   // #616
+                                my_format="RRF";          // z15 and higher            // #616
+                                my_operands="R1,R2<,M3>";                              // #616
+                            }                                                          // #616
+                        } else {                                                       // #612
+                            my_format="RRF";                                           // #612
+                            my_operands="R1,R2,M3";                                    // #612
+                        }                                                              // #612
+                    } else if (tz390.op_trace_type[index]==153) {                      // #612 #614
+                        if (tz390.op_name[index].equals("LOCFHR")) {                   // #612 #614
+                            my_format="RRF";                                           // #612 #614
+                            my_operands="R1,R2,M3";                                    // #612 #614
+                        } else if (tz390.op_name[index].equals("NOTGR")) {             //      #616
+                            my_format="RRF";                                           //      #616
+                            my_operands="R1,R2";                                       //      #616
+                        } else if (   tz390.op_name[index].length() >= 6               //      #614
+                                   && tz390.op_name[index].substring(0,6).equals("LOCFHR") //  #614
+                                  ) {                                                  //      #614
+                            my_format="RRF";                                           //      #614
+                            my_operands="R1,R2";                                       //      #614
+                        } else {                                                       // #612 #614
+                            my_format="RRF";                                           // #612 #614
+                            my_operands="R1,R2,R3";                                    // #612 #614
+                        }                                                              // #612 #614
+                    } else if (   tz390.op_trace_type[index]==154                      // #612 #614
+                               || tz390.op_trace_type[index]==410                      // #612
+                              ) {
+                        my_format="RRF";                                               // #612
+                        my_operands="R1,R2,R3";                                        // #612
+                        if (tz390.op_name[index].equals("NOTR")) {                     //      #616
+                            my_format="RRF";                                           //      #616
+                            my_operands="R1,R2";                                       //      #616
+                        }                                                              //      #616
                     } else {
-                        my_format="RRF";                                                   // #500
-                        my_operands="R1,R2,M3";                                            // #500
+                        my_format="RRF";                                               // #500
+                        my_operands="R1,R2,M3";                                        // #500
                     }
                     break;
                 case 40:
-                    my_format="RRF";                                                       // #500
-                    my_operands="R1,R2";                                                   // #500
-                    if (tz390.op_trace_type[index]==151) {                                 // #613
-                        if (tz390.op_name[index].equals("PPA")) {                          // #613
-                            my_operands="R1,R2,M3";                                        // #613
-                        }                                                                  // #613
-                    }                                                                      // #613
+                    my_format="RRF";                                                   // #500
+                    my_operands="R1,R2";                                               // #500
+                    if (tz390.op_trace_type[index]==151) {                             // #613
+                        if (tz390.op_name[index].equals("PPA")) {                      // #613
+                            my_operands="R1,R2,M3";                                    // #613
+                        }                                                              // #613
+                    }                                                                  // #613
                     break;
                 case 41:
-                    my_format="RIE";                                                       // #500
-                    my_operands="R1,I2,M3";                                                // #500
+                    my_format="RIE";                                                   // #500
+                    my_operands="R1,I2,M3";                                            // #500
                     break;
                 case 42:
-                    my_format="RIE";                                                       // #500
-                    my_operands="R1,I2";                                                   // #500
+                    my_format="RIE";                                                   // #500
+                    my_operands="R1,I2";                                               // #500
                     break;
                 case 43:
-                    my_format="RIE";                                                       // #500
-                    my_operands="R1,I2,M3,RI4";                                            // #500 #602
+                    my_format="RIE";                                                   // #500
+                    my_operands="R1,I2,M3,RI4";                                        // #500 #602
                     break;
                 case 44:
-                    my_format="RIE";                                                       // #500
-                    my_operands="R1,I2,RI4";                                               // #500 #602
+                    my_format="RIE";                                                   // #500
+                    my_operands="R1,I2,RI4";                                           // #500 #602
                     break;
                 case 45:
-                    my_format="RRS";                                                       // #500
-                    my_operands="R1,R2,M3,D4(B4)";                                         // #500
+                    my_format="RRS";                                                   // #500
+                    my_operands="R1,R2,M3,D4(B4)";                                     // #500
                     break;
                 case 46:
-                    my_format="RRS";                                                       // #500
-                    my_operands="R1,R2,D4(B4)";                                            // #500
+                    my_format="RRS";                                                   // #500
+                    my_operands="R1,R2,D4(B4)";                                        // #500
                     break;
                 case 47:
-                    my_format="RIS";                                                       // #500
-                    my_operands="R1,I2,M3,D4(B4)";                                         // #500
+                    my_format="RIS";                                                   // #500
+                    my_operands="R1,I2,M3,D4(B4)";                                     // #500
                     break;
                 case 48:
-                    my_format="RIS";                                                       // #500
-                    my_operands="R1,I2,D4(B4)";                                            // #500
+                    my_format="RIS";                                                   // #500
+                    my_operands="R1,I2,D4(B4)";                                        // #500
                     break;
                 case 49:
-                    my_format="RIE";                                                       // #500
-                    my_operands="R1,R2,M3,RI4";                                            // #500 #602
+                    my_format="RIE";                                                   // #500
+                    my_operands="R1,R2,M3,RI4";                                        // #500 #602
                     break;
                 case 50:
-                    my_format="RIE";                                                       // #500
-                    my_operands="R1,R2,RI4";                                               // #500 #602
+                    my_format="RIE";                                                   // #500
+                    my_operands="R1,R2,RI4";                                           // #500 #602
                     break;
                 case 51:
-                    my_format="SIL";                                                       // #500
-                    my_operands="D1(B1),I2";                                               // #500
+                    my_format="SIL";                                                   // #500
+                    my_operands="D1(B1),I2";                                           // #500
                     break;
                 case 52:
-                    my_format="RIE";                                                       // #500
-                    my_operands="R1,R2";                                                   // #500
-                    if (my_hexop.indexOf("$") == -1) {                                     // #500
+                    my_format="RIE";                                                   // #500
+                    my_operands="R1,R2";                                               // #500
+                    if (my_hexop.indexOf("$") == -1) {                                 // #500
                         my_operands="R1,R2,I3,I4<,I5>";
-                    } else if (   tz390.op_name[index].equals("SLLHH")                     // #617
-                               || tz390.op_name[index].equals("SLLHL")                     // #617
-                               || tz390.op_name[index].equals("SLLLH")                     // #617
-                               || tz390.op_name[index].equals("SRLHH")                     // #617
-                               || tz390.op_name[index].equals("SRLHL")                     // #617
-                               || tz390.op_name[index].equals("SRLLH")                     // #617
-                               ) {                                                         // #617
-                        my_operands="R1,R2,I3";                                            // #617
-                    }                                                                      // #617
+                    } else if (   tz390.op_name[index].equals("SLLHH")                 // #617
+                               || tz390.op_name[index].equals("SLLHL")                 // #617
+                               || tz390.op_name[index].equals("SLLLH")                 // #617
+                               || tz390.op_name[index].equals("SRLHH")                 // #617
+                               || tz390.op_name[index].equals("SRLHL")                 // #617
+                               || tz390.op_name[index].equals("SRLLH")                 // #617
+                               ) {                                                     // #617
+                        my_operands="R1,R2,I3";                                        // #617
+                    }                                                                  // #617
                     break;
                 case 53:
                     // Alternate formats have mnemonics ending in 'A'
-                    if (my_mnemonic.substring(my_mnemonic.length()-1).equals("A")) {       // #500
-                        my_format="RRF";                                                   // #500
-                        my_operands="R1,M3,R2,M4";                                         // #500
+                    if (my_mnemonic.substring(my_mnemonic.length()-1).equals("A")) {   // #500
+                        my_format="RRF";                                               // #500
+                        my_operands="R1,M3,R2,M4";                                     // #500
                     } else {
-                        my_format="RRE";                                                   // #500
-                        my_operands="R1,R2";                                               // #500
+                        my_format="RRE";                                               // #500
+                        my_operands="R1,R2";                                           // #500
                     }
                     break;
                 case 54:
                     // Alternate formats have mnemonics ending in 'A'
-                    if (my_mnemonic.substring(my_mnemonic.length()-1).equals("A")) {       // #500
-                        my_format="RRF";                                                   // #500
-                        my_operands="R1,M3,R2,M4";                                         // #500
+                    if (my_mnemonic.substring(my_mnemonic.length()-1).equals("A")) {   // #500
+                        my_format="RRF";                                               // #500
+                        my_operands="R1,M3,R2,M4";                                     // #500
                     } else {
-                        my_format="RRF";                                                   // #500
-                        my_operands="R1,M3,R2";                                            // #500
+                        my_format="RRF";                                               // #500
+                        my_operands="R1,M3,R2";                                        // #500
                     }
                     if (tz390.op_trace_type[index]==340) {                                 // #568
                         if (my_mnemonic.equals("IDTE")) {                                  // #568
                             if (tz390.opt_optable_optb_nr >= ArchLevel.ARCH_Z12.getValue()) { // ZS6=Z12 and above // #613 #631 #656
-                                my_operands="R1,R3,R2<,M4>";                               // #613
-                            } else {                                                       // #613
-                                my_operands="R1,R3,R2";                                    // #568 #613
-                            }                                                              // #568 #613
-                        } else if (my_mnemonic.equals("KMA")) {                            // #615
-                            my_operands="R1,R3,R2";                                        // #615
-                        }                                                                  // #615
-                    } else if (tz390.op_trace_type[index]==344) {                          // #613
-                        my_operands="R1,R3,R2<,M4>";                                       // #613
-                    }                                                                      // #613
+                                my_operands="R1,R3,R2<,M4>";                           // #613
+                            } else {                                                   // #613
+                                my_operands="R1,R3,R2";                                // #568 #613
+                            }                                                          // #568 #613
+                        } else if (my_mnemonic.equals("KMA")) {                        // #615
+                            my_operands="R1,R3,R2";                                    // #615
+                        }                                                              // #615
+                    } else if (tz390.op_trace_type[index]==344) {                      // #613
+                        my_operands="R1,R3,R2<,M4>";                                   // #613
+                    }                                                                  // #613
                     break;
                 case 55:
-                    my_format="SSF";                                                       // #500
-                    my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2);            // #500
-                    my_operands="R3,D1(B1),D2(B2)";                                        // #500
+                    my_format="SSF";                                                   // #500
+                    my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2);        // #500
+                    my_operands="R3,D1(B1),D2(B2)";                                    // #500
                     break;
                 case 56:
-                    my_format="RSY";                                                       // #500
-                    my_operands="R1,D2(B2)";                                               // #500 #612 #614
-                    if (tz390.op_trace_type[index]==207) {                                 //           #614
-                        if (   tz390.op_name[index].equals("LOCFH")                        //      #612 #614
-                            || tz390.op_name[index].equals("LOCG")                         //      #612 #614
-                            || tz390.op_name[index].equals("STOCFH")                       //      #612 #614
-                            || tz390.op_name[index].equals("STOCG")                        //      #612 #614
-                            ) {                                                            //      #612 #614
-                            my_operands="R1,D2(B2),M3";                                    // #500 #612 #614
-                        }                                                                  //      #612 #614
-                    } else if (tz390.op_trace_type[index]==209) {                          //           #614
-                        if (   tz390.op_name[index].equals("LOC")                          //      #612 #614
-                            || tz390.op_name[index].equals("STOC")                         //      #612 #614
-                            ) {                                                            //      #612 #614
-                            my_operands="R1,D2(B2),M3";                                    // #500 #612 #614
-                        }                                                                  //      #612 #614
-                    }                                                                      //           #614
+                    my_format="RSY";                                                   // #500
+                    my_operands="R1,D2(B2)";                                           // #500 #612 #614
+                    if (tz390.op_trace_type[index]==207) {                             //           #614
+                        if (   tz390.op_name[index].equals("LOCFH")                    //      #612 #614
+                            || tz390.op_name[index].equals("LOCG")                     //      #612 #614
+                            || tz390.op_name[index].equals("STOCFH")                   //      #612 #614
+                            || tz390.op_name[index].equals("STOCG")                    //      #612 #614
+                            ) {                                                        //      #612 #614
+                            my_operands="R1,D2(B2),M3";                                // #500 #612 #614
+                        }                                                              //      #612 #614
+                    } else if (tz390.op_trace_type[index]==209) {                      //           #614
+                        if (   tz390.op_name[index].equals("LOC")                      //      #612 #614
+                            || tz390.op_name[index].equals("STOC")                     //      #612 #614
+                           ) {                                                         //      #612 #614
+                            my_operands="R1,D2(B2),M3";                                // #500 #612 #614
+                        }                                                              //      #612 #614
+                    }                                                                  //           #614
                     break;
                 case 57:
-                    my_format="RIE";                                                       // #500
-                    my_operands="R1,R3,I2";                                                // #500
+                    my_format="RIE";                                                   // #500
+                    my_operands="R1,R3,I2";                                            // #500
                     break;
                 case 58:
-                    my_format="QST";                                                       // #500
-                    my_operands="VR1,QR3,RS2(RT2)";                                        // #500
-                    if (tz390.op_trace_type[index]==581) {                                 // #533
-                        my_operands="M1,QR3,RS2(RT2)";                                     // #533
-                    }                                                                      // #533
+                    my_format="QST";                                                   // #500
+                    my_operands="VR1,QR3,RS2(RT2)";                                    // #500
+                    if (tz390.op_trace_type[index]==581) {                             // #533
+                        my_operands="M1,QR3,RS2(RT2)";                                 // #533
+                    }                                                                  // #533
                     break;
                 case 59:
-                    my_format="QV";                                                        // #500
-                    my_operands="VR1,QR3,VR2";                                             // #500
-                    if (tz390.op_trace_type[index]==591) {                                 // #533
-                        my_operands="M1,QR3,VR2";                                          // #533
-                    } else if (tz390.op_trace_type[index]==592) {                          // #533
-                        my_operands="VR1,QR2";                                             // #533
-                    }                                                                      // #533
+                    my_format="QV";                                                    // #500
+                    my_operands="VR1,QR3,VR2";                                         // #500
+                    if (tz390.op_trace_type[index]==591) {                             // #533
+                        my_operands="M1,QR3,VR2";                                      // #533
+                    } else if (tz390.op_trace_type[index]==592) {                      // #533
+                        my_operands="VR1,QR2";                                         // #533
+                    }                                                                  // #533
                     break;
                 case 60:
-                    my_format="VST";                                                       // #500
-                    my_operands="VR1,VR3,RS2(RT2)";                                        // #500
-                    if (tz390.op_trace_type[index]==601) {                                 // #533
-                        my_operands="VR1,RS2(RT2)";                                        // #533
-                    } else if (tz390.op_trace_type[index]==602) {                          // #533
-                        my_operands="M1,VR3,RS2(RT2)";                                     // #533
-                    }                                                                      // #533
+                    my_format="VST";                                                   // #500
+                    my_operands="VR1,VR3,RS2(RT2)";                                    // #500
+                    if (tz390.op_trace_type[index]==601) {                             // #533
+                        my_operands="VR1,RS2(RT2)";                                    // #533
+                    } else if (tz390.op_trace_type[index]==602) {                      // #533
+                        my_operands="M1,VR3,RS2(RT2)";                                 // #533
+                    }                                                                  // #533
                     break;
                 case 61:
-                    my_format="VV";                                                        // #500
-                    my_operands="VR1,VR2";                                                 // #500
-                    if (tz390.op_trace_type[index]==611) {                                 // #533
-                        my_operands="VR1,VR3,VR2";                                         // #533
-                    } else if (tz390.op_trace_type[index]==612) {                          // #533
-                        my_operands="M1,VR3,VR2";                                          // #533
-                    } else if (tz390.op_trace_type[index]==613) {                          // #533
-                        my_operands="VR1";                                                 // #533
-                    }                                                                      // #533
+                    my_format="VV";                                                    // #500
+                    my_operands="VR1,VR2";                                             // #500
+                    if (tz390.op_trace_type[index]==611) {                             // #533
+                        my_operands="VR1,VR3,VR2";                                     // #533
+                    } else if (tz390.op_trace_type[index]==612) {                      // #533
+                        my_operands="M1,VR3,VR2";                                      // #533
+                    } else if (tz390.op_trace_type[index]==613) {                      // #533
+                        my_operands="VR1";                                             // #533
+                    }                                                                  // #533
                     break;
                 case 62:
-                    my_format="RRE";                                                       // #500
-                    my_operands="R1";                                                      // #500
-                    if (tz390.op_trace_type[index]==621) {                                 // #533
-                        my_operands="";                                                    // #533
-                    }                                                                      // #533
+                    my_format="RRE";                                                   // #500
+                    my_operands="R1";                                                  // #500
+                    if (tz390.op_trace_type[index]==621) {                             // #533
+                        my_operands="";                                                // #533
+                    }                                                                  // #533
                     break;
                 case 63:
-                    my_format="RSEv";                                                      // #500
-                    my_operands="VR1,VR3,D2(B2)";                                          // #500
+                    my_format="RSEv";                                                  // #500
+                    my_operands="VR1,VR3,D2(B2)";                                      // #500
                     break;
                 case 64:
-                    my_format="S";                                                         // #500
-                    my_operands="D2(B2)";                                                  // #500
+                    my_format="S";                                                     // #500
+                    my_operands="D2(B2)";                                              // #500
                     break;
                 case 65:
-                    my_format="VR";                                                        // #500
-                    my_operands="VR1,QR3,R2";                                              // #500
-                    if (tz390.op_trace_type[index]==651) {                                 // #533
-                        my_operands="VR1,QR2";                                             // #533
-                    }                                                                      // #533
-                    if (tz390.op_trace_type[index]==652) {                                 // #533
-                        my_operands="VR1";                                                 // #533
-                    }                                                                      // #533
+                    my_format="VR";                                                    // #500
+                    my_operands="VR1,QR3,R2";                                          // #500
+                    if (tz390.op_trace_type[index]==651) {                             // #533
+                        my_operands="VR1,QR2";                                         // #533
+                    }                                                                  // #533
+                    if (tz390.op_trace_type[index]==652) {                             // #533
+                        my_operands="VR1";                                             // #533
+                    }                                                                  // #533
                     break;
                 case 66:
-                    my_format="VS";                                                        // #500
-                    my_operands="RS2";                                                     // #500
+                    my_format="VS";                                                    // #500
+                    my_operands="RS2";                                                 // #500
                     break;
                 case 67:
-                    my_format="RR";                                                        // #500
-                    my_operands="R1,R2";                                                   // #500
+                    my_format="RR";                                                    // #500
+                    my_operands="R1,R2";                                               // #500
                     break;
                 case 68:
-                    my_format="RR";                                                        // #500
-                    my_operands="R1,R2";                                                   // #500
+                    my_format="RR";                                                    // #500
+                    my_operands="R1,R2";                                               // #500
                     break;
                 case 69:
-                    my_format="RR";                                                        // #500
-                    my_operands="M1,R2";                                                   // #500
+                    my_format="RR";                                                    // #500
+                    my_operands="M1,R2";                                               // #500
                     break;
                 case 70:
-                    my_format="R";                                                         // #500
-                    my_operands="R1";                                                      // #500
-                    if (my_mnemonic.equals("SPM")) {                                       // #500
-                        my_format="RR";                                                    // #500
-                    }                                                                      // #500
+                    my_format="R";                                                     // #500
+                    my_operands="R1";                                                  // #500
+                    if (my_mnemonic.equals("SPM")) {                                   // #500
+                        my_format="RR";                                                // #500
+                    }                                                                  // #500
                     break;
                 case 71:
-                    my_format="RR";                                                        // #500
-                    my_operands="R1,R2";                                                   // #500
+                    my_format="RR";                                                    // #500
+                    my_operands="R1,R2";                                               // #500
                     break;
                 case 72:
-                    my_format="RR";                                                        // #500
-                    my_hexop=my_hexop+".";                                                 // #500
-                    my_operands="R2";                                                      // #500
+                    my_format="RR";                                                    // #500
+                    my_hexop=my_hexop+".";                                             // #500
+                    my_operands="R2";                                                  // #500
                     break;
                 case 73:
-                    my_format="RI";                                                        // #500
-                    if(tz390.opt_optable_optb_nr >= ArchLevel.ARCH_ESA.getValue()) {       // ESA and above  // #554 #631 #656
-                        my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2,3);      // #554
-                    }                                                                      // #554
-                    my_operands="R1,I2";                                                   // #500
+                    my_format="RI";                                                    // #500
+                    if(tz390.opt_optable_optb_nr >= ArchLevel.ARCH_ESA.getValue()) {   // ESA and above  // #554 #631 #656
+                        my_hexop=my_hexop.substring(0,2)+"."+my_hexop.substring(2,3);  // #554
+                    }                                                                  // #554
+                    my_operands="R1,I2";                                               // #500
                     break;
                 case 74:
-                    my_format="RRF";                                                       // #500 #616
-                    if (   my_mnemonic.equals("SELFHR")                                    // #500 #616
-                        || my_mnemonic.equals("SELGR")                                     //      #616
-                        || my_mnemonic.equals("SELR")                                      //      #616
-                        ) {                                                                //      #616
-                        my_operands="R1,R2,R3,M4";                                         // #500
-                    } else {                                                               //      #616
-                        my_operands="R1,R2,R3";                                            // #500 #616
-                    }                                                                      // #500
+                    my_format="RRF";                                                   // #500 #616
+                    if (   my_mnemonic.equals("SELFHR")                                // #500 #616
+                        || my_mnemonic.equals("SELGR")                                 //      #616
+                        || my_mnemonic.equals("SELR")                                  //      #616
+                       ) {                                                             //      #616
+                        my_operands="R1,R2,R3,M4";                                     // #500
+                    } else {                                                           // #500 #616
+                        my_operands="R1,R2,R3";                                        // #500 #616
+                    }                                                                  // #500
                     break;
-                case 75:                                                                   // #613
-                    my_format="IE";                                                        // #613
-                    my_operands="I1,I2";                                                   // #613
-                    break;                                                                 // #613
-                case 76:                                                                   // #613
-                    my_format="MII";                                                       // #613
-                    my_operands="M1,RI2,RI3";                                              // #613
-                    break;                                                                 // #613
-                case 77:                                                                   // #613
-                    my_format="SMI";                                                       // #613
-                    my_operands="M1,RI2,D3(B3)";                                           // #613
-                    break;                                                                 // #613
-                case 78:                                                                   // #614
-                    my_format="VRX";                                                       // #614
-                    switch (tz390.op_trace_type[index]) {                                  // #614
-                    case 734:                                                              // #614
-                        my_operands="V1,D2(X2,B2),M3";                                     // #614
-                        break;                                                             // #614
-                    case 739:                                                              // #614
-                        my_operands="V1,D2(X2,B2)<,M3>";                                   // #614
-                        break;                                                             // #614
-                    case 740:                                                              // #614
-                        my_operands="V1,D2(X2,B2)";                                        // #614
-                        break;                                                             // #614
-                    case 741:                                                              // #614
-                        my_operands="V1,R3,D2(B2)";                                        // #614
-                        break;                                                             // #614
-                    default:                                                               // #614
-                        my_operands="*Unknown";                                            // #614
-                    }                                                                      // #614
-                    break;                                                                 // #614
-                case 79:                                                                   // #615
-                    my_format="VSI";                                                       // #615
-                    my_operands="V1,D2(B2),I3";                                            // #615
-                    break;                                                                 // #615
-                case 80:                                                                   // #614
-                    my_format="VRS";                                                       // #614
-                    switch (tz390.op_trace_type[index]) {                                  // #614
-                    case 736:                                                              // #614
-                        my_operands="V1,V3,D2(B2),M4";                                     // #614
-                        break;                                                             // #614
-                    case 742:                                                              // #614
-                        my_operands="V1,V3,D2(B2)<,M4>";                                   // #614
-                        break;                                                             // #614
-                    case 743:                                                              // #614
-                        my_operands="V1,V3,D2(B2)";                                        // #614
-                        break;                                                             // #614
-                    case 744:                                                              // #614
-                        my_operands="R1,V3,D2(B2),M4";                                     // #614
-                        break;                                                             // #614
-                    case 745:                                                              // #614
-                        my_operands="R1,V3,D2(B2)";                                        // #614
-                        break;                                                             // #614
-                    case 746:                                                              // #614
-                        my_operands="V1,R3,D2(B2),M4";                                     // #614
-                        break;                                                             // #614
-                    case 747:                                                              // #614
-                        my_operands="V1,R3,D2(B2)";                                        // #614
-                        break;                                                             // #614
-                    default:                                                               // #614
-                        my_operands="*Unknown";                                            // #614
-                    }                                                                      // #614
-                    break;                                                                 // #614
-                case 81:                                                                   // #614
-                    my_format="VRI";                                                       // #614
-                    switch (tz390.op_trace_type[index]) {                                  // #614
-                    case 737:                                                              // #614
-                        my_operands="V1,V2,V3,I4,M5";                                      // #614
-                        break;                                                             // #614
-                    case 748:                                                              // #614
-                        my_operands="V1,V2,V3,I4";                                         // #614
-                        break;                                                             // #614
-                    case 749:                                                              // #614
-                        my_operands="V1,V2,I3,M4,M5";                                      // #614
-                        break;                                                             // #614
-                    case 750:                                                              // #614
-                        my_operands="V1,V2,I3";                                            // #614
-                        break;                                                             // #614
-                    case 751:                                                              // #614
-                        my_operands="V1,I2,M3";                                            // #614
-                        break;                                                             // #614
-                    case 752:                                                              // #614
-                        my_operands="V1,I2";                                               // #614
-                        break;                                                             // #614
-                    case 753:                                                              // #614
-                        my_operands="V1,V3,I2,M4";                                         // #614
-                        break;                                                             // #614
-                    case 754:                                                              // #614
-                        my_operands="V1,V3,I2";                                            // #614
-                        break;                                                             // #614
-                    case 755:                                                              // #614
-                        my_operands="V1,I2,I3,M4";                                         // #614
-                        break;                                                             // #614
-                    case 756:                                                              // #614
-                        my_operands="V1,I2,I3";                                            // #614
-                        break;                                                             // #614
-                    case 757:                                                              // #614
-                        my_operands="V1";                                                  // #614
-                        break;                                                             // #614
-                    case 780:                                                              // #615
-                        my_operands="V1,R2,I3,M4";                                         // #615
-                        break;                                                             // #615
-                    case 783:                                                              // #615
-                        my_operands="V1,V2,I3,I4,M5";                                      // #615
-                        break;                                                             // #615
-                    case 787:                                                              // #661
-                        my_operands="V1,V2,I3,M4";                                         // #661
-                        break;                                                             // #661
-                    case 788:                                                              // #661
-                        my_operands="V1,V2,V3,V4,I5";                                      // #661
-                        break;                                                             // #661
-                    default:                                                               // #614
-                        my_operands="*Unknown";                                            // #614
-                    }                                                                      // #614
-                    break;                                                                 // #614
-                case 82:                                                                   // #614
-                    my_format="VRR";                                                       // #614
-                    switch (tz390.op_trace_type[index]) {                                  // #614
-                    case 738:                                                              // #614
-                        my_operands="V1,V2,V3";                                            // #614
-                        break;                                                             // #614
-                    case 758:                                                              // #614
-                        my_operands="V1,V2,V3,M4";                                         // #614
-                        break;                                                             // #614
-                    case 759:                                                              // #614
-                        my_operands="V1,V2,V3,M4,M5";                                      // #614
-                        break;                                                             // #614
-                    case 760:                                                              // #614
-                        my_operands="V1,V2,V3,M4<,M5>";                                    // #614
-                        break;                                                             // #614
-                    case 761:                                                              // #614
-                        my_operands="V1,V2,V3,M4<,M5>";                                    // #614
-                        break;                                                             // #614
-                    case 762:                                                              // #614
-                        my_operands="V1,V2,V3,V4,M5";                                      // #614
-                        break;                                                             // #614
-                    case 763:                                                              // #614
-                        my_operands="V1,V2,V3,V4,M5,M6";                                   // #614
-                        break;                                                             // #614
-                    case 764:                                                              // #614
-                        my_operands="V1,V2,V3,V4,M5<,M6>";                                 // #614
-                        break;                                                             // #614
-                    case 765:                                                              // #614
-                        my_operands="V1,V2,V3,M4,M5";                                      // #614
-                        break;                                                             // #614
-                    case 766:                                                              // #614
-                        my_operands="V1,V2,V3,M4,M5,M6";                                   // #614
-                        break;                                                             // #614
-                    case 767:                                                              // #614
-                        my_operands="V1,V2,M3";                                            // #614
-                        break;                                                             // #614
-                    case 768:                                                              // #614
-                        my_operands="V1,V2,M3,M4";                                         // #614
-                        break;                                                             // #614
-                    case 769:                                                              // #614
-                        my_operands="V1,V2,M3,M4,M5";                                      // #614
-                        break;                                                             // #614
-                    case 770:                                                              // #614
-                        my_operands="V1,V2,M5";                                            // #614
-                        break;                                                             // #614
-                    case 771:                                                              // #614
-                        my_operands="V1,V2,V3,V4";                                         // #614
-                        break;                                                             // #614
-                    case 772:                                                              // #614
-                        my_operands="V1,V2";                                               // #614
-                        break;                                                             // #614
-                    case 773:                                                              // #614
-                        my_operands="V1,R2,R3";                                            // #614
-                        break;                                                             // #614
-                    case 774:                                                              // #614
-                        my_operands="V1,V2,M4,M5";                                         // #614
-                        break;                                                             // #614
-                    case 775:                                                              // #614
-                        my_operands="V1,V2,V3<,M5>";                                       // #614
-                        break;                                                             // #614
-                    case 776:                                                              // #614
-                        my_operands="V1,V2<,M5>";                                          // #614
-                        break;                                                             // #614
-                    case 777:                                                              // #614
-                        my_operands="V1,V2,V3,V4<,M6>";                                    // #614
-                        break;                                                             // #614
-                    case 778:                                                              // #614
-                        my_operands="V1,V2,M3<,M5>";                                       // #614
-                        break;                                                             // #614
-                    case 779:                                                              // #615
-                        my_operands="R1,V2,M3";                                            // #615
-                        break;                                                             // #615
-                    case 781:                                                              // #615
-                        my_operands="V1,V2,V3,M6";                                         // #615
-                        break;                                                             // #615
-                    case 782:                                                              // #615
-                        my_operands="V1,V2,V3,V4,M6";                                      // #615
-                        break;                                                             // #615
-                    case 784:                                                              // #615
-                        my_operands="V1";                                                  // #615
-                        break;                                                             // #615
-                    case 785:                                                              // #615
-                        my_operands="R1,V2,M3<,M4>";                                       // #615
-                        break;                                                             // #615
-                    case 786:                                                              // #617
-                        my_operands="V1,V2,V3,M5";                                         // #617
-                        break;                                                             // #617
-                    case 789:                                                              // #661
-                        my_operands="V1<,I2>";                                             // #661
-                        break;                                                             // #661
-                    default:                                                               // #614
-                        my_operands="*Unknown";                                            // #614
-                    }                                                                      // #614
-                    break;                                                                 // #614
-                case 83:                                                                   // #614
-                    my_format="VRV";                                                       // #614
-                    my_operands="V1,D2(V2,B2),M3";                                         // #614
-                    break;                                                                 // #614
+                case 75:                                                               // #613
+                    my_format="IE";                                                    // #613
+                    my_operands="I1,I2";                                               // #613
+                    break;                                                             // #613
+                case 76:                                                               // #613
+                    my_format="MII";                                                   // #613
+                    my_operands="M1,RI2,RI3";                                          // #613
+                    break;                                                             // #613
+                case 77:                                                               // #613
+                    my_format="SMI";                                                   // #613
+                    my_operands="M1,RI2,D3(B3)";                                       // #613
+                    break;                                                             // #613
+                case 78:                                                               // #614
+                    my_format="VRX";                                                   // #614
+                    switch (tz390.op_trace_type[index]) {                              // #614
+                    case 734:                                                          // #614
+                        my_operands="V1,D2(X2,B2),M3";                                 // #614
+                        break;                                                         // #614
+                    case 739:                                                          // #614
+                        my_operands="V1,D2(X2,B2)<,M3>";                               // #614
+                        break;                                                         // #614
+                    case 740:                                                          // #614
+                        my_operands="V1,D2(X2,B2)";                                    // #614
+                        break;                                                         // #614
+                    case 741:                                                          // #614
+                        my_operands="V1,R3,D2(B2)";                                    // #614
+                        break;                                                         // #614
+                    default:                                                           // #614
+                        my_operands="*Unknown";                                        // #614
+                    }                                                                  // #614
+                    break;                                                             // #614
+                case 79:                                                               // #615
+                    my_format="VSI";                                                   // #615
+                    my_operands="V1,D2(B2),I3";                                        // #615
+                    break;                                                             // #615
+                case 80:                                                               // #614
+                    my_format="VRS";                                                   // #614
+                    switch (tz390.op_trace_type[index]) {                              // #614
+                    case 736:                                                          // #614
+                        my_operands="V1,V3,D2(B2),M4";                                 // #614
+                        break;                                                         // #614
+                    case 742:                                                          // #614
+                        my_operands="V1,V3,D2(B2)<,M4>";                               // #614
+                        break;                                                         // #614
+                    case 743:                                                          // #614
+                        my_operands="V1,V3,D2(B2)";                                    // #614
+                        break;                                                         // #614
+                    case 744:                                                          // #614
+                        my_operands="R1,V3,D2(B2),M4";                                 // #614
+                        break;                                                         // #614
+                    case 745:                                                          // #614
+                        my_operands="R1,V3,D2(B2)";                                    // #614
+                        break;                                                         // #614
+                    case 746:                                                          // #614
+                        my_operands="V1,R3,D2(B2),M4";                                 // #614
+                        break;                                                         // #614
+                    case 747:                                                          // #614
+                        my_operands="V1,R3,D2(B2)";                                    // #614
+                        break;                                                         // #614
+                    default:                                                           // #614
+                        my_operands="*Unknown";                                        // #614
+                    }                                                                  // #614
+                    break;                                                             // #614
+                case 81:                                                               // #614
+                    my_format="VRI";                                                   // #614
+                    switch (tz390.op_trace_type[index]) {                              // #614
+                    case 737:                                                          // #614
+                        my_operands="V1,V2,V3,I4,M5";                                  // #614
+                        break;                                                         // #614
+                    case 748:                                                          // #614
+                        my_operands="V1,V2,V3,I4";                                     // #614
+                        break;                                                         // #614
+                    case 749:                                                          // #614
+                        my_operands="V1,V2,I3,M4,M5";                                  // #614
+                        break;                                                         // #614
+                    case 750:                                                          // #614
+                        my_operands="V1,V2,I3";                                        // #614
+                        break;                                                         // #614
+                    case 751:                                                          // #614
+                        my_operands="V1,I2,M3";                                        // #614
+                        break;                                                         // #614
+                    case 752:                                                          // #614
+                        my_operands="V1,I2";                                           // #614
+                        break;                                                         // #614
+                    case 753:                                                          // #614
+                        my_operands="V1,V3,I2,M4";                                     // #614
+                        break;                                                         // #614
+                    case 754:                                                          // #614
+                        my_operands="V1,V3,I2";                                        // #614
+                        break;                                                         // #614
+                    case 755:                                                          // #614
+                        my_operands="V1,I2,I3,M4";                                     // #614
+                        break;                                                         // #614
+                    case 756:                                                          // #614
+                        my_operands="V1,I2,I3";                                        // #614
+                        break;                                                         // #614
+                    case 757:                                                          // #614
+                        my_operands="V1";                                              // #614
+                        break;                                                         // #614
+                    case 780:                                                          // #615
+                        my_operands="V1,R2,I3,M4";                                     // #615
+                        break;                                                         // #615
+                    case 783:                                                          // #615
+                        my_operands="V1,V2,I3,I4,M5";                                  // #615
+                        break;                                                         // #615
+                    case 787:                                                          // #661
+                        my_operands="V1,V2,I3,M4";                                     // #661
+                        break;                                                         // #661
+                    case 788:                                                          // #661
+                        my_operands="V1,V2,V3,V4,I5";                                  // #661
+                        break;                                                         // #661
+                    default:                                                           // #614
+                        my_operands="*Unknown";                                        // #614
+                    }                                                                  // #614
+                    break;                                                             // #614
+                case 82:                                                               // #614
+                    my_format="VRR";                                                   // #614
+                    switch (tz390.op_trace_type[index]) {                              // #614
+                    case 738:                                                          // #614
+                        my_operands="V1,V2,V3";                                        // #614
+                        break;                                                         // #614
+                    case 758:                                                          // #614
+                        my_operands="V1,V2,V3,M4";                                     // #614
+                        break;                                                         // #614
+                    case 759:                                                          // #614
+                        my_operands="V1,V2,V3,M4,M5";                                  // #614
+                        break;                                                         // #614
+                    case 760:                                                          // #614
+                        my_operands="V1,V2,V3,M4<,M5>";                                // #614
+                        break;                                                         // #614
+                    case 761:                                                          // #614
+                        my_operands="V1,V2,V3,M4<,M5>";                                // #614
+                        break;                                                         // #614
+                    case 762:                                                          // #614
+                        my_operands="V1,V2,V3,V4,M5";                                  // #614
+                        break;                                                         // #614
+                    case 763:                                                          // #614
+                        my_operands="V1,V2,V3,V4,M5,M6";                               // #614
+                        break;                                                         // #614
+                    case 764:                                                          // #614
+                        my_operands="V1,V2,V3,V4,M5<,M6>";                             // #614
+                        break;                                                         // #614
+                    case 765:                                                          // #614
+                        my_operands="V1,V2,V3,M4,M5";                                  // #614
+                        break;                                                         // #614
+                    case 766:                                                          // #614
+                        my_operands="V1,V2,V3,M4,M5,M6";                               // #614
+                        break;                                                         // #614
+                    case 767:                                                          // #614
+                        my_operands="V1,V2,M3";                                        // #614
+                        break;                                                         // #614
+                    case 768:                                                          // #614
+                        my_operands="V1,V2,M3,M4";                                     // #614
+                        break;                                                         // #614
+                    case 769:                                                          // #614
+                        my_operands="V1,V2,M3,M4,M5";                                  // #614
+                        break;                                                         // #614
+                    case 770:                                                          // #614
+                        my_operands="V1,V2,M5";                                        // #614
+                        break;                                                         // #614
+                    case 771:                                                          // #614
+                        my_operands="V1,V2,V3,V4";                                     // #614
+                        break;                                                         // #614
+                    case 772:                                                          // #614
+                        my_operands="V1,V2";                                           // #614
+                        break;                                                         // #614
+                    case 773:                                                          // #614
+                        my_operands="V1,R2,R3";                                        // #614
+                        break;                                                         // #614
+                    case 774:                                                          // #614
+                        my_operands="V1,V2,M4,M5";                                     // #614
+                        break;                                                         // #614
+                    case 775:                                                          // #614
+                        my_operands="V1,V2,V3<,M5>";                                   // #614
+                        break;                                                         // #614
+                    case 776:                                                          // #614
+                        my_operands="V1,V2<,M5>";                                      // #614
+                        break;                                                         // #614
+                    case 777:                                                          // #614
+                        my_operands="V1,V2,V3,V4<,M6>";                                // #614
+                        break;                                                         // #614
+                    case 778:                                                          // #614
+                        my_operands="V1,V2,M3<,M5>";                                   // #614
+                        break;                                                         // #614
+                    case 779:                                                          // #615
+                        my_operands="R1,V2,M3";                                        // #615
+                        break;                                                         // #615
+                    case 781:                                                          // #615
+                        my_operands="V1,V2,V3,M6";                                     // #615
+                        break;                                                         // #615
+                    case 782:                                                          // #615
+                        my_operands="V1,V2,V3,V4,M6";                                  // #615
+                        break;                                                         // #615
+                    case 784:                                                          // #615
+                        my_operands="V1";                                              // #615
+                        break;                                                         // #615
+                    case 785:                                                          // #615
+                        my_operands="R1,V2,M3<,M4>";                                   // #615
+                        break;                                                         // #615
+                    case 786:                                                          // #617
+                        my_operands="V1,V2,V3,M5";                                     // #617
+                        break;                                                         // #617
+                    case 789:                                                          // #661
+                        my_operands="V1<,I2>";                                         // #661
+                        break;                                                         // #661
+                    default:                                                           // #614
+                        my_operands="*Unknown";                                        // #614
+                    }                                                                  // #614
+                    break;                                                             // #614
+                case 83:                                                               // #614
+                    my_format="VRV";                                                   // #614
+                    my_operands="V1,D2(V2,B2),M3";                                     // #614
+                    break;                                                             // #614
                 default:
-                    my_format="???";                                                       // #500
-                    my_operands="*Unknown";                                                // #500
-                } // end of switch statemennt                                              // #500
-                // Build entry from the individual columns, aligning properly                 #500
-                my_mnemonic=(my_mnemonic+my_spc).substring(0,mnem_len   );                 // #500
-                my_format  =(my_format  +my_spc).substring(0,format_len );                 // #500
-                my_hexop   =(my_hexop   +my_spc).substring(0,hexop_len  );                 // #500
-                my_operands=(my_operands+my_spc).substring(0,operand_len);                 // #500
-                entry=my_mnemonic+" "+my_format+" "+my_hexop+" "+my_operands;              // #500
-            } // end of test on tz390.op_type[index] boundary value of 100                 // #500
+                    my_format="???";                                                   // #500
+                    my_operands="*Unknown";                                            // #500
+                } // end of switch statement                                           // #500
+                // Build entry from the individual columns, aligning properly             #500
+                my_mnemonic=(my_mnemonic+my_spc).substring(0,mnem_len   );             // #500
+                my_format  =(my_format  +my_spc).substring(0,format_len );             // #500
+                my_hexop   =(my_hexop   +my_spc).substring(0,hexop_len  );             // #500
+                my_operands=(my_operands+my_spc).substring(0,operand_len);             // #500
+                entry=my_mnemonic+" "+my_format+" "+my_hexop+" "+my_operands;          // #500
+            } // end of test on tz390.op_type[index] boundary value of 100             // #500
             if (   tz390.op_type[index] == 0     // comment lines
                 || tz390.op_type[index] == 122   //   empty lines (not used)
-                ) {
+               ) {
                 report_entries[index] = " ";
             } else {
                 report_entries[index] = entry;
             }
             index++;
         }
-        Arrays.sort(report_entries, new ReportEntryComparator());                      // #568
-        // print the array in lines of three entries each                              // #500
-        put_prn_line(" "+my_hdr+" "+my_hdr+" "+my_hdr.trim());                         // #500
+        Arrays.sort(report_entries, new ReportEntryComparator());                  // #568
+        // print the array in lines of three entries each                          // #500
+        put_prn_line(" "+my_hdr+" "+my_hdr+" "+my_hdr.trim());                     // #500
         index = 0;
-        my_prn_line    = "";                                                           // #500
-        my_entry_count = 0;                                                            // #500
-        while (index < report_entries.length) {                                        // #500
-            if (!report_entries[index].equals(" ")) { // skip empty                       #500
-                my_entry_count++;                                                      // #500
-                if (my_entry_count < 3) { // for first and second entries:                #500
-                    // add entry to line (including whitespace)                           #500
-                    my_prn_line = my_prn_line+" "+report_entries[index];               // #500
-                } else { // for third entry:                                              #500
-                    // print, adding third entry without padding                          #500
-                    put_prn_line(my_prn_line+" "+report_entries[index].trim());        // #500
-                    my_entry_count = 0;                                                // #500
-                    my_prn_line = "";                                                  // #500
-                }                                                                      // #500
+        my_prn_line    = "";                                                       // #500
+        my_entry_count = 0;                                                        // #500
+        while (index < report_entries.length) {                                    // #500
+            if (!report_entries[index].equals(" ")) { // skip empty                   #500
+                my_entry_count++;                                                  // #500
+                if (my_entry_count < 3) { // for first and second entries:            #500
+                    // add entry to line (including whitespace)                       #500
+                    my_prn_line = my_prn_line+" "+report_entries[index];           // #500
+                } else { // for third entry:                                          #500
+                    // print, adding third entry without padding                      #500
+                    put_prn_line(my_prn_line+" "+report_entries[index].trim());    // #500
+                    my_entry_count = 0;                                            // #500
+                    my_prn_line = "";                                              // #500
+                }                                                                  // #500
             }
             index++;
         }
-        // print final line with remaining entries                                     // #500
-        if (my_entry_count != 0) {                                                     // #500
-            put_prn_line(my_prn_line);                                                 // #500
-        }                                                                              // #500
+        // print final line with remaining entries                                 // #500
+        if (my_entry_count != 0) {                                                 // #500
+            put_prn_line(my_prn_line);                                             // #500
+        }                                                                          // #500
     }
 
 
@@ -2914,7 +2970,7 @@ public  class  az390 implements Runnable {
      * and contains only uppercase characters and digits.
      * Digits should sort higher than alphabetic characters.
      */
-    public class ReportEntryComparator implements Comparator<String> {               // #568
+    public class ReportEntryComparator implements Comparator<String> {             // #568
         /**
          * Dummy constructor - no initialization needed
          */
@@ -2924,30 +2980,51 @@ public  class  az390 implements Runnable {
 
 
 
-        @Override                                                                        // #568
-        public int compare(String str1, String str2) {                                   // #568
-            // special case: entries consisting of a single space sort first!            // #568
-            if (str1.charAt(0) == ' ') return 1;  // blank entry always smaller          // #568
-            if (str2.charAt(0) == ' ') return -1; // blank entry always smaller          // #568
-            for (int i=0; i<8; i++) {                                                    // #568
-                char c1 = str1.charAt(i);                                                // #568
-                char c2 = str2.charAt(i);                                                // #568
-                // if c1 == c2 then we continue on to the next character                 // #568
-                if (c1 != c2) {                                                          // #568
-                    if (c1 == ' ') return -1; // Mnemonic 2 is longer                    // #568
-                    if (c2 == ' ') return 1;  // Mnemonic 1 is longer                    // #568
-                    if (c1 <= '9') {                                                     // #568
-                        if (c2 <= '9') return (c1-c2); // compare two digits             // #568
-                        else return 1;                 // digit always larger            // #568
-                    } else { // c1 is not numeric                                        // #568
-                        if (c2 <= '9') return -1; // digit always larger                 // #568
-                        else return (c1-c2);      // compare two alphabetic chars        // #568
-                    }                                                                    // #568
-                }                                                                        // #568
-            }                                                                            // #568
-            return 0; // First 8 characters are equal                                    // #568
-        }                                                                                // #568
-    }                                                                                    // #568
+        @Override                                                                  // #568
+        public int compare(String str1, String str2) {                             // #568
+            // special case: entries consisting of a single space sort first!      // #568
+            if (str1.charAt(0) == ' ')
+            {
+                return 1; // blank entry always smaller                            // #568
+            }
+            if (str2.charAt(0) == ' ')
+            {
+                return -1; // blank entry always smaller                           // #568
+            }
+            for (int i=0; i<8; i++) {                                              // #568
+                char c1 = str1.charAt(i);                                          // #568
+                char c2 = str2.charAt(i);                                          // #568
+                // if c1 == c2 then we continue on to the next character           // #568
+                if (c1 != c2) {                                                    // #568
+                    if (c1 == ' ')
+                    {
+                        return -1; // Mnemonic 2 is longer                         // #568
+                    }
+                    if (c2 == ' ')
+                    {
+                        return 1;  // Mnemonic 1 is longer                         // #568
+                    }
+                    if (c1 <= '9') {                                               // #568
+                        if (c2 <= '9') {
+                            return (c1-c2); // compare two digits                  // #568
+                        }
+                        else {                                                     // #568
+                            return 1; // digit always larger                       // #568
+                        }
+                    }                                                              // #568
+                    else { // c1 is not numeric                                    // #568
+                        if (c2 <= '9') {
+                            return -1; // digit always larger                      // #568
+                        }
+                        else {                                                     // #568
+                            return (c1-c2); // compare two alphabetic chars        // #568
+                        }
+                    }                                                              // #568
+                }                                                                  // #568
+            }                                                                      // #568
+            return 0; // First 8 characters are equal                              // #568
+        }                                                                          // #568
+    }                                                                              // #568
 
 
 
@@ -2964,13 +3041,14 @@ public  class  az390 implements Runnable {
         cur_esd = 1;
         while (cur_esd <= tot_esd) {
             if (sym_type[esd_sid[cur_esd]] == sym_cst // RPI 459
-                && sym_sect_prev[esd_sid[cur_esd]] == 0) {
+                    && sym_sect_prev[esd_sid[cur_esd]] == 0) {
                 String esd_code =
-                      " ESD=" + tz390.get_hex(sym_esd[esd_sid[cur_esd]],4)
-                    + " LOC=" + tz390.get_hex(sym_loc[esd_sid[cur_esd]],8)
-                    + " LEN=" + tz390.get_hex(get_sym_len(esd_sid[cur_esd]),8)
-                    + " TYPE=" + get_esd_type()
-                    + " NAME=" + sym_name[esd_sid[cur_esd]];
+                        " ESD=" + tz390.get_hex(sym_esd[esd_sid[cur_esd]],4)
+                      + " LOC=" + tz390.get_hex(sym_loc[esd_sid[cur_esd]],8)
+                      + " LEN=" + tz390.get_hex(get_sym_len(esd_sid[cur_esd]),8)
+                      + " TYPE=" + get_esd_type()
+                      + " NAME=" + sym_name[esd_sid[cur_esd]]
+                                ;
                 if (tz390.opt_list) {
                     put_prn_line(esd_code);
                 }
@@ -2981,14 +3059,15 @@ public  class  az390 implements Runnable {
         cur_esd = 1;
         while (cur_esd <= tot_esd) {
             if (sym_type[esd_sid[cur_esd]] != sym_cst
-                && sym_type[esd_sid[cur_esd]] != sym_dst
-                && sym_sect_prev[esd_sid[cur_esd]] == 0) {
+                    && sym_type[esd_sid[cur_esd]] != sym_dst
+                    && sym_sect_prev[esd_sid[cur_esd]] == 0) {
                 String esd_code =
-                      " ESD=" + tz390.get_hex(sym_esd[esd_sid[cur_esd]],4)
-                    + " LOC=" + tz390.get_hex(sym_loc[esd_sid[cur_esd]],8)
-                    + " LEN=" + tz390.get_hex(get_sym_len(esd_sid[cur_esd]),8)
-                    + " TYPE=" + get_esd_type()
-                    + " NAME=" + sym_name[esd_sid[cur_esd]];
+                        " ESD=" + tz390.get_hex(sym_esd[esd_sid[cur_esd]],4)
+                      + " LOC=" + tz390.get_hex(sym_loc[esd_sid[cur_esd]],8)
+                      + " LEN=" + tz390.get_hex(get_sym_len(esd_sid[cur_esd]),8)
+                      + " TYPE=" + get_esd_type()
+                      + " NAME=" + sym_name[esd_sid[cur_esd]]
+                                ;
                 if (tz390.opt_list) {
                     put_prn_line(esd_code);
                 }
@@ -3101,9 +3180,9 @@ public  class  az390 implements Runnable {
         }
         bal_lab_attr_elt = sym_attr_elt_def;
         if (mac_inline_level > 0
-            && index != mac_inline_op_macro  // MACRO
-            && index != mac_inline_op_mend) { // MEND
-            index     = mac_inline_op_other; // RPI 581 print inline source
+                && index != mac_inline_op_macro   // MACRO
+                && index != mac_inline_op_mend) { // MEND
+            index     = mac_inline_op_other;      // RPI 581 print inline source
         }
         switch (index) {
         case 0:  // * comments
@@ -3111,14 +3190,14 @@ public  class  az390 implements Runnable {
             if (bal_line.length() > 0 && bal_line.charAt(0) != '*') {
                 log_error(190,"Comment must start with * in position 1");  // RPI 609
             }
-            if (   gen_obj_code
-                && bal_line.length() > mcall_bal_index) {
+            if (gen_obj_code
+                    && bal_line.length() > mcall_bal_index) {
                 if (bal_line.substring(0,9).equals("*MCALL #=")) {
                     if (bal_line.substring(mcall_lv_index,mcall_lv_index+5).equals("LV= 1")) { // RPI 891
                         mac_call_first = true; // RPI 891 switching to GEN code
                         list_bal_line = true;  // RPI 891
                     } else if (!tz390.opt_mcall) {
-                        // supress nested macro call listing
+                        // suppress nested macro call listing
                         list_bal_line = false; // RPI 891
                     }
                     if (!tz390.opt_mcall) { // RPI 511
@@ -3129,7 +3208,7 @@ public  class  az390 implements Runnable {
                         mac_call_last = true; // RPI 891 switching to open code
                     }
                     if (!tz390.opt_mcall) {
-                        // supress all macro exit listings
+                        // suppress all macro exit listings
                         list_bal_line = false; // RPI 891
                     } else {
                         list_bal_line = true;  // RPI 891
@@ -3326,23 +3405,23 @@ public  class  az390 implements Runnable {
                 || bal_op.equals("PCC")) { // RPI 1125
                 get_hex_zero(2);
             } else {
-                if (   bal_op.equals("KM")                                             // #704
-                    || bal_op.equals("KMC")) {                                         // #704
-                    get_hex_reg_even_nz();                                             // #704
-                } else {                                                               // #704
+                if (   bal_op.equals("KM")                                         // #704
+                    || bal_op.equals("KMC")) {                                     // #704
+                    get_hex_reg_even_nz();                                         // #704
+                } else {                                                           // #704
                     get_hex_reg();
-                }                                                                      // #704
+                }                                                                  // #704
                 if (   exp_index >= exp_text.length()
                     || exp_text.charAt(exp_index) != ',') {
                     obj_code = obj_code.concat("0"); // IPM,EFPC,SFPC,PTF RPI 817
                 } else {
                     skip_comma();
-                    if (   bal_op.equals("KM")                                         // #704
-                        || bal_op.equals("KMC")) {                                     // #704
-                        get_hex_reg_even_nz();                                         // #704
-                    } else {                                                           // #704
+                    if (   bal_op.equals("KM")                                     // #704
+                        || bal_op.equals("KMC")) {                                 // #704
+                        get_hex_reg_even_nz();                                     // #704
+                    } else {                                                       // #704
                         get_hex_reg();
-                    }                                                                  // #704
+                    }                                                              // #704
                 }
                 if (   bal_op.equals("TROO")
                     || bal_op.equals("TROT")
@@ -3356,7 +3435,7 @@ public  class  az390 implements Runnable {
                     || bal_op.equals("CU14")    // rpi 2202
                     || bal_op.equals("IPTE")    // rpi 2202
                     || bal_op.equals("SSKE")    // rpi 2202
-                    ) {
+                   ) {
                     if (!bal_abort && exp_next_char(',')) { //RPI 577
                         skip_comma();
                         get_hex_reg(); // RPI 454
@@ -3424,18 +3503,18 @@ public  class  az390 implements Runnable {
                 hex_bddd1_loc = hex_bddd_loc;
                 obj_code = obj_code + hex_ll + hex_bddd1;
                 obj_code = obj_code.substring(0,2)  // oo
-                    + obj_code.substring(6,8)       // ll from L2
-                    + obj_code.substring(2,6)       // d1(b1)
-                    + obj_code.substring(8,12);     // b2(b2)
+                        + obj_code.substring(6,8)       // ll from L2
+                        + obj_code.substring(2,6)       // d1(b1)
+                        + obj_code.substring(8,12);     // b2(b2)
             } else if (obj_code.contentEquals("D9") || obj_code.contentEquals("DB") || obj_code.contentEquals("DA")) { // MVCK, MVCS, MVCP d1(r1,b1),d2(b2),r3 to oo13bdd1bdd2
                 get_hex_xbddd();
                 skip_comma();
                 get_hex_bddd2(true);
                 skip_comma();
                 get_hex_reg();  // optional r3 for MVCK, MVCP, MVCS
-                obj_code = obj_code.substring(0,3)      // oo1
-                    + obj_code.substring(11,12)         // r3
-                    + obj_code.substring(3,11);         // b1d1, b2d2
+                obj_code = obj_code.substring(0,3)  // oo1
+                        + obj_code.substring(11,12) // r3
+                        + obj_code.substring(3,11); // b1d1, b2d2
             } else {
                 get_hex_llbddd();
                 hex_bddd1     = hex_bddd;
@@ -3458,7 +3537,7 @@ public  class  az390 implements Runnable {
                 get_hex_op(5,1);    // M1 BIE D2(X2,B2)
                 get_hex_xbdddhh2(); // d2(x2,b2)
             } else {
-                get_hex_reg();      // R1  CG R1,D2(X2,B2)
+                get_hex_reg(); // R1  CG R1,D2(X2,B2)
                 skip_comma();
                 get_hex_xbdddhh2();
             }
@@ -3535,7 +3614,7 @@ public  class  az390 implements Runnable {
                 skip_comma();
                 get_hex_llbddd();  // D2(L2,B2)
                 obj_code = obj_code.substring(0,2) + hex_ll + hex_bddd   // oolldbbb
-                    + obj_code.substring(2,3);                  // r1
+                        + obj_code.substring(2,3);                  // r1
                 skip_comma();
                 get_hex_reg();  // M3
             } else if (tz390.op_code[bal_op_index].substring(0,2).equals("ED")) {
@@ -3570,9 +3649,10 @@ public  class  az390 implements Runnable {
             get_hex_op(1,2);
             get_hex_reg();
             skip_comma();
-            if (   tz390.op_code[bal_op_index].substring(0,4).equals("EC42")    // EC42 LOCHI  R1,I2,M3
-                || tz390.op_code[bal_op_index].substring(0,4).equals("EC46")    // EC46 LOCGHI R1,I2,M3
-                || tz390.op_code[bal_op_index].substring(0,4).equals("EC4E")) { // EC42 LOCHHI R1,I2,M3
+            if (   tz390.op_code[bal_op_index].substring(0,4).equals("EC42") // EC42 LOCHI  R1,I2,M3
+                || tz390.op_code[bal_op_index].substring(0,4).equals("EC46") // EC46 LOCGHI R1,I2,M3
+                || tz390.op_code[bal_op_index].substring(0,4).equals("EC4E") // EC42 LOCHHI R1,I2,M3
+               ) {
                 get_hex_int(16);
                 if (tz390.op_code[bal_op_index].length() == 5) {
                     get_hex_op(5,1); // M3 for extended mnemonic like LOCHIE R1,I2
@@ -3581,9 +3661,9 @@ public  class  az390 implements Runnable {
                     get_hex_reg(); // M3
                 }
                 // move 001iiii3 to 0013iiii
-                obj_code = obj_code.substring(0,3)  // oo1
-                    + obj_code.substring(7,8)       // m3
-                    + obj_code.substring(3,7);      // iiii
+                obj_code = obj_code.substring(0,3) // oo1
+                        + obj_code.substring(7,8)  // m3
+                        + obj_code.substring(3,7); // iiii
             } else {
                 get_hex_reg();
                 skip_comma();
@@ -3627,11 +3707,11 @@ public  class  az390 implements Runnable {
             get_hex_xbddd();
             get_hex_zero(1);
             get_hex_op(3,2);
-            obj_code = obj_code.substring(0,2)  // oo
-                + obj_code.substring(3,4)       // r3
-                + obj_code.substring(4,9)       // xbddd
-                + obj_code.substring(2,3)       // r1
-                + obj_code.substring(9);        // 0oo
+            obj_code = obj_code.substring(0,2) // oo
+                    + obj_code.substring(3,4)  // r3
+                    + obj_code.substring(4,9)  // xbddd
+                    + obj_code.substring(2,3)  // r1
+                    + obj_code.substring(9);   // 0oo
             check_end_parms();
             put_obj_text();
             break;
@@ -3665,11 +3745,11 @@ public  class  az390 implements Runnable {
                 int l2 = hex_tab.indexOf(hex_len2.charAt(0))+1; // total field length  // #750 #730
                 if (l2 > 8) {                                                          // #750
                     log_error(70,"field 2 length = " + l2 +                            // #750 #730
-                                 " must be no more than 8");                           // #750 #730
+                            " must be no more than 8");                                // #750 #730
                 }                                                                      // #750
                 if (l2 >= l1) {                                                        // #750
                     log_error(70,"field 2 length = " + l2 +                            // #750 #730
-                                 " must be less than field 1 length = " + l1);         // #750 #730
+                            " must be less than field 1 length = " + l1);              // #750 #730
                 }                                                                      // #750
             }                                                                          // #750
             obj_code = obj_code + hex_len1 + hex_len2 + hex_bddd1 + hex_bddd2;
@@ -3746,11 +3826,11 @@ public  class  az390 implements Runnable {
             get_hex_reg();
             skip_comma();
             get_hex_reg();
-            obj_code = obj_code.substring(0,4)  // oooo
-                + obj_code.substring(5,6)       // r3
-                + obj_code.substring(7,8)       // m4
-                + obj_code.substring(4,5)       // r1
-                + obj_code.substring(6,7);      // r2
+            obj_code = obj_code.substring(0,4) // oooo
+                    + obj_code.substring(5,6)  // r3
+                    + obj_code.substring(7,8)  // m4
+                    + obj_code.substring(4,5)  // r1
+                    + obj_code.substring(6,7); // r2
             check_end_parms();
             put_obj_text();
             break;
@@ -3818,11 +3898,11 @@ public  class  az390 implements Runnable {
             get_hex_reg();
             skip_comma();
             get_hex_reg();
-            obj_code = obj_code.substring(0,4)  // oooo
-                + obj_code.substring(6,7)       // m3
-                + "0"
-                + obj_code.substring(4,5)  // r1
-                + obj_code.substring(7,8); // r2
+            obj_code = obj_code.substring(0,4) // oooo
+                    + obj_code.substring(6,7)  // m3
+                    + "0"
+                    + obj_code.substring(4,5)  // r1
+                    + obj_code.substring(7,8); // r2
             check_end_parms();
             put_obj_text();
             break;
@@ -3838,9 +3918,9 @@ public  class  az390 implements Runnable {
             get_hex_reg();
             skip_comma();
             get_hex_reg();
-            obj_code = obj_code.substring(0,5)  // oooo
-                + obj_code.substring(7,8)       // m4
-                + obj_code.substring(5,7);      // r1,r2
+            obj_code = obj_code.substring(0,5) // oooo
+                    + obj_code.substring(7,8)  // m4
+                    + obj_code.substring(5,7); // r1,r2
             check_end_parms();
             put_obj_text();
             break;
@@ -3858,11 +3938,11 @@ public  class  az390 implements Runnable {
                 get_hex_reg();
                 skip_comma();
                 get_hex_reg();
-                obj_code = obj_code.substring(0,4)  // oooo
-                    + obj_code.substring(6,7)       // r3
-                    + obj_code.substring(7,8)       // m4
-                    + obj_code.substring(4,5)       // r1
-                    + obj_code.substring(5,6);      // r2
+                obj_code = obj_code.substring(0,4) // oooo
+                        + obj_code.substring(6,7)  // r3
+                        + obj_code.substring(7,8)  // m4
+                        + obj_code.substring(4,5)  // r1
+                        + obj_code.substring(5,6); // r2
             } else {
                 get_hex_reg();
                 get_hex_zero(1);
@@ -3870,11 +3950,11 @@ public  class  az390 implements Runnable {
                 get_hex_reg();
                 skip_comma();
                 get_hex_reg();
-                obj_code = obj_code.substring(0,4)  // oooo
-                    + obj_code.substring(7,8)       // r3
-                    + "0"
-                    + obj_code.substring(4,5)  // r1
-                    + obj_code.substring(6,7); // r2
+                obj_code = obj_code.substring(0,4) // oooo
+                        + obj_code.substring(7,8)  // r3
+                        + "0"
+                        + obj_code.substring(4,5)  // r1
+                        + obj_code.substring(6,7); // r2
             }
             check_end_parms();
             put_obj_text();
@@ -3900,15 +3980,15 @@ public  class  az390 implements Runnable {
                 loc_start = loc_ctr;
                 loc_len = 6;
                 get_hex_op(1,3);
-                if (  (bal_parms == null
-                    || bal_parms.length() == 0
-                    || bal_parms.charAt(0) == ',')
-                    && bal_op.equals("XDUMP")) {
+                if ((bal_parms == null
+                        || bal_parms.length() == 0
+                        || bal_parms.charAt(0) == ',')
+                        && bal_op.equals("XDUMP")) {
                     exp_text = "0,0"; // force zeros for default XDUMP
                 }
                 get_hex_xbddd();
                 if (exp_index < exp_text.length()
-                    && exp_text.charAt(exp_index) == ',') {
+                        && exp_text.charAt(exp_index) == ',') {
                     skip_comma();
                     if (   exp_index < exp_text.length()
                         && exp_text.charAt(exp_index) == '(') {
@@ -3955,21 +4035,22 @@ public  class  az390 implements Runnable {
                 if ((tz390.op_code[bal_op_index].length() == 5)) {
                     get_hex_op(5,1);  // M3
                 } else {
-                    if (   tz390.op_code[bal_op_index].substring(0,4).equals("B966")    // NOTGR - NORGK r1,r2,r2
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("B976")) { // NOTR  = MORK  r1,r2,r2
+                    if (   tz390.op_code[bal_op_index].substring(0,4).equals("B966") // NOTGR - NORGK r1,r2,r2
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("B976") // NOTR  = MORK  r1,r2,r2
+                       ) {
                         // set r3 = r2 for NOT
-                        obj_code = obj_code.substring(0,7)  // oooo102
-                                 + obj_code.substring(6,7); // set r3=r2
+                        obj_code = obj_code.substring(0,7) // oooo102
+                                + obj_code.substring(6,7); // set r3=r2
                     } else {
                         get_hex_zero(1);  // m3=0
                     }
                 }
             }
-            obj_code = obj_code.substring(0,4)  // oooo
-                + obj_code.substring(7,8)       // m3
-                + "0"
-                + obj_code.substring(4,5)  // r1
-                + obj_code.substring(6,7); // r2
+            obj_code = obj_code.substring(0,4) // oooo
+                    + obj_code.substring(7,8)  // m3
+                    + "0"
+                    + obj_code.substring(4,5)  // r1
+                    + obj_code.substring(6,7); // r2
             check_end_parms();
             put_obj_text();
             break;
@@ -3980,12 +4061,13 @@ public  class  az390 implements Runnable {
             loc_start = loc_ctr;
             loc_len = 4;
             get_hex_op(1,4);    // oooo
-            get_hex_reg();        // r1
+            get_hex_reg();      // r1
             get_hex_zero(1);
             skip_comma();
-            get_hex_reg();       // r2 or r3 if IDTE
-            if (   tz390.op_code[bal_op_index].substring(0,4).equals("B98E")    // IDTE
-                || tz390.op_code[bal_op_index].substring(0,4).equals("B98F")) { // CRDTE
+            get_hex_reg();      // r2 or r3 if IDTE
+            if (   tz390.op_code[bal_op_index].substring(0,4).equals("B98E") // IDTE
+                || tz390.op_code[bal_op_index].substring(0,4).equals("B98F") // CRDTE
+               ) {
                 skip_comma();
                 get_hex_reg(); // r2 third parm
                 if ((tz390.op_code[bal_op_index].length() == 5)) {
@@ -3994,11 +4076,11 @@ public  class  az390 implements Runnable {
                     skip_comma();
                     get_hex_reg();  // m3
                 }
-                obj_code = obj_code.substring(0,4)  // oooo
-                    + obj_code.substring(5,6)      // r3 second op
-                    + obj_code.substring(7,8)      // m4
-                    + obj_code.substring(4,5)      // r1
-                    + obj_code.substring(6,7);     // r2
+                obj_code = obj_code.substring(0,4) // oooo
+                        + obj_code.substring(5,6)  // r3 second op
+                        + obj_code.substring(7,8)  // m4
+                        + obj_code.substring(4,5)  // r1
+                        + obj_code.substring(6,7); // r2
             } else { // not IDTE
                 if ((tz390.op_code[bal_op_index].length() == 5) && (tz390.op_code[bal_op_index].charAt(4) != 'F')) {
                     get_hex_op(5,1); // m3 extended op
@@ -4006,20 +4088,21 @@ public  class  az390 implements Runnable {
                     skip_comma();
                     get_hex_reg();  // m3
                 }
-                if (   tz390.op_code[bal_op_index].substring(0,4).equals("B2E8")    // PPA
-                    || tz390.op_code[bal_op_index].substring(0,4).equals("B960")    // CGRT
-                    || tz390.op_code[bal_op_index].substring(0,4).equals("B961")    // CLGRT
-                    || tz390.op_code[bal_op_index].substring(0,4).equals("B972")    // CRT
-                    || tz390.op_code[bal_op_index].substring(0,4).equals("B973")) { // CLRT
-                    obj_code = obj_code.substring(0,4)  // oooo
-                        + obj_code.substring(7,8)       // m3
-                        + "0"                           // 0
-                        + obj_code.substring(4,5)       // r1
-                        + obj_code.substring(6,7);      // r2
+                if (   tz390.op_code[bal_op_index].substring(0,4).equals("B2E8") // PPA
+                    || tz390.op_code[bal_op_index].substring(0,4).equals("B960") // CGRT
+                    || tz390.op_code[bal_op_index].substring(0,4).equals("B961") // CLGRT
+                    || tz390.op_code[bal_op_index].substring(0,4).equals("B972") // CRT
+                    || tz390.op_code[bal_op_index].substring(0,4).equals("B973") // CLRT
+                   ) {
+                    obj_code = obj_code.substring(0,4) // oooo
+                            + obj_code.substring(7,8)  // m3
+                            + "0"                      // 0
+                            + obj_code.substring(4,5)  // r1
+                            + obj_code.substring(6,7); // r2
                 } else {
-                    obj_code = obj_code.substring(0,6)  // oooo10
-                        + obj_code.substring(7,8)       // m3
-                        + obj_code.substring(6,7);
+                    obj_code = obj_code.substring(0,6) // oooo10
+                            + obj_code.substring(7,8)  // m3
+                            + obj_code.substring(6,7);
                 }
             }
             check_end_parms();
@@ -4092,16 +4175,16 @@ public  class  az390 implements Runnable {
             skip_comma();
             get_hex_relative_offset(16);    //i4 rel rpi 2225
             get_hex_op(3,2);
-            obj_code = obj_code.substring(0,3)  // op1+r1
-                + obj_code.substring(5,6)       // m3
-                + obj_code.substring(6,10)      // i4 4444 rel
-                + obj_code.substring(3,5)       // i2 22 byte
-                + obj_code.substring(10,12);    // op2
+            obj_code = obj_code.substring(0,3)   // op1+r1
+                    + obj_code.substring(5,6)    // m3
+                    + obj_code.substring(6,10)   // i4 4444 rel
+                    + obj_code.substring(3,5)    // i2 22 byte
+                    + obj_code.substring(10,12); // op2
             check_end_parms();
             put_obj_text();
             break;
             // 43 to 44 rpi 2202
-            //  45 to 46 rpi 2202
+            // 45 to 46 rpi 2202
         case 45:  // "RRS1" CGIB oorrbdddm0oo
             // r1,r2,m3,s4
             bal_op_ok = true;
@@ -4118,10 +4201,10 @@ public  class  az390 implements Runnable {
             skip_comma();
             get_hex_bddd2(true); // bddd4
             get_hex_op(3,2);
-            obj_code = obj_code.substring(0,4)  // op1+r1+r2
-                + obj_code.substring(6,10)      // s4 bddd
-                + obj_code.substring(4,6)       // m3 + 0
-                + obj_code.substring(10,12);    // op2
+            obj_code = obj_code.substring(0,4)   // op1+r1+r2
+                    + obj_code.substring(6,10)   // s4 bddd
+                    + obj_code.substring(4,6)    // m3 + 0
+                    + obj_code.substring(10,12); // op2
             check_end_parms();
             put_obj_text();
             break;
@@ -4147,10 +4230,10 @@ public  class  az390 implements Runnable {
             get_hex_zero(1); // 0
             get_hex_op(3,2); // op2
             // map oo12344440oo  to oo12444430oo
-            obj_code = obj_code.substring(0,4)     // op1+r1+r2
-                + obj_code.substring(5,9)          // s4 bddd
-                + obj_code.substring(4,5)          // m3 + 0
-                + obj_code.substring(9,12);        // 0, op2
+            obj_code = obj_code.substring(0,4)  // op1+r1+r2
+                    + obj_code.substring(5,9)   // s4 bddd
+                    + obj_code.substring(4,5)   // m3 + 0
+                    + obj_code.substring(9,12); // 0, op2
             check_end_parms();
             put_obj_text();
             break;
@@ -4170,11 +4253,11 @@ public  class  az390 implements Runnable {
             skip_comma();
             get_hex_bddd2(true);  // s4 bddd
             get_hex_op(3,2); // op2
-            obj_code = obj_code.substring(0,3)      // op1+r1
-                + obj_code.substring(5,6)           // m3
-                + obj_code.substring(6,10)          // s4 bddd
-                + obj_code.substring(3,5)           // i2 22 byte
-                + obj_code.substring(10,12);        // op2
+            obj_code = obj_code.substring(0,3)   // op1+r1
+                    + obj_code.substring(5,6)    // m3
+                    + obj_code.substring(6,10)   // s4 bddd
+                    + obj_code.substring(3,5)    // i2 22 byte
+                    + obj_code.substring(10,12); // op2
             check_end_parms();
             put_obj_text();
             break;
@@ -4198,11 +4281,11 @@ public  class  az390 implements Runnable {
             get_hex_bddd2(true);   // s4 bddd
             get_hex_op(3,2);  // op2
             // map 0012234444oo to oo13444422oo
-            obj_code = obj_code.substring(0,3)      // op1+r1
-                + obj_code.substring(5,6)           // m3
-                + obj_code.substring(6,10)          // i4 4444 rel
-                + obj_code.substring(3,5)           // i2 22 byte
-                + obj_code.substring(10,12);        // op2
+            obj_code = obj_code.substring(0,3)   // op1+r1
+                    + obj_code.substring(5,6)    // m3
+                    + obj_code.substring(6,10)   // i4 4444 rel
+                    + obj_code.substring(3,5)    // i2 22 byte
+                    + obj_code.substring(10,12); // op2
             check_end_parms();
             put_obj_text();
             break;
@@ -4223,10 +4306,10 @@ public  class  az390 implements Runnable {
             get_hex_relative_offset(16);    // I2 rpi 2225
             get_hex_zero(1);
             get_hex_op(3,2);  // OP2
-            obj_code = obj_code.substring(0,4)     // op1+r1+r2
-                + obj_code.substring(5,9)          // s4 bddd
-                + obj_code.substring(4,5)          // m3 + 0
-                + obj_code.substring(9,12);        // op2
+            obj_code = obj_code.substring(0,4)  // op1+r1+r2
+                    + obj_code.substring(5,9)   // s4 bddd
+                    + obj_code.substring(4,5)   // m3 + 0
+                    + obj_code.substring(9,12); // op2
             check_end_parms();
             put_obj_text();
             break;
@@ -4248,10 +4331,10 @@ public  class  az390 implements Runnable {
                 get_hex_reg(); // M3
                 skip_comma();
             }
-            get_hex_relative_offset(16);        // i2 rpi 2225
-            obj_code = obj_code.substring(0,4)  // op1+r1+r2
-                + obj_code.substring(5,9)       // i4
-                + obj_code.substring(4,5);      // m3
+            get_hex_relative_offset(16);       // i2 rpi 2225
+            obj_code = obj_code.substring(0,4) // op1+r1+r2
+                    + obj_code.substring(5,9)  // i4
+                    + obj_code.substring(4,5); // m3
             get_hex_zero(1);  // 0
             get_hex_op(3,2);  // OP2
             check_end_parms();
@@ -4300,18 +4383,18 @@ public  class  az390 implements Runnable {
                     tz390.put_trace("RNSBG/RXSBG I3=" + exp_val + "obj_code=" + obj_code);
                 }
                 if (!bal_abort
-                    && bal_op.length() == 6
-                    && bal_op.charAt(5) == 'T') { // turn on test bit if OP=?????T
-                    obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(((int)exp_val | (int)0x80),2); // DSH z16 #423 change + to |
+                        && bal_op.length() == 6
+                        && bal_op.charAt(5) == 'T') { // turn on test bit if OP=?????T
+                    obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex((exp_val | 0x80),2); // DSH z16 #423 change + to |
                 }
                 skip_comma();
                 get_hex_byte();   // I4
                 if (!bal_abort                                          // RPI 1164 WAS 6
-                    && bal_op.charAt(bal_op.length()-1) == 'Z') { // turn on XZERO bit if OP=??????Z  // RPI 1164 RISBG/RISBGN
-                    obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(((int)exp_val | (int)0x80),2); // DSH z16 #423 change + to |
+                        && bal_op.charAt(bal_op.length()-1) == 'Z') { // turn on XZERO bit if OP=??????Z  // RPI 1164 RISBG/RISBGN
+                    obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex((exp_val | 0x80),2); // DSH z16 #423 change + to |
                 }
                 if (exp_text.length() > exp_index
-                    && exp_text.charAt(exp_index) == ',') {
+                        && exp_text.charAt(exp_index) == ',') {
                     skip_comma();
                     get_hex_byte();   // I5
                 } else {
@@ -4336,11 +4419,11 @@ public  class  az390 implements Runnable {
                 get_hex_reg();  // r2
                 skip_comma();
                 get_hex_reg();  // m4
-                obj_code = obj_code.substring(0,4)      // op1
-                    + obj_code.substring(5,6)           // m3
-                    + obj_code.substring(7,8)           // m4
-                    + obj_code.substring(4,5)           // r1
-                    + obj_code.substring(6,7);          // r2
+                obj_code = obj_code.substring(0,4) // op1
+                        + obj_code.substring(5,6)  // m3
+                        + obj_code.substring(7,8)  // m4
+                        + obj_code.substring(4,5)  // r1
+                        + obj_code.substring(6,7); // r2
             } else {
                 get_hex_zero(2);
                 get_hex_reg();
@@ -4350,7 +4433,7 @@ public  class  az390 implements Runnable {
             check_end_parms();
             put_obj_text();
             break;
-        case 54:   // FIEBR?, FIDBR?, FIXBR? RPI 1125     r1,m3,r2 or r1,m3,r2,m4  maps to 00003012 or 00003412
+        case 54:   // FIEBR?, FIDBR?, FIXBR? RPI 1125 r1,m3,r2 or r1,m3,r2,m4  maps to 00003012 or 00003412
             // RPI 2202 generalize to support RRF-b IDTE
             bal_op_ok = true;
             loc_ctr = (loc_ctr+1)/2*2;
@@ -4376,11 +4459,11 @@ public  class  az390 implements Runnable {
             } else {
                 get_hex_zero(1); // RPI 2202 optional m4 for IDTE RRF-b
             }
-            obj_code = obj_code.substring(0,4)  // oooo
-                + obj_code.substring(5,6)             // m3
-                + obj_code.substring(7,8)             // m4 or 0
-                + obj_code.substring(4,5)             // r1
-                + obj_code.substring(6,7);            // r2
+            obj_code = obj_code.substring(0,4) // oooo
+                    + obj_code.substring(5,6)  // m3
+                    + obj_code.substring(7,8)  // m4 or 0
+                    + obj_code.substring(4,5)  // r1
+                    + obj_code.substring(6,7); // r2
             if (bal_op.equals("KMA") && !bal_abort) {                                  // #704
                 // r1 at position 4, r3 at position 5, r2 at position 6 (pre-reorder)  // #704
                 // After reorder: r1 at 6, r3 at 4, r2 at 7                            // #704
@@ -4389,11 +4472,11 @@ public  class  az390 implements Runnable {
                 char kma_r2 = obj_code.charAt(7);                                      // #704
                 if (kma_r3 == kma_r1) {                                                // #704
                     log_error(56,"incorrect register specification"                    // #704
-                        + " - R3 must not equal R1");                                  // #704
+                            + " - R3 must not equal R1");                              // #704
                 }                                                                      // #704
                 if (kma_r3 == kma_r2) {                                                // #704
                     log_error(56,"incorrect register specification"                    // #704
-                        + " - R3 must not equal R2");                                  // #704
+                            + " - R3 must not equal R2");                              // #704
                 }                                                                      // #704
             }                                                                          // #704
             check_end_parms();
@@ -4426,12 +4509,13 @@ public  class  az390 implements Runnable {
             get_hex_reg();
             skip_comma();
             get_hex_bdddhh2();
-            if (   tz390.op_code[bal_op_index].substring(0,4).equals("EBF3")    // EBF3 STOC   R1,D2(B2),M3
-                || tz390.op_code[bal_op_index].substring(0,4).equals("EBE3")    // EBE3 STOCG  R1,D2(B2),M3
-                || tz390.op_code[bal_op_index].substring(0,4).equals("EBE1")    // EBE1 STOCFH R1,D2(B2),M3
-                || tz390.op_code[bal_op_index].substring(0,4).equals("EBF2")    // EBF2 LOCC   R1,D2(B2),M3
-                || tz390.op_code[bal_op_index].substring(0,4).equals("EBE2")    // EBE2 LOGG   R1,D2(B2),M3
-                || tz390.op_code[bal_op_index].substring(0,4).equals("EBE0")) { // EBE0 LOCFH  R1,D2(B2),M3
+            if (   tz390.op_code[bal_op_index].substring(0,4).equals("EBF3") // EBF3 STOC   R1,D2(B2),M3
+                || tz390.op_code[bal_op_index].substring(0,4).equals("EBE3") // EBE3 STOCG  R1,D2(B2),M3
+                || tz390.op_code[bal_op_index].substring(0,4).equals("EBE1") // EBE1 STOCFH R1,D2(B2),M3
+                || tz390.op_code[bal_op_index].substring(0,4).equals("EBF2") // EBF2 LOCC   R1,D2(B2),M3
+                || tz390.op_code[bal_op_index].substring(0,4).equals("EBE2") // EBE2 LOGG   R1,D2(B2),M3
+                || tz390.op_code[bal_op_index].substring(0,4).equals("EBE0") // EBE0 LOCFH  R1,D2(B2),M3
+               ) {
                 if (   tz390.op_code[bal_op_index].length() == 5
                     && tz390.op_code[bal_op_index].substring(4,5) != "F") {
                     get_hex_op(5,1); // M3 for extended mnemonic like STOCE R1,D2(B2)
@@ -4444,9 +4528,9 @@ public  class  az390 implements Runnable {
                 get_hex_int(16);
             }
             // move 001BDDDDD3 to 0013BDDDDD
-            obj_code = obj_code.substring(0,3)   // oo1
-                + obj_code.substring(9,10)       // m3
-                + obj_code.substring(3,9);       // BDDDDD
+            obj_code = obj_code.substring(0,3) // oo1
+                    + obj_code.substring(9,10) // m3
+                    + obj_code.substring(3,9); // BDDDDD
             get_hex_op(3,2);
             check_end_parms();
             put_obj_text();
@@ -4479,11 +4563,11 @@ public  class  az390 implements Runnable {
             get_hex_reg();    // RS2
             get_exp_x();      // RT2
             // We now have oooovqst --> ooooqtvs
-            obj_code = obj_code.substring(0,4)      // oooo
-                + obj_code.substring(5,6)           // QR3
-                + obj_code.substring(7,8)           // RT2
-                + obj_code.substring(4,5)           // VR1
-                + obj_code.substring(6,7);          // RS2
+            obj_code = obj_code.substring(0,4) // oooo
+                    + obj_code.substring(5,6)  // QR3
+                    + obj_code.substring(7,8)  // RT2
+                    + obj_code.substring(4,5)  // VR1
+                    + obj_code.substring(6,7); // RS2
             check_end_parms();
             put_obj_text();
             break;
@@ -4510,11 +4594,11 @@ public  class  az390 implements Runnable {
             get_hex_reg();    // RS2
             get_exp_x();      // RT2
             // We now have oooovvst --> oooovtvs
-            obj_code = obj_code.substring(0,4)      // oooo
-                + obj_code.substring(5,6)           // VR3
-                + obj_code.substring(7,8)           // RT2
-                + obj_code.substring(4,5)           // VR1
-                + obj_code.substring(6,7);          // RS2
+            obj_code = obj_code.substring(0,4) // oooo
+                    + obj_code.substring(5,6)  // VR3
+                    + obj_code.substring(7,8)  // RT2
+                    + obj_code.substring(4,5)  // VR1
+                    + obj_code.substring(6,7); // RS2
             check_end_parms();
             put_obj_text();
             break;
@@ -4587,7 +4671,7 @@ public  class  az390 implements Runnable {
             // MR, DR require operand1 even, all others dont care RPI 1209O
             if (   obj_code.substring(0,2).equals("1C") // RPI 1209O
                 || obj_code.substring(0,2).equals("1D") // RPI 1209O
-                ) {                                     // RPI 1209O
+               ) {                                      // RPI 1209O
                 get_hex_reg_even();                     // RPI 1209O
             } else {                                    // RPI 1209O
                 get_hex_reg();                          // RPI 1209O
@@ -4674,15 +4758,15 @@ public  class  az390 implements Runnable {
             loc_ctr = (loc_ctr+1)/2*2;
             loc_start = loc_ctr;
             loc_len = 4;
-            get_hex_op(1,4);     //  0 oooo
-            get_hex_reg();       //  4 r1
+            get_hex_op(1,4);   //  0 oooo
+            get_hex_reg();     //  4 r1
             skip_comma();
-            get_hex_reg();       //  5 r2
+            get_hex_reg();     //  5 r2
             skip_comma();
-            get_hex_reg();       // 6 r3
+            get_hex_reg();     // 6 r3
             if (!bal_abort && exp_next_char(',')) {
                 skip_comma();
-                get_hex_reg();   // 7 m4
+                get_hex_reg(); // 7 m4
             } else {
                 if ((tz390.op_code[bal_op_index].length() == 5)) {
                     get_hex_op(5,1);  // M3
@@ -4690,11 +4774,11 @@ public  class  az390 implements Runnable {
                     get_hex_zero(1);  // m3=0
                 }
             }
-            obj_code = obj_code.substring(0,4)  // oooo
-                + obj_code.substring(6,7)       // r3
-                + obj_code.substring(7,8)       // m4
-                + obj_code.substring(4,5)       // r1
-                + obj_code.substring(5,6);      // r2
+            obj_code = obj_code.substring(0,4) // oooo
+                    + obj_code.substring(6,7)  // r3
+                    + obj_code.substring(7,8)  // m4
+                    + obj_code.substring(4,5)  // r1
+                    + obj_code.substring(5,6); // r2
             check_end_parms();
             put_obj_text();
             break;
@@ -4703,11 +4787,11 @@ public  class  az390 implements Runnable {
             loc_ctr = (loc_ctr+1)/2*2;
             loc_start = loc_ctr;
             loc_len = 4;
-            get_hex_op(1,4);     //  0 oooo
-            get_hex_zero(2);     //  4 r1
-            get_hex_reg();       //  i1
+            get_hex_op(1,4); //  0 oooo
+            get_hex_zero(2); //  4 r1
+            get_hex_reg();   //  i1
             skip_comma();
-            get_hex_reg();       // i2
+            get_hex_reg();   // i2
             check_end_parms();
             put_obj_text();
             break;
@@ -4717,12 +4801,12 @@ public  class  az390 implements Runnable {
             loc_ctr = (loc_ctr+1)/2*2;
             loc_start = loc_ctr;
             loc_len = 6;
-            get_hex_op(1,2);              //  0 oo
-            get_hex_reg();                // r1
+            get_hex_op(1,2);             //  0 oo
+            get_hex_reg();               // r1
             skip_comma();
-            get_hex_relative_offset(12);  //  i2 12 bits
+            get_hex_relative_offset(12); //  i2 12 bits
             skip_comma();
-            get_hex_relative_offset(24);  // i3  24 bits
+            get_hex_relative_offset(24); // i3  24 bits
             check_end_parms();
             put_obj_text();
             break;
@@ -4732,16 +4816,16 @@ public  class  az390 implements Runnable {
             loc_ctr = (loc_ctr+1)/2*2;
             loc_start = loc_ctr;
             loc_len = 6;
-            get_hex_op(1,2);     //  0 oo
-            get_hex_reg();       // r1
-            get_hex_zero(1);     //  0
+            get_hex_op(1,2);             //  0 oo
+            get_hex_reg();               // r1
+            get_hex_zero(1);             //  0
             skip_comma();
-            get_hex_relative_offset(16);        // i2 16 bits
+            get_hex_relative_offset(16); // i2 16 bits
             skip_comma();
             get_hex_bddd2(true);
-            obj_code = obj_code.substring(0,4)  // oo1o
-                + obj_code.substring(8,12)      // bddd
-                + obj_code.substring(4,8);      // i2
+            obj_code = obj_code.substring(0,4) // oo1o
+                    + obj_code.substring(8,12) // bddd
+                    + obj_code.substring(4,8); // i2
             check_end_parms();
             put_obj_text();
             break;
@@ -4751,10 +4835,10 @@ public  class  az390 implements Runnable {
             loc_ctr = (loc_ctr+1)/2*2;
             loc_start = loc_ctr;
             loc_len = 6;
-            get_hex_op(1,2);       //  oo
-            get_hex_vreg(1);       //  v1
+            get_hex_op(1,2); //  oo
+            get_hex_vreg(1); //  v1
             skip_comma();
-            get_hex_xbddd();       // xbddd
+            get_hex_xbddd(); // xbddd
             if (!bal_abort && exp_next_char(',')) {
                 skip_comma();
                 get_hex_reg();   // m4
@@ -4783,10 +4867,10 @@ public  class  az390 implements Runnable {
             skip_comma();
             get_hex_byte();   // I3
             // oo1bddd33
-            obj_code = obj_code.substring(0,2)     // oo
-                + obj_code.substring(7,9)          // i2
-                + obj_code.substring(3,7)          // bddd
-                + obj_code.substring(2,3);         // v1
+            obj_code = obj_code.substring(0,2) // oo
+                    + obj_code.substring(7,9)  // i2
+                    + obj_code.substring(3,7)  // bddd
+                    + obj_code.substring(2,3); // v1
             get_hex_vreg_rxb();    // RXB
             get_hex_op(3,2);         // oo
             check_end_parms();
@@ -4799,7 +4883,7 @@ public  class  az390 implements Runnable {
             loc_start = loc_ctr;
             loc_len = 6;
             get_hex_op(1,2);   //  oo
-            if ( tz390.op_code[bal_op_index].substring(0,4).equals("E721")) {         // E721 VRSc VLGV R1,V3,D2(B2),M4 RPI 2202
+            if ( tz390.op_code[bal_op_index].substring(0,4).equals("E721")) { // E721 VRSc VLGV R1,V3,D2(B2),M4 RPI 2202
                 // r1, v3
                 get_hex_reg();        // R1
                 skip_comma();
@@ -4816,9 +4900,10 @@ public  class  az390 implements Runnable {
                         get_hex_zero(1);   // M4
                     }
                 }
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E73F")  // E73F VRSb VSTL V1,R3,D2(B2) RPI 2202
-                     || tz390.op_code[bal_op_index].substring(0,4).equals("E737")    // E737 VRSb VLL  V1,R3,D2(B2) RPI 2202
-                     || tz390.op_code[bal_op_index].substring(0,4).equals("E722")) { // E722 VRSc VLVG V1,R3,D2(B2),M4 RPI 2202
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E73F") // E73F VRSb VSTL V1,R3,D2(B2) RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E737") // E737 VRSb VLL  V1,R3,D2(B2) RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E722") // E722 VRSc VLVG V1,R3,D2(B2),M4 RPI 2202
+                      ) {
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_reg();          // R3
@@ -4834,8 +4919,10 @@ public  class  az390 implements Runnable {
                         get_hex_zero(1);   // M4
                     }
                 }
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E73E")    // E73E VRSa VSTM V1,V3,D2(B2),,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E736")) { // E736 VRSa VLM  V1,V3,D2(B2),,M4 RPI 2202
+
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E73E") // E73E VRSa VSTM V1,V3,D2(B2),,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E736") // E736 VRSa VLM  V1,V3,D2(B2),,M4 RPI 2202
+                      ) {
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);       // V3 in rxb v2 pos RPI 2216
@@ -4851,10 +4938,11 @@ public  class  az390 implements Runnable {
                         get_hex_zero(1);   // M4
                     }
                 }
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E730")     // E730 VRSa VERL  V1,V3,D2(B2),M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E733")     // E733 VRSa VERLL V1,V3,D2(B2),M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E738")     // E738 VRSa VESRL V1,V3,D2(B2),M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E73A")) {  // E73A VRSa VESRA V1,V3,D2(B2),M4 RPI 2202
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E730") // E730 VRSa VERL  V1,V3,D2(B2),M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E733") // E733 VRSa VERLL V1,V3,D2(B2),M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E738") // E738 VRSa VESRL V1,V3,D2(B2),M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E73A") // E73A VRSa VESRA V1,V3,D2(B2),M4 RPI 2202
+                      ) {
                 get_hex_vreg(1);   // V1
                 skip_comma();
                 get_hex_vreg(2);    // V3 in rxb v2 pos RPI 2216
@@ -4879,10 +4967,10 @@ public  class  az390 implements Runnable {
                 skip_comma();
                 get_hex_bddd2(true); // bddd
                 // oo013bddd MOVE v1 after bddd
-                obj_code = obj_code.substring(0,3)   // oo0
-                    + obj_code.substring(4,5)        // R3
-                    + obj_code.substring(5,9)        // bddd
-                    + obj_code.substring(3,4);       // v1
+                obj_code = obj_code.substring(0,3) // oo0
+                        + obj_code.substring(4,5)  // R3
+                        + obj_code.substring(5,9)  // bddd
+                        + obj_code.substring(3,4); // v1
             }
             get_hex_vreg_rxb();    // RXB
             get_hex_op(3,2);         // oo
@@ -4897,9 +4985,10 @@ public  class  az390 implements Runnable {
             loc_len = 6;
             get_hex_op(1,2);   //  oo
             get_hex_vreg(1);       //  V1
-            if (   tz390.op_code[bal_op_index].substring(0,4).equals("E772")     // E772 VRId VERIM V1,V2,V3,I4,M5 RPI 2202
-                || tz390.op_code[bal_op_index].substring(0,4).equals("E786")     // E786 VRId VSLD  V1,V2,V3,I4 RPI 2202
-                || tz390.op_code[bal_op_index].substring(0,4).equals("E787")) {  // E787 VRId VSRD  V1,V2,V3,I4 RPI 2202
+            if (   tz390.op_code[bal_op_index].substring(0,4).equals("E772") // E772 VRId VERIM V1,V2,V3,I4,M5 RPI 2202
+                || tz390.op_code[bal_op_index].substring(0,4).equals("E786") // E786 VRId VSLD  V1,V2,V3,I4 RPI 2202
+                || tz390.op_code[bal_op_index].substring(0,4).equals("E787") // E787 VRId VSRD  V1,V2,V3,I4 RPI 2202
+               ) {
                 skip_comma();
                 get_hex_vreg(2);      // V2
                 skip_comma();
@@ -4926,8 +5015,9 @@ public  class  az390 implements Runnable {
                 skip_comma();
                 get_hex_byte();      // I4
                 get_hex_zero(1);
-            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E658")    // E658 VRIi VCVD V1,R2,I3,M4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E65A")) { // E65A VRIi VCVDG
+            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E658") // E658 VRIi VCVD V1,R2,I3,M4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E65A") // E65A VRIi VCVDG
+                       ) {
                 skip_comma();
                 get_hex_reg();        // r2
                 get_hex_zero(2);      // 00
@@ -4936,11 +5026,12 @@ public  class  az390 implements Runnable {
                 skip_comma();
                 get_hex_reg();        // M4
                 // swap I3 and M4 oo1200334 to oo1200433
-                obj_code = obj_code.substring(0,6)  // oo1200
-                    + obj_code.substring(8,9)       // M3
-                    + obj_code.substring(6,8);      // I3
-            } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E659")        // E659 VRIg VSRP V1,V2,I3,I4,M5
-                    ||    tz390.op_code[bal_op_index].substring(0,4).equals("E65B")) {  // E65B VRIg VPSOP
+                obj_code = obj_code.substring(0,6) // oo1200
+                        + obj_code.substring(8,9)  // M3
+                        + obj_code.substring(6,8); // I3
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E659") // E659 VRIg VSRP V1,V2,I3,I4,M5
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E65B") // E65B VRIg VPSOP
+                      ) {
                 skip_comma();
                 get_hex_vreg(2);       // V2
                 skip_comma();
@@ -4950,9 +5041,9 @@ public  class  az390 implements Runnable {
                 skip_comma();
                 get_hex_reg();       // M5
                 // move I4 before M5 then i3  001233445 to oo1244533
-                obj_code = obj_code.substring(0,4)  // oo12
-                    + obj_code.substring(6,9)       // I4,M5
-                    + obj_code.substring(4,6);      // I3
+                obj_code = obj_code.substring(0,4) // oo12
+                        + obj_code.substring(6,9)  // I4,M5
+                        + obj_code.substring(4,6); // I3
             } else if (tz390.op_code[bal_op_index].substring(0,4).equals("E74D")) { // E74D VRIc VREP V1,V3,I2,M4
                 skip_comma();
                 get_hex_vreg(2);       // V3 in v2 rxb pos  RPI 2216
@@ -4977,14 +5068,15 @@ public  class  az390 implements Runnable {
                     skip_comma();
                     get_hex_reg();      // M5
                 }
-                obj_code = obj_code.substring(0,7)  // oo12333 RPI 2225 reverse m4 and m5
-                    + obj_code.substring(8,9)       // M5
-                    + obj_code.substring(7,8);      // M4
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E740")     // E740 VRIa VLEIB V1,I2,M3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E745")     // E745 VRIa VREPI V1,I2,M3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E741")     // E741 VRIa VLEIH V1,I2,M3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E742")     // E742 VRIa VLEIG V1,I2,M3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E743")) {  // E743 VRIa VLEIF V1,I2,M3 RPI 2202
+                obj_code = obj_code.substring(0,7) // oo12333 RPI 2225 reverse m4 and m5
+                        + obj_code.substring(8,9)  // M5
+                        + obj_code.substring(7,8); // M4
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E740") // E740 VRIa VLEIB V1,I2,M3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E745") // E745 VRIa VREPI V1,I2,M3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E741") // E741 VRIa VLEIH V1,I2,M3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E742") // E742 VRIa VLEIG V1,I2,M3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E743") // E743 VRIa VLEIF V1,I2,M3 RPI 2202
+                      ) {
                 get_hex_zero(1);   //  0
                 skip_comma();
                 get_hex_int(16);      // I2
@@ -5019,13 +5111,15 @@ public  class  az390 implements Runnable {
                     skip_comma();
                     get_hex_reg();      // M4
                 }
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E671")     // E671 VRIf VAP    v1,v2,v3,i4,m5
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E673")     // E673 VRIf VSP
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E678")     // E678 VRIf VMP
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E679")     // E679 VRIf VMSP
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E67A")     // E67A VRIf VDP
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E67B")     // E67B VRIf VRP
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E67E")) {  // E67E VRIf VSDP
+
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E671") // E671 VRIf VAP    v1,v2,v3,i4,m5
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E673") // E673 VRIf VSP
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E678") // E678 VRIf VMP
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E679") // E679 VRIf VMSP
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E67A") // E67A VRIf VDP
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E67B") // E67B VRIf VRP
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E67E") // E67E VRIf VSDP
+                      ) {
                 skip_comma();
                 get_hex_vreg(2);       // V2
                 skip_comma();
@@ -5036,9 +5130,9 @@ public  class  az390 implements Runnable {
                 skip_comma();
                 get_hex_reg();       // M5
                 // move m5 before i4
-                obj_code = obj_code.substring(0,6)  // oo1230
-                    + obj_code.substring(8,9)       // M5
-                    + obj_code.substring(6,8);      // I4
+                obj_code = obj_code.substring(0,6) // oo1230
+                        + obj_code.substring(8,9)  // M5
+                        + obj_code.substring(6,8); // I4
             }  else {  // E649 VRIh VLIP
                 get_hex_zero(1);   //  0
                 skip_comma();
@@ -5057,8 +5151,9 @@ public  class  az390 implements Runnable {
             loc_start = loc_ctr;
             loc_len = 6;
             get_hex_op(1,2);   //  oo
-            if (   tz390.op_code[bal_op_index].substring(0,4).equals("E650")    // E650 VRRi VCVB R1,V2,M3,M4
-                || tz390.op_code[bal_op_index].substring(0,4).equals("E652")) { // E652 VRRi VCVBG R1,V2,M3,M4
+            if (   tz390.op_code[bal_op_index].substring(0,4).equals("E650") // E650 VRRi VCVB R1,V2,M3,M4
+                || tz390.op_code[bal_op_index].substring(0,4).equals("E652") // E652 VRRi VCVBG R1,V2,M3,M4
+               ) {
                 get_hex_reg();        // R1
                 skip_comma();
                 get_hex_vreg(2);       // V2
@@ -5085,10 +5180,11 @@ public  class  az390 implements Runnable {
                 skip_comma();
                 get_hex_reg();        // M3
                 get_hex_zero(2);
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E750")      // E750 VRRa VPOPCT V1,V2,M3
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E752")      // E752 VRRa VCTZ V1,V2,M3
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E753")      // E752 VRRa VCLZ V1,V2,M3
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E75F")) {   // E75F VRRa VSEG V1,V2,M3
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E750") // E750 VRRa VPOPCT V1,V2,M3
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E752") // E752 VRRa VCTZ V1,V2,M3
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E753") // E752 VRRa VCLZ V1,V2,M3
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E75F") // E75F VRRa VSEG V1,V2,M3
+                      ) {
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);        // V2
@@ -5099,36 +5195,37 @@ public  class  az390 implements Runnable {
                 } else {
                     get_hex_op(5,1);   //  M3
                 }
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E760")    // E760 VRRc VMRL V1,V2,V3,M4
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E761")    // E761 VRRc VMRH V1,V2,V3,M4
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E764")    // E764 VRRc VSUM V1,V2,V3,M4
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E765")    // E765 VRRc VSUMG V1,V2,V3,M4
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E767")    // E767 VRRc VSUMQ V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E770")    // E770 VRRc VESLV V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E773")    // E773 VRRc VERLLV V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E778")    // E778 VRRc VERSRLV V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77A")    // E77A VRRc VERSRAV V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E784")    // E784 VRRc VPDI    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E785")    // E785 VRRc VBPERM  V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E794")    // E794 VRRc VPK    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A1")    // E7A1 VRRc VMLH   V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A2")    // E7A2 VRRc VML    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A3")    // E7A3 VRRc VMH    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A4")    // E7A4 VRRc VMLE   V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A5")    // E7A5 VRRc VMLO   V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A6")    // E7A6 VRRc VME    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A7")    // E7A7 VRRc VMO    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7B4")    // E7B4 VRRc VGFM   V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F0")    // E7F0 VRRc VFAVGL V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F1")    // E7F1 VRRc VFACC  V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F2")    // E7F2 VRRc VFAVG  V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F3")    // E7F3 VRRc VFA    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F5")    // E7F5 VRRc VFSCBI V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F7")    // E7F7 VRRc VFS    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FC")    // E7FC VRRc VMNL   V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FD")    // E7FD VRRc VMXL   V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FE")    // E7FE VRRc VMN    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FF")) { // E7FF VRRc VMX    V1,V2,V3,M4 RPI 2202
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E760") // E760 VRRc VMRL V1,V2,V3,M4
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E761") // E761 VRRc VMRH V1,V2,V3,M4
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E764") // E764 VRRc VSUM V1,V2,V3,M4
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E765") // E765 VRRc VSUMG V1,V2,V3,M4
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E767") // E767 VRRc VSUMQ V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E770") // E770 VRRc VESLV V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E773") // E773 VRRc VERLLV V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E778") // E778 VRRc VERSRLV V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77A") // E77A VRRc VERSRAV V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E784") // E784 VRRc VPDI    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E785") // E785 VRRc VBPERM  V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E794") // E794 VRRc VPK    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A1") // E7A1 VRRc VMLH   V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A2") // E7A2 VRRc VML    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A3") // E7A3 VRRc VMH    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A4") // E7A4 VRRc VMLE   V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A5") // E7A5 VRRc VMLO   V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A6") // E7A6 VRRc VME    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A7") // E7A7 VRRc VMO    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7B4") // E7B4 VRRc VGFM   V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F0") // E7F0 VRRc VFAVGL V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F1") // E7F1 VRRc VFACC  V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F2") // E7F2 VRRc VFAVG  V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F3") // E7F3 VRRc VFA    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F5") // E7F5 VRRc VFSCBI V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F7") // E7F7 VRRc VFS    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FC") // E7FC VRRc VMNL   V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FD") // E7FD VRRc VMXL   V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FE") // E7FE VRRc VMN    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FF") // E7FF VRRc VMX    V1,V2,V3,M4 RPI 2202
+                      ) {
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);        // V2
@@ -5145,10 +5242,11 @@ public  class  az390 implements Runnable {
                         get_hex_zero(1);
                     }
                 }
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E7E2")    // E7E2 VRRc VFS V1,V2,V3,M4,M5
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7E3")    // E7E3 VRRc VFA V1,V2,V3,M4,M5
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7E5")    // E7E5 VRRc VFD V1,V2,V3,M4,M5
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7E7")) { // E7E7 VRRc VFM V1,V2,V3,M4,M5
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E7E2") // E7E2 VRRc VFS V1,V2,V3,M4,M5
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7E3") // E7E3 VRRc VFA V1,V2,V3,M4,M5
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7E5") // E7E5 VRRc VFD V1,V2,V3,M4,M5
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7E7") // E7E7 VRRc VFM V1,V2,V3,M4,M5
+                      ) {
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);        // V2
@@ -5176,14 +5274,15 @@ public  class  az390 implements Runnable {
                     }
                 }
                 // move I4 before M5 001230034 to oo124054
-                obj_code = obj_code.substring(0,7)  // oo12300
-                    + obj_code.substring(8,9)       // M5
-                    + obj_code.substring(7,8);      // M4
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E7E8")       // E7E8 VRRc VFCE  V1,V2,V3,M4,M5,M6
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EA")       // E7E8 VRRc VFCHE V1,V2,V3,M4,M5,M6
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EB")       // E7EB VRRc VFCH  V1,V2,V3,M4,M5,M6
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EE")       // E7EE VRRC VFMIN V1,V2,V3,M4,M5,M6
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EF")) {    // E7EF VRRc VFMAX V1,V2,V3,M4,M5,M6
+                obj_code = obj_code.substring(0,7) // oo12300
+                        + obj_code.substring(8,9)  // M5
+                        + obj_code.substring(7,8); // M4
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E7E8") // E7E8 VRRc VFCE  V1,V2,V3,M4,M5,M6
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EA") // E7E8 VRRc VFCHE V1,V2,V3,M4,M5,M6
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EB") // E7EB VRRc VFCH  V1,V2,V3,M4,M5,M6
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EE") // E7EE VRRC VFMIN V1,V2,V3,M4,M5,M6
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EF") // E7EF VRRc VFMAX V1,V2,V3,M4,M5,M6
+                      ) {
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);        // V2
@@ -5221,26 +5320,27 @@ public  class  az390 implements Runnable {
                     }
                 }
                 // move 001230456 to 001230654
-                obj_code = obj_code.substring(0,6)  // op1+v1,v2,v3,0
-                    + obj_code.substring(8,9)       // m6
-                    + obj_code.substring(7,8)       // m5
-                    + obj_code.substring(6,7);      // m4
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E762")            // E762 VRRf VLVGP V1,R2,R3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E766")            // E766 VRRc VCKSM V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E768")            // E768 VRRc VN V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E769")            // E769 VRRc VNC V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76A")            // E76A VRRc VO V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76B")            // E76B VRRc VNO V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76C")            // E76C VRRc VNX V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76D")            // E76D VRRc VX V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76E")            // E76E VRRc VNN V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76F")            // E76F VRRc VOC V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E774")            // E774 VRRc VSL V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E775")            // E775 VRRc VSLB V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77C")            // E77C VRRc VSRL V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77D")            // E77D VRRc VSRLB V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77E")            // E77E VRRc VSRA V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77F")) {         // E77F VRRc VSRAB V1,V2,V3 RPI 2202
+                obj_code = obj_code.substring(0,6) // op1+v1,v2,v3,0
+                        + obj_code.substring(8,9)  // m6
+                        + obj_code.substring(7,8)  // m5
+                        + obj_code.substring(6,7); // m4
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E762") // E762 VRRf VLVGP V1,R2,R3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E766") // E766 VRRc VCKSM V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E768") // E768 VRRc VN V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E769") // E769 VRRc VNC V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76A") // E76A VRRc VO V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76B") // E76B VRRc VNO V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76C") // E76C VRRc VNX V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76D") // E76D VRRc VX V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76E") // E76E VRRc VNN V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76F") // E76F VRRc VOC V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E774") // E774 VRRc VSL V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E775") // E775 VRRc VSLB V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77C") // E77C VRRc VSRL V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77D") // E77D VRRc VSRLB V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77E") // E77E VRRc VSRA V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77F") // E77F VRRc VSRAB V1,V2,V3 RPI 2202
+                      ) {
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);        // V2
@@ -5249,8 +5349,8 @@ public  class  az390 implements Runnable {
                     get_hex_vreg(3);       // V3
                 } else {
                     if (tz390.op_name[bal_op_index].equals("VNOT")) { // RPI 2226 VNOT V1,V2,V2 extention of VNO
-                        obj_code = obj_code.substring(0,4)  // op1+v1,v2
-                            + obj_code.substring(3,4);        // v3 = v2
+                        obj_code = obj_code.substring(0,4) // op1+v1,v2
+                                + obj_code.substring(3,4); // v3 = v2
                         if ((vreg_rxb & 4) == 4) {
                             vreg_rxb  = vreg_rxb + 2; // set v3 rxb bit
                         }
@@ -5286,30 +5386,31 @@ public  class  az390 implements Runnable {
                         get_hex_zero(1);    // M5
                     }
                 }
-                obj_code = obj_code.substring(0,6)      // op1+v1,v2,0,0
-                    + obj_code.substring(8,9)           // m5
-                    + obj_code.substring(7,8)           // m4
-                    + obj_code.substring(6,7);          // m3
-            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E7C0")        // E7C0 VRRa VCLFP/VCLGD V1,V2,M3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C1")        // E7C1 VRRa VCDLG V1,V2,M3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C2")        // E7C2 VRRa VCGD  V1,V2,M3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C3")        // E7C3 VRRa VCDG  V1,V2,M3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C4")        // E7C4 VRRa VFLL  V1,V2,M3,M4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C5")        // E7C5 VRRa VFLR  V1,V2,M3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C7")        // E7C7 VRRa VFI   V1,V2,M3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CA")        // E7CA VRRa WFK   V1,V2,M3,M4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CB")        // E7CB VRRa WFC   V1,V2,M3,M4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CC")        // E7CC VRRa VFPSO V1,V2,M3,M4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CE")        // E7CE VRRa VFSQ   V1,V2,M3,M4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D4")        // E7D4 VRRa VUPLL  V1,V2,M3
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D5")        // E7D5 VRRa VUPLH  V1,V2,M3
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D6")        // E7D6 VRRa VUPL   V1,V2,M3
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D7")        // E7D7 VRRa VUPH   V1,V2,M3
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D8")        // E7D8 VRRa VTM   V1,V2
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D9")        // E7D9 VRRa VECL  V1,V2,M3
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7DB")        // E7DB VRRa VEC   V1,V2,M3
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7DE")        // E7DE VRRa VLC   V1,V2,M3
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7DF")) {     // E7DF VRRa VLP   V1,V2,M3
+                obj_code = obj_code.substring(0,6) // op1+v1,v2,0,0
+                        + obj_code.substring(8,9)  // m5
+                        + obj_code.substring(7,8)  // m4
+                        + obj_code.substring(6,7); // m3
+            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E7C0") // E7C0 VRRa VCLFP/VCLGD V1,V2,M3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C1") // E7C1 VRRa VCDLG V1,V2,M3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C2") // E7C2 VRRa VCGD  V1,V2,M3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C3") // E7C3 VRRa VCDG  V1,V2,M3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C4") // E7C4 VRRa VFLL  V1,V2,M3,M4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C5") // E7C5 VRRa VFLR  V1,V2,M3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C7") // E7C7 VRRa VFI   V1,V2,M3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CA") // E7CA VRRa WFK   V1,V2,M3,M4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CB") // E7CB VRRa WFC   V1,V2,M3,M4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CC") // E7CC VRRa VFPSO V1,V2,M3,M4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CE") // E7CE VRRa VFSQ   V1,V2,M3,M4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D4") // E7D4 VRRa VUPLL  V1,V2,M3
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D5") // E7D5 VRRa VUPLH  V1,V2,M3
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D6") // E7D6 VRRa VUPL   V1,V2,M3
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D7") // E7D7 VRRa VUPH   V1,V2,M3
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D8") // E7D8 VRRa VTM   V1,V2
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D9") // E7D9 VRRa VECL  V1,V2,M3
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7DB") // E7DB VRRa VEC   V1,V2,M3
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7DE") // E7DE VRRa VLC   V1,V2,M3
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7DF") // E7DF VRRa VLP   V1,V2,M3
+                       ) {
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);        // V2
@@ -5332,7 +5433,7 @@ public  class  az390 implements Runnable {
                         || tz390.op_code[bal_op_index].substring(0,4).equals("E7C3")
                         || tz390.op_code[bal_op_index].substring(0,4).equals("E7C5")
                         || tz390.op_code[bal_op_index].substring(0,4).equals("E7C7")
-                        ) { // #230 OR option with M4
+                       ) { // #230 OR option with M4
                         if (!bal_abort && exp_next_char(',')) {
                             skip_comma();
                             get_hex_reg();   // M4
@@ -5360,18 +5461,19 @@ public  class  az390 implements Runnable {
                     }
                 }
                 // map 001200345 to 001200543
-                obj_code = obj_code.substring(0,6)      // op1+v1,v2,0,0
-                    + obj_code.substring(8,9)           // m5
-                    + obj_code.substring(7,8)           // m4
-                    + obj_code.substring(6,7);          // m3
-            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E780")        // E780 VRRb VFEE  V1,V2,V3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E781")        // E781 VRRb VFENE V1,V2,V3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E782")        // E782 VRRb VFAE  V1,V2,V3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E795")        // E795 VRRb VPKLS V1,V2,V3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E797")        // E797 VRRb VPKS  V1,V2,V3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7F8")        // E7F8 VRRb VCEQ  V1,V2,V3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7F9")        // E7F9 VRRb VCHL  V1,V2,V3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7FB")) {     // E7FB VRRb VCH  V1,V2,V3,M4,M5
+                obj_code = obj_code.substring(0,6) // op1+v1,v2,0,0
+                        + obj_code.substring(8,9)  // m5
+                        + obj_code.substring(7,8)  // m4
+                        + obj_code.substring(6,7); // m3
+            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E780") // E780 VRRb VFEE  V1,V2,V3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E781") // E781 VRRb VFENE V1,V2,V3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E782") // E782 VRRb VFAE  V1,V2,V3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E795") // E795 VRRb VPKLS V1,V2,V3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E797") // E797 VRRb VPKS  V1,V2,V3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7F8") // E7F8 VRRb VCEQ  V1,V2,V3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7F9") // E7F9 VRRb VCHL  V1,V2,V3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7FB") // E7FB VRRb VCH  V1,V2,V3,M4,M5
+                       ) {
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);        // V2
@@ -5408,30 +5510,31 @@ public  class  az390 implements Runnable {
                     }
                 }
                 // MAP 001230405 TO OO1230504
-                obj_code = obj_code.substring(0,6)      // op1+v1,v2,v3,0
-                    + obj_code.substring(8,9)           // m5
-                    + obj_code.substring(5,7);          // 0,m4
-            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E78A")    // E78A VRRd VSTRC V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78B")    // E78B VRRd VSTRS V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78C")    // E78C VRRe VPERM V1,V2,V3,V4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78D")    // E78D VRRe VSEL  V1,V2,V3,V4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78E")    // E78E VRRe VFMS  V1,V2,V3,V4,M5,M6 RPI 2225
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78F")    // E78F VRRe VFMA  V1,V2,V3,V4,M5,M6 RPI 2225
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E79E")    // E79E VRRb VFNMS V1,V2,V3,V4,M5,M6 RPI 2225
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E79F")    // E79F VRRb VFNMA V1,V2,V3,V4,M5,M6    RPI 2225
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7A9")    // E7A9 VRRd VMALH V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AA")    // E7AA VRRd VMAL  V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AB")    // E7AB VRRd VMAH  V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AC")    // E7AC VRRd VMALE V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AD")    // E7AD VRRd VMALO V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AE")    // E7AE VRRd VMAE  V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AF")    // E7AF VRRe VMAO  V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7B8")    // E7B8 VRRd VMSL  V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7B9")    // E7B9 VRRd VACCC V1,V2,V3,V4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BB")    // E7BB VRRd VAC   V1,V2,V3,V4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BC")    // E7BC VRRd VGFMA V1,V2,V3,V4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BD")    // E7BD VRRd VSBCBI V1,V2,V3,V4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BF")) { // E7BF VRRd VSBI   V1,V2,V3,V4,M5
+                obj_code = obj_code.substring(0,6) // op1+v1,v2,v3,0
+                        + obj_code.substring(8,9)  // m5
+                        + obj_code.substring(5,7); // 0,m4
+            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E78A") // E78A VRRd VSTRC V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78B") // E78B VRRd VSTRS V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78C") // E78C VRRe VPERM V1,V2,V3,V4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78D") // E78D VRRe VSEL  V1,V2,V3,V4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78E") // E78E VRRe VFMS  V1,V2,V3,V4,M5,M6 RPI 2225
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78F") // E78F VRRe VFMA  V1,V2,V3,V4,M5,M6 RPI 2225
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E79E") // E79E VRRb VFNMS V1,V2,V3,V4,M5,M6 RPI 2225
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E79F") // E79F VRRb VFNMA V1,V2,V3,V4,M5,M6 RPI 2225
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7A9") // E7A9 VRRd VMALH V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AA") // E7AA VRRd VMAL  V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AB") // E7AB VRRd VMAH  V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AC") // E7AC VRRd VMALE V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AD") // E7AD VRRd VMALO V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AE") // E7AE VRRd VMAE  V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AF") // E7AF VRRe VMAO  V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7B8") // E7B8 VRRd VMSL  V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7B9") // E7B9 VRRd VACCC V1,V2,V3,V4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BB") // E7BB VRRd VAC   V1,V2,V3,V4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BC") // E7BC VRRd VGFMA V1,V2,V3,V4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BD") // E7BD VRRd VSBCBI V1,V2,V3,V4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BF") // E7BF VRRd VSBI   V1,V2,V3,V4,M5
+                       ) {
                 // reformat OO,V1,V2,V3,V4,M5 to oo,v1,v2,v3,m5,m6,0,v4,rxb,oo
                 get_hex_vreg(1);     // V1
                 skip_comma();
@@ -5465,22 +5568,23 @@ public  class  az390 implements Runnable {
                         get_hex_zero(1);   // M6
                     }
                 }
-                if (   tz390.op_code[bal_op_index].substring(0,4).equals("E78E")      // E78E VRRe VFMS  V1,V2,V3,V4,M5,M6 RPI 2225
-                    || tz390.op_code[bal_op_index].substring(0,4).equals("E78F")      // E78F VRRe VFMA  V1,V2,V3,V4,M5,M6
-                    || tz390.op_code[bal_op_index].substring(0,4).equals("E79E")      // E79E VRRb VFNMS V1,V2,V3,V4,M5,M6
-                    || tz390.op_code[bal_op_index].substring(0,4).equals("E79F")) {   // E79F VRRb VFNMA V1,V2,V3,V4,M5,M6
+                if (   tz390.op_code[bal_op_index].substring(0,4).equals("E78E") // E78E VRRe VFMS  V1,V2,V3,V4,M5,M6 RPI 2225
+                    || tz390.op_code[bal_op_index].substring(0,4).equals("E78F") // E78F VRRe VFMA  V1,V2,V3,V4,M5,M6
+                    || tz390.op_code[bal_op_index].substring(0,4).equals("E79E") // E79E VRRb VFNMS V1,V2,V3,V4,M5,M6
+                    || tz390.op_code[bal_op_index].substring(0,4).equals("E79F") // E79F VRRb VFNMA V1,V2,V3,V4,M5,M6
+                   ) {
                     // map oo123456 to oo1235064xoo
-                    obj_code = obj_code.substring(0,5)  // op1+v1,v2,v3
-                        + obj_code.substring(7,8)       // m6 rpi 2225
-                        + "0"                           // 0
-                        + obj_code.substring(6,7)       // m5 rpi 2225
-                        + obj_code.substring(5,6);      // v4
+                    obj_code = obj_code.substring(0,5) // op1+v1,v2,v3
+                            + obj_code.substring(7,8)  // m6 rpi 2225
+                            + "0"                      // 0
+                            + obj_code.substring(6,7)  // m5 rpi 2225
+                            + obj_code.substring(5,6); // v4
                 } else {
                     // map oo123456 to oo1235604xoo  E78A VSTRC?
-                    obj_code = obj_code.substring(0,5)      // op1+v1,v2,v3
-                        + obj_code.substring(6,8)           // m5,m6
-                        + "0"                               // 0
-                        + obj_code.substring(5,6);          // v4
+                    obj_code = obj_code.substring(0,5) // op1+v1,v2,v3
+                            + obj_code.substring(6,8)  // m5,m6
+                            + "0"                      // 0
+                            + obj_code.substring(5,6); // v4
                 }
             }
             get_hex_vreg_rxb();    // RXB
@@ -5494,14 +5598,14 @@ public  class  az390 implements Runnable {
             loc_ctr = (loc_ctr+1)/2*2;
             loc_start = loc_ctr;
             loc_len = 6;
-            get_hex_op(1,2);       //  oo
-            get_hex_vreg(1);       // V1
+            get_hex_op(1,2);    //  oo
+            get_hex_vreg(1);    // V1
             skip_comma();
-            get_hex_v2xbddd();     // D2(V2,B2)
+            get_hex_v2xbddd();  // D2(V2,B2)
             skip_comma();
-            get_hex_reg();         // M3
-            get_hex_vreg_rxb();    // RXB
-            get_hex_op(3,2);       // oo
+            get_hex_reg();      // M3
+            get_hex_vreg_rxb(); // RXB
+            get_hex_op(3,2);    // oo
             check_end_parms();
             put_obj_text();
             break;
@@ -5525,11 +5629,11 @@ public  class  az390 implements Runnable {
             process_dc(1);
             break;
         case 106:  // ALIAS 0
-            bal_op_ok = true;     // RPI 368 ignore
+            bal_op_ok = true; // RPI 368 ignore
             bal_label_ok = false; // RPI 553
             break;
         case 107:  // AMODE 0
-            bal_op_ok = true;     //RPI122 IGNORE
+            bal_op_ok = true; //RPI122 IGNORE
             bal_label_ok = false; // RPI 553
         case 108:  // CATTR 0
             break;
@@ -5537,14 +5641,18 @@ public  class  az390 implements Runnable {
             bal_lab_attr = tz390.ascii_to_ebcdic['J']; // RPI 340
             bal_op_ok = true;
             process_sect(sym_cst,bal_label);  // RPI 230
-            if (first_cst_esd == 0)first_cst_esd = cur_esd;
+            if (first_cst_esd == 0) {
+                first_cst_esd = cur_esd;
+            }
             bal_label_ok = false;
             break;
         case 110:  // CSECT 0
             bal_lab_attr = tz390.ascii_to_ebcdic['J']; // RPI 340
             bal_op_ok = true;
             process_sect(sym_cst,bal_label);
-            if (first_cst_esd == 0)first_cst_esd = cur_esd;
+            if (first_cst_esd == 0) {
+                first_cst_esd = cur_esd;
+            }
             bal_label_ok = false;
             break;
         case 111:  // CXD 0
@@ -5569,8 +5677,8 @@ public  class  az390 implements Runnable {
         case 116:  // LOCTR 0
             bal_lab_attr = tz390.ascii_to_ebcdic['J']; // RPI 340
             bal_op_ok = true;
-            if (cur_pass == 1) {  // RPI 960
-                tot_loc_stmt++; // RPI 920
+            if (cur_pass == 1) { // RPI 960
+                tot_loc_stmt++;  // RPI 920
             }
             process_sect(sym_lct,bal_label);
             bal_label_ok = false;
@@ -5583,7 +5691,9 @@ public  class  az390 implements Runnable {
             bal_lab_attr = tz390.ascii_to_ebcdic['J']; // RPI 340
             bal_op_ok = true;
             process_sect(sym_cst,bal_label);  // RPI 230
-            if (first_cst_esd == 0)first_cst_esd = cur_esd;
+            if (first_cst_esd == 0) {
+                first_cst_esd = cur_esd;
+            }
             bal_label_ok = false;
             break;
         case 119:  // START 0
@@ -5687,12 +5797,13 @@ public  class  az390 implements Runnable {
         case 140:  // LTORG 0
             bal_op_ok = true;
             list_bal_line();
-            if (   cur_esd > 0  // RPI 1159 was tot_lit > 0
-                && sym_type[esd_sid[esd_base[cur_esd]]] == sym_cst) { // RPI 564
+            if ( // RPI 1159 was tot_lit > 0
+                    cur_esd > 0
+                    && sym_type[esd_sid[esd_base[cur_esd]]] == sym_cst) { // RPI 564
                 gen_ltorg();
             }
             cur_lit_pool++;
-            list_bal_line = false; // RPI891 supress LTORG at end
+            list_bal_line = false; // RPI891 suppress LTORG at end
             break;
         case 141:  // OPSYN 0
             break;
@@ -5746,16 +5857,16 @@ public  class  az390 implements Runnable {
         case 214:  // MNOTE 0
             bal_op_ok = true;  // pass through from mz390
             if (gen_obj_code
-                && mac_inline_level == 0) { // RPI 581
-                force_list_bal = true;      // RPI 581
-                if (   bal_parms != null    // RPI 503
+                    && mac_inline_level == 0) { // RPI 581
+                force_list_bal = true;          // RPI 581
+                if (   bal_parms != null        // RPI 503
                     && bal_parms.length() > 0
                     && bal_parms.charAt(0) != '*') {  // RPI 444
                     tz390.put_systerm("MNOTE " + bal_parms); // RPI 440
                 }
-                if (bal_parms.length() > 0
+                if (   bal_parms.length() > 0
                     && bal_parms.charAt(0) != '\''
-                      && bal_parms.charAt(0) != ','
+                    && bal_parms.charAt(0) != ','
                     && bal_parms.charAt(0) != '*') {
                     exp_text = bal_parms;
                     exp_index = 0;
@@ -5824,8 +5935,8 @@ public  class  az390 implements Runnable {
                 log_error(62,"unsupported operation code " + bal_op); // RPI 563
             }
             if (bal_label != null
-                && index < tz390.max_asm_type  // RPI 926
-                && bal_label_ok) { // RPI 451
+                    && index < tz390.max_asm_type  // RPI 926
+                    && bal_label_ok) { // RPI 451
                 update_label();
             }
         }
@@ -5861,15 +5972,15 @@ public  class  az390 implements Runnable {
             cur_line_type     = xref_file_type[bal_line_xref_file_num[bal_line_index]];
             cur_line_file_num = bal_line_xref_file_num[bal_line_index];
             put_prn_line(tz390.get_hex(list_obj_loc,6)
-                + " " + list_obj_code.substring(0,16)
-                + " " + hex_bddd1_loc
-                + " " + hex_bddd2_loc
-                + " " + tz390.get_cur_bal_line_id(cur_line_file_num,
-                    bal_line_xref_file_line[bal_line_index],
-                    bal_line_num[bal_line_index],
-                    mac_call_gen, // RPI 891
-                    cur_line_type)
-                + bal_line);
+                    + " " + list_obj_code.substring(0,16)
+                    + " " + hex_bddd1_loc
+                    + " " + hex_bddd2_loc
+                    + " " + tz390.get_cur_bal_line_id(cur_line_file_num,
+                            bal_line_xref_file_line[bal_line_index],
+                            bal_line_num[bal_line_index],
+                            mac_call_gen, // RPI 891
+                            cur_line_type)
+                    + bal_line);
         }
         force_list_bal = false;   // RPI 285
         update_list_bal_line();
@@ -5897,16 +6008,16 @@ public  class  az390 implements Runnable {
             return true;
         }
         if (list_bal_line
-            && print_on[print_level]) {
+                && print_on[print_level]) {
             if (mac_call_gen
-                && !print_gen[print_level]) {
+                    && !print_gen[print_level]) {
                 // suppress generated BAL
                 // for PRINT NOGEN
                 return false;
             }
             return true;
         } else {
-            // supress BAL for PRINT OFF
+            // suppress BAL for PRINT OFF
             return false;
         }
     }
@@ -6038,7 +6149,7 @@ public  class  az390 implements Runnable {
                             + " LOC=" + tz390.get_hex(rld_fld_loc[tot_rld],8)
                             + " LEN=" + tz390.get_hex(rld_fld_len[tot_rld],1)
                             + " SIGN=" + rld_fld_sgn[tot_rld]
-                                                     + " XESD=" + tz390.get_hex(rld_xrf_esd[tot_rld],4));
+                            + " XESD=" + tz390.get_hex(rld_xrf_esd[tot_rld],4));
                 }
                 tot_rld++;
             } else {
@@ -6061,7 +6172,7 @@ public  class  az390 implements Runnable {
                             + " LOC=" + tz390.get_hex(rld_fld_loc[tot_rld],8)
                             + " LEN=" + tz390.get_hex(rld_fld_len[tot_rld],1)
                             + " SIGN=" + rld_fld_sgn[tot_rld]
-                                                     + " XESD=" + tz390.get_hex(rld_xrf_esd[tot_rld],4));
+                            + " XESD=" + tz390.get_hex(rld_xrf_esd[tot_rld],4));
                 }
                 tot_rld++;
             } else {
@@ -6084,11 +6195,11 @@ public  class  az390 implements Runnable {
         int index = 0;
         while (index < tot_rld) {
             String rld_code =
-                  " ESD=" + tz390.get_hex(rld_fld_esd[index],4)
-                + " LOC=" + tz390.get_hex(rld_fld_loc[index],8)
-                + " LEN=" + tz390.get_hex(rld_fld_len[index],1)
-                + " SIGN=" + rld_fld_sgn[index]
-                + " XESD=" + tz390.get_hex(rld_xrf_esd[index],4);
+                    " ESD=" + tz390.get_hex(rld_fld_esd[index],4)
+                  + " LOC=" + tz390.get_hex(rld_fld_loc[index],8)
+                  + " LEN=" + tz390.get_hex(rld_fld_len[index],1)
+                  + " SIGN=" + rld_fld_sgn[index]
+                  + " XESD=" + tz390.get_hex(rld_xrf_esd[index],4);
             put_prn_line(rld_code);
             put_obj_line(".RLD" + rld_code);
             index++;
@@ -6113,7 +6224,7 @@ public  class  az390 implements Runnable {
 
 
     /**
-     * list symbols in alpah order
+     * list symbols in alpha order
      * with optional cross reference
      */
     private void gen_sym_list() {
@@ -6137,11 +6248,11 @@ public  class  az390 implements Runnable {
                 name = name.concat("       ").substring(0,8);
             }
             String sym_line = " SYM=" + name
-                      + " LOC=" + tz390.get_hex(sym_loc[index],8)
-                      + " LEN=" + tz390.get_hex(get_sym_len(index),8)
-                      + " ESD=" + tz390.get_hex(esd_base[sym_esd[index]],4) // RPI 301
-                       + " TYPE=" + sym_type_desc[sym_type[index]]
-                      ;
+                    + " LOC=" + tz390.get_hex(sym_loc[index],8)
+                    + " LEN=" + tz390.get_hex(get_sym_len(index),8)
+                    + " ESD=" + tz390.get_hex(esd_base[sym_esd[index]],4) // RPI 301
+                    + " TYPE=" + sym_type_desc[sym_type[index]]
+                            ;
             if (tz390.opt_xref) {
                 sym_line = sym_line + "  XREF=";
                 if (sym_def[index] > sym_def_ref) {
@@ -6197,7 +6308,7 @@ public  class  az390 implements Runnable {
                             + " LEN=" + tz390.get_hex(lit_len[cur_lit],8)
                             + " ESD=" + tz390.get_hex(lit_esd[cur_lit],4)
                             + " POOL=" + tz390.get_hex(lit_pool[cur_lit],4)
-                ;
+                    ;
             if (tz390.opt_xref  && lit_xref[cur_lit] != null) {
                 lit_line = lit_line + " XREF=";
                 Iterator<Integer> lit_xref_it = lit_xref[cur_lit].iterator();
@@ -6333,11 +6444,11 @@ public  class  az390 implements Runnable {
         // wait for az390 to processing pending bal
         while (az390_running
                 && (bal_line_full // RPI 485
-                    || !az390_waiting)) {
+                        || !az390_waiting)) {
             Thread.yield();
         }
         if (!lookahead_mode
-            && az390_thread != Thread.currentThread()) {
+                && az390_thread != Thread.currentThread()) {
             sym_lock = true;
         } else {
             abort_error(167,"invalid set sym lock request - " + sym_lock_desc);
@@ -6401,8 +6512,8 @@ public  class  az390 implements Runnable {
             save_bal_line(); // RPI 274
             if  (temp_line == null) {
                 bal_line = null;
-            } else if (   temp_line.length() < tz390.bal_ictl_end + 1     // RPI 437 RPI 728
-                       || temp_line.charAt(tz390.bal_ictl_end) <= ' ') {  //RPI181 RPI 728
+            } else if (temp_line.length() < tz390.bal_ictl_end + 1    // RPI 437 RPI 728
+                    || temp_line.charAt(tz390.bal_ictl_end) <= ' ') { //RPI181 RPI 728
                 bal_line = tz390.trim_trailing_spaces(temp_line,tz390.bal_ictl_end + 1);  //RPI124 RPI 728
                 if (!tz390.verify_ascii_source(bal_line)) {
                     log_error(116,"invalid ascii source line " + tz390.cur_bal_line_num + " in " + bal_file.getAbsolutePath());  // RPI 694 RPI 769
@@ -6428,7 +6539,7 @@ public  class  az390 implements Runnable {
                     tz390.prev_bal_cont_lines++;
                     save_bal_line(); // RPI 274
                     if  (temp_line.length() >= tz390.bal_ictl_cont  // RPI 728
-                        && temp_line.substring(tz390.bal_ictl_start - 1,tz390.bal_ictl_cont - 1).trim().equals("")) { // RPI167  RPI 728 no char preceeding cont
+                            && temp_line.substring(tz390.bal_ictl_start - 1,tz390.bal_ictl_cont - 1).trim().equals("")) { // RPI167  RPI 728 no char preceeding cont
                         bal_line = bal_line + tz390.trim_continue(temp_line,tz390.split_cont,tz390.bal_ictl_end,tz390.bal_ictl_cont); // RPI 315, RPI 463 RPI 728
                     } else {
                         log_error(8,"continuation line < " + tz390.bal_ictl_cont + " characters - " + temp_line);
@@ -6472,7 +6583,7 @@ public  class  az390 implements Runnable {
         bal_label = null;
         bal_op    = null;
         bal_parms = null;
-        if  (bal_line == null
+        if  (   bal_line == null
              || bal_line.length() == 0
              || bal_line.charAt(0) == '*') {
             return;
@@ -6517,7 +6628,7 @@ public  class  az390 implements Runnable {
     private int find_bal_op() {
         int index = 0;
         if  (bal_op != null
-             && bal_op.length() > 0) {
+                && bal_op.length() > 0) {
             String key = bal_op;
             index = tz390.find_key_index('R',key);
             if (index >= 0 && tz390.opsyn_old_name[index] != null) {
@@ -6560,8 +6671,8 @@ public  class  az390 implements Runnable {
         String token = null;
         boolean extrn_eod = false;
         extrn_match = extrn_pattern.matcher(bal_parms);
-        while (   !bal_abort && !extrn_eod
-               && extrn_match.find()) {
+        while (!bal_abort && !extrn_eod
+                && extrn_match.find()) {
             token = extrn_match.group();
             switch (token.charAt(0)) {
             case ',':
@@ -6576,8 +6687,8 @@ public  class  az390 implements Runnable {
                 switch (esd_type) {
                 case 3: // sym_ent
                     cur_sid = find_sym(token);
-                    if (   cur_sid != -1 // RPI 489
-                        && sym_def[cur_sid] > sym_def_ref) {
+                    if (cur_sid != -1 // RPI 489
+                            && sym_def[cur_sid] > sym_def_ref) {
                         add_entry(token);
                     } else {
                         log_error(156,"ENTRY not found - " + token);
@@ -6586,7 +6697,7 @@ public  class  az390 implements Runnable {
                 case 4: // sym_ext
                     cur_sid = find_sym(token);
                     if (!lookahead_mode
-                        && (   cur_sid == -1
+                            && (cur_sid == -1
                             || sym_def[cur_sid] == sym_def_lookahead) // RPI 415
                             || sym_def[cur_sid] != sym_cst) { // RPI 1044
                         cur_sid = add_extrn(token);
@@ -6595,7 +6706,7 @@ public  class  az390 implements Runnable {
                 case 8: // sym_wxt
                     cur_sid = find_sym(token);
                     if (!lookahead_mode
-                        && (cur_sid == -1
+                            && (cur_sid == -1
                             || sym_def[cur_sid] == sym_def_lookahead) // RPI 415
                             || sym_def[cur_sid] != sym_cst) { // RPI 1044
                         cur_sid = add_wxtrn(token);
@@ -6621,7 +6732,7 @@ public  class  az390 implements Runnable {
         }
         if (index >= 1) {
             if (sym_def[index] == sym_def_ref
-                && sym_attr[index] == tz390.ascii_to_ebcdic['U']) {
+                    && sym_attr[index] == tz390.ascii_to_ebcdic['U']) {
                 sym_type[index] = sym_ext;
                 sym_attr[index] = tz390.ascii_to_ebcdic['T']; // RPI 415
                 sym_esd[index] = add_esd(index,sym_ext);
@@ -6647,7 +6758,7 @@ public  class  az390 implements Runnable {
         }
         if (index >= 1) {
             if (sym_def[index] == sym_def_ref
-                && sym_attr[index] == tz390.ascii_to_ebcdic['U']) {
+                    && sym_attr[index] == tz390.ascii_to_ebcdic['U']) {
                 sym_type[index] = sym_wxt;
                 sym_attr[index] = tz390.ascii_to_ebcdic['S']; // RPI 415
                 sym_esd[index] = add_esd(index,sym_wxt);
@@ -6667,7 +6778,7 @@ public  class  az390 implements Runnable {
      */
     private void add_entry(String token) {
         if (sym_type[cur_sid] == sym_rel
-            || sym_type[cur_sid] == sym_cst) { // RPI 288
+                || sym_type[cur_sid] == sym_cst) { // RPI 288
             int index = 1;
             while (index <= tot_esd) {
                 if (esd_sid[index] == cur_sid) {
@@ -6705,7 +6816,7 @@ public  class  az390 implements Runnable {
             update_sect();
         }
         if (sect_name == null
-            || sect_name.length() == 0) {
+                || sect_name.length() == 0) {
             sect_name = private_csect;  // private code
             if (mz390_call && cur_pass == 1) {
                 az390_private_sect = true; // RPI 995
@@ -6713,7 +6824,7 @@ public  class  az390 implements Runnable {
         }
         cur_esd_sid = find_sym(sect_name);
         if (cur_esd_sid < 1
-            || sym_def[cur_esd_sid] == sym_def_ref) {
+                || sym_def[cur_esd_sid] == sym_def_ref) {
             // new section RPI 415
             if (cur_esd_sid == -1) {
                 // add for first time
@@ -6724,10 +6835,10 @@ public  class  az390 implements Runnable {
                 cur_esd_sid = -1;
             }
             if (cur_sid >= 1
-                && sym_def[cur_sid] <= sym_def_ref) {
+                    && sym_def[cur_sid] <= sym_def_ref) {
                 if (sym_type[cur_sid] != sym_ext
-                    && sym_type[cur_sid] != sym_wxt
-                    ) {
+                        && sym_type[cur_sid] != sym_wxt
+                        ) {
                     cur_esd = add_esd(cur_sid,sect_type);
                     if (sect_type == sym_dst) {  // RPI 44
                         loc_ctr = 0;  // reset for first time dsect
@@ -6749,7 +6860,7 @@ public  class  az390 implements Runnable {
         }
         if  (!lookahead_mode) {
             if (cur_esd_sid < 1    // new section or extrn redefine
-                || sym_def[cur_esd_sid] == sym_def_ref) {  //RPI182
+                    || sym_def[cur_esd_sid] == sym_def_ref) {  //RPI182
                 if (sect_type != sym_lct) {
                     loc_ctr = (loc_ctr + 7)/8*8;
                 }
@@ -6783,17 +6894,17 @@ public  class  az390 implements Runnable {
                         sym_type[cur_esd_sid]  = sym_cst;
                     }
                 }
-            } else if (sect_type == sym_type[cur_esd_sid]
+            } else if (   sect_type == sym_type[cur_esd_sid]
                        || sect_type == sym_lct
                        || sym_type[cur_esd_sid] == sym_lct
                        ) { // RPI 553
                 // update prev section
                 cur_esd = sym_esd[cur_esd_sid];
                 loc_ctr = esd_loc[cur_esd]; // rpi 778
-                if (loc_ctr < start_loc) {         // RPI 1523
-                    loc_ctr = start_loc;           // RPI 1523
-                    start_loc = 0;                 // RPI 1523
-                }                                  // RPI 1523
+                if (loc_ctr < start_loc) {  // RPI 1523
+                    loc_ctr = start_loc;    // RPI 1523
+                    start_loc = 0;          // RPI 1523
+                }                           // RPI 1523
             } else {
                 log_error(182,"Duplicate section name of different type");
             }
@@ -6833,7 +6944,7 @@ public  class  az390 implements Runnable {
         index  = tz390.find_key_index('S',name.toUpperCase());
         if (!lookahead_mode) {
             if (index != -1
-                && sym_def[index] != sym_def_lookahead) { // RPI 415
+                    && sym_def[index] != sym_def_lookahead) { // RPI 415
                 add_sym_xref(index);
                 if (sym_type[index] == sym_und) {  // RPI 694
                     log_error(198,"symbol not defined " + sym_name[index]);
@@ -6873,12 +6984,12 @@ public  class  az390 implements Runnable {
             init_sym_entry();
         } else if (sym_def[cur_sid] == bal_line_index) {
             if (sym_type[cur_sid] == sym_rel
-                && !bal_op.equals("EQU")) {
+                    && !bal_op.equals("EQU")) {
                 if (sym_loc[cur_sid] != loc_start) { // RPI 605
                     sect_change_error();
                     if (tz390.opt_trace // RPI 726
-                        && gen_obj_code
-                        && report_label_changes) {
+                            && gen_obj_code
+                            && report_label_changes) {
                         report_label_changes = false;
                         log_error(187,"first label address change for " + bal_label + " from " + tz390.get_hex(sym_loc[cur_sid],6) + " to " + tz390.get_hex(loc_start,6));
                     }
@@ -6893,7 +7004,7 @@ public  class  az390 implements Runnable {
                     sym_len[cur_sid] = loc_len;
                 }
             }
-        } else if (   sym_def[cur_sid] > sym_def_ref
+        } else if (sym_def[cur_sid] > sym_def_ref
                    && sym_attr[cur_sid] != tz390.ascii_to_ebcdic['M']   // allow redefine macro label
                    && (sym_attr[cur_sid] != tz390.ascii_to_ebcdic['J']  // RPI 182
                        || (!cur_sym_sect                                // RPI 553 don't allow sect + RX
@@ -7001,9 +7112,9 @@ public  class  az390 implements Runnable {
             dc_index = 0;
             dc_lit_ref = false;
             dc_lit_gen = false;
-            if (   bal_op.equals("DC")
-                && gen_obj_code
-                && sym_type[esd_sid[esd_base[cur_esd]]] == sym_cst) { // RPI 564
+            if (bal_op.equals("DC")
+                    && gen_obj_code
+                    && sym_type[esd_sid[esd_base[cur_esd]]] == sym_cst) { // RPI 564
                 dc_op = true;
             } else {
                 dc_op = false;
@@ -7027,7 +7138,7 @@ public  class  az390 implements Runnable {
             dc_lit_ref = false;
             dc_lit_gen = true;
             if (gen_obj_code
-                && sym_type[esd_sid[esd_base[cur_esd]]] == sym_cst) { // RPI 564
+                    && sym_type[esd_sid[esd_base[cur_esd]]] == sym_cst) { // RPI 564
                 dc_op = true;
             } else {
                 dc_op = false;
@@ -7039,9 +7150,9 @@ public  class  az390 implements Runnable {
         dc_bit_tot      = 0;
         dc_len_explicit = false;
         while (!bal_abort
-               && dc_index < dc_field.length()) {
+                && dc_index < dc_field.length()) {
             if (dc_field.charAt(dc_index) == ','
-                && !dc_lit_ref) {
+                    && !dc_lit_ref) {
                 dc_index++;
             } else if (dc_field.charAt(dc_index) <= ' ') { //RPI181
                 dc_index = dc_field.length();  // flush trailing comments
@@ -7057,10 +7168,10 @@ public  class  az390 implements Runnable {
                     && dc_field.charAt(dc_index) != ','
                     && dc_field.charAt(dc_index) > ' ') { //RPI181
                 // process field data
-                if (   bal_abort
+                if (bal_abort
                     || dc_field.charAt(dc_index) != dc_type_delimiter[dc_type_index]) {
-                    if (dc_type != 'C'
-                        || (   dc_field.charAt(dc_index) != '"'     //RPI5
+                    if (dc_type != 'C' ||
+                            (dc_field.charAt(dc_index) != '"'       //RPI5
                             && dc_field.charAt(dc_index) != '!')) { //RPI73
                         log_error(45,"invalid dc delimiter for type - " + dc_field.substring(0,dc_index+1));
                         return;
@@ -7147,10 +7258,10 @@ public  class  az390 implements Runnable {
                 dc_lit_gen = false;
                 return;
             }
-            if (  !(dc_index < dc_field.length())
-                 || dc_field.charAt(dc_index) <= ' '  //RPI181
-                 || dc_field.charAt(dc_index) == dc_type_delimiter[dc_type_index]
-                ) {
+            if (!(dc_index < dc_field.length())
+                    || dc_field.charAt(dc_index) <= ' '  //RPI181
+                    || dc_field.charAt(dc_index) == dc_type_delimiter[dc_type_index]
+                    ) {
                 if (dc_bit_len) {
                     flush_dc_bits(); // RPI 417
                 }
@@ -7159,9 +7270,9 @@ public  class  az390 implements Runnable {
             } else if (   dc_field.charAt(dc_index) != ','
                        && dc_field.charAt(dc_index) != '\'') {
                 log_error(54,"invalid dc field terminator =" + dc_field
-                    + " len=" + dc_field.length()
-                    + " char=" + dc_field.charAt(dc_index)
-                );
+                        + " len=" + dc_field.length()
+                        + " char=" + dc_field.charAt(dc_index)
+                        );
             }
         }
         // #325 end of code
@@ -7380,8 +7491,8 @@ public  class  az390 implements Runnable {
                 break;
             case 'C':
                 if (exp_token.length() > 1
-                    && (   exp_token.charAt(exp_token.length()-1) == '\''      //RPI 270
-                        || exp_token.charAt(exp_token.length()-1) == '"'    //RPI5
+                    && (   exp_token.charAt(exp_token.length()-1) == '\''    //RPI 270
+                        || exp_token.charAt(exp_token.length()-1) == '"'     //RPI5
                         || exp_token.charAt(exp_token.length()-1) == '!')) { //RPI73,RPI90
                     proc_exp_sdt();
                 } else {
@@ -7411,8 +7522,8 @@ public  class  az390 implements Runnable {
                 break;
             case 'U':
                 if (exp_token.length() == 2
-                    && (   exp_token.charAt(1) == '-'
-                        || exp_token.charAt(1) == '+')) {
+                && (exp_token.charAt(1) == '-'
+                || exp_token.charAt(1) == '+')) {
                     proc_exp_op(loc_ctr_offset); // #659
                 } else {
                     proc_exp_sym();
@@ -7915,7 +8026,7 @@ public  class  az390 implements Runnable {
                 log_error(98,"symbol not found - " + exp_token); // #239 DSH
             }
             if (cur_sid > 0
-                && (sym_def[cur_sid] >= sym_def_ref || lookahead_mode)) {  // RPI 488
+                    && (sym_def[cur_sid] >= sym_def_ref || lookahead_mode)) {  // RPI 488
                 if (exp_first_sym_len) {
                     exp_first_sym_len = false;
                     exp_len = sym_len[cur_sid];
@@ -8181,7 +8292,7 @@ public  class  az390 implements Runnable {
      * Notes:
      * <ol>
      *  <li>Set bal_abort if not set else exit</li>
-     *  <li>supress if not gen_obj and not trace</li>
+     *  <li>suppress if not gen_obj and not trace</li>
      *  <li>print bal line first if list on</li>
      * </ol>
      *
@@ -8189,7 +8300,10 @@ public  class  az390 implements Runnable {
      * @param msg   message text
      */
     private void log_error(int error,String msg) {
-        if (bal_abort)return; // only 1 error per line
+        if (bal_abort)
+        {
+            return; // only 1 error per line
+        }
         bal_abort = true;
         az390_errors++;
         if (gen_obj_code && az390_rc < 12) { // RPI 1062
@@ -8360,7 +8474,7 @@ public  class  az390 implements Runnable {
                 }
                 int index = 16;
                 while (print_data[print_level]
-                       && index < list_obj_code.length()) {
+                        && index < list_obj_code.length()) {
                     list_obj_loc = list_obj_loc + 8;
                     if (index + 16 > list_obj_code.length()) {
                         temp_hex = list_obj_code.substring(index);
@@ -8417,8 +8531,8 @@ public  class  az390 implements Runnable {
             log_error(122,"hex code not equal instruction length");
         }
         if (!exp_eot
-            && exp_index < exp_text.length()
-            && exp_text.charAt(exp_index) > ' ') {  //RPI181
+                && exp_index < exp_text.length()
+                && exp_text.charAt(exp_index) > ' ') {  //RPI181
             log_error(122,"extra parameter found - " + exp_text.substring(exp_index));
         }
     }
@@ -8478,7 +8592,7 @@ public  class  az390 implements Runnable {
                 bin_byte[2] = tz390.ascii_to_ebcdic['S'];
                 bin_byte[3] = tz390.ascii_to_ebcdic['D'];
                 Arrays.fill(bin_byte,4,14,ebcdic_space);
-                                     // 15-16 ESD ID
+                // 15-16 ESD ID
                 bin_byte[14] = (byte)Integer.valueOf(hex_rcd.substring(9,11),16).intValue();
                 bin_byte[15] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
                 index = 16;          // 17-72 up to 3 ESD entries
@@ -8496,7 +8610,7 @@ public  class  az390 implements Runnable {
                     bin_byte[10] = 0;    // 11-12 SD entry bytes
                     bin_byte[11] = 16;
                     bin_byte[24] = 0x00; // SD type at entry 9
-                                         // 24 bit address at entry 10-12
+                    // 24 bit address at entry 10-12
                     if (!hex_rcd.substring(18,20).equals("00")) {
                         abort_error(132,"SD invalid 24 bit address - " + hex_rcd);
                     }
@@ -8552,7 +8666,7 @@ public  class  az390 implements Runnable {
                 bin_byte[2] = tz390.ascii_to_ebcdic['X'];
                 bin_byte[3] = tz390.ascii_to_ebcdic['T'];
                 bin_byte[4] = ebcdic_space;
-                                        // 6-8 address at
+                // 6-8 address at
                 if (!hex_rcd.substring(18,20).equals("00")) {
                     log_error(134,"TXT invalid 24 bit address - " + hex_rcd);
                     return;
@@ -8566,7 +8680,7 @@ public  class  az390 implements Runnable {
                 bin_byte[11] = (byte)Integer.valueOf(hex_rcd.substring(31,33),16).intValue();
                 bin_byte[12] = ebcdic_space;
                 bin_byte[13] = ebcdic_space;
-                                         // 15-16 SD type
+                // 15-16 SD type
                 bin_byte[14] = (byte)Integer.valueOf(hex_rcd.substring(9,11),16).intValue();
                 bin_byte[15] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
                 index = 16;
@@ -8587,15 +8701,15 @@ public  class  az390 implements Runnable {
                 bin_byte[10] = 0;        // 11-12 number of bytes for RLD entries
                 bin_byte[11] = 8;
                 Arrays.fill(bin_byte,12,16,ebcdic_space);
-                                         // 17-18 ESD ID of referenced ESD
+                // 17-18 ESD ID of referenced ESD
                 bin_byte[16] = (byte)Integer.valueOf(hex_rcd.substring(45,47),16).intValue();
                 bin_byte[17] = (byte)Integer.valueOf(hex_rcd.substring(47,49),16).intValue();
-                                         // 19-20 ESD ID of SD containing RLD field
+                // 19-20 ESD ID of SD containing RLD field
                 bin_byte[18] = (byte)Integer.valueOf(hex_rcd.substring(9,11),16).intValue();
                 bin_byte[19] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
-                                         // 20 flags TTTTLLSN
+                // 20 flags TTTTLLSN
                 int  rld_len =  Integer.valueOf(hex_rcd.substring(31,32),16).intValue()
-                             - 1; // rld field len -1  4=3, 3=2, 2=1, 8=0 RPI 270 RPI 894
+                        - 1; // rld field len -1  4=3, 3=2, 2=1, 8=0 RPI 270 RPI 894
                 if (rld_len == 7) {
                     rld_len = 0;  // RPI 270 RPI 894
                 }
@@ -8605,7 +8719,7 @@ public  class  az390 implements Runnable {
                 } else {
                     bin_byte[20] = (byte)(rld_len << 2 + 2); // neg rld
                 }
-                                         // 22-24 address at
+                // 22-24 address at
                 if (!hex_rcd.substring(18,20).equals("00")) {
                     log_error(135,"RLD invalid 24 bit address - " + hex_rcd); // RPI 851
                     return;
@@ -8630,6 +8744,7 @@ public  class  az390 implements Runnable {
                 bin_byte[5] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
                 bin_byte[6] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
                 bin_byte[7] = (byte)Integer.valueOf(hex_rcd.substring(24,26),16).intValue();
+
             } else {
                 log_error(130,"invalid object record - " + hex_rcd); // RPI 851
                 return;
@@ -8774,15 +8889,18 @@ public  class  az390 implements Runnable {
         int obj_code_len = obj_code.length()/2;
         tot_obj_bytes = tot_obj_bytes + obj_code_len;
         if (cur_text_len > 0
-             && (bal_eof
-                 || cur_text_esd != esd_base[cur_esd] // RPI 301
-                 || cur_text_loc != loc_ctr_offset + loc_ctr)) {  // #659
+                && (bal_eof
+                        || cur_text_esd != esd_base[cur_esd] // RPI 301
+                        || cur_text_loc != loc_ctr_offset + loc_ctr)) {  // #659
             cur_text_loc = cur_text_loc - cur_text_len;
             temp_obj_line = ".TXT ESD=" + tz390.get_hex(cur_text_esd,4) + " LOC=" + tz390.get_hex(cur_text_loc - sym_loc[esd_sid[cur_text_esd]],8) + " LEN=" + tz390.get_hex(cur_text_len,2) + " " + cur_text_buff;
             put_obj_line(temp_obj_line);
             cur_text_len = 0;
         }
-        if (bal_eof || bal_abort)return;  // rpi 851
+        if (bal_eof || bal_abort)
+        {
+            return;  // rpi 851
+        }
         if (cur_text_len == 0) {
             cur_text_esd = esd_base[sym_esd[esd_sid[cur_esd]]]; // RPI 301
             cur_text_loc = loc_ctr_offset + loc_ctr;  // #659
@@ -8840,7 +8958,7 @@ public  class  az390 implements Runnable {
         while (!use_eof) {
             use_domain_tot++;
             if (cur_use_lab.length() == 0
-                && !cur_use_depend) {
+                    && !cur_use_depend) {
                 drop_cur_use_reg(); // RPI 629
             }
             add_use_entry();
@@ -8886,7 +9004,7 @@ public  class  az390 implements Runnable {
                     return;
                 }
                 if (exp_text.length() > exp_index
-                    && exp_text.charAt(exp_index) == ')') {
+                        && exp_text.charAt(exp_index) == ')') {
                     exp_index++;
                 } else {
                     log_error(103,"missing end of range value");
@@ -8915,14 +9033,14 @@ public  class  az390 implements Runnable {
         cur_use_reg = 0;
         cur_use_off = 0;
         if (exp_text.length() > exp_index
-            && exp_text.charAt(exp_index) == ',') {
+                && exp_text.charAt(exp_index) == ',') {
             exp_index++;  // RPI 776
             if (calc_exp()) {
                 if (exp_type == sym_sdt) {
                     cur_use_reg = exp_val;
                 } else if (exp_type == sym_rel
-                           || exp_type == sym_cst
-                           || exp_type == sym_dst) { // RPI 274
+                        || exp_type == sym_cst
+                        || exp_type == sym_dst) { // RPI 274
                     cur_use_depend =true;
                     if (cur_use_lab == "") {
                         drop_dependent_using(); // RPI 1056
@@ -8945,8 +9063,8 @@ public  class  az390 implements Runnable {
         int index = cur_use_start;
         while (index < cur_use_end) {
             if (use_lab[index] == ""
-                && cur_use_base_esd == use_base_esd[index]
-                && cur_use_base_loc == use_base_loc[index]) {
+                    && cur_use_base_esd == use_base_esd[index]
+                    && cur_use_base_loc == use_base_loc[index]) {
                 cur_use_end--;
                 if (index < cur_use_end) { // RPI 431 was <
                     move_use_entry(cur_use_end,index);
@@ -9033,7 +9151,7 @@ public  class  az390 implements Runnable {
         int dropped = 0; // RPI 1206
         while (index < cur_use_end) {
             if (use_lab[index] == ""  // RPI 431, RPI 451
-                && use_reg[index] == cur_use_reg) {
+                    && use_reg[index] == cur_use_reg) {
                 cur_use_end--;
                 dropped++; // RPI 1206
                 if (index < cur_use_end) {
@@ -9077,7 +9195,7 @@ public  class  az390 implements Runnable {
             cur_use_end++;
             use_lab[cur_use] = cur_use_lab;
             if (cur_use_lab.length() > 0
-                && tz390.find_key_index('U',cur_use_lab) == -1) {
+                    && tz390.find_key_index('U',cur_use_lab) == -1) {
                 // create key to indicate using label
                 if (!tz390.add_key_index(0)) {
                     abort_error(87,"key search table exceeded");
@@ -9105,12 +9223,13 @@ public  class  az390 implements Runnable {
             none = false;
             list_bal_line = true; // RPI 891
             put_prn_line("LISTUSE " + tz390.left_justify(sym_name[esd_sid[use_base_esd[index]]],8)
-                        + " ESD=" + tz390.get_hex(use_base_esd[index],4)
-                        + " LOC=" + tz390.get_hex(use_base_loc[index],8)
-                        + " LEN=" + tz390.get_hex(use_base_len[index],5)
-                        + " REG=" + tz390.get_hex(use_reg[index],1)
-                        + " OFF=" + tz390.get_hex(use_reg_loc[index],5)
-                        + " LAB=" + use_lab[index] );
+                       + " ESD=" + tz390.get_hex(use_base_esd[index],4)
+                       + " LOC=" + tz390.get_hex(use_base_loc[index],8)
+                       + " LEN=" + tz390.get_hex(use_base_len[index],5)
+                       + " REG=" + tz390.get_hex(use_reg[index],1)
+                       + " OFF=" + tz390.get_hex(use_reg_loc[index],5)
+                       + " LAB=" + use_lab[index]
+                    );
             index++;
         }
         if (none) {
@@ -9150,10 +9269,11 @@ public  class  az390 implements Runnable {
             tz390.put_trace("obj_len=" + obj_len + "p6=" + obj_code.substring(obj_len-2,obj_len-1));
         }
         obj_code = obj_code.substring(0,obj_len-2)
-                  + tz390.get_hex(
-                      Integer.parseInt(obj_code.substring(obj_len-2,obj_len-1),16)
-                    | Integer.parseInt(obj_code.substring(obj_len-1,obj_len),16)
-                   ,1);
+                + tz390.get_hex(
+                        Integer.parseInt(obj_code.substring(obj_len-2,obj_len-1),16)
+                        |
+                        Integer.parseInt(obj_code.substring(obj_len-1,obj_len),16)
+                        ,1);
     }
 
 
@@ -9260,33 +9380,33 @@ public  class  az390 implements Runnable {
 
 
 
-    /**                                                                                // #704
-     * Append hex reg from next parm - must be even and non-zero.                      // #704
-     * Used by KM, KMA, KMC per issue #704.                                            // #704
-     */                                                                                // #704
-    private void get_hex_reg_even_nz() {                                               // #704
-        if (calc_abs_exp()) {                                                          // #704
-            if (exp_val >= 0 && exp_val <= 15) {                                       // #704
-                if (exp_val == 0) {                                                    // #704
-                    log_error(56, "incorrect register specification"                   // #704
-                        + " - register 0 not allowed - " + exp_val);                   // #704
-                    obj_code = obj_code + "r";                                         // #704
-                } else if ((exp_val & 1) != 0) {                                       // #704
-                    log_error(56, "incorrect register specification"                   // #704
-                        + " - even register required - " + exp_val);                   // #704
-                    obj_code = obj_code + "r";                                         // #704
-                } else {                                                               // #704
-                    obj_code = obj_code + tz390.get_hex(exp_val, 1);                   // #704
-                }                                                                      // #704
-            } else {                                                                   // #704
-                log_error(55, "invalid register expression - " + exp_val);             // #704
-                obj_code = obj_code + "r";                                             // #704
-            }                                                                          // #704
-        } else {                                                                       // #704
-            log_error(41, "invalid register value");                                   // #704
-            obj_code = obj_code + "r";                                                 // #704
-        }                                                                              // #704
-    }                                                                                  // #704
+    /**                                                                            // #704
+     * Append hex reg from next parm - must be even and non-zero.                  // #704
+     * Used by KM, KMA, KMC per issue #704.                                        // #704
+     */                                                                            // #704
+    private void get_hex_reg_even_nz() {                                           // #704
+        if (calc_abs_exp()) {                                                      // #704
+            if (exp_val >= 0 && exp_val <= 15) {                                   // #704
+                if (exp_val == 0) {                                                // #704
+                    log_error(56, "incorrect register specification"               // #704
+                            + " - register 0 not allowed - " + exp_val);           // #704
+                    obj_code = obj_code + "r";                                     // #704
+                } else if ((exp_val & 1) != 0) {                                   // #704
+                    log_error(56, "incorrect register specification"               // #704
+                            + " - even register required - " + exp_val);           // #704
+                    obj_code = obj_code + "r";                                     // #704
+                } else {                                                           // #704
+                    obj_code = obj_code + tz390.get_hex(exp_val, 1);               // #704
+                }                                                                  // #704
+            } else {                                                               // #704
+                log_error(55, "invalid register expression - " + exp_val);         // #704
+                obj_code = obj_code + "r";                                         // #704
+            }                                                                      // #704
+        } else {                                                                   // #704
+            log_error(41, "invalid register value");                               // #704
+            obj_code = obj_code + "r";                                             // #704
+        }                                                                          // #704
+    }                                                                              // #704
 
 
 
@@ -9331,7 +9451,7 @@ public  class  az390 implements Runnable {
      */
     private void get_hex_byte() {
         if (calc_abs_exp()
-            && exp_val < 256) {
+                && exp_val < 256) {
             obj_code = obj_code + tz390.get_hex(exp_val,2);
         } else {
             log_error(42,"invalid byte value");
@@ -9346,7 +9466,7 @@ public  class  az390 implements Runnable {
      */
     private void get_hex_halfword() {
         if (calc_abs_exp()
-            && exp_val < 65536) {
+                && exp_val < 65536) {
             obj_code = obj_code + tz390.get_hex(exp_val,4);
         } else {
             log_error(42,"invalid halfword value");
@@ -9426,8 +9546,8 @@ public  class  az390 implements Runnable {
      */
     private void get_hex_byte_signed() {
         if (calc_exp()
-            && exp_val < 128
-            && exp_val >= -128) {
+                && exp_val < 128
+                && exp_val >= -128) {
             obj_code = obj_code + tz390.get_hex(exp_val,2);
         } else {
             log_error(209,"invalid signed byte value");
@@ -9658,7 +9778,7 @@ public  class  az390 implements Runnable {
      */
     private boolean exp_next_char(char next_char) {
         if (exp_text != null && exp_index < exp_text.length() // RPI 822
-            && exp_text.charAt(exp_index) == next_char) {
+                && exp_text.charAt(exp_index) == next_char) {
             return true;
         } else {
             return false;
@@ -9845,11 +9965,11 @@ public  class  az390 implements Runnable {
         cur_esd_base = exp_esd; // RPI 301
         while (index < cur_use_end) {
             if (use_base_esd[index] == cur_esd_base // RPI 301
-                && ((exp_use_lab != null
-                     && use_lab[index].equals(exp_use_lab))  // RPI 274
-                    || (exp_use_lab == null  // RPI 609
-                        && use_lab[index] == ""))
-                ) {
+                    && ((exp_use_lab != null
+                    && use_lab[index].equals(exp_use_lab))  // RPI 274
+                            || (exp_use_lab == null  // RPI 609
+                            && use_lab[index] == ""))
+                    ) {
                 test_offset = exp_val - use_base_loc[index];
                 if (get_bdddhh) {
                     test_len = max_hh;
@@ -9860,20 +9980,20 @@ public  class  az390 implements Runnable {
                         && test_offset + use_reg_loc[index] >= 0  // RPI 994
                         && test_offset < test_len) {
                     if (cur_use_lab == ""
-                        && test_offset == cur_use_off) {
+                            && test_offset == cur_use_off) {
                         mnote_warning_msg = "MNOTE 4,'Duplicate USING ranges found for - "
-                            + use_reg[index] + " and " + cur_use_reg
-                            + " using highest'"; // RPI 1056
+                                + use_reg[index] + " and " + cur_use_reg
+                                + " using highest'"; // RPI 1056
                     }
                     if (test_offset < cur_use_off
-                        || use_reg[index] > cur_use_reg) { // RPI 982
+                            || use_reg[index] > cur_use_reg) { // RPI 982
                         cur_use_reg = use_reg[index];
                         cur_use_off = test_offset + use_reg_loc[index];
                     }
-                } else if (   get_bdddhh
-                           && test_offset >= cur_use_neg_off  // RPI 982
-                           && test_offset < 0
-                           ) {
+                } else if (get_bdddhh
+                        && test_offset >= cur_use_neg_off  // RPI 982
+                        && test_offset < 0
+                        ) {
                     if (test_offset > cur_use_off
                             || use_reg[index] > cur_use_reg) { // RPI 982
                         cur_use_neg_reg = use_reg[index];
@@ -10034,7 +10154,7 @@ public  class  az390 implements Runnable {
                 return (tz390.get_hex(b,1)
                         + tz390.get_hex(dddhh & 0xfff,3)
                         + tz390.get_hex((dddhh >> 12) & 0xff,2)
-                       ).toUpperCase();
+                        ).toUpperCase();
             } else {
                 log_error(147,"displacement dddhh out of range = " + dddhh);
                 return get_default_bddd();
@@ -10042,8 +10162,8 @@ public  class  az390 implements Runnable {
         } else {
             if (dddhh >= 0 && dddhh < 4096) {
                 return (tz390.get_hex(b,1)
-                       + tz390.get_hex(dddhh,3)
-                       ).toUpperCase();
+                        + tz390.get_hex(dddhh,3)
+                        ).toUpperCase();
             } else {
                 log_error(148,"displacement ddd out of range = " + dddhh);
                 return get_default_bddd();
@@ -10224,7 +10344,7 @@ public  class  az390 implements Runnable {
         boolean check_mod = true;
         while (!bal_abort && check_mod) {
             if (dc_index < dc_field.length()
-                && dc_field.substring(dc_index,dc_index+1).toUpperCase().charAt(0) == 'L') {
+                    && dc_field.substring(dc_index,dc_index+1).toUpperCase().charAt(0) == 'L') {
                 // explicit length
                 dc_len_explicit = true;
                 if (!bal_abort) {
@@ -10245,12 +10365,12 @@ public  class  az390 implements Runnable {
                     log_error(185,"DS/DC negative length -" + dc_len);
                 }
             } else if (dc_index < dc_field.length()
-                && dc_field.substring(dc_index,dc_index+1).toUpperCase().charAt(0) == 'S') {
+                    && dc_field.substring(dc_index,dc_index+1).toUpperCase().charAt(0) == 'S') {
                 // explicit scale
                 dc_scale_explicit = true; // RPI 777
                 dc_scale = get_dc_mod_int();
             } else if (dc_index < dc_field.length()
-                && dc_field.substring(dc_index,dc_index+1).toUpperCase().charAt(0) == 'E') {
+                    && dc_field.substring(dc_index,dc_index+1).toUpperCase().charAt(0) == 'E') {
                 // explicit exponent
                 dc_exp_explicit = true;
                 dc_exp = get_dc_mod_int();
@@ -10262,7 +10382,7 @@ public  class  az390 implements Runnable {
          * align and save first field attr.
          */
         if (!dc_lit_ref
-            && !dc_len_explicit) { // RPI 265 align within DS/DC
+                && !dc_len_explicit) { // RPI 265 align within DS/DC
             if (tz390.opt_align || dc_dup == 0) { // RPI 1073
                 if (dc_len == 16) {
                     if (tz390.fp_type == tz390.fp_lq_type) { // RPI 1108
@@ -10385,10 +10505,10 @@ public  class  az390 implements Runnable {
         dc_index++;   // start inside (,,,)
         dc_data_start = dc_index;
         if (dc_op
-            && !dc_bit_len   // RPI 417
-            && ((dc_len >= 2       // RPI 893 add AL2(RLD) > BDDD support
+                && !dc_bit_len   // RPI 417
+                && ((dc_len >= 2       // RPI 893 add AL2(RLD) > BDDD support
                 && dc_len <= 4)
-                || dc_len == 8)) {  //RPI182 RPI 270
+                        || dc_len == 8)) {  //RPI182 RPI 270
             exp_rld_len = (byte) dc_len;
         } else {
             exp_rld_len = 0;
@@ -10441,7 +10561,7 @@ public  class  az390 implements Runnable {
             if (exp_val >= 0) {
                 dc_bit_buff = dc_bit_buff.add(BigInteger.valueOf(exp_val));
             } else {
-                dc_bit_value = ((long)(-1) >>> (64-dc_len)) & (long)(exp_val);
+                dc_bit_value = ((long)(-1) >>> (64-dc_len)) & (exp_val);
                 dc_bit_buff = dc_bit_buff.add(BigInteger.valueOf(dc_bit_value));
             }
         }
@@ -10481,10 +10601,10 @@ public  class  az390 implements Runnable {
         dc_data_start = dc_index;
         while (!dc_eod && !bal_abort) {
             int dcb_start = dc_index;
-            while (  !dc_eod && !bal_abort
-                   && dc_index < dc_field.length()
-                   && dc_field.charAt(dc_index) != '\''
-                   && dc_field.charAt(dc_index) != ',') {
+            while (!dc_eod && !bal_abort
+                    && dc_index < dc_field.length()
+                    && dc_field.charAt(dc_index) != '\''
+                    && dc_field.charAt(dc_index) != ',') {
                 dc_index++;
             }
             if (dc_index >= dc_field.length()) {
@@ -10613,12 +10733,12 @@ public  class  az390 implements Runnable {
         } else {
             dcc_match = dcc_eq_pattern.matcher(dc_field.substring(dc_index + 1));
         }
-        while (  !dc_eod && !bal_abort
-               && dcc_match.find()) {
+        while (!dc_eod && !bal_abort
+                && dcc_match.find()) {
             token = dcc_match.group();
             dcc_next = dcc_match.end();
             if (   token.charAt(0) != dcc_quote
-                && token.charAt(0) != '\''  //RPI192
+                && token.charAt(0) != '\''   //RPI192
                 && token.charAt(0) != '&') { //RPI192
                 dcc_text = dcc_text + token;
             } else if (token.length() == 2) {
@@ -10636,14 +10756,14 @@ public  class  az390 implements Runnable {
         dcc_len = dcc_text.length();
         if (dcc_len > 0 || dc_len_explicit) {                            // #509
             dcc_ascii_req =
-                 (dcc_quote == '\''
-                     && (    (tz390.opt_ascii
-                              && dc_type_sfx != 'E'
-                             )
-                          || dc_type_sfx == 'A'
-                        )
-                 )
-                 | dcc_quote == '"';  //RPI5 and RPI73
+                    (dcc_quote == '\''
+                    && (    (tz390.opt_ascii
+                            && dc_type_sfx != 'E'
+                            )
+                            || dc_type_sfx == 'A'
+                       )
+                    )
+                    | dcc_quote == '"';  //RPI5 and RPI73
             if (dc_bit_len) {
                 gen_dcc_bits();
             } else {
@@ -10708,7 +10828,7 @@ public  class  az390 implements Runnable {
             dc_first_field = false;
         }
         while (!bal_abort
-            && dc_dup > 0) {
+                && dc_dup > 0) {
             if (dc_op) {
                 obj_code = obj_code + string_to_hex(dcc_text,dcc_ascii_req);
                 put_obj_text();
@@ -10828,14 +10948,14 @@ public  class  az390 implements Runnable {
             return false;
         }
         if (dc_field.charAt(dc_index) == 'U'
-            || dc_field.charAt(dc_index) == 'u') {
+                || dc_field.charAt(dc_index) == 'u') {
             dc_unsigned = true;
             dc_index++;
         }
         int fp_bd_start = dc_index;
         while (dc_index < dc_field.length()) {
             if (dc_field.charAt(dc_index) == '\''
-                || dc_field.charAt(dc_index) == ',') {
+                    || dc_field.charAt(dc_index) == ',') {
                 try { //
                     dc_bd_val = new BigDecimal(remove_blanks(dc_field.substring(fp_bd_start,dc_index))); // #233
                 } catch (Exception e) {
@@ -10883,8 +11003,8 @@ public  class  az390 implements Runnable {
             if (dc_len <= 8) {  // RPI 893
                 return tz390.get_long_hex(dc_bd_val.longValueExact(),2*dc_len);
             } else if (dc_len <= 16
-                       && dc_bd_val.scale() <= 0
-                       && dc_bd_val.scale() > -40) {
+                    && dc_bd_val.scale() <= 0
+                    && dc_bd_val.scale() > -40) {
                 dc_bi_val = dc_bd_val.toBigIntegerExact();
                 dc_byte_val = dc_bi_val.toByteArray();
                 if (dc_byte_val.length > dc_len) {
@@ -10905,7 +11025,7 @@ public  class  az390 implements Runnable {
                     System.arraycopy(dc_byte_val,0,fp_data_byte,index,16-index);
                 }
                 return tz390.get_long_hex(fp_data_buff.getLong(0),2*dc_len-16)
-                     + tz390.get_long_hex(fp_data_buff.getLong(8),16);
+                        + tz390.get_long_hex(fp_data_buff.getLong(8),16);
             } else {
                 log_error(122,"DC field length out of range " + dc_len);
                 dc_len = 0;
@@ -11071,7 +11191,7 @@ public  class  az390 implements Runnable {
         dc_index++;   // start inside delimiter 'n,n'
         dc_data_start = dc_index;
         while (!dc_eod && !bal_abort) {
-            while (   !dc_eod && !bal_abort
+            while (!dc_eod && !bal_abort
                     && dc_index < dc_field.length()
                     && dc_field.charAt(dc_index) != '\'') {
                 dcp_sign = 'C';
@@ -11079,11 +11199,11 @@ public  class  az390 implements Runnable {
                 dc_dec_scale = 0;     // RPI 777
                 dc_digits = "";
                 while (!bal_abort  // RPI 617
-                       && dc_index < dc_field.length()
-                       && dc_field.charAt(dc_index) != ','
-                       && dc_field.charAt(dc_index) != '\'') {
+                        && dc_index < dc_field.length()
+                        && dc_field.charAt(dc_index) != ','
+                        && dc_field.charAt(dc_index) != '\'') {
                     if (dc_field.charAt(dc_index) >= '0'
-                        && dc_field.charAt(dc_index) <= '9') {
+                            && dc_field.charAt(dc_index) <= '9') {
                         dc_digits = dc_digits + dc_field.charAt(dc_index); // RPI 777
                         if (dc_dec_point) {
                             dc_dec_scale++; // RPI 777
@@ -11197,9 +11317,9 @@ public  class  az390 implements Runnable {
         dc_index++;   // start inside delimiter 'n,n'
         dc_data_start = dc_index;
         while (!dc_eod && !bal_abort) {
-            while (  !dc_eod && !bal_abort
-                   && dc_index < dc_field.length()
-                   && dc_field.charAt(dc_index) != '\'') {
+            while (!dc_eod && !bal_abort
+                    && dc_index < dc_field.length()
+                    && dc_field.charAt(dc_index) != '\'') {
                 dcp_sign = 'C';
                 dc_dec_point = false; // RPI 777
                 dc_dec_scale = 0;     // RPI 777
@@ -11209,7 +11329,7 @@ public  class  az390 implements Runnable {
                         && dc_field.charAt(dc_index) != ','
                         && dc_field.charAt(dc_index) != '\'') {
                     if (dc_field.charAt(dc_index) >= '0'
-                        && dc_field.charAt(dc_index) <= '9') {
+                            && dc_field.charAt(dc_index) <= '9') {
                         if (tz390.opt_ascii) { // RPI 777
                             dc_digits = dc_digits + "3" + dc_field.charAt(dc_index); // RPI 777
                         } else {
@@ -11367,13 +11487,14 @@ public  class  az390 implements Runnable {
         while (!dc_eod && !bal_abort) {
             dcx_len = 0;
             dc_hex = "";
-            while (  !dc_eod && !bal_abort
-                   && dc_index < dc_field.length()
-                   && dc_field.charAt(dc_index) != '\''
-                   && dc_field.charAt(dc_index) != ',') {
+            while (!dc_eod && !bal_abort
+                    && dc_index < dc_field.length()
+                    && dc_field.charAt(dc_index) != '\''
+                    && dc_field.charAt(dc_index) != ',') {
                 char hex_code = dc_field.substring(dc_index,dc_index + 1).toUpperCase().charAt(0);
-                if (   (hex_code >= '0' && hex_code <= '9')
-                    || (hex_code >= 'A' && hex_code <= 'F')) {
+                if ((hex_code >= '0' && hex_code <= '9')
+                        ||
+                        (hex_code >= 'A' && hex_code <= 'F')) {
                     dcx_len++;
                     dc_hex = dc_hex + hex_code;
                 } else if (hex_code != ' ') {
@@ -11477,8 +11598,8 @@ public  class  az390 implements Runnable {
         } else if (dc_field.charAt(dc_index+1) == '(') {
             exp_text = dc_field;
             exp_index = dc_index+2;
-            if (  !bal_abort && calc_abs_exp() // RPI 416
-                && dc_field.charAt(exp_index) == ')') {
+            if (!bal_abort && calc_abs_exp() // RPI 416
+                    && dc_field.charAt(exp_index) == ')') {
                 dc_index = exp_index+1;
                 return exp_val;
             } else {
@@ -11501,9 +11622,9 @@ public  class  az390 implements Runnable {
      */
     private int get_dc_int(int index) {
         dc_index = index;
-        while (   dc_index < dc_field.length()
-               && dc_field.charAt(dc_index) <= '9'
-               && dc_field.charAt(dc_index) >= '0') {
+        while (dc_index < dc_field.length()
+                && dc_field.charAt(dc_index) <= '9'
+                && dc_field.charAt(dc_index) >= '0') {
             dc_index++;
         }
         if (dc_index > index) {
@@ -11534,7 +11655,7 @@ public  class  az390 implements Runnable {
                 exp_index++;
                 if (calc_abs_exp()  // RPI 620
                         && (exp_val == 4
-                            || exp_val == 8)) {
+                        || exp_val == 8)) {
                     cur_off = loc_ctr - loc_ctr/exp_val*exp_val;
                     int gap_bytes = req_off - cur_off;
                     if (gap_bytes < 0) {
@@ -11606,7 +11727,7 @@ public  class  az390 implements Runnable {
         }
         end_loc = loc_ctr;
         update_sects();
-        list_bal_line = false; // RPI 891 supress END after auto LTORG
+        list_bal_line = false; // RPI 891 suppress END after auto LTORG
     }
 
 
@@ -11673,7 +11794,7 @@ public  class  az390 implements Runnable {
                         exp_index = 0;
                         if (exp_text.charAt(exp_index) != ',') {
                             if (exp_text.length() > 2
-                                && exp_text.substring(exp_index,exp_index+2).equals("T'")) {
+                                    && exp_text.substring(exp_index,exp_index+2).equals("T'")) {
                                 index = find_sym(exp_text.substring(exp_index+2));
                                 if (index > 0) {
                                     sym_attr[store_sid] = sym_attr[index];
@@ -11738,8 +11859,8 @@ public  class  az390 implements Runnable {
         update_sect(); // RPI 340
         loc_start = loc_ctr;
         if (bal_parms == null
-            || bal_parms.length() == 0
-            || bal_parms.charAt(0) == ',') {  // RPI 258
+                || bal_parms.length() == 0
+                || bal_parms.charAt(0) == ',') {  // RPI 258
             if (cur_esd > 0) {  //RPI10, RPI87
                 // org to end of current CSECT
                 loc_ctr = sym_loc[esd_sid[cur_esd]] + sym_len[esd_sid[cur_esd]];
@@ -11752,8 +11873,8 @@ public  class  az390 implements Runnable {
         exp_text = bal_parms;
         exp_index = 0;
         if (cur_esd > 0
-            && calc_rel_exp()
-            && exp_esd == esd_base[cur_esd]) { // RPI 301
+                && calc_rel_exp()
+                && exp_esd == esd_base[cur_esd]) { // RPI 301
             loc_ctr = exp_val;
             hex_bddd1_loc = tz390.get_hex(loc_ctr,6); // RPI 632
             update_sect();  // RPI 10, RPI 778
@@ -11777,8 +11898,7 @@ public  class  az390 implements Runnable {
         } else {                                                    // RPI 1523
             exp_text  = bal_parms;                                  // RPI 1523
             exp_index = 0;                                          // RPI 1523
-            if (calc_abs_exp()                                      // RPI 1523
-                ) {                                                 // RPI 1523
+            if (calc_abs_exp()) {                                   // RPI 1523
                 start_loc = (exp_val+7)/8*8; // Round to Dword      // RPI 1523
             } else {                                                // RPI 1523
                 start_loc = 0;                                      // RPI 1523
@@ -11946,7 +12066,7 @@ public  class  az390 implements Runnable {
         if (exp_next_char('=')) {
             calc_lit();
         } else if (exp_text != null && exp_text.substring(exp_index).length() > 8  // RPI 626 rpi 822
-                   && exp_text.substring(exp_index,exp_index+8).toUpperCase().equals("DFHRESP(")) {
+                && exp_text.substring(exp_index,exp_index+8).toUpperCase().equals("DFHRESP(")) {
             String dfhresp_type_key = exp_text.substring(exp_index + 8).toUpperCase() + "         ";
             int index = 0;
             while (index < dfhresp_type.length && !dfhresp_type_key.substring(0,dfhresp_type[index].length()).equals(dfhresp_type[index])) {
@@ -11959,7 +12079,7 @@ public  class  az390 implements Runnable {
                 calc_exp();
             }
         } else if (exp_text != null && exp_text.substring(exp_index).length() > 9  // RPI 1057
-                   && exp_text.substring(exp_index,exp_index+9).toUpperCase().equals("DFHVALUE(")) {
+                && exp_text.substring(exp_index,exp_index+9).toUpperCase().equals("DFHVALUE(")) {
             String dfhvalue_type_key = exp_text.substring(exp_index + 9).toUpperCase() + "         ";
             int index = 0;
             while (index < dfhvalue_type.length && !dfhvalue_type_key.substring(0,dfhvalue_type[index].length()).equals(dfhvalue_type[index])) {
@@ -12123,10 +12243,10 @@ public  class  az390 implements Runnable {
     private void gen_lit_size(int size) {
         cur_lit = 0;
         while (cur_lit < tot_lit) {
-            if (   lit_len[cur_lit]*lit_dup[cur_lit] == lit_len[cur_lit]*lit_dup[cur_lit]/size*size // RPI 1200 use dup for aligning
-                && lit_gen[cur_lit] == 0
-                && lit_pool[cur_lit] == cur_lit_pool
-                ) {
+            if (lit_len[cur_lit]*lit_dup[cur_lit] == lit_len[cur_lit]*lit_dup[cur_lit]/size*size // RPI 1200 use dup for aligning
+                    && lit_gen[cur_lit] == 0
+                    && lit_pool[cur_lit] == cur_lit_pool
+                    ) {
                 lit_gen[cur_lit] = 1;
                 lit_esd[cur_lit] = esd_base[cur_esd]; // RPI 457
                 if (size == 1 && loc_ctr != (loc_ctr/2*2)) {
@@ -12233,8 +12353,8 @@ public  class  az390 implements Runnable {
      */
     private void add_sym_xref(int index) {
         if (!tz390.opt_xref
-            || !gen_obj_code  //RPI165
-            || (last_xref_index   == index
+                || !gen_obj_code  //RPI165
+                || (last_xref_index   == index
                 && last_xref_line == bal_line_index)) {
             return;
         }
@@ -12258,8 +12378,8 @@ public  class  az390 implements Runnable {
         exp_text = bal_parms;
         exp_index = 0;
         if (calc_abs_exp()
-            && exp_val >= 0
-            && exp_val <  256) {
+                && exp_val >= 0
+                && exp_val <  256) {
             obj_code = obj_code + tz390.get_hex(exp_val,2);
             loc_len  = 1;
             put_obj_text();
@@ -12280,8 +12400,8 @@ public  class  az390 implements Runnable {
                     if (exp_text.charAt(exp_index) == ',') {
                         exp_index++;
                         exp_rld_len = 0;
-                        if (   calc_abs_exp()
-                            && exp_val < 256) {
+                        if (calc_abs_exp()
+                                && exp_val < 256) {
                             obj_code = obj_code + tz390.get_hex(exp_val,2);
                             obj_code = obj_code + tz390.get_hex(0,2);
                             put_obj_text();        // rpi 632
@@ -12289,7 +12409,7 @@ public  class  az390 implements Runnable {
                             if (exp_text.charAt(exp_index) == ',') {
                                 exp_index++;
                                 if (calc_abs_exp()
-                                    && exp_val <= 0xffff) {
+                                        && exp_val <= 0xffff) {
                                     obj_code = obj_code + tz390.get_hex(exp_val,4);
                                     put_obj_text();        // rpi 632
                                     loc_ctr = loc_ctr + 2; // rpi 632
@@ -12319,8 +12439,8 @@ public  class  az390 implements Runnable {
         exp_text = bal_parms;
         exp_index = 0;
         if (calc_abs_exp()
-            && exp_val >= 0
-            && exp_val <  256) {
+                && exp_val >= 0
+                && exp_val <  256) {
             ccw_op = tz390.get_hex(exp_val,2);
             if (exp_text.charAt(exp_index) == ',') {
                 exp_index++;
@@ -12334,13 +12454,13 @@ public  class  az390 implements Runnable {
                     if (exp_text.charAt(exp_index) == ',') {
                         exp_index++;
                         put_obj_text();
-                        if (   calc_abs_exp()
-                            && exp_val < 256) {
+                        if (calc_abs_exp()
+                                && exp_val < 256) {
                             ccw_flags = tz390.get_hex(exp_val,2);
                             if (exp_text.charAt(exp_index) == ',') {
                                 exp_index++;
                                 if (calc_abs_exp()
-                                    && exp_val <= 0xffff) {
+                                        && exp_val <= 0xffff) {
                                     ccw_len = tz390.get_hex(exp_val,4);
                                 }
                             }
@@ -12629,13 +12749,13 @@ public  class  az390 implements Runnable {
         fp_big_dec1 = fp_big_dec1.stripTrailingZeros(); // RPI 821
         int    work_scale  =  - fp_big_dec1.scale();
         double work_man    =    fp_big_dec1.multiply(
-            BigDecimal.TEN.pow(-work_scale,fp_context),fp_context).doubleValue();
+                BigDecimal.TEN.pow(-work_scale,fp_context),fp_context).doubleValue();
         tz390.fp_exp   =  (int)((Math.log(work_man)
-                           + ((double)work_scale
-                                * fp_log10))
-                          / fp_log2)
-                 - tz390.fp_man_bits[tz390.fp_type]
-                 - tz390.fp_one_bit_adj[tz390.fp_type];
+                + ((double)work_scale
+                        * fp_log10))
+                / fp_log2)
+                - tz390.fp_man_bits[tz390.fp_type]
+                        - tz390.fp_one_bit_adj[tz390.fp_type];
         /*
          * Now calc big_dec2 mantissa truncated integer
          * tz390.fp_exp calculated above.  This calculation
@@ -12687,9 +12807,9 @@ public  class  az390 implements Runnable {
             tz390.fp_exp = tz390.fp_exp + tz390.fp_exp_bias[tz390.fp_type];
             if (tz390.fp_exp >= 0 && tz390.fp_exp <= tz390.fp_exp_max[tz390.fp_type]) {
                 dc_hex = get_long_hex(
-                         ((long)(tz390.fp_sign | tz390.fp_exp)
-                                 << tz390.fp_man_bits[tz390.fp_type])
-                          | (fp_long1 & fp_long_db_man_bits));
+                        ((long)(tz390.fp_sign | tz390.fp_exp)
+                                << tz390.fp_man_bits[tz390.fp_type])
+                        | (fp_long1 & fp_long_db_man_bits));
             } else {
                 log_error(89,"floating point value out of range");
                 dc_hex = "FFFF000000000000";
@@ -12708,8 +12828,8 @@ public  class  az390 implements Runnable {
             fp_long1 = fp_big_int1.longValue();
             fp_round_bit = 0;
             while ((tz390.fp_exp & 0x3) != 0
-                   || fp_long1 > fp_long_dh_man_bits
-                   ) {
+                    || fp_long1 > fp_long_dh_man_bits
+                    ) {
                 fp_round_bit = (int)(fp_long1 & 1);
                 fp_long1 = fp_long1 >>> 1;
                 tz390.fp_exp++;
@@ -12722,9 +12842,9 @@ public  class  az390 implements Runnable {
             tz390.fp_exp = (tz390.fp_exp >> 2) + tz390.fp_exp_bias[tz390.fp_type] + dc_scale; // RPI 368
             if (tz390.fp_exp >= 0 && tz390.fp_exp <= tz390.fp_exp_max[tz390.fp_type]) {
                 dc_hex = get_long_hex(
-                         ((long)(tz390.fp_sign | tz390.fp_exp)
-                                 << tz390.fp_man_bits[tz390.fp_type])
-                          | fp_long1);
+                        ((long)(tz390.fp_sign | tz390.fp_exp)
+                                << tz390.fp_man_bits[tz390.fp_type])
+                        | fp_long1);
             } else {
                 log_error(89,"floating point value out of range");
                 dc_hex = "FFFF000000000000";
@@ -12744,9 +12864,9 @@ public  class  az390 implements Runnable {
             tz390.fp_exp = tz390.fp_exp + tz390.fp_exp_bias[tz390.fp_type];
             if (tz390.fp_exp >= 0 && tz390.fp_exp <= tz390.fp_exp_max[tz390.fp_type]) {
                 dc_hex = tz390.get_hex(
-                          ((tz390.fp_sign | tz390.fp_exp)
-                                  << tz390.fp_man_bits[tz390.fp_type])
-                          | (fp_int1 & fp_int_eb_man_bits),8);
+                        ((tz390.fp_sign | tz390.fp_exp)
+                                << tz390.fp_man_bits[tz390.fp_type])
+                        | (fp_int1 & fp_int_eb_man_bits),8);
             } else {
                 log_error(89,"floating point value out of range");
                 dc_hex = "FF000000";
@@ -12766,21 +12886,21 @@ public  class  az390 implements Runnable {
             fp_round_bit = 0;
             while ((tz390.fp_exp & 0x3) != 0  // RPI 821
                     || fp_int1 > fp_int_eh_man_bits
-                   ) {
+                    ) {
                 fp_round_bit = fp_int1 & 1;
                 fp_int1 = fp_int1 >>> 1;
                 tz390.fp_exp++;
                 if (fp_round_bit == 1   // RPI 821
-                    && (tz390.fp_exp & 0x3) != 0
-                    &&    fp_int1 <= fp_int_eh_man_bits) {
-                    fp_int1++;    // RPI 821
+                        && (tz390.fp_exp & 0x3) != 0
+                        && fp_int1 <= fp_int_eh_man_bits) {
+                    fp_int1++; // RPI 821
                 }
             }
             tz390.fp_exp = (tz390.fp_exp >> 2) + tz390.fp_exp_bias[tz390.fp_type] + dc_scale;  // RPI 368
             if (tz390.fp_exp >= 0 && tz390.fp_exp <= 0x7f) {
                 dc_hex = tz390.get_hex(
-                          ((tz390.fp_sign | tz390.fp_exp) << 24)
-                          | fp_int1,8);
+                        ((tz390.fp_sign | tz390.fp_exp) << 24)
+                        | fp_int1,8);
             } else {
                 log_error(89,"floating point value out of range");
                 dc_hex = "00000000";
@@ -12797,7 +12917,7 @@ public  class  az390 implements Runnable {
                 fp_big_int1 = fp_big_int1.shiftRight(1);
                 tz390.fp_exp++;
                 if (fp_round_bit == 1
-                    && fp_big_int1.compareTo(fp_big_int_one_bits) <= 0) {
+                        && fp_big_int1.compareTo(fp_big_int_one_bits) <= 0) {
                     fp_big_int1 = fp_big_int1.add(BigInteger.ONE);
                 }
             }
@@ -12829,14 +12949,14 @@ public  class  az390 implements Runnable {
                 dc_hex = "00000000000000000000000000000000";
             } else {
                 dc_hex = tz390.get_long_hex(tz390.fp_work_reg.getLong(0),16)
-                       + tz390.get_long_hex(tz390.fp_work_reg.getLong(8),16)    ;
+                        + tz390.get_long_hex(tz390.fp_work_reg.getLong(8),16);
             }
             break;
         case 8: // tz390.fp_lh_type s1,e7,m112 with split hex
             fp_round_bit = 0;
             while ((tz390.fp_exp & 0x3) != 0  // RPI 821
                     || fp_big_int1.compareTo(fp_big_int_lx_man_bits) > 0
-                   ) {
+                    ) {
                 if (fp_big_int1.testBit(0)) {
                     fp_round_bit = 1;
                 } else {
@@ -12845,9 +12965,9 @@ public  class  az390 implements Runnable {
                 fp_big_int1 = fp_big_int1.shiftRight(1);
                 tz390.fp_exp++;
                 if (fp_round_bit == 1
-                    && (tz390.fp_exp & 0x3) == 0  // RPI 821
-                    && fp_big_int1.compareTo(fp_big_int_lx_man_bits) <= 0
-                    ) {
+                        && (tz390.fp_exp & 0x3) == 0  // RPI 821
+                        && fp_big_int1.compareTo(fp_big_int_lx_man_bits) <= 0
+                        ) {
                     fp_big_int1 = fp_big_int1.add(BigInteger.ONE);
                 }
             }
@@ -12898,7 +13018,7 @@ public  class  az390 implements Runnable {
         if (index != -1) {
             index++;
             while (index < fp_text.length() && fp_text.charAt(index) >= '0'
-                   && fp_text.charAt(index) <= '9') {
+                    && fp_text.charAt(index) <= '9') {
                 tot++;
                 index++;
             }
