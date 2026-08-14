@@ -748,7 +748,7 @@ Below we show an example showing how various numbers of records might fit into a
 > [!NOTE]
 > The drawing shows V-type records. Must be fixed.
 
-### AIX Block Non-unique not segmented
+### AIX Non-unique not segmented
 
 AIX non-unique non-segmented records have the following format:
 
@@ -768,7 +768,7 @@ Below we show an example showing how various numbers of records might fit into a
 > with a large number of synonyms may exceed Block capacity, requiring the AIX data
 > record to be split into segments. An unsegmented non-unique AIX does not seem to make sense.
 
-### AIX Block Non-unique segmented
+### AIX Non-unique segmented
 
 AIX non-unique segmented records have the following formats:
 
@@ -833,6 +833,11 @@ The ELIX record has the following format:
 | KSDS       | Highest Primary key followed by the XLRA of the segment (always record 1) |
 | RRDS       | Highest RRN followed by the XLRA of the segment (always record 1)         |
 
+### LDS Blocks
+
+LDS Blocks have no structure imposed by zVSAM. The entire data block is treated as user data.
+There is no Block Header, Block Footer, and no RPTR list. Just user data; as many bytes of
+user data as the block size indicates. LDS blocks can be addressed only by their XLRA Block pointer.
 
 
 
