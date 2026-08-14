@@ -329,11 +329,11 @@ AIX non-unique records have the following format:
 
 The diagram below shows how AIX data blocks are chained in a Unique AIX's data component.
 
-![Diagram showing layout of a chain of AIX Data Blocks](zVSAM_V2_Drawing_Chain_AIX_Unique.jpg)
+![Diagram showing layout of a chain of AIX Data Blocks](img/zVSAM_V2_Drawing_Chain_AIX_Unique.jpg)
 
 The diagram below shows how AIX data blocks are chained in a Non-Unique AIX's data component.
 
-![Diagram showing layout of a Chain of Segmented AIX Data Blocks](zVSAM_V2_Drawing_Chain_AIX_NonUnique.jpg)
+![Diagram showing layout of a Chain of Segmented AIX Data Blocks](img/zVSAM_V2_Drawing_Chain_AIX_NonUnique.jpg)
 
 ### AIX Data Organization
 
@@ -452,7 +452,7 @@ zVSAM extension: Any AIX keys need not be in the first segment.
 Below we show an example showing how various numbers of records might fit into the blocks of the file,
 or how a single record might occupy multiple blocks of the file
 
-![Diagram showing layout of an ESDS Block with Spanned Variable records](zVSAM_V2_Drawing_Block_Type_ESDS_VS.jpg)
+![Diagram showing layout of an ESDS Block with Spanned Variable records](img/zVSAM_V2_Drawing_Block_Type_ESDS_VS.jpg)
 
 **Note**: The format of an ESDS block with Variable Spanned records is identical to that for a KSDS.
 
@@ -519,7 +519,7 @@ zVSAM extension: The primary key and any AIX keys need not be in the first segme
 
 Below we show an example where each record requires three segments:
 
-![Diagram showing layout of a KSDS Block with Fixed Spanned records](zVSAM_V2_Drawing_Block_Type_KSDS_FS.jpg)
+![Diagram showing layout of a KSDS Block with Fixed Spanned records](img/zVSAM_V2_Drawing_Block_Type_KSDS_FS.jpg)
 
 | Function      | Notes                                              |
 |---------------|----------------------------------------------------|
@@ -543,7 +543,7 @@ unallocated (marked in blue) and the record is placed on the next block.
 
 Below we show an example showing how various numbers of records might fit into the blocks:
 
-![Diagram showing layout of a KSDS Block with Variable records](zVSAM_V2_Drawing_Block_Type_KSDS_V.jpg)
+![Diagram showing layout of a KSDS Block with Variable records](img/zVSAM_V2_Drawing_Block_Type_KSDS_V.jpg)
 
 | Function      | Notes                                                                             |
 |---------------|-----------------------------------------------------------------------------------|
@@ -579,7 +579,7 @@ zVSAM extension: The primary key and any AIX keys need not be in the first segme
 Below we show an example showing how various numbers of records might fit into the blocks of the file,
 or how a single record might occupy multiple blocks of the file.
 
-![Diagram showing layout of a KSDS Block with Spanned Variable records](zVSAM_V2_Drawing_Block_Type_KSDS_VS.jpg)
+![Diagram showing layout of a KSDS Block with Spanned Variable records](img/zVSAM_V2_Drawing_Block_Type_KSDS_VS.jpg)
 
 | Function      | Notes                                                                             |
 | Add           | Yes                                                                               |
@@ -615,7 +615,7 @@ Empty slots are initially binary zeros with `RPTR_MTY` set.
 
 Below we show an example where 8 record slots fit into a block:
 
-![Diagram showing layout of an RRDS Block with Fixed records](zVSAM_V2_Drawing_Block_Type_RRDS_F.jpg)
+![Diagram showing layout of an RRDS Block with Fixed records](img/zVSAM_V2_Drawing_Block_Type_RRDS_F.jpg)
 
 | Function      | Notes                                          |
 |---------------|------------------------------------------------|
@@ -641,7 +641,7 @@ This dataset type is a zVSAM extension
 
 Below we show an example where each record requires three segments:
 
-![Diagram showing layout of an RRDS Block with Fixed Spanned records](zVSAM_V2_Drawing_Block_Type_RRDS_FS.jpg)
+![Diagram showing layout of an RRDS Block with Fixed Spanned records](img/zVSAM_V2_Drawing_Block_Type_RRDS_FS.jpg)
 
 | Function      | Notes                                          |
 |---------------|------------------------------------------------|
@@ -677,7 +677,7 @@ unallocated (marked in blue) and the record is placed on the next block.
 
 Below we show an example showing how various numbers of records might fit into the blocks
 
-![Diagram showing layout of an RRDS Block with Variable records](zVSAM_V2_Drawing_Block_Type_RRDS_V.jpg)
+![Diagram showing layout of an RRDS Block with Variable records](img/zVSAM_V2_Drawing_Block_Type_RRDS_V.jpg)
 
 | Function      | Notes                                                            |
 |---------------|------------------------------------------------------------------|
@@ -710,7 +710,7 @@ This dataset type is a zVSAM extension.
 
 Below we show an example showing how various numbers of records might fit into the blocks
 
-![Diagram showing layout of an RRDS Block with Variable Spanned records](zVSAM_V2_Drawing_Block_Type_RRDS_VS.jpg)
+![Diagram showing layout of an RRDS Block with Variable Spanned records](img/zVSAM_V2_Drawing_Block_Type_RRDS_VS.jpg)
 
 | Function      | Notes                                                            |
 |---------------|------------------------------------------------------------------|
@@ -743,7 +743,7 @@ records from the underlying base cluster.
 
 Below we show an example showing how various numbers of records might fit into a unique AIX's data block
 
-![Diagram showing layout of an AIX Data Block](zVSAM_V2_Drawing_Block_Type_AIX_Unique.jpg)
+![Diagram showing layout of an AIX Data Block](img/zVSAM_V2_Drawing_Block_Type_AIX_Unique.jpg)
 
 > [!NOTE]
 > The drawing shows V-type records. Must be fixed.
@@ -760,7 +760,7 @@ AIX non-unique non-segmented records have the following format:
 
 Below we show an example showing how various numbers of records might fit into a non-unique AIX's data block
 
-![Diagram showing layout of an unsegmented AIX Data Block](zVSAM_V2_Drawing_Block_Type_AIX_Unseg.jpg)
+![Diagram showing layout of an unsegmented AIX Data Block](img/zVSAM_V2_Drawing_Block_Type_AIX_Unseg.jpg)
 
 > [!NOTE]
 > This paragraph should probably be deleted. For a Non-Unique key you never knwo
@@ -792,7 +792,7 @@ AIX non-unique segmented records have the following formats:
 
 Below we show an example showing how various numbers of records might fit into a non-unique AIX's data block
 
-![Diagram showing layout of a Segmented AIX Data Block](zVSAM_V2_Drawing_Block_Type_AIX_Seg.jpg)
+![Diagram showing layout of a Segmented AIX Data Block](img/zVSAM_V2_Drawing_Block_Type_AIX_Seg.jpg)
 
 > [!NOTE]
 > Each segment contains a whole number of elements.
@@ -823,7 +823,7 @@ If the number of elements is too low then rebuild the AIX with a larger blocksiz
 IBM does not maintain elements in any particular order but for the ELIX structure to work zVSAM will
 maintain elements in sequence.
 
-![Diagram showing layout of an ELIX Block](zVSAM_V2_Drawing_Block_Type_ELIX.jpg)
+![Diagram showing layout of an ELIX Block](img/zVSAM_V2_Drawing_Block_Type_ELIX.jpg)
 
 The ELIX record has the following format:
 
