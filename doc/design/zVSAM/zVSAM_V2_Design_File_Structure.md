@@ -282,22 +282,22 @@ Not all structure elements occur in all Block types. The relation is as follows:
 ### ESDS Data Organization
 
 > [!NOTE]
-> this paragrpah still needs to be created, including a drawing.
+> this paragraph still needs to be created, including a drawing.
 
 ### KSDS Data Organization
 
 > [!NOTE]
-> this paragrpah still needs to be created, including a drawing.
+> this paragraph still needs to be created, including a drawing.
 
 ### KSDS Index Organization
 
 > [!NOTE]
-> this paragrpah still needs to be created, including a drawing.
+> this paragraph still needs to be created, including a drawing.
 
 ### RRDS Data Organization
 
 > [!NOTE]
-> this paragrpah still needs to be created, including a drawing.
+> this paragraph still needs to be created, including a drawing.
 
 ### AIX Data Organization
 
@@ -335,15 +335,15 @@ The diagram below shows how AIX data blocks are chained in a Non-Unique AIX's da
 
 ![Diagram showing layout of a Chain of Segmented AIX Data Blocks](img/zVSAM_V2_Drawing_Chain_AIX_NonUnique.jpg)
 
-### AIX Data Organization
+### AIX Index Organization
 
 > [!NOTE]
-> this paragrpah still needs to be created, including a drawing.
+> this paragraph still needs to be created, including a drawing.
 
 ### LDS Data Organization
 
 > [!NOTE]
-> this paragrpah still needs to be created, including a drawing.
+> this paragraph still needs to be created, including a drawing.
 
 ### ESDS Fixed non-Spanned
 
