@@ -1,108 +1,10 @@
-### Structure of ESDS
-
-### Structure of KSDS
-
-### Structure of RRDS
-
-### Structure of LDS
-
-### Free Blocks
-
-## Block Structures
-
 ### Block Header Structure
 
-Every block (except raw blocks) has a block header (`ZVSAMHDR`).
-All block headers have the same structure.
 
-Block Headers are formatted as follows:
 
-| Label    | Offset | Field type | Function                              |
-|----------|--------|------------|---------------------------------------|
-| ZVSAMHDR |        | DSECT      | Block header area                     |
-| BHDREYE  | X'000' | CL3        | =C'HDR' – eyecatcher to mark the area |
-| BHDRSEQ# | X'003' | XL1        | Write control value                   |
-| BHDRVER  | X'004' | XL1        | Design sequence number                |
-| BHDR_V2  |        | =X'02'     | Current design version number         |
-| BHDRFLG1 | X'005' | XL1        | Flags                                 |
-| BHDR_PFX |        | =X'80'     | Prefix block                          |
-| BHDR_MAP |        | =X'40'     | Spacemap block                        |
-| BHDR_DTA |        | =X'20'     | Data block                            |
-| BHDR_IDX |        | =X'10'     | Index block                           |
-| BHDR_SEG |        | =X'08'     | Segment block                         |
-| BHDR_LEF |        | =X'04'     | Index leaf Block                      |
-| BHDR_INT |        | =X'02'     | Index intermediate block              |
-| BHDR_ROT |        | =X'01'     | Index root block                      |
-| BHDR#REC | X'006' | XL1        | Nr of records on this block           |
-| BHDRXLVL | X'007' | XL1        | Index level                           |
-| BHDRSELF | X'008' | XL8        | XLRA of this block                    |
-| BHDRNEXT | X'010' | XL8        | XLRA of next block on chain           |
-| BHDRPREV | X'018' | XL8        | XLRA of previous block on chain       |
-| BHDRFRE@ | X'020' | XL3        | Offset of free area on this block     |
-| BHDRFLG2 | X'023' | XL1        | Flags                                 |
-| BHDR_ELX |        | =X'80'     | ELIX block                            |
-| BHDRFREE | X'024' | XL3        | Length of free area on this block     |
-|          |        | XL2        | Reserved                              |
 
-`BHDRSEQ#` is incremented by one every time the block is written out to the file.
-The footer area contains a comparable field: `BFTRSEQ#`. Together they guard against incomplete writes.
 
-`BHDRXLVL` indicates the index level. Zero is the leaf level. Index blocks are chained by level.
-That is, for every index level in use there is a pair of pointers in the prefix block (`PFXBLVLn`/`PFXELVLn`)
-that starts and ends the chain for that level.
 
-`BHDRSELF` contains the block's own XLRA. This helps to guard against misdirected reads and/or writes.
-
-`BHDRNEXT`/`BHDRPREV` point to the next and previous block on the chain. Which chain this is, depends on the `BHDRFLAG` setting,
-and, if this is an index block, by the `BHDRXLVL` value. For the prefix block, these two fields are set to foxes.
-Free blocks are not on any chain, for these blocks the `BHDRPREV`/`BHDRNEXT` pointers can have any value.
-
-Segmented records are a special case. Segments of a segmented record never share their block with other data.
-The block holding the first segment is part of the data chain. A block holding a non-first segment is part of the segment chain.
-A block that holds a record's first segment has an SPX pointing into the segment chain at the block holding the second segment.
-From the second segment the `BHDRPREV`/`BHDRNEXT` chain can be used to sequentially read subsequent segments up to the last segment of the record.
-
-The following table summarizes the way that blocks in the file are chained from the prefix block.
-Please note that free data blocks do not reside on any chain. Nor does the prefix block.
-
-| Block Type               | Begin of chain | End of chain |
-|--------------------------|----------------|--------------|
-| Prefix                   | foxes          | foxes        |
-| Spacemap                 | PFXBMAP        | PFXEMAP      |
-| Data (in use)            | PFXBDATA       | PFXEDATA     |
-| Data (non-first segment) | PFXBSEGM       | PFXESEGM     |
-| Data (free)              | foxes          | foxes        |
-| Index                    | PFXBLVLn       | PFXELVLn     |
-| Free                     | n.a.           | n.a.         |
-
-*Example 1:* Assume we have a cluster with three data blocks holding unsegmented records.
-The blocks are on the data chain as outlined in the picture below. Please note that all depicted pointers are block pointers.
-Each pointer thus originates with the indicated field, and ends at the block it points to.
-The location where the arrows attach has no meaning since it's a block pointer.
-
-![Diagram showing Chained Data Blocks](img/zVSAM_V2_Drawing_Chain_Data_Blocks.jpg)
-
-*Example 2:* Now suppose we have a cluster with three data blocks, the first block holding two unsegmented records,
-the second block holding the first segment of a record consisting of three segments and the third block holding the first segment
-of a record consisting of two segments.
-
-In the picture we show the data chain as a solid line (as in the picture above), we show the segment chain as a dotted line,
-and we show the SPX pointers as fat lines.
-
-The picture shows the prefix area's pointer to start/end block of both the data chain and the segment chain.
-It also shows the first and second block on each chain pointing to one another. Same thing for the second and third block on each chain.
-
-The picture also shows that the SPX only occurs on the first segment of each segmented record.
-
-As in the example above, all depicted pointers are block pointers. Each pointer originates with the indicated field,
-and ends at the block it points to. The location where the arrows attach has no meaning since it's a block pointer.
-
-![Diagram showing Chained Segmented Data Blocks](img/zVSAM_V2_Drawing_Chain_Segmented_Data_Blocks.jpg)
-
-*Example 3:* This example is the same as the example 2 – the only difference being that now all segments go onto the segment chain.
-The SPX resides by itself on the data block and just points to the first segment on the segment chain.
-
-![Diagram showing Chained Data Blocks - alternative design](img/zVSAM_V2_Drawing_Chain_Data_Blocks_alt.jpg)
 
 *Example 4:* This example shows an index of only one block, holding two record pointers.
 
@@ -113,63 +15,6 @@ causing the only index block to overflow and split. Now there are two leaf block
 and a new root block has been created on the LVL1 chain.
 
 ![Diagram showing two Chained Index Blocks](img/zVSAM_V2_Drawing_Chain_Index_Blocks_2.jpg)
-
-### Block Footer Structure
-
-Every block (except raw blocks) has a block footer. All block footers have the same structure.
-It is formatted as follows:
-
-| Label    | Offset | Field type | Function                              |
-|----------|--------|------------|---------------------------------------|
-| ZVSAMFTR |        | DSECT      | Block header area                     |
-| BFTREYE  | X'000' | CL3        | =C'FTR' – eyecatcher to mark the area |
-| BFTRSEQ# | X'003' | XL1        | Write control value                   |
-
-`BFTRSEQ#` is incremented by one every time the block is written out to the file.
-The header area contains a comparable field: `BHDRSEQ#`. Together they guard against incomplete writes.
-
-### Record Pointer List Structure
-
-Every block that contains data records contains a record pointer list. Records are accessible only through their Record Pointer or RPTR.
-Every entry in the list corresponds with a single record on the block. The last byte of a record's XLRA is the index into the Record Pointer List.
-Index value of X'00' is reserved for block pointers; values X'01' through X'FF' inclusive are usable as RPTR index values.
-The difference of 1 always needs to be taken into account when indexing the RPTR list.
-
-The RPTR list always follows the block header directly.
-
-The number of entries on the RPTR list varies with the number of records stored on the block (`BHDR#REC`) and is terminated
-by `RPTR_END` to mark the end of the list.
-
-Record Pointer List entries are formatted as follows:
-
-| Label    | Offset | Field type | Function                                                |
-|----------|--------|------------|---------------------------------------------------------|
-| ZVSAMRPT |        | DSECT      | Record Pointer                                          |
-| RPTRFLGS | X'000' | XL1        | Flag byte                                               |
-| RPTR_ACT |        | =X'80'     | Active record                                           |
-| RPTR_MTY |        | =X'40'     | Empty record slot                                       |
-| RPTR_DIS |        | =X'20'     | Record has been displaced to another block              |
-| RPTR_MOV |        | =X'10'     | New location of a moved record                          |
-| RPTR_SEG |        | =X'08'     | Record segment                                          |
-| RPTR_END |        | =X'01'     | Terminating entry                                       |
-| RPTRREC@ | X'001' | AL3        | Record offset within block - foxes when RPTR_END is set |
-
-`RPTR_ACT` and `RPTR_MTY` are mutually exclusive. Either one must be set, otherwise the RPTR list is compromised and data access will fail.
-When `RPTR_DIS` is set, the RPTR addresses a Displaced Record Pointer, rather than the actual data.
-The format of a Displaced Record Pointer is as follows:
-
-| Label    | Offset | Field type | Function                                       |
-|----------|--------|------------|------------------------------------------------|
-| ZVSAMDRP |        | DSECT      | Displaced Record Pointer                       |
-| DRPIXLRA | X'000' | XL8        | Indirect XLRA = location of actual record data |
-
-### Free Space
-
-Free space on any block is maintained in a single extent, usually but not necessarily following the RPTR list and preceding the stored record data.
-
-Additionally, there may be empty records on the block. These are marked with the `RPTR_MTY` bit in their RPTR list entry.
-These empty record slots are available for reuse and may (if needed) be merged with each other and with the available
-free space on the block to create a larger area of free space to satisfy an allocation request.
 
 ### Prefix Area Structure
 
