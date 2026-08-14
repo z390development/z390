@@ -745,3 +745,44 @@ Additional notes:
 - `CBMRRPL_CNV` – TESTCB only, always false
 - `CBMRRPL_TRANSID` – Always foxes
 
+### Counters Area
+
+All fields are 8 bytes except `CTRAVGRL` which is 4 bytes.
+
+| Counter    | Data/Index | Initialized by zREPRO                                     | Maintenance                                                                           |
+|------------|------------|-----------------------------------------------------------|---------------------------------------------------------------------------------------|
+| CTRAVGRL   | Both       | Yes. For fixed, =`PFXRECLN` even if the dataset is empty. | For variable files only:                                                              |
+|            |            | For variable, calculated or zero if the dataset is empty. | At CLOSE, calculate `CTRTOTRL`/`CTRNLOGR`                                             |
+| CTRAVSPAC  | Both       | Yes.                                                      | For every block update use the old and new `BHDRFREE` to increase/decrease this value |
+| CTRHALCRBA | Both       | Yes.                                                      | Updated when blocks are added to the end of the dataset component                     |
+|            |            |                                                           | or when the existing `HALCRBA` block has all records deleted. It's the                |
+|            |            |                                                           | block RBA+1 (XLRA+256) of the last data or level 0 index block containing records.    |
+| CTRHLRBA   | Index only | Yes.                                                      | Block RBA of `PFXROOT`. Update if it changes                                          |
+| CTRENDRBA  | Both       | Yes.                                                      | Updated when blocks are added to the end of the dataset component.                    |
+|            |            |                                                           | It's the block RBA+1 (XLRA+256) of the last data or level 0 index block               |
+| CTRNBFRFND | Both       | No                                                        | +1 for each LSR buffer read                                                           |
+| CTRNBUFNO  | Both       | No                                                        | +1 for each buffer allocated                                                          |
+| CTRBUFUSE  | Both       | No                                                        | +1 for each buffer used                                                               |
+| CTRBUFRDS  | Both       | No                                                        | +1 for each buffer read                                                               |
+| CTRNCIS    | Both       | No                                                        | +1 for each block split                                                               |
+| CTRNDELR   | Both       | No                                                        | KSDS or RRDS: +1 for each record delete                                               |
+| CTRNEXCP   | Both       | No                                                        | +1 for each physical block read/write                                                 |
+| CTRNEXT    | Both       | Yes                                                       | Always 1, not maintained                                                              |
+| CTRNINSR   | Both       | No                                                        | +1 for each record added. For RRDS, any empty slots added to the end are not counted  |
+| CTRNLOGR   | Both       | Yes                                                       | +1 for each record added; -1 for each record deleted.                                 |
+|            |            |                                                           | For RRDS, any empty slots added to the end are not counted                            |
+|            |            |                                                           | For Index, all records in all levels are counted                                      |
+| CTRNRETR   | Both       | No                                                        | +1 for each record read                                                               |
+| CTRNNUIW   | Both       | No                                                        | +1 for each maintenance write for block splits, chain repair, segment, spacemap       |
+|            |            |                                                           | and ELIX block management                                                             |
+| CTRNUPDR   | Both       | No                                                        | +1 for each record update                                                             |
+| CTRSDTASZ  | Both       | Yes                                                       | +block size for each block added                                                      |
+| CTRSTMST   | Both       | Yes                                                       | Write STCK value at CLOSE                                                             |
+| CTRSTRMAX  | Both       | No                                                        | +1 for each string created                                                            |
+| CTRNUIW    | Both       | No                                                        | +1 for each user-requested block write                                                |
+| CTRTOTRL   | Data only  | Yes                                                       | Maintained for variable files only:                                                   |
+|            |            |                                                           | +record size for each record added; -record size for each record deleted              |
+|            |            |                                                           | SPX is not included; RLF is included; Adjusted for change to variable length          |
+|            |            |                                                           | For RRDS, empty slots are not included                                                |
+| CTRLOKEY   | Data only  | Yes                                                       | KSDS only. Update when a lower key is added or this key is deleted                    |
+
