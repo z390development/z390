@@ -2742,7 +2742,7 @@ utilities keep precedence (this avoids unintentionally overriding system command
 <p>For example, add the following line to your shell startup file (use <code>~/.bashrc</code>,
 <code>~/.bash_profile</code>, or <code>~/.profile</code> for bash; use <code>~/.zshrc</code> for zsh):</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># append z390 bash tools to the existing PATH so system commands keep precedence</span>
-<span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PATH</span><span class="s2">:/usr/local/z390/bash&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">"</span><span class="nv">$PATH</span><span class="s2">:/usr/local/z390/bash"</span>
 </code></pre></div>
 <p>After editing the file, reload your shell config:</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># for bash</span>
@@ -2762,7 +2762,7 @@ would otherwise hide them because it appears earlier in your PATH. The wrapper
 intentionally executes (<code>exec</code>) the target script from the z390 <code>bash</code> folder
 so the target runs as if called directly.</p>
 <p>Usage examples:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># run the z390 &#39;link&#39; command even if a system &#39;link&#39; exists earlier in PATH</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># run the z390 'link' command even if a system 'link' exists earlier in PATH</span>
 z390w<span class="w"> </span>link<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 
 <span class="c1"># run any z390 command by passing the command name</span>
@@ -2845,7 +2845,7 @@ z390w<span class="w"> </span><span class="nb">help</span>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-25-g7100a9ad"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-26-g887c48c8"}</script>
     
     
       <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>

@@ -3523,31 +3523,31 @@ command processors to split the parm.</p>
 <p>If single quotes are included in text, they are passed on to &amp;SYSPARM.</p>
 <p>There is a limit of 32767 bytes for the text. </p>
 <p>SYSPARM will be transferred to the macro variable &amp;SYSPARM.</p>
-<p><div class="highlight"><pre><span></span><code>mz390 ... &quot;SYSPARM(HELLO WORLD)&quot;
+<p><div class="highlight"><pre><span></span><code>mz390 ... "SYSPARM(HELLO WORLD)"
 </code></pre></div>
 Access the text by coding:</p>
-<div class="highlight"><pre><span></span><code>label    DC    C&#39;&amp;SYSPARM&#39;
+<div class="highlight"><pre><span></span><code>label    DC    C'&amp;SYSPARM'
 ...... will translate to 
-label    DC    C&#39;HELLO WORLD&#39;
+label    DC    C'HELLO WORLD'
 </code></pre></div>
 <h3 id="run-time-parm">Run time - PARM</h3>
 <p>PARM can be accessed via GR1 at program entry.</p>
 <p>GR1 will contain an address that points to a fullword in storage which points to 
 a storage location with the parm length in a halfword followed by the parm value.</p>
-<div class="highlight"><pre><span></span><code>ez390 ... &quot;PARM(HELLO WORLD)&quot;
+<div class="highlight"><pre><span></span><code>ez390 ... "PARM(HELLO WORLD)"
 </code></pre></div>
 <p>The fullword pointed to by GR1 points to:</p>
-<div class="highlight"><pre><span></span><code>         DC   H&#39;11&#39;,C&#39;HELLO WORLD&#39;`
+<div class="highlight"><pre><span></span><code>         DC   H'11',C'HELLO WORLD'`
 </code></pre></div>
 <p>If single quotes are included around text in PARM they are removed.</p>
-<div class="highlight"><pre><span></span><code>ez390 ... &quot;PARM(&#39;HELLO WORLD&#39;)&quot; 
+<div class="highlight"><pre><span></span><code>ez390 ... "PARM('HELLO WORLD')" 
 </code></pre></div>
 <p>Will also result in the fullword pointed to by GR1 pointing to:</p>
-<div class="highlight"><pre><span></span><code>         DC   H&#39;11&#39;,C&#39;HELLO WORLD&#39;`
+<div class="highlight"><pre><span></span><code>         DC   H'11',C'HELLO WORLD'`
 </code></pre></div>
 <h4 id="usage">Usage</h4>
 <p>The program is run with the parameter passed</p>
-<div class="highlight"><pre><span></span><code>ez390 myprog &quot;PARM(&#39;HELLO WORLD&#39;)&quot;
+<div class="highlight"><pre><span></span><code>ez390 myprog "PARM('HELLO WORLD')"
 </code></pre></div>
 <p>The program code:</p>
 <div class="highlight"><pre><span></span><code>         L     R2,0(,R1)       R2=address of parm length(HW)+value
@@ -3556,7 +3556,7 @@ a storage location with the parm length in a halfword followed by the parm value
          EX    R3,MOVE         Execute MOVE instruction using length code from R3
 ......
 MOVE     MVC   PARM(0),2(R2)   Move instruction used by EX
-PARM     DC    CL80&#39; &#39;         Work area for parm value
+PARM     DC    CL80' '         Work area for parm value
 </code></pre></div>
 <ul>
 <li>GR1 is populated by ez390 with the parm address pointer.</li>
@@ -3711,9 +3711,9 @@ the following format:</p>
 <div class="highlight"><pre><span></span><code>         BLDL  0,LIST1
          LOAD  DE=BLDL2
 ......
-LIST1    DC    H&#39;2&#39;
-BLDL1    DC    H&#39;14&#39;,CL8&#39;MYPROG1&#39;,XL6&#39;00&#39;
-BLDL2    DC    H&#39;14&#39;,CL8&#39;MYPROG2&#39;,XL6&#39;00&#39;
+LIST1    DC    H'2'
+BLDL1    DC    H'14',CL8'MYPROG1',XL6'00'
+BLDL2    DC    H'14',CL8'MYPROG2',XL6'00'
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -4340,7 +4340,7 @@ PSA and may be addressed as follows:</p>
 <h3 id="cvt">CVTD - CVT structure</h3>
 <p>Provides a DSECT for the limited fields available in the Communications Vector 
 Table. This may be addressed as follows:</p>
-<div class="highlight"><pre><span></span><code>         L     reg,X&#39;10&#39;
+<div class="highlight"><pre><span></span><code>         L     reg,X'10'
          USING IHACVT,reg
 ......
          CVTD
@@ -4440,8 +4440,8 @@ within the standard C-type constant.</p>
 </ul>
 <div class="highlight"><pre><span></span><code>         LINK EP=MYLINK,DSNAME=MYPATH ...
 ......
-MYPATH   DC C&#39;c:\path\to\file&#39;,X&#39;00&#39;
-MYPATH   DC C&#39;&quot;c:\path1;c:\path2&quot;&#39;
+MYPATH   DC C'c:\path\to\file',X'00'
+MYPATH   DC C'"c:\path1;c:\path2"'
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -4537,7 +4537,7 @@ on the senior bit (bit 0) of the last parameter.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-25-g7100a9ad"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-26-g887c48c8"}</script>
     
     
       <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>

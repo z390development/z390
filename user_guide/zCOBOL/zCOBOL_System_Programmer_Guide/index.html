@@ -2970,8 +2970,8 @@ statements are as follows:</p>
 </code></pre></div>
 <ol>
 <li>zc390 translator generates the following 2 zCOBOL verb macro call statements:
-<div class="highlight"><pre><span></span><code><span class="c">MOVE  </span><span class="mi">1</span><span class="p">.</span><span class="mi">1</span><span class="p">,</span><span class="s1">&#39;TO&#39;</span><span class="p">,</span><span class="nv">FLT_SRT</span><span class="p">,</span><span class="s2">&quot;(&#39;,2,&#39;)&#39;`   </span>
-<span class="c">COMPUT</span><span class="nv">E</span><span class="w"> </span><span class="nv">FLT_SRT</span><span class="p">,</span><span class="s1">&#39;(&#39;</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="s1">&#39;)&#39;</span><span class="p">,</span><span class="o">=</span><span class="p">,</span><span class="nv">FLT_SRT</span><span class="p">,</span><span class="s1">&#39;(&quot;,2,&#39;</span><span class="p">)</span><span class="s1">&#39;,+,2.2</span>
+<div class="highlight"><pre><span></span><code><span class="c">MOVE  </span><span class="mi">1</span><span class="p">.</span><span class="mi">1</span><span class="p">,</span><span class="s1">'TO'</span><span class="p">,</span><span class="nv">FLT_SRT</span><span class="p">,</span><span class="s2">"(',2,')'`   </span>
+<span class="c">COMPUT</span><span class="nv">E</span><span class="w"> </span><span class="nv">FLT_SRT</span><span class="p">,</span><span class="s1">'('</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="s1">')'</span><span class="p">,</span><span class="o">=</span><span class="p">,</span><span class="nv">FLT_SRT</span><span class="p">,</span><span class="s1">'(",2,'</span><span class="p">)</span><span class="s1">',+,2.2</span>
 </code></pre></div></li>
 <li>The MOVE macro uses shared copybook routine GET_FIELD_PARM to parse the two
 fields for MOVE and store resulting field name and symbol table index.
@@ -3404,7 +3404,7 @@ or in OPT options file.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-25-g7100a9ad"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-26-g887c48c8"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
