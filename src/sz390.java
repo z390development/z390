@@ -238,6 +238,8 @@ public class sz390 implements Runnable {
     * 2025-11-12 Issue #714 DELETE does not remove and FREEMAIN CDE from CVTCDE chain
     * 2026-01-16 AFK        Add javadoc comments
     * 2026-05-30 Issue #654 Improve help text for debug mode commands
+    * 2026-06-27 Issue #853 Test script lines with leading * sometimes marked as invalid command
+    * 2026-07-11 Issue #865 Test run ends RC=0 even when test script does not run to completion
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -440,6 +442,7 @@ public class sz390 implements Runnable {
     /** variable      */ byte[]  test_mem_sdt  = null;
     /** variable      */ int test_v_retcode = -1; // -1 - not used, 0, 4, 8 when relevant; // RPI 1526
     /** variable      */ boolean test_script_mode_batch;   // #681
+    /** variable      */ boolean test_script_running;      // #865
     /*
      * test reg and mem break on change variables
      */
@@ -1246,6 +1249,10 @@ public void exit_ez390(){
 	  if (r15_rc > ez390_rc){
 		  ez390_rc = r15_rc;
 	  }
+      if (test_script_running) {                                                   // #865
+          log_error(110, "test script did not complete - Z command not executed"); // #865
+          ez390_rc = Math.max(8, ez390_rc);                                        // #865
+      }                                                                            // #865
 	  if  (ez390_errors > 0 || tz390.z390_abort){
 		  ez390_rc = 16;
       }
@@ -1554,6 +1561,7 @@ public void init_test(){
          try {
         	 test_cmd_file = new BufferedReader(new FileReader(test_file_name));
              test_script_mode_batch = true; // #681
+             test_script_running    = true; // #865
          } catch (Exception e){
 		 abort_error(57,"test input file for ddname " + tz390.test_ddname + " not found - " + test_file_name);
          test_script_mode_batch = false; // #681
@@ -6641,6 +6649,7 @@ private void exec_test_cmd(){
   try { // RPI 1137	
 	if (test_cmd != null && test_cmd.length() > 0){
 		tz390.put_trace("test cmd: " + test_cmd);
+        if (test_cmd.charAt(0) == '*') return; // ignore comment lines // #853
 	    test_match = test_pattern.matcher(test_cmd);
 	}
 	test_token = get_next_test_token();
@@ -6688,8 +6697,6 @@ private void exec_test_cmd(){
 		}
 	}
 	switch (test_opcode){
-	case '*': // * with no = following is comment
-		break;
 	case '=': // addr=sdt or nr=sdt change
 		if (!test_cmd_abort){
 			test_sdt = get_next_test_token();
@@ -6772,6 +6779,7 @@ private void exec_test_cmd(){
 	    break;
 	case 'H':  // help
 	    tz390.put_trace("z390 test command help summary");                                                                                                // #654
+	    tz390.put_trace("  *           comment if * appears in column 1; current location otherwise");                                                    // #853
 	    tz390.put_trace("  addr=sdt    set memory value (i.e. 1r?=x'80' changes mem at (r1) 31 bit");                                                     // #654
 	    tz390.put_trace("  reg=sdt     set register value (i.e. 15r=8 changes reg 15 to 8)");                                                             // #654
 	    tz390.put_trace("  A addr      add/remove address stop (i.e. A FF348. or A *+4 etc.)");  // RPI 395                                               // #654
@@ -7307,8 +7315,8 @@ private void exec_test_cmd(){
         tz390.opt_test  = false;     //RPI186
         pz390.test_trace_count = -1; //RPI186
 	    ez390_errors = 0;  // RPI 243
-        // ez390_rc = 0;                                                                                    // RPI 1526
-        ez390_rc = Math.max(test_v_retcode, 0);                                                                   // RPI 1526
+        ez390_rc = Math.max(test_v_retcode, ez390_rc);                                                      // RPI 1526 #865
+        test_script_running = false;                     // script completed                                // #865
         break;
 	default:
 		test_error("undefined test command - " + test_opcode);

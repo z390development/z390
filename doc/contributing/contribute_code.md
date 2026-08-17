@@ -34,6 +34,31 @@ to download the appropriate version for your system.
 You can find a quick reference for some frequently used git commands
 the bottom of this document.
 
+### Install lfs
+
+LFS is a git feature for Large File Support. z390 uses lfs for storing
+binary files (e.g. jpg, png) without bloating the repository itself.
+
+The installation depends on your host operating system.
+
+For Linux:
+```
+sudo apt update
+sudo apt install git-lfs
+git lfs install
+cd /mnt/c/z390dev/wrk_rt
+git lfs pull
+```
+
+On Windows:
+1. Download the Windows installer from https://git-lfs.com (or the GitHub releases page).
+2. Run the installer.
+3. issue:
+```
+git lfs install
+git lfs pull
+```
+
 ### Clone the code
 
 Start with a clone of the main repository.

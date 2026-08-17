@@ -403,6 +403,15 @@ public class pz390 {
      * 2025-10-20 AFK       Add javadoc comments
      * 2026-02-06 Issue 760 Divide Decimal (DP) incorrectly issues S0CA when quotient
      *                      length too long; should issue S0CB
+     * 2026-05-14 Issue 596 TRT instruction does not set GR1 correctly when
+     *                      running in 64-bit addressing mode. Similar problems
+     *                      with TRTR and EDMK. When fixing EDMK, additonal problems
+     *                      were found with the ED instruction:
+     *                      1) Did not S0C7 when left half of a source byte did not
+     *                         contain 0-9
+     *                      2) Did not properly set the condition code when the
+     *                         source field contained an unsigned packed decimal
+     *                         number (eg, X'1234').
 	 *********************************************************
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -633,6 +642,11 @@ public class pz390 {
     /** variable      */ int fp_dxc_trap = 0xff; // compare and trap exception RPI 817
     /** variable      */ int fp_dxc = 0; // byte 2 of fp_fpc_reg with IEEE exceptions
     /** variable      */ String fp_dfp_digits = null;
+
+    /*
+     * 		Array used only by exec_ed_edmk()                                 // #596
+     */
+    /** variable      */ byte[] targSave = new byte[256]; // ED/EDMK pattern  // #596
 
     /*
      * ASSIST global execution data areas RPI 812
@@ -3350,8 +3364,13 @@ public pz390()
 					} else {
 						psw_cc = psw_cc1;
 					}
-					reg.putInt(r1, (reg.getInt(r1) & psw_amode_high_bits) // RPI 828
-							| bd1_loc);
+					if(psw_extended_amode_bit == psw_extended_amode64_off ) {                        // #596
+						reg.putInt(r1,                                                               // #596
+							(reg.getInt(r1) & (psw_amode == psw_amode24 ? 0xFF000000 : 0x80000000))  // #596
+							| bd1_loc);                                                              // #596
+					} else {  // 64-bit addressing mode                                              // #596
+					    reg.putLong(r1-4, bd1_loc);                                                  // #596
+					}                                                                                // #596
 					reg.put(r2 + 3, mem_byte[bd2_loc
 							+ (mem_byte[bd1_loc] & 0xff)]);
 				}
@@ -3632,8 +3651,12 @@ public pz390()
 					} else {
 						psw_cc = psw_cc1;
 					}
-					reg.putInt(r1, (reg.getInt(r1) & psw_amode_high_bits) // RPI 828
-							| bd1_loc);
+					if (psw_extended_amode_bit == psw_extended_amode64_off) {         // #596
+					    reg.putInt(r1, (reg.getInt(r1) & psw_amode_high_bits) // RPI 828 #596
+			                      | bd1_loc);                                         // #596
+					} else { // 64-bit addressing mode                                // #596
+					    reg.putLong(r1-4, bd1_loc);                                   // #596
+					}                                                                 // #596
 					reg.put(r2 + 3, mem_byte[bd2_loc
 							+ (mem_byte[bd1_loc] & 0xff)]);
 					bd1_end = 0; // RPI 441
@@ -19411,6 +19434,18 @@ public pz390()
  * @param edmk_store boolean to indicate whether or not to store into R1
  */
 	private void exec_ed_edmk(boolean edmk_store) {
+		// fields to save, restore CC, pattern (ED/EDMK) & GR1 (EDMK)    // #596
+		int ccSave = psw_cc;               // current CC                 // #596
+		//byte[] targSave = new byte[256]; // pattern; global variable   // #596
+		int targSaveLen = rflen;           // pattern length             // #596
+		int bd1_locSave = bd1_loc;         // pattern address            // #596
+		long gr1Save = ( !edmk_store ? 0 : reg.getLong(r1-4) ); // GR1   // #596 
+		// save pattern in case data exception (S0C7)                    // #596
+		for (int i = 0; i < targSaveLen; i++) {                          // #596
+			targSave[i] = mem_byte[bd1_locSave+i];                       // #596
+		}                                                                // #596
+
+		boolean nonzero_digits = false;                                  // #596
 		psw_cc = psw_cc_equal; // assume last field zero;
 		byte target_byte = ' ';
 		byte source_byte = ' ';
@@ -19427,6 +19462,20 @@ public pz390()
 				if (left_digit) {
 					source_byte = mem_byte[bd2_loc];
 					next_digit = (source_byte & 0xf0) >> 4;
+					if (next_digit > 9) { // left digit in byte invalid  // #596
+						// restore pattern area                          // #596
+			            for (int i = 0; i < targSaveLen; i++) {          // #596
+			                mem_byte[bd1_locSave+i] = targSave[i];       // #596
+		                }                                                // #596
+		                // restore CC                                    // #596
+		                psw_cc = ccSave;                                 // #596
+		                // restore GR1 if EDMK                           // #596
+		                if (edmk_store) { reg.putLong(r1-4, gr1Save); }  // #596
+					    fp_dxc = fp_dxc_dec;                             // #596
+					    set_psw_check(psw_pic_data);                     // #596
+                        rflen = 0;  // stop while loop                   // #596
+                        break;                                           // #596 
+					}                                                    // #596
 					bd2_loc++;
 					source_sign = source_byte & 0xf;
 					if (source_sign <= 9) {
@@ -19443,27 +19492,33 @@ public pz390()
 					}
 				} else {
 					mem_byte[bd1_loc] = (byte) (next_digit | 0xf0);
+					if (!sig_digit && edmk_store) {                                                   // #596
+						if(psw_extended_amode_bit == psw_extended_amode64_off ) {                     // #596
+						    reg.putInt(r1,(reg.getInt(r1) & psw_amode_high_bits) | bd1_loc);  // RPI 828 #596
+						} else {  // 64-bit addressing mode                                           // #596
+						    reg.putLong(r1-4, bd1_loc);                                               // #596
+						}                                                                             // #596
+					}                                                                                 // #596
 					sig_digit = true;
-					if (edmk_store) {
-						edmk_store = false;
-						reg.putInt(r1,(reg.getInt(r1) & psw_amode_high_bits) | bd1_loc);  // RPI 828
-					}
-					if (next_digit != 0) { // assume pos if not zero
-						psw_cc = psw_cc_high;
-					}
+					if (next_digit != 0) {                                       // #596
+                        nonzero_digits = true;  // at least one nonzero digit    // #596
+						psw_cc = psw_cc_low;    // assume negative value         // #596
+					}                                                            // #596
 				}
 				if (source_sign > 9) {
 					if (source_sign != 0xd && source_sign != 0xb) {  // is434
 						sig_digit = false;
-					} else if (psw_cc == psw_cc_high) {
-						psw_cc = psw_cc_low;
-					}
+						psw_cc = (nonzero_digits ? psw_cc_high : psw_cc_equal);  // #596
+					} else {                                                     // #596
+					    psw_cc = (nonzero_digits ? psw_cc_low : psw_cc_equal);   // #596
+					}                                                            // #596
 				}
 				break;
 			case 0x22: // field separator
 				sig_digit = false;
 				mem_byte[bd1_loc] = fill_byte;
 				psw_cc = psw_cc_equal;
+				nonzero_digits = false;                                          // #596
 				break;
 			default: // any other char in mask
 				if (!sig_digit) {

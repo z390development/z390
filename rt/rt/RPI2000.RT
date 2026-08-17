@@ -9,8 +9,8 @@
 * existing code that interprets the A command
 *
 * ########################################
-v *+90 4 = x'9809C0C8'
-a *+90
+v *+5a. 4 = x'9809C0C0'
+a *+5a.
 t
 * ########################################
 * ### Initial access registers
