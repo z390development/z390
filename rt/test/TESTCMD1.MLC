@@ -22,13 +22,38 @@
 * 09/11/06 RPI 363 CHANGE FROM TEST TO RT\TEST DIRECTORY              
 * 02/02/07 RPI 532 REMOVE WINDOWS PROMPT AND FIX PATH CASE FOR LINUX  
 * 10/30/07 RPI 731 ADD CMDLOG=NO TO ALLOW PARENT TASK TO READ OUTPUT  
+* 08/03/26 AFK     Enable test to run on Linux
 *********************************************************************
          TITLE 'TESTCMD1 TEST USE OF SVC 34 COMMAND PROCESSOR'
 TESTCMD1 SUBENTRY
          COPY  ASMMSP
-         WTO   'TESTCMD1 TEST USE OF SVC 34 COMMAND PROCESSOR'
+
+.*
+.* Assume windows
+&WTOTXT  SETC  'TESTCMD1 TEST USE OF SVC 34 COMMAND PROCESSOR ON WINDOW+
+               S'
+&SCRIPT  SETC  '"rt\test\TESTCMD1.BAT"'
+         AIF   ('&SYSTEM_ID'(1,3) EQ 'Win').RUNTEST
+.* Not windows - must be linux or mac
+&WTOTXT  SETC  'TESTCMD1 TEST USE OF SVC 34 COMMAND PROCESSOR ON Linux'
+&SCRIPT  SETC  '"rt/test/testcmd1.sh"'
+.RUNTEST ANOP  ,
+*
+* Pick up script - if it was passed as parm.
+         LTR   R1,R1                   Got parm?
+         BZ    NOPARM
+         L     R1,0(,R1)               Get first pointer
+         LTR   R1,R1                   Valid?
+         BZ    NOPARM
+         CLC   0(2,R1),=H'0'           Empty string?
+         BE    NOPARM
+         LA    R5,2(,R1)               Point actual sysparm text
+         B     WTO
+NOPARM   DS    0H                      No parm: use default
+         LA    R5,=C'&SCRIPT'
+WTO      WTO   '&WTOTXT'
          CMDPROC START,CMDLOG=NO  RPI 731
-         CMDPROC WRITE,=C'"rt\test\TESTCMD1.BAT"'  RPI 532
+         CMDPROC WRITE,(R5)            R5 points to path and filename
          LA    R4,50
 CMDLOOP  EQU   *
          AHI   R4,-1
@@ -50,7 +75,7 @@ CMDLOOP  EQU   *
          B     CMDLOOP
 CMDEND   EQU   *
          CMDPROC STOP
-         WTO   'TESTSVC1 ENDING OK'
+         WTO   'TESTCMD1 ENDING OK'
          SUBEXIT
 ERROR    WTO   'TESTCMD1 COMMAND ERROR'
          SUBEXIT RC=16

@@ -52,7 +52,7 @@ RPI2008A DS    0H
 * Set up working storage areas
 *
 ***********************************************************************
-         MVC   WAEYE,=CL8'RPI2008'     Set eyecatcher
+*        MVC   WAEYE,=CL8'RPI2008'     Set eyecatcher
 ***********************************************************************
 *
 * Set addressing modes; using test, verify PSW displays key 8
