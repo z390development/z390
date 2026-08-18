@@ -42,7 +42,7 @@ public class InlineCatalog extends Catalog {
    */
   public CatalogEntry FindCatalogEntry(String entryType, String entryName) {
     Object entry = CatalogEntries.get(entryType + entryName);  
-    if (entry.equals(null)) return null;
+    if (entry == null) return null;
     return (CatalogEntry) entry;          // !! needs to be type-appropriate
   }
 

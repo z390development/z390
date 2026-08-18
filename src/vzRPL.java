@@ -75,7 +75,7 @@ public class vzRPL extends zControlBlock
     private static final short RPLOPT1     = 0x0027;
     private static final short RPLOPT2     = 0x0028;
     private static final short RPLFEEDB    = 0x0029;
-    private static final short RPLEND      = 0x0030;
+    private static final short RPLEND      = 0x0038;
 
     /**
     *   Values of equated symbols in RPL DSECT   

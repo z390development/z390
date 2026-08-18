@@ -384,7 +384,7 @@ public class vzACB extends zControlBlock
     byte    id      () {return get_byte(ACBID);}
 
     /** ACB length */
-    short   len     () {return get_byte(ACBLEN);}
+    short   len     () {return get_short(ACBLEN);}
 
     /** Macro access type flags byte 1 */
     byte    macr1   () {return get_byte(ACBMACR1);}
