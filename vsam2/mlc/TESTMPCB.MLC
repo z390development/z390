@@ -1,0 +1,135 @@
+*********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License 
+* along with this program; if not, see https://www.gnu.org/licenses.
+*********************************************************************
+* Author - Zane Hambly                                              *
+* Date   - 08/18/26                                                 *
+*********************************************************************
+TESTMPCB SUBENTRY BASES=(R13,R12,R11)
+*********************************************************************
+* ACB AND RPL BUILT FROM THE MACROS, READ BACK THROUGH THE          *
+* MAPPINGS. NO OFFSET IS WRITTEN DOWN TWICE ANYWHERE IN HERE,       *
+* WHICH IS THE WHOLE POINT OF IT.                                   *
+*********************************************************************
+         AIF   (&SYSZVSAM EQ 2).VEROK
+         MNOTE 15,'TESTMPCB REQUIRES ZVSAM(2)'
+.VEROK   ANOP
+         LA    R2,MYACB           R2=GENERATED ACB
+         USING IHAACB,R2
+         LA    R3,MYRPL           R3=GENERATED RPL
+         USING IHARPL,R3
+*
+* EYECATCHERS FIRST, SO A WRONG BASE SHOWS UP AS A WRONG EYECATCHER
+* RATHER THAN AS A PUZZLING LENGTH FURTHER DOWN
+         IILF  R15,C'CB01'        MARK TEST
+         CLC   ACBEYE,=C'zACB'    ACB EYECATCHER ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'CB02'        MARK TEST
+         CLI   ACBID,ACBIDVAL     VSAM ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'CB03'        MARK TEST
+         CLI   ACBSTYP,ACBSVSAM   VSAM SUBTYPE ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'CB04'        MARK TEST
+         CLI   ACBVER,ACBV2       zACB V2 ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'CB05'        MARK TEST
+         CLC   ACBDDNM,=CL8'ESF1' DDNAME WHERE THE MAPPING SAYS ?
+         JNE   TESTFAIL           EXIT IF NOT
+*
+* THE ONE THAT MATTERS. ACB2 STAMPS ACBLENG FROM ACBEND-IHAACB AND
+* ACBD PICKS ITS DSECT OFF &SYSZVSAM, SO A V1 MAPPING UNDER A V2 ACB
+* STAMPS 003C INTO A 0040-BYTE BLOCK, RC=0, NO MNOTE, NOTHING SAID
+         IILF  R15,C'CB06'        MARK TEST
+         CLC   ACBLENG,=AL2(ACB_LEN) STAMPED LENGTH = MAPPED LENGTH ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'CB07'        MARK TEST
+         CLC   ACBLENG,=AL2(MYACBND-MYACB) AND = WHAT WAS GENERATED ?
+         JNE   TESTFAIL           EXIT IF NOT
+*
+* THE RPL CARRIES NO LENGTH OF ITS OWN, SO CHECK THE GENERATED SIZE
+* AGAINST THE MAPPING AND THEN THAT THE OPERANDS LANDED WHERE IHARPL
+* SAYS THEY DO
+         IILF  R15,C'CB08'        MARK TEST
+         CLC   RPLEYE,=C'zRPL'    RPL EYECATCHER ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'CB09'        MARK TEST
+         CLC   =AL2(MYRPLND-MYRPL),=AL2(RPLLEN) GENERATED = MAPPED ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'CB10'        MARK TEST
+         CLC   RPLDACB,=A(MYACB)  ACB= LANDED AT RPLDACB ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'CB11'        MARK TEST
+         CLC   RPLAREA,=A(MYAREA) AREA= LANDED AT RPLAREA ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'CB12'        MARK TEST
+         CLC   RPLAREAL,=A(80)    AREALEN= LANDED AT RPLAREAL ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'CB13'        MARK TEST
+         CLC   RPLMSGLN,=AL2(50)  MSGLEN= LANDED AT RPLMSGLN ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'CB14'        MARK TEST
+         CLI   RPLKEYLN,10        KEYLEN= LANDED AT RPLKEYLN ?
+         JNE   TESTFAIL           EXIT IF NOT
+*
+* AND THAT OPTCD REACHED THE RIGHT BITS RATHER THAN JUST SOME BITS
+         IILF  R15,C'CB15'        MARK TEST
+         TM    RPLOPT1,RPLOPT1_SEQ SEQ ?
+         JZ    TESTFAIL           EXIT IF NOT
+         IILF  R15,C'CB16'        MARK TEST
+         TM    RPLOPT1,RPLOPT1_KEY ADR MEANS KEY IS OFF
+         JNZ   TESTFAIL           EXIT IF NOT
+*
+         WTO   'TESTMPCB SUCCESSFUL'
+         J     EXIT               EXIT
+*
+TESTFAIL DS    0H
+         ST    R15,WTOMARK        SAVE TEST ID IN WTO
+         LARL  R1,WTOFAIL         R1=WTO MSG
+         WTO   MF=(E,(R1))        SHOW IT
+         SUBEXIT RC=15
+*
+EXIT     DS    0H
+         SUBEXIT
+*
+         DS    0H
+WTOFAIL  DC    AL2(WTOFALEN-*,0)
+         DC    C'ERR!!! TEST '
+WTOMARK  DS    CL4
+         DC    C' FAILED'
+WTOFALEN EQU   *
+*
+         LTORG
+*
+MYAREA   DC    XL80'00'
+*
+MYACB    ACB   DDNAME=ESF1,                                            X
+               MACRF=(ADR,SEQ,IN),                                     X
+               BUFND=2,                                                X
+               STRNO=1
+MYACBND  EQU   *
+*
+MYRPL    RPL   ACB=MYACB,                                              X
+               AREA=MYAREA,                                            X
+               AREALEN=80,                                             X
+               MSGLEN=50,                                              X
+               KEYLEN=10,                                              X
+               OPTCD=(ADR,SEQ,MVE)
+MYRPLND  EQU   *
+*
+         YREGS
+         END

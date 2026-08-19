@@ -31,6 +31,12 @@ class RunVsam2 extends z390Test {
         assert rc == 0
     }
     @Test
+    void test_TESTMPCB() {
+        int rc = this.asmlg(basePath("vsam2", "mlc", "TESTMPCB"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
     void test_TESTSHCB() {
         int rc = this.asml(basePath("vsam2", "mlc", "TESTSHCB"), *options)
         this.printOutput()
