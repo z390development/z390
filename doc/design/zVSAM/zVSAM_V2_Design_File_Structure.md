@@ -279,6 +279,72 @@ Not all structure elements occur in all Block types. The relation is as follows:
 | Counters Area       | Y      | N        | N    | N     | N   |
 | Spacemap            | N      | Y        | N    | N     | N   |
 
+### ESDS Data Organization
+
+> [!NOTE]
+> this paragraph still needs to be created, including a drawing.
+
+### KSDS Data Organization
+
+> [!NOTE]
+> this paragraph still needs to be created, including a drawing.
+
+### KSDS Index Organization
+
+> [!NOTE]
+> this paragraph still needs to be created, including a drawing.
+
+### RRDS Data Organization
+
+> [!NOTE]
+> this paragraph still needs to be created, including a drawing.
+
+### AIX Data Organization
+
+AIX data records for a Unique Alternate Index have fixed-length records.
+The AIX cluster is mostly treated as a KSDS with a record type of F.
+Only when the AIX is opened as a path, will zVSAM use the AIX data to retrieve
+records from the underlying base cluster.
+
+AIX data records for a Non-Unique Alternate Index have variable-length segmented records.
+The AIX cluster is mostly treated as a KSDS with a record type of VS.
+Only when the AIX is opened as a path, will zVSAM use the AIX data to retrieve
+records from the underlying base cluster.
+
+AIX unique records have the following format:
+
+| AIX on ... | Record Content                  |
+|------------|---------------------------------|
+| ESDS       | AIX key followed by XRBA(8)     |
+| KSDS       | AIX key followed by primary key |
+| RRDS       | AIX key followed by RRN         |
+
+AIX non-unique records have the following format:
+
+| AIX on ... | Record Content                               |
+|------------|----------------------------------------------|
+| ESDS       | AIX key followed by 1 or more XRBA(8) values |
+| KSDS       | AIX key followed by 1 or more primary keys   |
+| RRDS       | AIX key followed by 1 or more RRN values     |
+
+The diagram below shows how AIX data blocks are chained in a Unique AIX's data component.
+
+![Diagram showing layout of a chain of AIX Data Blocks](img/zVSAM_V2_Drawing_Chain_AIX_Unique.jpg)
+
+The diagram below shows how AIX data blocks are chained in a Non-Unique AIX's data component.
+
+![Diagram showing layout of a Chain of Segmented AIX Data Blocks](img/zVSAM_V2_Drawing_Chain_AIX_NonUnique.jpg)
+
+### AIX Index Organization
+
+> [!NOTE]
+> this paragraph still needs to be created, including a drawing.
+
+### LDS Data Organization
+
+> [!NOTE]
+> this paragraph still needs to be created, including a drawing.
+
 ### ESDS Fixed non-Spanned
 
 The records are stored one after another, filling the block until no space is left.
@@ -301,7 +367,7 @@ The only difference being that free-space (`DATAFREESPACE=nn%`) does not apply t
 Access by:      | (X)RBA or AIX key                       |
 
 > [!NOTE]
-> RBA/XRBA not supported bu zVSAM. We'll use XLRSN instead.
+> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
 > Need to investigate how much RBA was implemented by Melvyn.
 
 ### ESDS Fixed Spanned
@@ -317,7 +383,7 @@ zVSAM extension: Any AIX keys need not be in the first segment.
 
 Below we show an example where each record requires three segments:
 
-![Diagram showing layout of an ESDS Block with Fixed Spanned records](img/zVSAM_V2.4_Drawing_Block_Type_ESDS_FS.jpg)
+![Diagram showing layout of an ESDS Block with Fixed Spanned records](img/zVSAM_V2_Drawing_Block_Type_ESDS_FS.jpg)
 
 **Note**: The format of an ESDS block with Fixed Spanned records is identical to that for a KSDS.
 
@@ -330,7 +396,7 @@ Below we show an example where each record requires three segments:
 | Access by:    | (X)RBA or AIX key                                  |
 
 > [!NOTE]
-> RBA/XRBA not supported bu zVSAM. We'll use XLRSN instead.
+> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
 > Need to investigate how much RBA was implemented by Melvyn.
 
 ### ESDS Variable non-Spanned
@@ -358,8 +424,13 @@ Below we show an example showing how various numbers of records might fit into t
 | Access by:    | (X)RBA or AIX key                                  |
 
 > [!NOTE]
-> RBA/XRBA not supported bu zVSAM. We'll use XLRSN instead.
+> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
 > Need to investigate how much RBA was implemented by Melvyn.
+
+> [!NOTE]
+> A rewrite that lengthens a record may require more room that is available on the block.
+> In this case the RPTR is marked as a displaced record, and the record is physically stored
+> on a nearby Block that has enough free space to accommodate the lengthened record.
 
 ### ESDS Variable Spanned
 
@@ -381,7 +452,7 @@ zVSAM extension: Any AIX keys need not be in the first segment.
 Below we show an example showing how various numbers of records might fit into the blocks of the file,
 or how a single record might occupy multiple blocks of the file
 
-![Diagram showing layout of an ESDS Block with Spanned Variable records](zVSAM_V2_Drawing_Block_Type_ESDS_VS.jpg)
+![Diagram showing layout of an ESDS Block with Spanned Variable records](img/zVSAM_V2_Drawing_Block_Type_ESDS_VS.jpg)
 
 **Note**: The format of an ESDS block with Variable Spanned records is identical to that for a KSDS.
 
@@ -394,15 +465,379 @@ or how a single record might occupy multiple blocks of the file
 | Access by:    | (X)RBA or AIX key                                  |
 
 > [!NOTE]
-> RBA/XRBA not supported bu zVSAM. We'll use XLRSN instead.
+> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
 > Need to investigate how much RBA was implemented by Melvyn.
 
+> [!NOTE]
+> A rewrite that lengthens a record may require more room that is available on the block.
+> In this case the RPTR is marked as a displaced record, and the record is physically stored
+> on a nearby Block that has enough free space to accommodate the lengthened record.
 
+> [!NOTE]
+> When a record is lengthened, it may be necessary to convert it from a normal varaible-length
+> record to a segmented one. When a record is shortened - at least in theory - a segmented record
+> might qualify to be converted to a normal variable-length record. Whether we implement this latter
+> conversion remains to be seen. There is no hard reason to object against having shortened VS record
+> consisting of a single segment that occupies less than a single Block.
 
+### KSDS Fixed non-Spanned
 
+The records are stored one after another, filling the block until no space is left.
+When the remaining free space is insufficient to accommodate another record, that free space remains
+unusable. Unusable space can be eliminated by building the dataset with `DATAADJUST=YES`.
 
+Blocks can be allocated with free space for add operations (`DATAFREESPACE=nn%`).
+During add operations available free space gets allocated to the records being added.
+When the block is full the block will be split and any new block will have at least nn% free space. 
 
+Format:
 
+![Diagram showing layout of a KSDS Block with Fixed records](img/zVSAM_V2_Drawing_Block_Type_KSDS_F.jpg)
+
+| Function  | Notes                                              |
+|-----------|----------------------------------------------------|
+| Add       | Yes                                                |
+| Update    | Yes, the primary key must not be changed           |
+| Delete    | Yes                                                |
+| Length    | change n/a                                         |
+| Access by | Primary key or AIX key. (X)RBA not yet implemented |
+
+> [!NOTE]
+> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
+> Need to investigate how much RBA was implemented by Melvyn.
+
+### KSDS Fixed Spanned
+
+The records are stored one after another, using a block for each segment and starting each
+record on a new block. Record size is expected to exceed block size, so the record is split into segments, the
+first segment is created to fill an entire block, and the rest of the record goes into one or more secondary
+segments which are stored on the next blocks.
+
+Each segment is preceded by a Segment Prefix (SPX, marked in yellow)
+
+zVSAM extension: The primary key and any AIX keys need not be in the first segment.
+
+Below we show an example where each record requires three segments:
+
+![Diagram showing layout of a KSDS Block with Fixed Spanned records](img/zVSAM_V2_Drawing_Block_Type_KSDS_FS.jpg)
+
+| Function      | Notes                                              |
+|---------------|----------------------------------------------------|
+| Add           | Yes                                                |
+| Update        | Yes, the primary key must not be changed           |
+| Delete        | Yes                                                |
+| Length change | n/a                                                |
+| Access by:    | Primary key or AIX key. (X)RBA not yet implemented |
+
+> [!NOTE]
+> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
+> Need to investigate how much RBA was implemented by Melvyn.
+
+### KSDS Variable non-Spanned
+
+The records are stored one after another, filling the block until no space is left.
+Every record is preceded by a Record Length Field (RLF, marked in grey).
+
+When remaining free space is insufficient to accommodate another record, that free space remains
+unallocated (marked in blue) and the record is placed on the next block.
+
+Below we show an example showing how various numbers of records might fit into the blocks:
+
+![Diagram showing layout of a KSDS Block with Variable records](img/zVSAM_V2_Drawing_Block_Type_KSDS_V.jpg)
+
+| Function      | Notes                                                                             |
+|---------------|-----------------------------------------------------------------------------------|
+| Add           | Yes                                                                               |
+| Update        | Yes, the primary key must not be changed                                          |
+| Delete        | Yes                                                                               |
+| Length change | Yes. When a record is shortened it must not affect the primary key or any AIX key |
+| Access by:    | Primary key or AIX key. (X)RBA not yet implemented                                |
+
+> [!NOTE]
+> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
+> Need to investigate how much RBA was implemented by Melvyn.
+
+> [!NOTE]
+> A rewrite that lengthens a record may require more room that is available on the block.
+> In this case the RPTR is marked as a displaced record, and the record is physically stored
+> on a nearby Block that has enough free space to accommodate the lengthened record.
+
+### KSDS Variable Spanned
+
+The records are stored one after another, filling the block until no space is left.
+Every record is preceded by a Record Length Field (RLF, marked in grey).
+When remaining free space is insufficient to accommodate another record, that free space remains
+unallocated (marked in blue) and the record is placed on the next block.
+
+Only if the record size exceeds the usable block size is the record is split into segments and each segment is
+prefixed with a Segment Prefix. The first segment is created to fill an entire block, and the rest of the record
+goes into one or more secondary segments which are stored on the next blocks.
+Each segment is preceded by a Segment Prefix (SPX, marked in yellow).
+
+zVSAM extension: The primary key and any AIX keys need not be in the first segment.
+
+Below we show an example showing how various numbers of records might fit into the blocks of the file,
+or how a single record might occupy multiple blocks of the file.
+
+![Diagram showing layout of a KSDS Block with Spanned Variable records](img/zVSAM_V2_Drawing_Block_Type_KSDS_VS.jpg)
+
+| Function      | Notes                                                                             |
+| Add           | Yes                                                                               |
+| Update        | Yes, the primary key must not be changed                                          |
+| Delete        | Yes                                                                               |
+| Length change | Yes. When a record is shortened it must not affect the primary key or any AIX key |
+| Access by:    | Primary key or AIX key. (X)RBA not yet implemented                                |
+
+> [!NOTE]
+> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
+> Need to investigate how much RBA was implemented by Melvyn.
+
+> [!NOTE]
+> A rewrite that lengthens a record may require more room that is available on the block.
+> In this case the RPTR is marked as a displaced record, and the record is physically stored
+> on a nearby Block that has enough free space to accommodate the lengthened record.
+
+> [!NOTE]
+> When a record is lengthened, it may be necessary to convert it from a normal varaible-length
+> record to a segmented one. When a record is shortened - at least in theory - a segmented record
+> might qualify to be converted to a normal variable-length record. Whether we implement this latter
+> conversion remains to be seen. There is no hard reason to object against having shortened VS record
+> consisting of a single segment that occupies less than a single Block.
+
+### RRDS Fixed non-Spanned
+
+The records are stored one after another, filling the block until no space is left.
+When the remaining free space is insufficient to accommodate another record, that free space remains
+unusable. Unusable space can be eliminated by building the dataset with `DATAADJUST=YES`.
+
+An RRDS consists of slots (RRNs) which may or may not contain a record.
+Empty slots are initially binary zeros with `RPTR_MTY` set.
+
+Below we show an example where 8 record slots fit into a block:
+
+![Diagram showing layout of an RRDS Block with Fixed records](img/zVSAM_V2_Drawing_Block_Type_RRDS_F.jpg)
+
+| Function      | Notes                                          |
+|---------------|------------------------------------------------|
+| Add           | Yes, but only to the end of the dataset        |
+| Update        | Yes                                            |
+| Delete        | Yes, slots may not be deleted. RPTR_MTY is set |
+| Length change | n/a                                            |
+| Access by:    | RRN                                            |
+
+### RRDS Fixed Spanned
+
+The records are stored one after another, using a block for each segment and starting each
+record on a new block. Record size is expected to exceed block size, so the record is split into segments, the
+first segment is created to fill an entire block, and the rest of the record goes into one or more secondary
+segments which are stored on the next blocks.
+
+Each segment is preceded by a Segment Prefix (SPX, marked in yellow).
+
+An RRDS consists of slots (RRNs) which may or may not contain a record.
+Empty slots are initially binary zeros with `RPTR_MTY` set.
+
+This dataset type is a zVSAM extension
+
+Below we show an example where each record requires three segments:
+
+![Diagram showing layout of an RRDS Block with Fixed Spanned records](img/zVSAM_V2_Drawing_Block_Type_RRDS_FS.jpg)
+
+| Function      | Notes                                          |
+|---------------|------------------------------------------------|
+| Add           | Yes, but only to the end of the dataset        |
+| Update        | Yes                                            |
+| Delete        | Yes, slots may not be deleted. RPTR_MTY is set |
+| Length change | n/a                                            |
+| Access by:    | RRN                                            |
+
+### RRDS Variable non-Spanned
+
+The records are stored one after another, filling the block until no space is left.
+Every record is preceded by a Record Length Field (RLF).
+
+An RRDS consists of slots (RRNs) which may or may not contain a record.
+Empty slots consist of a dummy RLF containing `X'00000004'` with `RPTR_MTY` set, these are shown
+in green in the diagram. Non-empty slots have a grey RLF.
+
+When remaining free space is insufficient to accommodate another record, that free space remains
+unallocated (marked in blue) and the record is placed on the next block.
+
+> [!NOTE]
+> This will not work as it tends to push a storage shortage on one block out to the next.
+> Which may have a cascading effect, affecting many blocks in a row.
+> Instead we should mark the RPTR entry as a displaced record, and store the record physically
+> after the last allocated record slot. Or use a nearby free page, if sufficient free pages
+> were allocated when the cluster was initially loaded.
+
+> [!NOTE]
+> A rewrite that lengthens a record may require more room that is available on the block.
+> In this case the RPTR is marked as a displaced record, and the record is physically stored
+> on a nearby Block that has enough free space to accommodate the lengthened record.
+
+Below we show an example showing how various numbers of records might fit into the blocks
+
+![Diagram showing layout of an RRDS Block with Variable records](img/zVSAM_V2_Drawing_Block_Type_RRDS_V.jpg)
+
+| Function      | Notes                                                            |
+|---------------|------------------------------------------------------------------|
+| Add           | Yes, but only to the end of the dataset                          |
+| Update        | Yes                                                              |
+| Delete        | Yes, slots may not be deleted. `RPTR_MTY is set` instead.        |
+|               | The record is replaced by a dummy RLF and the space is reclaimed |
+| Length change | Yes                                                              |
+| Access by:    | RRN                                                              |
+
+### RRDS Variable Spanned
+
+The records are stored one after another, filling the block until no space is left.
+Every record is preceded by a Record Length Field (RLF).
+
+An RRDS consists of slots (RRNs) which may or may not contain a record.
+Empty slots consist of a dummy RLF containing `X'00000004'` with `RPTR_MTY` set, these are shown
+in green in the diagram. Non-empty slots have a grey RLF.
+
+When remaining free space is insufficient to accommodate another record, that free space remains
+unallocated (marked in blue) and the record is placed on the next block.
+
+When a record length exceeds the available space in a block the record is split into segments, the first
+segment is created to fill an entire block, and the rest of the record goes into one or more secondary segments
+which are stored on the next blocks.
+
+Each segment is preceded by a Segment Prefix (SPX, marked in yellow).
+
+This dataset type is a zVSAM extension.
+
+Below we show an example showing how various numbers of records might fit into the blocks
+
+![Diagram showing layout of an RRDS Block with Variable Spanned records](img/zVSAM_V2_Drawing_Block_Type_RRDS_VS.jpg)
+
+| Function      | Notes                                                            |
+|---------------|------------------------------------------------------------------|
+| Add           | Yes, but only to the end of the dataset                          |
+| Update        | Yes                                                              |
+| Delete        | Yes, slots may not be deleted. RPTR_MTY is set                   |
+|               | The record is replaced by a dummy RLF and the space is reclaimed |
+|               | For segmented records, the freed blocks are marked as available  |
+| Length change | Yes                                                              |
+| Access by:    | RRN                                                              |
+
+> [!NOTE]
+> A rewrite that lengthens a record may require more room that is available on the block.
+> In this case the RPTR is marked as a displaced record, and the record is physically stored
+> on a nearby Block that has enough free space to accommodate the lengthened record.
+
+> [!NOTE]
+> When a record is lengthened, it may be necessary to convert it from a normal varaible-length
+> record to a segmented one. When a record is shortened - at least in theory - a segmented record
+> might qualify to be converted to a normal variable-length record. Whether we implement this latter
+> conversion remains to be seen. There is no hard reason to object against having shortened VS record
+> consisting of a single segment that occupies less than a single Block.
+
+### AIX Unique
+
+AIX data records for a Unique Alternate Index have fixed-length records.
+The AIX cluster is mostly treated as a KSDS with a record type of F.
+Only when the AIX is opened as a path, will zVSAM use the AIX data to retrieve
+records from the underlying base cluster.
+
+Below we show an example showing how various numbers of records might fit into a unique AIX's data block
+
+![Diagram showing layout of an AIX Data Block](img/zVSAM_V2_Drawing_Block_Type_AIX_Unique.jpg)
+
+> [!NOTE]
+> The drawing shows V-type records. Must be fixed.
+
+### AIX Non-unique not segmented
+
+AIX non-unique non-segmented records have the following format:
+
+| AIX on ... | Record Format                                             |
+|------------|-----------------------------------------------------------|
+| ESDS       | AIX key, an element count n(4) followed by n XRBAs(n\*8)  |
+| KSDS       | AIX key, an element count n(4) followed by n primary keys |
+| RRDS       | AIX key, an element count n(4) followed by n RRNs         |
+
+Below we show an example showing how various numbers of records might fit into a non-unique AIX's data block
+
+![Diagram showing layout of an unsegmented AIX Data Block](img/zVSAM_V2_Drawing_Block_Type_AIX_Unseg.jpg)
+
+> [!NOTE]
+> This paragraph should probably be deleted. For a Non-Unique key you never knwo
+> what the maximum number of synonyms in the base cluster will be. An AIX data record
+> with a large number of synonyms may exceed Block capacity, requiring the AIX data
+> record to be split into segments. An unsegmented non-unique AIX does not seem to make sense.
+
+### AIX Non-unique segmented
+
+AIX non-unique segmented records have the following formats:
+
+| AIX on ... | Record Format of FIRST segment                                                        |
+|------------|---------------------------------------------------------------------------------------|
+| ESDS       | SPX, AIX key, an element count(4) which is the total no. of elements in all segments. |
+|            | The actual number of XLRAs in this segment can be calculated from `SPXSEGLN`          |
+| KSDS       | SPX, AIX key, an element count(4) which is the total no. of elements in all segments. |
+|            | The actual number of primary keys in this segment can be calculated from `SPXSEGLN`   |
+| RRDS       | SPX, AIX key, an element count(4) which is the total no. of elements in all segments. |
+|            | The actual number of RRNs in this segment can be calculated from `SPXSEGLN`           |
+
+| AIX on ... | Record Format of MIDDLE or LAST segments                                              |
+|------------|---------------------------------------------------------------------------------------|
+| ESDS       | SPX and a number of XLRAs.                                                            |
+|            | The actual number of XLRAs in this segment can be calculated from `SPXSEGLN`          |
+| KSDS       | SPX and a number of primary keys.                                                     |
+|            | The actual number of primary keys in this segment can be calculated from `SPXSEGLN`   |
+| RRDS       | SPX and a number of RRNs.                                                             |
+|            | The actual number of RRNs in this segment can be calculated from `SPXSEGLN`           |
+
+Below we show an example showing how various numbers of records might fit into a non-unique AIX's data block
+
+![Diagram showing layout of a Segmented AIX Data Block](img/zVSAM_V2_Drawing_Block_Type_AIX_Seg.jpg)
+
+> [!NOTE]
+> Each segment contains a whole number of elements.
+
+### ELIX Block
+
+> [!NOTE]
+> The ELIX was introduced for managing AIX data records with an extremely large number of synonyms.
+> Although it is an elegant solution, we should seriously consisder NOT to implement the ELIX.
+> In the first place, AIX design should not allow for very large numbers of synonyms. Extend your AIX key if you can.
+> In the second place, creating ELIX support is a considerable effort spent on solving a niche problem
+> that should not occur in the first place. Maybe, if you do create an AIX with extreme numbers of
+> synonyms, bad performance is simply part of the price for having a badly designed index structure.
+
+A single ELIX block is created for each non-unique AIX record that is segmented.
+It has the same blocksize as a Data record.
+
+zVSAM lifts the current IBM restriction of 32K elements in a non-unique AIX record, because of this there
+may be many segments to read to find an element to delete or an insertion point for a new record.
+
+The ELIX Block provides an extra index on the segments and contains the highest element in each segment.
+As there is currently only one ELIX Block per AIX key this places a limit on the number of elements.
+
+When a non-unique AIX is built zREPRO will issue a message on the log like this:
+`zREPRO AIX MAX ELEMENT LIMIT 87654`
+If the number of elements is too low then rebuild the AIX with a larger blocksize.
+
+IBM does not maintain elements in any particular order but for the ELIX structure to work zVSAM will
+maintain elements in sequence.
+
+![Diagram showing layout of an ELIX Block](img/zVSAM_V2_Drawing_Block_Type_ELIX.jpg)
+
+The ELIX record has the following format:
+
+| AIX on ... | Record Format                                                             |
+|------------|---------------------------------------------------------------------------|
+| ESDS       | Highest XRBA followed by the XLRA of the segment (always record 1)        |
+| KSDS       | Highest Primary key followed by the XLRA of the segment (always record 1) |
+| RRDS       | Highest RRN followed by the XLRA of the segment (always record 1)         |
+
+### LDS Blocks
+
+LDS Blocks have no structure imposed by zVSAM. The entire data block is treated as user data.
+There is no Block Header, Block Footer, and no RPTR list. Just user data; as many bytes of
+user data as the block size indicates. LDS blocks can be addressed only by their XLRA Block pointer.
 
 
 
