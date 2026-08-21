@@ -248,6 +248,23 @@ Not all block types occur in all file types. The relation is as follows:
 > KSDS and AIX clusters consist of a data component and an index component.
 > ESDS, RRDS, and LDS clusters consist of a data component only.
 
+The following table summarizes the way that blocks in the file are chained from the prefix block.
+Please note that free data blocks do not reside on any chain. Nor does the prefix block.
+
+> [!NOTE]
+> originally, it was planned that free blocks reside on a free chain.
+> the table below does not include the free chain implementation:
+
+| Block Type               | Begin of chain | End of chain |
+|--------------------------|----------------|--------------|
+| Prefix                   | foxes          | foxes        |
+| Spacemap                 | PFXBMAP        | PFXEMAP      |
+| Data (in use)            | PFXBDATA       | PFXEDATA     |
+| Data (non-first segment) | PFXBSEGM       | PFXESEGM     |
+| Data (free)              | foxes          | foxes        |
+| Index                    | PFXBLVLn       | PFXELVLn     |
+| Free                     | n.a.           | n.a.         |
+
 ### Components of a Block
 
 With the exception of Raw Blocks, all blocks have internal structure elements, such as:
@@ -291,8 +308,56 @@ Not all structure elements occur in all Block types. The relation is as follows:
 
 ### KSDS Index Organization
 
-> [!NOTE]
-> this paragraph still needs to be created, including a drawing.
+The index component of a KSDS contains index entries, which consist of
+a primary key and its XLRA. The index is organized in a hierarchy of index levels.
+
+#### Index Blocks
+
+Each index Block has an RPTR area, allocate right after the Block Header.
+In addition to the offset, the RPTR contains flags to identify the type and status of each record.
+`RPTR_END` marks the end of record pointers in this block.
+
+The records are placed in reverse order in the block to consolidate free space at the centre.
+
+For Level 0 each record is the key (KSDS), XRBA (ESDS) or RRN (RRDS) and is followed by an XLRA.
+The XLRA is a record pointer to the Data block.
+
+For other levels, each record pointer is the highest key, XRBA or RRN followed by an XLRA.
+The XLRA is a block pointer to the previous level.
+
+As each index record is a fixed size it is recommended to specify `INDEXADJUST=YES` to avoid unusable
+free space
+
+
+#### Index Block Structure: Single level
+
+This example shows an index of only one block, holding two record pointers
+
+![Diagram showing layout of a Chain of 1 Index Block](img/zVSAM_V2_Drawing_Chain_Index_Blocks_1.jpg)
+
+#### Index Block Structure: Two Levels
+
+This example shows the index after adding three more record pointers, causing the only index block to overflow and
+split. Now there are two leaf blocks, still on the LVL0 chain, and a new root block has been created on the
+LVL1 chain
+
+![Diagram showing layout of a Chain of 2 Index Blocks](img/zVSAM_V2_Drawing_Chain_Index_Blocks_2.jpg)
+
+#### Index Block Level 0
+
+![Diagram showing layout of a Leaf Index Block](img/zVSAM_V2_Drawing_Block_Type_Index_Leaf.jpg)
+
+#### Index Block other levels
+
+![Diagram showing layout of a Non-Leaf Index Block](img/zVSAM_V2_Drawing_Block_Type_Index_NLeaf.jpg)
+
+It is possible to reserve an amount of freespace at load time which also applies if a block is split.
+It is specified in the catalog as `INDEXFREESPACE=nn`, where nn is a percentage of the available space.
+Only a fixed non-spanned KSDS can specify free space.
+
+For all types of fixed non-spanned datasets, the available space may not be a multiple of the index record size
+resulting in unusable space. To correct this use `INDEXADJUST=YES` which will calculate an optimal
+blocksize less than the specified one.
 
 ### RRDS Data Organization
 
@@ -839,22 +904,14 @@ LDS Blocks have no structure imposed by zVSAM. The entire data block is treated 
 There is no Block Header, Block Footer, and no RPTR list. Just user data; as many bytes of
 user data as the block size indicates. LDS blocks can be addressed only by their XLRA Block pointer.
 
+## Block Structures
 
+Each block - except a raw block - has an internal structure as
+outlined in [Components of a Block](#components-of-a-block)
 
+In the following paragraphs these structures are outlined in more detail.
 
-
-
-
-
-
-
-
-
-
-
-
-
-#### Block Header Structure
+### Block Header
 
 Every non-Raw Block has a block header (`ZVSAMHDR`).
 All block headers have the same structure.
@@ -924,24 +981,28 @@ the second segment. Subsequent segments are retrieved by following the SPXs to t
 The Segment chain starting at `PFXBSEGM` and ending at `PFXESEGM` has no role in processing a spanned
 dataset but just provides an extra integrity check.
 
-The following table summarizes the way that blocks in the file are chained from the prefix block.
-Please note that free data blocks do not reside on any chain. Nor does the prefix block.
+### Data blocks
 
-> [!NOTE]
-> originally, it was planned that free blocks reside on a free chain.
-> the table below does not include the free chain implementation:
+Each record has an Record Pointer List (RPTR block). The RPTR immediately follows the Block Header.
+In addition to the offset, the RPTR contains flags to identify the type and status of each record.
+`RPTR_END` marks the end of records in this block.
 
-| Block Type               | Begin of chain | End of chain |
-|--------------------------|----------------|--------------|
-| Prefix                   | foxes          | foxes        |
-| Spacemap                 | PFXBMAP        | PFXEMAP      |
-| Data (in use)            | PFXBDATA       | PFXEDATA     |
-| Data (non-first segment) | PFXBSEGM       | PFXESEGM     |
-| Data (free)              | foxes          | foxes        |
-| Index                    | PFXBLVLn       | PFXELVLn     |
-| Free                     | n.a.           | n.a.         |
+The records are allocated from the other end of the block (preceding the Footer area) to consolidate free space at the centre.
 
-### Block Footer Structure
+![Diagram showing layout of a Data Block](img/zVSAM_V2_Drawing_Block_Type_Data.jpg)
+
+It is possible to reserve an amount of freespace at load time which also applies if a block is split.
+It is specified in the catalog as `DATAFREESPACE=nn`, where nn is a percentage of the available space.
+Only a fixed non-spanned KSDS can specify free space.
+
+For all types of fixed non-spanned datasets, the available space may not be a multiple of the data record size
+resulting in unusable space. To correct this use `DATAADJUST=YES` which will calculate an optimal
+blocksize less than the specified one.
+
+How the Data Blocks are laid out in the file depends on whether the cluster is defined with Spanned records,
+or with unspanned records.
+
+### Block Footer
 
 Every block (except raw blocks) has a block footer. All block footers have the same structure.
 It is formatted as follows:
@@ -955,7 +1016,7 @@ It is formatted as follows:
 `BFTRSEQ#` is incremented by one every time the block is written out to the file.
 The header area contains a comparable field: `BHDRSEQ#`. Together they guard against incomplete writes.
 
-### Record Pointer List Structure
+### Record Pointer List
 
 Every block that contains data records contains a record list (`ZVSAMRPT`).
 Records are accessible only through their Record Pointer or RPTR.
@@ -995,19 +1056,11 @@ The format of a Displaced Record Pointer is as follows:
 | ZVSAMDRP |        | DSECT      | Displaced Record Pointer                       |
 | DRPIXLRA | X'000' | XL8        | Indirect XLRA = location of actual record data |
 
-#### Segment Prefix
+### Record data
 
-All segments begin with a segment prefix or SPX (`ZVSAMSEG`).
-The first segment is on the Data chain and subsequent segments are retrieved via `SPXBNEXT`.
-The flag `SPXSEGCC` indicates the first, middle or last segments.
+### Free Space
 
-Alternative designs handle organize the segments and their pointers differently.
-
-> [!NOTE]
-> A design choice is yet to be made. Whichever variant we choose, we'll
-> ahve to thoroughly check the design documents and the code Melvyn has already written.
-
-### Prefix Block
+### Prefix Area
 
 The prefix block (`ZVSAMPFX`) consists of the first 4096 bytes of every physical file.
 It contains meta-data defining the file and its attributes. It also contains various counters.
@@ -1029,9 +1082,14 @@ The overall structure of the prefix block would look something like this (areas 
 
 ![Diagram showing layout of a Prefix Block](img/zVSAM_V2_Drawing_Block_Type_Prefix.jpg)
 
-The addenda part of this document contains more details on the [counters area](zVSAM_V2_Design_Addenda.md.md#counters-area) and its maintenance.
+The addenda part of this document contains more details on the [prefix area](zVSAM_V2_Design_Addenda.md.md#prefix-area).
 
-### Spacemap Blocks
+### Counters Area
+
+The addenda part of this document contains more details on the [counters area](zVSAM_V2_Design_Addenda.md.md#counters-area)
+and its maintenance.
+
+### Spacemap
 
 Spacemap blocks (`ZVSAMMAP`) are used to manage available free space in a component.
 Each spacemap block has a size that matches the blocksize of all other blocks
@@ -1046,34 +1104,51 @@ When a single spacemap block suffices, `PFXBMAP` and `PFXEMAP` will both point t
 
 Each spacemap block consists of a block header immediately followed by the spacemap area, which in turn
 is followed directly by the block footer. No free space exists on a spacemap block.
+
 Thus, the last spacemap block may map blocks that do not exist in the dataset.
 The bit settings for blocks beyond the `PFXHXLRA` should all be zero to indicate an unallocated block.
 zVSAM is aware that any block beyond `PFXHXLRA` needs to be created and initialized before it can be allocated.
+
+The spacemap area is formatted as follows:
+
+| Label    | Offset | Field type | Function                                            |
+|----------|--------|------------|-----------------------------------------------------|
+| ZVSAMMAP |        | DSECT      | Spacemap area                                       |
+| MAPXLRA  | X'000' | XL8        | XLRA of first block addressed by this spacemap area |
+| MAPBITS  | X'008' | 0B         | Bitmap indicating availability                      |
+ 
+The `MAPBITS` label addresses an array of bytes, each of which addresses 4 blocks of the file,
+the status of each block being represented by two bits. Each byte relates to 4 blocks in direct succession to one another,
+the bytes in the array mapping to successive sequences of 4 blocks.
+
+The bits in the `MAPBITS` array are encoded as follows:
+
+| Value | Meaning                                                                                                                                                                                                                                                                     |
+|-------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| B'00' | block is not allocated. I.e. the block resides on no chain. The block's `BHDRNEXT`/`BHDRPREV` fields are meaningless.                                                                                                                                                       |
+| B'01' | block is allocated but may have insufficient free space. I.e. last allocation attempt failed, but a smaller record might fit. Or last allocation succeeded but left fewer than `CTRAVGRL` bytes of free space. Not used for blocks holding a segment of a segmented record. |
+| B'10' | block is allocated and eligible for record allocation. i.e. last allocation succeeded and left enough free space for a record of average size. (`CTRAVGRL`) Not used for blocks holding a segment of a segmented record.                                                    |
+| B'11' | Nothing can be allocated to this block. i.e. last allocation attempt failed, block holds a segment of a segmented record, block is an ELIX block, or block is a spacemap block.                                                                                             |
 
 Conceptually, the overall structure of a spacemap block would look something like this (areas not to scale):
 
 ![Diagram showing layout of a Spacemap Block](img/zVSAM_V2_Drawing_Block_Type_Spacemap.jpg)
 
-### Data Blocks
+#### Segment Prefix
 
-Each record has an Record Pointer List (RPTR block). The RPTR immediately follows the Block Header.
-In addition to the offset, the RPTR contains flags to identify the type and status of each record.
-`RPTR_END` marks the end of records in this block.
+> [!NOTE]
+> Segment prefixes were introduced by Melvyn. Whether they are needed depends on how we decide
+> to implement segmented records.
 
-The records are allocated from the other end of the block (preceding the Footer area) to consolidate free space at the centre.
+All segments begin with a segment prefix or SPX (`ZVSAMSEG`).
+The first segment is on the Data chain and subsequent segments are retrieved via `SPXBNEXT`.
+The flag `SPXSEGCC` indicates the first, middle or last segments.
 
-![Diagram showing layout of a Data Block](img/zVSAM_V2_Drawing_Block_Type_Data.jpg)
+Alternative designs handle organize the segments and their pointers differently.
 
-It is possible to reserve an amount of freespace at load time which also applies if a block is split.
-It is specified in the catalog as `DATAFREESPACE=nn`, where nn is a percentage of the available space.
-Only a fixed non-spanned KSDS can specify free space.
-
-For all types of fixed non-spanned datasets, the available space may not be a multiple of the data record size
-resulting in unusable space. To correct this use `DATAADJUST=YES` which will calculate an optimal
-blocksize less than the specified one.
-
-How the Data Blocks are laid out in the file depends on whether the cluster is defined with Spanned records,
-or with unspanned records.
+> [!NOTE]
+> A design choice is yet to be made. Whichever variant we choose, we'll
+> ahve to thoroughly check the design documents and the code Melvyn has already written.
 
 ### Free Space
 
@@ -1124,15 +1199,4 @@ The SPX resides by itself on the data block and just points to the first segment
 ##### Variant 2
 
 ![Diagram showing layout of a Segmented Data Block Chain - alternative design](img/zVSAM_V2_Drawing_Chain_Segmented_Data_Blocks_alt.jpg)
-
-### Index Blocks
-
-
-
-
-
-
-
-
-### Raw Blocks
 
