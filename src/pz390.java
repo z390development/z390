@@ -2839,8 +2839,7 @@ public class pz390 {
             psw_check = false;
             ins_setup_s();
             if (psw_problem_state == psw_problem_mode) {
-                set_psw_check(psw_pic_priv);
-                // RPI 1622 DK Privileged operation exception
+                set_psw_check(psw_pic_priv); // RPI 1622 DK Privileged operation exception
                 // in problem state issue privileged-operation exception
             } else { // supervisor mode
                 set_psw_loc(mem.getInt(bd2_loc + 4)); // incomplete implementation
@@ -4111,7 +4110,6 @@ public class pz390 {
 
 
 
-
     /**
      * opcodes x'A400' - x'A4FF' for Vector Facility
      */
@@ -4124,7 +4122,6 @@ public class pz390 {
             break;
         }
     } // RPI VF01 end of new routine to support A4xx opcodes for vector facility
-
 
 
 
@@ -4267,7 +4264,6 @@ public class pz390 {
 
 
 
-
     /**
      * opcodes x'A500' - x'A5FF' for Vector Facility
      */
@@ -4283,7 +4279,6 @@ public class pz390 {
 
 
 
-
     /**
      * opcodes x'A600' - x'A6FF' for Vector Facility
      */
@@ -4296,7 +4291,6 @@ public class pz390 {
             break;
         }
     } // RPI VF01 end of new routine to support A6xx opcodes for vector facility
-
 
 
 
@@ -7069,7 +7063,6 @@ public class pz390 {
         case 0x0F: // 4580 "B90F" "LRVGR" "RRE"
             psw_check = false;
             ins_setup_rre();
-
             work_reg.putLong(0, reg.getLong(rf2)); // RPI 1200
             rflen = 7;
             while (rflen >= 0) {
@@ -9727,7 +9720,6 @@ public class pz390 {
             psw_check = false;
             ins_setup_rxy();
             big_int1 = new BigInteger(get_signed_bytes(reg_byte, rf1, 8));
-
             big_int2 = new BigInteger(get_signed_bytes(mem_byte, xbd2_loc, 8));
             big_int1 = big_int1
                     .multiply(big_int2);
@@ -13915,9 +13907,9 @@ public class pz390 {
 
 
     /*
-     * ************************************** instruction support routines
      * **************************************
-     */
+     * instruction support routines
+     * **************************************/
 
 
 
@@ -14543,10 +14535,10 @@ public class pz390 {
     /**
      * return cc for logical subtract as follows:
      * <ul>
-     * <li>rv1 == 0 borrow == 1 - cc0 (slb only)</li>
-     * <li>rv1 != 0 borrow == 1 - cc1</li>
-     * <li>rv1 == 0 borrow == 0 - cc2</li>
-     * <li>rv1 != 0 borrow == 0 - cc3</li>
+     *  <li>rv1 == 0 borrow == 1 - cc0 (slb only)</li>
+     *  <li>rv1 != 0 borrow == 1 - cc1</li>
+     *  <li>rv1 == 0 borrow == 0 - cc2</li>
+     *  <li>rv1 != 0 borrow == 0 - cc3</li>
      * </ul>
      *
      * Notes:
