@@ -10,10 +10,10 @@
         <meta name="author" content="z390 Development team">
       
       
-        <link rel="canonical" href="https://z390development.github.io/z390/user_guide/zVSAM/zVSAM_V2_Design_File_Structure/">
+        <link rel="canonical" href="https://z390development.github.io/z390/design/zVSAM/zVSAM_V2_Design_ACB_Processes/">
       
       
-        <link rel="prev" href="../zVSAM_V1_zRepro_User_Guide/">
+        <link rel="prev" href="../zVSAM_V2_Design_File_Structure/">
       
       
         <link rel="next" href="../zVSAM_V2_Design_RPL_Processes/">
@@ -27,7 +27,7 @@
     
     
       
-        <title>zVSAM V2 Design File Structure - z390</title>
+        <title>zVSAM V2 - Logical processes for ACB-based requests - z390</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#block-header-structure" class="md-skip">
+        <a href="#zvsam-v2-logical-processes-for-acb-based-requests" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              zVSAM V2 Design File Structure
+              zVSAM V2 - Logical processes for ACB-based requests
             
           </span>
         </div>
@@ -237,8 +237,6 @@
   
   
   
-    
-  
   
     
     
@@ -246,13 +244,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../../z390/commands/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../../user_guide/z390/commands/" class="md-tabs__link">
           
   
   
@@ -311,6 +307,8 @@
   
   
   
+    
+  
   
     
     
@@ -318,11 +316,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../../design/zCOBOL/replace_implementation/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../zCOBOL/replace_implementation/" class="md-tabs__link">
           
   
   
@@ -590,31 +590,26 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
             
   
   
@@ -632,7 +627,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -656,20 +651,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
         
           
-          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="">
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
             
   
   
@@ -705,7 +697,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../z390/commands/" class="md-nav__link">
+      <a href="../../../user_guide/z390/commands/" class="md-nav__link">
         
   
   
@@ -733,7 +725,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../z390/structured_macro/" class="md-nav__link">
+      <a href="../../../user_guide/z390/structured_macro/" class="md-nav__link">
         
   
   
@@ -761,7 +753,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../z390/z390_filetypes/" class="md-nav__link">
+      <a href="../../../user_guide/z390/z390_filetypes/" class="md-nav__link">
         
   
   
@@ -789,7 +781,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../z390/z390_messages/" class="md-nav__link">
+      <a href="../../../user_guide/z390/z390_messages/" class="md-nav__link">
         
   
   
@@ -817,7 +809,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../z390/z390_options/" class="md-nav__link">
+      <a href="../../../user_guide/z390/z390_options/" class="md-nav__link">
         
   
   
@@ -859,20 +851,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
         
           
-          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
             
   
   
@@ -908,7 +897,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCOBOL/commands/" class="md-nav__link">
+      <a href="../../../user_guide/zCOBOL/commands/" class="md-nav__link">
         
   
   
@@ -936,7 +925,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCOBOL/zCOBOL_User_Guide/" class="md-nav__link">
+      <a href="../../../user_guide/zCOBOL/zCOBOL_User_Guide/" class="md-nav__link">
         
   
   
@@ -964,7 +953,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCOBOL/zCOBOL_System_Programmer_Guide/" class="md-nav__link">
+      <a href="../../../user_guide/zCOBOL/zCOBOL_System_Programmer_Guide/" class="md-nav__link">
         
   
   
@@ -992,7 +981,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCOBOL/zCOBOL_filetypes/" class="md-nav__link">
+      <a href="../../../user_guide/zCOBOL/zCOBOL_filetypes/" class="md-nav__link">
         
   
   
@@ -1020,7 +1009,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCOBOL/zCOBOL_options/" class="md-nav__link">
+      <a href="../../../user_guide/zCOBOL/zCOBOL_options/" class="md-nav__link">
         
   
   
@@ -1048,7 +1037,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCOBOL/zCOBOL_NIST_COBOL_1985_Test_Results/" class="md-nav__link">
+      <a href="../../../user_guide/zCOBOL/zCOBOL_NIST_COBOL_1985_Test_Results/" class="md-nav__link">
         
   
   
@@ -1090,20 +1079,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
         
           
-          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
             
   
   
@@ -1139,7 +1125,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCICS/" class="md-nav__link">
+      <a href="../../../user_guide/zCICS/" class="md-nav__link">
         
   
   
@@ -1167,7 +1153,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCICS/zcics_app_prog_guide/" class="md-nav__link">
+      <a href="../../../user_guide/zCICS/zcics_app_prog_guide/" class="md-nav__link">
         
   
   
@@ -1195,7 +1181,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCICS/zcics_basic_mapping_support/" class="md-nav__link">
+      <a href="../../../user_guide/zCICS/zcics_basic_mapping_support/" class="md-nav__link">
         
   
   
@@ -1223,7 +1209,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCICS/zcics_diagnosis_reference/" class="md-nav__link">
+      <a href="../../../user_guide/zCICS/zcics_diagnosis_reference/" class="md-nav__link">
         
   
   
@@ -1251,7 +1237,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCICS/zcics_history/" class="md-nav__link">
+      <a href="../../../user_guide/zCICS/zcics_history/" class="md-nav__link">
         
   
   
@@ -1279,7 +1265,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCICS/zcics_intro/" class="md-nav__link">
+      <a href="../../../user_guide/zCICS/zcics_intro/" class="md-nav__link">
         
   
   
@@ -1307,7 +1293,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCICS/zcics_supplied_transactions/" class="md-nav__link">
+      <a href="../../../user_guide/zCICS/zcics_supplied_transactions/" class="md-nav__link">
         
   
   
@@ -1335,7 +1321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCICS/zcics_sys_prog_guide/" class="md-nav__link">
+      <a href="../../../user_guide/zCICS/zcics_sys_prog_guide/" class="md-nav__link">
         
   
   
@@ -1363,7 +1349,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../zCICS/zcics_vsam_guide/" class="md-nav__link">
+      <a href="../../../user_guide/zCICS/zcics_vsam_guide/" class="md-nav__link">
         
   
   
@@ -1396,31 +1382,26 @@
                 
   
   
-    
   
   
-  
     
     
     
     
       
       
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
         
           
-          
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
             
   
   
@@ -1438,7 +1419,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1456,7 +1437,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../zVSAM_V1_User_Guide/" class="md-nav__link">
+      <a href="../../../user_guide/zVSAM/zVSAM_V1_User_Guide/" class="md-nav__link">
         
   
   
@@ -1484,7 +1465,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../zVSAM_V1_Catalog_User_Guide/" class="md-nav__link">
+      <a href="../../../user_guide/zVSAM/zVSAM_V1_Catalog_User_Guide/" class="md-nav__link">
         
   
   
@@ -1512,7 +1493,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../zVSAM_V1_zRepro_User_Guide/" class="md-nav__link">
+      <a href="../../../user_guide/zVSAM/zVSAM_V1_zRepro_User_Guide/" class="md-nav__link">
         
   
   
@@ -1520,221 +1501,6 @@
     
   
     zVSAM v1 zRepro User Guide
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    zVSAM V2 Design File Structure
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    zVSAM V2 Design File Structure
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#block-header-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Block Header Structure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prefix-area-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prefix Area Structure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#counters-area-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Counters Area Structure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#spacemap-area-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Spacemap Area Structure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#fixed-record-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fixed Record Structure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#variable-record-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Variable Record Structure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#fixed-segmented-record-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fixed-Segmented Record Structure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#variable-segmented-record-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Variable-Segmented Record Structure
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../zVSAM_V2_Design_RPL_Processes/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    zVSAM V2 - Logical processes for RPL-based requests
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../zVSAM_V2_Design_ACB_Processes/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    zVSAM V2 - Logical processes for ACB-based requests
   
 
     
@@ -2305,26 +2071,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
             
   
   
@@ -2342,7 +2113,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2366,17 +2137,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" >
         
           
-          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="">
             
   
   
@@ -2412,7 +2186,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/zCOBOL/replace_implementation/" class="md-nav__link">
+      <a href="../../zCOBOL/replace_implementation/" class="md-nav__link">
         
   
   
@@ -2440,7 +2214,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/zCOBOL/sort_implementation/" class="md-nav__link">
+      <a href="../../zCOBOL/sort_implementation/" class="md-nav__link">
         
   
   
@@ -2468,7 +2242,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/zCOBOL/string_implementation/" class="md-nav__link">
+      <a href="../../zCOBOL/string_implementation/" class="md-nav__link">
         
   
   
@@ -2501,26 +2275,31 @@
                 
   
   
+    
   
   
+  
     
     
     
     
       
       
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" >
         
           
-          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="">
             
   
   
@@ -2538,7 +2317,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -2556,7 +2335,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/zVSAM/zVSAM_V2_Design/" class="md-nav__link">
+      <a href="../zVSAM_V2_Design/" class="md-nav__link">
         
   
   
@@ -2584,7 +2363,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/zVSAM/zVSAM_V2_Design_Catalog/" class="md-nav__link">
+      <a href="../zVSAM_V2_Design_Catalog/" class="md-nav__link">
         
   
   
@@ -2612,7 +2391,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/zVSAM/zVSAM_V2_Design_Interfaces/" class="md-nav__link">
+      <a href="../zVSAM_V2_Design_Interfaces/" class="md-nav__link">
         
   
   
@@ -2640,7 +2419,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../design/zVSAM/zVSAM_V2_Design_File_Structure/" class="md-nav__link">
+      <a href="../zVSAM_V2_Design_File_Structure/" class="md-nav__link">
         
   
   
@@ -2665,10 +2444,213 @@
                 
   
   
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 - Logical processes for ACB-based requests
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 - Logical processes for ACB-based requests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#open" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Open">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#open-macro-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open macro logic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#open-execution-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open execution logic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implied-open-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implied OPEN table
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exit-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit logic
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#close" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Close
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Close">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#close-macro-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLOSE macro logic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#close-execution-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLOSE execution logic
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
   
   
     <li class="md-nav__item">
-      <a href="../../../design/zVSAM/zVSAM_V2_Design_Addenda/" class="md-nav__link">
+      <a href="../zVSAM_V2_Design_RPL_Processes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 - Logical processes for RPL-based requests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zVSAM_V2_Design_Addenda/" class="md-nav__link">
         
   
   
@@ -2721,6 +2703,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -2729,90 +2713,102 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#block-header-structure" class="md-nav__link">
+  <a href="#open" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Block Header Structure
+        Open
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Open">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#open-macro-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open macro logic
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#prefix-area-structure" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#open-execution-logic" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prefix Area Structure
+        Open execution logic
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#counters-area-structure" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#implied-open-table" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Counters Area Structure
+        Implied OPEN table
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#spacemap-area-structure" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#exit-logic" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Spacemap Area Structure
+        Exit logic
       
     </span>
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#fixed-record-structure" class="md-nav__link">
+  <a href="#close" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fixed Record Structure
+        Close
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Close">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#close-macro-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLOSE macro logic
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#variable-record-structure" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#close-execution-logic" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Variable Record Structure
+        CLOSE execution logic
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#fixed-segmented-record-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fixed-Segmented Record Structure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#variable-segmented-record-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Variable-Segmented Record Structure
-      
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2836,19 +2832,80 @@
   
 
 
-  <h1>zVSAM V2 Design File Structure</h1>
-
-<h3 id="block-header-structure">Block Header Structure</h3>
-<p><em>Example 4:</em> This example shows an index of only one block, holding two record pointers.</p>
-<p><img alt="Diagram showing a single Index Block" src="../img/zVSAM_V2_Drawing_Chain_Index_Blocks_1.jpg" /></p>
-<p><em>Example 5:</em> This example shows the index after adding three more record pointers,
-causing the only index block to overflow and split. Now there are two leaf blocks, still on the LVL0 chain,
-and a new root block has been created on the LVL1 chain.</p>
-<p><img alt="Diagram showing two Chained Index Blocks" src="../img/zVSAM_V2_Drawing_Chain_Index_Blocks_2.jpg" /></p>
-<h3 id="prefix-area-structure">Prefix Area Structure</h3>
-<p>The prefix area occurs only on the prefix block. It is located directly after the block header on the prefix block.
-No record pointer list lies in between.</p>
-<p>The prefix area contains basic structural information about the file. It has the following format:</p>
+<h1 id="zvsam-v2-logical-processes-for-acb-based-requests">zVSAM V2 - Logical processes for ACB-based requests</h1>
+<p>This document describes the logical processes for ACB-based requests to be implemented in zVSAM V2.</p>
+<h2 id="open">Open</h2>
+<p>Open logic has two major components: the open macro and the actual run-time logic to execute a request to open a file or a number of files.</p>
+<p>Open parameter list entries have two different formats depending on the MODE parameter.
+- When MODE=24 then each entry is one fullword
+- When MODE=31 then each entry is two fullwords</p>
+<p>Only one SVC 19 is generated for each OPEN macro (MF=I or E)</p>
+<p>A header precedes the list as follows:
+- DC C'zOPC'
+- DC AL2(no. of entries) The senior bit is off for MODE=24 and on for MODE=31</p>
+<p>The list format and input to OPEN depend on MODE=</p>
+<p>R1 points to the header</p>
+<ul>
+<li>MODE=24 AL1(option),AL3(DCB/ACB address)</li>
+<li>
+<p>MODE=31 AL1(option),XL3'00',AL4(DCB/ACB address)</p>
+</li>
+<li>
+<p>option=X'40' INPUT</p>
+</li>
+<li>option=X'20' OUTPUT</li>
+<li>option=X'60' UPDATE</li>
+</ul>
+<p>The last entry has the X'80' bit on in option.
+The option is ignored when opening an ACB.</p>
+<h3 id="open-macro-logic">Open macro logic</h3>
+<p>The open macro generates an open/close parameter list and/or an SVC 19 instruction to invoke the open routine.
+The syntax of the open macro is given in <a href="../zVSAM_V2_Design_Interfaces/#open-macro">OPEN macro</a>.</p>
+<p>The macro generates the following code:</p>
+<table>
+<thead>
+<tr>
+<th>MF variant</th>
+<th>Generated Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MF=L</td>
+<td>Open/close parameter list data only</td>
+</tr>
+<tr>
+<td>------------</td>
+<td>-----------------------------------------------------------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>MF=E</td>
+<td>1) Code to modify/populate the open/close parameter list at the indicated address, which may be a relocatable constant or a (register).</td>
+</tr>
+<tr>
+<td></td>
+<td>2) Code to invoke the open routine with R1 pointing to the open/close parameter list.</td>
+</tr>
+<tr>
+<td>------------</td>
+<td>-----------------------------------------------------------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>MF omitted</td>
+<td>1) Open/close parameter list data (inline)</td>
+</tr>
+<tr>
+<td></td>
+<td>2) Code to invoke the open routine with R1 pointing to the open/close parameter list.</td>
+</tr>
+</tbody>
+</table>
+<p>When constructing the open/close parameter list, the end-of-list indicator of the last entry is set.</p>
+<p>Open/close parameter list entries have two different formats. The one being used depends on the current addressing mode as indicated in the &amp;MODE parameter.</p>
+<ul>
+<li>When &amp;MODE=24 then each entry is one fullword on a fullword boundary.</li>
+<li>When &amp;MODE=31 then each entry is two fullwords on a fullword boundary.</li>
+</ul>
 <table>
 <thead>
 <tr>
@@ -2860,811 +2917,722 @@ No record pointer list lies in between.</p>
 </thead>
 <tbody>
 <tr>
-<td>ZVSAMPFX</td>
+<td>OCPL</td>
 <td></td>
 <td>DSECT</td>
-<td>Prefix area</td>
+<td>Open/Close Parameter List</td>
 </tr>
 <tr>
-<td>PFXEYE</td>
+<td>OC24</td>
 <td>X'000'</td>
-<td>CL4</td>
-<td>Eye catcher</td>
-</tr>
-<tr>
-<td>PFXZPFX</td>
-<td></td>
-<td>=C'zPFX'</td>
-<td></td>
-</tr>
-<tr>
-<td>PFXRCLEN</td>
-<td>X'004'</td>
 <td>XL4</td>
-<td>record length, max length if variable</td>
+<td>Entry for &amp;MODE=24</td>
 </tr>
 <tr>
-<td>PFXKYLEN</td>
-<td>X'008'</td>
-<td>XL4</td>
-<td>key length</td>
-</tr>
-<tr>
-<td>PFXKYOFF</td>
-<td>X'00C'</td>
-<td>XL4</td>
-<td>key offset, excluding SDW/RDW</td>
-</tr>
-<tr>
-<td>PFXDVOL@</td>
-<td>X'010'</td>
-<td>XL3</td>
-<td>offset to the data component's volume label</td>
-</tr>
-<tr>
-<td>PFXDNAM@</td>
-<td>X'013'</td>
-<td>XL3</td>
-<td>offset to the data component's filename</td>
-</tr>
-<tr>
-<td>PFXDPAT@</td>
-<td>X'016'</td>
-<td>XL3</td>
-<td>offset to the data component's pathname</td>
-</tr>
-<tr>
-<td>PFXXVOL@</td>
-<td>X'019'</td>
-<td>XL3</td>
-<td>offset to the index component's volume label</td>
-</tr>
-<tr>
-<td>PFXXNAM@</td>
-<td>X'01C'</td>
-<td>XL3</td>
-<td>offset to the index component's filename</td>
-</tr>
-<tr>
-<td>PFXXPAT@</td>
-<td>X'01F'</td>
-<td>XL3</td>
-<td>offset to the index component's pathname</td>
-</tr>
-<tr>
-<td>PFXIXLVL</td>
-<td>X'022'</td>
+<td>OC24OPT</td>
+<td>X'000'</td>
 <td>XL1</td>
-<td>nr of index levels</td>
+<td>Option byte (ignored for ACB)</td>
 </tr>
 <tr>
-<td>PFXALTHR</td>
-<td>X'023'</td>
-<td>XL1</td>
-<td>allocation redrive threshold</td>
-</tr>
-<tr>
-<td>PFXBLKSZ</td>
-<td>X'024'</td>
-<td>XL4</td>
-<td>blocksize used for this file (except prefix block)</td>
-</tr>
-<tr>
-<td>PFXHXLRA</td>
-<td>X'028'</td>
-<td>XL8</td>
-<td>XLRA of highest allocated block</td>
-</tr>
-<tr>
-<td>PFXBMAP</td>
-<td>X'030'</td>
-<td>XL8</td>
-<td>XLRA of first spacemap block</td>
-</tr>
-<tr>
-<td>PFXEMAP</td>
-<td>X'038'</td>
-<td>XL8</td>
-<td>XLRA of last spacemap block</td>
-</tr>
-<tr>
-<td>PFXMAPNW</td>
-<td>X'040'</td>
-<td>XL8</td>
-<td>XLRA of spacemap block last used for allocation</td>
-</tr>
-<tr>
-<td>PFXBDATA</td>
-<td>X'048'</td>
-<td>XL8</td>
-<td>XLRA of first data block</td>
-</tr>
-<tr>
-<td>PFXEDATA</td>
-<td>X'050'</td>
-<td>XL8</td>
-<td>XLRA of last data block</td>
-</tr>
-<tr>
-<td>PFXBSEGM</td>
-<td>X'058'</td>
-<td>XL8</td>
-<td>XLRA of first segment block</td>
-</tr>
-<tr>
-<td>PFXESEGM</td>
-<td>X'060'</td>
-<td>XL8</td>
-<td>XLRA of last segment block</td>
-</tr>
-<tr>
-<td>PFXROOT</td>
-<td>X'068'</td>
-<td>XL8</td>
-<td>XLRA of root index block</td>
-</tr>
-<tr>
-<td>PFXBLVL0</td>
-<td>X'070'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 0</td>
-</tr>
-<tr>
-<td>PFXELVL0</td>
-<td>X'078'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 0</td>
-</tr>
-<tr>
-<td>PFXBLVL1</td>
-<td>X'080'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 1</td>
-</tr>
-<tr>
-<td>PFXELVL1</td>
-<td>X'088'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 1</td>
-</tr>
-<tr>
-<td>PFXBLVL2</td>
-<td>X'090'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 2</td>
-</tr>
-<tr>
-<td>PFXELVL2</td>
-<td>X'098'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 2</td>
-</tr>
-<tr>
-<td>PFXBLVL3</td>
-<td>X'0A0'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 3</td>
-</tr>
-<tr>
-<td>PFXELVL3</td>
-<td>X'0A8'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 3</td>
-</tr>
-<tr>
-<td>PFXBLVL4</td>
-<td>X'0B0'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 4</td>
-</tr>
-<tr>
-<td>PFXELVL4</td>
-<td>X'0B8'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 4</td>
-</tr>
-<tr>
-<td>PFXBLVL5</td>
-<td>X'0C0'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 5</td>
-</tr>
-<tr>
-<td>PFXELVL5</td>
-<td>X'0C8'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 5</td>
-</tr>
-<tr>
-<td>PFXBLVL6</td>
-<td>X'0D0'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 6</td>
-</tr>
-<tr>
-<td>PFXELVL6</td>
-<td>X'0D8'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 6</td>
-</tr>
-<tr>
-<td>PFXBLVL7</td>
-<td>X'0E0'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 7</td>
-</tr>
-<tr>
-<td>PFXELVL7</td>
-<td>X'0E8'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 7</td>
-</tr>
-<tr>
-<td>PFXBLVL8</td>
-<td>X'0F0'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 8</td>
-</tr>
-<tr>
-<td>PFXELVL8</td>
-<td>X'0F8'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 8</td>
-</tr>
-<tr>
-<td>PFXBLVL9</td>
-<td>X'100'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 9</td>
-</tr>
-<tr>
-<td>PFXELVL9</td>
-<td>X'108'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 9</td>
-</tr>
-<tr>
-<td>PFXBLVLA</td>
-<td>X'110'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 10</td>
-</tr>
-<tr>
-<td>PFXELVLA</td>
-<td>X'118'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 10</td>
-</tr>
-<tr>
-<td>PFXBLVLB</td>
-<td>X'120'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 11</td>
-</tr>
-<tr>
-<td>PFXELVLB</td>
-<td>X'128'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 11</td>
-</tr>
-<tr>
-<td>PFXBLVLC</td>
-<td>X'130'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 412</td>
-</tr>
-<tr>
-<td>PFXELVLC</td>
-<td>X'138'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 12</td>
-</tr>
-<tr>
-<td>PFXBLVLD</td>
-<td>X'140'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 13</td>
-</tr>
-<tr>
-<td>PFXELVLD</td>
-<td>X'148'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 13</td>
-</tr>
-<tr>
-<td>PFXBLVLE</td>
-<td>X'150'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 14</td>
-</tr>
-<tr>
-<td>PFXELVLE</td>
-<td>X'158'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 14</td>
-</tr>
-<tr>
-<td>PFXBLVLF</td>
-<td>X'160'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 15</td>
-</tr>
-<tr>
-<td>PFXELVLF</td>
-<td>X'168'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 15</td>
-</tr>
-<tr>
-<td>PFXMAPOF</td>
-<td>X'170'</td>
-<td>XL3</td>
-<td>offset within spacemap block to last used byte for allocation</td>
-</tr>
-<tr>
-<td>PFXFRSPC</td>
-<td>X'173'</td>
-<td>XL1</td>
-<td>initial freespace % within block</td>
-</tr>
-<tr>
-<td>PFXFRBLK</td>
-<td>X'174'</td>
-<td>XL2</td>
-<td>initial freespace blocks</td>
-</tr>
-<tr>
-<td>PFXFRINT</td>
-<td>X'176'</td>
-<td>XL2</td>
-<td>initial freespace interval between free blocks</td>
-</tr>
-<tr>
-<td>PFXFFLGS</td>
-<td>X'178'</td>
-<td>XL1</td>
-<td>file flags</td>
-</tr>
-<tr>
-<td>PFX_ESDS</td>
+<td>OC24_EOL</td>
 <td></td>
 <td>=X'80'</td>
-<td>ESDS</td>
+<td>End-of-list indicator</td>
 </tr>
 <tr>
-<td>PFX_KSDS</td>
+<td>OC24DCB</td>
+<td>X'001'</td>
+<td>AL3</td>
+<td>Pointer to DCB or ACB</td>
+</tr>
+<tr>
 <td></td>
-<td>=X'40'</td>
-<td>KSDS</td>
-</tr>
-<tr>
-<td>PFX_RRDS</td>
 <td></td>
-<td>=X'20'</td>
-<td>RRDS</td>
-</tr>
-<tr>
-<td>PFX_LDS</td>
 <td></td>
-<td>=X'10'</td>
-<td>LDS</td>
-</tr>
-<tr>
-<td>PFX_AIX</td>
 <td></td>
-<td>=X'08'</td>
-<td>AIX</td>
 </tr>
 <tr>
-<td>PFX_INDX</td>
-<td></td>
-<td>=X'01'</td>
-<td>index component</td>
+<td>OC31</td>
+<td>X'000'</td>
+<td>XL8</td>
+<td>Entry for &amp;MODE=31</td>
 </tr>
 <tr>
-<td>PFXRFLGS</td>
-<td>X'179'</td>
+<td>OC31OPT</td>
+<td>X'000'</td>
 <td>XL1</td>
-<td>record flags</td>
+<td>Option byte (ignored for ACB)</td>
 </tr>
 <tr>
-<td>PFX_RFIX</td>
+<td>OC31_EOL</td>
 <td></td>
 <td>=X'80'</td>
-<td>1=fixed, 0=variable</td>
+<td>End-of-list indicator</td>
 </tr>
 <tr>
-<td>PFX_RSPN</td>
-<td></td>
-<td>=X'40'</td>
-<td>1=spanned, 0=non-spanned</td>
-</tr>
-<tr>
-<td>PFX_KUNQ</td>
-<td></td>
-<td>=X'20'</td>
-<td>1=AIX unique, 0=AIX non-unique</td>
-</tr>
-<tr>
-<td>PFX_AIXT</td>
-<td></td>
-<td>=X'10'</td>
-<td>1=AIX on KSDS, 0=AIX on ESDS</td>
-</tr>
-<tr>
-<td></td>
-<td>X'17A'</td>
-<td>XL6</td>
-<td>reserved</td>
-</tr>
-<tr>
-<td>PFXDTSKC</td>
-<td>X'180'</td>
-<td>XL8</td>
-<td>STCK of data component creation</td>
-</tr>
-<tr>
-<td>PFXIXSKC</td>
-<td>X'188'</td>
-<td>XL8</td>
-<td>STCK of index component creation</td>
-</tr>
-<tr>
-<td>PFXDTSKU</td>
-<td>X'190'</td>
-<td>XL8</td>
-<td>STCK of last update to data component</td>
-</tr>
-<tr>
-<td>PFXIXSKU</td>
-<td>X'198'</td>
-<td>XL8</td>
-<td>STCK of last update to index component</td>
-</tr>
-<tr>
-<td>PFXMAPDT</td>
-<td>X'1A0'</td>
-<td>XL8</td>
-<td>STCK of last allocation action</td>
-</tr>
-<tr>
-<td>PFXCTRS@</td>
-<td>X'1A8'</td>
+<td>OC31NULL</td>
+<td>X'001'</td>
 <td>XL3</td>
-<td>pointer to counters area</td>
+<td>Reserved, should contain zeroes</td>
 </tr>
 <tr>
-<td></td>
-<td>X'1AB'</td>
-<td>XL5</td>
-<td>reserved</td>
-</tr>
-</tbody>
-</table>
-<p>There are 7 pointer fields in the prefix area. These point to fields allocated elsewhere in the prefix block.
-Their exact addresses on the prefix block may vary.</p>
-<p>The <code>PFXDVOL@</code>, <code>PFXDPAT@</code>, <code>PFXDNAM@</code> pointers and the <code>PFXXVOL@</code>, <code>PFXXPAT@</code>, <code>PFXXNAM@</code> all point to a halfword-prefixed string.
-The <code>PFXCTRS@</code> pointer addresses a separate area that holds various counters.
-This area is expected to move into the catalog dataset in a future release.</p>
-<h3 id="counters-area-structure">Counters Area Structure</h3>
-<p>The counters area occurs only on the prefix block. Its location can be found by following the prefix area's <code>PFXCTRS@</code> field.</p>
-<p>The counters area has the following format:</p>
-<table>
-<thead>
-<tr>
-<th>Label</th>
-<th>Offset</th>
-<th>Field type</th>
-<th>Function</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ZVSAMCTR</td>
-<td></td>
-<td>DSECT</td>
-<td>Counters area</td>
-</tr>
-<tr>
-<td>CTREYE</td>
-<td>X'000'</td>
-<td>CL4</td>
-<td>Eyecatcher</td>
-</tr>
-<tr>
-<td>CTRZCTR</td>
-<td></td>
-<td>='zCTR'</td>
-<td></td>
-</tr>
-<tr>
-<td>CTRAVGRL</td>
+<td>OC31DCB</td>
 <td>X'004'</td>
-<td>XL4</td>
-<td>average record length</td>
+<td>AL4</td>
+<td>Pointer to DCB or ACB</td>
 </tr>
+</tbody>
+</table>
+<p>To invoke the open execution logic SVC 19 (X'13') is used.
+The type of parameter list is indicated as follows:
+- if R1 is zero, then R0 contains a pointer to a list of OC31 entries
+- otherwise R1 contains a pointer to a list of OC24 entries.</p>
+<h3 id="open-execution-logic">Open execution logic</h3>
+<p>Open execution logic is implemented as a Java routine.</p>
+<p>This logic consists of the following elements:</p>
+<table>
+<thead>
 <tr>
-<td>CTRAVSPAC</td>
-<td>X'008'</td>
-<td>XL8</td>
-<td>available space</td>
+<th>Action</th>
+<th>Details</th>
 </tr>
+</thead>
+<tbody>
 <tr>
-<td>CTRHALCRBA</td>
-<td>X'010'</td>
-<td>XL8</td>
-<td>high-allocated RBA</td>
-</tr>
-<tr>
-<td>CTRENDRBA</td>
-<td>X'018'</td>
-<td>XL8</td>
-<td>high water mark for the component</td>
-</tr>
-<tr>
-<td>CTRNCIS</td>
-<td>X'020'</td>
-<td>XL8</td>
-<td>nr of block-split operations</td>
-</tr>
-<tr>
-<td>CTRNDELR</td>
-<td>X'028'</td>
-<td>XL8</td>
-<td>nr of delete operations</td>
-</tr>
-<tr>
-<td>CTRNEXCP</td>
-<td>X'030'</td>
-<td>XL8</td>
-<td>nr of I/O operations</td>
-</tr>
-<tr>
-<td>CTRNEXT</td>
-<td>X'038'</td>
-<td>XL8</td>
-<td>nr of physical files allocated (always 1)</td>
-</tr>
-<tr>
-<td>CTRNINSR</td>
-<td>X'040'</td>
-<td>XL8</td>
-<td>nr of insert operations</td>
-</tr>
-<tr>
-<td>CTRNLOGR</td>
-<td>X'048'</td>
-<td>XL8</td>
-<td>nr of records in this component</td>
-</tr>
-<tr>
-<td>CTRNRETR</td>
-<td>X'050'</td>
-<td>XL8</td>
-<td>nr of retrieval operations</td>
-</tr>
-<tr>
-<td>CTRNNUIW</td>
-<td>X'058'</td>
-<td>XL8</td>
-<td>nr of zVSAM writes</td>
-</tr>
-<tr>
-<td>CTRNUPDR</td>
-<td>X'060'</td>
-<td>XL8</td>
-<td>nr of updates</td>
-</tr>
-<tr>
-<td>CTRSDTA</td>
-<td>X'068'</td>
-<td>XL8</td>
-<td>uncompressed data size</td>
-</tr>
-<tr>
-<td>CTRSTMST</td>
-<td>X'070'</td>
-<td>XL8</td>
-<td>system timestamp of last close operation</td>
-</tr>
-<tr>
-<td>CTRNUIW</td>
-<td>X'078'</td>
-<td>XL8</td>
-<td>nr of user writes</td>
-</tr>
-<tr>
-<td>CTRLOKEY@</td>
-<td>X'080'</td>
-<td>XL3</td>
-<td>pointer to lowest valid key value</td>
+<td>determine type of parameter list</td>
+<td>The list consists solely of OC31 entries, addressed by R0, if R1 = 0.</td>
 </tr>
 <tr>
 <td></td>
-<td>X'083'</td>
-<td>XL5</td>
-<td>Reserved</td>
-</tr>
-</tbody>
-</table>
-<p>The values in the counters area are maintained to support SHOWCB ACB and/or TESTCB ACB requests.
-They are mapped as follows:</p>
-<table>
-<thead>
-<tr>
-<th>Label</th>
-<th>Keyword</th>
-<th>SHOWCB</th>
-<th>TESTCB</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>CTRAVSPAC</td>
-<td>AVSPAC</td>
-<td>ACB</td>
-<td>ACB</td>
+<td>The list consists solely of OC24 entries, addressed by R1, if R1 &lt;&gt; 0.</td>
 </tr>
 <tr>
-<td>CTRHALCRBA</td>
-<td>HALCRBA</td>
-<td>ACB</td>
-<td>n.a.</td>
+<td>---------------------------------------------</td>
+<td>------------------------------------------------------------------------</td>
 </tr>
 <tr>
-<td>CTRENDRBA</td>
-<td>ENDRBA</td>
-<td>ACB</td>
-<td>ACB</td>
+<td>loop over all entries in the parameter list</td>
+<td>End-of-list is indicated in the option byte of the entry</td>
 </tr>
 <tr>
-<td>CTRNCIS</td>
-<td>NCIS</td>
-<td>ACB</td>
-<td>ACB</td>
+<td>---------------------------------------------</td>
+<td>------------------------------------------------------------------------</td>
 </tr>
 <tr>
-<td>CTRNDELR</td>
-<td>NDELR</td>
-<td>ACB</td>
-<td>ACB</td>
+<td>- check pointer: ACB or DCB</td>
+<td>First byte = X'A0' =&gt; ACB V1</td>
 </tr>
 <tr>
-<td>CTRNEXCP</td>
-<td>NEXCP</td>
-<td>ACB</td>
-<td>ACB</td>
-</tr>
-<tr>
-<td>CTRNEXT</td>
-<td>NEXT</td>
-<td>ACB</td>
-<td>ACB</td>
-</tr>
-<tr>
-<td>CTRNINSR</td>
-<td>NINSR</td>
-<td>ACB</td>
-<td>ACB</td>
-</tr>
-<tr>
-<td>CTRNLOGR</td>
-<td>NLOGR</td>
-<td>ACB</td>
-<td>ACB</td>
-</tr>
-<tr>
-<td>CTRNRETR</td>
-<td>NRETR</td>
-<td>ACB</td>
-<td>ACB</td>
-</tr>
-<tr>
-<td>CTRNNUIW</td>
-<td>NUIW</td>
-<td>ACB</td>
-<td>n.a.</td>
-</tr>
-<tr>
-<td>CTRNUPDR</td>
-<td>NUPDR</td>
-<td>ACB</td>
-<td>ACB</td>
-</tr>
-<tr>
-<td>CTRSDTA</td>
-<td>SDTASIZE</td>
-<td>ACB</td>
-<td>n.a.</td>
-</tr>
-<tr>
-<td>CTRSTMST</td>
-<td>STMST</td>
-<td>ACB</td>
-<td>ACB</td>
-</tr>
-<tr>
-<td>CTRNUIW</td>
-<td>UIW</td>
-<td>ACB</td>
-<td>n.a.</td>
-</tr>
-<tr>
-<td>CTRLOKEY@</td>
-<td>LOKEY</td>
-<td>ACB</td>
-<td>n.a.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="spacemap-area-structure">Spacemap Area Structure</h3>
-<p>The spacemap area fills every spacemap block. It consumes the entire area between the block header and the block footer.
-No free space is left.</p>
-<p>The spacemap area is formatted as follows:</p>
-<table>
-<thead>
-<tr>
-<th>Label</th>
-<th>Offset</th>
-<th>Field type</th>
-<th>Function</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ZVSAMMAP</td>
 <td></td>
-<td>DSECT</td>
-<td>Spacemap area</td>
+<td>First four bytes = C'zACB' =&gt; ACB V2</td>
 </tr>
 <tr>
-<td>MAPXLRA</td>
-<td>X'000'</td>
-<td>XL8</td>
-<td>XLRA of first block addressed by this spacemap area</td>
+<td></td>
+<td>Otherwise =&gt; Assume DCB</td>
 </tr>
 <tr>
-<td>MAPBITS</td>
-<td>X'008'</td>
-<td>0B</td>
-<td>Bitmap indicating availability</td>
+<td>---------------------------------------------</td>
+<td>------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>- if DCB invoke DCB open routine</td>
+<td>OPEN logic for DCB is beyond the scope of this document</td>
+</tr>
+<tr>
+<td>---------------------------------------------</td>
+<td>------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>- if ACB validate ACB</td>
+<td><code>ACBID</code> &lt;&gt; X'A0' =&gt; Error</td>
+</tr>
+<tr>
+<td></td>
+<td><code>ACBSTYP</code> &lt;&gt; X'10' =&gt; Error</td>
+</tr>
+<tr>
+<td></td>
+<td><code>ACBVER</code> &lt;&gt; X'02' =&gt; Error</td>
+</tr>
+<tr>
+<td>---------------------------------------------</td>
+<td>------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>- if ACB valid invoke VSAM open routine</td>
+<td></td>
+</tr>
+<tr>
+<td>---------------------------------------------</td>
+<td>------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>- next entry or end-of-loop</td>
+<td>If bit 0 of OCPL entry is on, terminate loop</td>
+</tr>
+<tr>
+<td>---------------------------------------------</td>
+<td>------------------------------------------------------------------------</td>
 </tr>
 </tbody>
 </table>
-<p>The <code>MAPBITS</code> label addresses an array of bytes, each of which addresses 4 blocks of the file,
-the status of each block being represented by two bits. Each byte relates to 4 blocks in direct succession to one another,
-the bytes in the array mapping to successive sequences of 4 blocks.</p>
-<p>The bits in the <code>MAPBITS</code> array are encoded as follows:</p>
+<blockquote>
+<p>[!NOTE]
+Melvyn suggested to check pointers for a value of 'DCBV' in the first four bytes. Any other value to cause an error.
+Since that would impact the non-VSAM macros for DCB handling, I doubt this is feasible.
+To be investigated and evaluated.</p>
+</blockquote>
+<p>Open logic for ACB handles a single ACB and proceeds as follows:</p>
 <table>
 <thead>
 <tr>
-<th>Value</th>
-<th>Meaning</th>
+<th>Action</th>
+<th>Details</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>B'00'</td>
-<td>block is not allocated. I.e. the block resides on no chain. The block's <code>BHDRNEXT</code>/<code>BHDRPREV</code> fields are meaningless.</td>
+<td>Check ACB status</td>
+<td>If ACB already open, issue error and fail open</td>
 </tr>
 <tr>
-<td>B'01'</td>
-<td>block is allocated but may have insufficient free space. I.e. last allocation attempt failed, but a smaller record might fit. Or last allocation succeeded but left fewer than <code>CTRAVGRL</code> bytes of free space. Not used for blocks holding a segment of a segmented record.</td>
+<td>Set ACBIOSFG</td>
+<td></td>
 </tr>
 <tr>
-<td>B'10'</td>
-<td>block is allocated and eligible for record allocation. i.e. last allocation succeeded and left enough free space for a record of average size. (<code>CTRAVGRL</code>) Not used for blocks holding a segment of a segmented record.</td>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
 </tr>
 <tr>
-<td>B'11'</td>
-<td>Nothing can be allocated to this block. i.e. last allocation attempt failed, block holds a segment of a segmented record, block is an ELIX block, or block is a spacemap block.</td>
+<td>Copy ACB to newly created FCB</td>
+<td>FCB is the java-equivalent of the ACB</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Extract DDNAME</td>
+<td>Copy <code>ACBDDNAM</code> field from ACB/FCB</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Find actual file name</td>
+<td>Retrieve host variable with name matching <code>ACBDDNAM</code> content</td>
+</tr>
+<tr>
+<td></td>
+<td>if not available: issue error and fail open</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Validate against catalog</td>
+<td>Find the file name in the catalog</td>
+</tr>
+<tr>
+<td></td>
+<td>if missing: issue error</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Issue OS open against file</td>
+<td>Read-only if ACB specifies <code>MACRF=IN</code></td>
+</tr>
+<tr>
+<td></td>
+<td>for input/update/extend otherwise.</td>
+</tr>
+<tr>
+<td></td>
+<td>If unsuccessful issue error and fail open</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Allocate buffer for prefix block</td>
+<td>Save buffer address in FCB</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Read first 4096 bytes into buffer</td>
+<td>If read fails, issue error</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Validate block header and footer</td>
+<td>if <code>BHDREYE</code> &lt;&gt; C'HDR' issue error</td>
+</tr>
+<tr>
+<td></td>
+<td>if <code>BFTREYE</code> &lt;&gt; C'FTR' issue error</td>
+</tr>
+<tr>
+<td></td>
+<td>if <code>BHDRSEQ#</code> &lt;&gt; <code>BFTRSEQ#</code> issue error</td>
+</tr>
+<tr>
+<td></td>
+<td>if <code>BHDRVER</code> &lt;&gt; X'02' issue error</td>
+</tr>
+<tr>
+<td></td>
+<td>if <code>BHDRSELF</code> &lt;&gt; foxes issue error</td>
+</tr>
+<tr>
+<td></td>
+<td>if <code>BHDRPREV</code> &lt;&gt; foxes issue error</td>
+</tr>
+<tr>
+<td></td>
+<td>if <code>BHDRNEXT</code> &lt;&gt; foxes issue error</td>
+</tr>
+<tr>
+<td></td>
+<td>if <code>BHDRFLGS</code> &lt;&gt; X'80' issue error</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Validate prefix area</td>
+<td>if <code>PFXEYE</code> &lt;&gt; C'zPFX' issue error</td>
+</tr>
+<tr>
+<td></td>
+<td>if filename &lt;&gt; <code>PFXDNAM</code> issue error</td>
+</tr>
+<tr>
+<td></td>
+<td>if file's path &lt;&gt; <code>PFXDPAT</code> issue error</td>
+</tr>
+<tr>
+<td></td>
+<td>if <code>PFX_INDX</code> is on issue error</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Validate counters area</td>
+<td>if <code>CTREYE</code> &lt;&gt; C'zCTR' issue error</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Validate prefix against catalog</td>
+<td>Only if no errors detected thus far:</td>
+</tr>
+<tr>
+<td></td>
+<td>compare cluster type</td>
+</tr>
+<tr>
+<td></td>
+<td>compare lrecl</td>
+</tr>
+<tr>
+<td></td>
+<td>compare blocksize</td>
+</tr>
+<tr>
+<td></td>
+<td>compare key offset</td>
+</tr>
+<tr>
+<td></td>
+<td>compare key length</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Fail open on error</td>
+<td>If any error was detected:</td>
+</tr>
+<tr>
+<td></td>
+<td>- request OS to close the file</td>
+</tr>
+<tr>
+<td></td>
+<td>- free the prefix buffer</td>
+</tr>
+<tr>
+<td></td>
+<td>- set buffer pointer in FCB to zeros</td>
+</tr>
+<tr>
+<td></td>
+<td>- fail the open request</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Issue OS open against index file</td>
+<td>If <code>PFXXNAM@</code> is non-zero then open the indicated index file</td>
+</tr>
+<tr>
+<td></td>
+<td>readonly if ACB <code>MACRF=IN</code> for input/update/extend otherwise</td>
+</tr>
+<tr>
+<td></td>
+<td>for input/update/extend otherwise.</td>
+</tr>
+<tr>
+<td></td>
+<td>Read index header block and repeat all validations with the following modifications:</td>
+</tr>
+<tr>
+<td></td>
+<td>- if <code>PFX_INDX</code> is off rather than on issue an error</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Fail open on error</td>
+<td>If any error was detected:</td>
+</tr>
+<tr>
+<td></td>
+<td>- request OS to close the files</td>
+</tr>
+<tr>
+<td></td>
+<td>- free the prefix buffers</td>
+</tr>
+<tr>
+<td></td>
+<td>- set buffer pointer in FCB to zeroes</td>
+</tr>
+<tr>
+<td></td>
+<td>- fail the open request</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Create data buffers</td>
+<td>Based on <code>ACBBUFND</code></td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Create index buffers</td>
+<td>Only if index is present</td>
+</tr>
+<tr>
+<td></td>
+<td>At least <code>ACBBUFNI</code> in total</td>
+</tr>
+<tr>
+<td></td>
+<td>Exactly one for the root block</td>
+</tr>
+<tr>
+<td></td>
+<td>At least 4 for each other index level</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Open base cluster</td>
+<td>If DDNAME refers to a path, repeat the open process for the base cluster.</td>
+</tr>
+<tr>
+<td></td>
+<td>File names and other info to be gathered from the path's catalog entry.</td>
+</tr>
+<tr>
+<td></td>
+<td>This basically repeats the steps above.</td>
+</tr>
+<tr>
+<td></td>
+<td>Create an FCB – even though there is no ACB – to represent the cluster.</td>
+</tr>
+<tr>
+<td>-----------------------------------</td>
+<td>--------------------------------------------------------------------------------------</td>
+</tr>
+<tr>
+<td>Update ACB on OPEN completion</td>
+<td>Set ACBIOSFG off</td>
+</tr>
+<tr>
+<td></td>
+<td>Set ACBOPEN on</td>
+</tr>
+<tr>
+<td></td>
+<td>Set addresses for ACBPFX, ACBXPFX, ACBBUFD, ACBBUFI</td>
+</tr>
+<tr>
+<td></td>
+<td>Set ACBDTYPE:</td>
+</tr>
+<tr>
+<td></td>
+<td>- If MACRF=AIX is specified, then ACB_AIX and ACB_BASE are set on</td>
 </tr>
 </tbody>
 </table>
-<h3 id="fixed-record-structure">Fixed Record Structure</h3>
-<h3 id="variable-record-structure">Variable Record Structure</h3>
-<h3 id="fixed-segmented-record-structure">Fixed-Segmented Record Structure</h3>
-<h3 id="variable-segmented-record-structure">Variable-Segmented Record Structure</h3>
+<blockquote>
+<p>[!NOTE]
+The environment variables take the following form (in a Windows environment)
+SET ddname=drive:\path\catalog.filename \
+SET catalog=drive:\path \
+The ddname variable may only contain one dot</p>
+</blockquote>
+<h3 id="implied-open-table">Implied OPEN table</h3>
+<p>This table has the permutations of component types, indented entries are implied processing.</p>
+<div class="highlight"><pre><span></span><code>| Open component          | MACRF=IN                                       | MACRF=OUT                                      |
+|-------------------------|------------------------------------------------|------------------------------------------------|
+| Base                    | Opened for input                               | Opened for in/out                              |
+| - AIXs (UPGRADE=NO)     | Not opened                                     | Not opened                                     |
+| - AIXs (UPGRADE=YES)    | Not opened                                     | Opened for in/out                              |
+|                         |                                                | See note 3                                     |
+|-------------------------|------------------------------------------------|------------------------------------------------|
+| PATH (NOUPDATE) to Base | Opened for input; No error if already open     | Opened for in/out; No error if already open    |
+| - AIXs (UPGRADE=NO)     | Not opened                                     | Not opened                                     |
+| - AIXs (UPGRADE=YES)    | Not opened                                     | Not opened                                     |
+|                         |                                                | See note 1                                     |
+|-------------------------|------------------------------------------------|------------------------------------------------|
+| PATH (UPDATE) to Base   | Opened for input; No error if already open     | Opened for in/out; No error if already open    |
+| - AIXs (UPGRADE=NO)     | Not opened                                     | Not opened                                     |
+| - AIXs (UPGRADE=YES)    | Not opened                                     | Opened for in/out                              |
+|                         |                                                | See note 3                                     |
+|-------------------------|------------------------------------------------|------------------------------------------------|
+| PATH (NOUPDATE) to AIX  | Implied open of Base; No error if already open | Implied open of Base; No error if already open |
+| See Note 4              | See Note 2                                     | See Note 2                                     |
+| - AIXs (UPGRADE=NO)     | AIX opened for input                           | AIX opened for input                           |
+| - AIXs (UPGRADE=YES)    | Not opened; See Note 1                         | Not opened; See Note 1                         |
+|-------------------------|------------------------------------------------|------------------------------------------------|
+| PATH (UPDATE) to AIX    | Implied open of Base; No error if already open | Implied open of Base; No error if already open |
+| See Note 4              | See Note 2                                     | See Note 2                                     |
+| - AIXs (UPGRADE=NO)     | AIX opened for input                           | AIX opened for input                           |
+| - AIXs (UPGRADE=YES)    | Opened for in/out; See Note 3                  | Opened for in/out; See Note 3                  |
+|-------------------------|------------------------------------------------|------------------------------------------------|
+</code></pre></div>
+<p><em>Notes:</em>
+1. A <code>NOUPDATE PATH</code> means that the structures for AIXs on the upgrade set are not created
+2. The Base is opened by zVSAM for input but has no associated ACB as it hasn't been opened by the application
+3. All AIXs on the upgrade set are opened for in/out by zVSAM and may be updated
+4. A PATH to an AIX ignores MACRF=IN/OUT</p>
+<h3 id="exit-logic">Exit logic</h3>
+<p>This logic is only entered if any of the following conditions are raised:
+- End-of-data (EODAD)
+- Logical error (LERAD)
+- Physical error (SYNAD)</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ACBEXLST has an address</td>
+<td>No action if zero</td>
+</tr>
+<tr>
+<td>Check that the exit is active</td>
+<td>No action if inactive</td>
+</tr>
+<tr>
+<td>Check that the address is not zero</td>
+<td>No action if zero</td>
+</tr>
+<tr>
+<td>Branch to the exit address</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="close">Close</h2>
+<p>Upon close the prefix counter field <code>CTRSTMST</code> must be updated.</p>
+<p>Do we need to include a last-updated timestamp to validate that last update of AIX is not behind the base cluster?</p>
+<p>Close is a lot more complex than you realise, you have to check that there are no outstanding block/record locks.</p>
+<p>include a last-updated timestamp to validate that last update of AIX is not behind the base cluster?</p>
+<p>I'm not sure about the usefulness of timestamps anyway, if you want to maintain them...ok</p>
+<p>An update of a base record can occur without affecting any AIX on the upgrade set, so only the timestamp of the base is affected.
+When AIX keys are changed then the base timestamp will precede the AIX timestamp(s). Looks like a lot of work for no good purpose.</p>
+<h3 id="close-macro-logic">CLOSE macro logic</h3>
+<p>The close macro generates a close parameter list and/or an SVC 20 instruction to invoke the close routine.</p>
+<p>The macro generates the following code:</p>
+<table>
+<thead>
+<tr>
+<th>MF variant</th>
+<th>Generated Code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MF=L</td>
+<td>Close parameter list data only</td>
+</tr>
+<tr>
+<td>MF=(E,address)</td>
+<td>1) Code to modify/populate the close parameter list at the indicated address, which may be a relocatable constant or a (register).</td>
+</tr>
+<tr>
+<td></td>
+<td>2) Code to invoke the close routine</td>
+</tr>
+<tr>
+<td>MF=I or omitted</td>
+<td>1) Close parameter list data (inline)</td>
+</tr>
+<tr>
+<td></td>
+<td>2) Code to invoke the close routine</td>
+</tr>
+</tbody>
+</table>
+<p>Close parameter list entries have two different formats depending on the MODE parameter.
+- When MODE=24 then each entry is one fullword
+- When MODE=31 then each entry is two fullwords</p>
+<p>Only one SVC 20 is generated for each CLOSE macro (MF=I or E)</p>
+<p>A header precedes the list as follows:
+- DC C'zOPC'
+- DC AL2(no. of entries) The senior bit is off for MODE=24 and on for MODE=31</p>
+<p>The list format and input to CLOSE depend on MODE=</p>
+<p>R1 points to the header
+- MODE=24 AL1(option),AL3(DCB/ACB address)
+- MODE=31 AL1(option),XL3'00',AL4(DCB/ACB address)
+option=0 except for the last entry when option=X'80'</p>
+<h3 id="close-execution-logic">CLOSE execution logic</h3>
+<p>Close involves lock and buffer management and may involve the closure of associated AIXs.</p>
+<p>CLOSE execution logic is implemented as a Java routine.
+This logic consists of the following elements:</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Determine type of parameter list</td>
+<td>no.of entries senior bit off, MODE=24</td>
+</tr>
+<tr>
+<td></td>
+<td>no.of entries senior bit on, MODE=31</td>
+</tr>
+<tr>
+<td>Determine if zVSAM V1 or V2</td>
+<td>1<sup>st</sup> 4 bytes &lt;&gt; C'zOPC'=&gt; ZVSAM V1</td>
+</tr>
+<tr>
+<td></td>
+<td>1<sup>st</sup> 4 bytes = C'zOPC'=&gt; ZVSAM V2</td>
+</tr>
+<tr>
+<td>loop over all entries in the parameter list</td>
+<td>End-of-list is indicated in the option byte of the entry</td>
+</tr>
+<tr>
+<td>- check : ACB or DCB</td>
+<td>First byte = X'A0' =&gt; ACB V1</td>
+</tr>
+<tr>
+<td></td>
+<td>First four bytes = C'zACB' =&gt; ACB V2</td>
+</tr>
+<tr>
+<td></td>
+<td>First four bytes = C'DCBV' =&gt; DCB</td>
+</tr>
+<tr>
+<td></td>
+<td>Otherwise =&gt; Error</td>
+</tr>
+<tr>
+<td>- if DCB invoke DCB close routine</td>
+<td>CLOSE logic for DCB is beyond the scope of this document</td>
+</tr>
+<tr>
+<td>- if ACB valid invoke VSAM close routine</td>
+<td></td>
+</tr>
+<tr>
+<td>- next entry or end-of-loop</td>
+<td>If bit 0 of an entry is on, terminate loop</td>
+</tr>
+</tbody>
+</table>
+<p>CLOSE logic for ACB handles a single ACB and proceeds as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Check ACB status</td>
+<td>If ACB already closed, issue error and fail close</td>
+</tr>
+<tr>
+<td>Check lock status</td>
+<td>If any blocks in this dataset or any associated AIX are locked then wait until the locks are freed</td>
+</tr>
+<tr>
+<td></td>
+<td>???may need a timeout mechanism</td>
+</tr>
+<tr>
+<td>Check buffer status</td>
+<td>Free any read buffers</td>
+</tr>
+<tr>
+<td></td>
+<td>Write any buffers marked as 'pending write' and then free them</td>
+</tr>
+<tr>
+<td>Issue OS close against file</td>
+<td>If unsuccessful issue error and fail close</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -3737,7 +3705,7 @@ the bytes in the array mapping to successive sequences of 4 blocks.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-29-g53983ccc"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-30-gd4928567"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>

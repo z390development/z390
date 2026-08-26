@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://z390development.github.io/z390/design/zVSAM/zVSAM_V2_Design_Addenda/">
       
       
-        <link rel="prev" href="../zVSAM_V2_Design_File_Structure/">
+        <link rel="prev" href="../zVSAM_V2_Design_RPL_Processes/">
       
       
       
@@ -1512,90 +1512,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../user_guide/zVSAM/zVSAM_V2_Design_File_Structure/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    zVSAM V2 Design File Structure
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../user_guide/zVSAM/zVSAM_V2_Design_RPL_Processes/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    zVSAM V2 - Logical processes for RPL-based requests
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../user_guide/zVSAM/zVSAM_V2_Design_ACB_Processes/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    zVSAM V2 - Logical processes for ACB-based requests
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -2526,6 +2442,62 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../zVSAM_V2_Design_ACB_Processes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 - Logical processes for ACB-based requests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../zVSAM_V2_Design_RPL_Processes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zVSAM V2 - Logical processes for RPL-based requests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -2715,6 +2687,17 @@
     <span class="md-ellipsis">
       
         CBMR - body and tail for RPL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prefix-area" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prefix Area
       
     </span>
   </a>
@@ -2914,6 +2897,17 @@
     <span class="md-ellipsis">
       
         CBMR - body and tail for RPL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prefix-area" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prefix Area
       
     </span>
   </a>
@@ -6081,7 +6075,748 @@ If they are issued before the ECB has been posted, unpredictable results may occ
 <p>Additional notes:
 - <code>CBMRRPL_CNV</code> – TESTCB only, always false
 - <code>CBMRRPL_TRANSID</code> – Always foxes</p>
+<h3 id="prefix-area">Prefix Area</h3>
+<blockquote>
+<p>[!NOTE]
+This is an old layout. Needs to be upgraded.</p>
+</blockquote>
+<p>The prefix area occurs only on the prefix block. It is located directly after the block header on the prefix block.
+No record pointer list lies in between.</p>
+<p>The prefix area contains basic structural information about the file. It has the following format:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Offset</th>
+<th>Field type</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZVSAMPFX</td>
+<td></td>
+<td>DSECT</td>
+<td>Prefix area</td>
+</tr>
+<tr>
+<td>PFXEYE</td>
+<td>X'000'</td>
+<td>CL4</td>
+<td>Eye catcher</td>
+</tr>
+<tr>
+<td>PFXZPFX</td>
+<td></td>
+<td>=C'zPFX'</td>
+<td></td>
+</tr>
+<tr>
+<td>PFXRCLEN</td>
+<td>X'004'</td>
+<td>XL4</td>
+<td>record length, max length if variable</td>
+</tr>
+<tr>
+<td>PFXKYLEN</td>
+<td>X'008'</td>
+<td>XL4</td>
+<td>key length</td>
+</tr>
+<tr>
+<td>PFXKYOFF</td>
+<td>X'00C'</td>
+<td>XL4</td>
+<td>key offset, excluding SDW/RDW</td>
+</tr>
+<tr>
+<td>PFXDVOL@</td>
+<td>X'010'</td>
+<td>XL3</td>
+<td>offset to the data component's volume label</td>
+</tr>
+<tr>
+<td>PFXDNAM@</td>
+<td>X'013'</td>
+<td>XL3</td>
+<td>offset to the data component's filename</td>
+</tr>
+<tr>
+<td>PFXDPAT@</td>
+<td>X'016'</td>
+<td>XL3</td>
+<td>offset to the data component's pathname</td>
+</tr>
+<tr>
+<td>PFXXVOL@</td>
+<td>X'019'</td>
+<td>XL3</td>
+<td>offset to the index component's volume label</td>
+</tr>
+<tr>
+<td>PFXXNAM@</td>
+<td>X'01C'</td>
+<td>XL3</td>
+<td>offset to the index component's filename</td>
+</tr>
+<tr>
+<td>PFXXPAT@</td>
+<td>X'01F'</td>
+<td>XL3</td>
+<td>offset to the index component's pathname</td>
+</tr>
+<tr>
+<td>PFXIXLVL</td>
+<td>X'022'</td>
+<td>XL1</td>
+<td>nr of index levels</td>
+</tr>
+<tr>
+<td>PFXALTHR</td>
+<td>X'023'</td>
+<td>XL1</td>
+<td>allocation redrive threshold</td>
+</tr>
+<tr>
+<td>PFXBLKSZ</td>
+<td>X'024'</td>
+<td>XL4</td>
+<td>blocksize used for this file (except prefix block)</td>
+</tr>
+<tr>
+<td>PFXHXLRA</td>
+<td>X'028'</td>
+<td>XL8</td>
+<td>XLRA of highest allocated block</td>
+</tr>
+<tr>
+<td>PFXBMAP</td>
+<td>X'030'</td>
+<td>XL8</td>
+<td>XLRA of first spacemap block</td>
+</tr>
+<tr>
+<td>PFXEMAP</td>
+<td>X'038'</td>
+<td>XL8</td>
+<td>XLRA of last spacemap block</td>
+</tr>
+<tr>
+<td>PFXMAPNW</td>
+<td>X'040'</td>
+<td>XL8</td>
+<td>XLRA of spacemap block last used for allocation</td>
+</tr>
+<tr>
+<td>PFXBDATA</td>
+<td>X'048'</td>
+<td>XL8</td>
+<td>XLRA of first data block</td>
+</tr>
+<tr>
+<td>PFXEDATA</td>
+<td>X'050'</td>
+<td>XL8</td>
+<td>XLRA of last data block</td>
+</tr>
+<tr>
+<td>PFXBSEGM</td>
+<td>X'058'</td>
+<td>XL8</td>
+<td>XLRA of first segment block</td>
+</tr>
+<tr>
+<td>PFXESEGM</td>
+<td>X'060'</td>
+<td>XL8</td>
+<td>XLRA of last segment block</td>
+</tr>
+<tr>
+<td>PFXROOT</td>
+<td>X'068'</td>
+<td>XL8</td>
+<td>XLRA of root index block</td>
+</tr>
+<tr>
+<td>PFXBLVL0</td>
+<td>X'070'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 0</td>
+</tr>
+<tr>
+<td>PFXELVL0</td>
+<td>X'078'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 0</td>
+</tr>
+<tr>
+<td>PFXBLVL1</td>
+<td>X'080'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 1</td>
+</tr>
+<tr>
+<td>PFXELVL1</td>
+<td>X'088'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 1</td>
+</tr>
+<tr>
+<td>PFXBLVL2</td>
+<td>X'090'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 2</td>
+</tr>
+<tr>
+<td>PFXELVL2</td>
+<td>X'098'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 2</td>
+</tr>
+<tr>
+<td>PFXBLVL3</td>
+<td>X'0A0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 3</td>
+</tr>
+<tr>
+<td>PFXELVL3</td>
+<td>X'0A8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 3</td>
+</tr>
+<tr>
+<td>PFXBLVL4</td>
+<td>X'0B0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 4</td>
+</tr>
+<tr>
+<td>PFXELVL4</td>
+<td>X'0B8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 4</td>
+</tr>
+<tr>
+<td>PFXBLVL5</td>
+<td>X'0C0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 5</td>
+</tr>
+<tr>
+<td>PFXELVL5</td>
+<td>X'0C8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 5</td>
+</tr>
+<tr>
+<td>PFXBLVL6</td>
+<td>X'0D0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 6</td>
+</tr>
+<tr>
+<td>PFXELVL6</td>
+<td>X'0D8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 6</td>
+</tr>
+<tr>
+<td>PFXBLVL7</td>
+<td>X'0E0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 7</td>
+</tr>
+<tr>
+<td>PFXELVL7</td>
+<td>X'0E8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 7</td>
+</tr>
+<tr>
+<td>PFXBLVL8</td>
+<td>X'0F0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 8</td>
+</tr>
+<tr>
+<td>PFXELVL8</td>
+<td>X'0F8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 8</td>
+</tr>
+<tr>
+<td>PFXBLVL9</td>
+<td>X'100'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 9</td>
+</tr>
+<tr>
+<td>PFXELVL9</td>
+<td>X'108'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 9</td>
+</tr>
+<tr>
+<td>PFXBLVLA</td>
+<td>X'110'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 10</td>
+</tr>
+<tr>
+<td>PFXELVLA</td>
+<td>X'118'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 10</td>
+</tr>
+<tr>
+<td>PFXBLVLB</td>
+<td>X'120'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 11</td>
+</tr>
+<tr>
+<td>PFXELVLB</td>
+<td>X'128'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 11</td>
+</tr>
+<tr>
+<td>PFXBLVLC</td>
+<td>X'130'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 412</td>
+</tr>
+<tr>
+<td>PFXELVLC</td>
+<td>X'138'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 12</td>
+</tr>
+<tr>
+<td>PFXBLVLD</td>
+<td>X'140'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 13</td>
+</tr>
+<tr>
+<td>PFXELVLD</td>
+<td>X'148'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 13</td>
+</tr>
+<tr>
+<td>PFXBLVLE</td>
+<td>X'150'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 14</td>
+</tr>
+<tr>
+<td>PFXELVLE</td>
+<td>X'158'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 14</td>
+</tr>
+<tr>
+<td>PFXBLVLF</td>
+<td>X'160'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 15</td>
+</tr>
+<tr>
+<td>PFXELVLF</td>
+<td>X'168'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 15</td>
+</tr>
+<tr>
+<td>PFXMAPOF</td>
+<td>X'170'</td>
+<td>XL3</td>
+<td>offset within spacemap block to last used byte for allocation</td>
+</tr>
+<tr>
+<td>PFXFRSPC</td>
+<td>X'173'</td>
+<td>XL1</td>
+<td>initial freespace % within block</td>
+</tr>
+<tr>
+<td>PFXFRBLK</td>
+<td>X'174'</td>
+<td>XL2</td>
+<td>initial freespace blocks</td>
+</tr>
+<tr>
+<td>PFXFRINT</td>
+<td>X'176'</td>
+<td>XL2</td>
+<td>initial freespace interval between free blocks</td>
+</tr>
+<tr>
+<td>PFXFFLGS</td>
+<td>X'178'</td>
+<td>XL1</td>
+<td>file flags</td>
+</tr>
+<tr>
+<td>PFX_ESDS</td>
+<td></td>
+<td>=X'80'</td>
+<td>ESDS</td>
+</tr>
+<tr>
+<td>PFX_KSDS</td>
+<td></td>
+<td>=X'40'</td>
+<td>KSDS</td>
+</tr>
+<tr>
+<td>PFX_RRDS</td>
+<td></td>
+<td>=X'20'</td>
+<td>RRDS</td>
+</tr>
+<tr>
+<td>PFX_LDS</td>
+<td></td>
+<td>=X'10'</td>
+<td>LDS</td>
+</tr>
+<tr>
+<td>PFX_AIX</td>
+<td></td>
+<td>=X'08'</td>
+<td>AIX</td>
+</tr>
+<tr>
+<td>PFX_INDX</td>
+<td></td>
+<td>=X'01'</td>
+<td>index component</td>
+</tr>
+<tr>
+<td>PFXRFLGS</td>
+<td>X'179'</td>
+<td>XL1</td>
+<td>record flags</td>
+</tr>
+<tr>
+<td>PFX_RFIX</td>
+<td></td>
+<td>=X'80'</td>
+<td>1=fixed, 0=variable</td>
+</tr>
+<tr>
+<td>PFX_RSPN</td>
+<td></td>
+<td>=X'40'</td>
+<td>1=spanned, 0=non-spanned</td>
+</tr>
+<tr>
+<td>PFX_KUNQ</td>
+<td></td>
+<td>=X'20'</td>
+<td>1=AIX unique, 0=AIX non-unique</td>
+</tr>
+<tr>
+<td>PFX_AIXT</td>
+<td></td>
+<td>=X'10'</td>
+<td>1=AIX on KSDS, 0=AIX on ESDS</td>
+</tr>
+<tr>
+<td></td>
+<td>X'17A'</td>
+<td>XL6</td>
+<td>reserved</td>
+</tr>
+<tr>
+<td>PFXDTSKC</td>
+<td>X'180'</td>
+<td>XL8</td>
+<td>STCK of data component creation</td>
+</tr>
+<tr>
+<td>PFXIXSKC</td>
+<td>X'188'</td>
+<td>XL8</td>
+<td>STCK of index component creation</td>
+</tr>
+<tr>
+<td>PFXDTSKU</td>
+<td>X'190'</td>
+<td>XL8</td>
+<td>STCK of last update to data component</td>
+</tr>
+<tr>
+<td>PFXIXSKU</td>
+<td>X'198'</td>
+<td>XL8</td>
+<td>STCK of last update to index component</td>
+</tr>
+<tr>
+<td>PFXMAPDT</td>
+<td>X'1A0'</td>
+<td>XL8</td>
+<td>STCK of last allocation action</td>
+</tr>
+<tr>
+<td>PFXCTRS@</td>
+<td>X'1A8'</td>
+<td>XL3</td>
+<td>pointer to counters area</td>
+</tr>
+<tr>
+<td></td>
+<td>X'1AB'</td>
+<td>XL5</td>
+<td>reserved</td>
+</tr>
+</tbody>
+</table>
+<p>There are 7 pointer fields in the prefix area. These point to fields allocated elsewhere in the prefix block.
+Their exact addresses on the prefix block may vary.</p>
+<p>The <code>PFXDVOL@</code>, <code>PFXDPAT@</code>, <code>PFXDNAM@</code> pointers and the <code>PFXXVOL@</code>, <code>PFXXPAT@</code>, <code>PFXXNAM@</code> all point to a halfword-prefixed string.
+The <code>PFXCTRS@</code> pointer addresses a separate area that holds various counters.
+This area is expected to move into the catalog dataset in a future release.</p>
 <h3 id="counters-area">Counters Area</h3>
+<p>The counters area occurs only on the prefix block. Its location can be found by following the prefix area's <code>PFXCTRS@</code> field.</p>
+<blockquote>
+<p>[!NOTE]
+This is an old layout. Needs to be upgraded.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Offset</th>
+<th>Field type</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CTRAVGRL</td>
+<td>X'004'</td>
+<td>XL4</td>
+<td>average record length</td>
+</tr>
+<tr>
+<td>CTRAVSPAC</td>
+<td>X'008'</td>
+<td>XL8</td>
+<td>available space</td>
+</tr>
+<tr>
+<td>CTRHALCRBA</td>
+<td>X'010'</td>
+<td>XL8</td>
+<td>high-allocated RBA</td>
+</tr>
+<tr>
+<td>CTRENDRBA</td>
+<td>X'018'</td>
+<td>XL8</td>
+<td>high water mark for the component</td>
+</tr>
+<tr>
+<td>CTRNCIS</td>
+<td>X'020'</td>
+<td>XL8</td>
+<td>nr of block-split operations</td>
+</tr>
+<tr>
+<td>CTRNDELR</td>
+<td>X'028'</td>
+<td>XL8</td>
+<td>nr of delete operations</td>
+</tr>
+<tr>
+<td>CTRNEXCP</td>
+<td>X'030'</td>
+<td>XL8</td>
+<td>nr of I/O operations</td>
+</tr>
+<tr>
+<td>CTRNEXT</td>
+<td>X'038'</td>
+<td>XL8</td>
+<td>nr of physical files allocated (always 1)</td>
+</tr>
+<tr>
+<td>CTRNINSR</td>
+<td>X'040'</td>
+<td>XL8</td>
+<td>nr of insert operations</td>
+</tr>
+<tr>
+<td>CTRNLOGR</td>
+<td>X'048'</td>
+<td>XL8</td>
+<td>nr of records in this component</td>
+</tr>
+<tr>
+<td>CTRNRETR</td>
+<td>X'050'</td>
+<td>XL8</td>
+<td>nr of retrieval operations</td>
+</tr>
+<tr>
+<td>CTRNNUIW</td>
+<td>X'058'</td>
+<td>XL8</td>
+<td>nr of zVSAM writes</td>
+</tr>
+<tr>
+<td>CTRNUPDR</td>
+<td>X'060'</td>
+<td>XL8</td>
+<td>nr of updates</td>
+</tr>
+<tr>
+<td>CTRSDTA</td>
+<td>X'068'</td>
+<td>XL8</td>
+<td>uncompressed data size</td>
+</tr>
+<tr>
+<td>CTRSTMST</td>
+<td>X'070'</td>
+<td>XL8</td>
+<td>system timestamp of last close operation</td>
+</tr>
+<tr>
+<td>CTRNUIW</td>
+<td>X'078'</td>
+<td>XL8</td>
+<td>nr of user writes</td>
+</tr>
+<tr>
+<td>CTRLOKEY@</td>
+<td>X'080'</td>
+<td>XL3</td>
+<td>pointer to lowest valid key value</td>
+</tr>
+<tr>
+<td></td>
+<td>X'083'</td>
+<td>XL5</td>
+<td>Reserved</td>
+</tr>
+</tbody>
+</table>
+<p>The values in the counters area are maintained to support SHOWCB ACB and/or TESTCB ACB requests.
+They are mapped as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Keyword</th>
+<th>SHOWCB</th>
+<th>TESTCB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CTRAVSPAC</td>
+<td>AVSPAC</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRHALCRBA</td>
+<td>HALCRBA</td>
+<td>ACB</td>
+<td>n.a.</td>
+</tr>
+<tr>
+<td>CTRENDRBA</td>
+<td>ENDRBA</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNCIS</td>
+<td>NCIS</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNDELR</td>
+<td>NDELR</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNEXCP</td>
+<td>NEXCP</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNEXT</td>
+<td>NEXT</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNINSR</td>
+<td>NINSR</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNLOGR</td>
+<td>NLOGR</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNRETR</td>
+<td>NRETR</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNNUIW</td>
+<td>NUIW</td>
+<td>ACB</td>
+<td>n.a.</td>
+</tr>
+<tr>
+<td>CTRNUPDR</td>
+<td>NUPDR</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRSDTA</td>
+<td>SDTASIZE</td>
+<td>ACB</td>
+<td>n.a.</td>
+</tr>
+<tr>
+<td>CTRSTMST</td>
+<td>STMST</td>
+<td>ACB</td>
+<td>ACB</td>
+</tr>
+<tr>
+<td>CTRNUIW</td>
+<td>UIW</td>
+<td>ACB</td>
+<td>n.a.</td>
+</tr>
+<tr>
+<td>CTRLOKEY@</td>
+<td>LOKEY</td>
+<td>ACB</td>
+<td>n.a.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="counters-maintenance-overview">Counters maintenance overview</h4>
 <p>All fields are 8 bytes except <code>CTRAVGRL</code> which is 4 bytes.</p>
 <table>
 <thead>
@@ -6371,7 +7106,7 @@ If they are issued before the ECB has been posted, unpredictable results may occ
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-29-g53983ccc"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-30-gd4928567"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
