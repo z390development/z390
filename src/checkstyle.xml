@@ -16,6 +16,16 @@
     <property name="fileExtensions" value="java"/>
   </module>
 
+  <!-- Enforce Windows-style line endings -->
+  <module name="LineEnding">
+    <property name="lineEnding" value="crlf"/>
+    <property name="fileExtensions" value="java"/>
+  </module>
+  <module name="NewlineAtEndOfFile">
+    <property name="lineSeparator" value="crlf"/>
+    <property name="fileExtensions" value="java"/>
+  </module>
+
   <module name="TreeWalker">
     <!-- File name must match class definition -->
     <module name="OuterTypeFilename"/>
@@ -76,11 +86,7 @@
       <property name="scope" value="private"/>
     </module>
     <!-- use module separatorWrap to flag a break between an object and the method applied to it  -->
-    <!-- Ban: receiver<newline>.method -->
-    <module name="SeparatorWrap">
-      <property name="tokens" value="DOT"/>
-      <property name="option" value="eol"/>
-    </module>
+    <!-- some lines are simply too long - we allow breakage at the dot if the dot starts a new line -->
     <!-- Ban: receiver.<newline>method -->
     <module name="SeparatorWrap">
       <property name="tokens" value="DOT"/>
@@ -92,15 +98,19 @@
   <!-- Require three empty lines after `}` marker -->
   <module name="RegexpMultiline">
     <property name="matchAcrossLines" value="true"/>
-    <property name="format" value="(?m)\*/\r?\n(?:\r?\n){0,2}[ \t]*/\*\*\r?\n[ \t]*\*"/>
-    <property name="message" value="Need 3 empty lines before Javadoc (after '}')."/>
+    <property name="format"
+      value="(?m)^( *)\}(?: *//[^\r\n]*)?\r?\n(?:\r?\n){0,2}\1/\*\*"/>
+    <property name="message"
+      value="Need 3 empty lines between routines (after '}' before next Javadoc)."/>
     <property name="fileExtensions" value="java"/>
   </module>
   <!-- Require three empty lines after the last import -->
   <module name="RegexpMultiline">
     <property name="matchAcrossLines" value="true"/>
-    <property name="format" value="(?m)^import\s+[^;]+;\r?\n(?:\r?\n){0,2}[ \t]*/\*\*"/>
-    <property name="message" value="Need 3 empty lines before class Javadoc (after imports)."/>
+    <property name="format"
+      value="(?m)^import .+;(?: *//[^\r\n]*)?\r?\n(?:\r?\n){0,2}/\*"/>
+    <property name="message"
+      value="Need 3 empty lines after the last import."/>
     <property name="fileExtensions" value="java"/>
   </module>
 </module>
