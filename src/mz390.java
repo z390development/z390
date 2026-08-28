@@ -445,6 +445,7 @@ import javax.swing.JTextArea;
  * 2025-10-20 AFK      Add javadoc comments
  * 2026-01-29 AFK #730 Incorrect code generated for zCobol MULTIPLY verb
  * 2026-08-08 #807 Fix issues flagged by linter
+ * 2026-08-27 #916 Missing break statements in case construct
  *****************************************************/
 
 
@@ -4859,6 +4860,7 @@ public  class  mz390 {
             }
         case 3:
             log_error(212,"invalid string in SETB expression"); // RPI 609
+            break; // #916
         default:
             tz390.abort_case();
         }
@@ -5792,12 +5794,12 @@ public  class  mz390 {
         case '.':
             exp_next_class = exp_class_str_op;
             break;
-        case ' ':   //asc_space_char
-        case '\t':  //tab
-        case '\r':  //cr
-        case '\n':  //lf
-            exp_next_index--; //RPI181 backup to space
-        case '~':
+        case ' ':   //asc_space_char intentional drop-through #916
+        case '\t':  //tab            intentional drop-through #916
+        case '\r':  //cr             intentional drop-through #916
+        case '\n':  //lf             intentional drop-through #916
+            exp_next_index--; //RPI181 backup to space - applies to all 4 of the above #916
+        case '~':   // shared handler for tilde and whitespace chars #916
             if (exp_level == 0) { // not string or subscript
                 exp_set_term_op();
             } else {
@@ -9571,6 +9573,7 @@ public  class  mz390 {
                     }
                 }
             }
+            break; // #916
         case 'R':
             if (bal_op.equals("RSECT")) {
                 lcl_sysect = bal_label.toUpperCase();
@@ -12142,6 +12145,9 @@ public  class  mz390 {
                 return "" + seta_value2;
             case 3:
                 return "" + seta_value;
+            default:                // #916
+                tz390.abort_case(); // #916
+                return "";          // #916
             }
         case 2: // val_setb_type
             switch (parm) {
@@ -12151,6 +12157,9 @@ public  class  mz390 {
                 return "" + setb_value2;
             case 3:
                 return "" + setb_value;
+            default:                // #916
+                tz390.abort_case(); // #916
+                return "";          // #916
             }
         case 3: // val_setc_type
             switch (parm) {
@@ -12160,6 +12169,9 @@ public  class  mz390 {
                 return "'" + setc_value2 + "'";
             case 3:
                 return "'" + setc_value + "'";
+            default:                // #916
+                tz390.abort_case(); // #916
+                return "";          // #916
             }
         default:
             tz390.abort_case();
