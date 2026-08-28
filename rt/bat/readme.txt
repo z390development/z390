@@ -22,6 +22,8 @@ RUNVSAM1    - verify zVSAM V1 testcases
 RUNVSAM2    - verify zVSAM V2 macro code
 RUNZPAR     - verify Zcobol Program Analysis Report
 TESTCMD1    - for use by RUNCMDPROC, testcase for TESTCMD1
+TESTCMDA    - for use by RUNCMDPROC, testcase for TESTCMD2
+TESTCMDB    - for use by RUNCMDPROC, testcase for TESTCMD2
 ZOPCHECK    - verify all z390 assembler instructions generate correct code
 
 End regression test commands
