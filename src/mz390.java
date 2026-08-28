@@ -12145,8 +12145,10 @@ public  class  mz390 {
                 return "" + seta_value2;
             case 3:
                 return "" + seta_value;
+            default:                // #916
+                tz390.abort_case(); // #916
+                return "";          // #916
             }
-            // intentional drop-through to reach error handling under default #916
         case 2: // val_setb_type
             switch (parm) {
             case 1:
@@ -12155,8 +12157,10 @@ public  class  mz390 {
                 return "" + setb_value2;
             case 3:
                 return "" + setb_value;
+            default:                // #916
+                tz390.abort_case(); // #916
+                return "";          // #916
             }
-            // intentional drop-through to reach error handling under default #916
         case 3: // val_setc_type
             switch (parm) {
             case 1:
@@ -12165,8 +12169,10 @@ public  class  mz390 {
                 return "'" + setc_value2 + "'";
             case 3:
                 return "'" + setc_value + "'";
+            default:                // #916
+                tz390.abort_case(); // #916
+                return "";          // #916
             }
-            // intentional drop-through to reach error handling under default #916
         default:
             tz390.abort_case();
             return "";
