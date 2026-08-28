@@ -144,7 +144,8 @@ public  class  z390
      * 2021-04-21 jjg Add CBLC, CBLCL, CBLCLG as commands
      * 2023-01-25 RPI 1598 re-implement javadoc changes by Hugh Sweeney
      * 2024-08-12 #545 Extend generated java doco to include private methods
-     * 2026-03-08 AFK Fix/Add javadoc comments
+     * 2026-03-08 AFK      Fix/Add javadoc comments
+     * 2026-08-27 AFK #916 Missing break statements in case construct
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************/
@@ -2485,6 +2486,7 @@ public z390()
             batch_cmd("JOB","","BAT",job_opt);
             break;
  	    }
+        break; // #916
    	 case 'L':
   	    if (event_name.equals("LINK..")){
             batch_cmd("link","","OBJ",link_opt);

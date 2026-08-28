@@ -240,6 +240,7 @@ public class sz390 implements Runnable {
     * 2026-05-30 Issue #654 Improve help text for debug mode commands
     * 2026-06-27 Issue #853 Test script lines with leading * sometimes marked as invalid command
     * 2026-07-11 Issue #865 Test run ends RC=0 even when test script does not run to completion
+    * 2026-08-27 AFK   #916 Missing break statements in case construct
 	********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -5459,6 +5460,7 @@ private void svc_guam(){
 			log_error(98,"undefined GUAM GUI Mouse command - " + guam_minor);
 		    pz390.reg.putInt(pz390.r15,8);
 		}
+        break; // #916
 	case 6: // SOUND
 		switch (guam_minor){
 		case 1: // PLAY,"wav_file"

@@ -745,3 +745,194 @@ Additional notes:
 - `CBMRRPL_CNV` – TESTCB only, always false
 - `CBMRRPL_TRANSID` – Always foxes
 
+### Prefix Area
+
+> [!NOTE]
+> This is an old layout. Needs to be upgraded.
+
+The prefix area occurs only on the prefix block. It is located directly after the block header on the prefix block.
+No record pointer list lies in between.
+
+The prefix area contains basic structural information about the file. It has the following format:
+
+| Label    | Offset | Field type | Function                                                      |
+|----------|--------|------------|---------------------------------------------------------------|
+| ZVSAMPFX |        | DSECT      | Prefix area                                                   |
+| PFXEYE   | X'000' | CL4        | Eye catcher                                                   |
+| PFXZPFX  |        | =C'zPFX'   |                                                               |
+| PFXRCLEN | X'004' | XL4        | record length, max length if variable                         |
+| PFXKYLEN | X'008' | XL4        | key length                                                    |
+| PFXKYOFF | X'00C' | XL4        | key offset, excluding SDW/RDW                                 |
+| PFXDVOL@ | X'010' | XL3        | offset to the data component's volume label                   |
+| PFXDNAM@ | X'013' | XL3        | offset to the data component's filename                       |
+| PFXDPAT@ | X'016' | XL3        | offset to the data component's pathname                       |
+| PFXXVOL@ | X'019' | XL3        | offset to the index component's volume label                  |
+| PFXXNAM@ | X'01C' | XL3        | offset to the index component's filename                      |
+| PFXXPAT@ | X'01F' | XL3        | offset to the index component's pathname                      |
+| PFXIXLVL | X'022' | XL1        | nr of index levels                                            |
+| PFXALTHR | X'023' | XL1        | allocation redrive threshold                                  |
+| PFXBLKSZ | X'024' | XL4        | blocksize used for this file (except prefix block)            |
+| PFXHXLRA | X'028' | XL8        | XLRA of highest allocated block                               |
+| PFXBMAP  | X'030' | XL8        | XLRA of first spacemap block                                  |
+| PFXEMAP  | X'038' | XL8        | XLRA of last spacemap block                                   |
+| PFXMAPNW | X'040' | XL8        | XLRA of spacemap block last used for allocation               |
+| PFXBDATA | X'048' | XL8        | XLRA of first data block                                      |
+| PFXEDATA | X'050' | XL8        | XLRA of last data block                                       |
+| PFXBSEGM | X'058' | XL8        | XLRA of first segment block                                   |
+| PFXESEGM | X'060' | XL8        | XLRA of last segment block                                    |
+| PFXROOT  | X'068' | XL8        | XLRA of root index block                                      |
+| PFXBLVL0 | X'070' | XL8        | XLRA of Header Block index level 0                            |
+| PFXELVL0 | X'078' | XL8        | XLRA of End Block index level 0                               |
+| PFXBLVL1 | X'080' | XL8        | XLRA of Header Block index level 1                            |
+| PFXELVL1 | X'088' | XL8        | XLRA of End Block index level 1                               |
+| PFXBLVL2 | X'090' | XL8        | XLRA of Header Block index level 2                            |
+| PFXELVL2 | X'098' | XL8        | XLRA of End Block index level 2                               |
+| PFXBLVL3 | X'0A0' | XL8        | XLRA of Header Block index level 3                            |
+| PFXELVL3 | X'0A8' | XL8        | XLRA of End Block index level 3                               |
+| PFXBLVL4 | X'0B0' | XL8        | XLRA of Header Block index level 4                            |
+| PFXELVL4 | X'0B8' | XL8        | XLRA of End Block index level 4                               |
+| PFXBLVL5 | X'0C0' | XL8        | XLRA of Header Block index level 5                            |
+| PFXELVL5 | X'0C8' | XL8        | XLRA of End Block index level 5                               |
+| PFXBLVL6 | X'0D0' | XL8        | XLRA of Header Block index level 6                            |
+| PFXELVL6 | X'0D8' | XL8        | XLRA of End Block index level 6                               |
+| PFXBLVL7 | X'0E0' | XL8        | XLRA of Header Block index level 7                            |
+| PFXELVL7 | X'0E8' | XL8        | XLRA of End Block index level 7                               |
+| PFXBLVL8 | X'0F0' | XL8        | XLRA of Header Block index level 8                            |
+| PFXELVL8 | X'0F8' | XL8        | XLRA of End Block index level 8                               |
+| PFXBLVL9 | X'100' | XL8        | XLRA of Header Block index level 9                            |
+| PFXELVL9 | X'108' | XL8        | XLRA of End Block index level 9                               |
+| PFXBLVLA | X'110' | XL8        | XLRA of Header Block index level 10                           |
+| PFXELVLA | X'118' | XL8        | XLRA of End Block index level 10                              |
+| PFXBLVLB | X'120' | XL8        | XLRA of Header Block index level 11                           |
+| PFXELVLB | X'128' | XL8        | XLRA of End Block index level 11                              |
+| PFXBLVLC | X'130' | XL8        | XLRA of Header Block index level 412                          |
+| PFXELVLC | X'138' | XL8        | XLRA of End Block index level 12                              |
+| PFXBLVLD | X'140' | XL8        | XLRA of Header Block index level 13                           |
+| PFXELVLD | X'148' | XL8        | XLRA of End Block index level 13                              |
+| PFXBLVLE | X'150' | XL8        | XLRA of Header Block index level 14                           |
+| PFXELVLE | X'158' | XL8        | XLRA of End Block index level 14                              |
+| PFXBLVLF | X'160' | XL8        | XLRA of Header Block index level 15                           |
+| PFXELVLF | X'168' | XL8        | XLRA of End Block index level 15                              |
+| PFXMAPOF | X'170' | XL3        | offset within spacemap block to last used byte for allocation |
+| PFXFRSPC | X'173' | XL1        | initial freespace % within block                              |
+| PFXFRBLK | X'174' | XL2        | initial freespace blocks                                      |
+| PFXFRINT | X'176' | XL2        | initial freespace interval between free blocks                |
+| PFXFFLGS | X'178' | XL1        | file flags                                                    |
+| PFX_ESDS |        | =X'80'     | ESDS                                                          |
+| PFX_KSDS |        | =X'40'     | KSDS                                                          |
+| PFX_RRDS |        | =X'20'     | RRDS                                                          |
+| PFX_LDS  |        | =X'10'     | LDS                                                           |
+| PFX_AIX  |        | =X'08'     | AIX                                                           |
+| PFX_INDX |        | =X'01'     | index component                                               |
+| PFXRFLGS | X'179' | XL1        | record flags                                                  |
+| PFX_RFIX |        | =X'80'     | 1=fixed, 0=variable                                           |
+| PFX_RSPN |        | =X'40'     | 1=spanned, 0=non-spanned                                      |
+| PFX_KUNQ |        | =X'20'     | 1=AIX unique, 0=AIX non-unique                                |
+| PFX_AIXT |        | =X'10'     | 1=AIX on KSDS, 0=AIX on ESDS                                  |
+|          | X'17A' | XL6        | reserved                                                      |
+| PFXDTSKC | X'180' | XL8        | STCK of data component creation                               |
+| PFXIXSKC | X'188' | XL8        | STCK of index component creation                              |
+| PFXDTSKU | X'190' | XL8        | STCK of last update to data component                         |
+| PFXIXSKU | X'198' | XL8        | STCK of last update to index component                        |
+| PFXMAPDT | X'1A0' | XL8        | STCK of last allocation action                                |
+| PFXCTRS@ | X'1A8' | XL3        | pointer to counters area                                      |
+|          | X'1AB' | XL5        | reserved                                                      |
+
+There are 7 pointer fields in the prefix area. These point to fields allocated elsewhere in the prefix block.
+Their exact addresses on the prefix block may vary.
+
+The `PFXDVOL@`, `PFXDPAT@`, `PFXDNAM@` pointers and the `PFXXVOL@`, `PFXXPAT@`, `PFXXNAM@` all point to a halfword-prefixed string.
+The `PFXCTRS@` pointer addresses a separate area that holds various counters.
+This area is expected to move into the catalog dataset in a future release.
+
+### Counters Area
+
+The counters area occurs only on the prefix block. Its location can be found by following the prefix area's `PFXCTRS@` field.
+
+> [!NOTE]
+> This is an old layout. Needs to be upgraded.
+
+| Label      | Offset | Field type | Function                                  |
+|------------|--------|------------|-------------------------------------------|
+| CTRAVGRL   | X'004' | XL4        | average record length                     |
+| CTRAVSPAC  | X'008' | XL8        | available space                           |
+| CTRHALCRBA | X'010' | XL8        | high-allocated RBA                        |
+| CTRENDRBA  | X'018' | XL8        | high water mark for the component         |
+| CTRNCIS    | X'020' | XL8        | nr of block-split operations              |
+| CTRNDELR   | X'028' | XL8        | nr of delete operations                   |
+| CTRNEXCP   | X'030' | XL8        | nr of I/O operations                      |
+| CTRNEXT    | X'038' | XL8        | nr of physical files allocated (always 1) |
+| CTRNINSR   | X'040' | XL8        | nr of insert operations                   |
+| CTRNLOGR   | X'048' | XL8        | nr of records in this component           |
+| CTRNRETR   | X'050' | XL8        | nr of retrieval operations                |
+| CTRNNUIW   | X'058' | XL8        | nr of zVSAM writes                        |
+| CTRNUPDR   | X'060' | XL8        | nr of updates                             |
+| CTRSDTA    | X'068' | XL8        | uncompressed data size                    |
+| CTRSTMST   | X'070' | XL8        | system timestamp of last close operation  |
+| CTRNUIW    | X'078' | XL8        | nr of user writes                         |
+| CTRLOKEY@  | X'080' | XL3        | pointer to lowest valid key value         |
+|            | X'083' | XL5        | Reserved                                  |
+
+The values in the counters area are maintained to support SHOWCB ACB and/or TESTCB ACB requests.
+They are mapped as follows:
+
+| Label      | Keyword  | SHOWCB | TESTCB |
+|------------|----------|--------|--------|
+| CTRAVSPAC  | AVSPAC   | ACB    | ACB    |
+| CTRHALCRBA | HALCRBA  | ACB    | n.a.   |
+| CTRENDRBA  | ENDRBA   | ACB    | ACB    |
+| CTRNCIS    | NCIS     | ACB    | ACB    |
+| CTRNDELR   | NDELR    | ACB    | ACB    |
+| CTRNEXCP   | NEXCP    | ACB    | ACB    |
+| CTRNEXT    | NEXT     | ACB    | ACB    |
+| CTRNINSR   | NINSR    | ACB    | ACB    |
+| CTRNLOGR   | NLOGR    | ACB    | ACB    |
+| CTRNRETR   | NRETR    | ACB    | ACB    |
+| CTRNNUIW   | NUIW     | ACB    | n.a.   |
+| CTRNUPDR   | NUPDR    | ACB    | ACB    |
+| CTRSDTA    | SDTASIZE | ACB    | n.a.   |
+| CTRSTMST   | STMST    | ACB    | ACB    |
+| CTRNUIW    | UIW      | ACB    | n.a.   |
+| CTRLOKEY@  | LOKEY    | ACB    | n.a.   |
+
+#### Counters maintenance overview
+
+All fields are 8 bytes except `CTRAVGRL` which is 4 bytes.
+
+| Counter    | Data/Index | Initialized by zREPRO                                     | Maintenance                                                                           |
+|------------|------------|-----------------------------------------------------------|---------------------------------------------------------------------------------------|
+| CTRAVGRL   | Both       | Yes. For fixed, =`PFXRECLN` even if the dataset is empty. | For variable files only:                                                              |
+|            |            | For variable, calculated or zero if the dataset is empty. | At CLOSE, calculate `CTRTOTRL`/`CTRNLOGR`                                             |
+| CTRAVSPAC  | Both       | Yes.                                                      | For every block update use the old and new `BHDRFREE` to increase/decrease this value |
+| CTRHALCRBA | Both       | Yes.                                                      | Updated when blocks are added to the end of the dataset component                     |
+|            |            |                                                           | or when the existing `HALCRBA` block has all records deleted. It's the                |
+|            |            |                                                           | block RBA+1 (XLRA+256) of the last data or level 0 index block containing records.    |
+| CTRHLRBA   | Index only | Yes.                                                      | Block RBA of `PFXROOT`. Update if it changes                                          |
+| CTRENDRBA  | Both       | Yes.                                                      | Updated when blocks are added to the end of the dataset component.                    |
+|            |            |                                                           | It's the block RBA+1 (XLRA+256) of the last data or level 0 index block               |
+| CTRNBFRFND | Both       | No                                                        | +1 for each LSR buffer read                                                           |
+| CTRNBUFNO  | Both       | No                                                        | +1 for each buffer allocated                                                          |
+| CTRBUFUSE  | Both       | No                                                        | +1 for each buffer used                                                               |
+| CTRBUFRDS  | Both       | No                                                        | +1 for each buffer read                                                               |
+| CTRNCIS    | Both       | No                                                        | +1 for each block split                                                               |
+| CTRNDELR   | Both       | No                                                        | KSDS or RRDS: +1 for each record delete                                               |
+| CTRNEXCP   | Both       | No                                                        | +1 for each physical block read/write                                                 |
+| CTRNEXT    | Both       | Yes                                                       | Always 1, not maintained                                                              |
+| CTRNINSR   | Both       | No                                                        | +1 for each record added. For RRDS, any empty slots added to the end are not counted  |
+| CTRNLOGR   | Both       | Yes                                                       | +1 for each record added; -1 for each record deleted.                                 |
+|            |            |                                                           | For RRDS, any empty slots added to the end are not counted                            |
+|            |            |                                                           | For Index, all records in all levels are counted                                      |
+| CTRNRETR   | Both       | No                                                        | +1 for each record read                                                               |
+| CTRNNUIW   | Both       | No                                                        | +1 for each maintenance write for block splits, chain repair, segment, spacemap       |
+|            |            |                                                           | and ELIX block management                                                             |
+| CTRNUPDR   | Both       | No                                                        | +1 for each record update                                                             |
+| CTRSDTASZ  | Both       | Yes                                                       | +block size for each block added                                                      |
+| CTRSTMST   | Both       | Yes                                                       | Write STCK value at CLOSE                                                             |
+| CTRSTRMAX  | Both       | No                                                        | +1 for each string created                                                            |
+| CTRNUIW    | Both       | No                                                        | +1 for each user-requested block write                                                |
+| CTRTOTRL   | Data only  | Yes                                                       | Maintained for variable files only:                                                   |
+|            |            |                                                           | +record size for each record added; -record size for each record deleted              |
+|            |            |                                                           | SPX is not included; RLF is included; Adjusted for change to variable length          |
+|            |            |                                                           | For RRDS, empty slots are not included                                                |
+| CTRLOKEY   | Data only  | Yes                                                       | KSDS only. Update when a lower key is added or this key is deleted                    |
+
