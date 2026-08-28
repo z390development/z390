@@ -28,6 +28,390 @@ import java.util.Date;
 
 
 
+/* *************************************************** Maintenance
+ * *************************************************** 04/18/05 copied from
+ * lz390.java and modified 06/20/05 start adding and testing common instr.
+ * 06/25/05 add opcodes to trace
+ * 07/11/05 add floating point instructions
+ * 08/20/05 add svc 6 link, fix svc 8 to use r0 pgm name
+ * 08/22/05 add SYS390
+ *   and SYSLOG dir options
+ * 09/04/05 add sequential and random DCB file I/O
+ * support
+ * 09/16/05 fix DSG, DSGR, DSGF, DSGFR to use R1+1 dividend
+ * 09/18/05 add CDE with usage and freemain info for DELETE
+ * 09/18/05 add link svc amode support
+ * 09/19/05 add TEST option interactive debug
+ * 09/27/05 add MEM(MB) option and reduce default to MEM(1)
+ * 09/27/05 fix 0C5 at end of mem using work_mem
+ * 10/04/05 RPI5 - option ASCII use ASCII vs EBCDIC
+ *          zcvt_ipl_pgm = ascii name DCB DDNAME field ascii DCB FT RCDS = ascii SVC
+ * LOAD, LINK, DELETE EP/EPLOC ASCII dump text = ascii TEST C'...' SDT =
+ * ASCII ED/EDMK remove high bit on chars SSP type instr. allow 0x3 sign
+ * UNPK gen 0x3 zone
+ * 10/04/05 RPI6 - option ERR(nn) limit errors
+ * 10/05/05 RPI5 - add test C"..." sdt support
+ * 10/12/05 suppress stats if NOSTATS option on
+ * 10/12/05 RPI20 fix error 62 on open of output file 10/14/05
+ * RPI21 0C5 on PSW addr > mem
+ * 10/14/05 RPI22 turn off time limit if test
+ * 10/14/05 RPI15 req z390 to issue exit at end of test 10/16/05 force
+ * console output of msgs after abort 10/16/05 RPI23 add CLST, CUSE, and
+ * SRST instructions
+ * 10/18/05 RPI28 change DSNAM field to EBCDIC unless
+ * ASCII mode
+ * 10/18/05 RPI29 use EZ390E and EZ390I prefixes 10/18/05 RPI31
+ * set r15 to 0 on successful svc 10/19/05 RPI33 only enable PD and exponent
+ * overflow
+ * 10/19/05 RPI32 add SYS390 dir list support 10/19/05 RPI34 full
+ * ebcdic / ascii translation
+ * 10/20/05 RPI35 prevent exit loop in test
+ * filling log
+ * 10/20/05 RPI37 use "I:" and "H:" to separate op/hex keys
+ * 10/20/05 RPI39 set rc=r15 on normal exit 10/22/05 RPI44 fix TM to set CC3
+ * when OR'd byte = mask rather than = to test memory byte 10/23/05 RPI43
+ * correct ED/EDMK sif. 1 byte early
+ * 10/23/05 RPI42 use full EBCDIC to ASCII
+ * translate for PGMNAME, DDNAM, DSNAM, GET/PUT 10/24/05 RPI46 add svc 34 to
+ * issue OS command
+ * 10/25/05 RPI47 add svc 93 to support application window
+ * 10/26/05 RPI49 10/27/05 RPI53 set r15 to error # in synad 10/27/05 RPI56
+ * add dump of first pgm memory if dump req 11/01/05 RPI65 fix BALR, BASR,
+ * BASSM when R1=R2
+ * 11/02/05 RPI66 correct padding spaces in ASCII mode
+ * 11/02/05 RPI69 change ED/EDMK to map X'40'for ASCII 11/03/05 RPI71 add
+ * missing AL3 relocation code
+ * 11/03/05 RPI63 handle x'1a' eof marker in gm
+ * RT/VT
+ * 11/03/05 RPI64 issue abend S013 if no synad after io err 11/07/05
+ * RPI73 remove PACK/UNPK mode changes and add PKA/UNPKA 11/08/05 RPI73
+ * change ED/EDMK to require EBCDIC mask and then translate output if ascii
+ * 11/08/05 RPI76 end cmd processes at exit 11/08/05 RPI77 add cmd read and
+ * wait controls
+ * 11/08/05 RPI79 add mult. cmd task support 11/11/05 RPI73
+ * restore PACK, UNPK ASCII mode support (allow 3/b sign and unpk to f/s or
+ * 3/s zone)
+ * 11/11/05 RPI75 add SNAP dump support svc 51 11/13/05 RPI88 add
+ * DCB validation
+ * 11/15/05 RPI92 correct trace format in test 11/15/05 RPI93
+ * correct SNAP svc to use memory range instead of address and length
+ * 11/15/05 RPI94 add svc_timer nano-sec counter 11/18/05 RPI98 ignore cr,lf
+ * TEST commands
+ * 11/19/05 RPI100 reformat abend dump and include before
+ * continuing in test
+ * 11/19/05 RPI101 correct open error causing erroneous
+ * eof error after reuse of tiot entry 11/19/05 RPI102 add LOAD extension to
+ * support loading and deleting file in addition to 390's. 11/20/05 RPI106
+ * correct SPM, IPM field position also NR, OR, and XR not setting CC also
+ * PR only restore 2-14
+ * 11/20/05 RPI82 replace MVC loop with copy & fill
+ * 11/21/05 add LinkedList string type checking 11/21/05 RPI108 speed up BC
+ * by 140 NS when branch not taken by skipping RX address fetch 11/23/05
+ * RPI110 turn off DCBOFLGS open bit at close 11/23/05 RPI108 speed up PD by
+ * removing mem_work and using int vs BigInteger when possible 11/25/05
+ * RPI111 trim spaces from DDNAME and DSNAME file 11/26/05 RPI47 add inital
+ * gz390 GUAM GUI window option for WTO and WTOR support 11/27/05 RPI112 correct
+ * error 90 I/O error
+ * 11/27/05 RPI108 replace byte buffer mem.get, mem.put
+ * reg.get and reg.put with direct byte array. 11/28/05 RPI113 file path
+ * with drive: and no separator
+ * 11/29/05 RPI47 add svc 1 wait and svc 160
+ * wtor request
+ * 12/04/05 RPI108 speed up MVCLE, CLC, MVZ, MVN OC, NC, XC.
+ * 12/07/05 RPI123 fix multiple path support 12/08/05 RPI121 abort ez390 on
+ * test q command
+ * 12/15/05 RPI135 use tz390 shared tables 12/18/05 RPI142
+ * use init_opcode_name_keys in tz390 and document all key codes in tz390.
+ * 12/20/05 RPI103 add multiple +- test addr operands 12/23/05 RPI127 strip
+ * mlc type from file name and use shared set_pgm_name_type 12/23/05 RPI131
+ * limit file output to maxfile(mb) 01/04/06 RPI107 split ez390 into ez390,
+ * pz390 01/06/06 RPI158 clear remainder of register for LL???? 01/08/06
+ * RPI160 correct LLGT loading from loc + 4 01/12/06 RPI 151 add LPSW
+ * support as branch.
+ * 01/15/06 RPI 173 add LRV, STPQ, LPQ support. 01/26/06
+ * RPI 172 move options to tz390, svc > sz390 02/02/06 RPI 175 rewrite AL???
+ * SL??? using long vs bigint
+ * 02/02/06 RPI 185 add z9 opcodes AFI, AGFI,
+ * etc.
+ * 02/04/06 RPI 197 remove test_or_trace interrupts 02/08/06 RPI 185
+ * add STCKF and fix STCK to be unique 02/09/06 RPI 185 add remainder of z9
+ * opcodes
+ * 02/16/06 RPI 202 correct 2nd opcode mask for z9 instr. 02/18/06
+ * RPI 206 support 3 flavors of RRF format 03/14/06 RPI 228 add CVTDCB OS
+ * flags
+ * 03/15/06 RPI 229 verify correct even/odd fp pairs 04/05/06 RPI 272
+ * correct MR to only use low 32 bits of r1+1 04/07/06 RPI 275 correct MLR
+ * and ML to only use low 32 bits of r1+1 04/10/06 RPI 276 add zcvt_user_pgm
+ * 04/12/06 RPI 244 support ESPIE/ESTAE PARAM, CT,OV 04/21/06 RPI 279 stimer
+ * real exit support
+ * 04/23/06 RPI 295 correct ICM, ICMH, ICMY, OIHL, and
+ * OILH CC values.
+ * 04/26/06 RPI 299 check for 0C5 in setups 04/27/06 RPI 298
+ * add MAYLR MYLR MAYHR MYHR, MAYL MYL MAYH MYH 04/28/06 RPI 301 force 0C7
+ * on PD zero sign was checking was checking first non-zero byte beyond in
+ * error.
+ * 05/02/06 RPI 305 update ESPIE and ESTAE support and fix get_pd for
+ * pd instr. to avoid recursive program checks 05/02/06 RPI 307 correct MAYL
+ * and MAYLR to remove duplicate setup call corrupting next instruction, and
+ * correct IPM trace format. 06/03/06 RPI 323 allow opcode break on first
+ * stimer exit instr.
+ * 06/03/06 RPI 325 allow KEB and KDD exact 0 07/03/06
+ * RPI 326 add TCEB, TCDB, and TCXB test data class 07/03/06 RPI 333 add
+ * SRNM and support rounding modes 07/05/06 RPI 335 correct TBEDR and other
+ * users of RRFe setup to caculate rf3 and mf3 correctly 07/05/06 RPI 348
+ * only show 2 bytes for halfword instr. 07/06/06 RPI 357 impove speed using
+ * short, int, and long buffers 07/17/06 RPI 370 make zcvt conversion rtns
+ * public for svc_cfd
+ * 07/20/06 RPI 376 CORRECT AL?? CC1 for high bit set
+ * with no carry
+ * 07/24/06 RPI 383 CORRECT MLG AND MLGR R1+1 * S2/R2 07/26/06
+ * RPI 384 fix HFP true zero 07/30/06 RPI 386 fix MVCL trap when data length =
+ * 0.
+ * 07/30/06 RPI 387 Fix RXY, RSY, and SIY to support 20 bit signed disp.
+ * 08/06/06 RPI 397 S0C5 on memory violations 08/06/06 RPI 398 fix D and DR
+ * truncated dividend error. 08/27/06 RPI 411 replace while loops with
+ * Arrays.fill and arraycopy 09/06/06 RPI 395 fix IC,STC,SS trace data
+ * lengths
+ * 09/08/06 RPI 441 add MVST move string and speed up TRT 09/18/06
+ * RPI 453 speedup MVST with byte memory access 09/19/06 RPI 454 add TRE,
+ * TROT, TRTO, TRTT
+ * 11/04/06 RPI 484 support TRE trace file for TRACE,
+ * TRACEALL 11/10/06 RPI 474 trace invalid opcode if trace on 11/10/06 RPI
+ * 487 speed up MVST using scan and arraycopy 12/06/06 RPI 407 add DFP CSDTR
+ * 12/10/06 RPI 414 add CFD and CTD DFP type conversions
+ * 12/13/06 RPI 407 add DFP initial instruction support
+ * 12/16/06 RPI 517 correct inexact result trap on DDTR etc.
+ * 12/17/06 RPI 518 correct HFP, BFP, and DFP 0C6 on invalid fetch pair
+ * 23/28/06 RPI 526 add missing DFP instr.
+ *          and fix CGDTR, CGXTR, IEDTR, IEXTR rounding/sign
+ * 01/06/07 RPI 524 add TCPIO svc x'7C' support
+ * 01/10/07 RPI 533 correct CGDTR/CGXTR rounding
+ * 01/16/07 RPI 536 issue 0C7 if DFP infinity or NaN used in calc
+ * 01/19/07 RPI 538 fix TEST single step through EX target.
+ * 01/19/07 RPI 540 fix DLG to prevent erroneous divide by 0 trap
+ *          and optimizie DLG, DLGR by removing work reg copy
+ * 01/23/07 RPI 544 corect trace format 183 for DLG, MLG to show r1+1
+ * 03/12/07 RPI 558 init ZCVT VSE COMRG JOBDATE and COMNAME
+ * 03/17/07 RPI 579 correct SRST to stop on = vs >=
+ * 03/18/07 RPI 580 correct TR?? test code compares
+ * 04/03/07 RPI 584 fix trap at startup with option ASCII and pgmname < 8
+ * 04/07/07 RPI 582 set R1 to addr of addr of PARM
+ * 04/16/07 RPI 588 correct trace for CVB, CVBG, CVBY, CVD, CVDG, CVDY
+ * 05/07/07 RPI 606 add MVCOS  support per SHARE HLASM info.
+ * 05/11/07 RPI 619 restore MVC and MVCOS to use inline code, fix  trace
+ * 05/29/07 RPI 627 repackage all 2 byte opcodes into separate function
+ *          for nested switch to speed up primary switch byte code
+ * 06/10/07 RPI 636 add estae_link to reset link stack for puercolate
+ *          and share setup_estae_exit routine.
+ * 06/21/07 RPI 643 fix CEFBR, CDFBR, CXFBR, CEGBR, CDGBR, CXGBR trace
+ * 08/09/07 RPI 672 prevent trace_psw switch being left on during
+ *          trace of undefined opcode causing EX target instruction
+ *          to be left modified.
+ * 08/30/07 RPI 689 route all TRACE output to TRE vs LOG
+ * 12/17/07 RPI 758 add specification exception for M, D, etc.
+ *          and fix MVST to store ending address in first oper reg vs R1
+ * 12/22/07 RPI 768 fix setting fp_ctl_bd2 for LXR
+ *          and fix setscale rounding for SQRT
+ * 12/23/07 rpi 767 enable unnormalized instr with normalization if option NORM
+ * 01/02/08 RPI 767 add IEXTR, IEDTR, LXDTR, LEDTR,
+ *          LDXTR, LEDTR, SLXT, SLDT, SRXT, SRDT
+ * 01/07/08 RPI 781 switch PD long to BigInt to prevent overflow
+ *          and detect overflow for DLG, DLGR
+ * 01/14/08 RPI 786 support DFP preferred exp.
+ * 01/14/08 RPI 787 support DFP unnormalized instructions.
+ * 01/14/08 RPI 788 correct overflow on DFP packed conversion
+ * 01/17/08 RPI 790 remove DFP normalization, add fp_normalization for HFP
+ * 01/22/08 RPI 791 set cc3 for CGDTR and CGXTR if too big
+ * 01/25/08 RPI 798 correct RRDTR/RRXTR to remove exact check
+ *          fix trace format, and fix ESDTR/ESXTR to include trailing zeros
+ * 02/20/08 RPI 808 prevent trap on LA for addr > max memory
+ *          prevent underflow if value exactly zero
+ * 02/27/08 rpi 811 fix CSDTR high digit 0 if negative
+ *                  fix SLDT/SRDT/SLXT/SRXT to handle pos exp.
+ * 02/27/08 RPI 815 correct support for negative index register
+ * 02/27/08 RPI 816 correct LDR and LXR to simply copy ctl registers
+ * 03/03/08 RPI 817 add 226 z10 instructions
+ * 03/12/08 RPI 820 misc. fixes:
+ *   1.  Prevent S0C5 for neg SRP b2 reg, and optimize
+ *       performance of RLL/RLLG using int/long rotate function.
+ *   2.  Honor DD/LD IEEE de, ue, oe exception on DDTR,MDTR
+ *   3.  Support un-normalized HFP input values
+ *   4.  Allow replacement of 2nd reg for cached LB/LD/LH
+ * 03/15/08 RPI 823 correct MVCIN to use right most source addr
+ * 03/19/08 RPI 819 add trace table for last 10 instr. at abend
+ *          init memory to x'F5' and registers to x'F4'
+ * 03/20/08 RPI 809 restore psw cc and amode for SPIE and ESTAE exits
+ * 03/20/08 RPI 824 flush LB/LD/LH value before rplacing 2nd reg
+ *          and correct DDTR, DXTR, DXR, and DXBR
+ *          to prevent null value stored in register cache
+ * 03/21/08 RPI 822 fix trace for LGFR type instr. using case 148
+ * 03/27/08 RPI 827 add opt_init support
+ * 03/27/08 RPI 828 fix TRT and EDMK to set high bit r1 = 0 in AMODE31
+ * 03/27/08 RPI 831 fix SLR,SL, SLY, SLGR, SLG, SLGFR, SLGF
+ *          to set CC1 when 2 neg values & result neg.
+ * 04/06/08 RPI 834 fix MSE?? and MSD?? to subtract rf1 from product rf2*rf3
+ *          and fix TCEB, TCDB, TCXB to detect -0
+ *          and fix LE RX type traces to show 4 byte target and source
+ * 05/10/08 RPI 821 switch DH from double to BigDecimal cache
+ * 05/10/08 RPI 849 use shared abort_case to catch logic errors
+ * 05/29/08 RPI 767 add HFP unnormalized support
+ *  AW, AWR, SW, SWR, AU, AUR, SU, SUR
+ *  MY, MYR, MAY, MAYR
+ *  MYH, MYHR, MYL, MYLR
+ *  MAYH, MAYHR, MAYL, MAYLR
+ * 06/04/08 RPI 842 check LD regs for IEXTR and RRXTR and ifx RRXTR.
+ * 06/06/08 RPI 843 round half-even for FP default
+ * 06/07/08 RPI 844 compatibility fixes for z9/z10 testins2
+ *          1) Raise spec error for TR?? table not on dword
+ *          2) Correct TMXX for high bit mixed tests
+ * 06/09/08 RPI 859 correct ALSI and ALGSI immediate sign extension
+ * 06/17/08 RPI 845 change EPIE offsets to match z/OS
+ * 06/21/08 RPI 845 replace ESTAD.MAC with IHASDWA passed in R1
+ * 06/23/08 RPI 866 init mem to F5 starting at mem24_start
+ * 07/05/08 RPI 875 correct CLIY error introduced by RPI 859
+ *          and masked by incorrect CLIY test in TESTINS2
+ * 07/23/08 RPI 878 fix XDECI to support ASCII mode
+ * 07/23/08 RPI 879 fix SLR, SLGR, SLGFR, SL, SLY, SLG, SLGF
+ *          to set CC3 when both neg and no borrow
+ * 08/13/08 RPI 894 change low DSA addr from 64k to 32k for testing AL2 RLD
+ * 09/12/08 RPI 764    change trace info for GL/PL svcs
+ * 11/06/08 rpi 947 add ascii printable text display of MVC data moved
+ * 12/13/08 RPI 975 prevent SFFF on dirty high addr bit for printable hex
+ * 01/12/09 RPI 981 prevent PD target update after data exception
+ * 01/18/09 RPI 985 optimize XC instruction for S1=S2
+ * 03/09/09 RPI 1013 add PFPO, CSTG, and CSST opcodes per POP V7
+ * 03/17/09 RPI 1015 prevent S0C5 on SRAG,SLAG,SRLG,SLLG,SRXT,SLXT
+ * 04/20/09 RPI 1026 add ESTA extract PC/BAKR PSW/CC
+ * 04/26/09 RPI 1030 verify zeros in R0 for SRST
+ * 05/03/09 RPI 1003 fix PFPO for LD to ED and ED to LB, EH to LD, fix MDE ovf chk
+ * 05/06/09 RPI 1035 trace EX 2,4,6 byte instr.
+ * 06/13/09 RPI 1054 correct ABEND PSW addr when S0C5 occurs during trace
+ * 06/14/09 RPI 1055 add CPYA, EAR, and SAR instruction support
+ * 09/19/09 RPI 1063 add CDE support with pointer from CVTCDE
+ * 09/20/09 RPI 1063 update pgm old psw for pgm checks (duplicate of ESPIE psw0
+ * 01/04/10 RPI 1094 move timeout to tz390 for use by gz390
+ * 01/10/10 RPI 1103 correct trace for EX to show R vs F.
+ * 02/04/10 RPI 1092 make PD compare routines public for zsort keys
+ * 02/25/10 RPI 1111 correct PR to only restore 2-14 vs 1-14
+ * 08/06/10 RPI 1125 add POPCNT per SHARE Pres. 08/04/10
+ * 10/11/10 RPI 1125 add SRNMB
+ * 10/21/10 RPI 1125 add B390-B392
+ * 10/22/10 RPI 1125 add alt_rnd_mode for "?" instr, LEDBR etc.
+ * 11/10/10 RPI 1125 add FIXBRA,FIEBRA,FIDBRA,CELFBR,CDLFBR,CXLFBR
+ * 11/23/10 RPI 1125 add CEFBRA,CDFBRA,CSFBRA, CFEBRA,CFDBRA,CFXBRA
+ * 11/24/10 RPI 1125 ADD B39C-B3A2 CLFEBR-CXLGBR
+ * 11/29/10 RPI 1125 ADD B3A4-B3AE CEGBRA, CGEBRA, CLGEBR
+ * 12/01/10 RPI 1125 ADD B3D0-B3DB MDTRA-SXTRA
+ * 12/02/10 RPI 1125 ADD B3E1-BEF9 CGDTRA-CXGTRA
+ * 12/03/10 RPI 1125 ADD B928-B92D PCKMO KMOTR
+ * 12/04/10 RPI 1125 ADD B941-B95B CFDTR - CXLFTR, FIX MDTRA DFP/BFP RND
+ * 12/06/10 RPI 1125 ADD B9AE-B9CB RRBM-SLHHHR
+ * 12/08/10 RPI 1125 ADD B9CD-B9DF CHHR-CLHHLR
+ * 12/09/10 RPI 1125 ADD B9E2-B9FB LOCGR-SLRK
+ * 12/09/10 RPI 1125 ADD C84-C85 LPD-LPDG
+ * 12/11/10 RPI 1125 ADD CC6-CCF BRCTH - CLIH
+ * 12/18/10 RPI 1125 ADD E3C0-E3CF LBH - CLHF
+ * 12/19/10 RPI 1125 ADD EBDC-EBFA SRAK - LAAL
+ * 12/21/10 RPI 1125 ADD EC51-ECDB RISBLG - ALGSIK
+ * 04/06/11 RPI 1158 FIX ALT DFP RND FOR CXGTR,CDGTR,CGXTR,CGDTR
+ * 05/06/11 RPI 1149 FIX TRACE FOR LAY, BCTR R,0
+ * 05/17/11 RPI 1164 add RISBHGZ and RISBLGZ trace support
+ * 09/23/11 RPI 1179 support +-num for XDECI
+ * 09/27/11 RPI 1180 fix trace format for SRXT/SLXT etc.
+ * 03/04/12 RPI 1195 issue spec error if CUSE r2 odd
+ * 04/02/12 RPI 1200 correct LRVGR and LRVR when same reg.
+ * 04/14/12 RPI 1207 correct E2xx() to E3xx()
+ * 04/30/12 RPI 1211 round L? and D? when trunc BD
+ * 05/10/12 RPI 1214 fix DXTR fp_rbdv2 to prevent S0C5
+ * 04/19/12 RPI 1209 Move array op_trace_type to tz390
+ * 07/20/14 RPI VF01 add vector operations
+ * 10/27/14 RPI 1209N Re-implement RR-type instructions and create full regression test
+ * 12/26/14 RPI 1505  BALR in amode 24 fails to construct correct high-order word in return address
+ * 01/05/15 RPI 1506  Execution of SAM64 acts as no-op / basic support for Amode64
+ * 01/31/15 RPI 1509  BALR in amode64 turns on amode31 bit generated in return address
+ * 02/01/15 RPI 1510  BALR when EXecuted generates return address from target BALR instruction
+ *                    Return address should be generated from EX/EXRL instruction location
+ * 02/05/15 RPI 1511  BCR should not branch when target address is contained in R0
+ * 02/14/15 RPI 1512  BASSM with odd target address should set amode64, not jump to odd address
+ * 02/14/15 RPI 1513  BASSM should set return address from EX/EXRL when executed
+ * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
+ * 01/09/15 RPI 1527  TROO, TRTO, TROT, TRTT will process 1 character if length 0 is specified
+ * 11/09/15 RPI 1531  MVCL and MVCLE with source length zero abend
+ * 02/08/16 RPI 1540  CLIJ/CLGIJ incorrectly test their operands
+ * 02/10/16 RPI 2002  BASR, BAL, BAS: make EXecute aware and amode 64 aware;
+ *                    BAL: cc,ilc,pgm mask put in return address for amode 24
+ * 02/16/16 RPI 2001  BSM: changes for set branch address & amode 64;
+ *                    BASSM: remove redundant if statement
+ * 03/01/16 RPI 2003  Add support for LAM, LAMY, STAM, and STAMY instructions
+ * 03/01/16 RPI 2004  Add support for TAM instruction
+ * 02/26/17 RPI 2009  Fix condition code 3 errors
+ *                      1. Add (AR, AGR, A, etc) instructions and subtract
+ *                         (SR, SGR, S, etc) instructions do not set CC=3 and do not set
+ *                         destination value when (fixed-point) overflow occurs; also, if
+ *                         overflow occurs and the program mask fixed-point-overflow bit
+ *                         is one, the CC in the PSW at abend is not set
+ *                      2. LCR, LCGR, LPR, and LPGR do not set the destination
+ *                         register when CC=3; also, none of these check for
+ *                         fixed-point-overflow exceptions
+ *                      3. SLA, SLAK, SLDA, and SLAG do not check for
+ *                         fixed-point-overflow exceptions
+ *                    Remove invalid call to get_int_add_cc() in ALSIHN instruction emulation
+ * 03/29/17 RPI 2010 Save and restore field psw_ins_len in method trace_psw()
+ * 2018-07-30 RPI 1622 Issue S0D3 if any of the privileged instructions are used
+ * 2019-09-22 RPI 2201 dsh use math.RoundingMode(int) to fix depreciated setScale(int,int)
+ * 2019-09-29 RPI 2202 dsh add new instructions documented in SA22-7832-12 dated 2019-09  pg 79 summary
+ *   AND WITH COMPLEMENT (NCRK, NCGRK)
+ *   MOVE RIGHT TO LEFT
+ *   NAND (NNRK, NNGRK)
+ *   NOT EXCLUSIVE OR (NXRK, NXGRK)
+ *   NOR (NORK, NOGRK)
+ *   OR WITH COMPLEMENT (OCRK, OCGRK)
+ *   SELECT (SEL, SELGR)
+ *   SELECT HIGH (SELFHR)
+ * 2019-10-01 RPI 2202 dsh fix trace case 154 for NRK etc to show R vs F for regs
+ * 2019-10-26 RPI 2202 add POPCNT high mask bit support to return total one bits
+ * 2021-01-06 RPI 2227 add 16 byte memory buffer to prevent pd fetch exception
+ * 2021-01-10 RPI 2204 add CDPT, CXPT, CZDT, CZXT; change to RPI 2227 - add 32 bytes
+ * 2021-01-10 RPI 2013 Modify MP, DP to verify operands.
+ *                     1. MP and DP: 2nd op len <= 8 and < 1st op len;
+ *                        else specification exception.
+ *                     2. MP: 1st op has at least as many bytes of
+ *                        leftmost zeros as 2nd op len; else
+ *                        general-purpose data exception.
+ *                     3. DP: delete setting psw_cc
+ *                     4. Add missing else clause to get_pdf_ints().
+ * 2021-10-29 Issue 291. Fix XDECI logic so that it matches ASSIST documentation.
+ * 2021-10-29 Issue 305. Fix XHEXI logic so that it matches ASSIST documentation.
+ *                       NB: RPI 878 added ASCII support for XDECI but not XHEXI.
+ *                           Not added here either.
+ * 2022-02-12 Issue 195. For all privileged instructions issue the proper exception according PoP
+ *                       Being S0C2 for privileged-operation exception when executed in problem state
+ *                       Other exceptions as defined in PoP
+ *                       And implement as a no-op if all tests are passed
+ * 2022-02-24 DSH ISSUE #300 add support for MGRK, MSGRKC, MSRKC, MSC
+ * 2022-03-05 DSH issue #300 updated based on review by John Ganci
+ *                      1) Simplify get_signed_bytes by dropping extra leading byte
+ *                      2) cleanup comments
+ * 2022-03-12 DSH fixed overflow for cc3 MSC, MSGC, MSGRKC, MSRKC
+ * 2023-03-29 Issue 434 ED instruction handles alternate signs incorrectly
+ * 2025-10-20 AFK       Add javadoc comments
+ * 2026-02-06 Issue 760 Divide Decimal (DP) incorrectly issues S0CA when quotient
+ *                      length too long; should issue S0CB
+ * 2026-05-14 Issue 596 TRT instruction does not set GR1 correctly when
+ *                      running in 64-bit addressing mode. Similar problems
+ *                      with TRTR and EDMK. When fixing EDMK, additonal problems
+ *                      were found with the ED instruction:
+ *                      1) Did not S0C7 when left half of a source byte did not
+ *                         contain 0-9
+ *                      2) Did not properly set the condition code when the
+ *                         source field contained an unsigned packed decimal
+ *                         number (eg, X'1234').
+ * 2026-08-24 JG+AFK    Fix issues flagged by linter
+ * 2026-08-27 AFK #916  Missing break statements in case construct
+ ********************************************************/
+
+
+
 /**
     pz390 is the processor emulator component of z390 which is called from
     ez390 to execute 390 code loaded in memory. Both ez390 and pz390 call
@@ -35,386 +419,8 @@ import java.util.Date;
     loading.
  */
 public class pz390 {
-    /* *************************************************** Maintenance
-     * *************************************************** 04/18/05 copied from
-     * lz390.java and modified 06/20/05 start adding and testing common instr.
-     * 06/25/05 add opcodes to trace
-     * 07/11/05 add floating point instructions
-     * 08/20/05 add svc 6 link, fix svc 8 to use r0 pgm name
-     * 08/22/05 add SYS390
-     *   and SYSLOG dir options
-     * 09/04/05 add sequential and random DCB file I/O
-     * support
-     * 09/16/05 fix DSG, DSGR, DSGF, DSGFR to use R1+1 dividend
-     * 09/18/05 add CDE with usage and freemain info for DELETE
-     * 09/18/05 add link svc amode support
-     * 09/19/05 add TEST option interactive debug
-     * 09/27/05 add MEM(MB) option and reduce default to MEM(1)
-     * 09/27/05 fix 0C5 at end of mem using work_mem
-     * 10/04/05 RPI5 - option ASCII use ASCII vs EBCDIC
-     *          zcvt_ipl_pgm = ascii name DCB DDNAME field ascii DCB FT RCDS = ascii SVC
-     * LOAD, LINK, DELETE EP/EPLOC ASCII dump text = ascii TEST C'...' SDT =
-     * ASCII ED/EDMK remove high bit on chars SSP type instr. allow 0x3 sign
-     * UNPK gen 0x3 zone
-     * 10/04/05 RPI6 - option ERR(nn) limit errors
-     * 10/05/05 RPI5 - add test C"..." sdt support
-     * 10/12/05 suppress stats if NOSTATS option on
-     * 10/12/05 RPI20 fix error 62 on open of output file 10/14/05
-     * RPI21 0C5 on PSW addr > mem
-     * 10/14/05 RPI22 turn off time limit if test
-     * 10/14/05 RPI15 req z390 to issue exit at end of test 10/16/05 force
-     * console output of msgs after abort 10/16/05 RPI23 add CLST, CUSE, and
-     * SRST instructions
-     * 10/18/05 RPI28 change DSNAM field to EBCDIC unless
-     * ASCII mode
-     * 10/18/05 RPI29 use EZ390E and EZ390I prefixes 10/18/05 RPI31
-     * set r15 to 0 on successful svc 10/19/05 RPI33 only enable PD and exponent
-     * overflow
-     * 10/19/05 RPI32 add SYS390 dir list support 10/19/05 RPI34 full
-     * ebcdic / ascii translation
-     * 10/20/05 RPI35 prevent exit loop in test
-     * filling log
-     * 10/20/05 RPI37 use "I:" and "H:" to separate op/hex keys
-     * 10/20/05 RPI39 set rc=r15 on normal exit 10/22/05 RPI44 fix TM to set CC3
-     * when OR'd byte = mask rather than = to test memory byte 10/23/05 RPI43
-     * correct ED/EDMK sif. 1 byte early
-     * 10/23/05 RPI42 use full EBCDIC to ASCII
-     * translate for PGMNAME, DDNAM, DSNAM, GET/PUT 10/24/05 RPI46 add svc 34 to
-     * issue OS command
-     * 10/25/05 RPI47 add svc 93 to support application window
-     * 10/26/05 RPI49 10/27/05 RPI53 set r15 to error # in synad 10/27/05 RPI56
-     * add dump of first pgm memory if dump req 11/01/05 RPI65 fix BALR, BASR,
-     * BASSM when R1=R2
-     * 11/02/05 RPI66 correct padding spaces in ASCII mode
-     * 11/02/05 RPI69 change ED/EDMK to map X'40'for ASCII 11/03/05 RPI71 add
-     * missing AL3 relocation code
-     * 11/03/05 RPI63 handle x'1a' eof marker in gm
-     * RT/VT
-     * 11/03/05 RPI64 issue abend S013 if no synad after io err 11/07/05
-     * RPI73 remove PACK/UNPK mode changes and add PKA/UNPKA 11/08/05 RPI73
-     * change ED/EDMK to require EBCDIC mask and then translate output if ascii
-     * 11/08/05 RPI76 end cmd processes at exit 11/08/05 RPI77 add cmd read and
-     * wait controls
-     * 11/08/05 RPI79 add mult. cmd task support 11/11/05 RPI73
-     * restore PACK, UNPK ASCII mode support (allow 3/b sign and unpk to f/s or
-     * 3/s zone)
-     * 11/11/05 RPI75 add SNAP dump support svc 51 11/13/05 RPI88 add
-     * DCB validation
-     * 11/15/05 RPI92 correct trace format in test 11/15/05 RPI93
-     * correct SNAP svc to use memory range instead of address and length
-     * 11/15/05 RPI94 add svc_timer nano-sec counter 11/18/05 RPI98 ignore cr,lf
-     * TEST commands
-     * 11/19/05 RPI100 reformat abend dump and include before
-     * continuing in test
-     * 11/19/05 RPI101 correct open error causing erroneous
-     * eof error after reuse of tiot entry 11/19/05 RPI102 add LOAD extension to
-     * support loading and deleting file in addition to 390's. 11/20/05 RPI106
-     * correct SPM, IPM field position also NR, OR, and XR not setting CC also
-     * PR only restore 2-14
-     * 11/20/05 RPI82 replace MVC loop with copy & fill
-     * 11/21/05 add LinkedList string type checking 11/21/05 RPI108 speed up BC
-     * by 140 NS when branch not taken by skipping RX address fetch 11/23/05
-     * RPI110 turn off DCBOFLGS open bit at close 11/23/05 RPI108 speed up PD by
-     * removing mem_work and using int vs BigInteger when possible 11/25/05
-     * RPI111 trim spaces from DDNAME and DSNAME file 11/26/05 RPI47 add inital
-     * gz390 GUAM GUI window option for WTO and WTOR support 11/27/05 RPI112 correct
-     * error 90 I/O error
-     * 11/27/05 RPI108 replace byte buffer mem.get, mem.put
-     * reg.get and reg.put with direct byte array. 11/28/05 RPI113 file path
-     * with drive: and no separator
-     * 11/29/05 RPI47 add svc 1 wait and svc 160
-     * wtor request
-     * 12/04/05 RPI108 speed up MVCLE, CLC, MVZ, MVN OC, NC, XC.
-     * 12/07/05 RPI123 fix multiple path support 12/08/05 RPI121 abort ez390 on
-     * test q command
-     * 12/15/05 RPI135 use tz390 shared tables 12/18/05 RPI142
-     * use init_opcode_name_keys in tz390 and document all key codes in tz390.
-     * 12/20/05 RPI103 add multiple +- test addr operands 12/23/05 RPI127 strip
-     * mlc type from file name and use shared set_pgm_name_type 12/23/05 RPI131
-     * limit file output to maxfile(mb) 01/04/06 RPI107 split ez390 into ez390,
-     * pz390 01/06/06 RPI158 clear remainder of register for LL???? 01/08/06
-     * RPI160 correct LLGT loading from loc + 4 01/12/06 RPI 151 add LPSW
-     * support as branch.
-     * 01/15/06 RPI 173 add LRV, STPQ, LPQ support. 01/26/06
-     * RPI 172 move options to tz390, svc > sz390 02/02/06 RPI 175 rewrite AL???
-     * SL??? using long vs bigint
-     * 02/02/06 RPI 185 add z9 opcodes AFI, AGFI,
-     * etc.
-     * 02/04/06 RPI 197 remove test_or_trace interrupts 02/08/06 RPI 185
-     * add STCKF and fix STCK to be unique 02/09/06 RPI 185 add remainder of z9
-     * opcodes
-     * 02/16/06 RPI 202 correct 2nd opcode mask for z9 instr. 02/18/06
-     * RPI 206 support 3 flavors of RRF format 03/14/06 RPI 228 add CVTDCB OS
-     * flags
-     * 03/15/06 RPI 229 verify correct even/odd fp pairs 04/05/06 RPI 272
-     * correct MR to only use low 32 bits of r1+1 04/07/06 RPI 275 correct MLR
-     * and ML to only use low 32 bits of r1+1 04/10/06 RPI 276 add zcvt_user_pgm
-     * 04/12/06 RPI 244 support ESPIE/ESTAE PARAM, CT,OV 04/21/06 RPI 279 stimer
-     * real exit support
-     * 04/23/06 RPI 295 correct ICM, ICMH, ICMY, OIHL, and
-     * OILH CC values.
-     * 04/26/06 RPI 299 check for 0C5 in setups 04/27/06 RPI 298
-     * add MAYLR MYLR MAYHR MYHR, MAYL MYL MAYH MYH 04/28/06 RPI 301 force 0C7
-     * on PD zero sign was checking was checking first non-zero byte beyond in
-     * error.
-     * 05/02/06 RPI 305 update ESPIE and ESTAE support and fix get_pd for
-     * pd instr. to avoid recursive program checks 05/02/06 RPI 307 correct MAYL
-     * and MAYLR to remove duplicate setup call corrupting next instruction, and
-     * correct IPM trace format. 06/03/06 RPI 323 allow opcode break on first
-     * stimer exit instr.
-     * 06/03/06 RPI 325 allow KEB and KDD exact 0 07/03/06
-     * RPI 326 add TCEB, TCDB, and TCXB test data class 07/03/06 RPI 333 add
-     * SRNM and support rounding modes 07/05/06 RPI 335 correct TBEDR and other
-     * users of RRFe setup to caculate rf3 and mf3 correctly 07/05/06 RPI 348
-     * only show 2 bytes for halfword instr. 07/06/06 RPI 357 impove speed using
-     * short, int, and long buffers 07/17/06 RPI 370 make zcvt conversion rtns
-     * public for svc_cfd
-     * 07/20/06 RPI 376 CORRECT AL?? CC1 for high bit set
-     * with no carry
-     * 07/24/06 RPI 383 CORRECT MLG AND MLGR R1+1 * S2/R2 07/26/06
-     * RPI 384 fix HFP true zero 07/30/06 RPI 386 fix MVCL trap when data length =
-     * 0.
-     * 07/30/06 RPI 387 Fix RXY, RSY, and SIY to support 20 bit signed disp.
-     * 08/06/06 RPI 397 S0C5 on memory violations 08/06/06 RPI 398 fix D and DR
-     * truncated dividend error. 08/27/06 RPI 411 replace while loops with
-     * Arrays.fill and arraycopy 09/06/06 RPI 395 fix IC,STC,SS trace data
-     * lengths
-     * 09/08/06 RPI 441 add MVST move string and speed up TRT 09/18/06
-     * RPI 453 speedup MVST with byte memory access 09/19/06 RPI 454 add TRE,
-     * TROT, TRTO, TRTT
-     * 11/04/06 RPI 484 support TRE trace file for TRACE,
-     * TRACEALL 11/10/06 RPI 474 trace invalid opcode if trace on 11/10/06 RPI
-     * 487 speed up MVST using scan and arraycopy 12/06/06 RPI 407 add DFP CSDTR
-     * 12/10/06 RPI 414 add CFD and CTD DFP type conversions
-     * 12/13/06 RPI 407 add DFP initial instruction support
-     * 12/16/06 RPI 517 correct inexact result trap on DDTR etc.
-     * 12/17/06 RPI 518 correct HFP, BFP, and DFP 0C6 on invalid fetch pair
-     * 23/28/06 RPI 526 add missing DFP instr.
-     *          and fix CGDTR, CGXTR, IEDTR, IEXTR rounding/sign
-     * 01/06/07 RPI 524 add TCPIO svc x'7C' support
-     * 01/10/07 RPI 533 correct CGDTR/CGXTR rounding
-     * 01/16/07 RPI 536 issue 0C7 if DFP infinity or NaN used in calc
-     * 01/19/07 RPI 538 fix TEST single step through EX target.
-     * 01/19/07 RPI 540 fix DLG to prevent erroneous divide by 0 trap
-     *          and optimizie DLG, DLGR by removing work reg copy
-     * 01/23/07 RPI 544 corect trace format 183 for DLG, MLG to show r1+1
-     * 03/12/07 RPI 558 init ZCVT VSE COMRG JOBDATE and COMNAME
-     * 03/17/07 RPI 579 correct SRST to stop on = vs >=
-     * 03/18/07 RPI 580 correct TR?? test code compares
-     * 04/03/07 RPI 584 fix trap at startup with option ASCII and pgmname < 8
-     * 04/07/07 RPI 582 set R1 to addr of addr of PARM
-     * 04/16/07 RPI 588 correct trace for CVB, CVBG, CVBY, CVD, CVDG, CVDY
-     * 05/07/07 RPI 606 add MVCOS  support per SHARE HLASM info.
-     * 05/11/07 RPI 619 restore MVC and MVCOS to use inline code, fix  trace
-     * 05/29/07 RPI 627 repackage all 2 byte opcodes into separate function
-     *          for nested switch to speed up primary switch byte code
-     * 06/10/07 RPI 636 add estae_link to reset link stack for puercolate
-     *          and share setup_estae_exit routine.
-     * 06/21/07 RPI 643 fix CEFBR, CDFBR, CXFBR, CEGBR, CDGBR, CXGBR trace
-     * 08/09/07 RPI 672 prevent trace_psw switch being left on during
-     *          trace of undefined opcode causing EX target instruction
-     *          to be left modified.
-     * 08/30/07 RPI 689 route all TRACE output to TRE vs LOG
-     * 12/17/07 RPI 758 add specification exception for M, D, etc.
-     *          and fix MVST to store ending address in first oper reg vs R1
-     * 12/22/07 RPI 768 fix setting fp_ctl_bd2 for LXR
-     *          and fix setscale rounding for SQRT
-     * 12/23/07 rpi 767 enable unnormalized instr with normalization if option NORM
-     * 01/02/08 RPI 767 add IEXTR, IEDTR, LXDTR, LEDTR,
-     *          LDXTR, LEDTR, SLXT, SLDT, SRXT, SRDT
-     * 01/07/08 RPI 781 switch PD long to BigInt to prevent overflow
-     *          and detect overflow for DLG, DLGR
-     * 01/14/08 RPI 786 support DFP preferred exp.
-     * 01/14/08 RPI 787 support DFP unnormalized instructions.
-     * 01/14/08 RPI 788 correct overflow on DFP packed conversion
-     * 01/17/08 RPI 790 remove DFP normalization, add fp_normalization for HFP
-     * 01/22/08 RPI 791 set cc3 for CGDTR and CGXTR if too big
-     * 01/25/08 RPI 798 correct RRDTR/RRXTR to remove exact check
-     *          fix trace format, and fix ESDTR/ESXTR to include trailing zeros
-     * 02/20/08 RPI 808 prevent trap on LA for addr > max memory
-     *          prevent underflow if value exactly zero
-     * 02/27/08 rpi 811 fix CSDTR high digit 0 if negative
-     *                  fix SLDT/SRDT/SLXT/SRXT to handle pos exp.
-     * 02/27/08 RPI 815 correct support for negative index register
-     * 02/27/08 RPI 816 correct LDR and LXR to simply copy ctl registers
-     * 03/03/08 RPI 817 add 226 z10 instructions
-     * 03/12/08 RPI 820 misc. fixes:
-     *   1.  Prevent S0C5 for neg SRP b2 reg, and optimize
-     *       performance of RLL/RLLG using int/long rotate function.
-     *   2.  Honor DD/LD IEEE de, ue, oe exception on DDTR,MDTR
-     *   3.  Support un-normalized HFP input values
-     *   4.  Allow replacement of 2nd reg for cached LB/LD/LH
-     * 03/15/08 RPI 823 correct MVCIN to use right most source addr
-     * 03/19/08 RPI 819 add trace table for last 10 instr. at abend
-     *          init memory to x'F5' and registers to x'F4'
-     * 03/20/08 RPI 809 restore psw cc and amode for SPIE and ESTAE exits
-     * 03/20/08 RPI 824 flush LB/LD/LH value before rplacing 2nd reg
-     *          and correct DDTR, DXTR, DXR, and DXBR
-     *          to prevent null value stored in register cache
-     * 03/21/08 RPI 822 fix trace for LGFR type instr. using case 148
-     * 03/27/08 RPI 827 add opt_init support
-     * 03/27/08 RPI 828 fix TRT and EDMK to set high bit r1 = 0 in AMODE31
-     * 03/27/08 RPI 831 fix SLR,SL, SLY, SLGR, SLG, SLGFR, SLGF
-     *          to set CC1 when 2 neg values & result neg.
-     * 04/06/08 RPI 834 fix MSE?? and MSD?? to subtract rf1 from product rf2*rf3
-     *          and fix TCEB, TCDB, TCXB to detect -0
-     *          and fix LE RX type traces to show 4 byte target and source
-     * 05/10/08 RPI 821 switch DH from double to BigDecimal cache
-     * 05/10/08 RPI 849 use shared abort_case to catch logic errors
-     * 05/29/08 RPI 767 add HFP unnormalized support
-     *  AW, AWR, SW, SWR, AU, AUR, SU, SUR
-     *  MY, MYR, MAY, MAYR
-     *  MYH, MYHR, MYL, MYLR
-     *  MAYH, MAYHR, MAYL, MAYLR
-     * 06/04/08 RPI 842 check LD regs for IEXTR and RRXTR and ifx RRXTR.
-     * 06/06/08 RPI 843 round half-even for FP default
-     * 06/07/08 RPI 844 compatibility fixes for z9/z10 testins2
-     *          1) Raise spec error for TR?? table not on dword
-     *          2) Correct TMXX for high bit mixed tests
-     * 06/09/08 RPI 859 correct ALSI and ALGSI immediate sign extension
-     * 06/17/08 RPI 845 change EPIE offsets to match z/OS
-     * 06/21/08 RPI 845 replace ESTAD.MAC with IHASDWA passed in R1
-     * 06/23/08 RPI 866 init mem to F5 starting at mem24_start
-     * 07/05/08 RPI 875 correct CLIY error introduced by RPI 859
-     *          and masked by incorrect CLIY test in TESTINS2
-     * 07/23/08 RPI 878 fix XDECI to support ASCII mode
-     * 07/23/08 RPI 879 fix SLR, SLGR, SLGFR, SL, SLY, SLG, SLGF
-     *          to set CC3 when both neg and no borrow
-     * 08/13/08 RPI 894 change low DSA addr from 64k to 32k for testing AL2 RLD
-     * 09/12/08 RPI 764    change trace info for GL/PL svcs
-     * 11/06/08 rpi 947 add ascii printable text display of MVC data moved
-     * 12/13/08 RPI 975 prevent SFFF on dirty high addr bit for printable hex
-     * 01/12/09 RPI 981 prevent PD target update after data exception
-     * 01/18/09 RPI 985 optimize XC instruction for S1=S2
-     * 03/09/09 RPI 1013 add PFPO, CSTG, and CSST opcodes per POP V7
-     * 03/17/09 RPI 1015 prevent S0C5 on SRAG,SLAG,SRLG,SLLG,SRXT,SLXT
-     * 04/20/09 RPI 1026 add ESTA extract PC/BAKR PSW/CC
-     * 04/26/09 RPI 1030 verify zeros in R0 for SRST
-     * 05/03/09 RPI 1003 fix PFPO for LD to ED and ED to LB, EH to LD, fix MDE ovf chk
-     * 05/06/09 RPI 1035 trace EX 2,4,6 byte instr.
-     * 06/13/09 RPI 1054 correct ABEND PSW addr when S0C5 occurs during trace
-     * 06/14/09 RPI 1055 add CPYA, EAR, and SAR instruction support
-     * 09/19/09 RPI 1063 add CDE support with pointer from CVTCDE
-     * 09/20/09 RPI 1063 update pgm old psw for pgm checks (duplicate of ESPIE psw0
-     * 01/04/10 RPI 1094 move timeout to tz390 for use by gz390
-     * 01/10/10 RPI 1103 correct trace for EX to show R vs F.
-     * 02/04/10 RPI 1092 make PD compare routines public for zsort keys
-     * 02/25/10 RPI 1111 correct PR to only restore 2-14 vs 1-14
-     * 08/06/10 RPI 1125 add POPCNT per SHARE Pres. 08/04/10
-     * 10/11/10 RPI 1125 add SRNMB
-     * 10/21/10 RPI 1125 add B390-B392
-     * 10/22/10 RPI 1125 add alt_rnd_mode for "?" instr, LEDBR etc.
-     * 11/10/10 RPI 1125 add FIXBRA,FIEBRA,FIDBRA,CELFBR,CDLFBR,CXLFBR
-     * 11/23/10 RPI 1125 add CEFBRA,CDFBRA,CSFBRA, CFEBRA,CFDBRA,CFXBRA
-     * 11/24/10 RPI 1125 ADD B39C-B3A2 CLFEBR-CXLGBR
-     * 11/29/10 RPI 1125 ADD B3A4-B3AE CEGBRA, CGEBRA, CLGEBR
-     * 12/01/10 RPI 1125 ADD B3D0-B3DB MDTRA-SXTRA
-     * 12/02/10 RPI 1125 ADD B3E1-BEF9 CGDTRA-CXGTRA
-     * 12/03/10 RPI 1125 ADD B928-B92D PCKMO KMOTR
-     * 12/04/10 RPI 1125 ADD B941-B95B CFDTR - CXLFTR, FIX MDTRA DFP/BFP RND
-     * 12/06/10 RPI 1125 ADD B9AE-B9CB RRBM-SLHHHR
-     * 12/08/10 RPI 1125 ADD B9CD-B9DF CHHR-CLHHLR
-     * 12/09/10 RPI 1125 ADD B9E2-B9FB LOCGR-SLRK
-     * 12/09/10 RPI 1125 ADD C84-C85 LPD-LPDG
-     * 12/11/10 RPI 1125 ADD CC6-CCF BRCTH - CLIH
-     * 12/18/10 RPI 1125 ADD E3C0-E3CF LBH - CLHF
-     * 12/19/10 RPI 1125 ADD EBDC-EBFA SRAK - LAAL
-     * 12/21/10 RPI 1125 ADD EC51-ECDB RISBLG - ALGSIK
-     * 04/06/11 RPI 1158 FIX ALT DFP RND FOR CXGTR,CDGTR,CGXTR,CGDTR
-     * 05/06/11 RPI 1149 FIX TRACE FOR LAY, BCTR R,0
-     * 05/17/11 RPI 1164 add RISBHGZ and RISBLGZ trace support
-     * 09/23/11 RPI 1179 support +-num for XDECI
-     * 09/27/11 RPI 1180 fix trace format for SRXT/SLXT etc.
-     * 03/04/12 RPI 1195 issue spec error if CUSE r2 odd
-     * 04/02/12 RPI 1200 correct LRVGR and LRVR when same reg.
-     * 04/14/12 RPI 1207 correct E2xx() to E3xx()
-     * 04/30/12 RPI 1211 round L? and D? when trunc BD
-     * 05/10/12 RPI 1214 fix DXTR fp_rbdv2 to prevent S0C5
-     * 04/19/12 RPI 1209 Move array op_trace_type to tz390
-     * 07/20/14 RPI VF01 add vector operations
-     * 10/27/14 RPI 1209N Re-implement RR-type instructions and create full regression test
-     * 12/26/14 RPI 1505  BALR in amode 24 fails to construct correct high-order word in return address
-     * 01/05/15 RPI 1506  Execution of SAM64 acts as no-op / basic support for Amode64
-     * 01/31/15 RPI 1509  BALR in amode64 turns on amode31 bit generated in return address
-     * 02/01/15 RPI 1510  BALR when EXecuted generates return address from target BALR instruction
-     *                    Return address should be generated from EX/EXRL instruction location
-     * 02/05/15 RPI 1511  BCR should not branch when target address is contained in R0
-     * 02/14/15 RPI 1512  BASSM with odd target address should set amode64, not jump to odd address
-     * 02/14/15 RPI 1513  BASSM should set return address from EX/EXRL when executed
-     * 03/28/15 RPI 1522  Load Logical Immediate instructions with a relocatable argument should issue error
-     * 01/09/15 RPI 1527  TROO, TRTO, TROT, TRTT will process 1 character if length 0 is specified
-     * 11/09/15 RPI 1531  MVCL and MVCLE with source length zero abend
-     * 02/08/16 RPI 1540  CLIJ/CLGIJ incorrectly test their operands
-     * 02/10/16 RPI 2002  BASR, BAL, BAS: make EXecute aware and amode 64 aware;
-     *                    BAL: cc,ilc,pgm mask put in return address for amode 24
-     * 02/16/16 RPI 2001  BSM: changes for set branch address & amode 64;
-     *                    BASSM: remove redundant if statement
-     * 03/01/16 RPI 2003  Add support for LAM, LAMY, STAM, and STAMY instructions
-     * 03/01/16 RPI 2004  Add support for TAM instruction
-     * 02/26/17 RPI 2009  Fix condition code 3 errors
-     *                      1. Add (AR, AGR, A, etc) instructions and subtract
-     *                         (SR, SGR, S, etc) instructions do not set CC=3 and do not set
-     *                         destination value when (fixed-point) overflow occurs; also, if
-     *                         overflow occurs and the program mask fixed-point-overflow bit
-     *                         is one, the CC in the PSW at abend is not set
-     *                      2. LCR, LCGR, LPR, and LPGR do not set the destination
-     *                         register when CC=3; also, none of these check for
-     *                         fixed-point-overflow exceptions
-     *                      3. SLA, SLAK, SLDA, and SLAG do not check for
-     *                         fixed-point-overflow exceptions
-     *                    Remove invalid call to get_int_add_cc() in ALSIHN instruction emulation
-     * 03/29/17 RPI 2010 Save and restore field psw_ins_len in method trace_psw()
-     * 2018-07-30 RPI 1622 Issue S0D3 if any of the privileged instructions are used
-     * 2019-09-22 RPI 2201 dsh use math.RoundingMode(int) to fix depreciated setScale(int,int)
-     * 2019-09-29 RPI 2202 dsh add new instructions documented in SA22-7832-12 dated 2019-09  pg 79 summary
-     *   AND WITH COMPLEMENT (NCRK, NCGRK)
-     *   MOVE RIGHT TO LEFT
-     *   NAND (NNRK, NNGRK)
-     *   NOT EXCLUSIVE OR (NXRK, NXGRK)
-     *   NOR (NORK, NOGRK)
-     *   OR WITH COMPLEMENT (OCRK, OCGRK)
-     *   SELECT (SEL, SELGR)
-     *   SELECT HIGH (SELFHR)
-     * 2019-10-01 RPI 2202 dsh fix trace case 154 for NRK etc to show R vs F for regs
-     * 2019-10-26 RPI 2202 add POPCNT high mask bit support to return total one bits
-     * 2021-01-06 RPI 2227 add 16 byte memory buffer to prevent pd fetch exception
-     * 2021-01-10 RPI 2204 add CDPT, CXPT, CZDT, CZXT; change to RPI 2227 - add 32 bytes
-     * 2021-01-10 RPI 2013 Modify MP, DP to verify operands.
-     *                     1. MP and DP: 2nd op len <= 8 and < 1st op len;
-     *                        else specification exception.
-     *                     2. MP: 1st op has at least as many bytes of
-     *                        leftmost zeros as 2nd op len; else
-     *                        general-purpose data exception.
-     *                     3. DP: delete setting psw_cc
-     *                     4. Add missing else clause to get_pdf_ints().
-     * 2021-10-29 Issue 291. Fix XDECI logic so that it matches ASSIST documentation.
-     * 2021-10-29 Issue 305. Fix XHEXI logic so that it matches ASSIST documentation.
-     *                       NB: RPI 878 added ASCII support for XDECI but not XHEXI.
-     *                           Not added here either.
-     * 2022-02-12 Issue 195. For all privileged instructions issue the proper exception according PoP
-     *                       Being S0C2 for privileged-operation exception when executed in problem state
-     *                       Other exceptions as defined in PoP
-     *                       And implement as a no-op if all tests are passed
-     * 2022-02-24 DSH ISSUE #300 add support for MGRK, MSGRKC, MSRKC, MSC
-     * 2022-03-05 DSH issue #300 updated based on review by John Ganci
-     *                      1) Simplify get_signed_bytes by dropping extra leading byte
-     *                      2) cleanup comments
-     * 2022-03-12 DSH fixed overflow for cc3 MSC, MSGC, MSGRKC, MSRKC
-     * 2023-03-29 Issue 434 ED instruction handles alternate signs incorrectly
-     * 2025-10-20 AFK       Add javadoc comments
-     * 2026-02-06 Issue 760 Divide Decimal (DP) incorrectly issues S0CA when quotient
-     *                      length too long; should issue S0CB
-     * 2026-05-14 Issue 596 TRT instruction does not set GR1 correctly when
-     *                      running in 64-bit addressing mode. Similar problems
-     *                      with TRTR and EDMK. When fixing EDMK, additonal problems
-     *                      were found with the ED instruction:
-     *                      1) Did not S0C7 when left half of a source byte did not
-     *                         contain 0-9
-     *                      2) Did not properly set the condition code when the
-     *                         source field contained an unsigned packed decimal
-     *                         number (eg, X'1234').
-     *********************************************************
-     * Global variables              (last RPI)
+    /*********************************************************
+     * Global variables
      ********************************************************/
     /*
      * limits
@@ -20982,6 +20988,7 @@ public class pz390 {
                     + tz390.get_hex(bd2_loc, 8) + ")="
                     + bytes_to_hex(mem, bd2_loc, 4, 0)
                     + " M3=" + tz390.get_hex(mf3, 1);
+                break; // #916
             case 210:// "SIY" 6 TMY ooiibdddhhoo
                 trace_parms = " S2(" + tz390.get_hex(bd1_loc, 8) + ")="
                     + bytes_to_hex(mem, bd1_loc, 1, 0) + " I2="
@@ -21363,18 +21370,21 @@ public class pz390 {
                     + "="  + tz390.get_long_hex(reg.getLong(rf2),16)
                     + " R" + tz390.get_hex(mf3, 1)
                     + "="  + tz390.get_long_hex(reg.getLong(rf3),16);
+                break; // #916
             case 420: // "AHIK" R1,R3,I2
                 trace_parms = " R" + tz390.get_hex(mf1, 1)
                     + "="  + tz390.get_hex(reg.getInt(rf1+4),8)
                     + " R" + tz390.get_hex(mf3, 1)
                     + "="  + tz390.get_hex(reg.getInt(rf3+4),8)
                     + " I2="  + tz390.get_hex(if2,4);
+                break; // #916
             case 430: // "AGHIK" R1,R3,I2
                 trace_parms = " R" + tz390.get_hex(mf1, 1)
                     + "="  + tz390.get_long_hex(reg.getLong(rf1),16)
                     + " R" + tz390.get_hex(mf3, 1)
                     + "="  + tz390.get_long_hex(reg.getLong(rf3),16)
                     + " I2="  + tz390.get_hex(if2,4);
+                break; // #916
             case 560: // "V-S" oooobddd VRCL RPI VF01
                 trace_parms = " R"   + tz390.get_hex(mf1, 1)
                     + "="    + tz390.get_hex(reg.getInt(rf1 + 4), 8)
@@ -22034,5 +22044,8 @@ public class pz390 {
     private void reset_dfp_alt_mode() {
         fp_dfp_rnd = fp_dfp_rnd_default; // RPI 1125
     }
-}
 
+
+
+    /* end of module pz390 */
+}

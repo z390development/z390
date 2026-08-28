@@ -445,6 +445,7 @@ import javax.swing.JTextArea;
  * 2026-01-29 AFK #730 Incorrect code generated for zCobol MULTIPLY verb
  * 2026-03-25 ZH  #704 Flag invalid register operands for KM, KMA, KMC
  * 2026-08-10 AFK #807 Fix issues flagged by linter
+ * 2026-08-27 AFK #916 Missing break statements in case construct
  *****************************************************/
 
 
@@ -5635,6 +5636,7 @@ public  class  az390 implements Runnable {
         case 107:  // AMODE 0
             bal_op_ok = true; //RPI122 IGNORE
             bal_label_ok = false; // RPI 553
+            break; // #916
         case 108:  // CATTR 0
             break;
         case 109:  // COM 0
