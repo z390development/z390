@@ -27,7 +27,7 @@ class RunCmdProc extends z390Test {
         } else {
             cmdfile = basePath('rt', 'bash', 'testcmd1')
         }
-        int rc = this.asmlg(basePath("rt", "test", "TESTCMD1"), *options,  'parm(\"${cmdfile}\")')
+        int rc = this.asmlg(basePath("rt", "test", "TESTCMD1"), *options, 'parm("' + cmdfile + '")')
         this.printOutput()
         assert rc == 0
         assert this.fileData['LOG'] =~ /HELLO FOR LAST TIME/
