@@ -247,7 +247,7 @@ import javax.swing.Timer;
 @SuppressWarnings("unchecked")
 public class sz390 implements Runnable {
     /****************************************************
-     * Global variables                   (last RPI)
+     * Global variables
      *****************************************************/
 
     /*
@@ -824,9 +824,9 @@ public class sz390 implements Runnable {
      * zsort global variables
      */
 
-    /*
-     * zsort statistics
-     */
+        //
+        // zsort statistics
+        //
 
     /** variable      */ String zsort_pfx;
     /** variable      */ String zsort_start = "";;
@@ -834,17 +834,17 @@ public class sz390 implements Runnable {
     /** variable      */ String zsort_elapsed = "";
     /** variable      */ int    zsort_id = 0;
 
-    /*
-     * mode mode flags - ISORT/FSORT resets them all
-     */
+        //
+        // mode mode flags - ISORT/FSORT resets them all
+        //
 
     /** variable      */ boolean zsort_abort     = false;
     /** variable      */ boolean zsort_put       = false; // zsort put ok
     /** variable      */ boolean zsort_get       = false; // zsort get ok
 
-    /*
-     * ISORT/FSORT input parms
-     */
+        //
+        // ISORT/FSORT input parms
+        //
 
     /** variable      */ int zsort_parm_addr = 0; // zsort parm addr in r1 > lrecl,mem,key info
     /** variable      */ int zsort_lrecl = 0;     // +0 4 = fixed record length or max var record
@@ -860,9 +860,9 @@ public class sz390 implements Runnable {
     /** variable      */ int zsort_tot_sorts  = 0;
     /** variable      */ int zsort_tot_passes = 0;
 
-    /*
-     * zsort work file variables
-     */
+        //
+        // zsort work file variables
+        //
 
     /** variable      */ String zsort_sortwk01_dsn = null;
     /** variable      */ String zsort_sortwk02_dsn = null;
@@ -876,9 +876,9 @@ public class sz390 implements Runnable {
     /** variable      */ int  zsort_tot_comp = 0;
     /** variable      */ int  zsort_tot_move = 0; // swaps, merges, isort get/put
 
-    /*
-     * zsort memory blk variables
-     */
+        //
+        // zsort memory blk variables
+        //
 
     /** variable      */ int zsort_fm_len   = 0; // mem alloc before rounding
     /** variable      */ int zsort_blk_len  = 0; // length of memory blk rounded down to even mult of lrecl
@@ -901,9 +901,9 @@ public class sz390 implements Runnable {
     /** variable      */ int  zsort_read_len;
     /** variable      */ int  zsort_write_len;
 
-    /*
-     * zsort merge variables used if records exceed memory
-     */
+        //
+        // zsort merge variables used if records exceed memory
+        //
 
     /** variable      */ boolean zsort_merge_wk01 = true; // merge from wk01 to wk02 or wk02 to wk01 on alternating passes
     /** variable      */ String zsort_wk_name;
