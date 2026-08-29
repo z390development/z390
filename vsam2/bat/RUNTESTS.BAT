@@ -37,6 +37,13 @@ IF %RC% NEQ 0 (
     SET ERRMSG=TESTMDCB assembly/link error
     GOTO errmsg
 )
+REM ACB/RPL mapping test
+CALL %VSAMPATH%\bat\TESTMPCB %ZVSAM%
+SET RC=%ERRORLEVEL%
+IF %RC% NEQ 0 (
+    SET ERRMSG=TESTMPCB assembly/link/run error
+    GOTO errmsg
+)
 REM SHOWCB test
 CALL %VSAMPATH%\bat\TESTSHCB %ZVSAM%
 SET RC=%ERRORLEVEL%
