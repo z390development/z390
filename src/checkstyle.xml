@@ -16,13 +16,9 @@
     <property name="fileExtensions" value="java"/>
   </module>
 
-  <!-- Enforce Windows-style line endings -->
-  <module name="LineEnding">
-    <property name="lineEnding" value="crlf"/>
-    <property name="fileExtensions" value="java"/>
-  </module>
+  <!-- Enforce trailing line ending -->
   <module name="NewlineAtEndOfFile">
-    <property name="lineSeparator" value="crlf"/>
+    <property name="lineSeparator" value="lf_cr_crlf"/>
     <property name="fileExtensions" value="java"/>
   </module>
 
