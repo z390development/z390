@@ -5,6 +5,18 @@
 set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script
 
+# download linter jar if needed, then run it against src/
+mkdir -p ../build/checkstyle
+if [ ! -f ../build/checkstyle/checkstyle-all.jar ]; then
+    ./getcheckstyle
+fi
+if [ ! -f ../build/checkstyle/checkstyle-all.jar ]; then
+    echo "bldjar: linter download failed - cannot continue"
+    exit 1
+fi
+java -jar ../build/checkstyle/checkstyle-all.jar --version
+java -jar ../build/checkstyle/checkstyle-all.jar -c ../src/checkstyle.xml ../src
+
 mkdir -p "../jar"   # create directory if it does not exist
 
 # empty destination directory; cd to it
