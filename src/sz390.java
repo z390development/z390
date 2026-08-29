@@ -235,6 +235,7 @@ import javax.swing.Timer;
  * 2026-05-30 Issue #654 Improve help text for debug mode commands
  * 2026-06-27 Issue #853 Test script lines with leading * sometimes marked as invalid command
  * 2026-07-11 Issue #865 Test run ends RC=0 even when test script does not run to completion
+ * 2026-08-27 AFK   #916 Missing break statements in case construct
  *****************************************************/
 
 
@@ -247,7 +248,7 @@ import javax.swing.Timer;
 @SuppressWarnings("unchecked")
 public class sz390 implements Runnable {
     /****************************************************
-     * Global variables                   (last RPI)
+     * Global variables
      *****************************************************/
 
     /*
@@ -824,9 +825,9 @@ public class sz390 implements Runnable {
      * zsort global variables
      */
 
-    /*
-     * zsort statistics
-     */
+        //
+        // zsort statistics
+        //
 
     /** variable      */ String zsort_pfx;
     /** variable      */ String zsort_start = "";;
@@ -834,17 +835,17 @@ public class sz390 implements Runnable {
     /** variable      */ String zsort_elapsed = "";
     /** variable      */ int    zsort_id = 0;
 
-    /*
-     * mode mode flags - ISORT/FSORT resets them all
-     */
+        //
+        // mode mode flags - ISORT/FSORT resets them all
+        //
 
     /** variable      */ boolean zsort_abort     = false;
     /** variable      */ boolean zsort_put       = false; // zsort put ok
     /** variable      */ boolean zsort_get       = false; // zsort get ok
 
-    /*
-     * ISORT/FSORT input parms
-     */
+        //
+        // ISORT/FSORT input parms
+        //
 
     /** variable      */ int zsort_parm_addr = 0; // zsort parm addr in r1 > lrecl,mem,key info
     /** variable      */ int zsort_lrecl = 0;     // +0 4 = fixed record length or max var record
@@ -860,9 +861,9 @@ public class sz390 implements Runnable {
     /** variable      */ int zsort_tot_sorts  = 0;
     /** variable      */ int zsort_tot_passes = 0;
 
-    /*
-     * zsort work file variables
-     */
+        //
+        // zsort work file variables
+        //
 
     /** variable      */ String zsort_sortwk01_dsn = null;
     /** variable      */ String zsort_sortwk02_dsn = null;
@@ -876,9 +877,9 @@ public class sz390 implements Runnable {
     /** variable      */ int  zsort_tot_comp = 0;
     /** variable      */ int  zsort_tot_move = 0; // swaps, merges, isort get/put
 
-    /*
-     * zsort memory blk variables
-     */
+        //
+        // zsort memory blk variables
+        //
 
     /** variable      */ int zsort_fm_len   = 0; // mem alloc before rounding
     /** variable      */ int zsort_blk_len  = 0; // length of memory blk rounded down to even mult of lrecl
@@ -901,9 +902,9 @@ public class sz390 implements Runnable {
     /** variable      */ int  zsort_read_len;
     /** variable      */ int  zsort_write_len;
 
-    /*
-     * zsort merge variables used if records exceed memory
-     */
+        //
+        // zsort merge variables used if records exceed memory
+        //
 
     /** variable      */ boolean zsort_merge_wk01 = true; // merge from wk01 to wk02 or wk02 to wk01 on alternating passes
     /** variable      */ String zsort_wk_name;
@@ -1623,19 +1624,19 @@ public class sz390 implements Runnable {
 
         try {
             test_pattern = Pattern.compile(
-                    "([bB]['][0|1]+['])"                   // sdt
-                    + "|([cC][']([^']|(['][']))*['])"      // sdt ebcdic
-                    + "|([cC][\"]([^\"]|([\"][\"]))*[\"])" // sdt ascii
-                    + "|([fF]['][-]*[0-9]+['])"            // sdt
-                    + "|([hH]['][-]*[0-9]+['])"            // sdt
-                    + "|([xX]['][0-9a-fA-F]+['])"          // sdt
-                    + "|([0-9]+[rR][%?]*)"                 // reg addr
-                    + "|([0-9a-fA-F]+[\\.])"               // hex. addr
-                    + "|([0-9]+)"                          // dec
-                    + "|([a-zA-Z]+)"                       // cmd or opcode
-                    + "|([!][=])|([>][=])|([<][=])"        // set break compare operator RPI 650
-                    + "|([=*+-?%<>])"                      // single operators RPI 650
-                    );
+                "([bB]['][0|1]+['])"                   // sdt
+                + "|([cC][']([^']|(['][']))*['])"      // sdt ebcdic
+                + "|([cC][\"]([^\"]|([\"][\"]))*[\"])" // sdt ascii
+                + "|([fF]['][-]*[0-9]+['])"            // sdt
+                + "|([hH]['][-]*[0-9]+['])"            // sdt
+                + "|([xX]['][0-9a-fA-F]+['])"          // sdt
+                + "|([0-9]+[rR][%?]*)"                 // reg addr
+                + "|([0-9a-fA-F]+[\\.])"               // hex. addr
+                + "|([0-9]+)"                          // dec
+                + "|([a-zA-Z]+)"                       // cmd or opcode
+                + "|([!][=])|([>][=])|([<][=])"        // set break compare operator RPI 650
+                + "|([=*+-?%<>])"                      // single operators RPI 650
+                );
         } catch (Exception e) {
             abort_error(56,"test error in expression pattern - " + e.toString());
         }
@@ -2396,9 +2397,9 @@ public class sz390 implements Runnable {
         cde_ent[cur_cde] = load_code_ent;
         if (tz390.opt_trace) {
             tz390.put_trace(" CDE "
-                    + "LOAD="  + tz390.get_hex(load_code_load,8)
-                    + " LEN="  + tz390.get_hex(load_code_len,8)
-                    + " NAME=" + load_file_name); // RPI 1051
+                + "LOAD="  + tz390.get_hex(load_code_load,8)
+                + " LEN="  + tz390.get_hex(load_code_len,8)
+                + " NAME=" + load_file_name); // RPI 1051
         }
         if (cde_addr[cur_cde] == 0) {
             pz390.reg.putInt(pz390.r1,cded_len); // RPI 1063
@@ -2769,9 +2770,9 @@ public class sz390 implements Runnable {
      */
     private void trace_mem(String mem_type,int mem_addr,int mem_len,int mem_nxt) {
         tz390.put_trace("TRACE MEMORY " + mem_type
-                + " LOC=" + tz390.get_hex(mem_addr,8)
-                + " LEN=" + tz390.get_hex(mem_len,8)
-                + " NXT=" + tz390.get_hex(mem_nxt,8)
+            + " LOC=" + tz390.get_hex(mem_addr,8)
+            + " LEN=" + tz390.get_hex(mem_len,8)
+            + " NXT=" + tz390.get_hex(mem_nxt,8)
         );
     }
 
@@ -3257,17 +3258,16 @@ public class sz390 implements Runnable {
         if (pz390.psw_extended_amode_bit == pz390.psw_extended_amode64_on) { // RPI 1506
             psw1 = psw1 | 1; // amode64 on                                   // RPI 1506
             formatted_psw = tz390.get_hex(psw1,8)                            // RPI 1506
-                    + "80000000 00000000"                                    // RPI 1506
-                    + tz390.get_hex(pz390.psw_loc,8);                        // RPI 1506
+                + "80000000 00000000"                                        // RPI 1506
+                + tz390.get_hex(pz390.psw_loc,8);                            // RPI 1506
         } else {                                                             // RPI 1506
             if (pz390.psw_amode == pz390.psw_amode31) {
-                amode_and_addr = pz390.int_high_bit
-                        | pz390.psw_loc;
+                amode_and_addr = pz390.int_high_bit | pz390.psw_loc;
             } else {
                 amode_and_addr = pz390.psw_loc;
             }
             formatted_psw = tz390.get_hex(psw1,8) + " "                      // RPI 1506
-                    + tz390.get_hex(amode_and_addr,8);                       // RPI 1506
+                + tz390.get_hex(amode_and_addr,8);                           // RPI 1506
         }                                                                    // RPI 1506
         return formatted_psw;                                                // RPI 1506
     }
@@ -3314,9 +3314,9 @@ public class sz390 implements Runnable {
             psw2 |= 1 << 31;  // amode31 on                                  // RPI 2008
         }                                                                    // RPI 2008
         formatted_psw = tz390.get_hex(psw1,8) + " "                          // RPI 2008
-                + tz390.get_hex(psw2,8) + " "                                // RPI 2008
-                + tz390.get_hex(psw3,8) + " "                                // RPI 2008
-                + tz390.get_hex(psw4,8);                                     // RPI 2008
+            + tz390.get_hex(psw2,8) + " "                                    // RPI 2008
+            + tz390.get_hex(psw3,8) + " "                                    // RPI 2008
+            + tz390.get_hex(psw4,8);                                         // RPI 2008
         return formatted_psw;                                                // RPI 2008
     }                                                                        // RPI 2008
 
@@ -5545,6 +5545,7 @@ public class sz390 implements Runnable {
                 log_error(98,"undefined GUAM GUI Mouse command - " + guam_minor);
                 pz390.reg.putInt(pz390.r15,8);
             }
+            break; // #916
         case 6: // SOUND
             switch (guam_minor) {
             case 1: // PLAY,"wav_file"
@@ -9810,4 +9811,3 @@ public class sz390 implements Runnable {
      *  end of sz390 code
      */
 }
-
