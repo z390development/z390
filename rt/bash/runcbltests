@@ -48,6 +48,8 @@ export OUTFILE=
 bash/cblclg zcobol/tests/TESTSIX1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTSIX2 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTSRCH $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/TSRCHEND $1 $2 $3 $4 $5 $6 $7 $8 $9
+bash/cblclg zcobol/tests/TSRCHOP  $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTSUB1 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTSUB2 $1 $2 $3 $4 $5 $6 $7 $8 $9
 bash/cblclg zcobol/tests/TESTTRC1 $1 $2 $3 $4 $5 $6 $7 $8 $9 TRUNC
