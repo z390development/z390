@@ -573,7 +573,7 @@ public  class  az390 implements Runnable {
                       ((long)(-1) >>> 17),
                       ((long)(-1) >>>  9),
                       ((long)(-1) >>>  1),
-                    };
+        };
     /** variable      */
     long[] min_fh = { ((long)(-1) <<  7),
                       ((long)(-1) << 15),
@@ -583,7 +583,7 @@ public  class  az390 implements Runnable {
                       ((long)(-1) << 47),
                       ((long)(-1) << 55),
                       ((long)(-1) << 63),
-                    };
+        };
     /*
      ********************************************************
      * bal file global variables
@@ -775,7 +775,7 @@ public  class  az390 implements Runnable {
                           1,  // X
                           2,  // Y
                           1   // Z
-                        };
+        };
     /** variable      */
     int[] dc_type_align = { 4,  // A
                             0,  // B
@@ -791,7 +791,7 @@ public  class  az390 implements Runnable {
                             0,  // X
                             2,  // Y
                             0   // Z
-                          };
+        };
     /** variable      */
     char[] dc_type_delimiter = { '(',  // A
                                  '\'', // B
@@ -807,7 +807,7 @@ public  class  az390 implements Runnable {
                                  '\'', // X
                                  '(',  // Y
                                  '\''  // Z
-                               };
+        };
     /** variable      */
     String[] sym_attra_type = { "AR",   // Register - Access
                                 "CR",   // CR Register - Control
@@ -817,7 +817,7 @@ public  class  az390 implements Runnable {
                                 "GR",   // Register - General
                                 "GR32", // Register - General 32-bit
                                 "GR64"  // Register - General 64-bit
-                              };
+        };
     /** variable      */ byte bal_lab_attr = 0;
     /** variable      */ byte sym_attr_elt_def = 0; // null char
     /** variable      */ byte bal_lab_attr_elt = sym_attr_elt_def; // RPI 415 explicit length attr
@@ -920,7 +920,7 @@ public  class  az390 implements Runnable {
                          0,0,0,0,3,0,   // 4 )   prev close
                          5,5,3,5,3,5,   // 5 ?'  prev pfx oper L' U+/= RPI 313 RPI 991 pfx/pfx=3
                          3,3,7,6,3,6,   // 6 ~   prev terminator
-                       };
+        };
     /*
      ********************************************************
      *  action code routines:
@@ -1118,7 +1118,7 @@ public  class  az390 implements Runnable {
                               "CONTAINERERR)",    //32 - =F'110' RPI 1168
                               "TOKENERR)",        //33 - =F'112' RPI 1168
                               "CHANNELERR)",      //34 - =F'122' RPI 1168
-                            };
+        };
     /** variable      */
     String[] dfhresp_lit = { "=F'0'",           // 1 "NORMAL)"
                              "=F'1'",           // 2 "ERROR)"
@@ -1154,7 +1154,7 @@ public  class  az390 implements Runnable {
                              "=F'110'",         //32 "CONTAINERERR)" RPI 1168
                              "=F'112'",         //33 "TOKENERR)"     RPI 1168
                              "=F'122'",         //33 "CHANNELERR)",  RPI 1168
-                           };
+        };
     /*
      ********************************************************
      * EXEC CICS DFHVALUE(type) literal substitution
@@ -1186,7 +1186,7 @@ public  class  az390 implements Runnable {
                                "DELETABLE)",       //23 - =F'43'
                                "NOTDELETABLE)",    //24 - =F'44'
                                "VRRDS)",           //25 - =F'732'
-                             };
+        };
     /** variable      */
     String[] dfhvalue_lit = { "=F'1'",            // 1 "NOTAPPLIC)"
                               "=F'3'",            // 2 "VSAM)"
@@ -1213,7 +1213,7 @@ public  class  az390 implements Runnable {
                               "=F'43'",           //23 "DELETABLE)"
                               "=F'44'",           //24 "NOTDELETABLE)"
                               "=F'732'",          //25 "VRRDS)"
-                            };
+        };
     /*
      ********************************************************
      * end of global az390 class data and start of procs
@@ -1679,8 +1679,7 @@ public  class  az390 implements Runnable {
                     && (sect_change
                         || (az390_errors > 0 && az390_errors < prev_az390_errors) // RPI 632 repeat until 0 or no change
                         || cur_pass <= 1 // RPI 264, RPI 632 was <=2
-                       )
-                  ) {
+                       ) ) {
                 report_label_changes = true; // RPI 632
                 report_equ_changes   = true; // RPI 632
                 prev_az390_errors = az390_errors;
@@ -1868,8 +1867,7 @@ public  class  az390 implements Runnable {
                 log_error(94,"loctr section start change error - "
                         + sym_name[index]
                         + " old start=" + tz390.get_hex(sym_loc[cur_sid],6)
-                        + " new start=" + tz390.get_hex(loc_ctr,6)
-                        );
+                        + " new start=" + tz390.get_hex(loc_ctr,6) );
             }
             sym_loc[index] = loc_ctr;
             esd_loc[sym_esd[index]] = loc_ctr; // RPI 778
@@ -1880,8 +1878,7 @@ public  class  az390 implements Runnable {
                 log_error(95,"loctr section end   change error - "
                         + sym_name[index]
                         + " old end  =" + tz390.get_hex(sym_max_loc[cur_sid],6)
-                        + " new end  =" + tz390.get_hex(loc_ctr,6)
-                        );
+                        + " new end  =" + tz390.get_hex(loc_ctr,6) );
             }
             sym_max_loc[index] = loc_ctr;
             sym_len[index] = 0;
@@ -2054,8 +2051,7 @@ public  class  az390 implements Runnable {
                     if (tz390.op_trace_type[index]==130) {                             // #554
                         if (short_op == 1) { // short opcode                           // #554
                             my_operands="M1,RI2";                                      // #554
-                        }
-                        else { // full opcode                                          // #554
+                        } else { // full opcode                                        // #554
                             my_operands="RI2"; // mask implied by mnemonic             // #554
                         }
                     } else {                                                           // #554
@@ -2119,15 +2115,13 @@ public  class  az390 implements Runnable {
                         if (   tz390.op_name[index].equals("ESEA")
                             || tz390.op_name[index].equals("EPAIR")
                             || tz390.op_name[index].equals("ESAIR")
-                            || tz390.op_name[index].equals("SSAIR")
-                           ) {
+                            || tz390.op_name[index].equals("SSAIR") ) {
                             my_operands="R1";                                          // #500
                         } else if (tz390.op_name[index].equals("LPTEA")) {
                             my_operands="R1,R3,R2,M4";                                 // #500
                         } else if (   tz390.op_name[index].equals("PCC")
                                    || tz390.op_name[index].equals("PCKMO")
-                                   || tz390.op_name[index].equals("NNPA")              // #617
-                                  ) {
+                                   || tz390.op_name[index].equals("NNPA") ) {          // #617
                             my_operands="";                                            // #500
                         } else if (   tz390.op_name[index].equals("CU14")              // #573
                                    || tz390.op_name[index].equals("CU24")) {           // #573
@@ -2156,8 +2150,7 @@ public  class  az390 implements Runnable {
                         || tz390.op_trace_type[index]==169) {                          // #554 #602
                         if (short_op == 1) { // short opcode                           // #554
                             my_operands="M1,RI2";                                      // #554
-                        }
-                        else { // full opcode                                          // #554
+                        } else { // full opcode                                        // #554
                             my_operands="RI2"; // mask implied by mnemonic             // #554
                         }
                     } else if (   tz390.op_trace_type[index]==160                      // #573
@@ -2168,8 +2161,7 @@ public  class  az390 implements Runnable {
                     } else                                                             // #554
                         if(tz390.opt_optable_optb_nr >= ArchLevel.ARCH_ESA.getValue()) { // ESA and above// #554 #631 #656
                             my_operands="R1,RI2";                                      // #554
-                        }
-                        else { // ESA and above                                        // #554 #631 #656
+                        } else { // ESA and above                                      // #554 #631 #656
                             my_operands="R1,I2";                                       // #500
                         }
                     break;
@@ -2177,8 +2169,7 @@ public  class  az390 implements Runnable {
                     my_format="SS";                                                    // #500
                     if (tz390.op_name[index].equals("PKU")) {
                         my_operands="D1(B1),D2(L2,B2)";                                // #500
-                    }
-                    else if (   tz390.op_name[index].equals("MVCK")
+                    } else if (   tz390.op_name[index].equals("MVCK")
                              || tz390.op_name[index].equals("MVCP")
                              || tz390.op_name[index].equals("MVCS")) {
                         my_operands="D1(R1,B1),D2(B2),R3";                             // #500
@@ -2275,7 +2266,7 @@ public  class  az390 implements Runnable {
                             if (   tz390.op_name[index].substring(0,6).equals("LOCGHI") // #614
                                 || tz390.op_name[index].substring(0,6).equals("LOCHHI") // #614
                                 || tz390.op_name[index].substring(0,5).equals("LOCHI")  // #614
-                               ) {                                                     // #614
+                            ) {                                                        // #614
                                 my_operands="R1,I2";                                   // #614
                             }                                                          // #614
                         }                                                              // #614
@@ -2315,15 +2306,14 @@ public  class  az390 implements Runnable {
                     my_operands="R1,R3,R2,M4";                                         // #554
                     if (   tz390.op_trace_type[index]==300                             // #617
                         && tz390.op_name[index].equals("RDP")                          // #617
-                       ) {                                                             // #617
+                    ) {                                                                // #617
                         my_operands="R1,R3,R2<,M4>";                                   // #617
                     } else if (   tz390.op_trace_type[index]==301                      // #573 #612 #617
                                || tz390.op_trace_type[index]==303                      //      #612
                                || tz390.op_trace_type[index]==304                      //      #612
                                || tz390.op_trace_type[index]==305                      //      #612
                                || tz390.op_trace_type[index]==306                      //      #612
-                               || tz390.op_trace_type[index]==342                      //      #612
-                              ) {                                                      //      #612
+                               || tz390.op_trace_type[index]==342 ) {                  //      #612
                         my_operands="R1,M3,R2,M4";                                     // #573
                     }                                                                  // #573
                     break;
@@ -2348,8 +2338,7 @@ public  class  az390 implements Runnable {
                     }                                                                  // #561
                     if (short_op == 1) { // short opcode                               // #561
                         my_operands="M1,RI2";                                          // #561
-                    }
-                    else {                      // full opcode                         // #561
+                    } else {                    // full opcode                         // #561
                         my_operands="RI2";      // mask implied by mnemonic            // #561
                     }
                     break;
@@ -2400,8 +2389,7 @@ public  class  az390 implements Runnable {
                             my_format="RRF";                                           // #612
                             my_operands="R1,R2";                                       // #612
                         }                                                              // #612
-                    }                                                                  // #612
-                    else if (tz390.op_trace_type[index]==142) {                        // #612
+                    } else if (tz390.op_trace_type[index]==142) {                      // #612
                         if (tz390.op_name[index].equals("LOCR")) {                     // #612
                             my_format="RRF";                                           // #612
                             my_operands="R1,R2,M3";                                    // #612
@@ -2409,8 +2397,7 @@ public  class  az390 implements Runnable {
                             my_format="RRF";                                           // #612
                             my_operands="R1,R2";                                       // #612
                         }                                                              // #612
-                    }                                                                  // #612
-                    else if (tz390.op_trace_type[index]==144) {
+                    } else if (tz390.op_trace_type[index]==144) {
                         if (tz390.op_name[index].equals("CHLR")) {
                             my_format="RRE";                                           // #500
                             my_operands="R1,R2";                                       // #500
@@ -2418,8 +2405,7 @@ public  class  az390 implements Runnable {
                             my_format="RRF";                                           // #500
                             my_operands="R1,R2<,M3>";                                  // #500
                         }
-                    }
-                    else if (tz390.op_trace_type[index]==151) {                        // #612
+                    } else if (tz390.op_trace_type[index]==151) {                      // #612
                         if (tz390.op_name[index].equals("POPCNT")) {                   // #612
                             // Introduced with ZS5=Z11; changed in ZS9=Z15             // #616
                             if (tz390.opt_optable_optb_nr < ArchLevel.ARCH_Z15.getValue()) { // 15=ZS9/Z15   // #616 #631 #656
@@ -2441,8 +2427,7 @@ public  class  az390 implements Runnable {
                             my_format="RRF";                                           //      #616
                             my_operands="R1,R2";                                       //      #616
                         } else if (   tz390.op_name[index].length() >= 6               //      #614
-                                   && tz390.op_name[index].substring(0,6).equals("LOCFHR") //  #614
-                                  ) {                                                  //      #614
+                                   && tz390.op_name[index].substring(0,6).equals("LOCFHR") ) { // #614
                             my_format="RRF";                                           //      #614
                             my_operands="R1,R2";                                       //      #614
                         } else {                                                       // #612 #614
@@ -2450,8 +2435,7 @@ public  class  az390 implements Runnable {
                             my_operands="R1,R2,R3";                                    // #612 #614
                         }                                                              // #612 #614
                     } else if (   tz390.op_trace_type[index]==154                      // #612 #614
-                               || tz390.op_trace_type[index]==410                      // #612
-                              ) {
+                               || tz390.op_trace_type[index]==410 ) {                  // #612
                         my_format="RRF";                                               // #612
                         my_operands="R1,R2,R3";                                        // #612
                         if (tz390.op_name[index].equals("NOTR")) {                     //      #616
@@ -2582,8 +2566,7 @@ public  class  az390 implements Runnable {
                         }                                                              //      #612 #614
                     } else if (tz390.op_trace_type[index]==209) {                      //           #614
                         if (   tz390.op_name[index].equals("LOC")                      //      #612 #614
-                            || tz390.op_name[index].equals("STOC")                     //      #612 #614
-                           ) {                                                         //      #612 #614
+                            || tz390.op_name[index].equals("STOC") ) {                 //      #612 #614
                             my_operands="R1,D2(B2),M3";                                // #500 #612 #614
                         }                                                              //      #612 #614
                     }                                                                  //           #614
@@ -2696,8 +2679,7 @@ public  class  az390 implements Runnable {
                     my_format="RRF";                                                   // #500 #616
                     if (   my_mnemonic.equals("SELFHR")                                // #500 #616
                         || my_mnemonic.equals("SELGR")                                 //      #616
-                        || my_mnemonic.equals("SELR")                                  //      #616
-                       ) {                                                             //      #616
+                        || my_mnemonic.equals("SELR") ) {                              //      #616
                         my_operands="R1,R2,R3,M4";                                     // #500
                     } else {                                                           // #500 #616
                         my_operands="R1,R2,R3";                                        // #500 #616
@@ -2927,9 +2909,8 @@ public  class  az390 implements Runnable {
                 my_operands=(my_operands+my_spc).substring(0,operand_len);             // #500
                 entry=my_mnemonic+" "+my_format+" "+my_hexop+" "+my_operands;          // #500
             } // end of test on tz390.op_type[index] boundary value of 100             // #500
-            if (   tz390.op_type[index] == 0     // comment lines
-                || tz390.op_type[index] == 122   //   empty lines (not used)
-               ) {
+            if (   tz390.op_type[index] == 0        // comment lines
+                || tz390.op_type[index] == 122) {   // empty lines (not used)
                 report_entries[index] = " ";
             } else {
                 report_entries[index] = entry;
@@ -2984,12 +2965,10 @@ public  class  az390 implements Runnable {
         @Override                                                                  // #568
         public int compare(String str1, String str2) {                             // #568
             // special case: entries consisting of a single space sort first!      // #568
-            if (str1.charAt(0) == ' ')
-            {
+            if (str1.charAt(0) == ' ') {
                 return 1; // blank entry always smaller                            // #568
             }
-            if (str2.charAt(0) == ' ')
-            {
+            if (str2.charAt(0) == ' ') {
                 return -1; // blank entry always smaller                           // #568
             }
             for (int i=0; i<8; i++) {                                              // #568
@@ -2997,27 +2976,22 @@ public  class  az390 implements Runnable {
                 char c2 = str2.charAt(i);                                          // #568
                 // if c1 == c2 then we continue on to the next character           // #568
                 if (c1 != c2) {                                                    // #568
-                    if (c1 == ' ')
-                    {
+                    if (c1 == ' ') {
                         return -1; // Mnemonic 2 is longer                         // #568
                     }
-                    if (c2 == ' ')
-                    {
+                    if (c2 == ' ') {
                         return 1;  // Mnemonic 1 is longer                         // #568
                     }
                     if (c1 <= '9') {                                               // #568
                         if (c2 <= '9') {
                             return (c1-c2); // compare two digits                  // #568
-                        }
-                        else {                                                     // #568
+                        } else {                                                   // #568
                             return 1; // digit always larger                       // #568
                         }
-                    }                                                              // #568
-                    else { // c1 is not numeric                                    // #568
+                    } else { // c1 is not numeric                                  // #568
                         if (c2 <= '9') {
                             return -1; // digit always larger                      // #568
-                        }
-                        else {                                                     // #568
+                        } else {                                                   // #568
                             return (c1-c2); // compare two alphabetic chars        // #568
                         }
                     }                                                              // #568
@@ -3436,7 +3410,7 @@ public  class  az390 implements Runnable {
                     || bal_op.equals("CU14")    // rpi 2202
                     || bal_op.equals("IPTE")    // rpi 2202
                     || bal_op.equals("SSKE")    // rpi 2202
-                   ) {
+                ) {
                     if (!bal_abort && exp_next_char(',')) { //RPI 577
                         skip_comma();
                         get_hex_reg(); // RPI 454
@@ -3653,7 +3627,7 @@ public  class  az390 implements Runnable {
             if (   tz390.op_code[bal_op_index].substring(0,4).equals("EC42") // EC42 LOCHI  R1,I2,M3
                 || tz390.op_code[bal_op_index].substring(0,4).equals("EC46") // EC46 LOCGHI R1,I2,M3
                 || tz390.op_code[bal_op_index].substring(0,4).equals("EC4E") // EC42 LOCHHI R1,I2,M3
-               ) {
+            ) {
                 get_hex_int(16);
                 if (tz390.op_code[bal_op_index].length() == 5) {
                     get_hex_op(5,1); // M3 for extended mnemonic like LOCHIE R1,I2
@@ -4038,7 +4012,7 @@ public  class  az390 implements Runnable {
                 } else {
                     if (   tz390.op_code[bal_op_index].substring(0,4).equals("B966") // NOTGR - NORGK r1,r2,r2
                         || tz390.op_code[bal_op_index].substring(0,4).equals("B976") // NOTR  = MORK  r1,r2,r2
-                       ) {
+                    ) {
                         // set r3 = r2 for NOT
                         obj_code = obj_code.substring(0,7) // oooo102
                                 + obj_code.substring(6,7); // set r3=r2
@@ -4068,7 +4042,7 @@ public  class  az390 implements Runnable {
             get_hex_reg();      // r2 or r3 if IDTE
             if (   tz390.op_code[bal_op_index].substring(0,4).equals("B98E") // IDTE
                 || tz390.op_code[bal_op_index].substring(0,4).equals("B98F") // CRDTE
-               ) {
+            ) {
                 skip_comma();
                 get_hex_reg(); // r2 third parm
                 if ((tz390.op_code[bal_op_index].length() == 5)) {
@@ -4094,7 +4068,7 @@ public  class  az390 implements Runnable {
                     || tz390.op_code[bal_op_index].substring(0,4).equals("B961") // CLGRT
                     || tz390.op_code[bal_op_index].substring(0,4).equals("B972") // CRT
                     || tz390.op_code[bal_op_index].substring(0,4).equals("B973") // CLRT
-                   ) {
+                ) {
                     obj_code = obj_code.substring(0,4) // oooo
                             + obj_code.substring(7,8)  // m3
                             + "0"                      // 0
@@ -4516,7 +4490,7 @@ public  class  az390 implements Runnable {
                 || tz390.op_code[bal_op_index].substring(0,4).equals("EBF2") // EBF2 LOCC   R1,D2(B2),M3
                 || tz390.op_code[bal_op_index].substring(0,4).equals("EBE2") // EBE2 LOGG   R1,D2(B2),M3
                 || tz390.op_code[bal_op_index].substring(0,4).equals("EBE0") // EBE0 LOCFH  R1,D2(B2),M3
-               ) {
+            ) {
                 if (   tz390.op_code[bal_op_index].length() == 5
                     && tz390.op_code[bal_op_index].substring(4,5) != "F") {
                     get_hex_op(5,1); // M3 for extended mnemonic like STOCE R1,D2(B2)
@@ -4672,7 +4646,7 @@ public  class  az390 implements Runnable {
             // MR, DR require operand1 even, all others dont care RPI 1209O
             if (   obj_code.substring(0,2).equals("1C") // RPI 1209O
                 || obj_code.substring(0,2).equals("1D") // RPI 1209O
-               ) {                                      // RPI 1209O
+            ) {                                         // RPI 1209O
                 get_hex_reg_even();                     // RPI 1209O
             } else {                                    // RPI 1209O
                 get_hex_reg();                          // RPI 1209O
@@ -4901,10 +4875,9 @@ public  class  az390 implements Runnable {
                         get_hex_zero(1);   // M4
                     }
                 }
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E73F") // E73F VRSb VSTL V1,R3,D2(B2) RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E737") // E737 VRSb VLL  V1,R3,D2(B2) RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E722") // E722 VRSc VLVG V1,R3,D2(B2),M4 RPI 2202
-                      ) {
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E73F")     // E73F VRSb VSTL V1,R3,D2(B2) RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E737")     // E737 VRSb VLL  V1,R3,D2(B2) RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E722") ) { // E722 VRSc VLVG V1,R3,D2(B2),M4 RPI 2202
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_reg();          // R3
@@ -4920,10 +4893,8 @@ public  class  az390 implements Runnable {
                         get_hex_zero(1);   // M4
                     }
                 }
-
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E73E") // E73E VRSa VSTM V1,V3,D2(B2),,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E736") // E736 VRSa VLM  V1,V3,D2(B2),,M4 RPI 2202
-                      ) {
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E73E")     // E73E VRSa VSTM V1,V3,D2(B2),,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E736") ) { // E736 VRSa VLM  V1,V3,D2(B2),,M4 RPI 2202
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);       // V3 in rxb v2 pos RPI 2216
@@ -4939,11 +4910,10 @@ public  class  az390 implements Runnable {
                         get_hex_zero(1);   // M4
                     }
                 }
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E730") // E730 VRSa VERL  V1,V3,D2(B2),M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E733") // E733 VRSa VERLL V1,V3,D2(B2),M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E738") // E738 VRSa VESRL V1,V3,D2(B2),M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E73A") // E73A VRSa VESRA V1,V3,D2(B2),M4 RPI 2202
-                      ) {
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E730")     // E730 VRSa VERL  V1,V3,D2(B2),M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E733")     // E733 VRSa VERLL V1,V3,D2(B2),M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E738")     // E738 VRSa VESRL V1,V3,D2(B2),M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E73A") ) { // E73A VRSa VESRA V1,V3,D2(B2),M4 RPI 2202
                 get_hex_vreg(1);   // V1
                 skip_comma();
                 get_hex_vreg(2);    // V3 in rxb v2 pos RPI 2216
@@ -4989,7 +4959,7 @@ public  class  az390 implements Runnable {
             if (   tz390.op_code[bal_op_index].substring(0,4).equals("E772") // E772 VRId VERIM V1,V2,V3,I4,M5 RPI 2202
                 || tz390.op_code[bal_op_index].substring(0,4).equals("E786") // E786 VRId VSLD  V1,V2,V3,I4 RPI 2202
                 || tz390.op_code[bal_op_index].substring(0,4).equals("E787") // E787 VRId VSRD  V1,V2,V3,I4 RPI 2202
-               ) {
+            ) {
                 skip_comma();
                 get_hex_vreg(2);      // V2
                 skip_comma();
@@ -5016,9 +4986,8 @@ public  class  az390 implements Runnable {
                 skip_comma();
                 get_hex_byte();      // I4
                 get_hex_zero(1);
-            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E658") // E658 VRIi VCVD V1,R2,I3,M4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E65A") // E65A VRIi VCVDG
-                       ) {
+            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E658")     // E658 VRIi VCVD V1,R2,I3,M4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E65A") ) { // E65A VRIi VCVDG
                 skip_comma();
                 get_hex_reg();        // r2
                 get_hex_zero(2);      // 00
@@ -5030,9 +4999,8 @@ public  class  az390 implements Runnable {
                 obj_code = obj_code.substring(0,6) // oo1200
                         + obj_code.substring(8,9)  // M3
                         + obj_code.substring(6,8); // I3
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E659") // E659 VRIg VSRP V1,V2,I3,I4,M5
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E65B") // E65B VRIg VPSOP
-                      ) {
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E659")     // E659 VRIg VSRP V1,V2,I3,I4,M5
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E65B") ) { // E65B VRIg VPSOP
                 skip_comma();
                 get_hex_vreg(2);       // V2
                 skip_comma();
@@ -5072,12 +5040,11 @@ public  class  az390 implements Runnable {
                 obj_code = obj_code.substring(0,7) // oo12333 RPI 2225 reverse m4 and m5
                         + obj_code.substring(8,9)  // M5
                         + obj_code.substring(7,8); // M4
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E740") // E740 VRIa VLEIB V1,I2,M3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E745") // E745 VRIa VREPI V1,I2,M3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E741") // E741 VRIa VLEIH V1,I2,M3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E742") // E742 VRIa VLEIG V1,I2,M3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E743") // E743 VRIa VLEIF V1,I2,M3 RPI 2202
-                      ) {
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E740")     // E740 VRIa VLEIB V1,I2,M3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E745")     // E745 VRIa VREPI V1,I2,M3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E741")     // E741 VRIa VLEIH V1,I2,M3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E742")     // E742 VRIa VLEIG V1,I2,M3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E743") ) { // E743 VRIa VLEIF V1,I2,M3 RPI 2202
                 get_hex_zero(1);   //  0
                 skip_comma();
                 get_hex_int(16);      // I2
@@ -5112,15 +5079,13 @@ public  class  az390 implements Runnable {
                     skip_comma();
                     get_hex_reg();      // M4
                 }
-
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E671") // E671 VRIf VAP    v1,v2,v3,i4,m5
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E673") // E673 VRIf VSP
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E678") // E678 VRIf VMP
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E679") // E679 VRIf VMSP
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E67A") // E67A VRIf VDP
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E67B") // E67B VRIf VRP
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E67E") // E67E VRIf VSDP
-                      ) {
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E671")     // E671 VRIf VAP    v1,v2,v3,i4,m5
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E673")     // E673 VRIf VSP
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E678")     // E678 VRIf VMP
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E679")     // E679 VRIf VMSP
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E67A")     // E67A VRIf VDP
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E67B")     // E67B VRIf VRP
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E67E") ) { // E67E VRIf VSDP
                 skip_comma();
                 get_hex_vreg(2);       // V2
                 skip_comma();
@@ -5154,7 +5119,7 @@ public  class  az390 implements Runnable {
             get_hex_op(1,2);   //  oo
             if (   tz390.op_code[bal_op_index].substring(0,4).equals("E650") // E650 VRRi VCVB R1,V2,M3,M4
                 || tz390.op_code[bal_op_index].substring(0,4).equals("E652") // E652 VRRi VCVBG R1,V2,M3,M4
-               ) {
+            ) {
                 get_hex_reg();        // R1
                 skip_comma();
                 get_hex_vreg(2);       // V2
@@ -5181,11 +5146,10 @@ public  class  az390 implements Runnable {
                 skip_comma();
                 get_hex_reg();        // M3
                 get_hex_zero(2);
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E750") // E750 VRRa VPOPCT V1,V2,M3
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E752") // E752 VRRa VCTZ V1,V2,M3
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E753") // E752 VRRa VCLZ V1,V2,M3
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E75F") // E75F VRRa VSEG V1,V2,M3
-                      ) {
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E750")     // E750 VRRa VPOPCT V1,V2,M3
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E752")     // E752 VRRa VCTZ V1,V2,M3
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E753")     // E752 VRRa VCLZ V1,V2,M3
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E75F") ) { // E75F VRRa VSEG V1,V2,M3
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);        // V2
@@ -5196,37 +5160,36 @@ public  class  az390 implements Runnable {
                 } else {
                     get_hex_op(5,1);   //  M3
                 }
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E760") // E760 VRRc VMRL V1,V2,V3,M4
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E761") // E761 VRRc VMRH V1,V2,V3,M4
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E764") // E764 VRRc VSUM V1,V2,V3,M4
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E765") // E765 VRRc VSUMG V1,V2,V3,M4
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E767") // E767 VRRc VSUMQ V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E770") // E770 VRRc VESLV V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E773") // E773 VRRc VERLLV V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E778") // E778 VRRc VERSRLV V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77A") // E77A VRRc VERSRAV V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E784") // E784 VRRc VPDI    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E785") // E785 VRRc VBPERM  V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E794") // E794 VRRc VPK    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A1") // E7A1 VRRc VMLH   V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A2") // E7A2 VRRc VML    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A3") // E7A3 VRRc VMH    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A4") // E7A4 VRRc VMLE   V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A5") // E7A5 VRRc VMLO   V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A6") // E7A6 VRRc VME    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A7") // E7A7 VRRc VMO    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7B4") // E7B4 VRRc VGFM   V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F0") // E7F0 VRRc VFAVGL V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F1") // E7F1 VRRc VFACC  V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F2") // E7F2 VRRc VFAVG  V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F3") // E7F3 VRRc VFA    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F5") // E7F5 VRRc VFSCBI V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F7") // E7F7 VRRc VFS    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FC") // E7FC VRRc VMNL   V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FD") // E7FD VRRc VMXL   V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FE") // E7FE VRRc VMN    V1,V2,V3,M4 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FF") // E7FF VRRc VMX    V1,V2,V3,M4 RPI 2202
-                      ) {
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E760")     // E760 VRRc VMRL V1,V2,V3,M4
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E761")     // E761 VRRc VMRH V1,V2,V3,M4
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E764")     // E764 VRRc VSUM V1,V2,V3,M4
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E765")     // E765 VRRc VSUMG V1,V2,V3,M4
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E767")     // E767 VRRc VSUMQ V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E770")     // E770 VRRc VESLV V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E773")     // E773 VRRc VERLLV V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E778")     // E778 VRRc VERSRLV V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77A")     // E77A VRRc VERSRAV V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E784")     // E784 VRRc VPDI    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E785")     // E785 VRRc VBPERM  V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E794")     // E794 VRRc VPK    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A1")     // E7A1 VRRc VMLH   V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A2")     // E7A2 VRRc VML    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A3")     // E7A3 VRRc VMH    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A4")     // E7A4 VRRc VMLE   V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A5")     // E7A5 VRRc VMLO   V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A6")     // E7A6 VRRc VME    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7A7")     // E7A7 VRRc VMO    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7B4")     // E7B4 VRRc VGFM   V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F0")     // E7F0 VRRc VFAVGL V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F1")     // E7F1 VRRc VFACC  V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F2")     // E7F2 VRRc VFAVG  V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F3")     // E7F3 VRRc VFA    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F5")     // E7F5 VRRc VFSCBI V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7F7")     // E7F7 VRRc VFS    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FC")     // E7FC VRRc VMNL   V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FD")     // E7FD VRRc VMXL   V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FE")     // E7FE VRRc VMN    V1,V2,V3,M4 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7FF") ) { // E7FF VRRc VMX    V1,V2,V3,M4 RPI 2202
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);        // V2
@@ -5243,11 +5206,10 @@ public  class  az390 implements Runnable {
                         get_hex_zero(1);
                     }
                 }
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E7E2") // E7E2 VRRc VFS V1,V2,V3,M4,M5
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7E3") // E7E3 VRRc VFA V1,V2,V3,M4,M5
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7E5") // E7E5 VRRc VFD V1,V2,V3,M4,M5
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7E7") // E7E7 VRRc VFM V1,V2,V3,M4,M5
-                      ) {
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E7E2")     // E7E2 VRRc VFS V1,V2,V3,M4,M5
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7E3")     // E7E3 VRRc VFA V1,V2,V3,M4,M5
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7E5")     // E7E5 VRRc VFD V1,V2,V3,M4,M5
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7E7") ) { // E7E7 VRRc VFM V1,V2,V3,M4,M5
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);        // V2
@@ -5278,12 +5240,11 @@ public  class  az390 implements Runnable {
                 obj_code = obj_code.substring(0,7) // oo12300
                         + obj_code.substring(8,9)  // M5
                         + obj_code.substring(7,8); // M4
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E7E8") // E7E8 VRRc VFCE  V1,V2,V3,M4,M5,M6
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EA") // E7E8 VRRc VFCHE V1,V2,V3,M4,M5,M6
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EB") // E7EB VRRc VFCH  V1,V2,V3,M4,M5,M6
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EE") // E7EE VRRC VFMIN V1,V2,V3,M4,M5,M6
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EF") // E7EF VRRc VFMAX V1,V2,V3,M4,M5,M6
-                      ) {
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E7E8")     // E7E8 VRRc VFCE  V1,V2,V3,M4,M5,M6
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EA")     // E7E8 VRRc VFCHE V1,V2,V3,M4,M5,M6
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EB")     // E7EB VRRc VFCH  V1,V2,V3,M4,M5,M6
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EE")     // E7EE VRRC VFMIN V1,V2,V3,M4,M5,M6
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E7EF") ) { // E7EF VRRc VFMAX V1,V2,V3,M4,M5,M6
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);        // V2
@@ -5325,23 +5286,22 @@ public  class  az390 implements Runnable {
                         + obj_code.substring(8,9)  // m6
                         + obj_code.substring(7,8)  // m5
                         + obj_code.substring(6,7); // m4
-            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E762") // E762 VRRf VLVGP V1,R2,R3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E766") // E766 VRRc VCKSM V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E768") // E768 VRRc VN V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E769") // E769 VRRc VNC V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76A") // E76A VRRc VO V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76B") // E76B VRRc VNO V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76C") // E76C VRRc VNX V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76D") // E76D VRRc VX V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76E") // E76E VRRc VNN V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76F") // E76F VRRc VOC V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E774") // E774 VRRc VSL V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E775") // E775 VRRc VSLB V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77C") // E77C VRRc VSRL V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77D") // E77D VRRc VSRLB V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77E") // E77E VRRc VSRA V1,V2,V3 RPI 2202
-                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77F") // E77F VRRc VSRAB V1,V2,V3 RPI 2202
-                      ) {
+            } else if (   tz390.op_code[bal_op_index].substring(0,4).equals("E762")     // E762 VRRf VLVGP V1,R2,R3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E766")     // E766 VRRc VCKSM V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E768")     // E768 VRRc VN V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E769")     // E769 VRRc VNC V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76A")     // E76A VRRc VO V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76B")     // E76B VRRc VNO V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76C")     // E76C VRRc VNX V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76D")     // E76D VRRc VX V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76E")     // E76E VRRc VNN V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E76F")     // E76F VRRc VOC V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E774")     // E774 VRRc VSL V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E775")     // E775 VRRc VSLB V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77C")     // E77C VRRc VSRL V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77D")     // E77D VRRc VSRLB V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77E")     // E77E VRRc VSRA V1,V2,V3 RPI 2202
+                       || tz390.op_code[bal_op_index].substring(0,4).equals("E77F") ) { // E77F VRRc VSRAB V1,V2,V3 RPI 2202
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);        // V2
@@ -5391,27 +5351,26 @@ public  class  az390 implements Runnable {
                         + obj_code.substring(8,9)  // m5
                         + obj_code.substring(7,8)  // m4
                         + obj_code.substring(6,7); // m3
-            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E7C0") // E7C0 VRRa VCLFP/VCLGD V1,V2,M3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C1") // E7C1 VRRa VCDLG V1,V2,M3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C2") // E7C2 VRRa VCGD  V1,V2,M3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C3") // E7C3 VRRa VCDG  V1,V2,M3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C4") // E7C4 VRRa VFLL  V1,V2,M3,M4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C5") // E7C5 VRRa VFLR  V1,V2,M3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C7") // E7C7 VRRa VFI   V1,V2,M3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CA") // E7CA VRRa WFK   V1,V2,M3,M4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CB") // E7CB VRRa WFC   V1,V2,M3,M4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CC") // E7CC VRRa VFPSO V1,V2,M3,M4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CE") // E7CE VRRa VFSQ   V1,V2,M3,M4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D4") // E7D4 VRRa VUPLL  V1,V2,M3
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D5") // E7D5 VRRa VUPLH  V1,V2,M3
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D6") // E7D6 VRRa VUPL   V1,V2,M3
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D7") // E7D7 VRRa VUPH   V1,V2,M3
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D8") // E7D8 VRRa VTM   V1,V2
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D9") // E7D9 VRRa VECL  V1,V2,M3
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7DB") // E7DB VRRa VEC   V1,V2,M3
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7DE") // E7DE VRRa VLC   V1,V2,M3
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7DF") // E7DF VRRa VLP   V1,V2,M3
-                       ) {
+            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E7C0")     // E7C0 VRRa VCLFP/VCLGD V1,V2,M3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C1")     // E7C1 VRRa VCDLG V1,V2,M3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C2")     // E7C2 VRRa VCGD  V1,V2,M3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C3")     // E7C3 VRRa VCDG  V1,V2,M3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C4")     // E7C4 VRRa VFLL  V1,V2,M3,M4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C5")     // E7C5 VRRa VFLR  V1,V2,M3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C7")     // E7C7 VRRa VFI   V1,V2,M3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CA")     // E7CA VRRa WFK   V1,V2,M3,M4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CB")     // E7CB VRRa WFC   V1,V2,M3,M4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CC")     // E7CC VRRa VFPSO V1,V2,M3,M4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7CE")     // E7CE VRRa VFSQ   V1,V2,M3,M4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D4")     // E7D4 VRRa VUPLL  V1,V2,M3
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D5")     // E7D5 VRRa VUPLH  V1,V2,M3
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D6")     // E7D6 VRRa VUPL   V1,V2,M3
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D7")     // E7D7 VRRa VUPH   V1,V2,M3
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D8")     // E7D8 VRRa VTM   V1,V2
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7D9")     // E7D9 VRRa VECL  V1,V2,M3
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7DB")     // E7DB VRRa VEC   V1,V2,M3
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7DE")     // E7DE VRRa VLC   V1,V2,M3
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7DF") ) { // E7DF VRRa VLP   V1,V2,M3
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);        // V2
@@ -5433,8 +5392,8 @@ public  class  az390 implements Runnable {
                         || tz390.op_code[bal_op_index].substring(0,4).equals("E7C2")
                         || tz390.op_code[bal_op_index].substring(0,4).equals("E7C3")
                         || tz390.op_code[bal_op_index].substring(0,4).equals("E7C5")
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C7")
-                       ) { // #230 OR option with M4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7C7") ) {
+                        // #230 OR option with M4
                         if (!bal_abort && exp_next_char(',')) {
                             skip_comma();
                             get_hex_reg();   // M4
@@ -5466,15 +5425,14 @@ public  class  az390 implements Runnable {
                         + obj_code.substring(8,9)  // m5
                         + obj_code.substring(7,8)  // m4
                         + obj_code.substring(6,7); // m3
-            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E780") // E780 VRRb VFEE  V1,V2,V3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E781") // E781 VRRb VFENE V1,V2,V3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E782") // E782 VRRb VFAE  V1,V2,V3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E795") // E795 VRRb VPKLS V1,V2,V3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E797") // E797 VRRb VPKS  V1,V2,V3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7F8") // E7F8 VRRb VCEQ  V1,V2,V3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7F9") // E7F9 VRRb VCHL  V1,V2,V3,M4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7FB") // E7FB VRRb VCH  V1,V2,V3,M4,M5
-                       ) {
+            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E780")     // E780 VRRb VFEE  V1,V2,V3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E781")     // E781 VRRb VFENE V1,V2,V3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E782")     // E782 VRRb VFAE  V1,V2,V3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E795")     // E795 VRRb VPKLS V1,V2,V3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E797")     // E797 VRRb VPKS  V1,V2,V3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7F8")     // E7F8 VRRb VCEQ  V1,V2,V3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7F9")     // E7F9 VRRb VCHL  V1,V2,V3,M4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7FB") ) { // E7FB VRRb VCH  V1,V2,V3,M4,M5
                 get_hex_vreg(1);        // V1
                 skip_comma();
                 get_hex_vreg(2);        // V2
@@ -5514,28 +5472,27 @@ public  class  az390 implements Runnable {
                 obj_code = obj_code.substring(0,6) // op1+v1,v2,v3,0
                         + obj_code.substring(8,9)  // m5
                         + obj_code.substring(5,7); // 0,m4
-            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E78A") // E78A VRRd VSTRC V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78B") // E78B VRRd VSTRS V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78C") // E78C VRRe VPERM V1,V2,V3,V4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78D") // E78D VRRe VSEL  V1,V2,V3,V4
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78E") // E78E VRRe VFMS  V1,V2,V3,V4,M5,M6 RPI 2225
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78F") // E78F VRRe VFMA  V1,V2,V3,V4,M5,M6 RPI 2225
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E79E") // E79E VRRb VFNMS V1,V2,V3,V4,M5,M6 RPI 2225
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E79F") // E79F VRRb VFNMA V1,V2,V3,V4,M5,M6 RPI 2225
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7A9") // E7A9 VRRd VMALH V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AA") // E7AA VRRd VMAL  V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AB") // E7AB VRRd VMAH  V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AC") // E7AC VRRd VMALE V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AD") // E7AD VRRd VMALO V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AE") // E7AE VRRd VMAE  V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AF") // E7AF VRRe VMAO  V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7B8") // E7B8 VRRd VMSL  V1,V2,V3,V4,M5,M6
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7B9") // E7B9 VRRd VACCC V1,V2,V3,V4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BB") // E7BB VRRd VAC   V1,V2,V3,V4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BC") // E7BC VRRd VGFMA V1,V2,V3,V4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BD") // E7BD VRRd VSBCBI V1,V2,V3,V4,M5
-                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BF") // E7BF VRRd VSBI   V1,V2,V3,V4,M5
-                       ) {
+            } else  if (   tz390.op_code[bal_op_index].substring(0,4).equals("E78A")     // E78A VRRd VSTRC V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78B")     // E78B VRRd VSTRS V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78C")     // E78C VRRe VPERM V1,V2,V3,V4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78D")     // E78D VRRe VSEL  V1,V2,V3,V4
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78E")     // E78E VRRe VFMS  V1,V2,V3,V4,M5,M6 RPI 2225
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E78F")     // E78F VRRe VFMA  V1,V2,V3,V4,M5,M6 RPI 2225
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E79E")     // E79E VRRb VFNMS V1,V2,V3,V4,M5,M6 RPI 2225
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E79F")     // E79F VRRb VFNMA V1,V2,V3,V4,M5,M6 RPI 2225
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7A9")     // E7A9 VRRd VMALH V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AA")     // E7AA VRRd VMAL  V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AB")     // E7AB VRRd VMAH  V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AC")     // E7AC VRRd VMALE V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AD")     // E7AD VRRd VMALO V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AE")     // E7AE VRRd VMAE  V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7AF")     // E7AF VRRe VMAO  V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7B8")     // E7B8 VRRd VMSL  V1,V2,V3,V4,M5,M6
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7B9")     // E7B9 VRRd VACCC V1,V2,V3,V4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BB")     // E7BB VRRd VAC   V1,V2,V3,V4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BC")     // E7BC VRRd VGFMA V1,V2,V3,V4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BD")     // E7BD VRRd VSBCBI V1,V2,V3,V4,M5
+                        || tz390.op_code[bal_op_index].substring(0,4).equals("E7BF") ) { // E7BF VRRd VSBI   V1,V2,V3,V4,M5
                 // reformat OO,V1,V2,V3,V4,M5 to oo,v1,v2,v3,m5,m6,0,v4,rxb,oo
                 get_hex_vreg(1);     // V1
                 skip_comma();
@@ -5569,11 +5526,10 @@ public  class  az390 implements Runnable {
                         get_hex_zero(1);   // M6
                     }
                 }
-                if (   tz390.op_code[bal_op_index].substring(0,4).equals("E78E") // E78E VRRe VFMS  V1,V2,V3,V4,M5,M6 RPI 2225
-                    || tz390.op_code[bal_op_index].substring(0,4).equals("E78F") // E78F VRRe VFMA  V1,V2,V3,V4,M5,M6
-                    || tz390.op_code[bal_op_index].substring(0,4).equals("E79E") // E79E VRRb VFNMS V1,V2,V3,V4,M5,M6
-                    || tz390.op_code[bal_op_index].substring(0,4).equals("E79F") // E79F VRRb VFNMA V1,V2,V3,V4,M5,M6
-                   ) {
+                if (   tz390.op_code[bal_op_index].substring(0,4).equals("E78E")     // E78E VRRe VFMS  V1,V2,V3,V4,M5,M6 RPI 2225
+                    || tz390.op_code[bal_op_index].substring(0,4).equals("E78F")     // E78F VRRe VFMA  V1,V2,V3,V4,M5,M6
+                    || tz390.op_code[bal_op_index].substring(0,4).equals("E79E")     // E79E VRRb VFNMS V1,V2,V3,V4,M5,M6
+                    || tz390.op_code[bal_op_index].substring(0,4).equals("E79F") ) { // E79F VRRb VFNMA V1,V2,V3,V4,M5,M6
                     // map oo123456 to oo1235064xoo
                     obj_code = obj_code.substring(0,5) // op1+v1,v2,v3
                             + obj_code.substring(7,8)  // m6 rpi 2225
@@ -6840,7 +6796,7 @@ public  class  az390 implements Runnable {
                     && sym_def[cur_sid] <= sym_def_ref) {
                 if (sym_type[cur_sid] != sym_ext
                         && sym_type[cur_sid] != sym_wxt
-                        ) {
+                ) {
                     cur_esd = add_esd(cur_sid,sect_type);
                     if (sect_type == sym_dst) {  // RPI 44
                         loc_ctr = 0;  // reset for first time dsect
@@ -7263,7 +7219,7 @@ public  class  az390 implements Runnable {
             if (!(dc_index < dc_field.length())
                     || dc_field.charAt(dc_index) <= ' '  //RPI181
                     || dc_field.charAt(dc_index) == dc_type_delimiter[dc_type_index]
-                    ) {
+            ) {
                 if (dc_bit_len) {
                     flush_dc_bits(); // RPI 417
                 }
@@ -7273,8 +7229,7 @@ public  class  az390 implements Runnable {
                        && dc_field.charAt(dc_index) != '\'') {
                 log_error(54,"invalid dc field terminator =" + dc_field
                         + " len=" + dc_field.length()
-                        + " char=" + dc_field.charAt(dc_index)
-                        );
+                        + " char=" + dc_field.charAt(dc_index) );
             }
         }
         // #325 end of code
@@ -7524,8 +7479,9 @@ public  class  az390 implements Runnable {
                 break;
             case 'U':
                 if (exp_token.length() == 2
-                && (exp_token.charAt(1) == '-'
-                || exp_token.charAt(1) == '+')) {
+                    && (exp_token.charAt(1) == '-'
+                    || exp_token.charAt(1) == '+')
+                ) {
                     proc_exp_op(loc_ctr_offset); // #659
                 } else {
                     proc_exp_sym();
@@ -8302,8 +8258,7 @@ public  class  az390 implements Runnable {
      * @param msg   message text
      */
     private void log_error(int error,String msg) {
-        if (bal_abort)
-        {
+        if (bal_abort) {
             return; // only 1 error per line
         }
         bal_abort = true;
@@ -8899,8 +8854,7 @@ public  class  az390 implements Runnable {
             put_obj_line(temp_obj_line);
             cur_text_len = 0;
         }
-        if (bal_eof || bal_abort)
-        {
+        if (bal_eof || bal_abort) {
             return;  // rpi 851
         }
         if (cur_text_len == 0) {
@@ -9231,7 +9185,7 @@ public  class  az390 implements Runnable {
                        + " REG=" + tz390.get_hex(use_reg[index],1)
                        + " OFF=" + tz390.get_hex(use_reg_loc[index],5)
                        + " LAB=" + use_lab[index]
-                    );
+            );
             index++;
         }
         if (none) {
@@ -9971,7 +9925,7 @@ public  class  az390 implements Runnable {
                     && use_lab[index].equals(exp_use_lab))  // RPI 274
                             || (exp_use_lab == null  // RPI 609
                             && use_lab[index] == ""))
-                    ) {
+            ) {
                 test_offset = exp_val - use_base_loc[index];
                 if (get_bdddhh) {
                     test_len = max_hh;
@@ -9994,8 +9948,7 @@ public  class  az390 implements Runnable {
                     }
                 } else if (get_bdddhh
                         && test_offset >= cur_use_neg_off  // RPI 982
-                        && test_offset < 0
-                        ) {
+                        && test_offset < 0 ) {
                     if (test_offset > cur_use_off
                             || use_reg[index] > cur_use_reg) { // RPI 982
                         cur_use_neg_reg = use_reg[index];
@@ -12248,7 +12201,7 @@ public  class  az390 implements Runnable {
             if (lit_len[cur_lit]*lit_dup[cur_lit] == lit_len[cur_lit]*lit_dup[cur_lit]/size*size // RPI 1200 use dup for aligning
                     && lit_gen[cur_lit] == 0
                     && lit_pool[cur_lit] == cur_lit_pool
-                    ) {
+            ) {
                 lit_gen[cur_lit] = 1;
                 lit_esd[cur_lit] = esd_base[cur_esd]; // RPI 457
                 if (size == 1 && loc_ctr != (loc_ctr/2*2)) {
@@ -12831,7 +12784,7 @@ public  class  az390 implements Runnable {
             fp_round_bit = 0;
             while ((tz390.fp_exp & 0x3) != 0
                     || fp_long1 > fp_long_dh_man_bits
-                    ) {
+            ) {
                 fp_round_bit = (int)(fp_long1 & 1);
                 fp_long1 = fp_long1 >>> 1;
                 tz390.fp_exp++;
@@ -12888,7 +12841,7 @@ public  class  az390 implements Runnable {
             fp_round_bit = 0;
             while ((tz390.fp_exp & 0x3) != 0  // RPI 821
                     || fp_int1 > fp_int_eh_man_bits
-                    ) {
+            ) {
                 fp_round_bit = fp_int1 & 1;
                 fp_int1 = fp_int1 >>> 1;
                 tz390.fp_exp++;
@@ -12958,7 +12911,7 @@ public  class  az390 implements Runnable {
             fp_round_bit = 0;
             while ((tz390.fp_exp & 0x3) != 0  // RPI 821
                     || fp_big_int1.compareTo(fp_big_int_lx_man_bits) > 0
-                    ) {
+            ) {
                 if (fp_big_int1.testBit(0)) {
                     fp_round_bit = 1;
                 } else {
@@ -12969,7 +12922,7 @@ public  class  az390 implements Runnable {
                 if (fp_round_bit == 1
                         && (tz390.fp_exp & 0x3) == 0  // RPI 821
                         && fp_big_int1.compareTo(fp_big_int_lx_man_bits) <= 0
-                        ) {
+                ) {
                     fp_big_int1 = fp_big_int1.add(BigInteger.ONE);
                 }
             }
