@@ -138,7 +138,7 @@ import javax.swing.filechooser.FileFilter;
  * 2024-08-12 #545 Extend generated java doco to include private methods
  * 2026-03-08 AFK      Fix/Add javadoc comments
  * 2026-08-27 AFK #916 Missing break statements in case construct
-*  2026-08-30 #807 AFK/JG Fix issues flagged by linter
+ * 2026-08-30 #807 AFK/JG Fix issues flagged by linter
   **********************************************************************
  * Add next maintenance entry above previous line
  **********************************************************************
