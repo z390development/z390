@@ -42,4 +42,10 @@ class RunVsam2 extends z390Test {
         this.printOutput()
         assert rc == 0
     }
+    @Test
+    void test_zRepro() {
+        int rc = this.asml(basePath("vsam2", "mlc", "ZREPRO"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
 }
