@@ -349,18 +349,19 @@ The following preamble should be applied to all programs
 git info: https://git-scm.com
 git documentation:https://git-scm.com/doc
 
-Action                                    | Command
-------------------------------------------|------------
-get list of available commands            | `git help`
-get syntax details for a git command      | `git help <command>`
-create local clone of git repo            | `git clone <url\> <subdir>`
-review status of current branch           | `git status`
-get list of all defined branches          | `git branch -v --all`
-prepare commit                            | `git add .`
-commit a set of changes                   | `git commit -m"descriptive comments"`
-push changes to your own fork             | `git push`
-remove ignored and added files from repo  | `git clean -d -f -X`
-graphical display of branches             | `git log --graph --oneline --decorate --all`
--- > when viewing the branches displayed  | `<Enter> to scroll 1 line, <PgDn> to scroll a page, q to quit`
-go 'back in time' to a specific commit    | `git branch -f <new_branch> [<start-point>]`
-                                          | `git switch <new_branch>`
+| Action                                    | Command                                                        |
+|-------------------------------------------|----------------------------------------------------------------|
+| get list of available commands            | `git help`                                                     |
+| get syntax details for a git command      | `git help <command>`                                           |
+| create local clone of git repo            | `git clone <url\> <subdir>`                                    |
+| review status of current branch           | `git status`                                                   |
+| get list of all defined branches          | `git branch -v --all`                                          |
+| prepare commit                            | `git add .`                                                    |
+| set script executable                     | `git add --chmod=+x path/to/your-script.sh`                    |
+| commit a set of changes                   | `git commit -m"descriptive comments"`                          |
+| push changes to your own fork             | `git push`                                                     |
+| remove ignored and added files from repo  | `git clean -d -f -X`                                           |
+| graphical display of branches             | `git log --graph --oneline --decorate --all`                   |
+| -- > when viewing the branches displayed  | `<Enter> to scroll 1 line, <PgDn> to scroll a page, q to quit` |
+| go 'back in time' to a specific commit    | `git branch -f <new_branch> [<start-point>]`                   |
+|                                           | `git switch <new_branch>`                                      |

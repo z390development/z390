@@ -30,6 +30,8 @@ runvsam1         - run zVSAM V1 tests
 runvsam2         - run zVSAM V2 tests
 runzpar          - verify ZCOBOL Program Analysis Report
 testcmd1         - for use by runcmdproc, testcase for testcmd1
+testcmda         - for use by runcmdproc, testcase for testcmd2
+testcmdb         - for use by runcmdproc, testcase for testcmd2
 x00c2bdxtests    - verify C2B, C2D, C2X tests that have X'00' in argument
 zopcheck         - verify all z390 assembler instructions generate correct code
 
