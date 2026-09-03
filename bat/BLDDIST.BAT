@@ -66,9 +66,6 @@ rem add javadoc
 mkdir javadoc
 xcopy /E /I /Y ..\..\build\javadoc\* javadoc\ > nul
 
-rem remove components not required for distribution
-del /F /Q bash\bldjar bat\BLDJAR.BAT bash\blddist bash\relver bat\RELVER.BAT
-
 rem create zip package
 cd ..
 powershell Compress-Archive -Path z390_%VERSION% -DestinationPath z390_%VERSION%.zip -Force || goto error

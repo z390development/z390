@@ -671,7 +671,7 @@ public  class  gz390
         if (!perm_file_log) {
             perm_file_write = false;
         }
-        /******************************************
+        /* *****************************************
          * Switch to demo mode if no read permission
          */
         if  (!perm_file_read) {

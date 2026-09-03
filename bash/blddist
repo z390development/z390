@@ -56,12 +56,6 @@ cp -R ${ROOT_DIR}/build/zstrmac/* mac/spm
 mkdir -p javadoc
 cp -R ${ROOT_DIR}/build/javadoc/* javadoc
 
-# remove components not required for distribution
-DEL_ITEMS=('bash/bldjar' 'bat/BLDJAR.BAT' 'bash/blddist' 'bash/relver' 'bat/RELVER.BAT')
-for item in ${DEL_ITEMS[@]}; do
-    rm ${item}
-done
-
 # create zip package
 cd ..
 zip -q -dd -r z390_${VERSION}.zip z390_${VERSION}

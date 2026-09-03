@@ -1,0 +1,24 @@
+#!/bin/bash
+# getcheckstyle: download the Checkstyle -all.jar used by bash/bldjar
+# Works on Linux, macOS, and GitHub Actions (bash 3.2+, curl, sed).
+
+set -e
+cd "$(dirname "$0")/.."
+
+out_dir=build/checkstyle
+out_file="${out_dir}/checkstyle-all.jar"
+version_file="${out_dir}/version.txt"
+
+mkdir -p "${out_dir}"
+
+echo "Downloading linter from checkstyle repository on github.com..."
+
+# Follow /releases/latest to the real tag URL, then take the last path part.
+latest_url=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+    https://github.com/checkstyle/checkstyle/releases/latest)
+tag=$(printf '%s\n' "${latest_url}" | sed 's|.*/||')
+jar_url="https://github.com/checkstyle/checkstyle/releases/download/${tag}/${tag}-all.jar"
+
+curl -fL --retry 3 -o "${out_file}" "${jar_url}"
+printf '%s' "${tag}" > "${version_file}"
+echo "Download finished: ${tag}"
