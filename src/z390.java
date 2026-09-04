@@ -20,8 +20,10 @@ with this program; if not, see <https://www.gnu.org/licenses/>.
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridBagConstraints;    // #923
+import java.awt.GridBagLayout;         // #923
+import java.awt.Insets;                // #923
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -55,6 +57,8 @@ import java.util.PropertyPermission;
 import java.util.StringTokenizer;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;                // #923
+import javax.swing.BoxLayout;          // #923
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
@@ -138,8 +142,9 @@ import javax.swing.filechooser.FileFilter;
  * 2024-08-12 #545 Extend generated java doco to include private methods
  * 2026-03-08 AFK      Fix/Add javadoc comments
  * 2026-08-27 AFK #916 Missing break statements in case construct
-*  2026-08-30 #807 AFK/JG Fix issues flagged by linter
-  **********************************************************************
+ * 2026-08-30 #807 AFK/JG Fix issues flagged by linter
+ * 2026-09-02 #923 z390.java: change from FlowLayout to BoxLayout and GridBagLayout
+ **********************************************************************
  * Add next maintenance entry above previous line
  **********************************************************************
  */
@@ -165,7 +170,7 @@ public  class  z390
     /** variable      */ private static final long serialVersionUID = 1L;
 
     /*
-     * global command mode variables
+     * Global command mode variables
      */
 
     /** variable      */ tz390 tz390 = null;
@@ -200,7 +205,7 @@ public  class  z390
     /** variable      */ SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
 
     /*
-     * current directory file
+     * Current directory file
      */
 
     /** variable      */ File dir_cur_file = null; // current directory file
@@ -239,7 +244,7 @@ public  class  z390
     /** variable      */ boolean monitor_last_cmd_mode = false;
 
     /*
-     *  status interval display variables
+     *  Status interval display variables
      */
 
     /** variable      */ boolean status_visible = true;
@@ -287,6 +292,7 @@ public  class  z390
     /** variable      */ int main_width  = 625;
     /** variable      */ int main_height = 400;
     /** variable      */ int main_border = 2;
+    /** variable      */ int main_panel_border = 10;  // #923
     /** variable      */ int main_loc_x = 50;
     /** variable      */ int main_loc_y = 50;
     /** variable      */ int scrollbar_width = 15;
@@ -391,7 +397,7 @@ public  class  z390
     /** variable      */ String select_opt  = "";
 
     /*
-     * batch command global variables
+     * Batch command global variables
      */
 
     /** variable      */ String bat_file_name = null;
@@ -404,7 +410,7 @@ public  class  z390
     /** variable      */ String exec_opt = "";
 
     /*
-     * web site and install location
+     * Web site and install location
      */
 
     /** variable      */ String web_site = "http://www.z390.org";
@@ -412,7 +418,7 @@ public  class  z390
     /** variable      */ String install_webdoc = null; // RPI 872
 
     /*
-     * macro assembler command global variables
+     * Macro assembler command global variables
      */
 
     /** variable      */ String sysin_file_name = null;
@@ -570,7 +576,7 @@ public  class  z390
 
 
     /**
-     * process startup parms:
+     * Process startup parms:
      * <ul>
      *  <li>/G  - graphical interface (default)</li>
      *  <li>/NP - no permissions (supress checking permissions</li>
@@ -632,7 +638,7 @@ public  class  z390
 
 
     /**
-     * if OFF specified, turn log off.
+     * If OFF specified, turn log off.
      * If file specified, open new log.
      * else error.
      *
@@ -742,7 +748,7 @@ public  class  z390
 
 
     /**
-     * display error total on log and close
+     * Display error total on log and close
      * data and log files
      */
     private void close_all_files() {
@@ -800,7 +806,7 @@ public  class  z390
 
 
     /**
-     * cancel threads and exit with rc
+     * Cancel threads and exit with rc
      * (turn off runtime shutdown exit
      *
      * @param return_code return code
@@ -828,7 +834,7 @@ public  class  z390
 
 
     /**
-     *   install hook for shutdown when -Xrs VM set
+     * Install hook for shutdown when -Xrs VM set
      */
     private void set_runtime_hooks() {
         if (main_console && !shutdown_exit) {
@@ -855,7 +861,7 @@ public  class  z390
 
 
     /**
-     * display z390 version and copyright
+     * Display z390 version and copyright
      */
     private void put_copyright() {
         put_log("Z390I " + tz390.version + " Copyright (C) 2021 z390 Assembler");
@@ -1298,7 +1304,7 @@ public  class  z390
 
 
     /**
-     * add command cmd_line to rolling history
+     * Add command cmd_line to rolling history
      */
     private void add_cmd_hist() {
         if (last_cmd_line.equals(cmd_line)) {
@@ -1320,7 +1326,7 @@ public  class  z390
 
 
     /**
-     * restore prev cmd to z390_cmd_line
+     * Restore prev cmd to z390_cmd_line
      */
     private void get_prev_cmd() {
         if (view_restore) {
@@ -1337,7 +1343,7 @@ public  class  z390
 
 
     /**
-     * display next cmd
+     * Display next cmd
      */
     private void get_next_cmd() {
         view_restore = false;
@@ -1351,7 +1357,7 @@ public  class  z390
 
 
     /**
-     * return date and time if tz390.opt_timing
+     * Return date and time if tz390.opt_timing
      *
      * @return date and time as a string value
      */
@@ -1368,7 +1374,7 @@ public  class  z390
 
 
     /**
-     * get string with or without single/double quotes.
+     * Get string with or without single/double quotes.
      * <ul>
      *  <li>ignore leading spaces or commas if ignore_spaces = true, else return null</li>
      *  <li>if space or comma found next.</li>
@@ -1404,7 +1410,7 @@ public  class  z390
 
 
     /**
-     * write basic info to log
+     * Write basic info to log
      */
     private void about_command() {
         put_copyright();
@@ -1427,7 +1433,7 @@ public  class  z390
 
 
     /**
-     * reset font size for log, and command line and menu pop-ups
+     * Reset font size for log, and command line and menu pop-ups
      *
      * @param cmd_parm1 requested font size as text
      * @param cmd_parm2 not used
@@ -1455,7 +1461,7 @@ public  class  z390
 
 
     /**
-     * reset font size for menu, log, cmd and status line
+     * Reset font size for menu, log, cmd and status line
      */
     private void set_text_font() {
         menuBar.setFont(new Font(tz390.z390_font,Font.BOLD,font_size)); //RPI81
@@ -1511,7 +1517,31 @@ public  class  z390
 
 
     /**
-     * return int from immediate decimal parm
+     * Return non-negative int value from string of decimal digits
+     * @param s string of decimal digits
+     * @return integer value if string contains only decimal
+     *         digits and the parsed value is in the range
+     *         zero to Integer.MAX_VALUE; otherwise, returns -1
+     */
+    private int get_nonnegative_dec_int(String s) {            // #923
+        int i = -1;                                            // #923
+        if (s.matches("\\d+")) {                               // #923
+            try {                                              // #923
+                i = Integer.parseInt(s);                       // #923
+            } catch (NumberFormatException e) {                // #923
+                i = -1;                                        // #923
+            }                                                  // #923
+        }                                                      // #923
+        if (i == -1) {                                         // #923
+            log_error(35, "invalid non-neg dec value - " + s); // #923
+        }                                                      // #923
+        return i;                                              // #923
+    }                                                          // #923
+
+
+
+    /**
+     * Return int from immediate decimal parm
      *
      * @param cmd_parm input text parameter
      * @return decimal value of input parameter
@@ -1527,7 +1557,7 @@ public  class  z390
 
 
     /**
-     * return int from immediate hex parm:or reg
+     * Return int from immediate hex parm:or reg
      *
      * @param cmd_parm input parameter in text format
      * @return decimal value from input parameter
@@ -1564,7 +1594,7 @@ public  class  z390
 
 
     /**
-     * return int value of char or 0 if not printable
+     * Return int value of char or 0 if not printable
      *
      * @param work_int integer input value
      * @return input value, or adjusted integer value
@@ -1579,7 +1609,7 @@ public  class  z390
 
 
     /**
-     * log summary list of commands and help reference
+     * Log summary list of commands and help reference
      */
     private void help_command() {
         put_log("\nz390 help command summary");
@@ -1602,7 +1632,7 @@ public  class  z390
 
 
     /**
-     * start monitor to terminate cmd
+     * Start monitor to terminate cmd
      * command if timeout limit reached
      */
     private void monitor_startup() {
@@ -1627,7 +1657,7 @@ public  class  z390
 
 
     /**
-     * start Windows command processer with synchronized buffered output to log.
+     * Start Windows command processer with synchronized buffered output to log.
      *
      * <ol>
      *  <li>If cmd_line is null, set cmd_mode and start command processor without command.</li>
@@ -1693,7 +1723,7 @@ public  class  z390
 
 
     /**
-     * sleep for monitor interval if not abort
+     * Sleep for monitor interval if not abort
      */
     private void sleep_now() {
         if (tz390.z390_abort) {
@@ -1709,7 +1739,7 @@ public  class  z390
 
 
     /**
-     * sync the cmd task directory with current directory.
+     * Sync the cmd task directory with current directory.
      */
     private void sync_cmd_dir() {
         if (!tz390.dir_cur.equals(install_loc)) {
@@ -1794,7 +1824,7 @@ public  class  z390
 
 
     /**
-     * issue timeout error
+     * Issue timeout error
      */
     private void cmd_timeout_error() {
         cmd_exec_cancel();
@@ -1806,7 +1836,7 @@ public  class  z390
 
 
     /**
-     * exec Windows command as follows:
+     * Exec Windows command as follows:
      * <ol>
      *  <li>If cmd_mode set via prior cmd with no command, then all commands are routed to command processor via cmd_exec_input.
      *   <ul>
@@ -1846,7 +1876,7 @@ public  class  z390
 
 
     /**
-     * format fixed field status line for both z390 gui status line and status log requests
+     * Format fixed field status line for both z390 gui status line and status log requests
      * <ol>
      *  <li>Time of date</li>
      *  <li>INS total</li>
@@ -1870,7 +1900,7 @@ public  class  z390
 
 
     /**
-     * format and pad status line number to
+     * Format and pad status line number to
      * specified length. If number 0, return
      * all spaces. If number &gt; 1000, return K.
      *
@@ -1896,7 +1926,7 @@ public  class  z390
 
 
     /**
-     * update status interval and write status line to log
+     * Update status interval and write status line to log
      */
     private void status_log_update() {
         status_next_time = System.currentTimeMillis();
@@ -1918,7 +1948,7 @@ public  class  z390
 
 
     /**
-     * load shared tables and file routines
+     * Load shared tables and file routines
      *
      * @param args argument string
      */
@@ -1966,13 +1996,14 @@ public  class  z390
      * Build the main panel with:
      * <ol>
      *  <li>Scrolling log display</li>
-     *  <li>command entry field</li>
+     *  <li>Command entry field</li>
+     *  <li>Status field</li>
      * </ol>
      */
     private void build_main_panel() {
         main_panel = new JPanel();
-        main_panel.setBorder(BorderFactory.createEmptyBorder(0,main_border,main_border,main_border));
-        main_panel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        main_panel.setBorder(BorderFactory.createEmptyBorder(0,main_panel_border,main_panel_border,main_panel_border)); // #923
+        main_panel.setLayout(new BoxLayout(main_panel, BoxLayout.PAGE_AXIS)); // #923
         set_gui_size();
         build_menu_items();
         set_tooltips();
@@ -1986,11 +2017,91 @@ public  class  z390
         menuBar.add(view_menu);
         menuBar.add(help_menu);
         main_frame.setJMenuBar(menuBar);
+        // first box is the log_view                              // #923
         main_panel.add(log_view);
-        main_panel.add(cmd_label);
-        main_panel.add(z390_cmd_line);
-        main_panel.add(status_line_label);
-        main_panel.add(status_line);
+        // add 2 pixel vertical space                             // #923
+        main_panel.add(Box.createRigidArea(new Dimension(0,2)));  // #923
+        /*                                                        // #923
+         * Add boxes for the command line and the status line.    // #923
+         *                                                        // #923
+         * For these two, if the label is part of a               // #923
+         * GridBagLayout, resizing the component stretches        // #923
+         * the label, resulting in the text field appearing       // #923
+         * to shift right instead of stretching right. We         // #923
+         * instead use a horizontal box layout, first adding      // #923
+         * the label, putting the text field in a separate panel  // #923
+         * that uses GridBagLayout, then adding that panel        // #923
+         * to the box layout. Now the text field maintains its    // #923
+         * leftmost position and stretches to the right when      // #923
+         * the component is resized.                              // #923
+         *                                                        // #923
+         * Structure of main_panel follows.                       // #923
+         *                                                        // #923
+         * main_panel: vertical BoxLayout                         // #923
+         *   first box is the log view scroll pane                // #923
+         *   second box is the command line                       // #923
+         *       command line: horizontal BoxLayout               // #923
+         *           first box is the label                       // #923
+         *           second box contains the text field           // #923
+         *               text field box uses GridBagLayout        // #923
+         *   third box is the status line                         // #923
+         *       status line: horizontal BoxLayout                // #923
+         *           first box is the label                       // #923
+         *           second box contains the text field           // #923
+         *               text field box uses GridBagLayout        // #923
+         */                                                       // #923
+        JPanel p1;  // work panel for label and text field        // #923
+        JPanel p2;  // work panel for text field                  // #923
+
+        p1 = new JPanel();                                        // #923
+        p1.setLayout(new BoxLayout(p1, BoxLayout.LINE_AXIS));     // #923
+
+        p2 = new JPanel();                                        // #923
+        p2.setLayout(new GridBagLayout());                        // #923
+
+        // add command label to work panel                        // #923
+        p1.add(cmd_label);                                        // #923
+
+        // add command text field to text field work panel        // #923
+        addItemGridBag(p2, z390_cmd_line,                         // #923
+                       0, 0,                                      // #923
+                       1, 1,                                      // #923
+                       1.0, 0.1,                                  // #923
+                       GridBagConstraints.WEST,                   // #923
+                       GridBagConstraints.HORIZONTAL,             // #923
+                       null); // no insets                        // #923
+
+        // add text field work panel to line work panel           // #923
+        p1.add(p2);                                               // #923
+
+        // add built command line panel to main panel             // #923
+        main_panel.add(p1);                                       // #923
+
+        p1 = new JPanel();                                        // #923
+        p1.setLayout(new BoxLayout(p1, BoxLayout.LINE_AXIS));     // #923
+
+        p2 = new JPanel();                                        // #923
+        p2.setLayout(new GridBagLayout());                        // #923
+
+        // add status label to work panel                         // #923
+        p1.add(status_line_label);                                // #923
+
+        // add status text field to text field work panel         // #923
+        addItemGridBag(p2, status_line,                           // #923
+                       0, 0,                                      // #923
+                       1, 1,                                      // #923
+                       1.0, 0.1,                                  // #923
+                       GridBagConstraints.WEST,                   // #923
+                       GridBagConstraints.HORIZONTAL,             // #923
+                       null); // no insets                        // #923
+
+        // add text field work panel to line work panel           // #923
+        p1.add(p2);                                               // #923
+
+        // add built status line panel to main panel              // #923
+        main_panel.add(p1);                                       // #923
+
+        // main_panel build is complete                           // #923
         main_frame.getContentPane().add(main_panel);
         main_frame.addWindowListener(new WindowAdapter() {
             @Override
@@ -2000,6 +2111,45 @@ public  class  z390
         });
         refresh_request = true;
     }
+
+
+
+    /**
+     * Add component to panel using GridBagLayout
+     *
+     * @param p the panel
+     * @param c the component
+     * @param x gridx value
+     * @param y gridy value
+     * @param width gridwidth value
+     * @param height gridheight value
+     * @param weightx weightx value
+     * @param weighty weighty value
+     * @param anchor anchor value
+     * @param fill fill value
+     * @param insets insets value; can be null
+     */
+    private void addItemGridBag(JPanel p, Component c,     // #923
+            int x, int y,                                  // #923
+            int width, int height,                         // #923
+            double weightx, double weighty,                // #923
+            int anchor,                                    // #923
+            int fill,                                      // #923
+            Insets insets) {                               // #923
+        GridBagConstraints gc = new GridBagConstraints();  // #923
+        gc.gridx = x;                                      // #923
+        gc.gridy = y;                                      // #923
+        gc.gridwidth = width;                              // #923
+        gc.gridheight = height;                            // #923
+        gc.weightx = weightx;                              // #923
+        gc.weighty = weighty;                              // #923
+        if (insets != null) {                              // #923
+            gc.insets = insets;                            // #923
+        }                                                  // #923
+        gc.anchor = anchor;                                // #923
+        gc.fill = fill;                                    // #923
+        p.add(c, gc);                                      // #923
+    } // end addItemGridBag()                              // #923
 
 
 
@@ -2016,7 +2166,7 @@ public  class  z390
 
 
     /**
-     * calculate gui object sizes based on screen size and font size
+     * Calculate gui object sizes based on screen size and font size
      */
     private void set_gui_size() {
         title_height = 56;
@@ -2032,7 +2182,7 @@ public  class  z390
 
 
     /**
-     * build scrolling log view based on current screen and font size
+     * Build scrolling log view based on current screen and font size
      */
     private void build_log_view() {
         log_text = new JTextArea();
@@ -2055,7 +2205,7 @@ public  class  z390
 
 
     /**
-     *   Build the command entry field
+     * Build the command entry field
      */
     private void build_z390_cmd_line() {
         cmd_label = new JLabel("Command: ");
@@ -2069,7 +2219,7 @@ public  class  z390
 
 
     /**
-     *   Build the status line
+     * Build the status line
      */
     private void build_status_line() {
         status_line_label = new JLabel(" Status: ");
@@ -2083,7 +2233,7 @@ public  class  z390
 
 
     /**
-     *    Build the menu bar
+     * Build the menu bar
      */
     private void build_menu_items() {
         menuBar = new JMenuBar();
@@ -2126,6 +2276,8 @@ public  class  z390
         option_menu_test = new JCheckBoxMenuItem("TEST");
         option_menu_trace = new JCheckBoxMenuItem("TRACE");
         view_menu_status = new JCheckBoxMenuItem("Status");
+        // hiding status line deprecated; always visible   // #923
+        view_menu_status.setEnabled(false);                // #923
         view_menu_status.setSelected(true);
         view_menu_cmd    = new JCheckBoxMenuItem("CMD Mode");
         help_menu_help       = new JMenuItem("Help");
@@ -2287,7 +2439,7 @@ public  class  z390
 
 
     /**
-     * set tooltips after font changes
+     * Set tooltips after font changes
      */
     private void set_tooltips() {
         String text_font_pfx = "<html><font size=" + font_size/3 + ">";
@@ -2334,7 +2486,7 @@ public  class  z390
 
 
     /**
-     * update main frame title with current date and time.
+     * Update main frame title with current date and time.
      */
     private void title_update() {
         Date cur_date = new Date();
@@ -2632,7 +2784,7 @@ public  class  z390
 
 
     /**
-     * exec command
+     * Exec command
      */
     private void exec_gui_command() {
         cmd_line = z390_cmd_line.getText();
@@ -2650,7 +2802,7 @@ public  class  z390
 
 
     /**
-     * display Java security access permissions
+     * Display Java security access permissions
      */
     private void perm_command() {
         if (check_perms) {
@@ -2688,7 +2840,7 @@ public  class  z390
 
 
     /**
-     * display Windows, Java Runtime, and z390 software releases led
+     * Display Windows, Java Runtime, and z390 software releases led
      */
     private void rel_command() {
         String temp_version;
@@ -2710,7 +2862,7 @@ public  class  z390
 
 
     /**
-     * link to z390\webdoc\index.html or www.z390.org
+     * Link to z390\webdoc\index.html or www.z390.org
      * note start parms are /d"path" file
      */
     private void guide_command() {
@@ -2724,7 +2876,7 @@ public  class  z390
 
 
     /**
-     * reset z390_cmd text and set focus
+     * Reset z390_cmd text and set focus
      */
     private void reset_z390_cmd() {
         if (main_gui) {
@@ -2736,7 +2888,7 @@ public  class  z390
 
 
     /**
-     * link to online support www.z390.org
+     * Link to online support www.z390.org
      */
     private void support_command() {
         start_doc(web_site);
@@ -2745,7 +2897,7 @@ public  class  z390
 
 
     /**
-     * document start from url
+     * Document start from url
      *
      * @param url url of command to be executed
      * @return false on error, true otherwise
@@ -2783,7 +2935,7 @@ public  class  z390
 
 
     /**
-     * put string to system clipboard
+     * Put string to system clipboard
      *
      * @param str string to write to clipboard
      */
@@ -2829,7 +2981,7 @@ public  class  z390
 
 
     /**
-     * cancel cmd, or gui cmd in response to
+     * Cancel cmd, or gui cmd in response to
      * F3 or CTRL-BREAK
      */
     private void process_cancel_key() {
@@ -2881,7 +3033,7 @@ public  class  z390
 
 
     /**
-     * display key event
+     * Display key event
      *
      * @param e keypress event
      * @param s Key pressed as text
@@ -3032,7 +3184,7 @@ public  class  z390
 
 
     /**
-     * last component to lose focus (ignored for now)
+     * Last component to lose focus (ignored for now)
      */
     @Override
     public void focusLost(FocusEvent e) {
@@ -3071,7 +3223,7 @@ public  class  z390
 
 
     /**
-     * set location of main window x, y
+     * Set location of main window x, y
      *
      * @param cmd_parm1 first command parameter
      * @param cmd_parm2 second command parameter
@@ -3121,7 +3273,7 @@ public  class  z390
 
 
     /**
-     * resize main window
+     * Resize main window
      *
      * @param cmd_parm1 first command parameter
      * @param cmd_parm2 second command parameter
@@ -3163,9 +3315,9 @@ public  class  z390
 
 
     /**
-     * set status line display on or off
+     * Set status line display on or off -- now always on // #923
      * or set interval for logging status.
-     * If seconds specified as 0 or null, logging
+     * If seconds specified as 0, logging
      * status is turned off
      *
      * @param cmd_parm1 first command parameter
@@ -3174,6 +3326,8 @@ public  class  z390
     private void status_command(String cmd_parm1,String cmd_parm2) {
         if (cmd_parm1 != null) {
             if (cmd_parm1.toUpperCase().equals("ON")) {
+                // deprecated; status always on  // #923
+                /*                               // #923
                 if (!main_status) {
                     main_status = true;
                     view_menu_status.setSelected(true);
@@ -3183,7 +3337,10 @@ public  class  z390
                     main_panel.add(status_line);
                     status_height = font_size + font_space + main_border;
                 }
+                */                               // #923
             } else if (cmd_parm1.toUpperCase().equals("OFF")) {
+                // deprecated; status always on  // #923
+                /*                               // #923
                 if  (main_status) {
                     main_status = false;
                     view_menu_status.setSelected(false);
@@ -3193,15 +3350,18 @@ public  class  z390
                     main_panel.remove(status_line);
                     status_height = 0;
                 }
+                */                               // #923
             } else {
-                int sec = get_dec_int(cmd_parm1);
-                if ( sec >= 1) {
+                int sec = get_nonnegative_dec_int(cmd_parm1);         // #923
+                if (sec >= 1) {
                     put_log("Status logging interval set to " + sec + " seconds");
                     status_interval = sec * 1000;
-                } else {
-                    put_log("Status logging turned off");
-                    status_interval = 0;
-                }
+                } else if ( sec == 0) {                               // #923
+                    put_log("Status logging turned off");             // #923
+                    status_interval = 0;                              // #923
+                } else {                                              // #923
+                    put_log("Status:  invalid value - " + cmd_parm1); // #923
+                }                                                     // #923
             }
             refresh_request = true;
         } else {
@@ -3212,7 +3372,7 @@ public  class  z390
 
 
     /**
-     * set GUI window title
+     * Set GUI window title
      *
      * @param cmd_parm1 command parameter
      * @param cmd_parm2 not used
@@ -3229,7 +3389,7 @@ public  class  z390
 
 
     /**
-     * set timeout interval in seconds. Used to timeout
+     * Set timeout interval in seconds. Used to timeout
      * commands when not in command mode.  Default
      * is 3 seconds.  Issue command with no argument to
      * turn off timeout.  Commands can be cancelled via BREAK.
@@ -3254,7 +3414,7 @@ public  class  z390
 
 
     /**
-     * check or uncheck option menu item and update option parm lists for commands
+     * Check or uncheck option menu item and update option parm lists for commands
      *
      * @param option_men menu option
      * @param cmd_parm1 command parameter
@@ -3370,7 +3530,7 @@ public  class  z390
 
 
     /**
-     * set current directory using file chooser dialog if parm1 null else use path
+     * Set current directory using file chooser dialog if parm1 null else use path
      *
      * @param cmd_parm1 command parameter
      */
@@ -3430,7 +3590,7 @@ public  class  z390
 
 
     /**
-     * create dialog with file chooser to select current directory
+     * Create dialog with file chooser to select current directory
      *
      * @param select_dir_chooser file chooser object
      */
@@ -3534,7 +3694,7 @@ public  class  z390
 
 
     /**
-     * create select file frame with chooser on first call. It is updated after that.
+     * Create select file frame with chooser on first call. It is updated after that.
      *
      * @param select_file_chooser file chooser object
      */
@@ -3621,7 +3781,7 @@ public  class  z390
 
 
     /**
-     * return shortest file name possible with quotes if LSN
+     * Return shortest file name possible with quotes if LSN
      *
      * @param file_name file name
      * @return file name
@@ -3643,7 +3803,7 @@ public  class  z390
 
 
     /**
-     * display alphabetical list of basic and extended commands
+     * Display alphabetical list of basic and extended commands
      *
      * @param cmd_parm1 not used
      * @param cmd_parm2 not used
@@ -3718,8 +3878,8 @@ public  class  z390
 
 
     /**
-     * if main window size has changed due to
-     * user streching without window event handler
+     * If main window size has changed due to
+     * user stretching without window event handler
      * triggering update, do it now.
      */
     private void check_main_view() {
@@ -3737,7 +3897,7 @@ public  class  z390
 
 
     /**
-     * update log and command line size following any of the following changes:
+     * Update log and command line size following any of the following changes:
      * <ul>
      *  <li>Change in window size</li>
      *  <li>Change in font size</li>
@@ -3750,7 +3910,8 @@ public  class  z390
             main_panel.setSize(main_width - 4 * main_border,main_height - title_height - menu_height - main_border);
             lines_per_page = log_height / log_char_height;
             log_view.setPreferredSize(new Dimension(log_width, log_height));
-            rebuild_lines();
+            // hiding status line deprecated; no need to rebuild // #923
+            // rebuild_lines();                                  // #923
             main_frame.setVisible(true);
             refresh_request = true;
         }
@@ -3758,53 +3919,55 @@ public  class  z390
 
 
 
-    /**
-     * rebuild z390_cmd and status lines
-     * with or without labels to fix current
-     * main_panel size.
-     */
-    private void rebuild_lines() {
-        /*
-         * start by removing labels and lines
-         */
-        if (labels_visible) {
-            main_panel.remove(cmd_label);
-            if (status_visible) {
-                main_panel.remove(status_line_label);
-            }
-        }
-        main_panel.remove(cmd_label);
-        if (status_visible) {
-            main_panel.remove(status_line);
-        }
-        /*
-         * determine if labels will fit
-         */
-        if (main_width >= labels_min_width
-             && font_size <= labels_max_font) {
-            labels_visible = true;
-        } else {
-            labels_visible = false;
-        }
-        /*
-         * add the optional labels and lines
-         */
-        if (labels_visible) {
-            main_panel.add(cmd_label);
-            label_width = cmd_label.getWidth();
-        } else {
-            label_width = 0;
-        }
-        z390_cmd_line.setColumns(command_columns);
-        main_panel.add(z390_cmd_line);
-        if (status_visible) {
-            if  (labels_visible) {
-                main_panel.add(status_line_label);
-            }
-            status_line.setColumns(command_columns);
-            main_panel.add(status_line);
-        }
-    }
+    // rebuild_lines no longer needed  // #923
+    // hiding status line deprecated   // #923
+    //    /**
+    //     * Rebuild z390_cmd and status lines
+    //     * with or without labels to fix current
+    //     * main_panel size.
+    //     */
+    //    private void rebuild_lines() {
+    //        /*
+    //         * start by removing labels and lines
+    //         */
+    //        if (labels_visible) {
+    //            main_panel.remove(cmd_label);
+    //            if (status_visible) {
+    //                main_panel.remove(status_line_label);
+    //            }
+    //        }
+    //        main_panel.remove(cmd_label);
+    //        if (status_visible) {
+    //            main_panel.remove(status_line);
+    //        }
+    //        /*
+    //         * determine if labels will fit
+    //         */
+    //        if (main_width >= labels_min_width
+    //             && font_size <= labels_max_font) {
+    //            labels_visible = true;
+    //        } else {
+    //            labels_visible = false;
+    //        }
+    //        /*
+    //         * add the optional labels and lines
+    //         */
+    //        if (labels_visible) {
+    //            main_panel.add(cmd_label);
+    //            label_width = cmd_label.getWidth();
+    //        } else {
+    //            label_width = 0;
+    //        }
+    //        z390_cmd_line.setColumns(command_columns);
+    //        main_panel.add(z390_cmd_line);
+    //        if (status_visible) {
+    //            if  (labels_visible) {
+    //                main_panel.add(status_line_label);
+    //            }
+    //            status_line.setColumns(command_columns);
+    //            main_panel.add(status_line);
+    //        }
+    //    }
 
 
 
@@ -3953,8 +4116,8 @@ public  class  z390
 
     /**
      * <ol>
-     *  <li>return ending rc else -1</li>
-     *  <li>return 0 if no process defined</li>
+     *  <li>Return ending rc else -1</li>
+     *  <li>Return 0 if no process defined</li>
      * </ol>
      *
      * @return return code
@@ -3976,7 +4139,7 @@ public  class  z390
 
 
     /**
-     * cancel exec process
+     * Cancel exec process
      */
     private void cmd_exec_cancel() {
         ins_count++;
@@ -3996,7 +4159,7 @@ public  class  z390
 
 
     /**
-     * run something
+     * Run something
      */
     @Override
     public void run() {
@@ -4018,7 +4181,7 @@ public  class  z390
 
 
     /**
-     * copy cmd output to log a byte at a time
+     * Copy cmd output to log a byte at a time
      * to handle cmd output with cr/lf (ie TIME)
      */
     private void copy_cmd_output_to_log() {
@@ -4046,7 +4209,7 @@ public  class  z390
 
 
     /**
-     * copy cmd error to log a line at a time
+     * Copy cmd error to log a line at a time
      */
     private void copy_cmd_error_to_log() {
         try {
@@ -4066,7 +4229,7 @@ public  class  z390
 
 
     /**
-     * invoke batch command with specified file
+     * Invoke batch command with specified file
      * and options. If file is null, invoke file
      * selection dialog with specified file type
      * and then launch batch command when selection
@@ -4124,7 +4287,7 @@ public  class  z390
 
 
     /**
-     * define accept and getdescription methods
+     * Define accept and getdescription methods
      * for file chooser to filter files to just
      * select_file_type if any
      */
@@ -4142,7 +4305,7 @@ public  class  z390
 
 
         /**
-         * accept a file
+         * Accept a file
          *
          * @param f file object
          * @return true if file selected; false otherwise
@@ -4167,7 +4330,7 @@ public  class  z390
 
 
         /**
-         * get description for file type
+         * Get description for file type
          *
          * @return text for file type
          */
@@ -4179,7 +4342,7 @@ public  class  z390
 
 
         /**
-         * get extension from file object
+         * Get extension from file object
          *
          * @param f file object
          * @return file extension
@@ -4198,5 +4361,5 @@ public  class  z390
 
 
 
-    /* end of module z390 */
+    /* End of module z390 */
 }
