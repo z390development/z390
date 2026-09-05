@@ -5,9 +5,8 @@ This folder contains a framework for testing the z390 application.
 This is a black box test framework and does not perform unit testing
 of the actual z390 code. It calls the z390 app via a shell command.
 
-The idea is that you can run z390 with input and then check the output 
+The idea is that you can run z390 with input and then check the output
 from the process.
-
 
 ## Setup
 
@@ -16,7 +15,7 @@ Build the z390 Java jar and libraries for use by the tests. From the z390 root:
     ./build.sh
     win> BUILD.BAT
 
-## Run 
+## Run
 
 By default the tests will not show the output of the `printOutput` method (see below).
 While developing tests, it is useful to see this output.
@@ -34,11 +33,9 @@ If you use an IDE like IntelliJ or Eclipse, they have support for Gradle test su
 
 https://www.jetbrains.com/help/idea/work-with-tests-in-gradle.html
 
-
-    
 ## Writing test cases
 
-Module `TESTINS1.MLC` resides in the z390 tests subdirectory. The following is a basic test 
+Module `TESTINS1.MLC` resides in the z390 tests subdirectory. The following is a basic test
 case that executes an assembly of the module and checks the return code.
 
 ```groovy
@@ -62,6 +59,24 @@ which provides methods for running and capturing the output.
 
 The tests use standard JUnit test structures.
 
+### Optional test cases
+
+It is possible to declare a groovy script as optional.
+All it takes is
+```groovy
+import org.junit.jupiter.api.Tag
+@Tag("optional")
+
+```
+
+See `RunMfAcc.groovy` for an example.
+
+Optional test script must be encoded explicitly in the `bat\RUNTEST.BAT`
+and the `bash/runtest` scripts because they require a slightly different invocation.
+
+Optional test cases are skipped when running a build procedure,
+but included when the `*All` parameter is added.
+
 ## Methods for testing
 
 The z390Test class embeds a number of methods for interacting with z390 similar
@@ -74,21 +89,22 @@ int rc = this.asm(basePath('tests', 'TESTINS1'), *options)
 assert rc == 0
 ```
 Parameters:
-* asmFile - The HLASM file without prefix to assemble. Use basePath method to build path relative to z390.
-* args... - 0-n parmeters to pass to the asm program, generally options.
+- asmFile - The HLASM file without prefix to assemble. Use basePath method to build path relative to z390.
+- args... - 0-n parmeters to pass to the asm program, generally options.
 
 Returns:
-* rc - The result code from the execution
+- rc - The result code from the execution
 
 Methods available :
-* asm - Assemble only
-* asml - Assemble and link. Any non zero RC on assemble will exit with RC
-* asmlg - Assemble, link and go. Any non zero RC on assemble and link will exit with RC
-* mz390 - Assemble only
-* cblc - COBOL compile only
-* cblclg - COBOL compile, link and go. Any non-zero return will exist with RC
-* lz390 - Link only. Output not cleared prior to run
-* ez390 - Run only. Output not cleared prior to run
+- asm - Assemble only
+- asml - Assemble and link. Any non zero RC on assemble will exit with RC
+- asmlg - Assemble, link and go. Any non zero RC on assemble and link will exit with RC
+- mz390 - Assemble only
+- cblc - zCOBOL compile only
+- cblcl - zCOBOL compile and link. Any non zero RC on assemble will exit with RC
+- cblclg - zCOBOL compile, link and go. Any non-zero return will exist with RC
+- lz390 - Link only. Output not cleared prior to run
+- ez390 - Run only. Output not cleared prior to run
 
 ### assemble from inline source
 
@@ -110,14 +126,13 @@ used in the assembly.
 ```groovy
 this.env = ['SNAPOUT': basePath('zopcheck', 'SNAPOUT.TXT')]
 ```
-The env property is a set of key value pairs within a Java or [Groovy map](https://docs.groovy-lang.org/latest/html/groovy-jdk/java/util/Map.html). 
+The env property is a set of key value pairs within a Java or [Groovy map](https://docs.groovy-lang.org/latest/html/groovy-jdk/java/util/Map.html).
 These will be passed as environment variables for the z390 calls.
 
 To add a single envvar without replacing any previously set environment variables:
 ```groovy
 this.env.put('SNAPOUT', basePath('zopcheck', 'SNAPOUT.TXT'))
 ```
-
 
 ### loadFile -- loads content of a file into fileData
 
@@ -130,7 +145,7 @@ loadFile(filename, label)
 You can access the file contents after loading the file
 
 ```groovy
-fileData[label] 
+fileData[label]
 ```
 
 ### printOutput -- prints captured data
@@ -140,7 +155,7 @@ printOutput()
 ```
 Prints the captured output to stdout - useful for debugging output.
 
-Captured output includes stdout, stderr, the assembly output files (LST, LOG, PRN and ERR files) 
+Captured output includes stdout, stderr, the assembly output files (LST, LOG, PRN and ERR files)
 and any other files you load using the `loadFile` method.
 
 First 5 digits are line numbers starting at 0 are included in the listing.
@@ -151,7 +166,7 @@ First 5 digits are line numbers starting at 0 are included in the listing.
 basePath("tests", "TESTINS1")
 ```
 
-Use this to construct file paths relative to the z390 source root. Ensures platform independent 
+Use this to construct file paths relative to the z390 source root. Ensures platform independent
 file handling.
 
 Set the z390 source root using envvar `Z390_SOURCE_ROOT`. If not provided, defaults to "../z390"
@@ -173,15 +188,13 @@ file contents and the function will replace this with the actual filename create
 
 Note - The temporary file and generated temporary directory will be deleted at end of testcase.
 
-
 ## Hints and tips
 
-### Need to execute logic before tests run 
+### Need to execute logic before tests run
 
 You have 2 options.
 
 #### Run logic before all tests in class only once
-
 
 ```groovy
 import org.junit.jupiter.api.TestInstance

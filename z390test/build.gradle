@@ -18,6 +18,19 @@ dependencies {
 }
 
 test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags 'optional'
+    }
+    testLogging.showStandardStreams = true
+}
+
+tasks.register('optionalTest', Test) {
+    description = 'Run optional regression suites (MFACC, etc.)'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'optional'
+    }
     testLogging.showStandardStreams = true
 }

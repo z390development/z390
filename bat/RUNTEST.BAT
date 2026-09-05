@@ -12,8 +12,16 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 pushd %~dps0..\z390test
 
-if %1. == . (call gradlew test --rerun
-     ) else (call gradlew test --rerun --tests %1 %2 %3 %4 %5 %6 %7 %8 %9
+rem -- for optional tests, a different testprocedure must be specified
+set testproc=test
+if /I %1. == . goto runtest
+if not exist src\test\groovy\org\z390\test\%1.groovy goto runtest
+findstr /R /C:"@Tag(.optional.)" src\test\groovy\org\z390\test\%1.groovy >nul
+if %errorlevel%==0 set testproc=optionalTest
+
+:runtest
+if %1. == . (call gradlew %testproc% --rerun
+     ) else (call gradlew %testproc% --rerun --tests %1 %2 %3 %4 %5 %6 %7 %8 %9
              )
 set z_ReturnCode=%ERRORLEVEL%
 
@@ -21,3 +29,7 @@ set z_ReturnCode=%ERRORLEVEL%
 popd
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 exit /b %z_ReturnCode%
+
+
+
+
