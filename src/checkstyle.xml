@@ -3,6 +3,8 @@
   "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
   "https://checkstyle.org/dtds/configuration_1_3.dtd">
 <module name="Checker">
+  <!-- org.z390.checkstyle.version MUST remain a single line; bat/GetCheckStyle.PS1 and bash/getcheckstyle parse it by line match. -->
+  <metadata name="org.z390.checkstyle.version" value="checkstyle-13.4.2"/>
   <!-- Disallow tabs for indentation -->
   <module name="FileTabCharacter">
     <property name="eachLine" value="true"/><!-- use true to report every tab -->

@@ -10,6 +10,10 @@ if [ ! -f ../build/checkstyle/checkstyle-all.jar ]; then
     echo "bldjar: linter tool Checkstyle not available - run bash/getcheckstyle to install"
     exit 1
 fi
+if ! ./getcheckstyle --verify; then
+    echo "bldjar: Checkstyle jar does not match the version pinned in src/checkstyle.xml"
+    exit 1
+fi
 java -jar ../build/checkstyle/checkstyle-all.jar --version
 if ! java -jar ../build/checkstyle/checkstyle-all.jar -c ../src/checkstyle.xml ../src; then
     echo "bldjar: Error while validating z390 java sources"

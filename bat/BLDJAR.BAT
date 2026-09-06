@@ -34,10 +34,13 @@ shift /1
 goto opt_loop
 :options_ok
 
-rem download/update linter jar
+rem download/update linter jar (version is pinned in src\checkstyle.xml)
 if not exist "build\checkstyle" mkdir build\checkstyle
-if /I %z_all% == Y              powershell -NoProfile -ExecutionPolicy Bypass -File "bat\GetCheckStyle.ps1"
+if /I %z_all% == Y powershell -NoProfile -ExecutionPolicy Bypass -File "bat\GetCheckStyle.ps1"
 if not exist "build\checkstyle\checkstyle-all.jar" goto no_linter || rem failed upgrade is no problem (hopefully) - but missing jar is
+powershell -NoProfile -ExecutionPolicy Bypass -File "bat\GetCheckStyle.ps1" -VerifyOnly
+if %ERRORLEVEL% NEQ 0 goto wrong_linter
+
 :run_linter
 java -jar build\checkstyle\checkstyle-all.jar --version
 
@@ -113,6 +116,12 @@ goto return
 :no_linter
 echo linter tool CheckStyle not available - run with *All argument (or install CheckStyle manually)
 set z_ReturnCode=8
+goto return
+
+:wrong_linter
+echo linter tool CheckStyle version does not match src\checkstyle.xml - run with *All argument (or upgrade manually)
+set z_ReturnCode=8
+goto return
 
 :return
 popd
