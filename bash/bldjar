@@ -5,17 +5,16 @@
 set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script
 
-# download linter jar if needed, then run it against src/
-mkdir -p ../build/checkstyle
+# use the installed linter; install/upgrade is manual via bash/getcheckstyle
 if [ ! -f ../build/checkstyle/checkstyle-all.jar ]; then
-    ./getcheckstyle
-fi
-if [ ! -f ../build/checkstyle/checkstyle-all.jar ]; then
-    echo "bldjar: linter download failed - cannot continue"
+    echo "bldjar: linter tool Checkstyle not available - run bash/getcheckstyle to install"
     exit 1
 fi
 java -jar ../build/checkstyle/checkstyle-all.jar --version
-java -jar ../build/checkstyle/checkstyle-all.jar -c ../src/checkstyle.xml ../src
+if ! java -jar ../build/checkstyle/checkstyle-all.jar -c ../src/checkstyle.xml ../src; then
+    echo "bldjar: Error while validating z390 java sources"
+    exit 1
+fi
 
 mkdir -p "../jar"   # create directory if it does not exist
 

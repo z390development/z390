@@ -18,7 +18,7 @@ echo Building z390 %VERSION%
 set DIST_DIR=dist
 
 rem build jar
-call bat\BLDJAR.BAT %z_TraceMode%                   || goto error
+call bat\BLDJAR.BAT %z_TraceMode% %*                || goto error
 
 rem generate HLASM compatible SPM's
 call bat\BLDZSTRMAC.BAT %z_TraceMode% build\zstrmac || goto error

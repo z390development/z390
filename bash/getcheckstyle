@@ -1,6 +1,6 @@
 #!/bin/bash
-# getcheckstyle: download the Checkstyle -all.jar used by bash/bldjar
-# Works on Linux, macOS, and GitHub Actions (bash 3.2+, curl, sed).
+# getcheckstyle: download the Checkstyle -all.jar required for bash/bldjar
+# Works on Linux, macOS, and GitHub Actions (bash 3.2+, curl, sed)
 
 set -e
 cd "$(dirname "$0")/.."
