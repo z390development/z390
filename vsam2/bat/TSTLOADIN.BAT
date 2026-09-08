@@ -1,5 +1,5 @@
 @if /I "%1" == "tron" (echo on) else (echo off)
-rem assemble, link test programs and files for zvsam(2)
+rem test zREPRO LOAD/UNLOAD/VERIFY functions for zvsam(2)
 
 setlocal
 if /I "%1" == "tron" (set z_TraceMode=tron
@@ -23,9 +23,10 @@ echo %0 >%data%\%logfile%
 rem
 rem Argument 1 is expected to point to a local clone of the z390Archive repository
 rem
-if /I %1. == . goto noArchive
-if not exist %1\TestData\COMPANIES.TXT goto noArchive
-set input=%1\TestData
+if "%~1"=="" goto noArchive
+set "archive=%~f1"
+if not exist "%archive%\TestData\COMPANIES.TXT" goto noArchive
+set "input=%archive%\TestData"
 goto LOAD
 :NoArchive
 echo no path to z390Archive clone specified, or path was not valid
@@ -42,7 +43,7 @@ if exist %data%\INDIANCO.IDX del %data%\INDIANCO.IDX
 set INQSAM=%input%\COMPANIES.TXT[RECFM=FT]
 set OUTVSAM=%data%\Z390CAT2.INDIANCO
 set Z390CAT2=%cat%\
-call bat\EZ390 %code%\ZREPRO PARM(LOAD) NOTIME MAXSIZE(1000) DUMP zVSAM(2)
+call bat\EZ390 %code%\ZREPRO PARM(LOAD) TIME(600) MAXSIZE(1000) DUMP zVSAM(2)
 set retcode=%ERRORLEVEL%
 type %code%\ZREPRO.LOG >>%data%\%logfile%
 if %retcode% NEQ 0 goto error
@@ -55,7 +56,7 @@ echo --                        >>%data%\%logfile%
 set INVSAM=%data%\Z390CAT2.INDIANCO
 set OUTQSAM=%data%\COMPANIES.TXO[RECFM=FT]
 set Z390CAT2=%cat%
-call BAT\EZ390 %code%\ZREPRO PARM(UNLOAD) NOTIME MAXSIZE(1000) DUMP zVSAM(2)
+call BAT\EZ390 %code%\ZREPRO PARM(UNLOAD) MAXSIZE(1000) DUMP zVSAM(2)
 set retcode=%ERRORLEVEL%
 type %code%\ZREPRO.LOG >>%data%\%logfile%
 if %retcode% NEQ 0 goto error
@@ -78,7 +79,7 @@ echo -- Step 4: verify the cluster >>%data%\%logfile%
 echo --                            >>%data%\%logfile%
 set INVSAM=%data%\Z390CAT2.INDIANCO
 set Z390CAT2=%cat%\
-call BAT\EZ390 %code%\ZREPRO PARM(VERIFY) NOTIME DUMP zVSAM(2)
+call BAT\EZ390 %code%\ZREPRO PARM(VERIFY) DUMP zVSAM(2)
 set retcode=%ERRORLEVEL%
 type %code%\ZREPRO.LOG >>%data%\%logfile%
 if %retcode% NEQ 0 goto error
@@ -93,7 +94,7 @@ if exist %data%\MYAIXIN.IDX del %data%\MYAIXIN.IDX >nul
 set INVSAM=%data%\Z390CAT2.INDIANCO
 set OUTVSAM=%data%\Z390CAT2.MYAIXIN
 set Z390CAT2=%cat%\
-call BAT\EZ390 %code%\ZREPRO PARM(BUILDAIX) NOTIME DUMP MEM(16) MAXSIZE(1000) zVSAM(2)
+call BAT\EZ390 %code%\ZREPRO PARM(BUILDAIX) DUMP MEM(16) MAXSIZE(1000) zVSAM(2)
 set retcode=%ERRORLEVEL%
 type %code%\ZREPRO.LOG >>%data%\%logfile%
 if %retcode% NEQ 0 goto error
@@ -107,7 +108,7 @@ rem -- MYAIXKS defines the AIX cluster MYAIXIN as a plain KSDS
 set INVSAM=%data%\Z390CAT2.MYAIXKS
 set OUTQSAM=%data%\MYAIXKS.TXO[RECFM=VT]
 set Z390CAT2=%cat%
-call BAT\EZ390 %code%\ZREPRO PARM(UNLOAD) NOTIME DUMP zVSAM(2)
+call BAT\EZ390 %code%\ZREPRO PARM(UNLOAD) DUMP zVSAM(2)
 set retcode=%ERRORLEVEL%
 type %code%\ZREPRO.LOG >>%data%\%logfile%
 if %retcode% NEQ 0 goto error
@@ -119,7 +120,7 @@ echo -- Step 7: verify the cluster >>%data%\%logfile%
 echo --                            >>%data%\%logfile%
 set INVSAM=%data%\Z390CAT2.MYAIXKS
 set Z390CAT2=%cat%\
-call BAT\EZ390 %code%\ZREPRO PARM(VERIFY) NOTIME DUMP zVSAM(2)
+call BAT\EZ390 %code%\ZREPRO PARM(VERIFY) DUMP zVSAM(2)
 set retcode=%ERRORLEVEL%
 type %code%\ZREPRO.LOG >>%data%\%logfile%
 if %retcode% NEQ 0 goto error
@@ -132,7 +133,7 @@ set z_ReturnCode=0
 goto return
 
 :error
-set z_ReturnCode=%ERRORLEVEL%
+set z_ReturnCode=%retcode%
 echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
 :return
 popd

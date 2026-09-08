@@ -1,5 +1,5 @@
 @if /I "%1" == "tron" (echo on) else (echo off)
-rem assemble, link test programs and files for zvsam(2)
+rem test zREPRO LOAD/UNLOAD/VERIFY functions for zvsam(2)
 
 setlocal
 if /I "%1" == "tron" (set z_TraceMode=tron
@@ -41,7 +41,7 @@ echo --                        >>%data%\%logfile%
 echo -- Step 2: unload cluster >>%data%\%logfile%
 echo --                        >>%data%\%logfile%
 set INVSAM=%data%\Z390CAT2.NULLESDS
-set OUTQSAM=%data%\NULLFILE.TXO[RECFM=FT]
+set OUTQSAM=%data%\NULLESDS.TXO[RECFM=FT]
 set Z390CAT2=%cat%
 call BAT\EZ390 %code%\ZREPRO PARM(UNLOAD) DUMP zVSAM(2)
 set retcode=%ERRORLEVEL%
@@ -54,7 +54,7 @@ echo --                             >>%data%\%logfile%
 echo -- Step 3: compare unload data >>%data%\%logfile%
 echo --                             >>%data%\%logfile%
 set MYLOAD=%input%\NULLFILE.TXT
-set UNLOAD=%data%\NULLFILE.TXO
+set UNLOAD=%data%\NULLESDS.TXO
 fc %MYLOAD% %UNLOAD% >>%data%\%logfile%
 set retcode=%ERRORLEVEL%
 if %retcode% NEQ 0 goto error
@@ -79,7 +79,7 @@ set z_ReturnCode=0
 goto return
 
 :error
-set z_ReturnCode=%ERRORLEVEL%
+set z_ReturnCode=%retcode%
 echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
 :return
 popd

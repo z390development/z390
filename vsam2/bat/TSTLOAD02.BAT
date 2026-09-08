@@ -1,5 +1,5 @@
 @if /I "%1" == "tron" (echo on) else (echo off)
-rem assemble, link test programs and files for zvsam(2)
+rem test zREPRO LOAD/UNLOAD/VERIFY functions for zvsam(2)
 
 setlocal
 if /I "%1" == "tron" (set z_TraceMode=tron
@@ -108,7 +108,7 @@ set z_ReturnCode=0
 goto return
 
 :error
-set z_ReturnCode=%ERRORLEVEL%
+set z_ReturnCode=%retcode%
 echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
 :return
 popd
