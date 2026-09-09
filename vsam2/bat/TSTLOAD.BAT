@@ -1,5 +1,6 @@
 @if /I "%1" == "tron" (echo on) else (echo off)
 rem test zREPRO LOAD/UNLOAD/VERIFY functions for zvsam(2)
+rem Argument 1 is expected to point to a local clone of the z390Archive repository
 
 setlocal
 if /I "%1" == "tron" (set z_TraceMode=tron
