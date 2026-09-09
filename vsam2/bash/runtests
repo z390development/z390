@@ -27,16 +27,6 @@ zvsam="zvsam(2)"
 
 rc=0
 
-# assemble and link a VSAM catalog for vsam2 test programs
-${vsampath}/bash/z390cat2 $zvsam
-rc=$?
-if [ $rc -ne 0 ]; then errmsg "z390cat2 assembly/link error"; fi
-
-# assemble and link zVSAM OPEN module
-${vsampath}/bash/zvsam19c $zvsam
-rc=$?
-if [ $rc -ne 0 ]; then errmsg "zvsam19c assembly/link error"; fi
-
 # GENCB test
 ${vsampath}/bash/testgncb $zvsam
 rc=$?
