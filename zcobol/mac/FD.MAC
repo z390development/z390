@@ -23,6 +23,7 @@
 .* 04/07/08 initial coding for global FD definition
 .* 10/06/08 ZSTRMAC
 .* 2023/05/12 &FILE_xxx(&PARM_IX) -> &FILE_xxx(&FILE_IX)
+.* 05/23/26 #808     WRITE statement not handling AFTER/BEFORE
 .*********************************************************************
 .* Generate file definition using file data from SELECT in ZC_FD.CPY
 .*********************************************************************
@@ -141,6 +142,126 @@
               AIF ('&SYSLIST(&PARM_IX)' EQ 'OMITTED')
                   :&PARM_IX SETA &PARM_IX+1
               AEND
+         AELSEIF ('&SYSLIST(&PARM_IX)' EQ 'LINAGE')                     #808
+.* Handle LINAGE clause                                                 #808
+              :&PARM_IX SETA &PARM_IX+1                                 #808
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'IS')                        #808
+                  :&PARM_IX SETA &PARM_IX+1                             #808
+              AEND                                                      #808
+              :&FILE_LINAGE(&FILE_IX) SETC '&SYSLIST(&PARM_IX)'         #808
+              :&FILE_ADVANCING(&FILE_IX) SETB '1' Set advancing support #808
+              :&PARM_IX SETA &PARM_IX+1                                 #808
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'LINES')                     #808
+                  :&PARM_IX SETA &PARM_IX+1                             #808
+              AEND                                                      #808
+              AIF ('&FILE_LINAGE(&FILE_IX)' EQ '')                      #808
+                  MNOTE 8,'LINAGE clause witout value'                  #808
+              AEND                                                      #808
+              AIF ('&FILE_ORG(&FILE_IX)' NE 'LSEQ' AND '&FILE_ORG(&FILE*#808
+               _IX)' NE 'QSAM')                                         #808
+               MNOTE 8,'LINAGE clause not allowed for file with ORGANIZ*#808
+               ATON &FILE_ORG(&FILE_IX)'                                #808
+              AEND                                                      #808
+.* Check for FOOTING sub-clause                                         #808
+              :&HAVE_FOOTING SETB 0                                     #808
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'FOOTING')                   #808
+                  :&HAVE_FOOTING SETB 1                                 #808
+              AEND                                                      #808
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'WITH' AND '&SYSLIST(&PARM_I*#808
+               X+1)' EQ 'FOOTING')                                      #808
+                  :&HAVE_FOOTING SETB 1                                 #808
+              AEND                                                      #808
+              AIF (&HAVE_FOOTING)                                       #808
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'WITH')                  #808
+                      :&PARM_IX SETA &PARM_IX+1                         #808
+                  AEND                                                  #808
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'FOOTING')               #808
+                      :&PARM_IX SETA &PARM_IX+1                         #808
+                  AEND                                                  #808
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'AT')                    #808
+                      :&PARM_IX SETA &PARM_IX+1                         #808
+                  AEND                                                  #808
+                  :&FILE_FOOTING(&FILE_IX) SETC '&SYSLIST(&PARM_IX)'    #808
+                  :&PARM_IX SETA &PARM_IX+1                             #808
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'LINES')                 #808
+                      :&PARM_IX SETA &PARM_IX+1                         #808
+                  AEND                                                  #808
+                  AIF ('&FILE_FOOTING(&FILE_IX)' EQ '')                 #808
+                      MNOTE 8,'LINAGE FOOTING clause witout value'      #808
+                  AEND                                                  #808
+              AEND                                                      #808
+.* Check for TOP sub-clause                                             #808
+              :&HAVE_TOP SETB 0                                         #808
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'TOP')                       #808
+                  :&HAVE_TOP SETB 1                                     #808
+              AEND                                                      #808
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'LINES' AND '&SYSLIST(&PARM_*#808
+               IX+1)' EQ 'TOP')                                         #808
+                  :&HAVE_TOP SETB 1                                     #808
+              AEND                                                      #808
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'AT' AND '&SYSLIST(&PARM_IX+*#808
+               1)' EQ 'TOP')                                            #808
+                  :&HAVE_TOP SETB 1                                     #808
+              AEND                                                      #808
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'LINES' AND '&SYSLIST(&PARM_*#808
+               IX+1)' EQ 'AT' AND '&SYSLIST(&PARM_IX+2)' EQ 'TOP')      #808
+                  :&HAVE_TOP SETB 1                                     #808
+              AEND                                                      #808
+              AIF (&HAVE_TOP)                                           #808
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'LINES')                 #808
+                      :&PARM_IX SETA &PARM_IX+1                         #808
+                  AEND                                                  #808
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'AT')                    #808
+                      :&PARM_IX SETA &PARM_IX+1                         #808
+                  AEND                                                  #808
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'TOP')                   #808
+                      :&PARM_IX SETA &PARM_IX+1                         #808
+                  AEND                                                  #808
+                  :&FILE_TOP(&FILE_IX) SETC '&SYSLIST(&PARM_IX)'        #808
+                  :&PARM_IX SETA &PARM_IX+1                             #808
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'LINES')                 #808
+                      :&PARM_IX SETA &PARM_IX+1                         #808
+                  AEND                                                  #808
+                  AIF ('&FILE_TOP(&FILE_IX)' EQ '')                     #808
+                      MNOTE 8,'LINAGE TOP clause witout value'          #808
+                  AEND                                                  #808
+              AEND                                                      #808
+.* Check for BOTTOM sub-clause                                          #808
+              :&HAVE_BOTTOM SETB 0                                      #808
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'BOTTOM')                    #808
+                  :&HAVE_BOTTOM SETB 1                                  #808
+              AEND                                                      #808
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'LINES' AND '&SYSLIST(&PARM_*#808
+               IX+1)' EQ 'BOTTOM')                                      #808
+                  :&HAVE_BOTTOM SETB 1                                  #808
+              AEND                                                      #808
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'AT' AND '&SYSLIST(&PARM_IX+*#808
+               1)' EQ 'BOTTOM')                                         #808
+                  :&HAVE_BOTTOM SETB 1                                  #808
+              AEND                                                      #808
+              AIF ('&SYSLIST(&PARM_IX)' EQ 'LINES' AND '&SYSLIST(&PARM_*#808
+               IX+1)' EQ 'AT' AND '&SYSLIST(&PARM_IX+2)' EQ 'BOTTOM')   #808
+                  :&HAVE_BOTTOM SETB 1                                  #808
+              AEND                                                      #808
+              AIF (&HAVE_BOTTOM)                                        #808
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'LINES')                 #808
+                      :&PARM_IX SETA &PARM_IX+1                         #808
+                  AEND                                                  #808
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'AT')                    #808
+                      :&PARM_IX SETA &PARM_IX+1                         #808
+                  AEND                                                  #808
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'BOTTOM')                #808
+                      :&PARM_IX SETA &PARM_IX+1                         #808
+                  AEND                                                  #808
+                  :&FILE_BOTTOM(&FILE_IX) SETC '&SYSLIST(&PARM_IX)'     #808
+                  :&PARM_IX SETA &PARM_IX+1                             #808
+                  AIF ('&SYSLIST(&PARM_IX)' EQ 'LINES')                 #808
+                      :&PARM_IX SETA &PARM_IX+1                         #808
+                  AEND                                                  #808
+                  AIF ('&FILE_BOTTOM(&FILE_IX)' EQ '')                  #808
+                      MNOTE 8,'LINAGE BOTTOM clause witout value'       #808
+                  AEND                                                  #808
+              AEND                                                      #808
          AELSE
               MNOTE 8,'FD OPTION NOT SUPPORTED - &SYSLIST(&PARM_IX)'
               :&PARM_IX SETA N'&SYSLIST+1
