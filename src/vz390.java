@@ -1064,7 +1064,6 @@ public class vz390 {
      */
     private void init_vclr_fields() {            // is476
         //cur_vclr_addr = 0;
-
         cur_vclr_id = null;
         cur_vcdt_name = null;
         cur_vclr_type = null;
@@ -1087,7 +1086,6 @@ public class vz390 {
      */
     private void init_vaix_fields() {            // is476
         cur_vaix_addr = 0;
-
         cur_vaix_id = null;
         cur_vaix_name = null;
         cur_vaix_reln = null;
@@ -1099,12 +1097,12 @@ public class vz390 {
     }
 
 
+
     /**
      * Initialize VPTH fields
      */
     private void init_vpth_fields() {            // is476
         //cur_vpth_addr = 0;
-
         cur_vpth_id = null;
         cur_vpth_name = null;
         cur_vpth_entn = null;
