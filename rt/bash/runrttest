@@ -19,6 +19,18 @@ bash/asmlg rt/test/TESTCAL1 notiming stats bal noloadhigh
 bash/asmlg rt/test/TESTCAL2 notiming stats bal noloadhigh
 bash/asmlg rt/test/TESTCDE1 notiming stats bal noloadhigh
 bash/asmlg rt/test/TESTCFD1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTCPY1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTCPY2 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTCTD1 notiming stats bal noloadhigh
+# Compare program WTO lines only (drop EZ390 header/trailer, license, wrapped SYSMAC)
+grep -vE 'EZ390|ABSOLUTELY NO WARRANTY|This is free software|under certain conditions|SYSMAC\(' \
+    rt/test/TESTCTD1.LOG | tr -d '\r' | diff - <(tr -d '\r' < rt/test/TESTCTD1.TF1) || exit 1
+
+bash/asmlg rt/test/TESTCVB1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTCVBG notiming stats bal noloadhigh
+
+
+
 
 bash/asml  rt/test/TESTSUB1 notiming stats bal
 

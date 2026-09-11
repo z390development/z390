@@ -23,6 +23,21 @@ call bat\ASMLG %z_TraceMode% rt\test\TESTCAL1 notiming stats bal noloadhigh %1 %
 call bat\ASMLG %z_TraceMode% rt\test\TESTCAL2 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% rt\test\TESTCDE1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\ASMLG %z_TraceMode% rt\test\TESTCFD1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% rt\test\TESTCPY1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% rt\test\TESTCPY2 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+
+rem TESTCTD1 writes WTO lines we need to compare against reference file TESTCTD1.TF1
+call bat\ASMLG %z_TraceMode% rt\test\TESTCTD1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+findstr /v /c:"EZ390" /c:"ABSOLUTELY NO WARRANTY" /c:"This is free software" /c:"under certain conditions" /c:"SYSMAC(" rt\test\TESTCTD1.LOG > rt\test\TESTCTD1.TMP
+fc rt\test\TESTCTD1.TMP rt\test\TESTCTD1.TF1 > nul || goto error
+del rt\test\TESTCTD1.TMP
+
+call bat\ASMLG %z_TraceMode% rt\test\TESTCVB1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\ASMLG %z_TraceMode% rt\test\TESTCVBG notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+
+
+
+
 
 call bat\ASML  %z_TraceMode% rt\test\TESTSUB1 notiming stats bal            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 
