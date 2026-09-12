@@ -35,6 +35,7 @@ if [ $ec -ne 0 ]; then echo "bldjar: Error compiling Java sources"; exit $ec; fi
 
 # create z390.properties file
 ../bash/relver $1
+ec=$?
 if [ $ec -ne 0 ]; then echo "bldjar: Error finding z390 version number"; exit $ec; fi
 
 # build z390.jar with the JDK jar utility
