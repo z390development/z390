@@ -3,20 +3,40 @@ package org.z390.test
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
-
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.TestInstance.Lifecycle
 import static org.junit.jupiter.api.DynamicTest.dynamicTest
 
+@TestInstance(Lifecycle.PER_CLASS)
 class RunVsam2 extends z390Test {
 
     var options = ['trace', 'noloadhigh', 'zvsam(2)', "SYSMAC(${basePath("mac")})", "SYSCPY(${basePath("mac")})"]
     var sys390 = "SYS390(${basePath('vsam2', 'mlc')}+${basePath('linklib')})"
-    var zreproRunOpts = ['DUMP', 'zVSAM(2)', 'STATS', 'noloadhigh', sys390]
+    var linklib390 = "SYS390(${basePath('linklib')})"
+    var zreproRunOpts  = ['DUMP', 'zVSAM(2)', 'STATS', 'noloadhigh', sys390]
     // Absolute: Groovy File I/O (JUnit CWD is still z390test/)
     var dataDirAbs = basePath('vsam2', 'data')
     // Relative to repo root: ez390 env (callZ390 workdir = project_root)
     var catRel = pathJoin('vsam2', 'mlc')
     var dataRel = pathJoin('vsam2', 'data')
     var zrepro = basePath('vsam2', 'mlc', 'ZREPRO')
+
+    @BeforeAll
+    void buildVsam2Tools() {
+        // Same three steps as vsam2/bat/BLDVSAM.BAT (until dist includes them)
+        int rc = this.asml(basePath('vsam2', 'mlc', 'ZREPRO'), *options, linklib390, 'zVSAM(1)', 'stats')
+        this.printOutput('buildVsam2Tools ZREPRO')
+        assert rc == 0, "ZREPRO asml failed rc=${rc}"
+        
+        rc = this.asml(basePath('vsam2', 'mlc', 'ZVSAM19C'), *options, linklib390, 'zVSAM(2)', 'stats')
+        this.printOutput('buildVsam2Tools ZVSAM19C')
+        assert rc == 0, "ZVSAM19C asml failed rc=${rc}"
+        
+        rc = this.asml(basePath('vsam2', 'mlc', 'Z390CAT2'), *options, sys390, 'zVSAM(2)', 'stats')
+        this.printOutput('buildVsam2Tools Z390CAT2')
+        assert rc == 0, "Z390CAT2 asml failed rc=${rc}"
+    }
 
     @Test
     void test_TESTGNCB() {
