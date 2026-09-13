@@ -42,6 +42,11 @@
 *                                                                     *
 * Rewrite for zVSAM V2                                                *
 ***********************************************************************
+*                                                                     *
+* Maintenance log                                                     *
+* 2026-09-09 #930 add / as a valid separator                          *
+*                                                                     *
+***********************************************************************
 * zREPRO SPECIFICATION:
 *
 * THE QSAM FILE MAY HAVE OVERRIDE RECFM, ONLY [RECFM=FT] OR [RECFM=VT]
@@ -3551,8 +3556,11 @@ DODPAT   DS    0H
          JNE   DODPTERR           ERROR IF NOT
 BSLOOP1  DS    0H
          AHI   R1,-1              SCAN BACK
-         CLI   0(R1),C'\'         BACKSLASH ?
+         CLI   0(R1),C'\'         BACKSLASH ? (for Win/Dos)             #930
+         JE    BSLOOP1_FOUND      Exit LOOP if true                     #930
+         CLI   0(R1),C'/'         Forward slash? (for Mac/Linux)        #930
          JNE   BSLOOP1            LOOP IF NOT
+BSLOOP1_FOUND  EQU *              We found a separator                  #930
          LA    R2,VSAMDTAO        R2=OUTPUT DATA CLUSTER PATH
          SR    R1,R2              R1=CLUSTER PATH LENGTH
          AHI   R1,2               +2 FOR LENGTH
@@ -3612,8 +3620,11 @@ DOXPAT   DS    0H
          JNE   DOXPTERR           ERROR IF NOT
 BSLOOP4  DS    0H
          AHI   R1,-1              SCAN BACK
-         CLI   0(R1),C'\'         BACKSLASH ?
+         CLI   0(R1),C'\'         BACKSLASH ? (for Win/Dos)             #930
+         JE    BSLOOP4_FOUND      Exit LOOP if true                     #930
+         CLI   0(R1),C'/'         Forward slash? (for Mac/Linux)        #930
          JNE   BSLOOP4            LOOP IF NOT
+BSLOOP4_FOUND  EQU *              We found a separator                  #930
          LA    R2,VSAMIDXO        R2=OUTPUT INDEX PATH
          SR    R1,R2              R1=INDEX PATH LENGTH
          AHI   R1,2               +2 FOR LENGTH
@@ -3714,8 +3725,12 @@ PROCVSAM DS    0H
          LR    R15,R1             R15=DOT ADDRESS
 PROCVLP2 DS    0H
          AHI   R15,-1             SCAN BACK
-         CLI   0(R15),C'\'        BACKSLASH ?
+         CLI   0(R15),C'\'        BACKSLASH ? (for Win/Dos)             #930
+         JE    PROCVLP2_FOUND     Exit LOOP if true                     #930
+         CLI   0(R15),C'/'        Forward slash? (for Mac/Linux)        #930
          JNE   PROCVLP2           LOOP IF NOT
+PROCVLP2_FOUND EQU *              We found a separator                  #930
+         MVC   SEPARATOR,0(R15)   Save preferred separator for reuse    #930
          AHI   R15,1              R15 POINTS TO CATALOG NAME
          LR    R8,R15             SAVE IT
          SR    R1,R15             R1=LENGTH OF CATALOG NAME
@@ -3754,7 +3769,16 @@ VSAMCATM DS    0H
          AHI   R1,1               BUMP OUTPUT POINTER
          CLI   0(R8),0            STOPPER ?
          JNE   VSAMCATM           LOOP IF NOT
-         MVI   0(R1),C'\'         APPEND \
+* Add separator, unless we already have one                             #930
+         BCTR  R1,0               Point last valid character            #930
+         CLI   0(R1),C'/'         Separator for Linux/Mac               #930
+         JE    VSAMCATM_SEPOK     Okay - separator found                #930
+         CLI   0(R1),C'\'         Separator for Windows/Dos             #930
+         JE    VSAMCATM_SEPOK     Okay - separator found                #930
+         LA    R1,1(0,R1)         Bump R1 to stopper location           #930
+         MVC   0(1,R1),SEPARATOR  Use sparator for current OS           #930
+VSAMCATM_SEPOK EQU *              Separator already present             #930
+*                                 no action needed, R1 points separator #930
          MVC   1(8,R1),VSAMCATG   APPEND CATALOG NAME
          LA    R1,1(R1,R6)        BUMP TO END
          IIHF  R1,C!.390!         R1 HIGH=EBCDIC .390
@@ -3788,8 +3812,12 @@ VSAMGOTC DS    0H
          LR    R1,R5              R1=ENVIRONMENT VARIABLE ADDRESS
 PROCVLP3 DS    0H
          AHI   R15,-1             SCAN BACK
-         CLI   0(R15),C'\'        BACKSLASH ?
+         CLI   0(R15),C'\'        BACKSLASH ? (for Win/Dos)             #930
+         JE    PROCVLP3_FOUND     Exit LOOP if true                     #930
+         CLI   0(R15),C'/'        Forward slash? (for Mac/Linux)        #930
          JNE   PROCVLP3           LOOP IF NOT
+PROCVLP3_FOUND EQU *              We found a separator                  #930
+         MVC   SEPARATOR,0(R15)   Save preferred separator for reuse    #930
          SR    R15,R1             R15=LENGTH OF CLUSTER PATH-1
          LA    R6,VSAMDTAI        R6=INPUT DATA CLUSTER PATH
          L     R9,GETENVI         R9=INPUT ENVIRONMENT VARIABLE
@@ -3920,7 +3948,10 @@ VSAMDODT DS    0H
 VSAMBSLD DS    0H
          AHI   R5,-1              SCAN BACK
          CLI   0(R5),C'\'         BACKSLASH ?
+         JE    VSAMBSLD_FOUND     Exit LOOP if true                     #930
+         CLI   0(R5),C'/'         Forward slash? (for Mac/Linux)        #930
          JNE   VSAMBSLD           LOOP IF NOT
+VSAMBSLD_FOUND EQU *              We found a separator                  #930
          AHI   R5,1               R5=FIRST BYTE OF DATA FILE.SFX
          SR    R1,R5              R1=LENGTH
          MVI   BADFMCDE,C'9'      CODE=9 CLUSTER.SUFFIX LENGTH ERROR
@@ -3948,8 +3979,11 @@ VSAMDOIX DS    0H
          LR    R1,R5              R1=STOPPER ADDRESS
 VSAMBSLI DS    0H
          AHI   R5,-1              SCAN BACK
-         CLI   0(R5),C'\'         BACKSLASH ?
+         CLI   0(R5),C'\'         Backslash? (for Windows/Dos)          #930
+         JE    VSAMBSLI_FOUND     Exit LOOP if true                     #930
+         CLI   0(R5),C'/'         Forward slash? (for Mac/Linux)        #930
          JNE   VSAMBSLI           LOOP IF NOT
+VSAMBSLI_FOUND EQU *              We found a separator                  #930
          AHI   R5,1               R5=FIRST BYTE OF INDEX FILE.SFX
          SR    R1,R5              R1=LENGTH
          MVI   BADFMCDE,C'9'      CODE=9 CLUSTER.SUFFIX LENGTH ERROR
@@ -5009,6 +5043,7 @@ SPCEADJ  DC    XL8'00'            SPACEMAP BLOCK NUMBER ADJUST
 SPCE2BIT DC    XL8'03'            SPACEMAP BIT LOCATOR
 SPCEREGS DS    16XL4              REG SAVE AREA
 *
+SEPARATOR DC   C' '               Separator from input path             #930
 ITYPE    DC    C' '               I=INFILE O=OUTFILE A=AIX
 EOFFLAG  DC    X'00'              FE=AIX INPUT EOF BUT BUFFER HAS RECS
 *                                 FF=INPUT EOF
@@ -5961,8 +5996,16 @@ VERDVOLK DS    0H
          AHI   R5,-2-1            LENGTH-2, -1 FOR EXECUTE
          LA    R2,VERFILE         R2=PATH\FILE AREA
          EXRL  R5,VERMOVPF        MOVE PATH
-         LA    R2,1(R2,R5)        R2=POINT AFTER PATH
-         MVI   0(R2),C'\'         INSERT BACKSLASH
+         LA    R2,0(R2,R5)        R2=POINT last char of path            #930
+* Add separator, unless we already have one                             #930
+         CLI   0(R2),C'/'         Separator for Linux/Mac               #930
+         JE    VERDPATH_SEPOK     Okay - separator found                #930
+         CLI   0(R2),C'\'         Separator for Windows/Dos             #930
+         JE    VERDPATH_SEPOK     Okay - separator found                #930
+         LA    R2,1(0,R2)         Bump R2 to stopper location           #930
+         MVC   0(1,R2),SEPARATOR  Use sparator for current OS           #930
+VERDPATH_SEPOK EQU *              Separator already present             #930
+*                                 no action needed, R2 points separator #930
          AHI   R2,1               BUMP POINTER
          LH    R4,PFXDNAM@        R4=DATA FILENAME OFFSET
          AR    R4,R6              R4=DATA FILENAME POINTER
@@ -5975,6 +6018,30 @@ VERDVOLK DS    0H
          LA    R5,VERFILE         R5=PATH\FILE IN PFX
          CLST  R4,R5              MATCH ?
          JE    VERDPATK           EXIT IF IT DOES
+* Compare loop treating / and \ separators as equal                     #930
+         LA    R4,VSAMDTAI        R4=PATH\FILE OPENED                   #930
+         LA    R5,VERFILE         R5=PATH\FILE IN PFX                   #930
+VERDPATH_LOOP  EQU *                                                    #930
+         CLC   0(1,R4),0(R5)      Character matches?                    #930
+         JE    VERDPATH_NEXT      Yes: continue                         #930
+         CLI   0(R4),C'/'         valid separator?                      #930
+         JE    VERDPATH_OK1       Yes: this one's fine                  #930
+         CLI   0(R4),C'\'         valid separator?                      #930
+         JE    VERDPATH_OK1       Yes: this one's fine                  #930
+         J     VERDPATH_ERR       Not a valid separator: error          #930
+VERDPATH_OK1   EQU *                                                    #930
+         CLI   0(R5),C'/'         valid separator?                      #930
+         JE    VERDPATH_NEXT      Yes: this one's fine                  #930
+         CLI   0(R5),C'\'         valid separator?                      #930
+         JE    VERDPATH_NEXT      Yes: this one's fine                  #930
+         J     VERDPATH_ERR       Not a valid separator: error          #930
+VERDPATH_NEXT  EQU *              matching char or 2 valid separators   #930
+         CLI   0(R4),X'00'        Terminator byte?                      #930
+         JE    VERDPATK           Yes: comparison is okay               #930
+         LA    R4,1(,R4)          Bump R4                               #930
+         LA    R5,1(,R5)          Bump R5                               #930
+         J     VERDPATH_LOOP      Go compare next character             #930
+VERDPATH_ERR   EQU *                                                    #930
 * PFXDPAT@/DNAM@ IN ERROR
          MVI   WTOCOREC,C' '      CLEAR
          MVC   WTOCOREC+1(31),WTOCOREC  WTOCOREC
@@ -6716,8 +6783,16 @@ VEIXVOLK DS    0H
          AHI   R5,-2-1            LENGTH-2, -1 FOR EXECUTE
          LA    R2,VERFILE         R2=PATH\FILE AREA
          EXRL  R5,VERMOVPF        MOVE PATH
-         LA    R2,1(R2,R5)        R2=POINT AFTER PATH
-         MVI   0(R2),C'\'         INSERT BACKSLASH
+         LA    R2,0(R2,R5)        R2=POINT last char of path            #930
+* Add separator, unless we already have one                             #930
+         CLI   0(R2),C'/'         Separator for Linux/Mac               #930
+         JE    VEIXPATH_SEPOK     Okay - separator found                #930
+         CLI   0(R2),C'\'         Separator for Windows/Dos             #930
+         JE    VEIXPATH_SEPOK     Okay - separator found                #930
+         LA    R2,1(0,R2)         Bump R2 to stopper location           #930
+         MVC   0(1,R2),SEPARATOR  Use sparator for current OS           #930
+VEIXPATH_SEPOK EQU *              Separator already present             #930
+*                                 no action needed, R1 points separator #930
          AHI   R2,1               BUMP POINTER
          LH    R4,PFXXNAM@        R4=INDEX FILENAME OFFSET
          AR    R4,R6              R4=INDEX FILENAME POINTER
@@ -6730,12 +6805,36 @@ VEIXVOLK DS    0H
          LA    R5,VERFILE         R5=PATH\FILE IN PFX
          CLST  R4,R5              MATCH ?
          JE    VEIXPATK           EXIT IF IT DOES
+* Compare loop treating / and \ separators as equal                     #930
+         LA    R4,VSAMIDXI        R4=PATH\FILE OPENED                   #930
+         LA    R5,VERFILE         R5=PATH\FILE IN PFX                   #930
+VEIXPATH_LOOP  EQU *                                                    #930
+         CLC   0(1,R4),0(R5)      Character matches?                    #930
+         JE    VEIXPATH_NEXT      Yes: continue                         #930
+         CLI   0(R4),C'/'         valid separator?                      #930
+         JE    VEIXPATH_OK1       Yes: this one's fine                  #930
+         CLI   0(R4),C'\'         valid separator?                      #930
+         JE    VEIXPATH_OK1       Yes: this one's fine                  #930
+VEIXPATH_OK1   EQU *                                                    #930
+         CLI   0(R5),C'/'         valid separator?                      #930
+         JE    VEIXPATH_NEXT      Yes: this one's fine                  #930
+         CLI   0(R5),C'\'         valid separator?                      #930
+         JE    VEIXPATH_NEXT      Yes: this one's fine                  #930
+         J     VEIXPATH_ERR       Not a valid separator: error          #930
+VEIXPATH_NEXT  EQU *              matching char or 2 valid separators   #930
+         CLI   0(R4),X'00'        Terminator byte?                      #930
+         JE    VEIXPATK           Yes: comparison is okay               #930
+         LA    R4,1(,R4)          Bump R4                               #930
+         LA    R5,1(,R5)          Bump R5                               #930
+         J     VEIXPATH_LOOP      Go compare next character             #930
+VEIXPATH_ERR   EQU *                                                    #930
 * PFXXPAT@/XNAM@ IN ERROR
          MVI   WTOCOREC,C' '      CLEAR
          MVC   WTOCOREC+1(31),WTOCOREC  WTOCOREC
          LA    R5,VSAMIDXI        R5=ADDRESS OF CORRECT VALUE
 * WTO STOPS AT X'00', MUST MOVE BYTE-BY-BYTE
          LA    R1,32              R1=LOOP LIMIT
+         LA    R15,WTOCOREC       R15=WTOCOREC                          #930
 VEILOOPC DS    0H
          CLI   0(R5),0            NULL STOPPER ?
          JE    VEICORDN           EXIT IF IT IS
@@ -6749,6 +6848,7 @@ VEICORDN DS    0H
          MVC   WTOINCOR+1(31),WTOINCOR  WTOINCOR
          LA    R4,VERFILE         R4=ADDRESS OF INCORRECT VALUE
          LA    R1,32              R1=LOOP LIMIT
+         LA    R15,WTOINCOR       R15=WTOCOREC                          #930
 VEILOOPI DS    0H
          CLI   0(R4),0            NULL STOPPER ?
          JE    VEIINCDN           EXIT IF IT IS

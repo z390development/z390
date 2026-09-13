@@ -20,7 +20,7 @@ rc=0
 
 # run build TESTGNCB.390
 
-bash/asml ${vsampath}/mlc/TESTGNCB $1 $2 $3 $4 $5 $zvsam
+bash/asmlg ${vsampath}/mlc/TESTGNCB $1 $2 $3 $4 $5 $zvsam
 rc=$?
 if [ $rc -ne 0 ]; then echo "error in testgncb"; fi
 

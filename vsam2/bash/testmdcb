@@ -20,7 +20,7 @@ rc=0
 
 # run build TESTMDCB.390
 
-bash/asml ${vsampath}/mlc/TESTMDCB $1 $2 $3 $4 $5 $zvsam
+bash/asmlg ${vsampath}/mlc/TESTMDCB $1 $2 $3 $4 $5 $zvsam
 rc=$?
 if [ $rc -ne 0 ]; then echo "error in testmdcb"; fi
 
