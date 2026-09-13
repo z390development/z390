@@ -446,6 +446,7 @@ import javax.swing.JTextArea;
  * 2026-03-25 ZH  #704 Flag invalid register operands for KM, KMA, KMC
  * 2026-08-10 AFK #807 Fix issues flagged by linter
  * 2026-08-27 AFK #916 Missing break statements in case construct
+ * 2026-09-12 RJS #877 Do not display stale object code on error lines
  *****************************************************/
 
 
@@ -508,6 +509,7 @@ public  class  az390 implements Runnable {
     /** variable      */ boolean bal_label_ok = false; // RPI 451
     /** variable      */ String bal_parms = null;
     /** variable      */ boolean list_use = false;
+    /** variable      */ boolean list_line_in_error = false; // #877
     /** variable      */ int mac_inline_level = 0;      // rpi 581
     /** variable      */ int mac_inline_op_macro = 220; // rpi 581
     /** variable      */ int mac_inline_op_mend  = 221; // rpi 581
@@ -5929,16 +5931,16 @@ public  class  az390 implements Runnable {
         if (gen_obj_code) { // RPI 581
             cur_line_type     = xref_file_type[bal_line_xref_file_num[bal_line_index]];
             cur_line_file_num = bal_line_xref_file_num[bal_line_index];
-            put_prn_line(tz390.get_hex(list_obj_loc,6)
-                    + " " + list_obj_code.substring(0,16)
-                    + " " + hex_bddd1_loc
-                    + " " + hex_bddd2_loc
-                    + " " + tz390.get_cur_bal_line_id(cur_line_file_num,
-                            bal_line_xref_file_line[bal_line_index],
-                            bal_line_num[bal_line_index],
-                            mac_call_gen, // RPI 891
-                            cur_line_type)
-                    + bal_line);
+            put_prn_line((list_line_in_error ? "      " : tz390.get_hex(list_obj_loc,6)) // Conditional PC #877
+		        + " " + list_obj_code.substring(0,16) 
+		        + " " + hex_bddd1_loc 
+		        + " " + hex_bddd2_loc 
+		        + " " + tz390.get_cur_bal_line_id(cur_line_file_num,
+                    bal_line_xref_file_line[bal_line_index],
+                    bal_line_num[bal_line_index],
+                    mac_call_gen, // RPI 891 
+                    cur_line_type) 
+		        + bal_line);
         }
         force_list_bal = false;   // RPI 285
         update_list_bal_line();
@@ -8269,7 +8271,12 @@ public  class  az390 implements Runnable {
         if (gen_obj_code) { // RPI 484
             if (!mz390_abort) { // RPI 433 don't duplicate mz error line
                 force_list_bal = true;  // RPI 285
-                list_bal_line();
+                list_obj_code = "";             // #877
+                hex_bddd1_loc = "      ";       // #877
+                hex_bddd2_loc = "      ";       // #877
+                list_line_in_error = true;      // Take the error path in list_bal_line() #877
+			    list_bal_line();                // #877
+                list_line_in_error = false;     // Reset the flag #877
             }
             force_list_bal = true;  // RPI 285
             set_file_line_xref();
