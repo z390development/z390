@@ -23,7 +23,7 @@ class RunRtTest extends z390Test {
         var tests = []
         var modules = [
                 'TESTACT1', 'TESTAIN1', 'TESTAIN2', 'TESTAIN3', 'TESTASM1', 'TESTASM2', 'TESTCAL1', 'TESTCAL2',
-                'TESTCFD1'
+                'TESTCFD1', 'TESTCPY1', 'TESTCPY2', 'TESTCVB1', 'TESTCVBG'
         ]
         modules.each {
             module -> tests.add(
@@ -59,6 +59,18 @@ class RunRtTest extends z390Test {
         def actual   = extractSnapLines(fileData.get('LOG'))     // actual SNAP lines
         assert expected == actual
     }
+
+    @Test
+    void test_TESTCTD1() {
+        int rc = this.asmlg(basePath("rt", "test", "TESTCTD1"), *options)
+        this.printOutput()
+        assert rc == 0
+        loadFile(basePath('rt', 'test', "TESTCTD1.TF1"), 'TF1')
+        def expected = fileData.get('TF1').readLines()
+        def actual   = extractProgramLogLines(fileData.get('LOG'))
+        assert expected == actual, "TESTCTD1.LOG WTO lines differ from TESTCTD1.TF1"
+    }
+
 
 
 
