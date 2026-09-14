@@ -5,7 +5,9 @@ import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.Test
 
 import static org.junit.jupiter.api.DynamicTest.dynamicTest
+import org.junit.jupiter.api.Tag
 
+@Tag("optional")
 class RunMfAcc extends z390Test{
 
     var options  = ['noloadhigh bal notiming stats', "SYSMAC(+${basePath('mac')})", "SYSCPY(+${basePath('mfacc')}+${basePath('mac')})", "SYSOBJ(+${basePath('linklib')})"]

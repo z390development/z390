@@ -19,9 +19,9 @@ rem build the package -- %1 might be *ALL to include non-standard components in 
 call bat\BLDDIST.BAT %z_TraceMode% %*           || goto error
 call bat\IVP.BAT     %z_TraceMode% %*           || goto error
 
-rem run the tests
-call z390test\gradlew.bat -p z390test cleanTest || goto error
-call z390test\gradlew.bat -p z390test test      || goto error
+rem run the tests - include the optional tests only when *All is in effect
+if /I %1. == *All. (set opt=cleanOptionalTest optionalTest) else (set opt=)
+call z390test\gradlew.bat -p z390test cleanTest test %opt% || goto error
 
 rem if NIST was specified, it must be followed by the NIST repository's path
 if /I %1. == nist. call bat\RUNNIST.BAT %z_TraceMode% %2

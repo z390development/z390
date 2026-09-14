@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# runtest: run a regression test using gradle
+
+# Optional trace mode (parity with bat\RUNTEST.BAT tron/troff)
+if [ "$1" = "tron" ]; then
+  set -x
+  shift
+elif [ "$1" = "troff" ]; then
+  set +x
+  shift
+fi
+
+# switch to z390test folder
+cd "$(dirname "$0")/../z390test"
+
+# For optional tests, a different test procedure must be specified
+testproc=test
+if [ -n "$1" ]; then
+  groovy_file="src/test/groovy/org/z390/test/${1}.groovy"
+  if [ -f "$groovy_file" ] && grep -qF '@Tag("optional")' "$groovy_file"; then
+    testproc=optionalTest
+  fi
+fi
+
+# execute the tests
+if [ $# -eq 0 ]; then
+  ./gradlew "$testproc" --rerun
+else
+  ./gradlew "$testproc" --rerun --tests "$@"
+fi
+
+exit $?
