@@ -5976,15 +5976,15 @@ public  class  az390 implements Runnable {
             cur_line_type     = xref_file_type[bal_line_xref_file_num[bal_line_index]];
             cur_line_file_num = bal_line_xref_file_num[bal_line_index];
             put_prn_line((list_line_in_error ? "      " : tz390.get_hex(list_obj_loc,6)) // Conditional PC #877
-		        + " " + list_obj_code.substring(0,16) 
-		        + " " + hex_bddd1_loc 
-		        + " " + hex_bddd2_loc 
-		        + " " + tz390.get_cur_bal_line_id(cur_line_file_num,
+                + " " + list_obj_code.substring(0,16)
+                + " " + hex_bddd1_loc
+                + " " + hex_bddd2_loc
+                + " " + tz390.get_cur_bal_line_id(cur_line_file_num,
                     bal_line_xref_file_line[bal_line_index],
                     bal_line_num[bal_line_index],
-                    mac_call_gen, // RPI 891 
-                    cur_line_type) 
-		        + bal_line);
+                    mac_call_gen, // RPI 891
+                    cur_line_type)
+                + bal_line);
         }
         force_list_bal = false;   // RPI 285
         update_list_bal_line();
@@ -8320,7 +8320,7 @@ public  class  az390 implements Runnable {
                 hex_bddd1_loc = "      ";       // #877
                 hex_bddd2_loc = "      ";       // #877
                 list_line_in_error = true;      // Take the error path in list_bal_line() #877
-			    list_bal_line();                // #877
+                list_bal_line();                // #877
                 list_line_in_error = false;     // Reset the flag #877
             }
             force_list_bal = true;  // RPI 285
