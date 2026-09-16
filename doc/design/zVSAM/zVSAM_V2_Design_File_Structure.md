@@ -237,16 +237,17 @@ There are 7 types of blocks that may occur in zVSAM files:
 6. Free block - used to hold free space
 7. Raw block – used to hold a block's worth of LDS data
 
-Every block, except a raw block, has an internal structure consisting of a block header,
+Every block, except raw blocks, has an internal structure consisting of a block header,
 a block body and a block footer. The block header and footer have a fixed structure.
 The content of the block body differs by block type.
 
-- for a Prefix block, the block body contains the prefix area, the counters area, and possibly free space
+- for a Prefix block, the block body contains the prefix area, the counters area, and possibly a RRN translation map and free space
 - for a Spacemap block, the block body contains the spacemap data
 - for a Data block, the block body contains a variable-length list of record pointers, data records, and possibly free space
 - for a Segment block, the block body contains a single Segment and possibly free space
 - for an Index block, the block body contains a variable-length list of record pointers, index entries, and possibly free space
 - for a Free block, the block body is all free space
+- for a Raw block, the entire block is data, no footer, no header, no chains
 
 Raw blocks have no internal structure, as far as zVSAM is concerned.
 Any and all internal structure(s) in an LDS are to be maintained by the application program.
@@ -254,38 +255,35 @@ Each of the 7 block types is explained in more detail below.
 
 Not all block types occur in all file types. The relation is as follows:
 
-| File Type  | Prefix | Spacemap | Data  | Segment | Index | Free       | Raw   |
-|------------|--------|----------|-------|---------|-------|------------|-------|
-| ESDS       | Y      | Y        | Y     | Opt     | N     | allow mode | N     |
-| KSDS-data  | Y      | Y        | Y     | Opt     | N     | Opt        | N     |
-| KSDS-index | Y      | Y        | N     | Y       | Y     | Opt        | N     |
-| RRDS       | Y      | Y        | Y     | Opt     | N     | Opt        | N     |
-| AIX-data   | Y      | Y        | Y     | Opt     | N     | Opt        | N     |
-| AIX-index  | Y      | Y        | N     | Y       | Y     | Opt        | N     |
-| LDS        | Y      | N        | N     | N       | N     | N          | Y     |
+| File Type  | Prefix | Spacemap | Data  | Segment | Index | Free       | Raw   | Undefined |
+|------------|--------|----------|-------|---------|-------|------------|-------|-----------|
+| ESDS       | Y      | Y        | Y     | Opt     | N     | allow mode | N     | Y         |
+| KSDS-data  | Y      | Y        | Y     | Opt     | N     | Opt        | N     | Y         |
+| KSDS-index | Y      | Y        | N     | Y       | Y     | Opt        | N     | Y         |
+| RRDS       | Y      | Y        | Y     | Opt     | N     | Opt        | N     | Y         |
+| AIX-data   | Y      | Y        | Y     | Opt     | N     | Opt        | N     | Y         |
+| AIX-index  | Y      | Y        | N     | Y       | Y     | Opt        | N     | Y         |
+| LDS        | Y      | N        | N     | N       | N     | N          | Y     | Y         |
 
 > [!NOTE]
 > 1. IBM VSAM does not support free pages in an ESDS, or an RRDS with Fixed or Fixed-Spanned records.
 >    zVSAM - when in allow mode - does support free pages on ESDS and all types of RRDS clusters.
 > 2. Segment and Free blocks are not required, but may optionally occur in the indicated cluster components.
-> 3. Free blocks are not on any chain. The block headers's chain info is invalid by definition.
+> 3. Free blocks are not on any chain. The block headers's chain info is invalid by definition. Free blocks can be found through the spacemap page only.
+> 4. Raw blocks are not on any chain. The blocks have neither headers nor footer. Raw blocks can be found through the spacemap page only.
 
 The following table summarizes the way that blocks in the file are chained from the prefix block.
 Please note that the Prefix block does not reside on any chain.
 
-> [!NOTE]
-> Free blocks do not reside on any chain - they aer managed from the Spacemap blocks,
-> which **are** chained.
-
-| Block Type | Begin of chain | End of chain |
-|------------|----------------|--------------|
-| Prefix     | foxes          | foxes        |
-| Spacemap   | `PFXBMAP`      | `PFXEMAP`    |
-| Data       | `PFXBDATA`     | `PFXEDATA`   |
-| Segment    | `PFXBSEGM`     | `PFXESEGM`   |
-| Index      | `PFXBLVLn`     | `PFXELVLn`   |
-| Free       | n.a.           | n.a.         |
-| Raw        | n.a.           | n.a.         |
+| Block Type | Begin of chain | End of chain | Notes                     |
+|------------|----------------|--------------|---------------------------|
+| Prefix     | foxes          | foxes        | Always at start of file   |
+| Spacemap   | `PFXBMAP`      | `PFXEMAP`    |                           |
+| Data       | `PFXBDATA`     | `PFXEDATA`   |                           |
+| Segment    | `PFXBSEGM`     | `PFXESEGM`   |                           |
+| Index      | `PFXBLVLn`     | `PFXELVLn`   |                           |
+| Free       | n.a.           | n.a.         | Spacemap-governed         |
+| Raw        | n.a.           | n.a.         | Spacemap-governed         |
 
 For index blocks, there are 16 levels of index - the `n` in
 `PFXBLVLn` and `PFXELVLn` ranges from 0 through F.
@@ -299,7 +297,7 @@ With the exception of Raw Blocks, all blocks have internal structure elements, s
 - data records
 - free space
 
-All Blocks (except Prefix Block and Raw Blocks) are chained into a chain which is anchored in the Prefix Block.
+All Blocks (except Prefix Block, Free Blocks and Raw Blocks) are chained into a chain which is anchored in the Prefix Block.
 The type of Block determines on which chain it resides:
 - Spacemap Chain
 - Data Chain (data blocks, with the exception of non-first segment blocks)
@@ -320,9 +318,12 @@ Not all structure elements occur in all Block types. The relation is as follows:
 | Free Space          | Opt    | N        | Opt  | Opt     | Opt   | Y            | N   |
 | Prefix Area         | Y      | N        | N    | N       | N     | N            | N   |
 | Counters Area       | Y      | N        | N    | N       | N     | N            | N   |
+| RRN map             | RRDS   | N        | N    | N       | N     | N            | N   |
 | Spacemap            | N      | Y        | N    | N       | N     | N            | N   |
 
-Note: `Opt` indicates that Free Space is an optional element on the indicated block type.
+Notes:
+1. `Opt` indicates that Free Space is an optional element on the indicated block type.
+2. An RRN map is present in the Prefix Block of a RRDS cluster only.
 
 ### ESDS Data Organization
 
@@ -392,13 +393,19 @@ LVL1 chain
 
 ![Diagram showing layout of a Leaf Index Block](img/zVSAM_V2_Drawing_Block_Type_Index_Leaf.jpg)
 
+Note how each index record points to a data record. It contains the record's key (shown in the drawing)
+and its XLRA (not shown in the drawing).
+
 #### Index Block other levels
 
 ![Diagram showing layout of a Non-Leaf Index Block](img/zVSAM_V2_Drawing_Block_Type_Index_NLeaf.jpg)
 
+Note how each index record points to an index data block in the next layer of the index.
+Each index record contains that block's highest key (shown in the drawing)
+and its XLRA (not shown in the drawing).
+
 It is possible to reserve an amount of freespace at load time which also applies if a block is split.
 It is specified in the catalog as `INDEXFREESPACE=nn`, where nn is a percentage of the available space.
-Only a fixed non-spanned KSDS can specify free space.
 
 For all types of fixed non-spanned datasets, the available space may not be a multiple of the index record size
 resulting in unusable space. To correct this use `INDEXADJUST=YES` which will calculate an optimal
@@ -406,8 +413,16 @@ blocksize less than the specified one.
 
 ### RRDS Data Organization
 
+A RRDS data component consists of a Prefix block and a Spacemap block followed by Data blocks and Segment blocks as needed.
+When the file grows additional Spacemap blocks are added when needed. Not only block transitions, but also
+the presence of additional Spacemap blocks and/or Segment blocks cause gaps in the XLRA sequence.
+
+Segment blocks and Free blocks are not required, but may be present in the file.
+
+![Diagram showing Blocks in a KSDS Data component](img/zVSAM_V2_File_RRDS.jpg)
+
 > [!NOTE]
-> this paragraph still needs to be created, including a drawing.
+> The prefix block contains control information for mapping a record's RRN to its XLRA.
 
 ### AIX Data Organization
 
@@ -425,7 +440,7 @@ AIX unique records have the following format:
 
 | AIX on ... | Record Content                  |
 |------------|---------------------------------|
-| ESDS       | AIX key followed by XRBA(8)     |
+| ESDS       | AIX key followed by XLRA(8)     |
 | KSDS       | AIX key followed by primary key |
 | RRDS       | AIX key followed by RRN         |
 
