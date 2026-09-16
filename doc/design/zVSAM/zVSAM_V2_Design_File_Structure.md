@@ -333,7 +333,57 @@ the presence of additional Spacemap blocks cause gaps in the XLRA sequence.
 
 Segment blocks and Free blocks are not required, but may be present in the file.
 
+Although records in an ESDS are written sequentially, an overflow data block can be created when:
+- an update lengthens a variable-length record to exceed block capacity. The excess data is placed on an overflow data block.
+
+Segment blocks are created when:
+- in an FS-type or VS-type ESDS a record is written that exceeds the capacity of its containing block.
+- in an V-type or VS-type ESDS a record is lengthened causing it to exceed the capacity of its containing block.
+
+Free blocks are created when:
+- a segmented record is deleted; deletion is possible only in allow mode.
+- data on an overflow data block is shortened or deleted; deletion is possible only in allow mode.
+
+The following figure shows a contrived example of how the different types of blocks might sit in the physical file:
+
 ![Diagram showing Blocks in an ESDS](img/zVSAM_V2_File_ESDS.jpg)
+
+### Data Block Chain Organization for unspanned records
+
+Assume we have a cluster with three data blocks holding unsegmented records.
+The blocks are on the data chain as outlined in the picture below. Please note that all depicted pointers are block pointers.
+Each pointer thus originates with the indicated field, and ends at the block it points to.
+The location where the arrows attach has no meaning since it's a block pointer.
+
+![Diagram showing layout of a Data Block Chain without spanned records](img/zVSAM_V2_Chain_Unsegmented_Data_Blocks.jpg)
+
+Note: the structure of the Data Chain is the same for ESDS, KSDS data component, RRDS, and AIX data component.
+
+> [!NOTE]
+> The chain of spacemap blocks is structurally identical to the data block chain fo unspanned records.
+> It is anchored on the prefix area's `PFXBMAP` and `PFXEMAP` fields.
+
+### Data Block Chain Organization for spanned records
+
+Now suppose we have a cluster with three data blocks, the first block holding two unsegmented records, the
+second block holding the first segment of a record consisting of three segments and the third block holding
+the first segment of a record consisting of two segments.
+
+In the picture we show the data chain as a solid line (as in the picture above), we show the segment chain as a
+dotted line, and we show the SPX s as a fat line.
+
+The picture shows the prefix area's pointer to start/end block of both the data chain and the segment chain.
+It also shows the first and second block on each chain pointing to one another.
+Same thing for the second and third block on each chain.
+
+The picture also shows that the SPX only occurs on the first segment of each segmented record.
+
+All depicted pointers are block pointers. Each pointer originates with the indicated field,
+and ends at the block it points to. The location where the arrows attach has no meaning since it's a block pointer.
+
+![Diagram showing layout of a Segmented Data Block Chain](img/zVSAM_V2_Chain_Segmented_Data_Blocks.jpg)
+
+Note: the structure of the Data Chain and Segment chain are the same for ESDS, KSDS data component, RRDS, and AIX data component.
 
 ### KSDS Data Organization
 
@@ -343,7 +393,26 @@ the presence of additional Spacemap blocks cause gaps in the XLRA sequence.
 
 Segment blocks and Free blocks are not required, but may be present in the file.
 
+Data records are written on the data block where they logically belong. A data block is split when:
+- a record is added that does not fit on the block
+- a variable-length record is updated so that it no longer fits on the block
+- a record must be added, but the record pointer list is exhausted; that is: no valid XLRA value is available on the block
+
+Segment blocks are created when:
+- in an FS-type or VS-type KSDS a record is written that exceeds the capacity of its containing block.
+- in a V-type or VS-type KSDS a record is lengthened causing it to exceed the capacity of its containing block.
+
+Free blocks are created when:
+- a segmented record is deleted
+- all data on a data block is deleted
+
+The following figure shows a contrived example of how the different types of blocks might sit in the physical file:
+
 ![Diagram showing Blocks in a KSDS Data component](img/zVSAM_V2_File_KSDS_Data.jpg)
+
+Data Block Chain Organization for a KSDS is no different than it is for an ESDS or RRDS.
+Please see [Data Block Chain Organization for unspanned records](#data-block-chain-organization-for-unspanned-records)
+and [Data Block Chain Organization for spanned records](#data-block-chain-organization-for-spanned-records) above.
 
 ### KSDS Index Organization
 
@@ -351,6 +420,15 @@ A KSDS index component consists of a Prefix block and a Spacemap block followed 
 When the file grows additional Spacemap blocks are added when needed.
 
 Free blocks are not required, but may be present in the file.
+
+Index entries are written on the index block where they logically belong. An index block is split when:
+- an entry is added that does not fit on the block
+- an entry must be added, but the record pointer list is exhausted; that is: no valid XLRA value is available on the block
+
+Free blocks are created when:
+- deletion of a data record causes the number of index entries on an index block to drop to zero.
+
+The following figure shows a contrived example of how the different types of blocks might sit in the physical file:
 
 ![Diagram showing Blocks in a KSDS Index component](img/zVSAM_V2_File_KSDS_Index.jpg)
 
@@ -391,14 +469,14 @@ LVL1 chain
 
 #### Index Block Level 0
 
-![Diagram showing layout of a Leaf Index Block](img/zVSAM_V2_Drawing_Block_Type_Index_Leaf.jpg)
+![Diagram showing layout of a Leaf Index Block](img/zVSAM_V2_Block_Type_Index_Leaf.jpg)
 
 Note how each index record points to a data record. It contains the record's key (shown in the drawing)
 and its XLRA (not shown in the drawing).
 
 #### Index Block other levels
 
-![Diagram showing layout of a Non-Leaf Index Block](img/zVSAM_V2_Drawing_Block_Type_Index_NLeaf.jpg)
+![Diagram showing layout of a Non-Leaf Index Block](img/zVSAM_V2_Block_Type_Index_NLeaf.jpg)
 
 Note how each index record points to an index data block in the next layer of the index.
 Each index record contains that block's highest key (shown in the drawing)
@@ -413,18 +491,40 @@ blocksize less than the specified one.
 
 ### RRDS Data Organization
 
-A RRDS data component consists of a Prefix block and a Spacemap block followed by Data blocks and Segment blocks as needed.
+A RRDS data component consists of a Prefix block and a Spacemap block followed by Data blocks and possibly Segment blocks as needed.
 When the file grows additional Spacemap blocks are added when needed. Not only block transitions, but also
 the presence of additional Spacemap blocks and/or Segment blocks cause gaps in the XLRA sequence.
 
 Segment blocks and Free blocks are not required, but may be present in the file.
+
+Data blocks are created when:
+- a record is written with an RRN that exceeds the highest allocated RRN.
+
+Although records in an RRDS are written to pre-allocated slots, an overflow data block can be created when:
+- an update lengthens a variable-length record to exceed block capacity. The excess data is placed on an overflow data block.
+
+Segment blocks are created when:
+- in an FS-type or VS-type RRDS a record is written that exceeds the capacity of its containing block.
+- in a V-type or VS-type RRDS a record is lengthened causing it to exceed the capacity of its containing block.
+
+Free blocks are created when:
+- a segmented record is deleted
+- all data on a data block is deleted
+
+The following figure shows a contrived example of how the different types of blocks might sit in the physical file:
 
 ![Diagram showing Blocks in a KSDS Data component](img/zVSAM_V2_File_RRDS.jpg)
 
 > [!NOTE]
 > The prefix block contains control information for mapping a record's RRN to its XLRA.
 
+Data Block Chain Organization for a RRDS is no different than it is for an ESDS or KSDS data component.
+Please see [Data Block Chain Organization for unspanned records](#data-block-chain-organization-for-unspanned-records)
+and [Data Block Chain Organization for spanned records](#data-block-chain-organization-for-spanned-records) above.
+
 ### AIX Data Organization
+
+**!!
 
 AIX data records for a Unique Alternate Index have fixed-length records.
 The AIX cluster is mostly treated as a KSDS with a record type of F.
@@ -443,6 +543,8 @@ AIX unique records have the following format:
 | ESDS       | AIX key followed by XLRA(8)     |
 | KSDS       | AIX key followed by primary key |
 | RRDS       | AIX key followed by RRN         |
+| LDS        | not supported                   |
+| AIX        | not supported                   |
 
 AIX non-unique records have the following format:
 
@@ -451,6 +553,8 @@ AIX non-unique records have the following format:
 | ESDS       | AIX key followed by 1 or more XRBA(8) values |
 | KSDS       | AIX key followed by 1 or more primary keys   |
 | RRDS       | AIX key followed by 1 or more RRN values     |
+| LDS        | not supported                                |
+| AIX        | not supported                                |
 
 The diagram below shows how AIX data blocks are chained in a Unique AIX's data component.
 
@@ -1149,6 +1253,8 @@ The addenda part of this document contains more details on the [prefix area](zVS
 The addenda part of this document contains more details on the [counters area](zVSAM_V2_Design_Addenda.md.md#counters-area)
 and its maintenance.
 
+### RRN map
+
 ### Spacemap
 
 Spacemap blocks (`ZVSAMMAP`) are used to manage available free space in a component.
@@ -1217,46 +1323,3 @@ Free space on any block is maintained in a single extent, usually but not necess
 Additionally, there may be empty records on the block. These are marked with the `RPTR_MTY` bit in their RPTR list entry.
 These empty record slots are available for reuse and may (if needed) be merged with each other and with the available
 free space on the block to create a larger area of free space to satisfy an allocation request.
-
-#### Data Block Structure (SPANNED=NO)
-
-Assume we have a cluster with three data blocks holding unsegmented records.
-The blocks are on the data chain as outlined in the picture below. Please note that all depicted pointers are block pointers.
-Each pointer thus originates with the indicated field, and ends at the block it points to.
-The location where the arrows attach has no meaning since it's a block pointer.
-
-![Diagram showing layout of a Data Block Chain](img/zVSAM_V2_Drawing_Chain_Data_Blocks.jpg)
-
-#### Data Block Structure (SPANNED=YES)
-
-Now suppose we have a cluster with three data blocks, the first block holding two unsegmented records, the
-second block holding the first segment of a record consisting of three segments and the third block holding
-the first segment of a record consisting of two segments.
-
-In the picture we show the data chain as a solid line (as in the picture above), we show the segment chain as a
-dotted line, and we show the SPX s as a fat line.
-
-The picture shows the prefix area's pointer to start/end block of both the data chain and the segment chain.
-It also shows the first and second block on each chain pointing to one another.
-Same thing for the second and third block on each chain.
-
-The picture also shows that the SPX only occurs on the first segment of each segmented record.
-
-All depicted pointers are block pointers. Each pointer originates with the indicated field,
-and ends at the block it points to. The location where the arrows attach has no meaning since it's a block pointer.
-
-![Diagram showing layout of a Segmented Data Block Chain](img/zVSAM_V2_Drawing_Chain_Segmented_Data_Blocks.jpg)
-
-There are two design alternative to the above.
-
-The difference is that in this variant all segments go onto the segment chain.
-The SPX resides by itself on the data block and just points to the first segment on the segment chain.
-
-##### Variant 1
-
-![Diagram showing layout of a Segmented Data Block Chain - alternative design](img/zVSAM_V2_Drawing_Chain_Data_Blocks_alt.jpg)
-
-##### Variant 2
-
-![Diagram showing layout of a Segmented Data Block Chain - alternative design](img/zVSAM_V2_Drawing_Chain_Segmented_Data_Blocks_alt.jpg)
-
