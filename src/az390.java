@@ -509,7 +509,6 @@ public  class  az390 implements Runnable {
     /** variable      */ boolean bal_label_ok = false; // RPI 451
     /** variable      */ String bal_parms = null;
     /** variable      */ boolean list_use = false;
-    /** variable      */ boolean list_line_in_error = false; // #877
     /** variable      */ int mac_inline_level = 0;      // rpi 581
     /** variable      */ int mac_inline_op_macro = 220; // rpi 581
     /** variable      */ int mac_inline_op_mend  = 221; // rpi 581
@@ -5756,7 +5755,7 @@ public  class  az390 implements Runnable {
             break;
         case 140:  // LTORG 0
             bal_op_ok = true;
-            list_bal_line();
+            list_bal_line(false);                                         // #877
             if ( // RPI 1159 was tot_lit > 0
                     cur_esd > 0
                     && sym_type[esd_sid[esd_base[cur_esd]]] == sym_cst) { // RPI 564
@@ -5901,7 +5900,7 @@ public  class  az390 implements Runnable {
             }
         }
         if (!bal_abort && bal_line != null) { // RPI 891
-            list_bal_line();
+            list_bal_line(false);                                     // #877
         }
         loc_ctr = loc_ctr + loc_len;
     }
@@ -5919,7 +5918,7 @@ public  class  az390 implements Runnable {
      *    call reformating, and delay flags
      *    mac_call_first and mac_call_last.
      */
-    private void list_bal_line() {
+    private void list_bal_line(boolean list_line_in_error) {                             // #877
         if (!check_list_bal_line()) { // RPI 484 RPI 891
             update_list_bal_line();
             return;
@@ -8274,9 +8273,7 @@ public  class  az390 implements Runnable {
                 list_obj_code = "";             // #877
                 hex_bddd1_loc = "      ";       // #877
                 hex_bddd2_loc = "      ";       // #877
-                list_line_in_error = true;      // Take the error path in list_bal_line() #877
-                list_bal_line();                // #877
-                list_line_in_error = false;     // Reset the flag #877
+                list_bal_line(true);            // Take error mode path             // #877
             }
             force_list_bal = true;  // RPI 285
             set_file_line_xref();
@@ -8357,7 +8354,7 @@ public  class  az390 implements Runnable {
         tz390.z390_abort = true;
         tz390.opt_con = true;    // RPI 453
         force_list_bal = true;      // RPI 285
-        list_bal_line();
+        list_bal_line(false);       // #877
         force_list_bal = true; // RPI 285
         String error_msg = "AZ390E abort " + error + " on line " + bal_line_num[bal_line_index] + " " + bal_line_text[bal_line_index];
         put_log(error_msg);
@@ -11658,7 +11655,7 @@ public  class  az390 implements Runnable {
         if (cur_esd > 0) {
             update_sect();
         }
-        list_bal_line();
+        list_bal_line(false);                                             // #877
         if (tot_lit > 0) {
             cur_esd = 1;
             while (cur_esd <= tot_esd
