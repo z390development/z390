@@ -28,6 +28,8 @@ jobs:
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
+      - name: Install Checkstyle linter
+        run: bash/getcheckstyle
       - name: Build z390 distribution
         run: bash/blddist
       - name: Run installation verification (IVP)

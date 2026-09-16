@@ -18,7 +18,7 @@ echo Building z390 %VERSION%
 set DIST_DIR=dist
 
 rem build jar
-call bat\BLDJAR.BAT %z_TraceMode%                   || goto error
+call bat\BLDJAR.BAT %z_TraceMode% %*                || goto error
 
 rem generate HLASM compatible SPM's
 call bat\BLDZSTRMAC.BAT %z_TraceMode% build\zstrmac || goto error
@@ -65,9 +65,6 @@ xcopy /E /I /Y ..\..\build\zstrmac\* mac\spm\ > nul
 rem add javadoc
 mkdir javadoc
 xcopy /E /I /Y ..\..\build\javadoc\* javadoc\ > nul
-
-rem remove components not required for distribution
-del /F /Q bash\bldjar bat\BLDJAR.BAT bash\blddist bash\relver bat\RELVER.BAT
 
 rem create zip package
 cd ..
