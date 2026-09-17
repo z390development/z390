@@ -5917,8 +5917,10 @@ public  class  az390 implements Runnable {
      *    for update of mac_call_gen,
      *    call reformating, and delay flags
      *    mac_call_first and mac_call_last.
+     *
+     * @param list_line_in_error  Trigger the removal of the Location/PC at the line start  // #877
      */
-    private void list_bal_line(boolean list_line_in_error) {                             // #877
+    private void list_bal_line(boolean list_line_in_error) {                                // #877
         if (!check_list_bal_line()) { // RPI 484 RPI 891
             update_list_bal_line();
             return;
