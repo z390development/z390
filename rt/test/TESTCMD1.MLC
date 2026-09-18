@@ -32,11 +32,11 @@ TESTCMD1 SUBENTRY
 .* Assume windows
 &WTOTXT  SETC  'TESTCMD1 TEST USE OF SVC 34 COMMAND PROCESSOR ON WINDOW+
                S'
-&SCRIPT  SETC  '"rt\test\TESTCMD1.BAT"'
+&SCRIPT  SETC  '"rt\bat\TESTCMD1.BAT"'
          AIF   ('&SYSTEM_ID'(1,3) EQ 'Win').RUNTEST
 .* Not windows - must be linux or mac
 &WTOTXT  SETC  'TESTCMD1 TEST USE OF SVC 34 COMMAND PROCESSOR ON Linux'
-&SCRIPT  SETC  '"rt/test/testcmd1.sh"'
+&SCRIPT  SETC  '"rt/bash/testcmd1"'
 .RUNTEST ANOP  ,
 *
 * Pick up script - if it was passed as parm.
@@ -47,7 +47,7 @@ TESTCMD1 SUBENTRY
          BZ    NOPARM
          CLC   0(2,R1),=H'0'           Empty string?
          BE    NOPARM
-         LA    R5,2(,R1)               Point actual sysparm text
+         LA    R5,2(,R1)               Point actual parm text
          B     WTO
 NOPARM   DS    0H                      No parm: use default
          LA    R5,=C'&SCRIPT'

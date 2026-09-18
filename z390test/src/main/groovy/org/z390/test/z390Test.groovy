@@ -363,4 +363,33 @@ class z390Test {
         return result
     }
 
+    /**
+     * Program WTO / console lines from an EZ390 .LOG (or a full-LOG .TF1).
+     * Skips the EZ390 header, including wrapped SYSMAC/SYSCPY option lines,
+     * and stops at the EZ390 trailer.
+     */
+    static List<String> extractProgramLogLines(String logText) {
+        def lines = logText.readLines()
+        int start = lines.findIndexOf { it.contains('EZ390I options') }
+        if (start < 0) {
+            return []
+        }
+        def result = []
+        boolean started = false
+        for (int i = start + 1; i < lines.size(); i++) {
+            def line = lines[i]
+            if (line.contains('EZ390I total errors') || line.contains('EZ390 ENDED')) {
+                break
+            }
+            if (!started) {
+                if (line ==~ /^\s+.*/) {
+                    continue  // wrapped options
+                }
+                started = true
+            }
+            result << line
+        }
+        return result
+    }
+
 }

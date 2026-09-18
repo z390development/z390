@@ -1,13 +1,33 @@
 #!/bin/bash
 
-# runmvstests: Run the MVS demo and test programs
+# runcmdproc tests: Run the command proceesor test programs
 set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script - rt/bash
 cd ..               # up to rt
 cd ..               # up to z390
 
-bash/asmlg rt/test/TESTCMD1 notiming stats bal noloadhigh "sysmac(mac)" 'parm("rt/bash/testcmd1")'
+bash/asmlg rt/test/TESTCMD1 notiming stats bal noloadhigh "sysmac(mac)"
 grep -q "HELLO FOR LAST TIME" rt/test/TESTCMD1.LOG || exit 1
+
+# TESTCMD2 dropped - Windows-only version preceding TESTCMD4. The latter tests more variations.
+
+export TESTCMDFILE=rt/test/bash/testcmd3
+bash/asmlg rt/test/TESTCMD3 notiming stats bal noloadhigh "sysmac(mac)"
+grep -q "TESTCMD3 ending OK" rt/test/TESTCMD3.LOG || exit 1
+
+# TESTCMD4: two command processors (3 pairings)
+# 1. Both CPs produce the same number of lines
+export TESTCMDFILE1=rt/test/bash/testcmd4a
+export TESTCMDFILE2=rt/test/bash/testcmd4b
+bash/asmlg rt/test/TESTCMD4 notiming stats bal noloadhigh "sysmac(mac)"
+# 2. Second CP produces more lines than first
+export TESTCMDFILE1=rt/test/bash/testcmd4a
+export TESTCMDFILE2=rt/test/bash/testcmd4c
+bash/asmlg rt/test/TESTCMD4 notiming stats bal noloadhigh "sysmac(mac)"
+# 3. First CP produces more lines than second
+export TESTCMDFILE1=rt/test/bash/testcmd4c
+export TESTCMDFILE2=rt/test/bash/testcmd4b
+bash/asmlg rt/test/TESTCMD4 notiming stats bal noloadhigh "sysmac(mac)"
 
 # if we get here, there were no errors
 echo "Command Processor tests ran without errors"

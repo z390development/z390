@@ -58,6 +58,7 @@ public class  test_unicode {
     }
 
 
+
     /**
      * start instance of zcobol class
      */
