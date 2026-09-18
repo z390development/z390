@@ -47,6 +47,11 @@ ${vsampath}/bash/testmdcb $zvsam
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "testmdcb assembly/link error"; fi
 
+# ACB/RPL mapping test
+${vsampath}/bash/testmpcb $zvsam
+rc=$?
+if [ $rc -ne 0 ]; then errmsg "testmpcb assembly/link/run error"; fi
+
 # SHOWCB test
 ${vsampath}/bash/testshcb $zvsam
 rc=$?
