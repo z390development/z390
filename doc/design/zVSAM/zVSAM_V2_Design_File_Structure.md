@@ -1,6 +1,6 @@
 # zVSAM V2 - Physical structure of the files
 
-This document describes the file structure for implementing zVSAM V2 data sets.
+This document describes the file structures for implementing zVSAM V2 data sets.
 
 ## Basic Concepts
 
@@ -10,6 +10,8 @@ The logical unit of access or storage is the record. Yet the unit for any given 
 Block sizes may vary from 512 bytes to 16MB. Each block holds up to 255 records. For any given cluster
 component, choosing an appropriate block size is important. Block size can greatly affect not only
 performance, but also both internal and external storage consumption.
+
+Every Block and every Record in the file has an XLRA that uniquely identifies it.
 
 A cluster consists of one or more files that belong together and should be managed together. Whether you
 take a backup, perform a restore, or perform other administrative tasks, the files that make up a cluster should
@@ -21,28 +23,62 @@ been compromised. Names and locations of files are managed. Tampering with files
 render the cluster unusable.
 
 As a result, it is not possible to rename a zVSAM cluster or file. Unload and reload your cluster in order to
-move the data or to assign a different name to cluster or file.
+move the data or to assign a different name to a cluster or file.
 
 Just like files in a cluster belong together and should be managed together, clusters in a sphere are logically
 connected and should be managed together. Again, failing to manage the files in a correct and
 comprehensive manner may render your data inaccessible.
 
+### Data and Indexes
+
+zVSAM clusters consist of one or two components.
+
+ESDS, RRDS, and LDS clusters consist of a data component only.
+KSDS and AIX clusters have a data component and an additional index component.
+
+The index component holds the primary keys in a tree-like structure. Every primary key
+is associated with the XLRA of the data record that it represents.
+
+E.g. if a KSDS holds information on cars, the license plate ID could be the primary key.
+The index component then would hold the license plate IDs, each with the XLRA of the complete record
+in the data component.
+
+An alternate index cluster - an AIX for short - is used to create an access path to a base cluster,
+using other information than the primarty key to retrieve the data record.
+
+E.g. if a KSDS holds information on cars, an alternate key might be defined on the owner's last name.
+
+An AIX does not contain XLRAs to the base cluster. Instead, every AIX data record contains a single
+alternate key value, followed by the primary keys of all data records that have the alternate key value.
+
+E.g. The entry for "Smith" followed by a long list of cars owned by all persons named "Smith".
+
+Every AIX is a KSDS in its own right. The data records that associate each alternate key with their respective
+primary keys are stored in the data component. The index component then holds an entry for each data record's
+primary key, associated with the XLRA for the AIX data record in the AIX's data component.
+
+Note: the alternate key defined on the base cluster thus becomes the primary key on the AIX cluster.
+
 ### Cluster types and Cluster Components
 
-Each cluster consists of a data component and an index component as follows:
+Each cluster consists of a data component and (for KSDS and AIX) an index component as follows:
 
-| Cluster type | Index content                |
-|--------------|------------------------------|
-| ESDS         | Index on XLRSN ??            |
-| KSDS         | Index on key value           |
-| RRDS         | Index on RRN                 |
-| LDS          | No index                     |
-| AIX          | Index on alternate key value |
+| Cluster type | Index content                | Alternate index supported |
+|--------------|------------------------------|---------------------------|
+| ESDS         | No index                     | Yes                       |
+| KSDS         | Index on key value           | Yes                       |
+| RRDS         | No index                     | In allow mode only        |
+| LDS          | No index                     | No                        |
+| AIX          | Index on alternate key value | No                        |
 
 > [!NOTE]
-> Melvyn dropped LDS support. I don't know why. We should re-evaluate.
-> And why do we need an index on an ESDS? That seems rather superfluous.
-> I think Melvyn added an index in XRBA. We should re-evaluate that too.
+> 1. IBM VSAM does not allow an AIX to be defined on an extended-addressability ESDS.
+>    zVSAM does not distinguish between standard and extended-addressability clusters.
+>    Therefore, even in noallow mode, an AIX can be defined on a large ESDS.
+> 2. IBM VSAM does not allow an AIX to be defined on a reusable cluster.
+>    zVSAM - when in allow mode - does allow an AIX to be defined on a reusable cluster.
+> 3. IBM VSAM does not allow an AIX to be defined on a RRDS cluster.
+>    zVSAM - when in allow mode - does allow an AIX to be defined on a RRDS cluster.
 
 ### Record Formats
 
@@ -55,89 +91,99 @@ In zVSAM we support the following record formats:
 | V      | Variable. Records have varying lengths. Records never span a Block boundary.                    |
 | VS     | Variable Spanned. Records have varying lengths. Records may or may not span a Block boundary.   |
 
-For ESDS, KSDS, and RRDS all record types are supported.
-For AIX only F and VS record formats are supported: F for unique, and VS for non-unique indexes.
+- For ESDS, KSDS, and RRDS all record types are supported.
+- For AIX only F and VS record formats are supported: F for unique, and VS for non-unique indexes.
+- For LDS, record type is not defined and not applicable.
 
 Supported Record Formats per Cluster Type:
 
-| Cluster Type     | F   | FS  | V   | VS  |
-|------------------|-----|-----|-----|-----|
-| ESDS             | Y   | Y   | Y\* | Y\* |
-| KSDS             | Y   | Y   | Y   | Y   |
-| RRDS             | Y   | Y\* | Y   | Y\* |
-| LDS              | N   | N   | N   | N   |
-| AIX - unique     | Y   | N   | N   | N   |
-| AIX - non-unique | N   | N   | N   | Y   |
+| Cluster Type     | F   | FS         | V   | VS         |
+|------------------|-----|------------|-----|------------|
+| ESDS             | Y   | Y          | Y   | Y          |
+| KSDS             | Y   | Y          | Y   | Y          |
+| RRDS             | Y   | allow mode | Y   | allow mode |
+| LDS              | N   | N          | N   | N          |
+| AIX - unique     | Y   | N          | N   | N          |
+| AIX - non-unique | N   | N          | N   | Y          |
 
-\* zVSAM extension
+For a unique AIX each record holds an alternate key value plus the primary key
+of the associated record in the cluster's data component.
+This fixed configuration dictates a record type of F.
 
-For a unique AIX each record holds an alternate key value plus the primary key (KSDS) or XLRA (ESDS)
-of the associated record in the cluster's data component. This fixed configuration dictates a record type of F.
+For a non-unique AIX each record holds an alternate key value and as many primary keys
+of associated records in the cluster's data component as there are records holding that
+specific alternate key value. The table of primary keys may vary in length from 1 to very large numbers.
+No block size is guaranteed to be large enough to hold the largest possible index record, therefore a record type
+of VS is mandated. When a non-unique index record needs to be split into segments, no primary key value
+is ever split; i.e. only an exact number of these reside within a single segment of the record.
 
-For a non-unique AIX each record holds an alternate key value and as many primary keys (KSDS) or
-XLRAs (ESDS) of associated records in the cluster's data component as there are records holding that
-specific alternate key value. The table of primary keys may vary in length from 1 to very large numbers. No
-block size is guaranteed to be large enough to hold the largest possible index record, therefore a record type
-of VS is mandated. When a non-unique index record needs to be split into segments, no primary key value or
-XLRA is ever split; i.e. only an exact number of these reside within a single segment of the record.
+> [!NOTE]
+> As with IBM VSAM, an AIX defined on a cluster that supports
+> spanned records, the key must be defined within the first segment
+> of a recrod.
 
 Supported Index-types per Cluster Type
 
 | Cluster Type | Primary - Unique | AIX - unique | AIX - Non-unique |
 |--------------|------------------|--------------|------------------|
-| ESDS         | Y\*              | Y            | Y                |
+| ESDS         | n.a.             | Y            | Y                |
 | KSDS         | Y                | Y            | Y                |
-| RRDS         | Y\*              | N            | N                |
+| RRDS         | n.a.             | allow mode   | allow mode       |
 | LDS          | N                | N            | N                |
 
-\* zVSAM extension
+> [!NOTE]
+> 1. IBM VSAM uses an index for RRDS clustes with variable-length records,
+>    whether they are segmented or not. in zVSAM no such index is needed.
+> 2. IBM VSAM does not support an AIX to be defind on a RRDS cluster.
+>    zVSAM - when in allow mode - does allow an AIX to be defined on any RRDS cluster.
 
 ### Concept of Fixed-length records stored in blocks
 
 Disregarding block structure elements, F-type records are conceptually stored one after another,
 filling the block until no space is left. When  remaining free space is insufficient to accommodate another record,
 that free space remains unallocated (marked in blue). The actual implementation is quite different,
-but we'll leave those details alone for the moment.
+but we'll leave the implementation details alone for the moment.
 
-![Diagram showing Blocked records of type F](img/zVSAM_V2_Drawing_Record_Type_F.jpg)
+![Diagram showing Blocked records of type F](img/zVSAM_V2_Record_Type_F.jpg)
 
 This holds for all cluster types, except LDS. In an LDS there is no block structure.
 Each block and each record holds 4096 bytes of data.
 
-Below we show an example of records in a LDS:
+Below we show an example of records in an LDS:
 
-![Diagram showing records in an LDS](img/zVSAM_V2_Drawing_Record_Type_LDS.jpg)
+![Diagram showing records in an LDS](img/zVSAM_V2_Record_Type_LDS.jpg)
 
 ### Concept of Fixed-length Segmented records stored in blocks
 
 Disregarding block structure elements, FS-type records are conceptually stored one after another, using a block for each segment
 and starting each record on a new block. Record size is expected to exceed block size, so the record is split into segments,
-the first segment is created to fill an entire block, and the rest of the record goes into a second segment, which is stored on the next block.
+the first segment is created to fill an entire block, and the rest of the record goes into subsequebt segments, which are stored on the next blocks.
 Each segment is preceded by a Segment Prefix (SPX, marked in yellow). Depending on record size and usable block size,
-more than two segments may be needed to store the record. The actual implementation is quite different, but we'll leave those details alone for the moment.
+more than two segments may be needed to store the record. The actual implementation is quite different,
+but we'll leave the implementation details alone for the moment.
 
 Below we show an example where each record requires three blocks and is therefore split into three segments:
 
-![Diagram showing Blocked records of type FS](img/zVSAM_V2_Drawing_Record_Type_FS.jpg)
+![Diagram showing Blocked records of type FS](img/zVSAM_V2_Record_Type_FS.jpg)
 
 ### Concept of Variable-length records stored in blocks
 
 Disregarding block structure elements, V-type records are conceptually stored one after another, filling the block until no space is left.
 When  remaining free space is insufficient to accommodate another record, that free space remains unallocated (marked in blue).
 Every record is preceded by a Record Length Field (RLF, marked in grey). The actual implementation is quite different,
-but we'll leave those details alone for the moment.
+but we'll leave the implmentation details alone for the moment.
 
 Below we show an example showing how various numbers of records might fit into the blocks of the file:
 
-![Diagram showing Blocked records of type V](img/zVSAM_V2_Drawing_Record_Type_V.jpg)
+![Diagram showing Blocked records of type V](img/zVSAM_V2_Record_Type_V.jpg)
 
 ### Concept of Variable-length Segmented records stored in blocks
 
 Disregarding block structure elements, VS-type records are conceptually stored one after another, filling the block until no space is left.
 Every record is preceded by a Record Length Field (RLF, marked in grey). When  remaining free space is insufficient to accommodate a complete record,
 the record is placed on the next block. Only if the record size exceeds usable block size, the record is split into segments
-and each segment is prefixed with a Segment Prefix. The first segment is created to fill a block and the rest of the record goes into a second segment,
-which is stored on the next block. Each segment is preceded by a Segment Prefix (SPX, marked in yellow).
+and each segment is prefixed with a Segment Prefix. The first segment is created to fill a block and the rest of the record goes into subsequent segments,
+which are stored on the next blocks. Each segment is preceded by a Segment Prefix (SPX, marked in yellow).
 Please note that the RLF occurs only once in each record, whereas each record segment has its own SPX.
 
 Depending on record size and usable block size, more than two segments may be needed to store a record.
@@ -146,37 +192,9 @@ The actual implementation is quite different, but we'll leave those details alon
 Below we show an example showing how various numbers of records might fit into the blocks of
 the file, or how a single record might occupy multiple blocks of the file:
 
-![Diagram showing Blocked records of type VS](img/zVSAM_V2_Drawing_Record_Type_VS.jpg)
+![Diagram showing Blocked records of type VS](img/zVSAM_V2_Record_Type_VS.jpg)
 
 ## File Structure
-
-zVSAM clusters consist of one or two components.
-
-ESDS, RRDS, and LDS clusters consist of a data component only.
-KSDS and AIX clusters have a data component and an additional index component.
-
-The index component holds the primary keys in a tree-like structure. Every primary key
-is associated with the XLRSN of the data record that it represents.
-
-E.g. if a KSDS holds information on cars, the license plate ID could be the primary key.
-The index component then would hold the license plate IDs, each with the XLRSN of the complete record
-in the data component.
-
-An alternate index cluster - an AIX for short - is used to create an access path to a base cluster,
-using other information than the primarty key to retrieve the data record.
-
-E.g. if a KSDS holds information on cars, an alternate key might be defined on the owner's last name.
-
-An AIX does not contain XLRSNs to the base cluster. Instead, every AIX data record contains a single
-alternate key value, followed by the primary keys of all data records that have the alternate key value.
-
-E.g. The entry for "Smith" followed by a long list of cars owned by a person named "Smith".
-
-Every AIX is a KSDS in its own right. The data records that associate each alternate key with their respective
-primary keys are stored in the data component. The index component then holds an entry for each data record's
-primary key, associated with the XLRSN for the AIX data record in the AIX's data component.
-
-Note: the alternate key defined on the base cluster thus becomes the primary key on the AIX cluster.
 
 The rest of this document explains:
 1. how clusters are built from files
@@ -186,14 +204,13 @@ The rest of this document explains:
 ### Physical files
 
 All zVSAM data is stored in physical files, as defined to the operating system.
-Each component consists of one file. This file is formatted as a zVSAM file, the structure of which is
+Each component consists of one or more files. The files are formatted as zVSAM files, the structure of which is
 explained in the next set of chapters.
 
 > [!NOTE]
 > the hosting operating system may impose a limit on physical file size and not every host OS
 > supports a physical file spanning a volume boundary of the storage device(s). Therefore, to support clusters
-> that exceed the maximum size of a single physical file, in the future we may need to support clusters that
-> consist of multiple files.
+> that exceed the maximum size of a single physical file, zVSAM is designed to support clusters that consist of multiple files.
 
 ### Structure of physical files
 
@@ -210,60 +227,66 @@ All blocks in the file are created with that size, except the prefix block which
 irrespective of the size of the other blocks in the file.
 The file is assumed to logically begin with the first block after the prefix block.
 
-There are 6 types of blocks that may occur in zVSAM files:
+There are 7 types of blocks that may occur in zVSAM files:
 
-1. Prefix block – one for each file, being the first 4096 bytes of every file
+1. Prefix block – one for each physical file, being the first 4096 bytes of every file
 2. Spacemap block – used to manage free space in the file
 3. Data block – used to hold user data, or AIX data records (in an AIX only)
-4. Index block – used to hold index information
-5. ELIX block – used to index segmented (read: large) non-unique AIX records
-6. Raw block – used to hold a block's worth of LDS data
+4. Segment block - used to hold the segments that make up a segmented record
+5. Index block – used to hold index information
+6. Free block - used to hold free space
+7. Raw block – used to hold a block's worth of LDS data
 
-Every block, except a raw block, has an internal structure consisting of a block header,
-a list of record pointers (data and index blocks only), a block body and a block footer.
-The block header and footer have a fixed structure. The list of record pointers, if present,
-has a variable length. The block body contains record data and/or free space.
+Every block, except raw blocks, has an internal structure consisting of a block header,
+a block body and a block footer. The block header and footer have a fixed structure.
+The content of the block body differs by block type.
+
+- for a Prefix block, the block body contains the prefix area, the counters area, and possibly a RRN translation map and free space
+- for a Spacemap block, the block body contains the spacemap data
+- for a Data block, the block body contains a variable-length list of record pointers, data records, and possibly free space
+- for a Segment block, the block body contains a single Segment and possibly free space
+- for an Index block, the block body contains a variable-length list of record pointers, index entries, and possibly free space
+- for a Free block, the block body is all free space
+- for a Raw block, the entire block is data, no footer, no header, no chains
 
 Raw blocks have no internal structure, as far as zVSAM is concerned.
 Any and all internal structure(s) in an LDS are to be maintained by the application program.
-Each of the 6 block types is explained in more detail below.
-
-> [!NOTE]
-> Melvyn removed all mention of LDS support. We should reconsider.
-> Melvyn added support for ELIX blocks. We should reconsider that, too.
+Each of the 7 block types is explained in more detail below.
 
 Not all block types occur in all file types. The relation is as follows:
 
-| File Type  | Prefix | Spacemap | Data | Index | Raw |
-|------------|--------|----------|------|-------|-----|
-| ESDS       | Y      | Y        | Y    | N     | N   |
-| KSDS-data  | Y      | Y        | Y    | N     | N   |
-| KSDS-index | Y      | Y        | N    | Y     | N   |
-| RRDS       | Y      | Y        | Y    | N     | N   |
-| AIX-data   | Y      | Y        | Y    | N     | N   |
-| AIX-index  | Y      | Y        | N    | Y     | N   |
-| LDS        | Y      | N        | Y    | N     | Y   |
+| File Type  | Prefix | Spacemap | Data  | Segment | Index | Free       | Raw   |
+|------------|--------|----------|-------|---------|-------|------------|-------|
+| ESDS       | Y      | Y        | Y     | Opt     | N     | allow mode | N     |
+| KSDS-data  | Y      | Y        | Y     | Opt     | N     | Opt        | N     |
+| KSDS-index | Y      | Y        | N     | Y       | Y     | Opt        | N     |
+| RRDS       | Y      | Y        | Y     | Opt     | N     | Opt        | N     |
+| AIX-data   | Y      | Y        | Y     | Opt     | N     | Opt        | N     |
+| AIX-index  | Y      | Y        | N     | Y       | Y     | Opt        | N     |
+| LDS        | Y      | N        | N     | N       | N     | N          | Y     |
 
 > [!NOTE]
-> KSDS and AIX clusters consist of a data component and an index component.
-> ESDS, RRDS, and LDS clusters consist of a data component only.
+> 1. IBM VSAM does not support free pages in an ESDS, or an RRDS with Fixed or Fixed-Spanned records.
+>    zVSAM - when in allow mode - does support free pages on ESDS and all types of RRDS clusters.
+> 2. Segment and Free blocks are not required, but may optionally occur in the indicated cluster components.
+> 3. Free blocks are not on any chain. The block headers's chain info is invalid by definition. Free blocks can be found through the spacemap page only.
+> 4. Raw blocks are not on any chain. The blocks have neither headers nor footer. Raw blocks can be found through the spacemap page only.
 
 The following table summarizes the way that blocks in the file are chained from the prefix block.
-Please note that free data blocks do not reside on any chain. Nor does the prefix block.
+Please note that the Prefix block does not reside on any chain.
 
-> [!NOTE]
-> originally, it was planned that free blocks reside on a free chain.
-> the table below does not include the free chain implementation:
+| Block Type | Begin of chain | End of chain | Notes                     |
+|------------|----------------|--------------|---------------------------|
+| Prefix     | foxes          | foxes        | Always at start of file   |
+| Spacemap   | `PFXBMAP`      | `PFXEMAP`    |                           |
+| Data       | `PFXBDATA`     | `PFXEDATA`   |                           |
+| Segment    | `PFXBSEGM`     | `PFXESEGM`   |                           |
+| Index      | `PFXBLVLn`     | `PFXELVLn`   |                           |
+| Free       | n.a.           | n.a.         | Spacemap-governed         |
+| Raw        | n.a.           | n.a.         | Spacemap-governed         |
 
-| Block Type               | Begin of chain | End of chain |
-|--------------------------|----------------|--------------|
-| Prefix                   | foxes          | foxes        |
-| Spacemap                 | PFXBMAP        | PFXEMAP      |
-| Data (in use)            | PFXBDATA       | PFXEDATA     |
-| Data (non-first segment) | PFXBSEGM       | PFXESEGM     |
-| Data (free)              | foxes          | foxes        |
-| Index                    | PFXBLVLn       | PFXELVLn     |
-| Free                     | n.a.           | n.a.         |
+For index blocks, there are 16 levels of index - the `n` in
+`PFXBLVLn` and `PFXELVLn` ranges from 0 through F.
 
 ### Components of a Block
 
@@ -272,8 +295,9 @@ With the exception of Raw Blocks, all blocks have internal structure elements, s
 - a Block Footer
 - a Record Pointer List
 - data records
+- free space
 
-All Blocks (except Prefix Block and Raw Blocks) are chained into a chain which is anchored in the Prefix Block.
+All Blocks (except Prefix Block, Free Blocks and Raw Blocks) are chained into a chain which is anchored in the Prefix Block.
 The type of Block determines on which chain it resides:
 - Spacemap Chain
 - Data Chain (data blocks, with the exception of non-first segment blocks)
@@ -285,55 +309,162 @@ Every Block (except Raw Blocks) also has a footer, which mainly serves to guard 
 
 Not all structure elements occur in all Block types. The relation is as follows:
 
-| Structure Element   | Prefix | Spacemap | Data | Index | Raw |
-|---------------------|--------|----------|------|-------|-----|
-| Block Header        | Y      | Y        | Y    | Y     | N   |
-| Block Footer        | Y      | Y        | Y    | Y     | N   |
-| Record Pointer List | N      | N        | Y    | Y     | N   |
-| Record data         | N      | N        | Y    | Y     | Y   |
-| Free Space          | Y      | N        | Y    | Y     | N   |
-| Prefix Area         | Y      | N        | N    | N     | N   |
-| Counters Area       | Y      | N        | N    | N     | N   |
-| Spacemap            | N      | Y        | N    | N     | N   |
+| Structure Element   | Prefix | Spacemap | Data | Segment | Index | Free         | Raw |
+|---------------------|--------|----------|------|---------|-------|--------------|-----|
+| Block Header        | Y      | Y        | Y    | Y       | Y     | Y            | N   |
+| Block Footer        | Y      | Y        | Y    | Y       | Y     | Y            | N   |
+| Record Pointer List | N      | N        | Y    | N       | Y     | N            | N   |
+| Record data         | N      | N        | Y    | Y       | N     | N            | Y   |
+| Free Space          | Opt    | N        | Opt  | Opt     | Opt   | Y            | N   |
+| Prefix Area         | Y      | N        | N    | N       | N     | N            | N   |
+| Counters Area       | Y      | N        | N    | N       | N     | N            | N   |
+| RRN map             | RRDS   | N        | N    | N       | N     | N            | N   |
+| Spacemap            | N      | Y        | N    | N       | N     | N            | N   |
+
+Notes:
+1. `Opt` indicates that Free Space is an optional element on the indicated block type.
+2. An RRN map is present in the Prefix Block of a RRDS cluster only.
+3. The record data area may contain records and Displaced Record Pointers.
+
+Displaced Record Pointers may be created when:
+- a record is lengthened such that it no longer fits on the block
+- a spanned record, too large to fit on a single block, is created
+- when a KSDS block needs to be split, zVSAM decides whether to create Displaced Record Pointers,
+  or to assign changed XLRA values to the records being split off the block that is being split.
 
 ### ESDS Data Organization
 
+An ESDS consists of a Prefix block and a Spacemap block followed by Data blocks and Segment blocks as needed.
+When the file grows additional Spacemap blocks are added when needed. Not only block transitions, but also
+the presence of additional Spacemap blocks cause gaps in the XLRA sequence.
+
+Segment blocks and Free blocks are not required, but may be present in the file.
+
+Although records in an ESDS are written sequentially, an overflow data block can be created when:
+- an update lengthens a variable-length record to exceed block capacity. The excess data is placed on an overflow data block.
+
+Segment blocks are created when:
+- in an FS-type or VS-type ESDS a record is written that exceeds the capacity of its containing block.
+- in an V-type or VS-type ESDS a record is lengthened causing it to exceed the capacity of its containing block.
+
+Free blocks are created when:
+- a segmented record is deleted; deletion is possible only in allow mode.
+- data on an overflow data block is shortened or deleted; deletion is possible only in allow mode.
+
+The following figure shows a contrived example of how the different types of blocks might sit in the physical file:
+
+![Diagram showing Blocks in an ESDS](img/zVSAM_V2_File_ESDS.jpg)
+
+### Data Block Chain Organization for unspanned records
+
+Assume we have a cluster with three data blocks holding unsegmented records.
+The blocks are on the data chain as outlined in the picture below. Please note that all depicted pointers are block pointers.
+Each pointer thus originates with the indicated field, and ends at the block it points to.
+The location where the arrows attach has no meaning since it's a block pointer.
+
+![Diagram showing layout of a Data Block Chain without spanned records](img/zVSAM_V2_Chain_Unsegmented_Data_Blocks.jpg)
+
+Note: the structure of the Data Chain is the same for ESDS, KSDS data component, RRDS, and AIX data component.
+
 > [!NOTE]
-> this paragraph still needs to be created, including a drawing.
+> The chain of spacemap blocks is structurally identical to the data block chain fo unspanned records.
+> It is anchored on the prefix area's `PFXBMAP` and `PFXEMAP` fields.
+
+### Data Block Chain Organization for spanned records
+
+Now suppose we have a cluster with three data blocks, the first block holding two unsegmented records, the
+second block holding the first segment of a record consisting of three segments and the third block holding
+the first segment of a record consisting of two segments.
+
+In the picture we show the data chain as a solid line (as in the picture above), we show the segment chain as a
+dotted line, and we show the SPX s as a fat line.
+
+The picture shows the prefix area's pointer to start/end block of both the data chain and the segment chain.
+It also shows the first and second block on each chain pointing to one another.
+Same thing for the second and third block on each chain.
+
+The picture also shows that the SPX only occurs on the first segment of each segmented record.
+
+All depicted pointers are block pointers. Each pointer originates with the indicated field,
+and ends at the block it points to. The location where the arrows attach has no meaning since it's a block pointer.
+
+![Diagram showing layout of a Segmented Data Block Chain](img/zVSAM_V2_Chain_Segmented_Data_Blocks.jpg)
+
+Note: the structure of the Data Chain and Segment chain are the same for ESDS, KSDS data component, RRDS, and AIX data component.
 
 ### KSDS Data Organization
 
-> [!NOTE]
-> this paragraph still needs to be created, including a drawing.
+A KSDS data component consists of a Prefix block and a Spacemap block followed by Data blocks and Segment blocks as needed.
+When the file grows additional Spacemap blocks are added when needed. Not only block transitions, but also
+the presence of additional Spacemap blocks cause gaps in the XLRA sequence.
+
+Segment blocks and Free blocks are not required, but may be present in the file.
+
+Data records are written on the data block where they logically belong. A data block is split when:
+- a record is added that does not fit on the block
+- a variable-length record is updated so that it no longer fits on the block
+- a record must be added, but the record pointer list is exhausted; that is: no valid XLRA value is available on the block
+
+Segment blocks are created when:
+- in an FS-type or VS-type KSDS a record is written that exceeds the capacity of its containing block.
+- in a V-type or VS-type KSDS a record is lengthened causing it to exceed the capacity of its containing block.
+
+Free blocks are created when:
+- a segmented record is deleted
+- all data on a data block is deleted
+
+The following figure shows a contrived example of how the different types of blocks might sit in the physical file:
+
+![Diagram showing Blocks in a KSDS Data component](img/zVSAM_V2_File_KSDS_Data.jpg)
+
+Data Block Chain Organization for a KSDS is no different than it is for an ESDS, RRDS, or AIX data component.
+Please see [Data Block Chain Organization for unspanned records](#data-block-chain-organization-for-unspanned-records)
+and [Data Block Chain Organization for spanned records](#data-block-chain-organization-for-spanned-records) above.
 
 ### KSDS Index Organization
 
-The index component of a KSDS contains index entries, which consist of
-a primary key and its XLRA. The index is organized in a hierarchy of index levels.
+A KSDS index component consists of a Prefix block and a Spacemap block followed by Index blocks.
+When the file grows additional Spacemap blocks are added when needed.
+
+Free blocks are not required, but may be present in the file.
+
+Index entries are written on the index block where they logically belong. An index block is split when:
+- an entry is added that does not fit on the block
+- an entry must be added, but the record pointer list is exhausted; that is: no valid XLRA value is available on the block
+
+Free blocks are created when:
+- deletion of a data record causes the number of index entries on an index block to drop to zero.
+
+The following figure shows a contrived example of how the different types of blocks might sit in the physical file:
+
+![Diagram showing Blocks in a KSDS Index component](img/zVSAM_V2_File_KSDS_Index.jpg)
 
 #### Index Blocks
 
-Each index Block has an RPTR area, allocate right after the Block Header.
-In addition to the offset, the RPTR contains flags to identify the type and status of each record.
+The index blocks of a KSDS index component contain index entries, which consist of
+a primary key and its XLRA. The index is organized in a hierarchy of index levels.
+
+Each index Block has an RPTR area, allocated right after the Block Header.
+Eazch RPTR entry contains an in-block offset to the record.
+Additionally, the RPTR contains flags to identify the type and status of each record.
 `RPTR_END` marks the end of record pointers in this block.
 
-The records are placed in reverse order in the block to consolidate free space at the centre.
+The records are allocated from the end of the block downwards to consolidate free space at the centre.
 
-For Level 0 each record is the key (KSDS), XRBA (ESDS) or RRN (RRDS) and is followed by an XLRA.
-The XLRA is a record pointer to the Data block.
+For Level 0 each record is the key (KSDS), or RRN (RRDS) of the base record and is followed by an XLRA.
+The XLRA is a record pointer that is valid for the cluster's Data component.
 
-For other levels, each record pointer is the highest key, XRBA or RRN followed by an XLRA.
-The XLRA is a block pointer to the previous level.
+For other levels, each record pointer is the highest key or RRN followed by an XLRA.
+These XLRAs are block pointers that are valid for the cluster's Inex component.
 
 As each index record is a fixed size it is recommended to specify `INDEXADJUST=YES` to avoid unusable
 free space
-
 
 #### Index Block Structure: Single level
 
 This example shows an index of only one block, holding two record pointers
 
-![Diagram showing layout of a Chain of 1 Index Block](img/zVSAM_V2_Drawing_Chain_Index_Blocks_1.jpg)
+![Diagram showing layout of a Chain of 1 Index Block](img/zVSAM_V2_Chain_Index_Blocks_1.jpg)
 
 #### Index Block Structure: Two Levels
 
@@ -341,19 +472,25 @@ This example shows the index after adding three more record pointers, causing th
 split. Now there are two leaf blocks, still on the LVL0 chain, and a new root block has been created on the
 LVL1 chain
 
-![Diagram showing layout of a Chain of 2 Index Blocks](img/zVSAM_V2_Drawing_Chain_Index_Blocks_2.jpg)
+![Diagram showing layout of a Chain of 2 Index Blocks](img/zVSAM_V2_Chain_Index_Blocks_2.jpg)
 
 #### Index Block Level 0
 
-![Diagram showing layout of a Leaf Index Block](img/zVSAM_V2_Drawing_Block_Type_Index_Leaf.jpg)
+![Diagram showing layout of a Leaf Index Block](img/zVSAM_V2_Block_Type_Index_Leaf.jpg)
+
+Note how each index record points to a data record. It contains the record's key (shown in the drawing)
+and its XLRA (not shown in the drawing).
 
 #### Index Block other levels
 
-![Diagram showing layout of a Non-Leaf Index Block](img/zVSAM_V2_Drawing_Block_Type_Index_NLeaf.jpg)
+![Diagram showing layout of a Non-Leaf Index Block](img/zVSAM_V2_Block_Type_Index_NLeaf.jpg)
+
+Note how each index record points to an index data block in the next layer of the index.
+Each index record contains that block's highest key (shown in the drawing)
+and its XLRA (not shown in the drawing).
 
 It is possible to reserve an amount of freespace at load time which also applies if a block is split.
 It is specified in the catalog as `INDEXFREESPACE=nn`, where nn is a percentage of the available space.
-Only a fixed non-spanned KSDS can specify free space.
 
 For all types of fixed non-spanned datasets, the available space may not be a multiple of the index record size
 resulting in unusable space. To correct this use `INDEXADJUST=YES` which will calculate an optimal
@@ -361,18 +498,50 @@ blocksize less than the specified one.
 
 ### RRDS Data Organization
 
+A RRDS data component consists of a Prefix block and a Spacemap block followed by Data blocks and possibly Segment blocks as needed.
+When the file grows additional Spacemap blocks are added when needed. Not only block transitions, but also
+the presence of additional Spacemap blocks and/or Segment blocks cause gaps in the XLRA sequence.
+
+Segment blocks and Free blocks are not required, but may be present in the file.
+
+Data blocks are created when:
+- a record is written with an RRN that exceeds the highest allocated RRN.
+
+Although records in an RRDS are written to pre-allocated slots, an overflow data block can be created when:
+- an update lengthens a variable-length record to exceed block capacity. The excess data is placed on an overflow data block.
+
+Segment blocks are created when:
+- in an FS-type or VS-type RRDS a record is written that exceeds the capacity of its containing block.
+- in a V-type or VS-type RRDS a record is lengthened causing it to exceed the capacity of its containing block.
+
+Free blocks are created when:
+- a segmented record is deleted
+- all data on a data block is deleted
+
+The following figure shows a contrived example of how the different types of blocks might sit in the physical file:
+
+![Diagram showing Blocks in a KSDS Data component](img/zVSAM_V2_File_RRDS.jpg)
+
 > [!NOTE]
-> this paragraph still needs to be created, including a drawing.
+> The prefix block contains control information for mapping a record's RRN to its XLRA.
+
+Data Block Chain Organization for a RRDS is no different than it is for an ESDS, KSDS data component, or AIX data component.
+Please see [Data Block Chain Organization for unspanned records](#data-block-chain-organization-for-unspanned-records)
+and [Data Block Chain Organization for spanned records](#data-block-chain-organization-for-spanned-records) above.
 
 ### AIX Data Organization
 
 AIX data records for a Unique Alternate Index have fixed-length records.
 The AIX cluster is mostly treated as a KSDS with a record type of F.
+
+Each record contains a unique key and its associated primary key value.
 Only when the AIX is opened as a path, will zVSAM use the AIX data to retrieve
 records from the underlying base cluster.
 
 AIX data records for a Non-Unique Alternate Index have variable-length segmented records.
 The AIX cluster is mostly treated as a KSDS with a record type of VS.
+
+Each record contains a unique key and all its associated primary key values.
 Only when the AIX is opened as a path, will zVSAM use the AIX data to retrieve
 records from the underlying base cluster.
 
@@ -380,9 +549,11 @@ AIX unique records have the following format:
 
 | AIX on ... | Record Content                  |
 |------------|---------------------------------|
-| ESDS       | AIX key followed by XRBA(8)     |
+| ESDS       | AIX key followed by XLRA(8)     |
 | KSDS       | AIX key followed by primary key |
 | RRDS       | AIX key followed by RRN         |
+| LDS        | not supported                   |
+| AIX        | not supported                   |
 
 AIX non-unique records have the following format:
 
@@ -391,24 +562,37 @@ AIX non-unique records have the following format:
 | ESDS       | AIX key followed by 1 or more XRBA(8) values |
 | KSDS       | AIX key followed by 1 or more primary keys   |
 | RRDS       | AIX key followed by 1 or more RRN values     |
+| LDS        | not supported                                |
+| AIX        | not supported                                |
 
-The diagram below shows how AIX data blocks are chained in a Unique AIX's data component.
+How the different types of blocks might sit in the physical file is the same as for a KSDS data component.
+Please see [KSDS Data Organization](#ksds-data-organization) for a graphical example.
 
-![Diagram showing layout of a chain of AIX Data Blocks](img/zVSAM_V2_Drawing_Chain_AIX_Unique.jpg)
-
-The diagram below shows how AIX data blocks are chained in a Non-Unique AIX's data component.
-
-![Diagram showing layout of a Chain of Segmented AIX Data Blocks](img/zVSAM_V2_Drawing_Chain_AIX_NonUnique.jpg)
+Data Block Chain Organization for an AIX data component is no different than it is for an ESDS, KSDS data component, or RRDS.
+Please see [Data Block Chain Organization for unspanned records](#data-block-chain-organization-for-unspanned-records)
+and [Data Block Chain Organization for spanned records](#data-block-chain-organization-for-spanned-records) above.
 
 ### AIX Index Organization
 
-> [!NOTE]
-> this paragraph still needs to be created, including a drawing.
+The index component of an AIX is organized exactly the same way as the index component of a KSDS.
+
+Please see [KSDS Index Organization](#ksds-index-organization) for a graphical example of how blocks may sit in the file
+and for diagrams showing how the index chains are organized.
 
 ### LDS Data Organization
 
+An LDS consists of a Prefix block and as many Raw blocks as needed.
+
+An LDS contains no spacemap, therefore pages cannot be freed. Also, raw pages contain no block headers or footers,
+therefore they cannot be chained. Essentially an LDS has no structure - it just a long series of sequential blocks
+holding data whose structure is not defined to zVSAM.
+
+The following figure shows an example of how the blocks might sit in the physical file:
+
+![Diagram showing Blocks in an LDS](img/zVSAM_V2_File_LDS.jpg)
+
 > [!NOTE]
-> this paragraph still needs to be created, including a drawing.
+> The prefix block contains control information for mapping a record's logical address to its XLRA.
 
 ### ESDS Fixed non-Spanned
 
@@ -416,11 +600,7 @@ The records are stored one after another, filling the block until no space is le
 When the remaining free space is insufficient to accommodate another record, that free space remains
 unusable. Unusable space can be eliminated by building the dataset with `DATAADJUST=YES`.
 
-Format:
-
-![Diagram showing layout of an ESDS Block with Fixed records](img/zVSAM_V2_Drawing_Block_Type_ESDS_F.jpg)
-
-**Note**: The format of an ESDS block with Fixed records is identical to that for a KSDS.
+The format of an ESDS block with Fixed records is identical to that for a KSDS.
 The only difference being that free-space (`DATAFREESPACE=nn%`) does not apply to ESDS datasets.
 
 | Function      | Notes                                   |
@@ -429,26 +609,19 @@ The only difference being that free-space (`DATAFREESPACE=nn%`) does not apply t
 | Update        | Yes                                     |
 | Delete        | No                                      |
 | Length change | n/a                                     |
-Access by:      | (X)RBA or AIX key                       |
-
-> [!NOTE]
-> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
-> Need to investigate how much RBA was implemented by Melvyn.
+| Access by:    | XLRA or AIX key                         |
 
 ### ESDS Fixed Spanned
 
-The records are stored one after another, using a block for each segment and starting each
-record on a new block. Record size is expected to exceed block size, so the record is split into segments, the
+Record size is expected to exceed block size, so the record is split into segments, the
 first segment is created to fill an entire block, and the rest of the record goes into one or more secondary
-segments which are stored on the next blocks.
+segments which are stored on the next blocks. All record data is stored on the segment chain.
+Data blocks only contain Displaced Record Pointers - one for each record.
 
-Each segment is preceded by a Segment Prefix (SPX, marked in yellow)
+The records are stored one after another, using a block for each segment and starting each
+record on a new block. Each segment is preceded by a Segment Prefix.
 
 zVSAM extension: Any AIX keys need not be in the first segment.
-
-Below we show an example where each record requires three segments:
-
-![Diagram showing layout of an ESDS Block with Fixed Spanned records](img/zVSAM_V2_Drawing_Block_Type_ESDS_FS.jpg)
 
 **Note**: The format of an ESDS block with Fixed Spanned records is identical to that for a KSDS.
 
@@ -458,11 +631,7 @@ Below we show an example where each record requires three segments:
 | Update        | Yes                                                |
 | Delete        | No                                                 |
 | Length change | n/a                                                |
-| Access by:    | (X)RBA or AIX key                                  |
-
-> [!NOTE]
-> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
-> Need to investigate how much RBA was implemented by Melvyn.
+| Access by:    | XLRA or AIX key                                    |
 
 ### ESDS Variable non-Spanned
 
@@ -489,7 +658,7 @@ Below we show an example showing how various numbers of records might fit into t
 | Access by:    | (X)RBA or AIX key                                  |
 
 > [!NOTE]
-> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
+> RBA/XRBA not supported by zVSAM. We'll use XLRA instead.
 > Need to investigate how much RBA was implemented by Melvyn.
 
 > [!NOTE]
@@ -530,7 +699,7 @@ or how a single record might occupy multiple blocks of the file
 | Access by:    | (X)RBA or AIX key                                  |
 
 > [!NOTE]
-> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
+> RBA/XRBA not supported by zVSAM. We'll use XLRA instead.
 > Need to investigate how much RBA was implemented by Melvyn.
 
 > [!NOTE]
@@ -568,7 +737,7 @@ Format:
 | Access by | Primary key or AIX key. (X)RBA not yet implemented |
 
 > [!NOTE]
-> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
+> RBA/XRBA not supported by zVSAM. We'll use XLRA instead.
 > Need to investigate how much RBA was implemented by Melvyn.
 
 ### KSDS Fixed Spanned
@@ -595,7 +764,7 @@ Below we show an example where each record requires three segments:
 | Access by:    | Primary key or AIX key. (X)RBA not yet implemented |
 
 > [!NOTE]
-> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
+> RBA/XRBA not supported by zVSAM. We'll use XLRA instead.
 > Need to investigate how much RBA was implemented by Melvyn.
 
 ### KSDS Variable non-Spanned
@@ -619,7 +788,7 @@ Below we show an example showing how various numbers of records might fit into t
 | Access by:    | Primary key or AIX key. (X)RBA not yet implemented                                |
 
 > [!NOTE]
-> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
+> RBA/XRBA not supported by zVSAM. We'll use XLRA instead.
 > Need to investigate how much RBA was implemented by Melvyn.
 
 > [!NOTE]
@@ -654,7 +823,7 @@ or how a single record might occupy multiple blocks of the file.
 | Access by:    | Primary key or AIX key. (X)RBA not yet implemented                                |
 
 > [!NOTE]
-> RBA/XRBA not supported by zVSAM. We'll use XLRSN instead.
+> RBA/XRBA not supported by zVSAM. We'll use XLRA instead.
 > Need to investigate how much RBA was implemented by Melvyn.
 
 > [!NOTE]
@@ -1089,6 +1258,8 @@ The addenda part of this document contains more details on the [prefix area](zVS
 The addenda part of this document contains more details on the [counters area](zVSAM_V2_Design_Addenda.md.md#counters-area)
 and its maintenance.
 
+### RRN map
+
 ### Spacemap
 
 Spacemap blocks (`ZVSAMMAP`) are used to manage available free space in a component.
@@ -1157,46 +1328,3 @@ Free space on any block is maintained in a single extent, usually but not necess
 Additionally, there may be empty records on the block. These are marked with the `RPTR_MTY` bit in their RPTR list entry.
 These empty record slots are available for reuse and may (if needed) be merged with each other and with the available
 free space on the block to create a larger area of free space to satisfy an allocation request.
-
-#### Data Block Structure (SPANNED=NO)
-
-Assume we have a cluster with three data blocks holding unsegmented records.
-The blocks are on the data chain as outlined in the picture below. Please note that all depicted pointers are block pointers.
-Each pointer thus originates with the indicated field, and ends at the block it points to.
-The location where the arrows attach has no meaning since it's a block pointer.
-
-![Diagram showing layout of a Data Block Chain](img/zVSAM_V2_Drawing_Chain_Data_Blocks.jpg)
-
-#### Data Block Structure (SPANNED=YES)
-
-Now suppose we have a cluster with three data blocks, the first block holding two unsegmented records, the
-second block holding the first segment of a record consisting of three segments and the third block holding
-the first segment of a record consisting of two segments.
-
-In the picture we show the data chain as a solid line (as in the picture above), we show the segment chain as a
-dotted line, and we show the SPX s as a fat line.
-
-The picture shows the prefix area's pointer to start/end block of both the data chain and the segment chain.
-It also shows the first and second block on each chain pointing to one another.
-Same thing for the second and third block on each chain.
-
-The picture also shows that the SPX only occurs on the first segment of each segmented record.
-
-All depicted pointers are block pointers. Each pointer originates with the indicated field,
-and ends at the block it points to. The location where the arrows attach has no meaning since it's a block pointer.
-
-![Diagram showing layout of a Segmented Data Block Chain](img/zVSAM_V2_Drawing_Chain_Segmented_Data_Blocks.jpg)
-
-There are two design alternative to the above.
-
-The difference is that in this variant all segments go onto the segment chain.
-The SPX resides by itself on the data block and just points to the first segment on the segment chain.
-
-##### Variant 1
-
-![Diagram showing layout of a Segmented Data Block Chain - alternative design](img/zVSAM_V2_Drawing_Chain_Data_Blocks_alt.jpg)
-
-##### Variant 2
-
-![Diagram showing layout of a Segmented Data Block Chain - alternative design](img/zVSAM_V2_Drawing_Chain_Segmented_Data_Blocks_alt.jpg)
-

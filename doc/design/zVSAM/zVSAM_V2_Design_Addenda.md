@@ -183,7 +183,7 @@ Review notes:
 1. ENDRBA - current last sentence seems superfluous. Left-over from a prior version? Double-check and remove or rephrase.
 2. NSSS should be zero, rather than foxes - we never do CA splits.
 3. Melvyn declares CDTASIZE to always return zero. Do we want that?
-4. ENDRBA (and HALCRBA, HLRBA) - we do not have RBA values, only LRSN. How to redefine? Melvyn says to use `CTRENDRBA`
+4. ENDRBA (and HALCRBA, HLRBA) - we do not have RBA values, only XLRA. How to redefine? Melvyn says to use `CTRENDRBA`
 5. Melvyn declares FS to always return zero. Do we want that?
 6. Melvyn declares NRETR to be zero for index components. I'm not sure why.
 

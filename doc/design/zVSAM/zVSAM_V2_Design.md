@@ -50,6 +50,7 @@ to the extent that the following acronyms and terms are understood:
 | AIX     | Alternate IndeX                                                     |
 | CBMR    | Control Block Modification Request                                  |
 | CI      | Control Interval                                                    |
+| DRP     | z390 only: Displaced Record Pointer                                 |
 | ESDS    | Entry Sequenced Data Set                                            |
 | EXLST   | Exit List                                                           |
 | IBM     | International Business Machines Corp., USA                          |
