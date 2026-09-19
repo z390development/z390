@@ -1,5 +1,5 @@
 @echo off
-REM ASSEMBLE, LINK SHOWCB TEST
+REM ASSEMBLE, LINK, EXECUTE SHOWCB TEST
 rem %0 in z390\vsam2\bat; switch to z390
 pushd %~dps0..\..
 

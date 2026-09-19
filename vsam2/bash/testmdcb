@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# testmdcb: assemble, link module using MODCB macro
+# testmdcb: assemble, link, execute module using MODCB macro
 
 ########################################
 # setup
@@ -18,7 +18,7 @@ zvsam="zvsam(2)"
 
 rc=0
 
-# run build TESTMDCB.390
+# build and execute TESTMDCB.390
 
 bash/asmlg ${vsampath}/mlc/TESTMDCB $1 $2 $3 $4 $5 $zvsam
 rc=$?

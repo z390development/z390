@@ -40,7 +40,7 @@ run_one() {
     "${vsampath}/bash/${script}" ${trace_mode} "$@"
     rc=$?
     if [ $rc -ne 0 ]; then
-        echo "$0 ERROR: Encountered RC $rc - exiting"
+        echo "$0 ERROR: $script encountered RC $rc - exiting"
         exit $rc
     fi
 }

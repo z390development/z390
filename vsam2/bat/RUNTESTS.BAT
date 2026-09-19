@@ -15,19 +15,19 @@ rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 pushd %~dps0..\..
 
 REM GENCB test
-set ERRMSG=TESTGNCB assembly/link error
+set ERRMSG=TESTGNCB assembly/link/execute error
 call vsam2\bat\TESTGNCB %z_TraceMode% zVSAM(2) || goto errmsg
 
 REM MODCB test
-set ERRMSG=TESTMDCB assembly/link error ||  goto errmsg
+set ERRMSG=TESTMDCB assembly/link/execute error ||  goto errmsg
 call vsam2\bat\TESTMDCB %z_TraceMode% zVSAM(2) || goto errmsg
 
 REM SHOWCB test
-set ERRMSG=TESTSHCB assembly/link error
+set ERRMSG=TESTSHCB assembly/link/execute error
 call vsam2\bat\TESTSHCB %z_TraceMode% zVSAM(2) || goto errmsg
 
 REM TESTCB test
-set ERRMSG=TESTTSCB assembly/link error
+set ERRMSG=TESTTSCB assembly/link/execute error
 call vsam2\bat\TESTTSCB %z_TraceMode% zVSAM(2) || goto errmsg
 
 REM zREPRO tests for LOAD/UUNLOAD/VERIFY/BUILDAIX

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# testshcb: assemble, link module using SHOWCB macro
+# testshcb: assemble, link, execute module using SHOWCB macro
 
 ########################################
 # setup
@@ -18,7 +18,7 @@ zvsam="zvsam(2)"
 
 rc=0
 
-# run build TESTSHCB.390
+# build and execute TESTSHCB.390
 
 bash/asmlg ${vsampath}/mlc/TESTSHCB $1 $2 $3 $4 $5 $zvsam
 rc=$?
