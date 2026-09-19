@@ -109,6 +109,8 @@ tests/codepage/mlcwork/*
 **/rtgendr[1-3].[dD][aA][tT]
 **/RTGENDIF.[dD][aA][tT]
 util/superzap/*.[dD][aA][tT]
+vsam2/data/*
+!vsam2/data/*.[tT][xX][tT]
 
 # redirection files
 **/*.[lL][nN][kK]
