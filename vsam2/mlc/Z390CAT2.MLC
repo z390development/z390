@@ -208,8 +208,8 @@
                SPANNED=YES,                                            X
                DATABLOCKSIZE=4K,                                       X
                INDEXBLOCKSIZE=4K,                                      X
-               DTADSN=E:\Z390\ZVSAM\DATA\MYAIXIN.DTA,                  X
-               IDXDSN=E:\Z390\ZVSAM\DATA\MYAIXIN.IDX
+               DTADSN=vsam2\data\MYAIXIN.DTA,                          X
+               IDXDSN=vsam2\data\MYAIXIN.IDX
 *
 * VS-ESDS
 *
