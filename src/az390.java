@@ -447,6 +447,8 @@ import javax.swing.JTextArea;
  * 2026-08-10 AFK #807 Fix issues flagged by linter
  * 2026-08-27 AFK #916 Missing break statements in case construct
  * 2026-09-12 RJS #877 Do not display stale object code on error lines
+ * 2026-09-18 RJS #935 Fill ADDR2 in listing for relative branches
+ *                     (BRAS/JAS and other get_hex_relative_offset callers)
  *****************************************************/
 
 
@@ -9479,6 +9481,7 @@ public  class  az390 implements Runnable {
     private void get_hex_relative_offset(int bits) {
         if (calc_exp()) {
             if  (exp_type == sym_rel) {
+                hex_bddd2_loc = tz390.get_hex(exp_val,6); // #935 ADDR2 before offset conversion
                 if (bits == 12) {
                     obj_code = obj_code + get_hex_relative_offset_12();
                 } else if (bits == 16) {
