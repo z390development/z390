@@ -12,12 +12,7 @@ class RunRtTest extends z390Test {
     var libs = ["SYSMAC(+${sysmac})", "SYSCPY(+${syscpy})"]
     var options  = ['noloadhigh bal notiming stats', *libs]
 
-    void test_module(String moduleName) {
-        int rc = this.asmlg(basePath("rt", "test", moduleName), *options)
-        this.printOutput()
-        assert rc == 0
-    }
-
+    // Factory for programs that need to be run - no output file comparisons needed
     @TestFactory
     Collection<DynamicTest> test_pgms() {
         var tests = []
@@ -31,6 +26,81 @@ class RunRtTest extends z390Test {
         }
         return tests
     }
+
+    // Test function for test factory test_pgms
+    void test_module(String moduleName) {
+        int rc = this.asmlg(basePath("rt", "test", moduleName), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+
+    /**
+     * DCB tests. setEnv false means the program uses DSNAME= and must not
+     * inherit SYSUT1/SYSUT2/SYSOUT. outText/rptText true compares lines so CR/LF
+     * differences are ignored; false compares raw bytes.
+     */
+    @TestFactory
+    Collection<DynamicTest> test_dcb_pgms() {
+        var cases = [
+            [name: 'TESTDCB2', setEnv: true,  outRef: 'TF2', outText: false, rptText: true ],
+            [name: 'TESTDCB3', setEnv: true,  outRef: 'TF1', outText: false, rptText: true ],
+            [name: 'TESTDCB4', setEnv: true,  outRef: 'TF1', outText: true,  rptText: true ],
+            [name: 'TESTDCB5', setEnv: true,  outRef: 'TF2', outText: false, rptText: true ],
+            [name: 'TESTDCB6', setEnv: true,  outRef: 'TF2', outText: false, rptText: true ],
+            [name: 'TESTDCB7', setEnv: true,  outRef: 'TF2', outText: true,  rptText: true ],
+            [name: 'TESTDCB8', setEnv: true,  outRef: 'TF1', outText: false, rptText: true ],
+            [name: 'TESTDCB9', setEnv: true,  outRef: 'TF2', outText: false, rptText: true ],
+            [name: 'TESTDCBA', setEnv: false, outRef: 'TF1', outText: true,  rptText: true ],
+            [name: 'TESTDCBB', setEnv: true,  outRef: 'TF1', outText: false, rptText: true ],
+            [name: 'TESTDCBC', setEnv: false, outRef: 'TF1', outText: true,  rptText: true ],
+            [name: 'TESTDCBD', setEnv: false, outRef: 'TF2', outText: true,  rptText: true ],
+            [name: 'TESTDCBE', setEnv: false, outRef: 'TF2', outText: false, rptText: false],
+            [name: 'TESTDCBF', setEnv: true,  outRef: 'TF2', outText: false, rptText: true ],
+        ]
+        return cases.collect { spec ->
+            dynamicTest("test RT program ${spec.name}", () -> test_dcb(spec))
+        }
+    }
+
+    // Test function for test factory test_dcb_pgms
+    void test_dcb(Map spec) {
+        // tests share this instance, so drop DD names left by the previous row.
+        this.env = [:]
+        def name = spec.name
+        if (spec.setEnv) {
+            env.put('SYSUT1', basePath('rt', 'test', "${name}.TF1"))
+            env.put('SYSUT2', basePath('rt', 'test', "${name}.OUT"))
+            env.put('SYSOUT', basePath('rt', 'test', "${name}.RPT"))
+        }
+        int rc = this.asmlg(workDir: new File(basePath()), basePath('rt', 'test', name), *options)
+        this.printOutput()
+        assert rc == 0
+        assertSameContent(basePath('rt', 'test', "${name}.OUT"),
+                           basePath('rt', 'test', "${name}.${spec.outRef}"),
+                           spec.outText as boolean,
+                           "${name}.OUT")
+        assertSameContent(basePath('rt', 'test', "${name}.RPT"),
+                           basePath('rt', 'test', "${name}.TF3"),
+                           spec.rptText as boolean,
+                           "${name}.RPT")
+    }
+
+    // helper function for file comparisons - used by test_dcb
+    private void assertSameContent(String actualPath, String expectedPath, boolean text, String label) {
+        def actual = new File(actualPath)
+        def expected = new File(expectedPath)
+        assert actual.isFile(), "missing output ${actualPath}"
+        assert expected.isFile(), "missing reference ${expectedPath}"
+        if (text) {
+            assert actual.readLines() == expected.readLines(), "${label} differs from ${expected.name}"
+        } else {
+            assert actual.bytes == expected.bytes, "${label} differs from ${expected.name}"
+        }
+    }
+
+    //
+    // Individual test cases, not covered by either factory above
+    //
 
     @Test
     void test_TESTBLD1() {

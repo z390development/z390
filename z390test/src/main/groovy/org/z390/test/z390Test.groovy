@@ -115,12 +115,12 @@ class z390Test {
         }
     }
 
-    def callZ390(String asmFileExcludingExtension, String command, String... args) {
+    def callZ390(Map kwargs=[:], String asmFileExcludingExtension, String command, String... args) {
         println("Executing ${command}: ${asmFileExcludingExtension}")
         var cmd = ["java", "-classpath", basePath('z390.jar'),
                    '-Xrs', '-Xms150000K', '-Xmx150000K', command, asmFileExcludingExtension, *args].join(" ")
         println(cmd)
-        var proc = cmd.execute(this.getEnvList(), null)   // , workDir);
+        var proc = cmd.execute(this.getEnvList(), kwargs.workDir as File)
         var sout = new StringBuilder()
         var serr = new StringBuilder()
         proc.consumeProcessOutput(sout, serr)
@@ -239,7 +239,7 @@ class z390Test {
         if (rc == 0) {
             rc = this.callZ390(asmFilename, 'lz390', args)
             if (rc == 0) {
-                rc = this.callZ390(asmFilename, 'ez390', args)
+                rc = this.callZ390(kwargs, asmFilename, 'ez390', args)
             }
         }
         this.getOutput(asmFilename)
