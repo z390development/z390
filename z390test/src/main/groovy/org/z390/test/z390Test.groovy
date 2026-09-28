@@ -117,6 +117,10 @@ class z390Test {
 
     def callZ390(Map kwargs=[:], String asmFileExcludingExtension, String command, String... args) {
         println("Executing ${command}: ${asmFileExcludingExtension}")
+        // Repo root as cwd: so catalog relative paths resolve correctly
+        File workDir = new File(this.project_root.toString()).canonicalFile
+        println("workdir: ${workDir}")
+        // prepare command
         var cmd = ["java", "-classpath", basePath('z390.jar'),
                    '-Xrs', '-Xms150000K', '-Xmx150000K', command, asmFileExcludingExtension, *args].join(" ")
         println(cmd)

@@ -446,6 +446,7 @@ import javax.swing.JTextArea;
  * 2026-03-25 ZH  #704 Flag invalid register operands for KM, KMA, KMC
  * 2026-08-10 AFK #807 Fix issues flagged by linter
  * 2026-08-27 AFK #916 Missing break statements in case construct
+ * 2026-09-12 RJS #877 Do not display stale object code on error lines
  *****************************************************/
 
 
@@ -5754,7 +5755,7 @@ public  class  az390 implements Runnable {
             break;
         case 140:  // LTORG 0
             bal_op_ok = true;
-            list_bal_line();
+            list_bal_line(false);                                         // #877
             if ( // RPI 1159 was tot_lit > 0
                     cur_esd > 0
                     && sym_type[esd_sid[esd_base[cur_esd]]] == sym_cst) { // RPI 564
@@ -5899,7 +5900,7 @@ public  class  az390 implements Runnable {
             }
         }
         if (!bal_abort && bal_line != null) { // RPI 891
-            list_bal_line();
+            list_bal_line(false);                                     // #877
         }
         loc_ctr = loc_ctr + loc_len;
     }
@@ -5916,8 +5917,10 @@ public  class  az390 implements Runnable {
      *    for update of mac_call_gen,
      *    call reformating, and delay flags
      *    mac_call_first and mac_call_last.
+     *
+     * @param list_line_in_error  Trigger the removal of the Location/PC at the line start  // #877
      */
-    private void list_bal_line() {
+    private void list_bal_line(boolean list_line_in_error) {                                // #877
         if (!check_list_bal_line()) { // RPI 484 RPI 891
             update_list_bal_line();
             return;
@@ -5929,16 +5932,16 @@ public  class  az390 implements Runnable {
         if (gen_obj_code) { // RPI 581
             cur_line_type     = xref_file_type[bal_line_xref_file_num[bal_line_index]];
             cur_line_file_num = bal_line_xref_file_num[bal_line_index];
-            put_prn_line(tz390.get_hex(list_obj_loc,6)
-                    + " " + list_obj_code.substring(0,16)
-                    + " " + hex_bddd1_loc
-                    + " " + hex_bddd2_loc
-                    + " " + tz390.get_cur_bal_line_id(cur_line_file_num,
-                            bal_line_xref_file_line[bal_line_index],
-                            bal_line_num[bal_line_index],
-                            mac_call_gen, // RPI 891
-                            cur_line_type)
-                    + bal_line);
+            put_prn_line((list_line_in_error ? "      " : tz390.get_hex(list_obj_loc,6)) // Conditional PC #877
+                + " " + list_obj_code.substring(0,16)
+                + " " + hex_bddd1_loc
+                + " " + hex_bddd2_loc
+                + " " + tz390.get_cur_bal_line_id(cur_line_file_num,
+                    bal_line_xref_file_line[bal_line_index],
+                    bal_line_num[bal_line_index],
+                    mac_call_gen, // RPI 891
+                    cur_line_type)
+                + bal_line);
         }
         force_list_bal = false;   // RPI 285
         update_list_bal_line();
@@ -8269,7 +8272,10 @@ public  class  az390 implements Runnable {
         if (gen_obj_code) { // RPI 484
             if (!mz390_abort) { // RPI 433 don't duplicate mz error line
                 force_list_bal = true;  // RPI 285
-                list_bal_line();
+                list_obj_code = "";             // #877
+                hex_bddd1_loc = "      ";       // #877
+                hex_bddd2_loc = "      ";       // #877
+                list_bal_line(true);            // Take error mode path             // #877
             }
             force_list_bal = true;  // RPI 285
             set_file_line_xref();
@@ -8350,7 +8356,7 @@ public  class  az390 implements Runnable {
         tz390.z390_abort = true;
         tz390.opt_con = true;    // RPI 453
         force_list_bal = true;      // RPI 285
-        list_bal_line();
+        list_bal_line(false);       // #877
         force_list_bal = true; // RPI 285
         String error_msg = "AZ390E abort " + error + " on line " + bal_line_num[bal_line_index] + " " + bal_line_text[bal_line_index];
         put_log(error_msg);
@@ -11651,7 +11657,7 @@ public  class  az390 implements Runnable {
         if (cur_esd > 0) {
             update_sect();
         }
-        list_bal_line();
+        list_bal_line(false);                                             // #877
         if (tot_lit > 0) {
             cur_esd = 1;
             while (cur_esd <= tot_esd
