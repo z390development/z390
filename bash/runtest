@@ -23,7 +23,7 @@ if [ -n "$1" ]; then
   fi
 fi
 
-# execute the tests
+# execute the test or tests
 if [ $# -eq 0 ]; then
   ./gradlew "$testproc" --rerun
 else
