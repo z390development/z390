@@ -53,8 +53,10 @@ call bat\BLDDIST.BAT %z_TraceMode% %buildall% || goto error
 call bat\IVP.BAT     %z_TraceMode% %buildall% || goto error
 
 rem run the tests - include the optional tests only when *All is in effect
-call z390test\gradlew.bat -p z390test cleanTest || goto error
-call z390test\gradlew.bat -p z390test test      || goto error
+set testMode=standard
+if /I "%buildall%" == "*All" set testMode=full
+call z390test\gradlew.bat -p z390test cleanTest                  || goto error
+call z390test\gradlew.bat -p z390test test -PtestMode=%testMode% || goto error
 
 rem if arc was specified, we run the vsam2 tests
 if /I "%arc%"  NEQ "" call vsam2\bat\TSTLOADIN.BAT %z_TraceMode% "%arc%" || goto error

@@ -62,20 +62,24 @@ The tests use standard JUnit test structures.
 ### Optional test cases
 
 It is possible to declare a groovy script as optional.
-All it takes is
-```groovy
-import org.junit.jupiter.api.Tag
-@Tag("optional")
+All it takes is `@FullSuite` on a groovy class or method.
 
-```
-
-See `RunMfAcc.groovy` for an example.
-
-Optional test script must be encoded explicitly in the `bat\RUNTEST.BAT`
-and the `bash/runtest` scripts because they require a slightly different invocation.
+See `RunMfAcc.groovy` and `TestOptables.groovy `for examples.
 
 Optional test cases are skipped when running a build procedure,
-but included when the `*All` parameter is added.
+but included when the `*All` parameter is added:
+
+```BAT
+BUILD.BAT *All
+```
+
+```bash
+bash build.sh '*All'
+```
+
+For running individual test scripts, the `bat\RUNTEST.BAT` and `bash/runtest`
+procedures support a `full` parameter that includes the optional test cases.
+Optional test cases are skipped by default.
 
 ## Methods for testing
 
