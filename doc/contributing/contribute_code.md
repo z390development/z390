@@ -34,6 +34,31 @@ to download the appropriate version for your system.
 You can find a quick reference for some frequently used git commands
 the bottom of this document.
 
+### Install lfs
+
+LFS is a git feature for Large File Support. z390 uses lfs for storing
+binary files (e.g. jpg, png) without bloating the repository itself.
+
+The installation depends on your host operating system.
+
+For Linux:
+```
+sudo apt update
+sudo apt install git-lfs
+git lfs install
+cd /mnt/c/z390dev/wrk_rt
+git lfs pull
+```
+
+On Windows:
+1. Download the Windows installer from https://git-lfs.com (or the GitHub releases page).
+2. Run the installer.
+3. issue:
+```
+git lfs install
+git lfs pull
+```
+
 ### Clone the code
 
 Start with a clone of the main repository.
@@ -325,18 +350,19 @@ The following preamble should be applied to all programs
 git info: https://git-scm.com
 git documentation:https://git-scm.com/doc
 
-Action                                    | Command
-------------------------------------------|------------
-get list of available commands            | `git help`
-get syntax details for a git command      | `git help <command>`
-create local clone of git repo            | `git clone <url\> <subdir>`
-review status of current branch           | `git status`
-get list of all defined branches          | `git branch -v --all`
-prepare commit                            | `git add .`
-commit a set of changes                   | `git commit -m"descriptive comments"`
-push changes to your own fork             | `git push`
-remove ignored and added files from repo  | `git clean -d -f -X`
-graphical display of branches             | `git log --graph --oneline --decorate --all`
--- > when viewing the branches displayed  | `<Enter> to scroll 1 line, <PgDn> to scroll a page, q to quit`
-go 'back in time' to a specific commit    | `git branch -f <new_branch> [<start-point>]`
-                                          | `git switch <new_branch>`
+| Action                                    | Command                                                        |
+|-------------------------------------------|----------------------------------------------------------------|
+| get list of available commands            | `git help`                                                     |
+| get syntax details for a git command      | `git help <command>`                                           |
+| create local clone of git repo            | `git clone <url\> <subdir>`                                    |
+| review status of current branch           | `git status`                                                   |
+| get list of all defined branches          | `git branch -v --all`                                          |
+| prepare commit                            | `git add .`                                                    |
+| set script executable                     | `git add --chmod=+x path/to/your-script.sh`                    |
+| commit a set of changes                   | `git commit -m"descriptive comments"`                          |
+| push changes to your own fork             | `git push`                                                     |
+| remove ignored and added files from repo  | `git clean -d -f -X`                                           |
+| graphical display of branches             | `git log --graph --oneline --decorate --all`                   |
+| -- > when viewing the branches displayed  | `<Enter> to scroll 1 line, <PgDn> to scroll a page, q to quit` |
+| go 'back in time' to a specific commit    | `git branch -f <new_branch> [<start-point>]`                   |
+|                                           | `git switch <new_branch>`                                      |

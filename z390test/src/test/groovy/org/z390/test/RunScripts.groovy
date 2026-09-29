@@ -194,4 +194,74 @@ class RunScripts extends z390Test {
         this.printOutput()
         assert rc == 0
     }
+    @Test
+    void test_RPI2009A() {
+        int rc = this.asml(basePath("rt", "rt", "RPI2009A"), *options)
+        this.printOutput()
+        assert rc == 0
+    
+        def variants = [
+            'A', 'AFI', 'AG', 'AGF', 'AGFI', 'AGFR', 'AGHI', 'AGHIK',
+            'AGR', 'AGRK', 'AGSI', 'AH', 'AHHHR', 'AHHLR', 'AHI', 'AHIK',
+            'AHY', 'AIH', 'AR', 'ARK', 'ASI', 'AY', 'LAA', 'LAAG'
+        ]
+        variants.each { parm ->
+            env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2009A_${parm}.RT")]
+            rc = this.ez390(basePath("rt", "rt", "RPI2009A"), *options, "parm(${parm})", "test(RTSCRIPT)")
+            this.printOutput()
+            assert rc == 0, "RPI2009A parm(${parm}) failed with RC=${rc}"
+        }
+    }
+    @Test
+    void test_RPI2009B() {
+        int rc = this.asml(basePath("rt", "rt", "RPI2009B"), *options)
+        this.printOutput()
+        assert rc == 0
+    
+        def variants = [
+            'S', 'SG', 'SGF', 'SGFR', 'SGR', 'SGRK',
+            'SH', 'SHHHR', 'SHHLR', 'SHY', 'SR', 'SRK', 'SY'
+        ]
+        variants.each { parm ->
+            env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2009B_${parm}.RT")]
+            rc = this.ez390(basePath("rt", "rt", "RPI2009B"), *options, "parm(${parm})", "test(RTSCRIPT)")
+            this.printOutput()
+            assert rc == 0, "RPI2009B parm(${parm}) failed with RC=${rc}"
+        }
+    }
+    @Test
+    void test_RPI2009C() {
+        env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2009C.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2009C"), *options, "test(RTSCRIPT)")
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_RPI2009D() {
+        env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2009D.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2009D"), *options, "test(RTSCRIPT)")
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_RPI2009E() {
+        env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2009E.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2009E"), *options, "test(RTSCRIPT)")
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_RPI2009F() {
+        env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2009F.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2009F"), *options, "test(RTSCRIPT)")
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
+    void test_RPI2010() {
+        env = ['RTSCRIPT': basePath('rt', 'rt', "RPI2010.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "RPI2010"), *options, "test(RTSCRIPT)")
+        this.printOutput()
+        assert rc == 0
+    }
 }

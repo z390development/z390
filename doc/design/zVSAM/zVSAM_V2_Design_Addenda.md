@@ -123,7 +123,235 @@ Accessing subfields of the zACB directly may adversely impact portability of you
 > Fields ACBPFX through ACBDTYPE are dataset-level fields and do not belong in the zACB,
 > which is intended for cluster-level information. These fields need to be moved to another structure.
 
-### CBMR description
+## SHOWCB ACB details
+
+| Keyword  | Usage and implementation in zVSAM                                                                                                                                                                                       |
+|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| AVSPAC   | Count of available space in bytes – taken from prefix counter field `CTRAVSPAC`                                                                                                                                         |
+| BFRFND   | nr of times since this ACB was opened that a get/read request for this ACB was satisfied from a buffer, without doing any I/O. Derived from `CTRNBFRFND`                                                                |
+| BSTRNO   | Initial value of strings for a path. Derived from `ACBBSTNO`                                                                                                                                                            |
+| BUFND    | value of data buffers specified in ACB. Derived from `ACBBUFND`                                                                                                                                                         |
+| BUFNI    | value of index buffers specified in ACB. Derived from `ACBBUFNI`                                                                                                                                                        |
+| BUFNO    | Number of data/index buffers allocated (last 4 bytes) Derived from `CTRNBUFNO`                                                                                                                                          |
+| BUFNOL   | Number of data/index buffers allocated for LSR processing (returns zero)                                                                                                                                                |
+| BUFRDS   | Number of data/index buffer reads (last 4 bytes). Derived from `CTRNBUFRDS`                                                                                                                                             |
+| BUFSP    | Buffer space in bytes specified in ACB. Derived from `ACBBUFSP`                                                                                                                                                         |
+| BUFUSE   | Number of data/index buffers actually in use (last 4 bytes) Derived from `CTRNBUFUSE`                                                                                                                                   |
+| CDTASIZE | Compressed data size. Since zVSAM does not support compression, this is the same as `SDTASIZE`. Taken from prefix counter field `CTRSDTA`.                                                                              |
+| CINV     | Block size for data/index. Derived from `PFXBLKSZ`                                                                                                                                                                      |
+| CIPCA    | CI's in CA (returns zero)                                                                                                                                                                                               |
+| DDNAME   | DDNAME specified in ACB. Derived from `ACBDDNM`                                                                                                                                                                         |
+| ENDRBA   | high water mark of the component in bytes, discounting the prefix block. Taken from prefix counter field `CTRENDRBA`.                                                                                                   |
+|          | If the last block in the component is free, it's the starting XRBA of that block. If the last block holds the last record, it's the XRBA of that record's last byte.                                                    |
+|          | Otherwise, it's the XRBA of the last byte of the last record on the block.                                                                                                                                              |
+| ERROR    | Return code from last open/close operation. Derived from `ACBERFLG`                                                                                                                                                     |
+| EXLLEN   | Length of EXLST in bytes                                                                                                                                                                                                |
+| EXLST    | address of EXLST, zero if none. Derived from `ACBEXLST`                                                                                                                                                                 |
+| FS       | For data component `PFXFRBLK` / (`PFXFRBLK` + `PFXFRINT`) \* 100. Foxes for index.                                                                                                                                      |
+| HALCRBA  | XRBA of the last byte of the last record. Taken from prefix counter field `CTRHALCRBA`.                                                                                                                                 |
+| HLRBA    | For OBJECT=INDEX only, highest index block RBA. Derived from `CTRHLRBA`                                                                                                                                                 |
+| KEYLEN   | length of key field. For KSDS this is the length of the key field. For RRDS/ESDS the value is always 8. Taken from prefix field `PFXKYLEN`.                                                                             |
+| LEVEL    | Address (4 bytes) and length (4 bytes) of field containing zVSAM version. Derived from `ACBVER`                                                                                                                         |
+| LOKEY    | Address (4 bytes) of lowest key in the cluster + length (4 bytes) of key. Derived from `CTRLOKEY@` and `PFXKYLEN`                                                                                                       |
+| LRECL    | Maximum data/index record length. Derived from `PFXRCLEN`                                                                                                                                                               |
+| MAREA    | Message area (returns foxes)                                                                                                                                                                                            |
+| MLEN     | Message length (returns zero)                                                                                                                                                                                           |
+| NCIS     | value of Block splits in the data component (last 4 bytes) Zero for OBJECT=INDEX. Derived from `CTRNCIS`                                                                                                                |
+| NDELR    | value of deleted records from the data component (last 4 bytes) Zero for OBJECT=INDEX. Derived from `CTRNDELR`                                                                                                          |
+| NEXCP    | value of I/O requests for the data/index components (last 4 bytes) Derived from `CTRNEXCP`                                                                                                                              |
+| NEXT     | value of extents of the data/index components (returns 1)                                                                                                                                                               |
+| NINSR    | value of records inserted for the data component (last 4 bytes) Zero for OBJECT=INDEX. Derived from `CTRNINSR`                                                                                                          |
+| NIXL     | value of index levels for index component. Zero for OBJECT=DATA. Derived from highest non-foxes `PFXBLVLn`                                                                                                              |
+| NLOGR    | nr of records in the component. Taken from prefix counter field `CTRNLOGR`.                                                                                                                                             |
+| NRETR    | value of records retrieved from the data component (last 4 bytes). Zero for OBJECT=INDEX. Derived from `CTRNRETR`                                                                                                       |
+| NSSS     | value of control area splits for the data/index (returns zero)                                                                                                                                                          |
+| NUIW     | nr of times a block was written for this component by zVSAM rather than the user program. Taken from prefix counter field `CTRNNUIW`.                                                                                   |
+| NUPDR    | nr of times a record was updated for this component. Taken from prefix counter field `CTRNUPDR`.                                                                                                                        |
+| PASSWD   | address to password, consisting of length (1 byte, binary) followed by the actual password value. Derived from `ACBPASSW`                                                                                               |
+| RELEASE  | Address (4 bytes) and length (4 bytes) of field containing zVSAM version. Derived from `ACBVER`. Same as LEVEL                                                                                                          |
+| RKP      | Relative Key Position, offset of key within logical record. Derived from `PFXKYOFF`                                                                                                                                     |
+| RMODE31  | 0=None, 1=Buff, 2=CB, 3=All. Derived from `ACBOFLGS`                                                                                                                                                                    |
+| RPLLEN   | Length of RPL in bytes                                                                                                                                                                                                  |
+| SDTASIZE | Total nr of data bytes currently stored in the component. Sum of all record lengths. Taken from prefix counter field `CTRSDTASZ`.                                                                                       |
+| SHRPOOL  | SHRPOOL number. Derived from `ACBSHRP`                                                                                                                                                                                  |
+| STMST    | system timestamp of last close operation on the component. Taken from prefix counter field `CTRSTMST`.                                                                                                                  |
+| STRMAX   | Max value of concurrently active strings (last 4 bytes). Derived from `CTRSTRMAX`                                                                                                                                       |
+| STRNO    | Max value of allocated strings. Derived from `ACBSTRNO`                                                                                                                                                                 |
+| UIW      | nr of times a block was written for this component by the user program rather than zVSAM. Taken from prefix counter field `CTRNUIW`.                                                                                    |
+
+Review notes:
+1. ENDRBA - current last sentence seems superfluous. Left-over from a prior version? Double-check and remove or rephrase.
+2. NSSS should be zero, rather than foxes - we never do CA splits.
+3. Melvyn declares CDTASIZE to always return zero. Do we want that?
+4. ENDRBA (and HALCRBA, HLRBA) - we do not have RBA values, only LRSN. How to redefine? Melvyn says to use `CTRENDRBA`
+5. Melvyn declares FS to always return zero. Do we want that?
+6. Melvyn declares NRETR to be zero for index components. I'm not sure why.
+
+## TESTCB ACB details
+
+| Keyword  | Usage and implementation in zVSAM                                                                                                                                                                                       |
+|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| AVSPAC   | Available space in data/index (last 4 bytes) From `CTRAVSPAC`                                                                                                                                                           |
+| BFRFND   | Buffer hits for data/index including LSR (last 4 bytes). From `CTRNBFRFND`                                                                                                                                              |
+| BSTRNO   | Initial value of strings for a path From `ACBBSTNO`                                                                                                                                                                     |
+| BUFND    | value of data buffers. From `ACBBUFND`                                                                                                                                                                                  |
+| BUFNI    | value of index buffers. From `ACBBUFNI`                                                                                                                                                                                 |
+| BUFNO    | value of I/O Buffers (last 4 bytes) From `CTRNBUFNO`                                                                                                                                                                    |
+| BUFRDS   | Number of data/index buffer reads (last 4 bytes). From `CTRNBUFRDS`                                                                                                                                                     |
+| BUFSP    | Buffer space in bytes. From `ACBBUFSP`                                                                                                                                                                                  |
+| BUFUSE   | Number of data/index buffers actually in use (last 4 bytes). From `CTRNBUFUSE`                                                                                                                                          |
+| CINV     | Block size in bytes. From `PFXBLKSZ`                                                                                                                                                                                    |
+| DDNAME   | DDNAME. From `ACBDDNM`                                                                                                                                                                                                  |
+| ENDRBA   | Highest used RBA (last 4 bytes). From `CTRENDRBA`                                                                                                                                                                       |
+| ERROR    | Return code from last open/close operation From `ACBERFLG`                                                                                                                                                              |
+| EXLST    | EXLST address. From `ACBEXLST`                                                                                                                                                                                          |
+| FS       | ????                                                                                                                                                                                                                    |
+| HALCRBA  | Highest allocated data/index RBA (last 4 bytes). From `CTRHALCRBA`                                                                                                                                                      |
+| HLRBA    | For OBJECT=INDEX only, highest index block RBA. From `CTRHLRBA`                                                                                                                                                         |
+| KEYLEN   | Length of key field. From `PFXKYLEN`                                                                                                                                                                                    |
+| LRECL    | Logical Record Length. From `PFXRCLEN`                                                                                                                                                                                  |
+| MACRF    | List of keywords for processing options. From `ACBMACRn`.                                                                                                                                                               |
+| NCIS     | value of block splits (last 4 bytes) Compares to zero for OBJECT=INDEX From `CTRNCIS`                                                                                                                                   |
+| NDELR    | value of deleted records (last 4 bytes) Compares to zero for OBJECT=INDEX From `CTRNDELR`                                                                                                                               |
+| NEXCP    | value of I/O requests (last 4 bytes) From `CTRNEXCP`                                                                                                                                                                    |
+| NEXT     | value of extents (last 4 bytes) From `CTRNEXT` (always 1)                                                                                                                                                               |
+| NINSR    | value of inserted records (last 4 bytes) Compares to zero for OBJECT=INDEX From `CTRNINSR`                                                                                                                              |
+| NIXL     | value of index levels Compares to zero for OBJECT=DATA From `PFXBLVLn`                                                                                                                                                  |
+| NLOGR    | value of records (last 4 bytes) From `CTRNLOGR`                                                                                                                                                                         |
+| NRETR    | value of records retrieved (last 4 bytes) Compares to zero for OBJECT=INDEX From `CTRNRETR`                                                                                                                             |
+| NSSS     | Compares to zero                                                                                                                                                                                                        |
+| NUIW     | value of non-user writes (last 4 bytes). From `CTRNNUIW`                                                                                                                                                                |
+| NUPDR    | value of updated records (last 4 bytes) From `CTRNUPDR`                                                                                                                                                                 |
+| OFLAGS   | Successful OPEN. From `ACBOFLGS`                                                                                                                                                                                        |
+| OPENOBJ  | ACB represents Path, Base or AIX From `ACBDTYPE`                                                                                                                                                                        |
+| PASSWD   | address of 1-byte length, password From `ACBPASSW`                                                                                                                                                                      |
+| RKP      | offset of key field within record From `PFXKYOFF`                                                                                                                                                                       |
+| SHRPOOL  | SHRPOOL number. From `ACBSHRP`                                                                                                                                                                                          |
+| SDTASZ   | Data size. From `CTRSDTASZ`                                                                                                                                                                                             |
+| STMST    | Address of system timestamp field From `CTRSTMST`                                                                                                                                                                       |
+| STRMAX   | Max. value of concurrently active strings (last 4 bytes). Derived from `CTRSTRMAX`                                                                                                                                      |
+| STRNO    | Max. value of parallel requests From `ACBSTRNO`                                                                                                                                                                         |
+| UIW      | value of user writes (last 4 bytes). From `CTRNUIW`                                                                                                                                                                     |
+
+## zEXLST description
+
+The zEXLST is the internal structure (control block, object) that constitutes the EXLST.
+
+The structure and layout of the zEXLST are not formally part of the interface and may change in future releases.
+Therefore the zEXLST layout for zVSAM V2 is shown here only for the sake of completeness.
+Direct access to subfields in the zEXLST is discouraged. Use SHOWCB EXLST, TESTCB EXLST and/or MODCB EXLST to inspect, test, and/or modify the zEXLST's content.
+Accessing subfields of the zEXLST directly may adversely impact portability of your programs.
+
+| Label    | Equate       | Designation | Remarks                                                         |
+|----------|--------------|-------------|-----------------------------------------------------------------|
+| IHAEXLST |              | DSECT       |                                                                 |
+|          | IFGEXLST     | DSECT       | Alternative DSECT name                                          |
+| EXLEYE   |              | CL4         | Eye catcher                                                     |
+|          | EXLZLST      | =C'zLST'    | Fixed value                                                     |
+| EXLLEN   |              | H           | Length of exit list                                             |
+| EXLLEN2  |              |             | Synonym of EXLLEN                                               |
+| EXLSTYP  |              | XL1         | Subtype                                                         |
+|          | EXLSVSAM     | =X'10'      | zVSAM                                                           |
+| EXLEODF  |              | XL1         | Eodad routine flags                                             |
+|          | EXLEODS      | =X'80'      | Present                                                         |
+|          | EXLEODA      | =X'40'      | Active                                                          |
+| EXLLERF  |              | XL1         | Lerad routine flags                                             |
+|          | EXLLERS      | =X'80'      | Present                                                         |
+|          | EXLLERA      | =X'40'      | Active                                                          |
+| EXLSYNF  |              | XL1         | Synad routine flags                                             |
+|          | EXLSYNS      | X'80'       | Present                                                         |
+|          | EXLSYNA      | X'40'       | Active                                                          |
+| --       |              | XL2         | Filler for alignment                                            |
+| EXLEODP  |              | AL4         | EODAD address                                                   |
+| EXLLERP  |              | AL4         | SYNAD address                                                   |
+| EXLSYNP  |              | AL4         | LERAD address                                                   |
+| EXLSTEND |              | --          | End label for DSECT                                             |
+|          | EXLSTLEN     | calculated  | Length of EXLST                                                 |
+
+> [!NOTE]
+> The pointer fields in the macro are coded in the wrong location, making them unaligned.
+> We'll have to investigate the impact of changing the macro to conform to the layout described here.
+
+## zRPL description
+
+The zRPL is the internal structure (control block, object) that constitutes the RPL.
+
+The structure and layout of the zRPL are not formally part of the interface and may change in future releases.
+Therefore the zRPL layout for zVSAM V1 is not included and the zRPL layout for zVSAM V2 is shown here only for the sake of completeness.
+Direct access to subfields in the zRPL is discouraged. Use SHOWCB RPL, TESTCB RPL and/or MODCB RPL to inspect, test, and/or modify the zRPL's content.
+Accessing subfields of the zRPL directly may adversely impact portability of your programs.
+
+| Label     | Equate       | Designation | Remarks                                                         |
+|-----------|--------------|-------------|-----------------------------------------------------------------|
+| IHARPL    |              | DSECT       |                                                                 |
+| IFGRPL    |              |             | Synonym of IHARPL                                               |
+| RPLEYE    |              | CL4         | Eye catcher                                                     |
+|           | RPLZRPL      | =C'zRPL'    | Fixed value                                                     |
+| RPLDACB   |              | AL4         | Pointer to ACB                                                  |
+| RPLAREA   |              | AL4         | Pointer to record area                                          |
+| RPLAREAL  |              | XL4         | Length of record area                                           |
+| RPLARG    |              | AL4         | Pointer to argument                                             |
+| RPLECB    |              | AL4         | Pointer to ECB                                                  |
+|           | RPLWAIT      | =X'80'      | - request has been issued                                       |
+|           | RPLPOST      | =X'40'      | - request has been completed                                    |
+| RPLMSGAR  |              | AL4         | Pointer to message area                                         |
+| RPLNXTRP  |              | AL4         | Pointer to next chained RPL                                     |
+| RPLRECLN  |              | XL4         | Length of record read or of record to be written                |
+| RPLMSGLN  |              | XL2         | Length of message area                                          |
+| RPLKEYLN  |              | XL1         | Key length                                                      |
+| RPLOPTCD  |              | 0XL2        | Option codes                                                    |
+| RPLOPTCD1 |              | XL1         | Option byte 1                                                   |
+|           | RPLOPT_KEY   | =X'80'      | 0: OPTCD=ADR 1: OPTCD=KEY                                       |
+|           | RPLOPT_SEQ   | =X'40'      | 0: OPTCD=DIR 1: OPTCD=SEQ                                       |
+|           | RPLOPT_SKP   | =X'20'      | 0: OPTCD=SEQ/DIR 1: OPTCD=SKP                                   |
+|           | RPLOPT_ARD   | =X'10'      | 0: OPTCD=LRD 1: OPTCD=ARD                                       |
+|           | RPLOPT_FWD   | =X'08'      | 0: OPTCD=BWD 1: OPTCD=FWD                                       |
+|           | RPLOPT_SYN   | =X'04'      | 0: OPTCD=ASY 1: OPTCD=SYN                                       |
+|           | RPLOPT_NUP   | =X'02'      | 0: OPTCD=UPD 1: OPTCD=NUP                                       |
+|           | RPLOPT_NSP   | =X'01'      | 0: OPTCD=NUP/UPD 1: OPTCD=NSP                                   |
+| RPLOPTCD2 |              | XL1         | Option byte 2                                                   |
+|           | RPLOPT_KEQ   | =X'80'      | 0: OPTCD=KGE 1: OPTCD=KEQ                                       |
+|           | RPLOPT_FKS   | =X'40'      | 0: OPTCD=GEN 1: OPTCD=FKS                                       |
+|           | RPLOPT_MVE   | =X'20'      | 0: OPTCD=LOC 1: OPTCD=MVE                                       |
+|           | RPLOPT_RBA   | =X'10'      | 0: OPTCD=XRBA 1: OPTCD=RBA                                      |
+|           | RPLOPT_ECB   | =X'08'      | 0: internal 1: external ECB                                     |
+| RPLFEEDB  |              | 0XL4        | Feedback code                                                   |
+| RPLFUNCD  |              | XL1         | RPL function code                                               |
+| RPLRTNCD  |              | XL1         | RPL return code                                                 |
+| RPLCMPON  |              | XL1         | RPL component code                                              |
+| RPLERRCD  |              | XL1         | RPL reason code                                                 |
+| RPLCXRBA  |              | XL8         | XRBA of current record                                          |
+| RPLAIXID  |              | XL1         | AIX pointer type                                                |
+|           | RPLAXPKP     | =X'80'      | 0: KEY 1: RBA                                                   |
+|           |              | XL2         | Reserved for alignment                                          |
+|           | RPLEND       | \*          | End of RPL marker                                               |
+|           | RPLLEN       | \*-RPLEYE   | Length of RPL                                                   |
+|-----------|--------------|-------------|-------------- Not needed ? -------------------------------------|
+| RPLID     | ?            | XL1         | Identifier                                                      |
+|           | ??           |             | Fixed value for RPL                                             |
+| RPLSTYPE  | ?            | XL1         | RPL Subtype                                                     |
+|           | ??           |             | Fixed value for VSAM                                            |
+|           | ???          |             | Which codes do we support?                                      |
+| RPLNEXT   |              | A           | Ptr to next RPL                                                 |
+| RPLLXRBBA |              | XL8         | XRBA of last record                                             |
+| RPLOPENC  |              | F           | Unique ACB Open count                                           |
+| RPLFLAG   |              | 0XL4        | Processing flags                                                |
+| RPLFLG1   |              | XL1         | Processing flags                                                |
+|           | RPLF1GOK     | =X'80'      | Previous GET ok                                                 |
+|           | RPLF1GNF     | =X'40'      | Previous GET not found                                          |
+| RPLFLG2   |              | XL1         | Processing flags                                                |
+| RPLFLG3   |              | XL1         | Processing flags                                                |
+| RPLFLG4   |              | XL1         | Processing flags                                                |
+
+> [!NOTE]
+> Review notes:
+> - `RPLID` and next entry - Reason for ? in column 2 not clear. Need to double check.
+> - `RPLSTYPE` and next entry - Reason for ? in column 2 not clear. Need to double check.
+> - `RPLFEEDB` and next entry - Determine feedback codes we need to support and document them here.
+> - `RPLNEXT` - Describe purpose of this chain.
+> - Melvyn marked the trailing part of the list as possibly not needed. Requires re-investigation.
+
+## CBMR description
 
 The structure and layout of the CBMR are not formally part of the interface and may change in future releases.
 Therefore the CBMR layout is shown here only for the sake of completeness. Direct access to subfields in the CBMR is discouraged.
@@ -516,4 +744,195 @@ If they are issued before the ECB has been posted, unpredictable results may occ
 Additional notes:
 - `CBMRRPL_CNV` – TESTCB only, always false
 - `CBMRRPL_TRANSID` – Always foxes
+
+### Prefix Area
+
+> [!NOTE]
+> This is an old layout. Needs to be upgraded.
+
+The prefix area occurs only on the prefix block. It is located directly after the block header on the prefix block.
+No record pointer list lies in between.
+
+The prefix area contains basic structural information about the file. It has the following format:
+
+| Label    | Offset | Field type | Function                                                      |
+|----------|--------|------------|---------------------------------------------------------------|
+| ZVSAMPFX |        | DSECT      | Prefix area                                                   |
+| PFXEYE   | X'000' | CL4        | Eye catcher                                                   |
+| PFXZPFX  |        | =C'zPFX'   |                                                               |
+| PFXRCLEN | X'004' | XL4        | record length, max length if variable                         |
+| PFXKYLEN | X'008' | XL4        | key length                                                    |
+| PFXKYOFF | X'00C' | XL4        | key offset, excluding SDW/RDW                                 |
+| PFXDVOL@ | X'010' | XL3        | offset to the data component's volume label                   |
+| PFXDNAM@ | X'013' | XL3        | offset to the data component's filename                       |
+| PFXDPAT@ | X'016' | XL3        | offset to the data component's pathname                       |
+| PFXXVOL@ | X'019' | XL3        | offset to the index component's volume label                  |
+| PFXXNAM@ | X'01C' | XL3        | offset to the index component's filename                      |
+| PFXXPAT@ | X'01F' | XL3        | offset to the index component's pathname                      |
+| PFXIXLVL | X'022' | XL1        | nr of index levels                                            |
+| PFXALTHR | X'023' | XL1        | allocation redrive threshold                                  |
+| PFXBLKSZ | X'024' | XL4        | blocksize used for this file (except prefix block)            |
+| PFXHXLRA | X'028' | XL8        | XLRA of highest allocated block                               |
+| PFXBMAP  | X'030' | XL8        | XLRA of first spacemap block                                  |
+| PFXEMAP  | X'038' | XL8        | XLRA of last spacemap block                                   |
+| PFXMAPNW | X'040' | XL8        | XLRA of spacemap block last used for allocation               |
+| PFXBDATA | X'048' | XL8        | XLRA of first data block                                      |
+| PFXEDATA | X'050' | XL8        | XLRA of last data block                                       |
+| PFXBSEGM | X'058' | XL8        | XLRA of first segment block                                   |
+| PFXESEGM | X'060' | XL8        | XLRA of last segment block                                    |
+| PFXROOT  | X'068' | XL8        | XLRA of root index block                                      |
+| PFXBLVL0 | X'070' | XL8        | XLRA of Header Block index level 0                            |
+| PFXELVL0 | X'078' | XL8        | XLRA of End Block index level 0                               |
+| PFXBLVL1 | X'080' | XL8        | XLRA of Header Block index level 1                            |
+| PFXELVL1 | X'088' | XL8        | XLRA of End Block index level 1                               |
+| PFXBLVL2 | X'090' | XL8        | XLRA of Header Block index level 2                            |
+| PFXELVL2 | X'098' | XL8        | XLRA of End Block index level 2                               |
+| PFXBLVL3 | X'0A0' | XL8        | XLRA of Header Block index level 3                            |
+| PFXELVL3 | X'0A8' | XL8        | XLRA of End Block index level 3                               |
+| PFXBLVL4 | X'0B0' | XL8        | XLRA of Header Block index level 4                            |
+| PFXELVL4 | X'0B8' | XL8        | XLRA of End Block index level 4                               |
+| PFXBLVL5 | X'0C0' | XL8        | XLRA of Header Block index level 5                            |
+| PFXELVL5 | X'0C8' | XL8        | XLRA of End Block index level 5                               |
+| PFXBLVL6 | X'0D0' | XL8        | XLRA of Header Block index level 6                            |
+| PFXELVL6 | X'0D8' | XL8        | XLRA of End Block index level 6                               |
+| PFXBLVL7 | X'0E0' | XL8        | XLRA of Header Block index level 7                            |
+| PFXELVL7 | X'0E8' | XL8        | XLRA of End Block index level 7                               |
+| PFXBLVL8 | X'0F0' | XL8        | XLRA of Header Block index level 8                            |
+| PFXELVL8 | X'0F8' | XL8        | XLRA of End Block index level 8                               |
+| PFXBLVL9 | X'100' | XL8        | XLRA of Header Block index level 9                            |
+| PFXELVL9 | X'108' | XL8        | XLRA of End Block index level 9                               |
+| PFXBLVLA | X'110' | XL8        | XLRA of Header Block index level 10                           |
+| PFXELVLA | X'118' | XL8        | XLRA of End Block index level 10                              |
+| PFXBLVLB | X'120' | XL8        | XLRA of Header Block index level 11                           |
+| PFXELVLB | X'128' | XL8        | XLRA of End Block index level 11                              |
+| PFXBLVLC | X'130' | XL8        | XLRA of Header Block index level 412                          |
+| PFXELVLC | X'138' | XL8        | XLRA of End Block index level 12                              |
+| PFXBLVLD | X'140' | XL8        | XLRA of Header Block index level 13                           |
+| PFXELVLD | X'148' | XL8        | XLRA of End Block index level 13                              |
+| PFXBLVLE | X'150' | XL8        | XLRA of Header Block index level 14                           |
+| PFXELVLE | X'158' | XL8        | XLRA of End Block index level 14                              |
+| PFXBLVLF | X'160' | XL8        | XLRA of Header Block index level 15                           |
+| PFXELVLF | X'168' | XL8        | XLRA of End Block index level 15                              |
+| PFXMAPOF | X'170' | XL3        | offset within spacemap block to last used byte for allocation |
+| PFXFRSPC | X'173' | XL1        | initial freespace % within block                              |
+| PFXFRBLK | X'174' | XL2        | initial freespace blocks                                      |
+| PFXFRINT | X'176' | XL2        | initial freespace interval between free blocks                |
+| PFXFFLGS | X'178' | XL1        | file flags                                                    |
+| PFX_ESDS |        | =X'80'     | ESDS                                                          |
+| PFX_KSDS |        | =X'40'     | KSDS                                                          |
+| PFX_RRDS |        | =X'20'     | RRDS                                                          |
+| PFX_LDS  |        | =X'10'     | LDS                                                           |
+| PFX_AIX  |        | =X'08'     | AIX                                                           |
+| PFX_INDX |        | =X'01'     | index component                                               |
+| PFXRFLGS | X'179' | XL1        | record flags                                                  |
+| PFX_RFIX |        | =X'80'     | 1=fixed, 0=variable                                           |
+| PFX_RSPN |        | =X'40'     | 1=spanned, 0=non-spanned                                      |
+| PFX_KUNQ |        | =X'20'     | 1=AIX unique, 0=AIX non-unique                                |
+| PFX_AIXT |        | =X'10'     | 1=AIX on KSDS, 0=AIX on ESDS                                  |
+|          | X'17A' | XL6        | reserved                                                      |
+| PFXDTSKC | X'180' | XL8        | STCK of data component creation                               |
+| PFXIXSKC | X'188' | XL8        | STCK of index component creation                              |
+| PFXDTSKU | X'190' | XL8        | STCK of last update to data component                         |
+| PFXIXSKU | X'198' | XL8        | STCK of last update to index component                        |
+| PFXMAPDT | X'1A0' | XL8        | STCK of last allocation action                                |
+| PFXCTRS@ | X'1A8' | XL3        | pointer to counters area                                      |
+|          | X'1AB' | XL5        | reserved                                                      |
+
+There are 7 pointer fields in the prefix area. These point to fields allocated elsewhere in the prefix block.
+Their exact addresses on the prefix block may vary.
+
+The `PFXDVOL@`, `PFXDPAT@`, `PFXDNAM@` pointers and the `PFXXVOL@`, `PFXXPAT@`, `PFXXNAM@` all point to a halfword-prefixed string.
+The `PFXCTRS@` pointer addresses a separate area that holds various counters.
+This area is expected to move into the catalog dataset in a future release.
+
+### Counters Area
+
+The counters area occurs only on the prefix block. Its location can be found by following the prefix area's `PFXCTRS@` field.
+
+> [!NOTE]
+> This is an old layout. Needs to be upgraded.
+
+| Label      | Offset | Field type | Function                                  |
+|------------|--------|------------|-------------------------------------------|
+| CTRAVGRL   | X'004' | XL4        | average record length                     |
+| CTRAVSPAC  | X'008' | XL8        | available space                           |
+| CTRHALCRBA | X'010' | XL8        | high-allocated RBA                        |
+| CTRENDRBA  | X'018' | XL8        | high water mark for the component         |
+| CTRNCIS    | X'020' | XL8        | nr of block-split operations              |
+| CTRNDELR   | X'028' | XL8        | nr of delete operations                   |
+| CTRNEXCP   | X'030' | XL8        | nr of I/O operations                      |
+| CTRNEXT    | X'038' | XL8        | nr of physical files allocated (always 1) |
+| CTRNINSR   | X'040' | XL8        | nr of insert operations                   |
+| CTRNLOGR   | X'048' | XL8        | nr of records in this component           |
+| CTRNRETR   | X'050' | XL8        | nr of retrieval operations                |
+| CTRNNUIW   | X'058' | XL8        | nr of zVSAM writes                        |
+| CTRNUPDR   | X'060' | XL8        | nr of updates                             |
+| CTRSDTA    | X'068' | XL8        | uncompressed data size                    |
+| CTRSTMST   | X'070' | XL8        | system timestamp of last close operation  |
+| CTRNUIW    | X'078' | XL8        | nr of user writes                         |
+| CTRLOKEY@  | X'080' | XL3        | pointer to lowest valid key value         |
+|            | X'083' | XL5        | Reserved                                  |
+
+The values in the counters area are maintained to support SHOWCB ACB and/or TESTCB ACB requests.
+They are mapped as follows:
+
+| Label      | Keyword  | SHOWCB | TESTCB |
+|------------|----------|--------|--------|
+| CTRAVSPAC  | AVSPAC   | ACB    | ACB    |
+| CTRHALCRBA | HALCRBA  | ACB    | n.a.   |
+| CTRENDRBA  | ENDRBA   | ACB    | ACB    |
+| CTRNCIS    | NCIS     | ACB    | ACB    |
+| CTRNDELR   | NDELR    | ACB    | ACB    |
+| CTRNEXCP   | NEXCP    | ACB    | ACB    |
+| CTRNEXT    | NEXT     | ACB    | ACB    |
+| CTRNINSR   | NINSR    | ACB    | ACB    |
+| CTRNLOGR   | NLOGR    | ACB    | ACB    |
+| CTRNRETR   | NRETR    | ACB    | ACB    |
+| CTRNNUIW   | NUIW     | ACB    | n.a.   |
+| CTRNUPDR   | NUPDR    | ACB    | ACB    |
+| CTRSDTA    | SDTASIZE | ACB    | n.a.   |
+| CTRSTMST   | STMST    | ACB    | ACB    |
+| CTRNUIW    | UIW      | ACB    | n.a.   |
+| CTRLOKEY@  | LOKEY    | ACB    | n.a.   |
+
+#### Counters maintenance overview
+
+All fields are 8 bytes except `CTRAVGRL` which is 4 bytes.
+
+| Counter    | Data/Index | Initialized by zREPRO                                     | Maintenance                                                                           |
+|------------|------------|-----------------------------------------------------------|---------------------------------------------------------------------------------------|
+| CTRAVGRL   | Both       | Yes. For fixed, =`PFXRECLN` even if the dataset is empty. | For variable files only:                                                              |
+|            |            | For variable, calculated or zero if the dataset is empty. | At CLOSE, calculate `CTRTOTRL`/`CTRNLOGR`                                             |
+| CTRAVSPAC  | Both       | Yes.                                                      | For every block update use the old and new `BHDRFREE` to increase/decrease this value |
+| CTRHALCRBA | Both       | Yes.                                                      | Updated when blocks are added to the end of the dataset component                     |
+|            |            |                                                           | or when the existing `HALCRBA` block has all records deleted. It's the                |
+|            |            |                                                           | block RBA+1 (XLRA+256) of the last data or level 0 index block containing records.    |
+| CTRHLRBA   | Index only | Yes.                                                      | Block RBA of `PFXROOT`. Update if it changes                                          |
+| CTRENDRBA  | Both       | Yes.                                                      | Updated when blocks are added to the end of the dataset component.                    |
+|            |            |                                                           | It's the block RBA+1 (XLRA+256) of the last data or level 0 index block               |
+| CTRNBFRFND | Both       | No                                                        | +1 for each LSR buffer read                                                           |
+| CTRNBUFNO  | Both       | No                                                        | +1 for each buffer allocated                                                          |
+| CTRBUFUSE  | Both       | No                                                        | +1 for each buffer used                                                               |
+| CTRBUFRDS  | Both       | No                                                        | +1 for each buffer read                                                               |
+| CTRNCIS    | Both       | No                                                        | +1 for each block split                                                               |
+| CTRNDELR   | Both       | No                                                        | KSDS or RRDS: +1 for each record delete                                               |
+| CTRNEXCP   | Both       | No                                                        | +1 for each physical block read/write                                                 |
+| CTRNEXT    | Both       | Yes                                                       | Always 1, not maintained                                                              |
+| CTRNINSR   | Both       | No                                                        | +1 for each record added. For RRDS, any empty slots added to the end are not counted  |
+| CTRNLOGR   | Both       | Yes                                                       | +1 for each record added; -1 for each record deleted.                                 |
+|            |            |                                                           | For RRDS, any empty slots added to the end are not counted                            |
+|            |            |                                                           | For Index, all records in all levels are counted                                      |
+| CTRNRETR   | Both       | No                                                        | +1 for each record read                                                               |
+| CTRNNUIW   | Both       | No                                                        | +1 for each maintenance write for block splits, chain repair, segment, spacemap       |
+|            |            |                                                           | and ELIX block management                                                             |
+| CTRNUPDR   | Both       | No                                                        | +1 for each record update                                                             |
+| CTRSDTASZ  | Both       | Yes                                                       | +block size for each block added                                                      |
+| CTRSTMST   | Both       | Yes                                                       | Write STCK value at CLOSE                                                             |
+| CTRSTRMAX  | Both       | No                                                        | +1 for each string created                                                            |
+| CTRNUIW    | Both       | No                                                        | +1 for each user-requested block write                                                |
+| CTRTOTRL   | Data only  | Yes                                                       | Maintained for variable files only:                                                   |
+|            |            |                                                           | +record size for each record added; -record size for each record deleted              |
+|            |            |                                                           | SPX is not included; RLF is included; Adjusted for change to variable length          |
+|            |            |                                                           | For RRDS, empty slots are not included                                                |
+| CTRLOKEY   | Data only  | Yes                                                       | KSDS only. Update when a lower key is added or this key is deleted                    |
 

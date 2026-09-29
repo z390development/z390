@@ -1,0 +1,68 @@
+#!/bin/bash
+# getcheckstyle: install or verify the Checkstyle -all.jar pinned in src/checkstyle.xml
+# Works on Linux, macOS, and GitHub Actions (bash 3.2+, curl, sed)
+
+set -e
+cd "$(dirname "$0")/.."
+
+config_file=src/checkstyle.xml
+meta_name='org.z390.checkstyle.version'
+out_dir=build/checkstyle
+out_file="${out_dir}/checkstyle-all.jar"
+version_file="${out_dir}/version.txt"
+
+verify_only=0
+if [ "${1:-}" = "--verify" ]; then
+    verify_only=1
+fi
+
+# The metadata element MUST be a single line; see comment in src/checkstyle.xml
+tag=$(
+    tr -d '\r' < "${config_file}" \
+    | sed -n "s/^[[:space:]]*<metadata name=\"${meta_name}\" value=\"\\([^\"]*\\)\"\\/>[[:space:]]*$/\\1/p"
+)
+if [ -z "${tag}" ]; then
+    echo "getcheckstyle: pinned version not found in ${config_file}" >&2
+    echo "Expected one line: <metadata name=\"${meta_name}\" value=\"checkstyle-X.Y.Z\"/>" >&2
+    exit 1
+fi
+case "${tag}" in
+    *$'\n'*)
+        echo "getcheckstyle: multiple ${meta_name} metadata lines in ${config_file}" >&2
+        exit 1
+        ;;
+esac
+
+have=""
+if [ -f "${version_file}" ]; then
+    have=$(tr -d '\r\n' < "${version_file}")
+fi
+
+if [ "${verify_only}" -eq 1 ]; then
+    if [ ! -f "${out_file}" ]; then
+        echo "getcheckstyle: ${out_file} is missing - run bash/getcheckstyle" >&2
+        exit 1
+    fi
+    if [ "${have}" != "${tag}" ]; then
+        echo "getcheckstyle: installed '${have}' does not match pin '${tag}' - run bash/getcheckstyle" >&2
+        exit 1
+    fi
+    echo "Checkstyle ${tag} OK"
+    exit 0
+fi
+
+mkdir -p "${out_dir}"
+
+if [ -f "${out_file}" ] && [ "${have}" = "${tag}" ]; then
+    echo "Checkstyle ${tag} already present"
+    exit 0
+fi
+
+jar_url="https://github.com/checkstyle/checkstyle/releases/download/${tag}/${tag}-all.jar"
+tmp_file="${out_file}.tmp"
+
+echo "Downloading linter ${tag} from checkstyle repository on github.com..."
+curl -fL --retry 3 -o "${tmp_file}" "${jar_url}"
+mv "${tmp_file}" "${out_file}"
+printf '%s\n' "${tag}" > "${version_file}"
+echo "Download finished: ${tag}"

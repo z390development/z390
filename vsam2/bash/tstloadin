@@ -1,0 +1,155 @@
+#!/bin/bash
+# tstloadin: LOAD/UNLOAD/VERIFY INDIANCO F-KSDS + AIX (large file / 2 spacemap pages)
+
+########################################
+# setup
+########################################
+
+cd "$(dirname "$0")"   # vsam2/bash
+cd ../..              # repo root
+
+input=vsam2/data
+data=vsam2/data
+catdir=vsam2/mlc
+code=vsam2/mlc
+logfile=tstloadin.LOG
+zvsam="zVSAM(2)"
+
+trace=0
+if [ $# -gt 0 ]; then
+    SHELLNOCASEMATCH=$(shopt -p nocasematch)
+    shopt -s nocasematch
+    case "$1" in
+        tron)  shift; trace=1 ;;
+        troff) shift; trace=0 ;;
+    esac
+    $SHELLNOCASEMATCH
+fi
+if [ $trace -eq 1 ]; then set -x; fi
+
+########################################
+# optional z390Archive path (arg 1)
+########################################
+
+# Argument 1 is expected to point to a local clone of the z390Archive repository
+if [ -n "$1" ]; then
+    # resolve to absolute path (GNU readlink -f or Python fallback)
+    if archive=$(readlink -f -- "$1" 2>/dev/null); then
+        :
+    else
+        archive=$(python -c 'import os,sys; print(os.path.abspath(sys.argv[1]))' "$1")
+    fi
+    if [ ! -f "$archive/TestData/COMPANIES.TXT" ]; then
+        echo "no path to z390Archive clone specified, or path was not valid"
+        echo "defaulting to use the small subset at $input"
+    else
+        input="$archive/TestData"
+    fi
+else
+    echo "no path to z390Archive clone specified, or path was not valid"
+    echo "defaulting to use the small subset at $input"
+fi
+
+########################################
+# code
+########################################
+
+rc=0
+echo "$0" > "${data}/${logfile}"
+echo "Input data: ${input}/COMPANIES.TXT" >> "${data}/${logfile}"
+
+# LOAD
+echo "--                      " >> "${data}/${logfile}"
+echo "-- Step 1: load cluster " >> "${data}/${logfile}"
+echo "--                      " >> "${data}/${logfile}"
+# LOAD THE F-KSDS
+rm -f "${data}/INDIANCO.DTA" "${data}/INDIANCO.IDX"
+export INQSAM="${input}/COMPANIES.TXT[RECFM=FT]"
+export OUTVSAM="${data}/Z390CAT2.INDIANCO"
+export Z390CAT2="${catdir}/"
+bash/ez390 "${code}/ZREPRO" "PARM(LOAD)" "NOTIME" "MAXSIZE(1000)" DUMP "$zvsam"
+rc=$?
+cat "${code}/ZREPRO.LOG" >> "${data}/${logfile}"
+if [ $rc -ne 0 ]; then echo "$0 ERROR: Encountered RC $rc - exiting"; exit $rc; fi
+
+# UNLOAD
+echo "--                        " >> "${data}/${logfile}"
+echo "-- Step 2: unload cluster " >> "${data}/${logfile}"
+echo "--                        " >> "${data}/${logfile}"
+# UNLOAD THE F-KSDS (ORIGINAL INPUT COMPANIES.TXT from z390Archive repo)
+export INVSAM="${data}/Z390CAT2.INDIANCO"
+export OUTQSAM="${data}/COMPANIES.TXO[RECFM=FT]"
+export Z390CAT2="${catdir}"
+bash/ez390 "${code}/ZREPRO" "PARM(UNLOAD)" "NOTIME" "MAXSIZE(1000)" DUMP "$zvsam"
+rc=$?
+cat "${code}/ZREPRO.LOG" >> "${data}/${logfile}"
+if [ $rc -ne 0 ]; then echo "$0 ERROR: Encountered RC $rc - exiting"; exit $rc; fi
+
+# COMPARE
+echo "--                             " >> "${data}/${logfile}"
+echo "-- Step 3: compare unload data " >> "${data}/${logfile}"
+echo "--                             " >> "${data}/${logfile}"
+if diff -q --strip-trailing-cr "${input}/COMPANIES.TXT" "${data}/COMPANIES.TXO"; then
+    echo "diff: no differences encountered" >> "${data}/${logfile}"
+else
+    rc=$?
+    echo "diff: files differ" >> "${data}/${logfile}"
+    diff --strip-trailing-cr "${input}/COMPANIES.TXT" "${data}/COMPANIES.TXO" >> "${data}/${logfile}" 2>&1 || true
+    echo "$0 ERROR: Encountered RC $rc - exiting"
+    exit $rc
+fi
+
+# VERIFY
+echo "--                            " >> "${data}/${logfile}"
+echo "-- Step 4: verify the cluster " >> "${data}/${logfile}"
+echo "--                            " >> "${data}/${logfile}"
+export INVSAM="${data}/Z390CAT2.INDIANCO"
+export Z390CAT2="${catdir}/"
+bash/ez390 "${code}/ZREPRO" "PARM(VERIFY)" "NOTIME" DUMP "$zvsam"
+rc=$?
+cat "${code}/ZREPRO.LOG" >> "${data}/${logfile}"
+if [ $rc -ne 0 ]; then echo "$0 ERROR: Encountered RC $rc - exiting"; exit $rc; fi
+
+# BUILDAIX
+echo "--                               " >> "${data}/${logfile}"
+echo "-- Step 5: build alternate index " >> "${data}/${logfile}"
+echo "--                               " >> "${data}/${logfile}"
+# BUILDAIX NON-UNIQUE MYAIXIN OVER INDIANCO F-KSDS
+rm -f "${data}/MYAIXIN.DTA" "${data}/MYAIXIN.IDX"
+export INVSAM="${data}/Z390CAT2.INDIANCO"
+export OUTVSAM="${data}/Z390CAT2.MYAIXIN"
+export Z390CAT2="${catdir}/"
+bash/ez390 "${code}/ZREPRO" "PARM(BUILDAIX)" "NOTIME" DUMP "MEM(16)" "MAXSIZE(1000)" "$zvsam"
+rc=$?
+cat "${code}/ZREPRO.LOG" >> "${data}/${logfile}"
+if [ $rc -ne 0 ]; then echo "$0 ERROR: Encountered RC $rc - exiting"; exit $rc; fi
+
+# UNLOAD AIX
+echo "--                            " >> "${data}/${logfile}"
+echo "-- Step 6: unload aix cluster " >> "${data}/${logfile}"
+echo "--                            " >> "${data}/${logfile}"
+# MYAIXKS defines the AIX cluster MYAIXIN as a plain KSDS
+export INVSAM="${data}/Z390CAT2.MYAIXKS"
+export OUTQSAM="${data}/MYAIXKS.TXO[RECFM=VT]"
+export Z390CAT2="${catdir}"
+bash/ez390 "${code}/ZREPRO" "PARM(UNLOAD)" "NOTIME" DUMP "$zvsam"
+rc=$?
+cat "${code}/ZREPRO.LOG" >> "${data}/${logfile}"
+if [ $rc -ne 0 ]; then echo "$0 ERROR: Encountered RC $rc - exiting"; exit $rc; fi
+
+# VERIFY AIX
+echo "--                            " >> "${data}/${logfile}"
+echo "-- Step 7: verify the cluster " >> "${data}/${logfile}"
+echo "--                            " >> "${data}/${logfile}"
+export INVSAM="${data}/Z390CAT2.MYAIXKS"
+export Z390CAT2="${catdir}/"
+bash/ez390 "${code}/ZREPRO" "PARM(VERIFY)" "NOTIME" DUMP "$zvsam"
+rc=$?
+cat "${code}/ZREPRO.LOG" >> "${data}/${logfile}"
+if [ $rc -ne 0 ]; then echo "$0 ERROR: Encountered RC $rc - exiting"; exit $rc; fi
+
+echo "--               " >> "${data}/${logfile}"
+echo "-- Test complete " >> "${data}/${logfile}"
+echo "--               " >> "${data}/${logfile}"
+
+exit $rc

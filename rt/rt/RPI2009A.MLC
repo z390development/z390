@@ -136,7 +136,7 @@ RPI20020 DS    0H
          ST    R1,WAPARM@              Save pointer to parameter list
          STMH  R12,R12,WAR12H          Save high half of R12
          LLGTR R12,R12                 Ensure high half of R12 is zero
-         MVC   WAEYE,=CL8'RPI2009A'    Set eyecatcher
+*        MVC   WAEYE,=CL8'RPI2009A'    Set eyecatcher
 *
          LARL  R11,STOR                R11 --> common storage
          USING STOR,R11                Overlay common storage
@@ -4092,6 +4092,8 @@ TLAAG1   DS    0H
 *
 *
 *
+         DC    8X'00'              Filler - Required to match addresses+
+                                       in the associated RT scripts
 ***********************************************************************
 *
 * Begin Part 2 test set: test CC=3; fixed-point-overflow (PIC = 0008)

@@ -1,15 +1,7 @@
 name: Build z390
 on:
-  push:
-    paths-ignore:
-      - 'doc/**'
-      - 'doc_overrides/**'
-      - 'mkdocs.yml'
-  pull_request:
-    paths-ignore:
-      - 'doc/**'
-      - 'doc_overrides/**'
-      - 'mkdocs.yml'
+  - push
+  - pull_request
 
 env:
   JAVA_DISTRIBUTION: temurin
@@ -36,6 +28,8 @@ jobs:
         with:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
+      - name: Install Checkstyle linter
+        run: bash/getcheckstyle
       - name: Build z390 distribution
         run: bash/blddist
       - name: Run installation verification (IVP)
