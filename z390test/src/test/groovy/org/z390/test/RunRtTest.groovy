@@ -72,7 +72,7 @@ class RunRtTest extends z390Test {
             env.put('SYSUT2', basePath('rt', 'test', "${name}.OUT"))
             env.put('SYSOUT', basePath('rt', 'test', "${name}.RPT"))
         }
-        int rc = this.asmlg(workDir: new File(basePath()), basePath('rt', 'test', name), *options)
+        int rc = this.asmlg(basePath('rt', 'test', name), *options)
         this.printOutput()
         assert rc == 0
         assertSameContent(basePath('rt', 'test', "${name}.OUT"),
