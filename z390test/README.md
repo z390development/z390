@@ -62,9 +62,9 @@ The tests use standard JUnit test structures.
 ### Optional test cases
 
 It is possible to declare a groovy script as optional.
-All it takes is `@FullSuite` on a groovy class or method.
+All it takes is `@OptionalTest` on a groovy class or method.
 
-See `RunMfAcc.groovy` and `TestOptables.groovy `for examples.
+See `RunMfAcc.groovy` and `TestOptables.groovy` for examples.
 
 Optional test cases are skipped when running a build procedure,
 but included when the `*All` parameter is added:
