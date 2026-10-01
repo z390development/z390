@@ -1,5 +1,5 @@
 @if /I "%1" == "tron" (echo on) else (echo off)
-rem runtest runs a regression test using gradle
+rem rungroovy runs a groovy regression test suite, or a script (or part of it) using gradle
 
 setlocal
 if /I "%1" == "tron" (set z_TraceMode=tron

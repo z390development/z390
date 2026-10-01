@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# runtest: run a regression test using gradle
+# rungroovy runs a groovy regression test suite, or a script (or part of it) using gradle
 
 # use optional argument 'full' to include optional tests
 test_mode=standard

@@ -77,7 +77,7 @@ BUILD.BAT *All
 bash build.sh '*All'
 ```
 
-For running individual test scripts, the `bat\RUNTEST.BAT` and `bash/runtest`
+For running individual test scripts, the `bat\RUNGROOVY.BAT` and `bash/rungroovy`
 procedures support a `full` parameter that includes the optional test cases.
 Optional test cases are skipped by default.
 
