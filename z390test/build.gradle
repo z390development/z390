@@ -17,7 +17,19 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+def requestedMode = (findProperty('testMode') ?: 'standard').toString()
+def testMode
+if (requestedMode.equals('full')) {
+    testMode = 'full'
+} else if (requestedMode.equals('standard')) {
+    testMode = 'standard'
+} else {
+    throw new GradleException("testMode must be 'standard' or 'full', was '${requestedMode}'")
+}
+
 test {
     useJUnitPlatform()
+    systemProperty 'z390.test.mode', testMode
+    inputs.property('z390.test.mode', testMode)
     testLogging.showStandardStreams = true
 }

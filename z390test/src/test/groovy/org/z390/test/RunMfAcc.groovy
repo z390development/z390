@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 
 import static org.junit.jupiter.api.DynamicTest.dynamicTest
 
+@OptionalTest // declare all tests in this class as optional
 class RunMfAcc extends z390Test{
 
     var options  = ['noloadhigh bal notiming stats', "SYSMAC(+${basePath('mac')})", "SYSCPY(+${basePath('mfacc')}+${basePath('mac')})", "SYSOBJ(+${basePath('linklib')})"]
