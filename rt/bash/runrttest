@@ -29,6 +29,91 @@ grep -vE 'EZ390|ABSOLUTELY NO WARRANTY|This is free software|under certain condi
 bash/asmlg rt/test/TESTCVB1 notiming stats bal noloadhigh
 bash/asmlg rt/test/TESTCVBG notiming stats bal noloadhigh
 
+# TESTDCB1 moved to demo
+export SYSUT1=rt/test/TESTDCB2.TF1
+export SYSUT2=rt/test/TESTDCB2.OUT
+export SYSOUT=rt/test/TESTDCB2.RPT
+bash/asmlg rt/test/TESTDCB2 notiming stats bal noloadhigh
+cmp -s rt/test/TESTDCB2.OUT rt/test/TESTDCB2.TF2 || exit 1
+tr -d '\r' < rt/test/TESTDCB2.RPT | diff - <(tr -d '\r' < rt/test/TESTDCB2.TF3) || exit 1
+export SYSUT1=rt/test/TESTDCB3.TF1
+export SYSUT2=rt/test/TESTDCB3.OUT
+export SYSOUT=rt/test/TESTDCB3.RPT
+bash/asmlg rt/test/TESTDCB3 notiming stats bal noloadhigh
+cmp -s rt/test/TESTDCB3.OUT rt/test/TESTDCB3.TF1 || exit 1
+tr -d '\r' < rt/test/TESTDCB3.RPT | diff - <(tr -d '\r' < rt/test/TESTDCB3.TF3) || exit 1
+export SYSUT1=rt/test/TESTDCB4.TF1
+export SYSUT2=rt/test/TESTDCB4.OUT
+export SYSOUT=rt/test/TESTDCB4.RPT
+bash/asmlg rt/test/TESTDCB4 notiming stats bal noloadhigh
+tr -d '\r' < rt/test/TESTDCB4.OUT | diff - <(tr -d '\r' < rt/test/TESTDCB4.TF1) || exit 1
+tr -d '\r' < rt/test/TESTDCB4.RPT | diff - <(tr -d '\r' < rt/test/TESTDCB4.TF3) || exit 1
+export SYSUT1=rt/test/TESTDCB5.TF1
+export SYSUT2=rt/test/TESTDCB5.OUT
+export SYSOUT=rt/test/TESTDCB5.RPT
+bash/asmlg rt/test/TESTDCB5 notiming stats bal noloadhigh
+cmp -s rt/test/TESTDCB5.OUT rt/test/TESTDCB5.TF2 || exit 1
+tr -d '\r' < rt/test/TESTDCB5.RPT | diff - <(tr -d '\r' < rt/test/TESTDCB5.TF3) || exit 1
+export SYSUT1=rt/test/TESTDCB6.TF1
+export SYSUT2=rt/test/TESTDCB6.OUT
+export SYSOUT=rt/test/TESTDCB6.RPT
+bash/asmlg rt/test/TESTDCB6 notiming stats bal noloadhigh
+cmp -s rt/test/TESTDCB6.OUT rt/test/TESTDCB6.TF2 || exit 1
+tr -d '\r' < rt/test/TESTDCB6.RPT | diff - <(tr -d '\r' < rt/test/TESTDCB6.TF3) || exit 1
+export SYSUT1=rt/test/TESTDCB7.TF1
+export SYSUT2=rt/test/TESTDCB7.OUT
+export SYSOUT=rt/test/TESTDCB7.RPT
+bash/asmlg rt/test/TESTDCB7 notiming stats bal noloadhigh
+tr -d '\r' < rt/test/TESTDCB7.OUT | diff - <(tr -d '\r' < rt/test/TESTDCB7.TF2) || exit 1
+tr -d '\r' < rt/test/TESTDCB7.RPT | diff - <(tr -d '\r' < rt/test/TESTDCB7.TF3) || exit 1
+export SYSUT1=rt/test/TESTDCB8.TF1
+export SYSUT2=rt/test/TESTDCB8.OUT
+export SYSOUT=rt/test/TESTDCB8.RPT
+bash/asmlg rt/test/TESTDCB8 notiming stats bal noloadhigh
+cmp -s rt/test/TESTDCB8.OUT rt/test/TESTDCB8.TF1 || exit 1
+tr -d '\r' < rt/test/TESTDCB8.RPT | diff - <(tr -d '\r' < rt/test/TESTDCB8.TF3) || exit 1
+export SYSUT1=rt/test/TESTDCB9.TF1
+export SYSUT2=rt/test/TESTDCB9.OUT
+export SYSOUT=rt/test/TESTDCB9.RPT
+bash/asmlg rt/test/TESTDCB9 notiming stats bal noloadhigh
+cmp -s rt/test/TESTDCB9.OUT rt/test/TESTDCB9.TF2 || exit 1
+tr -d '\r' < rt/test/TESTDCB9.RPT | diff - <(tr -d '\r' < rt/test/TESTDCB9.TF3) || exit 1
+export SYSUT1=
+export SYSUT2=
+export SYSOUT=
+bash/asmlg rt/test/TESTDCBA notiming stats bal noloadhigh
+tr -d '\r' < rt/test/TESTDCBA.OUT | diff - <(tr -d '\r' < rt/test/TESTDCBA.TF1) || exit 1
+tr -d '\r' < rt/test/TESTDCBA.RPT | diff - <(tr -d '\r' < rt/test/TESTDCBA.TF3) || exit 1
+export SYSUT1=rt/test/TESTDCBB.TF1
+export SYSUT2=rt/test/TESTDCBB.OUT
+export SYSOUT=rt/test/TESTDCBB.RPT
+bash/asmlg rt/test/TESTDCBB notiming stats bal noloadhigh
+cmp -s rt/test/TESTDCBB.OUT rt/test/TESTDCBB.TF1 || exit 1
+tr -d '\r' < rt/test/TESTDCBB.RPT | diff - <(tr -d '\r' < rt/test/TESTDCBB.TF3) || exit 1
+export SYSUT1=
+export SYSUT2=
+export SYSOUT=
+bash/asmlg rt/test/TESTDCBC notiming stats bal noloadhigh
+tr -d '\r' < rt/test/TESTDCBC.OUT | diff - <(tr -d '\r' < rt/test/TESTDCBC.TF1) || exit 1
+tr -d '\r' < rt/test/TESTDCBC.RPT | diff - <(tr -d '\r' < rt/test/TESTDCBC.TF3) || exit 1
+export SYSUT1=
+export SYSUT2=
+export SYSOUT=
+bash/asmlg rt/test/TESTDCBD notiming stats bal noloadhigh
+tr -d '\r' < rt/test/TESTDCBD.OUT | diff - <(tr -d '\r' < rt/test/TESTDCBD.TF2) || exit 1
+tr -d '\r' < rt/test/TESTDCBD.RPT | diff - <(tr -d '\r' < rt/test/TESTDCBD.TF3) || exit 1
+export SYSUT1=
+export SYSUT2=
+export SYSOUT=
+bash/asmlg rt/test/TESTDCBE notiming stats bal noloadhigh
+cmp -s rt/test/TESTDCBE.OUT rt/test/TESTDCBE.TF2 || exit 1
+cmp -s rt/test/TESTDCBE.RPT rt/test/TESTDCBE.TF3 || exit 1
+export SYSUT1=rt/test/TESTDCBF.TF1
+export SYSUT2=rt/test/TESTDCBF.OUT
+export SYSOUT=rt/test/TESTDCBF.RPT
+bash/asmlg rt/test/TESTDCBF notiming stats bal noloadhigh
+cmp -s rt/test/TESTDCBF.OUT rt/test/TESTDCBF.TF2 || exit 1
+tr -d '\r' < rt/test/TESTDCBF.RPT | diff - <(tr -d '\r' < rt/test/TESTDCBF.TF3) || exit 1
 
 
 
@@ -36,7 +121,7 @@ bash/asml  rt/test/TESTSUB1 notiming stats bal
 
 # TESTBLD1 requires rt\test\TESTSUB1.390 and mvs\demo\DEMO.390
 [ -f mvs/demo/DEMO.390 ] || bash/asml mvs/demo/DEMO notiming stats bal
-bash/asmlg rt/test/TESTBLD1 notiming stats bal noloadhigh sys390(rt/test+mvs/demo)
+bash/asmlg rt/test/TESTBLD1 notiming stats bal noloadhigh "sys390(rt/test+mvs/demo)"
 
 # if we get here, there were no errors
 echo "rt/test - all tests ran without errors"

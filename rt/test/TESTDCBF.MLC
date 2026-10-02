@@ -21,6 +21,7 @@
 *********************************************************************
 * 09/11/08 RPI  764 test GL/PL mode support and OPEN/CLOSE (reg)
 * 06/05/09 rpi 1045 change OPEN (3) to ((3)) per macros for dsns
+* 09/28/26 AFK      output to SYSUT2 writes 80 instead of 120 - fixed
 *********************************************************************
 TESTDCBF SUBENTRY
          WTO   'TESTDCBF COPY SYSUT1 FB FILE TO SYSUT2 FB USING GL/PL'
@@ -55,7 +56,7 @@ ABORT    EQU   *
 SYSUT1   DCB   DDNAME=SYSUT1,EODAD=EOF,MACRF=GL,SYNAD=ABORT,           X
                RECFM=FB,LRECL=80,BLKSIZE=8000            
 SYSUT2   DCB   DDNAME=SYSUT2,MACRF=PL,SYNAD=ABORT,                     X
-               RECFM=FB,LRECL=80,BLKSIZE=8000
+               RECFM=FB,LRECL=120,BLKSIZE=6000
 SYSOUT   DCB   DDNAME=SYSOUT,RECFM=FT,BLKSIZE=120,MACRF=PM
 PTOT     DC    PL2'0'
 MSG      DS    0CL120
