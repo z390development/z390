@@ -805,7 +805,7 @@ Remaining Keyword parameters specify a value, an address, or a keyword list to b
 See [supported parameter types](#supported-parameter-types) for details.
 
 > [!NOTE]
-> Melvyn defined RBA values. We use LRSNs throughout. If we do not drop the RBA support,
+> Melvyn defined RBA values. We use XLRAs throughout. If we do not drop the RBA support,
 > we'll need to find out why Melvyn introduced RBA values and how he plans to assign/maintain them.
 
 > [!NOTE]
@@ -1663,7 +1663,7 @@ Length of record area.
 Pointer to search argument. This is a key, a relative record number, or a RBA.
 
 > [!NOTE]
-> Melvyn mentions RBA - I think this should be an XLRSN instead. Unless we decide to support RBAs as well.
+> Melvyn mentions RBA - I think this should be an XLRA instead. Unless we decide to support RBAs as well.
 
 #### KEYLEN=
 
@@ -1740,7 +1740,7 @@ Defined options for the OPTCD parameter are listed below:
 | [CR/NRI]         |         | Not supported – future option. Keyword is flagged as ignored with a warning message (Level 4 Mnote) |
 
 > [!NOTE]
-> RBA/XRBA - Melvyn assumed RBA support. Maybe we should use LRSN/XLRSN instead?
+> RBA/XRBA - Melvyn assumed RBA support. Maybe we should use XLRA instead?
 
 ================================================================================================================================================================================
 
@@ -2195,7 +2195,7 @@ Remaining Keyword parameters specify a value, an address, or a keyword list to b
 See [supported parameter types](#supported-parameter-types) for details.
 
 > [!NOTE]
-> Melvyn defined RBA values. We use LRSNs throughout. If we do not drop the RBA support,
+> Melvyn defined RBA values. We use XLRAs throughout. If we do not drop the RBA support,
 > we'll need to find out why Melvyn introduced RBA values and how he plans to assign/maintain them.
 
 #### MF=
