@@ -5776,7 +5776,7 @@ The syntax rules for ATRB have been tightened in zVSAM V2:
 <p>See <a href="#supported-parameter-types">supported parameter types</a> for details.</p>
 <blockquote>
 <p>[!NOTE]
-Melvyn defined RBA values. We use LRSNs throughout. If we do not drop the RBA support,
+Melvyn defined RBA values. We use XLRAs throughout. If we do not drop the RBA support,
 we'll need to find out why Melvyn introduced RBA values and how he plans to assign/maintain them.</p>
 <p>[!NOTE]
 Melvyn defined ERROR to return code from last open/close.
@@ -7274,7 +7274,7 @@ Use GENCB to generate RPLs in dynamically acquired storage.</p>
 <p>Pointer to search argument. This is a key, a relative record number, or a RBA.</p>
 <blockquote>
 <p>[!NOTE]
-Melvyn mentions RBA - I think this should be an XLRSN instead. Unless we decide to support RBAs as well.</p>
+Melvyn mentions RBA - I think this should be an XLRA instead. Unless we decide to support RBAs as well.</p>
 </blockquote>
 <h4 id="keylen">KEYLEN=</h4>
 <p>Length of key value specified in ARG= when a generic key search is requested.</p>
@@ -7483,7 +7483,7 @@ The bit <code>RPLOPT2_ECB</code> is set for an external ECB.</p>
 </table>
 <blockquote>
 <p>[!NOTE]
-RBA/XRBA - Melvyn assumed RBA support. Maybe we should use LRSN/XLRSN instead?</p>
+RBA/XRBA - Melvyn assumed RBA support. Maybe we should use XLRA instead?</p>
 </blockquote>
 <p>================================================================================================================================================================================</p>
 <h3 id="rpld-macro">RPLD macro</h3>
@@ -8387,7 +8387,7 @@ All subparameters have to be true for EQ.</p>
 <p>See <a href="#supported-parameter-types">supported parameter types</a> for details.</p>
 <blockquote>
 <p>[!NOTE]
-Melvyn defined RBA values. We use LRSNs throughout. If we do not drop the RBA support,
+Melvyn defined RBA values. We use XLRAs throughout. If we do not drop the RBA support,
 we'll need to find out why Melvyn introduced RBA values and how he plans to assign/maintain them.</p>
 </blockquote>
 <h4 id="mf_12">MF=</h4>
@@ -8979,7 +8979,7 @@ Note 4: not supported are expressions like <code>(S,scon)</code> or <code>(*,sco
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-42-g5e9f079c"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-43-gbbad7b90"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>

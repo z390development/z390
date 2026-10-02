@@ -2715,6 +2715,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#elix-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ELIX Block
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2919,6 +2930,17 @@
     <span class="md-ellipsis">
       
         Counters Area
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#elix-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ELIX Block
       
     </span>
   </a>
@@ -3824,7 +3846,7 @@ which is intended for cluster-level information. These fields need to be moved t
 1. ENDRBA - current last sentence seems superfluous. Left-over from a prior version? Double-check and remove or rephrase.
 2. NSSS should be zero, rather than foxes - we never do CA splits.
 3. Melvyn declares CDTASIZE to always return zero. Do we want that?
-4. ENDRBA (and HALCRBA, HLRBA) - we do not have RBA values, only LRSN. How to redefine? Melvyn says to use <code>CTRENDRBA</code>
+4. ENDRBA (and HALCRBA, HLRBA) - we do not have RBA values, only XLRA. How to redefine? Melvyn says to use <code>CTRENDRBA</code>
 5. Melvyn declares FS to always return zero. Do we want that?
 6. Melvyn declares NRETR to be zero for index components. I'm not sure why.</p>
 <h2 id="testcb-acb-details">TESTCB ACB details</h2>
@@ -6076,10 +6098,6 @@ If they are issued before the ECB has been posted, unpredictable results may occ
 - <code>CBMRRPL_CNV</code> – TESTCB only, always false
 - <code>CBMRRPL_TRANSID</code> – Always foxes</p>
 <h3 id="prefix-area">Prefix Area</h3>
-<blockquote>
-<p>[!NOTE]
-This is an old layout. Needs to be upgraded.</p>
-</blockquote>
 <p>The prefix area occurs only on the prefix block. It is located directly after the block header on the prefix block.
 No record pointer list lies in between.</p>
 <p>The prefix area contains basic structural information about the file. It has the following format:</p>
@@ -6127,335 +6145,113 @@ No record pointer list lies in between.</p>
 <td>PFXKYOFF</td>
 <td>X'00C'</td>
 <td>XL4</td>
-<td>key offset, excluding SDW/RDW</td>
+<td>key offset, excluding SPX/RLF</td>
+</tr>
+<tr>
+<td>PFXCTRS@</td>
+<td>X'010'</td>
+<td>XL2</td>
+<td>offset to counters area ZVSAMCTR</td>
 </tr>
 <tr>
 <td>PFXDVOL@</td>
-<td>X'010'</td>
-<td>XL3</td>
+<td>X'012'</td>
+<td>XL2</td>
 <td>offset to the data component's volume label</td>
 </tr>
 <tr>
 <td>PFXDNAM@</td>
-<td>X'013'</td>
-<td>XL3</td>
+<td>X'014'</td>
+<td>XL2</td>
 <td>offset to the data component's filename</td>
 </tr>
 <tr>
 <td>PFXDPAT@</td>
 <td>X'016'</td>
-<td>XL3</td>
+<td>XL2</td>
 <td>offset to the data component's pathname</td>
 </tr>
 <tr>
 <td>PFXXVOL@</td>
-<td>X'019'</td>
-<td>XL3</td>
+<td>X'018'</td>
+<td>XL2</td>
 <td>offset to the index component's volume label</td>
 </tr>
 <tr>
 <td>PFXXNAM@</td>
-<td>X'01C'</td>
-<td>XL3</td>
+<td>X'01A'</td>
+<td>XL2</td>
 <td>offset to the index component's filename</td>
 </tr>
 <tr>
 <td>PFXXPAT@</td>
-<td>X'01F'</td>
-<td>XL3</td>
+<td>X'01C'</td>
+<td>XL2</td>
 <td>offset to the index component's pathname</td>
 </tr>
 <tr>
-<td>PFXIXLVL</td>
+<td>PFXRM@</td>
+<td>X'01E'</td>
+<td>XL2</td>
+<td>offset to RRN map table</td>
+</tr>
+<tr>
+<td>PFXRME#</td>
+<td>X'020'</td>
+<td>XL2</td>
+<td>Nr of entries in RRN map table</td>
+</tr>
+<tr>
+<td>PFXSLOTS</td>
 <td>X'022'</td>
+<td>XL2</td>
+<td>Nr of slots per block (RRDS only)</td>
+</tr>
+<tr>
+<td>PFXIXLVL</td>
+<td>X'024'</td>
 <td>XL1</td>
 <td>nr of index levels</td>
 </tr>
 <tr>
 <td>PFXALTHR</td>
-<td>X'023'</td>
+<td>X'025'</td>
 <td>XL1</td>
 <td>allocation redrive threshold</td>
 </tr>
 <tr>
-<td>PFXBLKSZ</td>
-<td>X'024'</td>
-<td>XL4</td>
-<td>blocksize used for this file (except prefix block)</td>
-</tr>
-<tr>
-<td>PFXHXLRA</td>
-<td>X'028'</td>
-<td>XL8</td>
-<td>XLRA of highest allocated block</td>
-</tr>
-<tr>
-<td>PFXBMAP</td>
-<td>X'030'</td>
-<td>XL8</td>
-<td>XLRA of first spacemap block</td>
-</tr>
-<tr>
-<td>PFXEMAP</td>
-<td>X'038'</td>
-<td>XL8</td>
-<td>XLRA of last spacemap block</td>
-</tr>
-<tr>
-<td>PFXMAPNW</td>
-<td>X'040'</td>
-<td>XL8</td>
-<td>XLRA of spacemap block last used for allocation</td>
-</tr>
-<tr>
-<td>PFXBDATA</td>
-<td>X'048'</td>
-<td>XL8</td>
-<td>XLRA of first data block</td>
-</tr>
-<tr>
-<td>PFXEDATA</td>
-<td>X'050'</td>
-<td>XL8</td>
-<td>XLRA of last data block</td>
-</tr>
-<tr>
-<td>PFXBSEGM</td>
-<td>X'058'</td>
-<td>XL8</td>
-<td>XLRA of first segment block</td>
-</tr>
-<tr>
-<td>PFXESEGM</td>
-<td>X'060'</td>
-<td>XL8</td>
-<td>XLRA of last segment block</td>
-</tr>
-<tr>
-<td>PFXROOT</td>
-<td>X'068'</td>
-<td>XL8</td>
-<td>XLRA of root index block</td>
-</tr>
-<tr>
-<td>PFXBLVL0</td>
-<td>X'070'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 0</td>
-</tr>
-<tr>
-<td>PFXELVL0</td>
-<td>X'078'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 0</td>
-</tr>
-<tr>
-<td>PFXBLVL1</td>
-<td>X'080'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 1</td>
-</tr>
-<tr>
-<td>PFXELVL1</td>
-<td>X'088'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 1</td>
-</tr>
-<tr>
-<td>PFXBLVL2</td>
-<td>X'090'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 2</td>
-</tr>
-<tr>
-<td>PFXELVL2</td>
-<td>X'098'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 2</td>
-</tr>
-<tr>
-<td>PFXBLVL3</td>
-<td>X'0A0'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 3</td>
-</tr>
-<tr>
-<td>PFXELVL3</td>
-<td>X'0A8'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 3</td>
-</tr>
-<tr>
-<td>PFXBLVL4</td>
-<td>X'0B0'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 4</td>
-</tr>
-<tr>
-<td>PFXELVL4</td>
-<td>X'0B8'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 4</td>
-</tr>
-<tr>
-<td>PFXBLVL5</td>
-<td>X'0C0'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 5</td>
-</tr>
-<tr>
-<td>PFXELVL5</td>
-<td>X'0C8'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 5</td>
-</tr>
-<tr>
-<td>PFXBLVL6</td>
-<td>X'0D0'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 6</td>
-</tr>
-<tr>
-<td>PFXELVL6</td>
-<td>X'0D8'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 6</td>
-</tr>
-<tr>
-<td>PFXBLVL7</td>
-<td>X'0E0'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 7</td>
-</tr>
-<tr>
-<td>PFXELVL7</td>
-<td>X'0E8'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 7</td>
-</tr>
-<tr>
-<td>PFXBLVL8</td>
-<td>X'0F0'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 8</td>
-</tr>
-<tr>
-<td>PFXELVL8</td>
-<td>X'0F8'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 8</td>
-</tr>
-<tr>
-<td>PFXBLVL9</td>
-<td>X'100'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 9</td>
-</tr>
-<tr>
-<td>PFXELVL9</td>
-<td>X'108'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 9</td>
-</tr>
-<tr>
-<td>PFXBLVLA</td>
-<td>X'110'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 10</td>
-</tr>
-<tr>
-<td>PFXELVLA</td>
-<td>X'118'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 10</td>
-</tr>
-<tr>
-<td>PFXBLVLB</td>
-<td>X'120'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 11</td>
-</tr>
-<tr>
-<td>PFXELVLB</td>
-<td>X'128'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 11</td>
-</tr>
-<tr>
-<td>PFXBLVLC</td>
-<td>X'130'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 412</td>
-</tr>
-<tr>
-<td>PFXELVLC</td>
-<td>X'138'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 12</td>
-</tr>
-<tr>
-<td>PFXBLVLD</td>
-<td>X'140'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 13</td>
-</tr>
-<tr>
-<td>PFXELVLD</td>
-<td>X'148'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 13</td>
-</tr>
-<tr>
-<td>PFXBLVLE</td>
-<td>X'150'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 14</td>
-</tr>
-<tr>
-<td>PFXELVLE</td>
-<td>X'158'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 14</td>
-</tr>
-<tr>
-<td>PFXBLVLF</td>
-<td>X'160'</td>
-<td>XL8</td>
-<td>XLRA of Header Block index level 15</td>
-</tr>
-<tr>
-<td>PFXELVLF</td>
-<td>X'168'</td>
-<td>XL8</td>
-<td>XLRA of End Block index level 15</td>
-</tr>
-<tr>
-<td>PFXMAPOF</td>
-<td>X'170'</td>
-<td>XL3</td>
-<td>offset within spacemap block to last used byte for allocation</td>
+<td>PFXRPTR#</td>
+<td>X'026'</td>
+<td>XL1</td>
+<td>Nr of bits in RPTR index part of XLRA</td>
 </tr>
 <tr>
 <td>PFXFRSPC</td>
-<td>X'173'</td>
+<td>X'027'</td>
 <td>XL1</td>
 <td>initial freespace % within block</td>
 </tr>
 <tr>
 <td>PFXFRBLK</td>
-<td>X'174'</td>
+<td>X'028'</td>
 <td>XL2</td>
 <td>initial freespace blocks</td>
 </tr>
 <tr>
 <td>PFXFRINT</td>
-<td>X'176'</td>
+<td>X'02A'</td>
 <td>XL2</td>
 <td>initial freespace interval between free blocks</td>
 </tr>
 <tr>
+<td>PFXMAPOF</td>
+<td>X'02C'</td>
+<td>XL4</td>
+<td>offset within spacemap block to last used byte for allocation</td>
+</tr>
+<tr>
 <td>PFXFFLGS</td>
-<td>X'178'</td>
+<td>X'030'</td>
 <td>XL1</td>
 <td>file flags</td>
 </tr>
@@ -6497,7 +6293,7 @@ No record pointer list lies in between.</p>
 </tr>
 <tr>
 <td>PFXRFLGS</td>
-<td>X'179'</td>
+<td>X'031'</td>
 <td>XL1</td>
 <td>record flags</td>
 </tr>
@@ -6522,70 +6318,370 @@ No record pointer list lies in between.</p>
 <tr>
 <td>PFX_AIXT</td>
 <td></td>
-<td>=X'10'</td>
-<td>1=AIX on KSDS, 0=AIX on ESDS</td>
+<td>=X'03'</td>
+<td>3=AIX on KSDS 2=on ESDS 1=on RRDS</td>
+</tr>
+<tr>
+<td>PFX_AIXKS</td>
+<td></td>
+<td>=X'03'</td>
+<td>PFX_AIXT=B'11' - AIX on KSDS</td>
+</tr>
+<tr>
+<td>PFX_AIXES</td>
+<td></td>
+<td>=X'02'</td>
+<td>PFX_AIXT=B'10' - AIX on ESDS</td>
+</tr>
+<tr>
+<td>PFX_AIXRR</td>
+<td></td>
+<td>=X'01'</td>
+<td>PFX_AIXT=B'01' - AIX on RRDS</td>
+</tr>
+<tr>
+<td>PFXAIXN</td>
+<td>X'032'</td>
+<td>XL1</td>
+<td>no. of AIX's on the upgrade set</td>
 </tr>
 <tr>
 <td></td>
-<td>X'17A'</td>
-<td>XL6</td>
+<td>X'033'</td>
+<td>XL1</td>
 <td>reserved</td>
 </tr>
 <tr>
-<td>PFXDTSKC</td>
+<td>PFXBLKSZ</td>
+<td>X'034'</td>
+<td>XL4</td>
+<td>blocksize used for this file (except prefix block)</td>
+</tr>
+<tr>
+<td>PFXHXLRA</td>
+<td>X'038'</td>
+<td>XL8</td>
+<td>XLRA of highest allocated block</td>
+</tr>
+<tr>
+<td></td>
+<td>X'040'</td>
+<td>XL8</td>
+<td>reserved</td>
+</tr>
+<tr>
+<td>PFXMAPNW</td>
+<td>X'048'</td>
+<td>XL8</td>
+<td>XLRA of spacemap block last used for allocation</td>
+</tr>
+<tr>
+<td>PFXBMAP</td>
+<td>X'050'</td>
+<td>XL8</td>
+<td>XLRA of first spacemap block</td>
+</tr>
+<tr>
+<td>PFXEMAP</td>
+<td>X'058'</td>
+<td>XL8</td>
+<td>XLRA of last spacemap block</td>
+</tr>
+<tr>
+<td>PFXBDATA</td>
+<td>X'060'</td>
+<td>XL8</td>
+<td>XLRA of first data block</td>
+</tr>
+<tr>
+<td>PFXEDATA</td>
+<td>X'068'</td>
+<td>XL8</td>
+<td>XLRA of last data block</td>
+</tr>
+<tr>
+<td>PFXBOVFL</td>
+<td>X'070'</td>
+<td>XL8</td>
+<td>XLRA of first block on overflow chain</td>
+</tr>
+<tr>
+<td>PFXEOVFL</td>
+<td>X'078'</td>
+<td>XL8</td>
+<td>XLRA of last block on overflow chain</td>
+</tr>
+<tr>
+<td>PFXBSEGM</td>
+<td>X'080'</td>
+<td>XL8</td>
+<td>XLRA of first segment block</td>
+</tr>
+<tr>
+<td>PFXESEGM</td>
+<td>X'088'</td>
+<td>XL8</td>
+<td>XLRA of last segment block</td>
+</tr>
+<tr>
+<td></td>
+<td>X'090'</td>
+<td>XL8</td>
+<td>reserved</td>
+</tr>
+<tr>
+<td>PFXROOT</td>
+<td>X'098'</td>
+<td>XL8</td>
+<td>XLRA of root index block</td>
+</tr>
+<tr>
+<td>PFXBLVL0</td>
+<td>X'0A0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 0</td>
+</tr>
+<tr>
+<td>PFXELVL0</td>
+<td>X'0A8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 0</td>
+</tr>
+<tr>
+<td>PFXBLVL1</td>
+<td>X'0B0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 1</td>
+</tr>
+<tr>
+<td>PFXELVL1</td>
+<td>X'0B8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 1</td>
+</tr>
+<tr>
+<td>PFXBLVL2</td>
+<td>X'0C0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 2</td>
+</tr>
+<tr>
+<td>PFXELVL2</td>
+<td>X'0C8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 2</td>
+</tr>
+<tr>
+<td>PFXBLVL3</td>
+<td>X'0D0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 3</td>
+</tr>
+<tr>
+<td>PFXELVL3</td>
+<td>X'0D8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 3</td>
+</tr>
+<tr>
+<td>PFXBLVL4</td>
+<td>X'0E0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 4</td>
+</tr>
+<tr>
+<td>PFXELVL4</td>
+<td>X'0E8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 4</td>
+</tr>
+<tr>
+<td>PFXBLVL5</td>
+<td>X'0F0'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 5</td>
+</tr>
+<tr>
+<td>PFXELVL5</td>
+<td>X'0F8'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 5</td>
+</tr>
+<tr>
+<td>PFXBLVL6</td>
+<td>X'100'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 6</td>
+</tr>
+<tr>
+<td>PFXELVL6</td>
+<td>X'108'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 6</td>
+</tr>
+<tr>
+<td>PFXBLVL7</td>
+<td>X'110'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 7</td>
+</tr>
+<tr>
+<td>PFXELVL7</td>
+<td>X'118'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 7</td>
+</tr>
+<tr>
+<td>PFXBLVL8</td>
+<td>X'120'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 8</td>
+</tr>
+<tr>
+<td>PFXELVL8</td>
+<td>X'128'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 8</td>
+</tr>
+<tr>
+<td>PFXBLVL9</td>
+<td>X'130'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 9</td>
+</tr>
+<tr>
+<td>PFXELVL9</td>
+<td>X'138'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 9</td>
+</tr>
+<tr>
+<td>PFXBLVLA</td>
+<td>X'140'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 10</td>
+</tr>
+<tr>
+<td>PFXELVLA</td>
+<td>X'148'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 10</td>
+</tr>
+<tr>
+<td>PFXBLVLB</td>
+<td>X'150'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 11</td>
+</tr>
+<tr>
+<td>PFXELVLB</td>
+<td>X'158'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 11</td>
+</tr>
+<tr>
+<td>PFXBLVLC</td>
+<td>X'160'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 12</td>
+</tr>
+<tr>
+<td>PFXELVLC</td>
+<td>X'168'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 12</td>
+</tr>
+<tr>
+<td>PFXBLVLD</td>
+<td>X'170'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 13</td>
+</tr>
+<tr>
+<td>PFXELVLD</td>
+<td>X'178'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 13</td>
+</tr>
+<tr>
+<td>PFXBLVLE</td>
 <td>X'180'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 14</td>
+</tr>
+<tr>
+<td>PFXELVLE</td>
+<td>X'188'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 14</td>
+</tr>
+<tr>
+<td>PFXBLVLF</td>
+<td>X'190'</td>
+<td>XL8</td>
+<td>XLRA of Header Block index level 15</td>
+</tr>
+<tr>
+<td>PFXELVLF</td>
+<td>X'198'</td>
+<td>XL8</td>
+<td>XLRA of End Block index level 15</td>
+</tr>
+<tr>
+<td>PFXDTSKC</td>
+<td>X'1A0'</td>
 <td>XL8</td>
 <td>STCK of data component creation</td>
 </tr>
 <tr>
 <td>PFXIXSKC</td>
-<td>X'188'</td>
+<td>X'1A8'</td>
 <td>XL8</td>
 <td>STCK of index component creation</td>
 </tr>
 <tr>
 <td>PFXDTSKU</td>
-<td>X'190'</td>
+<td>X'1B0'</td>
 <td>XL8</td>
 <td>STCK of last update to data component</td>
 </tr>
 <tr>
 <td>PFXIXSKU</td>
-<td>X'198'</td>
+<td>X'1B8'</td>
 <td>XL8</td>
 <td>STCK of last update to index component</td>
 </tr>
 <tr>
-<td>PFXMAPDT</td>
-<td>X'1A0'</td>
+<td>PFXDTMAP</td>
+<td>X'1C0'</td>
 <td>XL8</td>
-<td>STCK of last allocation action</td>
+<td>STCK of last data spacemap update</td>
 </tr>
 <tr>
-<td>PFXCTRS@</td>
-<td>X'1A8'</td>
-<td>XL3</td>
-<td>pointer to counters area</td>
+<td>PFXIXMAP</td>
+<td>X'1C8'</td>
+<td>XL8</td>
+<td>STCK of last index spacemap update</td>
 </tr>
 <tr>
 <td></td>
-<td>X'1AB'</td>
-<td>XL5</td>
-<td>reserved</td>
+<td>X'1D0'</td>
+<td>XL48</td>
+<td>Reserved</td>
 </tr>
 </tbody>
 </table>
-<p>There are 7 pointer fields in the prefix area. These point to fields allocated elsewhere in the prefix block.
+<p>There are 8 pointer fields in the prefix area. These point to fields allocated elsewhere in the prefix block.
 Their exact addresses on the prefix block may vary.</p>
 <p>The <code>PFXDVOL@</code>, <code>PFXDPAT@</code>, <code>PFXDNAM@</code> pointers and the <code>PFXXVOL@</code>, <code>PFXXPAT@</code>, <code>PFXXNAM@</code> all point to a halfword-prefixed string.
+On Linux/Unix systems, the UUID is stored (in string format), not the volume label.
+The <code>PFXRM@</code> is valid only for an RRDS data file, and points to the RRN translation table.
 The <code>PFXCTRS@</code> pointer addresses a separate area that holds various counters.
 This area is expected to move into the catalog dataset in a future release.</p>
 <h3 id="counters-area">Counters Area</h3>
 <p>The counters area occurs only on the prefix block. Its location can be found by following the prefix area's <code>PFXCTRS@</code> field.</p>
-<blockquote>
-<p>[!NOTE]
-This is an old layout. Needs to be upgraded.</p>
-</blockquote>
+<p>Most counter fields, but not all, are maintained in order to be able to satisfy a
+SHOWCB BLK=ACB or TESTCB BLK=ACB request.</p>
 <table>
 <thead>
 <tr>
@@ -6596,6 +6692,24 @@ This is an old layout. Needs to be upgraded.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>ZVSAMCTR</td>
+<td></td>
+<td>DSECT</td>
+<td>Counters area</td>
+</tr>
+<tr>
+<td>CTREYE</td>
+<td>X'000'</td>
+<td>CL4</td>
+<td>Eye catcher</td>
+</tr>
+<tr>
+<td>CTRZCTR</td>
+<td></td>
+<td>=C'zCTR'</td>
+<td></td>
+</tr>
 <tr>
 <td>CTRAVGRL</td>
 <td>X'004'</td>
@@ -6609,100 +6723,118 @@ This is an old layout. Needs to be upgraded.</p>
 <td>available space</td>
 </tr>
 <tr>
-<td>CTRHALCRBA</td>
+<td>CTRHALCLRA</td>
 <td>X'010'</td>
 <td>XL8</td>
-<td>high-allocated RBA</td>
+<td>high-allocated XLRA</td>
 </tr>
 <tr>
-<td>CTRENDRBA</td>
+<td></td>
 <td>X'018'</td>
+<td>XL8</td>
+<td>reserved</td>
+</tr>
+<tr>
+<td>CTRENDLRA</td>
+<td>X'020'</td>
 <td>XL8</td>
 <td>high water mark for the component</td>
 </tr>
 <tr>
 <td>CTRNCIS</td>
-<td>X'020'</td>
+<td>X'028'</td>
 <td>XL8</td>
 <td>nr of block-split operations</td>
 </tr>
 <tr>
 <td>CTRNDELR</td>
-<td>X'028'</td>
+<td>X'030'</td>
 <td>XL8</td>
 <td>nr of delete operations</td>
 </tr>
 <tr>
 <td>CTRNEXCP</td>
-<td>X'030'</td>
+<td>X'038'</td>
 <td>XL8</td>
 <td>nr of I/O operations</td>
 </tr>
 <tr>
 <td>CTRNEXT</td>
-<td>X'038'</td>
+<td>X'040'</td>
 <td>XL8</td>
-<td>nr of physical files allocated (always 1)</td>
+<td>nr of physical files in the component</td>
 </tr>
 <tr>
 <td>CTRNINSR</td>
-<td>X'040'</td>
+<td>X'048'</td>
 <td>XL8</td>
 <td>nr of insert operations</td>
 </tr>
 <tr>
 <td>CTRNLOGR</td>
-<td>X'048'</td>
+<td>X'050'</td>
 <td>XL8</td>
 <td>nr of records in this component</td>
 </tr>
 <tr>
 <td>CTRNRETR</td>
-<td>X'050'</td>
+<td>X'058'</td>
 <td>XL8</td>
 <td>nr of retrieval operations</td>
 </tr>
 <tr>
 <td>CTRNNUIW</td>
-<td>X'058'</td>
+<td>X'060'</td>
 <td>XL8</td>
 <td>nr of zVSAM writes</td>
 </tr>
 <tr>
 <td>CTRNUPDR</td>
-<td>X'060'</td>
+<td>X'068'</td>
 <td>XL8</td>
 <td>nr of updates</td>
 </tr>
 <tr>
-<td>CTRSDTA</td>
-<td>X'068'</td>
+<td>CTRSDTASZ</td>
+<td>X'070'</td>
 <td>XL8</td>
 <td>uncompressed data size</td>
 </tr>
 <tr>
 <td>CTRSTMST</td>
-<td>X'070'</td>
+<td>X'078'</td>
 <td>XL8</td>
 <td>system timestamp of last close operation</td>
 </tr>
 <tr>
 <td>CTRNUIW</td>
-<td>X'078'</td>
+<td>X'080'</td>
 <td>XL8</td>
 <td>nr of user writes</td>
 </tr>
 <tr>
+<td>CTRTOTRL</td>
+<td>X'088'</td>
+<td>XL8</td>
+<td>total record lengths (variable only)</td>
+</tr>
+<tr>
 <td>CTRLOKEY@</td>
-<td>X'080'</td>
-<td>XL3</td>
-<td>pointer to lowest valid key value</td>
+<td>X'090'</td>
+<td>XL2</td>
+<td>pointer to lowest valid key</td>
+</tr>
+<tr>
+<td>CTRHIKEY@</td>
+<td>X'092'</td>
+<td>XL2</td>
+<td>pointer to highest valid key</td>
 </tr>
 <tr>
 <td></td>
-<td>X'083'</td>
-<td>XL5</td>
-<td>Reserved</td>
+<td>X'094'</td>
+<td>XL108</td>
+<td>reserved</td>
 </tr>
 </tbody>
 </table>
@@ -6715,6 +6847,7 @@ They are mapped as follows:</p>
 <th>Keyword</th>
 <th>SHOWCB</th>
 <th>TESTCB</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
@@ -6723,101 +6856,122 @@ They are mapped as follows:</p>
 <td>AVSPAC</td>
 <td>ACB</td>
 <td>ACB</td>
+<td>Bytes of free space remaining in the data or index component.</td>
 </tr>
 <tr>
-<td>CTRHALCRBA</td>
+<td>CTRHALCLRA</td>
 <td>HALCRBA</td>
 <td>ACB</td>
-<td>n.a.</td>
+<td>n/a</td>
+<td>Relative byte address of the last byte of space allocated to the component.</td>
 </tr>
 <tr>
-<td>CTRENDRBA</td>
+<td>CTRENDLRA</td>
 <td>ENDRBA</td>
 <td>ACB</td>
 <td>ACB</td>
+<td>Relative byte address of the last byte of space actually used in the component.</td>
 </tr>
 <tr>
 <td>CTRNCIS</td>
 <td>NCIS</td>
 <td>ACB</td>
 <td>ACB</td>
+<td>Number of block splits that have occurred in the data component.</td>
 </tr>
 <tr>
 <td>CTRNDELR</td>
 <td>NDELR</td>
 <td>ACB</td>
 <td>ACB</td>
+<td>Number of records that have been deleted from the data component.</td>
 </tr>
 <tr>
 <td>CTRNEXCP</td>
 <td>NEXCP</td>
 <td>ACB</td>
 <td>ACB</td>
+<td>Number of I/O operations zVSAM has issued against the component.</td>
 </tr>
 <tr>
 <td>CTRNEXT</td>
 <td>NEXT</td>
 <td>ACB</td>
 <td>ACB</td>
+<td>Number of physical files currently allocated to the component.</td>
 </tr>
 <tr>
 <td>CTRNINSR</td>
 <td>NINSR</td>
 <td>ACB</td>
 <td>ACB</td>
+<td>Number of records inserted into, or added to, the data component.</td>
 </tr>
 <tr>
 <td>CTRNLOGR</td>
 <td>NLOGR</td>
 <td>ACB</td>
 <td>ACB</td>
+<td>Number of logical records currently stored in the component.</td>
 </tr>
 <tr>
 <td>CTRNRETR</td>
 <td>NRETR</td>
 <td>ACB</td>
 <td>ACB</td>
+<td>Number of records that have been retrieved from the data component.</td>
 </tr>
 <tr>
 <td>CTRNNUIW</td>
 <td>NUIW</td>
 <td>ACB</td>
-<td>n.a.</td>
+<td>n/a</td>
+<td>Number of writes to the component issued by zVSAM, not by the user.</td>
 </tr>
 <tr>
 <td>CTRNUPDR</td>
 <td>NUPDR</td>
 <td>ACB</td>
 <td>ACB</td>
+<td>Number of records that have been updated in the component.</td>
 </tr>
 <tr>
-<td>CTRSDTA</td>
+<td>CTRSDTASZ</td>
 <td>SDTASIZE</td>
 <td>ACB</td>
-<td>n.a.</td>
+<td>n/a</td>
+<td>Uncompressed byte count of the source data in a data component.</td>
 </tr>
 <tr>
 <td>CTRSTMST</td>
 <td>STMST</td>
 <td>ACB</td>
 <td>ACB</td>
+<td>System timestamp recording when the component was last closed.</td>
 </tr>
 <tr>
 <td>CTRNUIW</td>
 <td>UIW</td>
 <td>ACB</td>
-<td>n.a.</td>
+<td>n/a</td>
+<td>Number of writes to the component initiated by the user program.</td>
 </tr>
 <tr>
 <td>CTRLOKEY@</td>
 <td>LOKEY</td>
 <td>ACB</td>
-<td>n.a.</td>
+<td>n/a</td>
+<td>Pointer to lowest key value in a KSDS/AIX data component.</td>
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p>[!NOTE]
+Some interfaces specify RBA values. zVSAM will not return RBA values. A zVSAM cluster is record-addressed
+and may grow beyond the maximum RBA value expressible in 8 bytes. Instead zVSAM returns xLRA values.</p>
+</blockquote>
 <h4 id="counters-maintenance-overview">Counters maintenance overview</h4>
-<p>All fields are 8 bytes except <code>CTRAVGRL</code> which is 4 bytes.</p>
+<p>All fields are 8 bytes except <code>CTRAVGRL</code> which is 4 bytes, and <code>CTRLOKEY@</code>/<code>CTRHIKEY@</code> which are both 2 bytes.</p>
 <table>
 <thead>
 <tr>
@@ -6831,14 +6985,14 @@ They are mapped as follows:</p>
 <tr>
 <td>CTRAVGRL</td>
 <td>Both</td>
-<td>Yes. For fixed, =<code>PFXRECLN</code> even if the dataset is empty.</td>
-<td>For variable files only:</td>
+<td>Yes. For fixed, =<code>PFXRCLEN</code>.</td>
+<td>n/a</td>
 </tr>
 <tr>
 <td></td>
 <td></td>
-<td>For variable, calculated or zero if the dataset is empty.</td>
-<td>At CLOSE, calculate <code>CTRTOTRL</code>/<code>CTRNLOGR</code></td>
+<td>For variable, calculated.</td>
+<td>At CLOSE, calculate <code>CTRTOTRL</code>/<code>CTRNLOGR</code>. Zero if empty.</td>
 </tr>
 <tr>
 <td>CTRAVSPAC</td>
@@ -6847,94 +7001,64 @@ They are mapped as follows:</p>
 <td>For every block update use the old and new <code>BHDRFREE</code> to increase/decrease this value</td>
 </tr>
 <tr>
-<td>CTRHALCRBA</td>
+<td>CTRHALCLRA</td>
 <td>Both</td>
 <td>Yes.</td>
-<td>Updated when blocks are added to the end of the dataset component</td>
+<td>Updated when blocks are added to the end of the component.</td>
 </tr>
 <tr>
 <td></td>
 <td></td>
 <td></td>
-<td>or when the existing <code>HALCRBA</code> block has all records deleted. It's the</td>
+<td>It's the block XLRA of the last data or index block.</td>
 </tr>
 <tr>
-<td></td>
-<td></td>
-<td></td>
-<td>block RBA+1 (XLRA+256) of the last data or level 0 index block containing records.</td>
-</tr>
-<tr>
-<td>CTRHLRBA</td>
-<td>Index only</td>
-<td>Yes.</td>
-<td>Block RBA of <code>PFXROOT</code>. Update if it changes</td>
-</tr>
-<tr>
-<td>CTRENDRBA</td>
+<td>CTRENDLRA</td>
 <td>Both</td>
 <td>Yes.</td>
-<td>Updated when blocks are added to the end of the dataset component.</td>
+<td>Updated when blocks are added to the end of the component</td>
 </tr>
 <tr>
 <td></td>
 <td></td>
 <td></td>
-<td>It's the block RBA+1 (XLRA+256) of the last data or level 0 index block</td>
+<td>or when the existing <code>HALCLRA</code> block has all records deleted. It's the</td>
 </tr>
 <tr>
-<td>CTRNBFRFND</td>
-<td>Both</td>
-<td>No</td>
-<td>+1 for each LSR buffer read</td>
-</tr>
-<tr>
-<td>CTRNBUFNO</td>
-<td>Both</td>
-<td>No</td>
-<td>+1 for each buffer allocated</td>
-</tr>
-<tr>
-<td>CTRBUFUSE</td>
-<td>Both</td>
-<td>No</td>
-<td>+1 for each buffer used</td>
-</tr>
-<tr>
-<td>CTRBUFRDS</td>
-<td>Both</td>
-<td>No</td>
-<td>+1 for each buffer read</td>
+<td></td>
+<td></td>
+<td></td>
+<td>block XLRA of the last data or index block containing records.</td>
 </tr>
 <tr>
 <td>CTRNCIS</td>
 <td>Both</td>
 <td>No</td>
-<td>+1 for each block split</td>
+<td>+1 for each block split.</td>
 </tr>
 <tr>
 <td>CTRNDELR</td>
 <td>Both</td>
 <td>No</td>
-<td>KSDS or RRDS: +1 for each record delete</td>
+<td>+1 for each record delete.</td>
 </tr>
 <tr>
 <td>CTRNEXCP</td>
 <td>Both</td>
 <td>No</td>
-<td>+1 for each physical block read/write</td>
+<td>+1 for each physical read/write operation. Multi-block I/O counts as 1 I/O.</td>
 </tr>
 <tr>
 <td>CTRNEXT</td>
 <td>Both</td>
 <td>Yes</td>
-<td>Always 1, not maintained</td>
+<td>Nr of physical files in the component; +1 when a file is created.</td>
 </tr>
 <tr>
 <td>CTRNINSR</td>
 <td>Both</td>
 <td>No</td>
-<td>+1 for each record added. For RRDS, any empty slots added to the end are not counted</td>
+<td>+1 for each record added. For RRDS, any empty slots added to the end are not counted.</td>
 </tr>
 <tr>
 <td>CTRNLOGR</td>
@@ -6946,61 +7070,49 @@ They are mapped as follows:</p>
 <td></td>
 <td></td>
 <td></td>
-<td>For RRDS, any empty slots added to the end are not counted</td>
+<td>For RRDS, any empty slots added to the end are not counted.</td>
 </tr>
 <tr>
 <td></td>
 <td></td>
 <td></td>
-<td>For Index, all records in all levels are counted</td>
+<td>For Index, all records in all levels are counted.</td>
 </tr>
 <tr>
 <td>CTRNRETR</td>
 <td>Both</td>
 <td>No</td>
-<td>+1 for each record read</td>
+<td>+1 for each record read.</td>
 </tr>
 <tr>
 <td>CTRNNUIW</td>
 <td>Both</td>
 <td>No</td>
-<td>+1 for each maintenance write for block splits, chain repair, segment, spacemap</td>
-</tr>
-<tr>
-<td></td>
-<td></td>
-<td></td>
-<td>and ELIX block management</td>
+<td>+1 for each maintenance write for block splits, chain repair, segment, spacemap, etc.</td>
 </tr>
 <tr>
 <td>CTRNUPDR</td>
 <td>Both</td>
 <td>No</td>
-<td>+1 for each record update</td>
+<td>+1 for each record update.</td>
 </tr>
 <tr>
 <td>CTRSDTASZ</td>
-<td>Both</td>
+<td>Data</td>
 <td>Yes</td>
-<td>+block size for each block added</td>
+<td>+ or - record size (including RLF if present) for each record added, deleted, updated.</td>
 </tr>
 <tr>
 <td>CTRSTMST</td>
 <td>Both</td>
 <td>Yes</td>
-<td>Write STCK value at CLOSE</td>
-</tr>
-<tr>
-<td>CTRSTRMAX</td>
-<td>Both</td>
-<td>No</td>
-<td>+1 for each string created</td>
+<td>Write STCK value at CLOSE.</td>
 </tr>
 <tr>
 <td>CTRNUIW</td>
 <td>Both</td>
 <td>No</td>
-<td>+1 for each user-requested block write</td>
+<td>+1 for each user-requested block write.</td>
 </tr>
 <tr>
 <td>CTRTOTRL</td>
@@ -7012,25 +7124,77 @@ They are mapped as follows:</p>
 <td></td>
 <td></td>
 <td></td>
-<td>+record size for each record added; -record size for each record deleted</td>
+<td>+record size for each record added; -record size for each record deleted.</td>
 </tr>
 <tr>
 <td></td>
 <td></td>
 <td></td>
-<td>SPX is not included; RLF is included; Adjusted for change to variable length</td>
+<td>SPX is not included; RLF is included; Adjusted for change to variable length.</td>
 </tr>
 <tr>
 <td></td>
 <td></td>
 <td></td>
-<td>For RRDS, empty slots are not included</td>
+<td>For RRDS, empty slots are not included.</td>
 </tr>
 <tr>
-<td>CTRLOKEY</td>
+<td>CTRLOKEY@</td>
 <td>Data only</td>
 <td>Yes</td>
-<td>KSDS only. Update when a lower key is added or this key is deleted</td>
+<td>KSDS and AIX: Update when a lower key is added or this key is deleted.</td>
+</tr>
+<tr>
+<td>CTRHIKEY@</td>
+<td>Data only</td>
+<td>Yes</td>
+<td>KSDS and AIX only. Update when a higher key is added or this key is deleted.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="elix-block">ELIX Block</h3>
+<blockquote>
+<p>[!NOTE]
+The ELIX was introduced for managing AIX data records with an extremely large number of synonyms.
+Although it is an elegant solution, we will not implement the ELIX at this point in time.
+In the first place, AIX design should not allow for very large numbers of synonyms. Extend your AIX key if you can.
+In the second place, creating ELIX support is a considerable effort spent on solving a niche problem
+that should not occur in the first place. Maybe, if you do create an AIX with extreme numbers of
+synonyms, bad performance is simply part of the price for having a badly designed index structure.
+We keep the design paragraph here in honour of its author, Melvyn Maltz.</p>
+</blockquote>
+<p>A single ELIX block is created for each non-unique AIX record that is segmented.
+It has the same blocksize as a Data block.</p>
+<p>zVSAM lifts the current IBM restriction of 32K elements in a non-unique AIX record, because of this there
+may be many segments to read to find an element to delete or an insertion point for a new record.</p>
+<p>The ELIX Block provides an extra index on the segments and contains the highest element in each segment.
+As there is currently only one ELIX Block per AIX key this places a limit on the number of elements.</p>
+<p>When a non-unique AIX is built zREPRO will issue a message on the log like this:
+<code>zREPRO AIX MAX ELEMENT LIMIT 87654</code>
+If the number of elements is too low then rebuild the AIX with a larger blocksize.</p>
+<p>IBM does not maintain elements in any particular order but for the ELIX structure to work zVSAM will
+maintain elements in sequence.</p>
+<p><img alt="Diagram showing layout of an ELIX Block" src="img/zVSAM_V2_Drawing_Block_Type_ELIX.jpg" /></p>
+<p>The ELIX record has the following format:</p>
+<table>
+<thead>
+<tr>
+<th>AIX on</th>
+<th>Record Format</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ESDS</td>
+<td>Highest Base XLRA followed by the XLRA of the segment (always record 1)</td>
+</tr>
+<tr>
+<td>KSDS</td>
+<td>Highest Primary key followed by the XLRA of the segment (always record 1)</td>
+</tr>
+<tr>
+<td>RRDS</td>
+<td>Highest RRN followed by the XLRA of the segment (always record 1)</td>
 </tr>
 </tbody>
 </table>
@@ -7106,7 +7270,7 @@ They are mapped as follows:</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-42-g5e9f079c"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-43-gbbad7b90"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>

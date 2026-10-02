@@ -2853,6 +2853,10 @@ to the extent that the following acronyms and terms are understood:</p>
 <td>Control Interval</td>
 </tr>
 <tr>
+<td>DRP</td>
+<td>z390 only: Displaced Record Pointer</td>
+</tr>
+<tr>
 <td>ESDS</td>
 <td>Entry Sequenced Data Set</td>
 </tr>
@@ -2914,7 +2918,7 @@ to the extent that the following acronyms and terms are understood:</p>
 </tr>
 <tr>
 <td>XLRA</td>
-<td>Extended Logical Record Address</td>
+<td>Extended Logical Record Address - z390 equivalent of RBA/XRBA</td>
 </tr>
 <tr>
 <td>zACB</td>
@@ -2941,6 +2945,10 @@ The ones that are used by IBM as well, are intended to have the same meaning the
 </thead>
 <tbody>
 <tr>
+<td>allow mode</td>
+<td>enabled by <code>allow</code> option on z390 invocation. <code>noallow</code> or compatibility mode is the default</td>
+</tr>
+<tr>
 <td>Area</td>
 <td>a section of storage with a defined layout, depending on the type of Area</td>
 </tr>
@@ -2958,7 +2966,7 @@ The ones that are used by IBM as well, are intended to have the same meaning the
 </tr>
 <tr>
 <td>Element</td>
-<td>a primary key or XRBA in an AIX record</td>
+<td>a primary key, RRN, or XLRA in an AIX record</td>
 </tr>
 <tr>
 <td>File</td>
@@ -2995,7 +3003,7 @@ The ones that are used by IBM as well, are intended to have the same meaning the
 </tbody>
 </table>
 <h2 id="compatibility">Compatibility</h2>
-<p>As this document relates to zVSAM V2, there are two type of compatibility we need to consider.
+<p>As this document relates to zVSAM V2, there are two types of compatibility we need to consider.
 On the one hand we have designed zVSAM to be compatible with IBM VSAM.
 And on the other hand we need to consider compatibility with
 z390's zVSAM V1 – the prior implementation of zVSAM in the z390 environment.</p>
@@ -3026,7 +3034,7 @@ inconvenience this may cause.</p>
 <ol>
 <li>We have introduced a new z390 option: ZVSAM which indicates which version of
    zVSAM you want z390 to use.
-   For maximum compatibility the default is set to ZVSAM(1) to enable zVSAM v1.
+   For maximum compatibility the default is set to ZVSAM(1) to enable zVSAM V1.
    The default will be changed to ZVSAM(2) in a future release of z390.
    The parameter takes the following forms:<ol>
 <li>ZVSAM(0) – zVSAM usage is disallowed</li>
@@ -3035,8 +3043,8 @@ inconvenience this may cause.</p>
 </ol>
 </li>
 <li>Any assembly involving zVSAM must use either zVSAM V1 or zVSAM V2,
-   the cannot be mixed. However, modules using zVSAM V1 and zVSAM V2 can be linked
-   and executed in the z390. This should allow for a gradual transition from zVSAM V1 to V2.</li>
+   they cannot be mixed. However, modules using zVSAM V1 and zVSAM V2 can be linked
+   and executed in the z390 environment. This should allow for a gradual transition from zVSAM V1 to V2.</li>
 <li>To convert your zVSAM V1 clusters to zVSAM V2 you'll have to take the following steps:<ol>
 <li>unload the existing data from their clusters using REPRO. \
    For details on how to use REPRO, please refer to the "z390_VSAM_User_Guide"</li>
@@ -3045,7 +3053,7 @@ inconvenience this may cause.</p>
 </ol>
 </li>
 <li>All macros supporting zVSAM will be modified to make them version-aware.
-   The ZVSAM option value described above will be propagated into a sytem SETC variable &amp;SYSZVSAM.
+   The ZVSAM option value described above will be propagated into a system SETC variable &amp;SYSZVSAM.
    This variable can be tested to choose the correct expansion of these macros.
    Your own code can also test this system variable.</li>
 </ol>
@@ -3121,7 +3129,7 @@ inconvenience this may cause.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-42-g5e9f079c"}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": "v1.8.4.4-43-gbbad7b90"}</script>
     
     
       <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
