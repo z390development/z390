@@ -102,6 +102,12 @@ class RunAsmTests extends z390Test {
         assert rc == 0
     }
     @Test
+    void test_IS596() {
+        int rc = this.asmlg(basePath("rt", "mlc", "IS596"), *optionsNoinitNoloadhigh)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
     void test_IS658() {
         int rc = this.asml(basePath("rt", "mlc", "IS658LD"), *options)
         this.printOutput()
@@ -250,10 +256,23 @@ class RunAsmTests extends z390Test {
         assert rc == 0
     }
     @Test
+    void test_TESTX2C() {
+        int rc = this.asml(basePath("rt", "mlc", "TESTX2C"), *options, 'optable(z390)')
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
     void test_TB2CX2C() {
         int rc = this.asmlg(basePath("rt", "mlc", "TB2CX2C"), *options)
         this.printOutput()
         assert rc == 0
+    }
+    @Test
+    void test_TLPSW() {
+        int rc = this.asmlg(basePath("rt", "mlc", "TLPSW"), *options)
+        this.printOutput()
+        assert rc == 0
+        assert this.fileData['LOG'].contains("LPSW S0C2 trapped"), "S0C2 Abend was not trapped"
     }
     @Test
     void test_ZOPCHECK() {

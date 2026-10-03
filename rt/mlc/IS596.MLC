@@ -1,0 +1,4389 @@
+***********************************************************************
+* Regression test for issue #596:
+*     TRT in 64-bit addressing mode does not properly set
+*     64-bit general register 1 when match found.
+*
+* Two additional instructions, TRTR and EDMK, are also impacted.
+*
+* TRTR also incorrectly sets bit 32 of register 1 when executed
+* in 31-bit addressing mode.
+*
+* Testing uncovered additional problems with the ED and EDMK
+* instructions:
+*   1.  ED and EDMK should terminate with a data exception
+*       if the left digit in a byte of the packed decimal source
+*       is greater than 9 (B'1010' -- B'1111'). In this case, the
+*       edit pattern and condition code should be unchanged for
+*       both ED and EDMK; for EDMK, GR1 should be unchanged. An
+*       abnormal temination with system code S0C7 should result.
+*   2.  ED and EDMK incorrectly set the condition code for an
+*       unsigned packed decimal source field such as X'1234'.
+*   3.  EDMK incorrectly set GR1 in cases where the register should
+*       remain unchanged.
+*   4.  Running the Groovy regression tests uncovered a bug in two
+*       mfacc programs -- P9MM1.MLC and P9MM2.MLC. They both
+*       incorrectly set R1 before an EDMK. The current pz390.java
+*       changes fixed a pz390.java bug that allowed the two mfacc
+*       programs to (apparently) work correctly. These two mfacc
+*       programs are being modified to correctly set R1 before an
+*       EDMK.
+*       
+* These problems are also being fixed by #596.
+*
+* The tests performed here verify that
+*   1. TRT and TRTR correctly set GR1, GR2 and the condition code
+*      when running in all three addressing modes.
+*   2. ED and EDMK correctly edit the source and correctly set
+*      the condition code for both signed and unsigned packed
+*      decimal values. For ED, the tests run in addressing mode 31.
+*      For EDMK, the tests are run in all three addressing modes
+*      in order to verify that EDMK correctly sets 64-bit GR1.
+*   3. ED and EDMK correctly detect and handle invalid packed
+*      decimal source, terminating with a data exception and
+*      leaving the original edit pattern and condition code
+*      unchanged. In addition, EDMK leaves 64-bit GR1 unchanged.
+*   4. The two mfacc programs are verified to run correctly when
+*      the Groovy regression test for mfacc is run.
+*
+* Registers on entry:
+*     15  entry point
+*     14  return point
+*     13  standard 18 word save area
+*
+* Registers on exit:
+*     0--14  as at entry
+*     15     return code
+*                0  all tests were successful
+*                8  at least one test failed
+*
+* Output:
+*     Informatory WTOs are issued for each test
+*     Error WTOs are issued when an error occurs
+*
+* Restrictions: The test program must reside in 24-bit storage and
+*               z390 option "noinit" must be used when assembling
+*               and linking the program.
+*
+*               The ED and EDMK tests have additional restrictions.
+*               See the comments for the ED tests.
+*
+*               Maximum total number of tests is 99,999.
+**********************************************************************
+IS596    CSECT
+IS596    AMODE 31
+IS596    RMODE 24
+         STM   14,12,12(13)        Save caller's registers
+         LLGTR 12,15               R12 = base register
+         USING IS596,12            Establish addressability
+         L     11,=A(STOR)         Common storage
+         USING STOR,11             Overlay common storage
+         LA    14,SAS              First save area in save area set
+         ST    13,4(,14)           Chain save areas
+         ST    14,8(,13)
+         LR    13,14               Current save area
+*
+         SR    10,10               R10 = return code
+*                                  0: all tests passed; 8: >= 1 failed
+*
+* ago .skptrt
+         SAM31 ,                   Start in 31-bit addressing mode
+         L     15,=A(TTRT)         Test TRT
+         BASR  14,15
+         LTR   15,15               Test had errors?
+         BZ    *+6                 No
+         LR    10,15               Yes; error return code
+*
+.skptrt anop
+* ago .skptrtr
+         SAM31 ,                   Start in 31-bit addressing mode
+         L     15,=A(TTRTR)        Test TRTR
+         BASR  14,15
+         LTR   15,15               Test had errors?
+         BZ    *+6                 No
+         LR    10,15               Yes; error return code
+*
+.skptrtr anop
+* ago .skped
+         SAM31 ,                   Start in 31-bit addressing mode
+         L     15,=A(TED)          Test ED
+         BASR  14,15
+         LTR   15,15               Test had errors?
+         BZ    *+6                 No
+         LR    10,15               Yes; error return code
+*
+.skped anop
+* ago .skpedmk
+         SAM31 ,                   Start in 31-bit addressing mode
+         L     15,=A(TEDMK)        Test EDMK
+         BASR  14,15
+         LTR   15,15               Test had errors?
+         BZ    *+6                 No
+         LR    10,15               Yes; error return code
+*
+.skpedmk anop
+*
+*        Testing complete; show test subtotals and totals
+*
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+         SR    2,2                 Total number of tests
+         LR    3,2                 Total number of errors
+*
+         MVC   WTLit,=C'TRT '      Copy literal to WTO
+         L     0,NumTRT            Number of TRT tests
+         AR    2,0                 Add to total
+         CVD   0,DW                Convert to packed decimal
+         MVC   PatWk,Pat           Copy edit pattern
+         ED    PatWk,DW+5          Edit low order 5 digits
+         MVC   WT#,PatWk+1         Copy to WTO         
+         L     0,NumTRTE           Number of TRT test errors
+         AR    3,0                 Add to total
+         CVD   0,DW                To packed decimal
+         MVC   PatWk,Pat           Copy edit pattern
+         ED    PatWk,DW+5          Edit low order 5 digits
+         MVC   WT#E,PatWk+1        Copy to WTO
+         WTO   MF=(E,WTOTot)       Show TRT totals
+*
+         MVC   WTLit,=C'TRTR'      Copy literal to WTO
+         L     0,NumTRTR           Number of TRTR tests
+         AR    2,0                 Add to total
+         CVD   0,DW                To packed decimal
+         MVC   PatWk,Pat           Copy edit pattern
+         ED    PatWk,DW+5          Edit low order 5 digits
+         MVC   WT#,PatWk+1         Copy to WTO
+         L     0,NumTRTRE          Number of TRTR test errors
+         AR    3,0                 Add to total
+         CVD   0,DW                To packed decimal
+         MVC   PatWk,Pat           Copy edit pattern
+         ED    PatWk,DW+5          Edit low order 5 digits
+         MVC   WT#E,PatWk+1        Copy to WTO
+         WTO   MF=(E,WTOTot)       Show TRTR totals
+*
+         MVC   WTLit,=C'ED  '      Copy literal to WTO
+         L     0,NumED             Number of ED tests
+         AR    2,0                 Add to total
+         CVD   0,DW                To packed decimal
+         MVC   PatWk,Pat           Copy edit pattern
+         ED    PatWk,DW+5          Edit low order 5 digits
+         MVC   WT#,PatWk+1         Copy to WTO
+         L     0,NumEDE            Number of ED test errors
+         AR    3,0                 Add to total
+         CVD   0,DW                To packed decimal
+         MVC   PatWk,Pat           Copy edit pattern
+         ED    PatWk,DW+5          Edit low order 5 digits
+         MVC   WT#E,PatWk+1        Copy to WTO
+         WTO   MF=(E,WTOTot)       Show ED totals
+*
+         MVC   WTLit,=C'EDMK'      Copy literal to WTO
+         L     0,NumEDMK           Number of EDMK tests
+         AR    2,0                 Add to total
+         CVD   0,DW                To packed decimal
+         MVC   PatWk,Pat           Copy edit pattern
+         ED    PatWk,DW+5          Edit low order 5 digits
+         MVC   WT#,PatWk+1         Copy to WTO
+         L     0,NumEDMKE          Number of EDMK test errors
+         AR    3,0                 Add to total
+         CVD   0,DW                To packed decimal
+         MVC   PatWk,Pat           Copy edit pattern
+         ED    PatWk,DW+5          Edit low order 5 digits
+         MVC   WT#E,PatWk+1        Copy to WTO
+         WTO   MF=(E,WTOTot)       Show EDMK totals
+*
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+         MVC   WTLit,=C'Tot '      Copy literal to WTO
+         CVD   2,DW                Total num tests to packed decimal
+         MVC   PatWk,Pat           Copy ED pattern
+         ED    PatWk,DW+5          Edit low order 5 digits
+         MVC   WT#,PatWk+1         Copy to WTO
+         CVD   3,DW                Total num errors to packed decimal
+         MVC   PatWk,Pat           Copy edit pattern
+         ED    PatWk,DW+5          Edit low order 5 digits
+         MVC   WT#E,PatWk+1        Copy to WTO
+         WTO   MF=(E,WTOTot)       Show totals
+*
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+*        Set return code and exit
+*
+         LR    15,10               Highest return code from all tests
+*
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except R15
+         BR    14                  Return to caller
+*
+         LTORG ,
+*
+*        Save area set for the program
+*
+SAS      DS    0D                      Save Area Set
+         DC    A(0,0,*+64),15A(0)
+         DC    A(0,*-76,*+64),15A(0)
+         DC    A(0,*-76,*+64),15A(0)
+         DC    A(0,*-76,*+64),15A(0)
+         DC    A(0,*-76,*+64),15A(0)
+         DC    A(0,*-76,*+64),15A(0)
+         DC    A(0,*-76,*+64),15A(0)
+         DC    A(0,*-76,0),15A(0)
+*
+         DROP  ,                   End all addressability
+*
+***********************************************************************
+* Test TRT
+*
+* Registers on entry:
+*     15  entry point
+*     14  return point
+*     13  usable save area on chained save area set
+*     11  common storage; CSECT STOR
+*
+* Addressing mode on entry:
+*     31-bit
+*
+* Parameters:
+*     None
+*
+* Output:
+*     Informatory WTOs
+*     Error WTOs if a test fails
+*
+* Registers on exit:
+*     0--14  as at entry
+*     15     return code
+*
+* Return code:
+*     0  all tests were successful
+*     8  at least one test failed; error WTO(s) issued
+*
+* Addressing mode on exit:
+*     31-bit
+*
+* Sample test output:
+*
+* AM 24 Actual: CC 1  GR1 FFFFFFFFFF009ECD  GR2 FFFFFFFFFFFFFFAA
+*       Expect: CC 1  GR1 FFFFFFFFFF009ECD  GR2 FFFFFFFFFFFFFFAA
+* AM 31 Actual: CC 1  GR1 FFFFFFFF00009ECD  GR2 FFFFFFFFFFFFFFAA
+*       Expect: CC 1  GR1 FFFFFFFF00009ECD  GR2 FFFFFFFFFFFFFFAA
+* AM 64 Actual: CC 1  GR1 0000000000009ECD  GR2 FFFFFFFFFFFFFFAA
+*       Expect: CC 1  GR1 0000000000009ECD  GR2 FFFFFFFFFFFFFFAA
+*
+* Notes on the sample test output:
+* 1. Each test is executed three times, once for each addressing     
+*    mode.
+* 2. Before each test, GR1 and GR2 are preset to X'FFFFFFFFFFFFFFFF',
+*    the condition code is preset to 3, and the addressing mode
+*    is preset to 24, 31, 64, respectively.
+* 3. The TRT instuction is used to locate a X'40' (space) in a
+*    string. Strings with no spaces, a space before the rightmost
+*    byte, and a space at the rightmost byte are used.
+* 4. The test output shows the addressing mode and actual
+*    (values after TRT is executed) CC, GR1, GR2 on the first line
+*    and expected CC, GR1, GR2 on the second line.
+***********************************************************************
+TTRT     CSECT
+TTRT     AMODE 31
+TTRT     RMODE 31
+         STM   14,12,12(13)        Save caller's registers
+         LLGTR 12,15               R12 = base register
+         USING TTRT,12             Establish addressability
+         USING STOR,11             Overlay common storage
+         L     13,8(,13)           Usable save area
+*
+         MVC   WBName,=C'TRT '     Test name
+         WTO   MF=(E,WTOBegin)     Test begin message
+*
+         SR    10,10               R10 = return code
+*                                  0: all pass; 8: >= 1 failed
+*
+*        Addressing mode 24 tests
+*
+         SAM24 ,
+*
+         LM    3,5,TRTTests        R3->1st, R4=len1, R5->last
+         USING TTRTDS,3            Overlay test
+TTRTLp1  DS    0H
+         LM    6,8,0(3)            R6 --> storage to TRT
+*                                  R7  =  length of storage
+*                                  R8 --> translate table
+         BCTR  7,0                 Length code
+*
+         L     1,TRTPrR1A          A(preset GR1)
+         LG    1,0(,1)             Preset GR1
+         LG    2,TRTPresetGR2      Preset GR2
+         TM    *,X'91'             Preset CC to 3
+*
+         EX    7,TTRT_TRT          Locate byte in string
+*
+         IPM   0                   Actual CC
+         STMG  1,2,ActGR12         Actual GR1, GR2 to parm list area
+         SGR   1,1                 Zero GR1
+         LGR   2,1                 ... and GR2
+         SRL   0,28                Isolate CC
+         L     1,TRTECC            Expected CC
+         STM   0,1,CkTRTP5         Put in check parm list
+*
+         L     1,TRTE24R1A         A(expected GR1)
+         L     2,TRTER2A           A(expected GR2)
+         MVC   ExpGR1,0(1)         Expected GR1 to parm list area
+         MVC   ExpGR2,0(2)         Expected GR2 to parm list area
+*
+         LA    1,CkTRTP            R1 --> parm list
+         L     15,=A(ShowC12)      Show act, exp CC, GR1 and GR2
+         BASR  14,15
+         L     15,=A(CheckC12)     Check expected vs actual
+         BASR  14,15
+         LTR   15,15               Error?
+         BZ    *+6+4+4+4           No; skip set RC, count error
+         LR    10,15               At least one error
+         L     15,NumTRTE          Count TRT errors
+         LA    15,1(15)
+         ST    15,NumTRTE          New TRT error count
+*
+         L     15,NumTRT           Count TRT tests
+         LA    15,1(15)
+         ST    15,NumTRT           New TRT test count
+*
+         BXLE  3,4,TTRTLp1         Do all tests
+*
+*        Addressing mode 31 tests
+*
+         SAM31 ,
+*
+         LM    3,5,TRTTests        R3->1st, R4=len1, R5->last
+         USING TTRTDS,3            Overlay test
+TTRTLp2  DS    0H
+         LM    6,8,0(3)            R6 --> storage
+*                                  R7  =  length of storage
+*                                  R8 --> translate table
+         BCTR  7,0                 Length code
+*
+         L     1,TRTPrR1A          A(preset GR1)
+         LG    1,0(,1)             Preset GR1
+         LG    2,TRTPresetGR2      Preset GR2
+         TM    *,X'91'             Preset CC to 3
+*
+         EX    7,TTRT_TRT          Locate byte in string
+*
+         IPM   0                   Actual CC
+         STMG  1,2,ActGR12         Actual GR1, GR2 to parm list area
+         SGR   1,1                 Zero GR1
+         LGR   2,1                 ... and GR2
+         SRL   0,28                Isolate CC
+         L     1,TRTECC            Expected CC
+         STM   0,1,CkTRTP5         Put in check parm list
+*
+         L     1,TRTE31R1A         A(expected GR1)
+         L     2,TRTER2A           A(expected GR2)
+         MVC   ExpGR1,0(1)         Expected GR1 to parm list area
+         MVC   ExpGR2,0(2)         Expected GR2 to parm list area
+*
+         LA    1,CkTRTP            R1 --> parm list
+         L     15,=A(ShowC12)      Show act, exp CC, GR1 and GR2
+         BASR  14,15
+         L     15,=A(CheckC12)     Check expected vs actual
+         BASR  14,15
+         LTR   15,15               Error?
+         BZ    *+6+4+4+4           No; skip set RC, count error
+         LR    10,15               At least one error
+         L     15,NumTRTE          Count TRT errors
+         LA    15,1(15)
+         ST    15,NumTRTE          New TRT error count
+*
+         L     15,NumTRT           Count TRT tests
+         LA    15,1(15)
+         ST    15,NumTRT           New TRT test count
+*
+         BXLE  3,4,TTRTLp2         Do all tests
+*
+*        Addressing mode 64 tests
+*
+         SAM64 ,
+*
+         LM    3,5,TRTTests        3->1st, 4=len1, 5->last
+         USING TTRTDS,3            Overlay test
+TTRTLp3  DS    0H
+         LM    6,8,0(3)            R6 --> storage
+*                                  R7  =  length of storage
+*                                  R8 --> translate table
+         BCTR  7,0                 Length code
+*
+         L     1,TRTPrR1A          A(preset GR1)
+         LG    1,0(,1)             Preset GR1
+         LG    2,TRTPresetGR2      Preset GR2
+         TM    *,X'91'             Preset CC to 3
+*
+         EX    7,TTRT_TRT          Locate byte in string
+*
+         IPM   0                   Actual CC
+         STMG  1,2,ActGR12         Actual GR1, GR2 to parm list area
+         SGR   1,1                 Zero GR1
+         LGR   2,1                 ... and GR2
+         SRL   0,28                Isolate CC
+         L     1,TRTECC            Expected CC
+         STM   0,1,CkTRTP5         Put in check parm list
+*
+         L     1,TRTE64R1A         A(expected GR1)
+         L     2,TRTER2A           A(expected GR2)
+         MVC   ExpGR1,0(1)         Expected GR1 to parm list area
+         MVC   ExpGR2,0(2)         Expected GR2 to parm list area
+*
+         LA    1,CkTRTP            R1 --> parm list
+         L     15,=A(ShowC12)      Show act, exp CC, GR1 and GR2
+         BASR  14,15
+         L     15,=A(CheckC12)     Check expected vs actual
+         BASR  14,15
+         LTR   15,15               Error?
+         BZ    *+6+4+4+4           No; skip set RC, count error
+         LR    10,15               At least one error
+         L     15,NumTRTE          Count TRT errors
+         LA    15,1(15)
+         ST    15,NumTRTE          New TRT error count
+*
+         L     15,NumTRT           Count TRT tests
+         LA    15,1(15)
+         ST    15,NumTRT           New TRT test count
+*
+         BXLE  3,4,TTRTLp3         Do all tests
+*
+         DROP  3                   End test case overlay
+*
+         SAM31 ,                   Restore amode at entry
+         SGR   1,1                 GR1, GR2 reset to zero
+         LGR   2,1
+*
+*
+         MVC   WEName,=C'TRT '     Test name
+         WTO   MF=(E,WTOEnd)       Test end message
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+         LR    15,10               Set return code
+*
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except R15
+         BR    14                  Return to caller
+*
+         LTORG ,
+*
+TTRT_TRT TRT   0(*-*,6),0(8)       First match using translate table
+*
+          DS    0D
+***********************************************************************
+*         TRT tests; TTRTDS DSECT overlays a test
+***********************************************************************
+*
+TRTTests  DC    A(TRTT1,TTRTDSLN,TRTTn,0)  A(1st),len 1,A(last),unused
+*
+TRTT1     DS    0D                  First test
+          DC    A(StrNone)          Storage containing string
+          DC    A(L'StrNone)        Length of storage
+          DC    A(LocSpace)         Translate table
+          DC    A(TRTPresetGR1)     Preset GR1
+          DC    F'0'                Expected CC
+          DC    A(TRTR2CC0)         Expected GR2
+          DC    A(TRTR1CC0)         Expected GR1; 24-bit
+          DC    A(TRTR1CC0)         Expected GR1; 31-bit
+          DC    A(TRTR1CC0)         Expected GR1; 64-bit
+*
+          DC    A(StrBeg)           Storage containing string
+          DC    A(L'StrBeg)         Length of storage
+          DC    A(LocSpace)         Translate table
+          DC    A(TRTPresetGR1)     Preset GR1
+          DC    F'1'                Expected CC
+          DC    A(TRTR2CC1)         Expected GR2
+          DC    A(TRT24R1CC1_B)     Expected GR1; 24-bit
+          DC    A(TRT31R1CC1_B)     Expected GR1; 31-bit
+          DC    A(TRT64R1CC1_B)     Expected GR1; 64-bit
+*
+          DC    A(StrMid)           Storage containing string
+          DC    A(L'StrMid)         Length of storage
+          DC    A(LocSpace)         Translate table
+          DC    A(TRTPresetGR1)     Preset GR1
+          DC    F'1'                Expected CC
+          DC    A(TRTR2CC1)         Expected GR2
+          DC    A(TRT24R1CC1)       Expected GR1; 24-bit
+          DC    A(TRT31R1CC1)       Expected GR1; 31-bit
+          DC    A(TRT64R1CC1)       Expected GR1; 64-bit
+*
+          DC    A(StrEnd)           Storage containing string
+          DC    A(L'StrEnd)         Length of storage
+          DC    A(LocSpace)         Translate table
+          DC    A(TRTPresetGR1)     Preset GR1
+          DC    F'2'                Expected CC
+          DC    A(TRTR2CC2)         Expected GR2
+          DC    A(TRT24R1CC2)       Expected GR1; 24-bit
+          DC    A(TRT31R1CC2)       Expected GR1; 31-bit
+          DC    A(TRT64R1CC2)       Expected GR1; 64-bit
+*
+***********************************************************************
+*         Put new tests above this line
+***********************************************************************
+TRTTn     EQU   *-TTRTDSLN          Last test
+*
+***********************************************************************
+*        GR1 and GR2 expected values for the tests
+***********************************************************************
+*
+               DS    0D
+TRTPresetGR1   DC    F'-1,-1'              Preset value for GR1
+TRTPresetGR2   EQU   TRTPresetGR1          Preset value for GR2
+*
+TRTR1CC0       EQU   TRTPresetGR1          Expected GR1 when CC=0
+TRTR2CC0       EQU   TRTR1CC0              Expected GR2 when CC=0
+*
+               DS    0D
+TRTR2CC1       DC    F'-1',XL4'FFFFFFAA'   Expected GR2 when CC=1
+TRTR2CC2       EQU   TRTR2CC1              Expected GR2 when CC=2
+*
+*              GR1 expected values for tests; 24,31,64 bit; CC 0,1,2
+*
+               DS    0D
+*
+TRT24R1CC0     EQU   TRTR1CC0
+TRT24R1CC1_B   DC    F'-1',X'FF',AL3(StrBeg+0)
+TRT24R1CC1     DC    F'-1',X'FF',AL3(StrMid+1)
+TRT24R1CC2     DC    F'-1',X'FF',AL3(StrEnd+L'StrEnd-1)
+*
+TRT31R1CC0     EQU   TRTR1CC0
+TRT31R1CC1_B   DC    F'-1',A(StrBeg+0)
+TRT31R1CC1     DC    F'-1',A(StrMid+1)
+TRT31R1CC2     DC    F'-1',A(StrEnd+L'StrEnd-1)
+*
+TRT64R1CC0     EQU   TRTR1CC0
+TRT64R1CC1_B   DC    F'0',A(StrBeg+0)
+TRT64R1CC1     DC    F'0',A(StrMid+1)
+TRT64R1CC2     DC    F'0',A(StrEnd+L'StrEnd-1)
+*
+         DROP  ,
+*
+***********************************************************************
+* Test TRTR
+*
+* Registers on entry:
+*     15  entry point
+*     14  return point
+*     13  usable save area on chained save area set
+*     11  common storage; CSECT STOR
+*
+* Addressing mode on entry:
+*     31-bit
+*
+* Parameters:
+*     None
+*
+* Output:
+*     Informatory WTOs
+*     Error WTOs if a test fails
+*
+* Registers on exit:
+*     0--14  as at entry
+*     15     return code
+*
+* Return code:
+*     0  all tests were successful
+*     8  at least one test failed; error WTO(s) issued
+*
+* Addressing mode on exit:
+*     31-bit
+*
+* Sample test output:
+*
+* AM 31 Actual: CC 1  GR1 FFFFFFFF80009ECE  GR2 FFFFFFFFFFFFFFAA
+*       Expect: CC 1  GR1 FFFFFFFF80009ECE  GR2 FFFFFFFFFFFFFFAA
+* AM 31 Actual: CC 1  GR1 FFFFFFFF00009ECE  GR2 FFFFFFFFFFFFFFAA
+*       Expect: CC 1  GR1 FFFFFFFF00009ECE  GR2 FFFFFFFFFFFFFFAA
+*
+* Notes on the sample test output:
+* 1. Each test is executed three times, once for each addressing
+*    mode.
+* 2. Before each test, GR1 and GR2 are preset to X'FFFFFFFFFFFFFFFF',
+*    the condition code is preset to 3, and the addressing mode
+*    is preset to 24, 31, 64, respectively.
+* 3. Due to a difference between TRT and TRTR, the 31-bit CC 1 and
+*    CC 2 tests are repeated with GR1 preset to X'FFFFFFFF7FFFFFFF'
+*    (bit 32 preset to zero).
+* 3. The TRTR instuction is used to locate a X'40' (space) in a
+*    string. Strings with no spaces, a space after the leftmost
+*    byte, and a space at the leftmost byte are used.
+* 4. The test output shows the addressing mode and actual
+*    (values after TRTR is executed) CC, GR1, GR2 on the first line
+*    and expected CC, GR1, GR2 on the second line.
+* 5. Note that the sample output illustrates the difference between
+*    TRT and TRTR (bit 32 is set to zero by TRT, unchanged by TRTR).
+***********************************************************************
+TTRTR    CSECT
+TTRTR    AMODE 31
+TTRTR    RMODE 31
+         STM   14,12,12(13)        Save caller's registers
+         LLGTR 12,15               R12 = base register
+         USING TTRTR,12            Establish addressability
+         USING STOR,11             Overlay common storage
+         L     13,8(,13)           Next save area
+*
+         MVC   WBName,=C'TRTR'     Test name
+         WTO   MF=(E,WTOBegin)     Test begin message
+*
+         SR    10,10               R10 = return code
+*                                  0:= all pass; 8: >= 1 failed
+*
+*        Addressing mode 24 tests
+*
+         SAM24 ,
+*
+         LM    3,5,TRTRTests       R3->1st, R4=len1, R5->last
+         USING TTRTDS,3            Overlay test
+TTRTRLp1 DS    0H
+         LM    6,8,0(3)            R6 --> storage to TRTR
+*                                  R7  =  length of storage
+*                                  R8 --> translate table
+         BCTR  7,0                 Length code
+         LA    9,0(7,6)            R9 --> last byte of storage
+*
+         L     1,TRTPrR1A          A(preset GR1)
+         LG    1,0(,1)             Preset GR1
+         LG    2,TRTRPresetGR2     Preset GR2
+         TM    *,X'91'             Preset CC to 3
+*
+         EX    7,TTRTR_TRTR        Locate byte in string
+*
+         IPM   0                   Actual CC
+         STMG  1,2,ActGR12         Actual GR1, GR2 to parm list area
+         SGR   1,1                 Zero GR1
+         LGR   2,1                 ... and GR2
+         SRL   0,28                Isolate CC
+         L     1,TRTECC            Expected CC
+         STM   0,1,CkTRTP5         Put in check parm list
+*
+         L     1,TRTE24R1A         A(expected GR1)
+         L     2,TRTER2A           A(expected GR2)
+         MVC   ExpGR1,0(1)         Expected GR1 to parm list area
+         MVC   ExpGR2,0(2)         Expected GR2 to parm list area
+*
+         LA    1,CkTRTP            R1 --> parm list
+         L     15,=A(ShowC12)      Show act, exp CC, GR1 and GR2
+         BASR  14,15
+         L     15,=A(CheckC12)     Check expected vs actual
+         BASR  14,15
+         LTR   15,15               Error?
+         BZ    *+6+4+4+4           No; skip set RC, count error
+         LR    10,15               At least one error
+         L     15,NumTRTRE         Count TRTR errors
+         LA    15,1(15)
+         ST    15,NumTRTRE         New TRTR error count
+*
+         L     15,NumTRTR          Count TRTR tests
+         LA    15,1(15)
+         ST    15,NumTRTR          New TRTR test count
+*
+         BXLE  3,4,TTRTRLp1        Do all test cases
+*
+*        Addressing mode 31 tests with expected GR1 bit 32 equal to 1
+*
+         SAM31 ,
+*
+         LM    3,5,TRTRTests       R3->1st, R4=len1, R5->last
+         USING TTRTDS,3            Overlay test
+TTRTRLp2 DS    0H
+         LM    6,8,0(3)            R6 --> storage to TRTR
+*                                  R7  =  length of storage
+*                                  R8 --> translate table
+         BCTR  7,0                 Length code
+         LA    9,0(7,6)            R9 --> last byte of storage
+*
+         L     1,TRTPrR1A          A(preset GR1)
+         LG    1,0(,1)             Preset GR1
+         LG    2,TRTRPresetGR2     Preset GR2
+         TM    *,X'91'             Preset CC to 3
+*
+         EX    7,TTRTR_TRTR        Locate byte in string
+*
+         IPM   0                   Actual CC
+         STMG  1,2,ActGR12         Actual GR1, GR2 to parm list area
+         SGR   1,1                 Zero GR1
+         LGR   2,1                 ... and GR2
+         SRL   0,28                Isolate CC
+         L     1,TRTECC            Expected CC
+         STM   0,1,CkTRTP5         Put in check parm list
+*
+         L     1,TRTE31R1A         A(expected GR1)
+         L     2,TRTER2A           A(expected GR2)
+         MVC   ExpGR1,0(1)         Expected GR1 to parm list area
+         MVC   ExpGR2,0(2)         Expected GR2 to parm list area
+*
+         LA    1,CkTRTP            R1 --> parm list
+         L     15,=A(ShowC12)      Show act, exp CC, GR1 and GR2
+         BASR  14,15
+         L     15,=A(CheckC12)     Check expected vs actual
+         BASR  14,15
+         LTR   15,15               Error?
+         BZ    *+6+4+4+4           No; skip set RC, count error
+         LR    10,15               At least one error
+         L     15,NumTRTRE         Count TRTR errors
+         LA    15,1(15)
+         ST    15,NumTRTRE         New TRTR error count
+*
+         L     15,NumTRTR          Count TRTR tests
+         LA    15,1(15)
+         ST    15,NumTRTR          New TRTR test count
+*
+         BXLE  3,4,TTRTRLp2        Do all test cases
+*
+*
+*        Addressing mode 31 tests with preset GR1 bit 32 equal to 0
+*
+         SAM31 ,
+*
+         LM    3,5,TRTRTests_0     R3->1st, R4=len1, R5->last
+         USING TTRTDS,3            Overlay test
+TTRTRLp3 DS    0H
+         LM    6,8,0(3)            R6 --> storage to TRTR
+*                                  R7  =  length of storage
+*                                  R8 --> translate table
+         BCTR  7,0                 Length code
+         LA    9,0(7,6)            R9 --> last byte of storage
+*
+         L     1,TRTPrR1A          A(preset GR1)
+         LG    1,0(,1)             Preset GR1
+         LG    2,TRTRPresetGR2     Preset GR2
+         TM    *,X'91'             Preset CC to 3
+*
+         EX    7,TTRTR_TRTR        Locate byte in string
+*
+         IPM   0                   Actual CC
+         STMG  1,2,ActGR12         Actual GR1, GR2 to parm list area
+         SGR   1,1                 Zero GR1
+         LGR   2,1                 ... and GR2
+         SRL   0,28                Isolate CC
+         L     1,TRTECC            Expected CC
+         STM   0,1,CkTRTP5         Put in check parm list
+*
+         L     1,TRTE31R1A         A(expected GR1)
+         L     2,TRTER2A           A(expected GR2)
+         MVC   ExpGR1,0(1)         Expected GR1 to parm list area
+         MVC   ExpGR2,0(2)         Expected GR2 to parm list area
+*
+         LA    1,CkTRTP            R1 --> parm list
+         L     15,=A(ShowC12)      Show act, exp CC, GR1 and GR2
+         BASR  14,15
+         L     15,=A(CheckC12)     Check expected vs actual
+         BASR  14,15
+         LTR   15,15               Error?
+         BZ    *+6+4+4+4           No; skip set RC, count error
+         LR    10,15               At least one error
+         L     15,NumTRTRE         Count TRTR errors
+         LA    15,1(15)
+         ST    15,NumTRTRE         New TRTR error count
+*
+         L     15,NumTRTR          Count TRTR tests
+         LA    15,1(15)
+         ST    15,NumTRTR          New TRTR test count
+*
+         BXLE  3,4,TTRTRLp3        Do all test cases
+*
+*        Addressing mode 64 tests
+*
+         SAM64 ,
+*
+         LM    3,5,TRTRTests       R3->1st, R4=len1, R5->last
+         USING TTRTDS,3            Overlay test
+TTRTRLp4 DS    0H
+         LM    6,8,0(3)            R6 --> storage to TRTR
+*                                  R7  =  length of storage
+*                                  R8 --> translate table
+         BCTR  7,0                 Length code
+         LA    9,0(7,6)            R9 --> last byte of storage
+*
+         L     1,TRTPrR1A          A(preset GR1)
+         LG    1,0(,1)             Preset GR1
+         LG    2,TRTRPresetGR2     Preset GR2
+         TM    *,X'91'             Preset CC to 3
+*
+         EX    7,TTRTR_TRTR        Locate byte in string
+*
+         IPM   0                   Actual CC
+         STMG  1,2,ActGR12         Actual GR1, GR2 to parm list area
+         SGR   1,1                 Zero GR1
+         LGR   2,1                 ... and GR2
+         SRL   0,28                Isolate CC
+         L     1,TRTECC            Expected CC
+         STM   0,1,CkTRTP5         Put in check parm list
+*
+         L     1,TRTE64R1A         A(expected GR1)
+         L     2,TRTER2A           A(expected GR2)
+         MVC   ExpGR1,0(1)         Expected GR1 to parm list area
+         MVC   ExpGR2,0(2)         Expected GR2 to parm list area
+*
+         LA    1,CkTRTP            R1 --> parm list
+         L     15,=A(ShowC12)      Show act, exp CC, GR1 and GR2
+         BASR  14,15
+         L     15,=A(CheckC12)     Check expected vs actual
+         BASR  14,15
+         LTR   15,15               Error?
+         BZ    *+6+4+4+4           No; skip set RC, count error
+         LR    10,15               At least one error
+         L     15,NumTRTRE         Count TRTR errors
+         LA    15,1(15)
+         ST    15,NumTRTRE         New TRTR error count
+*
+         L     15,NumTRTR          Count TRTR tests
+         LA    15,1(15)
+         ST    15,NumTRTR          New TRTR test count
+*
+         BXLE  3,4,TTRTRLp4        Do all test cases
+*
+         SAM31 ,                   Restore amode at entry
+         SGR   1,1                 GR1, GR2 reset to zero
+         LGR   2,1
+*
+         MVC   WEName,=C'TRTR'     Test name
+         WTO   MF=(E,WTOEnd)       Test end message
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+         LR    15,10               Set return code
+*
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except R15
+         BR    14                  Return to caller
+*
+         LTORG ,
+*
+TTRTR_TRTR TRTR 0(*-*,9),0(8)      Reverse 1st match via translate tbl
+*
+          DS    0D
+***********************************************************************
+*         TRTR tests; TTRTDS DSECT overlays a test
+***********************************************************************
+*
+TRTRTests DC   A(TRTRT1,TTRTDSLN,TRTRTn,0) A(1st),len 1,A(last),unused
+*
+TRTRT1    DS   0D                  First test
+          DC   A(StrNone)          Storage
+          DC   A(L'StrNone)        Length of storage
+          DC   A(LocSpace)         Translate table
+          DC   A(TRTRPresetGR1)    Preset GR1
+          DC   F'0'                Expected CC
+          DC   A(TRTRR2CC0)        Expected GR2
+          DC   A(TRTRR1CC0)        Expected GR1; 24-bit
+          DC   A(TRTRR1CC0)        Expected GR1; 31-bit
+          DC   A(TRTRR1CC0)        Expected GR1; 64-bit
+*
+          DC   A(StrEnd)           Storage
+          DC   A(L'StrEnd)         Length of storage
+          DC   A(LocSpace)         Translate table
+          DC   A(TRTRPresetGR1)    Preset GR1
+          DC   F'1'                Expected CC
+          DC   A(TRTRR2CC1)        Expected GR2
+          DC   A(TRTR24R1CC1_E)    Expected GR1; 24-bit
+          DC   A(TRTR31R1CC1_E)    Expected GR1; 31-bit
+          DC   A(TRTR64R1CC1_E)    Expected GR1; 64-bit
+*
+          DC   A(StrMid)           Storage
+          DC   A(L'StrMid)         Length of storage
+          DC   A(LocSpace)         Translate table
+          DC   A(TRTRPresetGR1)    Preset GR1
+          DC   F'1'                Expected CC
+          DC   A(TRTRR2CC1)        Expected GR2
+          DC   A(TRTR24R1CC1)      Expected GR1; 24-bit
+          DC   A(TRTR31R1CC1)      Expected GR1; 31-bit
+          DC   A(TRTR64R1CC1)      Expected GR1; 64-bit
+*
+          DC   A(StrBeg)           Storage
+          DC   A(L'StrBeg)         Length of storage
+          DC   A(LocSpace)         Translate table
+          DC   A(TRTRPresetGR1)    Preset GR1
+          DC   F'2'                Expected CC
+          DC   A(TRTRR2CC2)        Expected GR2
+          DC   A(TRTR24R1CC2)      Expected GR1; 24-bit
+          DC   A(TRTR31R1CC2)      Expected GR1; 31-bit
+          DC   A(TRTR64R1CC2)      Expected GR1; 64-bit
+*
+***********************************************************************
+*         Put new tests above this line
+***********************************************************************
+TRTRTn    EQU  *-TTRTDSLN          Last test
+*
+          DS    0D
+***********************************************************************
+*         TRTR tests; 31-bit only; preset, expected GR1 bit 32 = 0
+***********************************************************************
+*
+TRTRTests_0 DC A(TRTRT1_0,TTRTDSLN,TRTRTn_0,0) A(1st),len 1,A(last),0
+*
+TRTRT1_0  DS   0D                  First test
+          DC   A(StrMid)           Storage
+          DC   A(L'StrMid)         Length of storage
+          DC   A(LocSpace)         Translate table
+          DC   A(TRTRPresetGR1Bit32Zero)   Preset GR1
+          DC   F'1'                Expected CC
+          DC   A(TRTRR2CC1)        Expected GR2
+          DC   A(0) TRTR24R1CC1)   N/A     Expected GR1; 24-bit
+          DC   A(TRTR31R1Bit32ZeroCC1)     Expected GR1; 31-bit
+          DC   A(0) TRTR64R1CC1)   N/A     Expected GR1; 64-bit
+*
+          DC   A(StrBeg)           Storage
+          DC   A(L'StrBeg)         Length of storage
+          DC   A(LocSpace)         Translate table
+          DC   A(TRTRPresetGR1Bit32Zero)   Preset GR1
+          DC   F'2'                Expected CC
+          DC   A(TRTRR2CC2)        Expected GR2
+          DC   A(0) TRTR24R1CC2)   N/A     Expected GR1; 24-bit
+          DC   A(TRTR31R1Bit32ZeroCC2)     Expected GR1; 31-bit
+          DC   A(0) TRTR64R1CC2)   N/A     Expected GR1; 64-bit
+*
+***********************************************************************
+*         Put new tests above this line
+***********************************************************************
+TRTRTn_0  EQU  *-TTRTDSLN          Last test
+*
+***********************************************************************
+*         GR1 and GR2 expected values for the tests
+***********************************************************************
+*
+                        DS    0D
+TRTRPresetGR1           DC    F'-1,-1'
+TRTRPresetGR2           EQU   TRTRPresetGR1
+*
+TRTRPresetGR1Bit32Zero  DC    F'-1',X'7FFFFFFF'
+*
+TRTRR1CC0               EQU   TRTPresetGR1
+TRTRR2CC0               EQU   TRTPresetGR2
+*
+TRTRR2CC1               DC    F'-1',XL4'FFFFFFAA'
+TRTRR2CC2               EQU   TRTRR2CC1
+*
+TRTR24R1CC0             EQU   TRTRR1CC0
+TRTR24R1CC1_E           DC    F'-1',X'FF',AL3(StrEnd+L'StrEnd-1)
+TRTR24R1CC1             DC    F'-1',X'FF',AL3(StrMid+2)
+TRTR24R1CC2             DC    F'-1',X'FF',AL3(StrBeg)
+*
+TRTR31R1CC0             EQU   TRTRR1CC0
+TRTR31R1CC1_E           DC    F'-1',X'80',AL3(StrEnd+L'StrEnd-1)
+TRTR31R1CC1             DC    F'-1',A(StrMid+2+X'80000000')
+TRTR31R1CC2             DC    F'-1',A(StrBeg+X'80000000')
+*
+TRTR31R1Bit32ZeroCC1    DC    F'-1',A(StrMid+2)
+TRTR31R1Bit32ZeroCC2    DC    F'-1',A(StrBeg)
+*
+TRTR64R1CC0             EQU   TRTRR1CC0
+TRTR64R1CC1_E           DC    A(0),A(StrEnd+L'StrEnd-1)
+TRTR64R1CC1             DC    F'0',A(StrMid+2)
+TRTR64R1CC2             DC    F'0',A(StrBeg)
+*
+         DROP  ,
+*
+***********************************************************************
+* Test ED
+*
+* Registers on entry:
+*     15  entry point
+*     14  return point
+*     13  usable save area on chained save area set
+*     11  common storage; CSECT STOR
+*
+* Addressing mode on entry:
+*     31-bit
+*
+* Parameters:
+*     None
+*
+* Output:
+*     Informatory WTOs
+*     Error WTOs if a test fails
+*
+* Registers on exit:
+*     0--14  as at entry
+*     15     return code
+*
+* Return code:
+*     0  all tests were successful
+*     8  at least one test failed; error WTO(s) issued
+*
+* Addressing mode on entry:
+*     31-bit
+*
+* Sample output:
+*
+*     PDArea 00456D        Printable hex packed decimal area
+*     EDPat  402020202020  Printable hex edit pattern
+* Act EDNum  404040F4F5F6  Printable hex actual edit result
+* Exp EDNum  404040F4F5F6  Printable hex expected edit result
+*            b b b 4 5 6   Printable expected edit result (b = space)
+* Act CC 1  Exp CC 1       Actual and expected condition code
+*
+* Any error messages appear after the condition code line.
+*
+* Note that all ED tests are done in addressing mode 31.
+*
+* Restrictions: The ED (and EDMK) tests have the following
+*               restrictions:
+*               1. Maximum pattern length is 20 bytes.
+*               2. Maximum packed decimal area length is 16 bytes.
+***********************************************************************
+TED      CSECT
+TED      AMODE 31
+TED      RMODE 31
+         STM   14,12,12(13)        Save caller's registers
+         LLGTR 12,15               R12 = base register
+         USING TED,12              Establish addressability
+         USING STOR,11             Overlay common storage
+         L     13,8(,13)           Next save area
+*
+         MVC   WBName,=C'ED  '     Test name
+         WTO   MF=(E,WTOBegin)     Test begin message
+*
+         SR    10,10               R10 = return code
+*                                  0:= all pass; 8: >= 1 failed
+*
+         L     3,=A(EDTCS)         ED/EDMK tests
+         USING EDTCS,3
+         LM    3,5,EDTests         R3->1st, R4=len1, R5->last
+         USING TEDDS,3             Overlay test case
+TEDLp1   DS    0H
+         LM    6,9,0(3)            R6 -> Edit pattern
+*                                  R7 =  Edit pattern length
+*                                  R8 -> Packed decimal area
+*                                  R9 =  Packed decimal area length
+*
+         XC    EDPatWk,EDPatWk     Initialize pattern work area
+         XC    PDAWk,PDAWk         Initialize pack dec work area
+*
+         LA    14,EDPatWk          Dest
+         LR    15,6                Source
+         BCTR  7,0                 Len code
+         EX    7,TEDCpy            Copy edit pattern to work
+*
+         LA    14,PDAWk            Dest
+         LR    15,8                Source
+         BCTR  9,0                 Len code
+         EX    9,TEDCpy            Copy packed decimal area to work
+*
+*        Convert edit pattern to printable hex (max 20 pattern bytes)
+*
+         UNPK  PHWk(9),EDPatWk(5)          Pattern bytes 0-3
+         UNPK  PHWk+8(9),EDPatWk+4(5)      Pattern bytes 4-7
+         UNPK  PHWk+16(9),EDPatWk+8(5)     Pattern bytes 8-11
+         UNPK  PHWk+24(9),EDPatWk+12(5)    Pattern bytes 12-15
+         UNPK  PHWk+32(9),EDPatWk+16(5)    Pattern bytes 16-19
+         TR    PHWk(2*L'EDPatWk),H2P       Finish conversion
+*
+         MVC   WPatPH,Spaces           Initialize output area
+         LA    14,WPatPH               Dest
+         LA    15,PHWk                 Source
+         LA    1,1(7,7)                Len code
+         EX    1,TEDCpy                Copy printable edit pat to WTO
+*
+*        Convert packed decimal area to printable hex (max 16 bytes)
+*
+         UNPK  PHWk(9),PDAWk(5)        Packed decimal area bytes 0-3
+         UNPK  PHWk+8(9),PDAWk+4(5)    Packed decimal area bytes 4-7
+         UNPK  PHWk+16(9),PDAWk+8(5)   Packed decimal area bytes 8-11
+         UNPK  PHWk+24(9),PDAWk+12(5)  Packed decimal area bytes 12-15
+         TR    PHWk(2*L'PDAWk),H2P     Finish conversion
+*
+         MVC   WPDAPH,Spaces           Initialize output area
+         LA    14,WPDAPH               Dest
+         LA    15,PHWk                 Source
+         LA    1,1(9,9)                Len code
+         EX    1,TEDCpy                Copy printable packed dec to WTO
+*
+         WTO   MF=(E,WTOPDAPH)         Show packed decimal area
+         WTO   MF=(E,WTOPatPH)         Show edit pattern before ED
+*
+         TM    *,X'91'                 Preset CC to 3
+*
+         EX    7,TED_ED                Edit packed decimal area
+*
+*        Save CC for later check code; put act CC and exp CC in WTO
+*
+         IPM   0                       Actual CC
+         SRL   0,28                    Isolate CC
+         ST    0,CkPCP4                Save in CkPatCC parm list
+         STC   0,WEDCCA                Put in WTO
+         OI    WEDCCA,X'F0'            Make printable
+         MVC   WEDCCE,EDECC+3          Expected CC
+         OI    WEDCCE,X'F0'            Make printable
+*
+*        Convert ED result to printable hex (max 20 pattern bytes)
+*
+         UNPK  PHWk(9),EDPatWk(5)          Result bytes 0-3
+         UNPK  PHWk+8(9),EDPatWk+4(5)      Result bytes 4-7
+         UNPK  PHWk+16(9),EDPatWk+8(5)     Result bytes 8-11
+         UNPK  PHWk+24(9),EDPatWk+12(5)    Result bytes 12-15
+         UNPK  PHWk+32(9),EDPatWk+16(5)    Result bytes 16-19
+         TR    PHWk(2*L'EDPatWk),H2P       Finish conversion
+*
+*        Show actual ED result (EDNum)
+*
+         MVC   WE#PH,Spaces        Initialize output area
+         LA    14,WE#PH            Dest
+         LA    15,PHWk             Source
+         LA    1,1(7,7)            Len code
+         EX    1,TEDCpy            Copy printable edit result to WTO
+*
+         MVC   WE#PHLit,=C'Act'    Actual EDNum
+         WTO   MF=(E,WTOE#PH)      Show EDNum (prt hex) after ED
+*
+*        Convert expected result to printable hex (max 20 bytes)
+*
+         L     15,EDENumA              Expected EDNum
+         UNPK  PHWk(9),0(5,15)         Result bytes 0-3
+         UNPK  PHWk+8(9),4(5,15)       Result bytes 4-7
+         UNPK  PHWk+16(9),8(5,15)      Result bytes 8-11
+         UNPK  PHWk+24(9),12(5,15)     Result bytes 12-15
+         UNPK  PHWk+32(9),16(5,15)     Result bytes 16-19
+         TR    PHWk(2*L'EDPatWk),H2P   Finish conversion
+*
+         MVC   WE#PH,Spaces        Initialize output area
+         LA    14,WE#PH            Dest
+         LA    15,PHWk             Source
+         LA    1,1(7,7)            Len code
+         EX    1,TEDCpy            Copy printable edit result to WTO
+*
+*        Show expected EDNum
+*
+         MVC   WE#PHLit,=C'Exp'    Expected EDNum
+         WTO   MF=(E,WTOE#PH)      Show exp EDNum (prt hex) after ED
+*
+*        Show expected EDNum characters, each under its prt hex value
+*
+         MVC   WE#C,Spaces         Initialize output area
+         LA    1,WE#C              Begin output area
+         L     14,EDENumA          Begin edit pattern after ED
+         LA    15,1(7,14)          Past end of edit pattern
+TEDLp2   DS    0H
+         CR    14,15               Past end of edit pattern?
+         BE    TEDELp2             Yes; all bytes copied
+         CLI   0(14),X'40'         Space character?
+         BE    TED010              Yes; copy 'b' instead of ' '
+         MVC   0(1,1),0(14)        No: copy byte; should be printable
+         B     TED020              Next byte
+TED010   DS    0H
+         MVI   0(1),C'b'           Copy 'b' instead of ' '
+*NSI     B     TED020              Next byte
+TED020   DS    0H
+         AHI   1,2                 Align under next prt hex byte
+         AHI   14,1                Next prt hex edit pattern byte
+         B     TEDLp2              Copy all bytes
+TEDELp2  DS    0H
+         WTO   MF=(E,WTOE#C)       Show exp EDNum (char) after ED
+*
+         WTO   MF=(E,WTOEDCC)      Show act, exp CC after ED
+*
+*        Now check act:exp for EDNum, CC after ED
+*
+         ST    7,CkPCP2            Put length of pattern in parm list
+         L     0,EDECC             Expected CC
+         ST    0,CkPCP5            Put in parm list
+         L     0,EDENumA           A(expected EDNum)
+         ST    0,CkPCP3            Put in parm list
+         LA    1,CkPCP             R1 -> parm list
+         L     15,=A(CkPatCC)      Check act:exp for pat, CC
+         BASR  14,15
+         LTR   15,15               Check okay?
+         BZ    *+6+4+4+4           Yes; skip set RC, count error
+         LR    10,15               At least one error
+         L     15,NumEDE           Count ED errors
+         LA    15,1(15)
+         ST    15,NumEDE           New ED error count
+*
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+         L     15,NumED            Count ED tests
+         LA    15,1(15)
+         ST    15,NumED            New ED test count
+*
+         BXLE  3,4,TEDLp1          Do all tests
+*
+         DROP  3                   End test case overlay
+*
+*        Data exception (S0C7) tests
+*
+*        Set ESPIE to trap data exception
+*
+         L     2,=A(ESPIEEX)               ESPIE exit
+         ESPIE SET,(2),(7),PARAM=ESPARM    Data exception
+*
+         ST    1,ESTOKEN                   Save token for reset
+*
+         LA    0,TED0C7R               Return address for ESPIE exit
+         ST    0,ESRET@                Put in parm area field
+*
+         MVC   WB7Name,=C'ED  '    S0C7 test name
+         WTO   MF=(E,WTOBeg7)      Begin S0C7 test message
+*
+         L     3,=A(EDTCS)         ED/EDMK tests
+         USING EDTCS,3
+         LM    3,5,ED0C7Tests      R3->1st, R4=len1, R5->last
+         USING TEDDS,3             Overlay test case
+TED0C7Lp DS    0H
+         LM    6,9,0(3)            R6 -> Edit pattern
+*                                  R7 =  Edit pattern length
+*                                  R8 -> Packed decimal area
+*                                  R9 =  Packed decimal area length
+*
+         XC    EDPatWk,EDPatWk     Initialize pattern work area
+         XC    PDAWk,PDAWk         Initialize pack dec work area
+*
+         LA    14,EDPatWk          Dest
+         LR    15,6                Source
+         BCTR  7,0                 Len code
+         EX    7,TEDCpy            Copy edit pattern to work
+*
+         LA    14,PDAWk            Dest
+         LR    15,8                Source
+         BCTR  9,0                 Len code
+         EX    9,TEDCpy            Copy packed decimal area to work
+*
+*        Convert edit pattern to printable hex (max 20 pattern bytes)
+*
+         UNPK  PHWk(9),EDPatWk(5)          Pattern bytes 0-3
+         UNPK  PHWk+8(9),EDPatWk+4(5)      Pattern bytes 4-7
+         UNPK  PHWk+16(9),EDPatWk+8(5)     Pattern bytes 8-11
+         UNPK  PHWk+24(9),EDPatWk+12(5)    Pattern bytes 12-15
+         UNPK  PHWk+32(9),EDPatWk+16(5)    Pattern bytes 16-19
+         TR    PHWk(2*L'EDPatWk),H2P       Finish conversion
+*
+         MVC   WPatPH,Spaces           Initialize output area
+         LA    14,WPatPH               Dest
+         LA    15,PHWk                 Source
+         LA    1,1(7,7)                Len code
+         EX    1,TEDCpy                Copy printable edit pat to WTO
+*
+*        Convert packed decimal area to printable hex (max 16 bytes)
+*
+         UNPK  PHWk(9),PDAWk(5)        Packed decimal area bytes 0-3
+         UNPK  PHWk+8(9),PDAWk+4(5)    Packed decimal area bytes 4-7
+         UNPK  PHWk+16(9),PDAWk+8(5)   Packed decimal area bytes 8-11
+         UNPK  PHWk+24(9),PDAWk+12(5)  Packed decimal area bytes 12-15
+         TR    PHWk(2*L'PDAWk),H2P     Finish conversion
+*
+         MVC   WPDAPH,Spaces           Initialize output area
+         LA    14,WPDAPH               Dest
+         LA    15,PHWk                 Source
+         LA    1,1(9,9)                Len code
+         EX    1,TEDCpy                Copy printable packed dec to WTO
+*
+         WTO   MF=(E,WTOPDAPH)         Show packed decimal area
+         WTO   MF=(E,WTOPatPH)         Show edit pattern before ED
+*
+         TM    *,X'91'                 Preset CC to 3
+*
+         EX    7,TED_ED                Edit packed decimal area
+*
+         WTO   '*** ERROR: ED test should S0C7; ESPIE exit returns to TX
+               ED0C7R'
+*
+         L     15,NumEDE               Count ED errors
+         LA    15,1(15)
+         ST    15,NumEDE               New ED error count
+         B     TED0C7B                 Nothing to do; skip rest of test
+*
+TED0C7R  DS    0H                      Return point from ESPIE exit
+*
+*        Save CC for later check code; put act CC and exp CC in WTO
+*
+         IPM   0                       Actual CC
+         SRL   0,28                    Isolate CC
+         ST    0,CkPCP4                Save in CkPatCC parm list
+         STC   0,WEDCCA                Put in WTO
+         OI    WEDCCA,X'F0'            Make printable
+         MVC   WEDCCE,EDECC+3          Expected CC
+         OI    WEDCCE,X'F0'            Make printable
+***      WTO   '*** Successful return from ESPIE exit'
+*
+*        Convert ED result to printable hex (max 20 pattern bytes)
+*
+         UNPK  PHWk(9),EDPatWk(5)          Result bytes 0-3
+         UNPK  PHWk+8(9),EDPatWk+4(5)      Result bytes 4-7
+         UNPK  PHWk+16(9),EDPatWk+8(5)     Result bytes 8-11
+         UNPK  PHWk+24(9),EDPatWk+12(5)    Result bytes 12-15
+         UNPK  PHWk+32(9),EDPatWk+16(5)    Result bytes 16-19
+         TR    PHWk(2*L'EDPatWk),H2P       Finish conversion
+*
+         MVC   WE#PH,Spaces        Initialize output area
+         LA    14,WE#PH            Dest
+         LA    15,PHWk             Source
+         LA    1,1(7,7)            Len code
+         EX    1,TEDCpy            Copy printable edit result to WTO
+*
+*        Show actual ED result (EDNum)
+*
+         MVC   WE#PHLit,=C'Act'    Actual EDNum
+         WTO   MF=(E,WTOE#PH)      Show EDNum (prt hex) after ED
+*
+*        Convert expected result to printable hex (max 20 bytes)
+*
+         L     15,EDENumA              Expected EDNum (max 20 bytes)
+         UNPK  PHWk(9),0(5,15)         Result bytes 0-3
+         UNPK  PHWk+8(9),4(5,15)       Result bytes 4-7
+         UNPK  PHWk+16(9),8(5,15)      Result bytes 8-11
+         UNPK  PHWk+24(9),12(5,15)     Result bytes 12-15
+         UNPK  PHWk+32(9),16(5,15)     Result bytes 16-19
+         TR    PHWk(2*L'EDPatWk),H2P   Finish conversion
+*
+         MVC   WE#PH,Spaces        Initialize output area
+         LA    14,WE#PH            Dest
+         LA    15,PHWk             Source
+         LA    1,1(7,7)            Len code
+         EX    1,TEDCpy            Copy printable edit result to WTO
+*
+*        Show expected EDNum
+*
+         MVC   WE#PHLit,=C'Exp'    Expected EDNum
+         WTO   MF=(E,WTOE#PH)      Show exp EDNum (prt hex) after ED
+*
+         WTO   MF=(E,WTOEDCC)      Show act, exp CC after ED
+*
+*        Now check act:exp for EDNum, CC after ED data exception
+*
+         ST    7,CkPCP2            Put length of pattern in parm list
+         L     0,EDECC             Expected CC
+         ST    0,CkPCP5            Put in parm list
+         L     0,EDENumA           A(expected EDNum)
+         ST    0,CkPCP3            Put in parm list
+         LA    1,CkPCP             R1 -> parm list
+         L     15,=A(CkPatCC)      Check act:exp for pat, CC
+         BASR  14,15
+         LTR   15,15               Check okay?
+         BZ    *+6+4+4+4           Yes; skip set RC, count error
+         LR    10,15               At least one error
+         L     15,NumEDE           Count ED errors
+         LA    15,1(15)
+         ST    15,NumEDE           New ED error count
+TED0C7B  DS    0H                  End one test case
+*
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+         L     15,NumED            Count ED tests
+         LA    15,1(15)
+         ST    15,NumED            New ED test count
+*
+         BXLE  3,4,TED0C7Lp        Do all tests
+*
+         DROP  3                   End test case overlay
+*
+         ESPIE RESET,ESTOKEN       Cancel ESPIE
+*
+         MVC   WE7Name,=C'ED  '    S0C7 test name
+         WTO   MF=(E,WTOEnd7)      End S0C7 test message
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+         MVC   WEName,=C'ED  '     Test name
+         WTO   MF=(E,WTOEnd)       Test end message
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+         LR    15,10               Set return code
+*
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except R15
+         BR    14                  Return to caller
+*
+         LTORG ,
+*
+TED_ED   ED    EDPatWk(*-*),PDAWk  Edit packed decimal area
+*
+         DROP  ,
+*
+***********************************************************************
+* Test EDMK
+*
+* Registers on entry:
+*     15  entry point
+*     14  return point
+*     13  usable save area on chained save area set
+*     11  common storage; CSECT STOR
+*
+* Addressing mode on entry:
+*     31-bit
+*
+* Parameters:
+*     None
+*
+* Output:
+*     Informatory WTOs
+*     Error WTOs if a test fails
+*
+* Registers on exit:
+*     0--14  as at entry
+*     15     return code
+*
+* Return code:
+*     0  all tests were successful
+*     8  at least one test failed; error WTO(s) issued
+*
+* Addressing mode on entry:
+*     31-bit
+*
+* Sample output:
+*
+*     PDArea 00456D
+*     EDPat  402020202020
+* Act EDNum  404040F4F5F6
+* Exp EDNum  404040F4F5F6
+* Act CC 1  Exp CC 1
+* EDNum address 00009B28  Act GR1 FFFFFFFFFF009B2B  Exp GR1 FFFFFFFF...
+*                                                           FF009B2B
+*
+* Amode 31:  Act GR1: FFFFFFFF00009B2B  Exp GR1 FFFFFFFF00009B2B
+*
+* Amode 64:  Act GR1: 0000000000009B2B  Exp GR1 0000000000009B2B
+*
+* Notes on the sample test output:
+* 1. All but the last line are identical to the ED test output.
+* 2. Befire each test, GR1 is preset to X'FFFFFFFFFFFFFFFF' and the
+*    condition code is preset to 3. The addressing mode is preset
+*    to 24, 31, and 64 -- each test is executed in all addressing
+*    modes.
+* 3. The above test output is the test executed when the addressing
+*    mode is equal to 24.
+* 4. The expected GR1 shown above is completely on the message line.
+*    Split here due to extending past column 71.
+* 5. The EDnum address is shown so that one is able to verify that
+*    the address in GR1 is set correctly.
+* 6. The first 5 lines of output for the corresponding addressing
+*    mode 31 and 64 tests are the same as above. The only difference
+*    is line 6 of the output, where the GR1 values are different.
+*    Those values are shown above.
+***********************************************************************
+TEDMK    CSECT
+TEDMK    AMODE 31
+TEDMK    RMODE 31
+         STM   14,12,12(13)        Save caller's registers
+         LLGTR 12,15               R12 = base register
+         USING TEDMK,12            Establish addressability
+         USING STOR,11             Overlay common storage
+         L     13,8(,13)           Next save area
+*
+         MVC   WBName,=C'EDMK'     Test name
+         WTO   MF=(E,WTOBegin)     Test begin message
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+         SR    10,10               R10 = return code
+*                                  0:= all pass; 8: >= 1 failed
+*
+         LA    0,EDPatWk           Address of EDMK result
+         ST    0,FW                Convert to
+         UNPK  DW(9),FW(5)                    printable hex
+         TR    DW,H2P              Finish conversion
+         MVC   WE#A,DW             Copy to WTO
+*
+*        Run tests 3 times -- once for each of amode 24, 31, 64
+*
+         LA    2,AM24              First amode literal (24-bit)
+TMKLp1   DS    0H
+         CLC   AMEnd,0(2)          Done all amode tests?
+         BE    TMKLp1E             Yes; all done
+         MVC   AMLit,0(2)          Amode literal for test
+*
+*        Set amode according to AMLit
+*
+         CLC   AMLit,AM24          24-bit test?
+         BE    TMKAM24             Yes
+         CLC   AMLit,AM31          31-bit test?
+         BE    TMKAM31             Yes
+         SAM64 ,                   No; then 64-bit test
+         B     TMKAM100            Continue
+TMKAM24  DS    0H
+         SAM24 ,                   24-bit test
+         B     TMKAM100            Continue
+TMKAM31  DS    0H
+         SAM31 ,                   31-bit test
+*NSI     B     TMKAM100            Continue
+TMKAM100 DS    0H
+*
+*        Run tests in current addressing mode
+*
+         MVC   WAMBLit,AMLit       Copy to begin WTO
+         MVC   WAMELit,AMLit       ... and to end WTO
+         WTO   MF=(E,WTOAMBeg)     Begin tests for current amode
+*
+         L     3,=A(EDTCS)         ED/EDMK tests
+         USING EDTCS,3
+         LM    3,5,EDTests         R3->1st, R4=len1, R5->last
+         USING TEDDS,3             Overlay test case
+TMKLp2   DS    0H
+         LM    6,9,0(3)            R6 -> Edit pattern
+*                                  R7 =  Edit pattern length
+*                                  R8 -> Packed decimal area
+*                                  R9 =  Packed decimal area length
+*
+         XC    EDPatWk,EDPatWk     Initialize pattern work area
+         XC    PDAWk,PDAWk         Initialize pack dec work area
+*
+         LA    14,EDPatWk          Dest
+         LR    15,6                Source
+         BCTR  7,0                 Len code
+         EX    7,TEDCpy            Copy edit pattern to work
+*
+         LA    14,PDAWk            Dest
+         LR    15,8                Source
+         BCTR  9,0                 Len code
+         EX    9,TEDCpy            Copy packed decimal area to work
+*
+*        Convert edit pattern to printable hex (max 20 pattern bytes)
+*
+         UNPK  PHWk(9),EDPatWk(5)          Pattern bytes 0-3
+         UNPK  PHWk+8(9),EDPatWk+4(5)      Pattern bytes 4-7
+         UNPK  PHWk+16(9),EDPatWk+8(5)     Pattern bytes 8-11
+         UNPK  PHWk+24(9),EDPatWk+12(5)    Pattern bytes 12-15
+         UNPK  PHWk+32(9),EDPatWk+16(5)    Pattern bytes 16-19
+         TR    PHWk(2*L'EDPatWk),H2P       Finish conversion
+*
+         MVC   WPatPH,Spaces           Initialize output area
+         LA    14,WPatPH               Dest
+         LA    15,PHWk                 Source
+         LA    1,1(7,7)                Len code
+         EX    1,TEDCpy                Copy printable edit pat to WTO
+*
+*        Convert packed decimal area to printable hex (max 16 bytes)
+*
+         UNPK  PHWk(9),PDAWk(5)        Packed decimal area bytes 0-3
+         UNPK  PHWk+8(9),PDAWk+4(5)    Packed decimal area bytes 4-7
+         UNPK  PHWk+16(9),PDAWk+8(5)   Packed decimal area bytes 8-11
+         UNPK  PHWk+24(9),PDAWk+12(5)  Packed decimal area bytes 12-15
+         TR    PHWk(2*L'PDAWk),H2P     Finish conversion
+*
+         MVC   WPDAPH,Spaces           Initialize output area
+         LA    14,WPDAPH               Dest
+         LA    15,PHWk                 Source
+         LA    1,1(9,9)                Len code
+         EX    1,TEDCpy                Copy printable packed dec to WTO
+*
+         WTO   MF=(E,WTOPDAPH)         Show packed decimal area
+         WTO   MF=(E,WTOPatPH)         Show edit pattern before EDMK
+*
+         LG    1,MKPresetGR1           Preset GR1
+         TM    *,X'91'                 Preset CC to 3
+*
+         EX    7,TED_EDMK              Edit and mark packed dec area
+*
+*        Save CC, GR1 for later check code; put act and exp CC in WTO
+*
+         IPM   0                       Actual CC
+         STG   1,ActGR1                Save in CkPatCC1 parm list field
+         SGR   1,1                     Reset GR1 to zero
+         SRL   0,28                    Isolate CC
+         ST    0,CkPCP4                Save in CkPatCC1 parm list
+         STC   0,WEDCCA                Put in WTO
+         OI    WEDCCA,X'F0'            Make printable
+         MVC   WEDCCE,EDECC+3          Expected CC
+         OI    WEDCCE,X'F0'            Make printable
+*
+*        Convert actual GR1 to printable hex and put in WTO
+*
+         UNPK  PHWk(9),ActGR1(5)       Convert act GR1
+         UNPK  PHWk+8(9),ActGR1+4(5)                   to printable hex
+         TR    PHWk(16),H2P            Finish conversion
+         MVC   WActGR1,PHWk            Copy to WTO
+*
+*        Convert expected GR1 to printable hex and put in WTO
+*        (Depends on addressing mode)
+*
+         TAM   ,                   Current addressing mode
+         BC    B'1000',TMK24       Amode 24
+         BC    B'0100',TMK31       Amode 31
+         L     15,EDE64R1A         A(GR1 for 64-bit test)
+         B     TMK100              Continue
+TMK24    DS    0H
+         L     15,EDE24R1A         A(GR1 for 24-bit test)
+         B     TMK100              Continue
+TMK31    DS    0H
+         L     15,EDE31R1A         A(GR1 for 31-bit test)
+*NSI     B     TMK100              Continue
+TMK100   DS    0H
+*
+         UNPK  PHWk(9),0(5,15)     Convert exp GR1
+         UNPK  PHWk+8(9),4(5,15)                   to printable hex
+         TR    PHWk(16),H2P        Finish conversion
+         MVC   WExpGR1,PHWk        Copy to WTO
+*
+         ST    15,CkPCP7           Put A(exp GR1) in CkPatCC1 parm list
+*
+*        Convert EDMK result to printable hex (max 20 pattern bytes)
+*
+         UNPK  PHWk(9),EDPatWk(5)          Result bytes 0-3
+         UNPK  PHWk+8(9),EDPatWk+4(5)      Result bytes 4-7
+         UNPK  PHWk+16(9),EDPatWk+8(5)     Result bytes 8-11
+         UNPK  PHWk+24(9),EDPatWk+12(5)    Result bytes 12-15
+         UNPK  PHWk+32(9),EDPatWk+16(5)    Result bytes 16-19
+         TR    PHWk(2*L'EDPatWk),H2P       Finish conversion
+*
+         MVC   WE#PH,Spaces        Initialize output area
+         LA    14,WE#PH            Dest
+         LA    15,PHWk             Source
+         LA    1,1(7,7)            Len code
+         EX    1,TEDCpy            Copy printable edit result to WTO
+*
+*        Show actual EDMK result (EDNum)
+*
+         MVC   WE#PHLit,=C'Act'    Actual EDNum
+         WTO   MF=(E,WTOE#PH)      Show act EDNum (prt hex) after EDMK
+*
+*        Convert expected result to printable hex (max 20 bytes)
+*
+         L     15,EDENumA              Expected EDNum (max 20 bytes)
+         UNPK  PHWk(9),0(5,15)         Result bytes 0-3
+         UNPK  PHWk+8(9),4(5,15)       Result bytes 4-7
+         UNPK  PHWk+16(9),8(5,15)      Result bytes 8-11
+         UNPK  PHWk+24(9),12(5,15)     Result bytes 12-15
+         UNPK  PHWk+32(9),16(5,15)     Result bytes 16-19
+         TR    PHWk(2*L'EDPatWk),H2P   Finish conversion
+*
+         MVC   WE#PH,Spaces        Initialize output area
+         LA    14,WE#PH            Dest
+         LA    15,PHWk             Source
+         LA    1,1(7,7)            Len code
+         EX    1,TEDCpy            Copy printable edit result to WTO
+*
+*        Show expected EDNum
+*
+         MVC   WE#PHLit,=C'Exp'    Expected EDNum
+         WTO   MF=(E,WTOE#PH)      Show exp EDNum (prt hex) after EDMK
+*
+*        Show actual and expected condition code
+*
+         WTO   MF=(E,WTOEDCC)      Show CC after EDMK
+*
+*        Show edit field address, actual and expected GR1
+*
+         WTO   MF=(E,WTOE#AR1)
+*
+*        Now check act:exp for EDNum, CC, GR1 after EDMK
+*
+         ST    7,CkPCP2            Put length of pattern in parm list
+         L     0,EDECC             Expected CC
+         ST    0,CkPCP5            Put in parm list
+         L     0,EDENumA           A(expected EDNum)
+         ST    0,CkPCP3            Put in parm list
+         LA    1,CkPCP             R1 -> parm list
+         L     15,=A(CkPatCC1)     Check act:exp for pat, CC, GR1
+         BASR  14,15
+         LTR   15,15               Check okay?
+         BZ    *+6+4+4+4           Yes; skip set RC, count error
+         LR    10,15               At least one error
+         L     15,NumEDMKE         Count ED errors
+         LA    15,1(15)
+         ST    15,NumEDMKE         New ED error count
+*
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+         L     15,NumEDMK          Count EDMK tests
+         LA    15,1(15)
+         ST    15,NumEDMK          New EDMK test count
+*
+         BXLE  3,4,TMKLp2          Do all tests for current amode
+*
+         WTO   MF=(E,WTOAMEnd)     End tests for current amode
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+         LA    2,L'AMLit(,2)       Next amode test, if any
+         B     TMKLp1              Do all tests for current amode
+TMKLp1E  DS    0H
+*
+         DROP  3                   End test case overlay
+*
+         SGR   1,1                 Reset GR1 to zero
+*
+*        Do S0C7 tests. All done for addressing mode 31.
+*
+         SAM31 ,                   Only do for amode 31
+*
+*        Set ESPIE to handle data exceptions
+*
+         L     2,=A(ESPIEEX)               ESPIE exit
+         ESPIE SET,(2),(7),PARAM=ESPARM    Data exception
+*
+         ST    1,ESTOKEN                   Save token for reset
+*
+         LA    0,TMK0C7R               Return address for ESPIE exit
+         ST    0,ESRET@                Put in parm area field
+*
+         MVC   WB7Name,=C'EDMK'    Test name
+         WTO   MF=(E,WTOBeg7)      Test begin message
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+         L     3,=A(EDTCS)         ED/EDMK tests
+         USING EDTCS,3
+         LM    3,5,ED0C7Tests      R3->1st, R4=len1, R5->last
+         USING TEDDS,3             Overlay test case
+TMK0C7Lp DS    0H
+         LM    6,9,0(3)            R6 -> Edit pattern
+*                                  R7 =  Edit pattern length
+*                                  R8 -> Packed decimal area
+*                                  R9 =  Packed decimal area length
+*
+         XC    EDPatWk,EDPatWk     Initialize pattern work area
+         XC    PDAWk,PDAWk         Initialize pack dec work area
+*
+         LA    14,EDPatWk          Dest
+         LR    15,6                Source
+         BCTR  7,0                 Len code
+         EX    7,TEDCpy            Copy edit pattern to work
+*
+         LA    14,PDAWk            Dest
+         LR    15,8                Source
+         BCTR  9,0                 Len code
+         EX    9,TEDCpy            Copy packed decimal area to work
+*
+*        Convert edit pattern to printable hex (max 20 pattern bytes)
+*
+         UNPK  PHWk(9),EDPatWk(5)          Pattern bytes 0-3
+         UNPK  PHWk+8(9),EDPatWk+4(5)      Pattern bytes 4-7
+         UNPK  PHWk+16(9),EDPatWk+8(5)     Pattern bytes 8-11
+         UNPK  PHWk+24(9),EDPatWk+12(5)    Pattern bytes 12-15
+         UNPK  PHWk+32(9),EDPatWk+16(5)    Pattern bytes 16-19
+         TR    PHWk(2*L'EDPatWk),H2P       Finish conversion
+*
+         MVC   WPatPH,Spaces           Initialize output area
+         LA    14,WPatPH               Dest
+         LA    15,PHWk                 Source
+         LA    1,1(7,7)                Len code
+         EX    1,TEDCpy                Copy printable edit pat to WTO
+*
+*        Convert packed decimal area to printable hex (max 16 bytes)
+*
+         UNPK  PHWk(9),PDAWk(5)        Packed decimal area bytes 0-3
+         UNPK  PHWk+8(9),PDAWk+4(5)    Packed decimal area bytes 4-7
+         UNPK  PHWk+16(9),PDAWk+8(5)   Packed decimal area bytes 8-11
+         UNPK  PHWk+24(9),PDAWk+12(5)  Packed decimal area bytes 12-15
+         TR    PHWk(2*L'PDAWk),H2P     Finish conversion
+*
+         MVC   WPDAPH,Spaces           Initialize output area
+         LA    14,WPDAPH               Dest
+         LA    15,PHWk                 Source
+         LA    1,1(9,9)                Len code
+         EX    1,TEDCpy                Copy printable packed dec to WTO
+*
+         WTO   MF=(E,WTOPDAPH)         Show packed decimal area
+         WTO   MF=(E,WTOPatPH)         Show edit pattern before EDMK
+*
+         LG    1,MKPresetGR1           Preset GR1
+         TM    *,X'91'                 Preset CC to 3
+*
+         EX    7,TED_EDMK              Edit and mark packed dec area
+*
+         STG   1,SVG1
+         WTO   '*** ERROR: EDMK test should S0C7; ESPIE exit returns toX
+                TMK0C7R'
+         SGR   1,1                     Reset GR1 to zero
+         LA    10,12                   Should not occur; error ret code
+*
+         L     15,NumEDMKE            Count EDMK errors
+         LA    15,1(15)
+         ST    15,NumEDMKE             New EDMK error count
+         B     TMK0C7B                 Skip rest of this test case
+*
+TMK0C7R  DS    0H                      Return point from ESPIE exit
+*
+*        Save CC, GR1 for later check code; put act and exp CC in WTO
+*
+         IPM   0                       Actual CC
+         STG   1,ActGR1                Save in CkPatCC1 parm list field
+         SGR   1,1                     Reset GR1 to zero
+         SRL   0,28                    Isolate CC
+         ST    0,CkPCP4                Save in CkPatCC1 parm list
+         STC   0,WEDCCA                Put in WTO
+         OI    WEDCCA,X'F0'            Make printable
+         MVC   WEDCCE,EDECC+3          Expected CC
+         OI    WEDCCE,X'F0'            Make printable
+***         WTO   '*** Successful return from ESPIE exit'
+*
+*        Convert actual GR1 to printable hex and put in WTO
+*
+         UNPK  PHWk(9),ActGR1(5)       Convert act GR1
+         UNPK  PHWk+8(9),ActGR1+4(5)                   to printable hex
+         TR    PHWk(16),H2P            Finish conversion
+         MVC   WActGR1,PHWk            Copy to WTO
+*
+*        Convert expected GR1 to printable hex and put in WTO
+*        (Depends on addressing mode)
+*
+         TAM   ,                   Current addressing mode
+         BC    B'1000',TMK0C724    Amode 24
+         BC    B'0100',TMK0C731    Amode 31
+         L     15,EDE64R1A         A(GR1 for 64-bit test)
+         B     TMK0C710            Continue
+TMK0C724 DS    0H
+         L     15,EDE24R1A         A(GR1 for 24-bit test)
+         B     TMK0C710            Continue
+TMK0C731 DS    0H
+         L     15,EDE31R1A         A(GR1 for 31-bit test)
+*NSI     B     TMK0C710            Continue
+TMK0C710 DS    0H
+*
+         UNPK  PHWk(9),0(5,15)     Convert exp GR1
+         UNPK  PHWk+8(9),4(5,15)                   to printable hex
+         TR    PHWk(16),H2P        Finish conversion
+         MVC   WExpGR1,PHWk        Copy to WTO
+*
+         ST    15,CkPCP7           Put A(exp GR1) in CkPatCC1 parm list
+*
+*        Convert ED result to printable hex (max 20 pattern bytes)
+*
+         UNPK  PHWk(9),EDPatWk(5)          Result bytes 0-3
+         UNPK  PHWk+8(9),EDPatWk+4(5)      Result bytes 4-7
+         UNPK  PHWk+16(9),EDPatWk+8(5)     Result bytes 8-11
+         UNPK  PHWk+24(9),EDPatWk+12(5)    Result bytes 12-15
+         UNPK  PHWk+32(9),EDPatWk+16(5)    Result bytes 16-19
+         TR    PHWk(2*L'EDPatWk),H2P       Finish conversion
+*
+         MVC   WE#PH,Spaces        Initialize output area
+         LA    14,WE#PH            Dest
+         LA    15,PHWk             Source
+         LA    1,1(7,7)            Len code
+         EX    1,TEDCpy            Copy printable edit result to WTO
+*
+*        Show actual EDNum
+*
+         MVC   WE#PHLit,=C'Act'    Actual EDNum
+         WTO   MF=(E,WTOE#PH)      Show act EDNum (prt hex) after EDMK
+*
+*        Convert expected result to printable hex (max 20 bytes)
+*
+         L     15,EDENumA              Expected EDNum (max 20 bytes)
+         UNPK  PHWk(9),0(5,15)         Result bytes 0-3
+         UNPK  PHWk+8(9),4(5,15)       Result bytes 4-7
+         UNPK  PHWk+16(9),8(5,15)      Result bytes 8-11
+         UNPK  PHWk+24(9),12(5,15)     Result bytes 12-15
+         UNPK  PHWk+32(9),16(5,15)     Result bytes 16-19
+         TR    PHWk(2*L'EDPatWk),H2P   Finish conversion
+*
+         MVC   WE#PH,Spaces        Initialize output area
+         LA    14,WE#PH            Dest
+         LA    15,PHWk             Source
+         LA    1,1(7,7)            Len code
+         EX    1,TEDCpy            Copy printable edit result to WTO
+*
+*        Show expected EDNum
+*
+         MVC   WE#PHLit,=C'Exp'    Expected EDNum
+         WTO   MF=(E,WTOE#PH)      Show exp EDNum (prt hex) after EDMK
+*
+*        Show actual and expected condition code
+*
+         WTO   MF=(E,WTOEDCC)      Show CC after EDMK
+*
+*        Show edit field address, actual and expected GR1
+*
+         WTO   MF=(E,WTOE#AR1)
+*
+*        Now check act:exp for EDNum, CC, GR1 after EDMK
+*
+         ST    7,CkPCP2            Put length of pattern in parm list
+         L     0,EDECC             Expected CC
+         ST    0,CkPCP5            Put in parm list
+         L     0,EDENumA           A(expected EDNum)
+         ST    0,CkPCP3            Put in parm list
+         LA    1,CkPCP             R1 -> parm list
+         L     15,=A(CkPatCC1)     Check act:exp for pat, CC, GR1
+         BASR  14,15
+         LTR   15,15               Check okay?
+         BZ    *+6+4+4+4           Yes; skip set RC, count error
+         LR    10,15               At least one error
+         L     15,NumEDMKE         Count EDMK errors
+         LA    15,1(15)
+         ST    15,NumEDMKE         New EDMK error count
+*
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+TMK0C7B  DS    0H
+*
+         L     15,NumEDMK          Count EDMK tests
+         LA    15,1(15)
+         ST    15,NumEDMK          New EDMK test count
+*
+         BXLE  3,4,TMK0C7Lp        Do all 0C7 tests for amode 31
+*
+         DROP  3                   End test case overlay
+*
+         MVC   WE7Name,=C'EDMK'    Test name
+         WTO   MF=(E,WTOEnd7)      Test end message
+         WTO   MF=(E,WTOBlank)     Blank line
+*
+*        Cancel ESPIE
+*
+         ESPIE RESET,ESTOKEN           Cancel ESPIE
+*
+         MVC   WEName,=C'EDMK'     Test name
+         WTO   MF=(E,WTOEnd)       Test end message
+*
+         SAM31 ,                   Restore amode at entry
+         LR    15,10               Set return code
+*
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except R15
+         BR    14                  Return to caller
+*
+         LTORG ,
+*
+TED_EDMK EDMK  EDPatWk(*-*),PDAWk  Edit and mark packed decimal area
+*
+               DS    0D
+MKPresetGR1    DC    F'-1,-1'      Same as EDMKPresetGR1 in EDTests
+*
+         DROP  ,
+*
+***********************************************************************
+* Show addressing mode, actual and expected condition code and 64-bit
+* registers 1 and 2
+*
+* Registers on entry:
+*     15  entry point
+*     14  return point
+*     13  usable save area on chained save area set
+*     11  common storage; CSECT STOR
+*
+* Parameters:
+*     R1 --> parameter list
+*            +0   A(actual GR1 value)
+*            +4   A(expected GR1 value)
+*            +8   A(actual GR2 value)
+*            +12  A(expected GR2 value)
+*            +16  word = actual CC value
+*            +20  word = expected CC value
+*
+* Output:
+*     Informatory WTOs showing amode, expected condition code and
+*     GR1,GR2 values
+*
+* Return code:
+*     None
+***********************************************************************
+ShowC12  CSECT
+ShowC12  AMODE 31
+ShowC12  RMODE 31
+         STM   14,12,12(13)        Save caller's registers
+         LLGTR 12,15               R12 = base register
+         USING ShowC12,12          Establish addressability
+         USING STOR,11             Overlay common storage
+         L     13,8(,13)           Next save area
+         LR    2,1                 R2 --> parm list
+*
+         MVC   W1CC,16+3(2)        Copy actual CC to WTO
+         OI    W1CC,X'F0'          Make printable
+*
+         L     3,0(,2)             R3 --> actual GR1
+         UNPK  PHWk(9),0(5,3)      High half GR1
+         UNPK  PHWk+8(9),4(5,3)    Low half GR1
+         L     4,8(,2)             R4 --> actual GR2
+         UNPK  PHWk+16(9),0(5,4)   High half GR2
+         UNPK  PHWk+24(9),4(5,4)   Low half GR2
+         TR    PHWk,H2P            Finish convert to printable hex
+         MVC   W1GR1,PHWk          Copy actual GR1 to WTO
+         MVC   W1GR2,PHWk+16       Copy actual GR2 to WTO
+         TAM   ,                   Current addressing mode
+         BC    B'1000',S24         Amode 24
+         BC    B'0100',S31         Amode 31
+         MVC   W1AM,=C'64'         Copy amode 64 literal to WTO
+         B     S100                Continue
+S24      DS    0H
+         MVC   W1AM,=C'24'         Copy amode 24 literal to WTO
+         B     S100                Continue
+S31      DS    0H
+         MVC   W1AM,=C'31'         Copy amode 31 literal to WTO
+*NSI     B     S100                Continue
+S100     DS    0H
+         WTO   MF=(E,WTO1)         Show amode lit, act CC, GR1, GR2
+*
+         MVC   W3CC,20+3(2)        Copy expected CC to WTO
+         OI    W3CC,X'F0'          Make printable
+*
+         L     3,4(,2)             R3 --> expected GR1
+         UNPK  PHWk(9),0(5,3)      High half GR1
+         UNPK  PHWk+8(9),4(5,3)    Low half GR1
+         L     4,12(,2)            R4 --> expected GR2
+         UNPK  PHWk+16(9),0(5,4)   High half GR2
+         UNPK  PHWk+24(9),4(5,4)   Low half GR2
+         TR    PHWk,H2P            Finish convert to printable hex
+         MVC   W3GR1,PHWk          Copy expected GR1 to WTO
+         MVC   W3GR2,PHWk+16       Copy expected GR2 to WTO
+         WTO   MF=(E,WTO3)         Show expected GR1,GR2
+*
+         L     13,4(,13)           Caller's save area
+         LM    14,12,12(13)        Restore caller's registers
+         BR    14                  Return
+*
+         LTORG ,
+*
+         DROP  ,
+*
+***********************************************************************
+* Check actual CC,GR1,GR2 vs expected CC,GR1,GR2
+*
+* Registers on entry:
+*     15  entry point
+*     14  return point
+*     13  usable save area on chained save area set
+*     11  common storage; CSECT STOR
+*
+* Parameters:
+*     R1 --> parameter list
+*            +0   A(actual GR1 value)
+*            +4   A(expected GR1 value)
+*            +8   A(actual GR2 value)
+*            +12  A(expected GR2 value)
+*            +16  word = actual CC value
+*            +20  word = expected CC value
+*
+* Output:
+*     Error WTO if one of actual CC, GR1, GR2 is not equal to its
+*     expected value
+*
+* Return code:
+*     0  Actual CC, GR1 and GR2 equal their expected values
+*     8  One of actual CC, GR1, GR2 is not equal to its expected
+*        value; error WTO issued
+***********************************************************************
+CheckC12 CSECT
+CheckC12 AMODE 31
+CheckC12 RMODE 31
+         STM   14,12,12(13)        Save caller's registers
+         LLGTR 12,15               R12 = base register
+         USING CheckC12,12         Establish addressability
+         USING STOR,11             Overlay common storage
+         L     13,8(,13)           Next save area
+         LR    2,1                 R2 --> parm list
+*
+         LM    3,4,16(2)           Actual and expected CC
+         CR    3,4                 Are they equal?
+         BNE   Ck100               No; error
+*
+         LM    3,6,0(2)            R3 --> actual GR1
+*                                  R4 --> expected GR1
+*                                  R5 --> actual GR2
+*                                  r6 --> expected GR2
+         CLC   0(8,3),0(4)         Actual GR1 = expected GR1?
+         BNE   Ck100               No; error
+         CLC   0(8,5),0(6)         Actual GR2 = expected GR2?
+         BNE   Ck100               No; error
+         SR    15,15               Both match; ok
+         B     Ck200               Done
+Ck100    DS    0H
+         WTO   MF=(E,WTO2)         Error occurred
+         LA    15,8                Set error return code
+Ck200    DS    0H
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except for 15
+         BR    14                  Return
+*
+         LTORG ,
+*
+         DROP  ,
+*
+***********************************************************************
+* Check actual CC, pattern area vs expected CC, pattern area
+*
+* Registers on entry:
+*     15  entry point
+*     14  return point
+*     13  usable save area on chained save area set
+*     11  common storage; CSECT STOR
+*      1  A(parameter list)
+*         +0   A(actual pattern area after ED/EDMK)
+*         +4   word = length of actual pattern area
+*         +8   A(expected pattern area after ED/EDMK)
+*         +12  word = actual CC after ED/EDMK
+*         +16  word = expected CC after ED/EDMK
+*
+* Output:
+*     Error WTO if one of actual pattern, CC is not equal to its
+*     expected value
+*
+* Return code:
+*     0  Actual pattern, CC, equal their expected values
+*     8  One of actual pattern, CC is not equal to its expected
+*        value; error WTO(s) issued
+***********************************************************************
+CkPatCC  CSECT
+CkPatCC  AMODE 31
+CkPatCC  RMODE 31
+         STM   14,12,12(13)        Save caller's registers
+         LLGTR 12,15               R12 = base register
+         USING CkPatCC,12          Establish addressability
+         USING STOR,11             Overlay common storage
+         L     13,8(,13)           Next save area
+*
+         LR    2,1                 Save parm list addess
+         SR    10,10               R10 will be return code
+*
+         L     15,=A(CkPat)        Check pattern: act = exp?
+         BASR  14,15
+         LTR   15,15               Patterns match?
+         BZ    *+6                 Yes; continue
+         LR    10,15               No; set return code; WTO was issued
+*
+         LA    1,12(,2)            Parm list for CkCC:
+*                                  +0 = word = actual CC
+*                                  +4 = word = expected CC
+         L     15,=A(CkCC)         Check CC: act = exp?
+         BASR  14,15
+         LTR   15,15               CCs match?
+         BZ    *+6                 Yes; continue
+         LR    10,15               No; set return code; WTO was issued
+*
+         LR    15,10               Set return code
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except for 15
+         BR    14                  Return
+*
+         LTORG ,
+*
+         DROP  ,
+*
+***********************************************************************
+* Check actual pattern area vs expected pattern area
+*
+* Registers on entry:
+*     15  entry point
+*     14  return point
+*     13  usable save area on chained save area set
+*     11  common storage; CSECT STOR
+*      1  A(parameter list)
+*         +0   A(actual pattern area after ED/EDMK)
+*         +4   word = length of actual pattern area
+*         +8   A(expected pattern area after ED/EDMK)
+*
+* Output:
+*     Error WTO if actual pattern is not equal to its expected value
+*
+* Return code:
+*     0  Actual pattern equals expected pattern
+*     8  Actual pattern not equal to expected pattern; error WTO issued
+***********************************************************************
+CkPat    CSECT
+CkPat    AMODE 31
+CkPat    RMODE 31
+         STM   14,12,12(13)        Save caller's registers
+         LLGTR 12,15               R12 = base register
+         USING CkPat,12            Establish addressability
+         USING STOR,11             Overlay common storage
+         L     13,8(,13)           Next save area
+*
+         LR    2,1                 Parameter list
+         SR    10,10               Assume act:exp successful
+         LM    3,5,0(2)            R3 -> act pat area after ED/EDMK
+*                                  R4 -> word = length of pat area
+*                                  R5 -> exp pat area after ED/EDMK
+         BCTR  4,0                 Length code
+         EX    4,CkPatCmp          Actual pat = expected pat?
+         BE    CkPat010            Yes; continue
+         WTO   '*** Error: Act EDNum not equal to exp EDNum'
+         LA    10,8                Set error return code
+CkPat010 DS    0H
+         LR    15,10               Set return code
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except for 15
+         BR    14                  Return
+*
+         LTORG ,
+*
+CkPatCmp CLC   0(*-*,3),0(5)       Compare Act pattern to exp pattern
+*
+         DROP  ,
+*
+***********************************************************************
+* Check actual CC vs expected CC
+*
+* Registers on entry:
+*     15  entry point
+*     14  return point
+*     13  usable save area on chained save area set
+*     11  common storage; CSECT STOR
+*      1  A(parameter list)
+*         +0   word = actual CC after ED/EDMK
+*         +4   word = expected CC after ED/EDMK
+*
+* Output:
+*     Error WTO if actual CC is not equal to its expected value
+*
+* Return code:
+*     0  Actual CC equals expected CC
+*     8  Actual CC not equal to expected CC; error WTO issued
+***********************************************************************
+CkCC     CSECT
+CkCC     AMODE 31
+CkCC     RMODE 31
+         STM   14,12,12(13)        Save caller's registers
+         LLGTR 12,15               R12 = base register
+         USING CkCC,12             Establish addressability
+         USING STOR,11             Overlay common storage
+         L     13,8(,13)           Next save area
+*
+         LR    2,1                 Parameter list
+         SR    10,10               Assume act:exp successful
+         LM    6,7,0(2)            R6 = actual CC
+*                                  R7 = expected CC
+         CR    6,7                 Actual CC = expected CC?
+         BE    CkCC10              Yes; next check
+         LA    10,8                Set error return code
+         WTO   '*** Error: Act CC not equal to exp CC'
+CkCC10   DS    0H
+         LR    15,10               Set return code
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except for 15
+         BR    14                  Return
+*
+         LTORG ,
+*
+         DROP  ,
+*
+***********************************************************************
+* Check actual pattern area, CC, GR1 vs expected pattern area, CC, GR1
+* after EDMK
+*
+* Registers on entry:
+*     15  entry point
+*     14  return point
+*     13  usable save area on chained save area set
+*     11  common storage; CSECT STOR
+*      1  A(parameter list)
+*         +0   A(actual pattern area after ED/EDMK)
+*         +4   word = length of actual pattern area
+*         +8   A(expected pattern area after ED/EDMK)
+*         +12  word = actual CC after ED/EDMK
+*         +16  word = expected CC after ED/EDMK
+*         +20  A(actual GR1 after EDMK)
+*         +24  A(expected GR1 after EDMK)
+*
+* Output:
+*     Error WTO if one of actual pattern, CC is not equal to its
+*     expected value
+*
+* Return code:
+*     0  Actual pattern, CC, GR1 equal their expected values
+*     8  One of actual pattern, CC, GR1 is not equal to its expected
+*        value; error WTO(s) issued
+***********************************************************************
+CkPatCC1 CSECT
+CkPatCC1 AMODE 31
+CkPatCC1 RMODE 31
+         STM   14,12,12(13)        Save caller's registers
+         LLGTR 12,15               R12 = base register
+         USING CkPatCC1,12         Establish addressability
+         USING STOR,11             Overlay common storage
+         L     13,8(,13)           Next save area
+*
+         LR    2,1                 Parameter list
+         SR    10,10               Assume act:exp successful
+         L     15,=A(CkPatCC)      Check act:exp for pat, CC
+         BASR  14,15
+         LR    10,15               Save return code
+*
+         LM    3,4,20(2)           R3 -> act GR1 after EDMK
+*                                  R4 -> exp GR1 after EDMK
+         CLC   0(8,3),0(4)         Actual GR1 = expected GR1?
+         BE    CkPC1010            Yes; next
+         LA    10,8                No; error return code
+         WTO   '*** Error: Act GR1 not equal to exp GR1'
+CkPC1010 DS    0H
+         LR    15,10               Set return code
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except for 15
+         BR    14                  Return
+*
+         LTORG ,
+*
+         DROP  ,
+*
+***********************************************************************
+* Check actual pattern area, CC, GR1 vs expected pattern area, CC, GR1
+* after EDMK
+*
+* Registers on entry:
+*     15  entry point
+*     14  return point
+*     13  usable save area on chained save area set
+*     11  common storage; CSECT STOR
+*      1  A(parameter list)
+*         +0   A(actual pattern area after ED/EDMK)
+*         +4   word = length of actual pattern area
+*         +8   A(expected pattern area after ED/EDMK)
+*         +12  word = actual CC after ED/EDMK
+*         +16  word = expected CC after ED/EDMK
+*         +20  A(actual GR1 after EDMK)
+*         +24  A(expected GR1 after EDMK)
+*
+* Output:
+*     Error WTO if one of actual pattern, CC is not equal to its
+*     expected value
+*
+* Return code:
+*     0  Actual pattern, CC, GR1 equal their expected values
+*     8  One of actual pattern, CC, GR1 is not equal to its expected
+*        value; error WTO(s) issued
+***********************************************************************
+CkPat1   CSECT
+CkPat1   AMODE 31
+CkPat1   RMODE 31
+         STM   14,12,12(13)        Save caller's registers
+         LLGTR 12,15               R12 = base register
+         USING CkPat1,12           Establish addressability
+         USING STOR,11             Overlay common storage
+         L     13,8(,13)           Next save area
+*
+         LR    2,1                 Parameter list
+         SR    10,10               Assume act:exp successful
+         L     15,=A(CkPat)        Check act:exp for pat CC
+         BASR  14,15
+         LR    10,15               Save return code
+*
+         LM    3,4,20(2)           R3 -> act GR1 after EDMK
+*                                  R4 -> exp GR1 after EDMK
+         CLC   0(8,3),0(4)         Actual GR1 = expected GR1?
+         BE    CkP1010             Yes; next
+         LA    10,8                No; error return code
+         WTO   '*** Error: Act GR1 not equal to exp GR1'
+CkP1010  DS    0H
+         LR    15,10               Set return code
+         L     13,4(,13)           Caller's save area
+         L     14,12(,13)          Restore caller's registers
+         LM    0,12,20(13)         ... except for 15
+         BR    14                  Return
+*
+         LTORG ,
+*
+         DROP  ,
+*
+***********************************************************************
+* ESPIE exit
+***********************************************************************
+ESPIEEX  CSECT
+ESPIEEX  AMODE 31
+ESPIEEX  RMODE 31
+         USING EPIE,1              Overlay EPIE
+         L     3,EPIEPARM          R3 --> user parameter list
+         LM    3,5,0(3)            R3 = A(return address)
+*                                  R4 --> word for pgm interrupt info
+*                                  R5 --> doubleword for PSW (8 bytes)
+         L     3,0(,3)             R3 = return address
+*
+         L     7,EPIEINT           Program interrupt information
+         ST    7,0(,4)             Return the program interrupt info
+*
+         LM    8,9,EPIEPSW         EC PSW at error
+         STM   8,9,0(5)            Return the PSW
+*
+         LR    10,9                Next instruction address
+         NILF  10,X'80000000'      Isolate amode bit
+*
+         OR    3,10                Add amode bit to return address
+         ST    3,EPIEPSW+4         Set next instruction address
+*
+         BR    14                  Return to operating system
+*
+ESPIESV  DC    16F'0'              *** debug *** Temp save ESPIEEX regs
+*
+         DROP  ,
+*
+***********************************************************************
+* Common storage
+*
+* Register 11 overlays the storage for the entire test
+***********************************************************************
+STOR     CSECT
+STOR     AMODE 31
+STOR     RMODE 31
+         USING STOR,11             R11 overlays common area
+         DC    CL4'STOR'           Eyecatcher
+         DC    A(STORLen)          Length of STOR area (debug)
+*
+NumTRT   DC    F'0'                Number of TRT tests
+NumTRTE  DC    F'0'                Number of TRT tests that failed
+*
+NumTRTR  DC    F'0'                Number of TRTR tests
+NumTRTRE DC    F'0'                Number of TRTR tests that failed
+*
+NumED    DC    F'0'                Number of ED tests
+NumEDE   DC    F'0'                Number of ED tests that failed
+*
+NumEDMK  DC    F'0'                Number of EDMK tests
+NumEDMKE DC    F'0'                Number of EDMK tests that failed
+*
+PatWk    DS    CL(L'Pat)           Edit pattern work for totals
+*
+Pat      DC    X'402020202120'     Edit pattern for totals
+*
+Spaces   DC    CL80' '             Spaces
+*
+SV12     DS    0D                  Area for GR1, GR2
+SVG1     DS    XL8
+SVG2     DS    XL8
+*
+DW       DS    D,XL1               Doubleword work and pad
+FW       DS    F,XL1               Fullword work and pad
+*
+PHWk     DS    CL40,CL1            Printable hex work plus pad
+*
+***********************************************************************
+*        Translate table for TRT, TRTR tests
+***********************************************************************
+LocSpace DC    256X'00'
+         ORG   LocSpace+C' '
+         DC    X'AA'
+         ORG   ,
+*
+***********************************************************************
+*        Translate table used to convert hex to printable hex
+***********************************************************************
+H2P      EQU   *-240               Convert to printable hex
+         DC    C'0123456789ABCDEF'
+*
+***********************************************************************
+*        ESPIE data for ED, EDMK S0C7 tests
+***********************************************************************
+*
+ESTOKEN  DC    F'0'                ESPIE token
+*
+***         DC    CL8'ESPARM'         Eyecatcher
+ESPARM   DS    0A                  Parameter list for ESPIE exit
+         DC    A(ESRET@)           A(Return address for ESPIE)
+         DC    A(ESCOMP)           Completion code from ESPIE exit
+         DC    A(ESPSW)            PSW from ESPIE exit
+         DS    0D
+***         DC    CL8'ESRET@'         Eyecatcher
+ESRET@   DC    A(0)                Return address for ESPIE exit
+ESCOMP   DC    F'0'                Completion code from ESPIE exit
+ESPSW    DC    AD(0)               PSW from ESPIE exit
+*
+***********************************************************************
+         DS    0D
+ActGR12  DS    0D
+ActGR1   DS    XL8                 Actual GR1 after TRT, TRTR, EDMK
+ActGR2   DS    XL8                 Actual GR2 after TRT, TRTR
+*
+ExpGR1   DS    XL8                 Expected GR1 after TRT, TRTR, EDMK
+ExpGR2   DS    XL8                 Expected GR2 after TRT, TRTR
+*
+***********************************************************************
+*        Parameter list for CkTRT; for TRT/TRTR checks
+***********************************************************************
+*
+CkTRTP   DS    0D                  Parameter list for CkTRT(R)
+CkTRTP1  DC    A(ActGR1)           A(actual GR1 after TRT/TRTR)
+CkTRTP2  DC    A(ExpGR1)           A(expected GR1 after TRT/TRTR)
+CkTRTP3  DC    A(ActGR2)           A(actual GR2 after TRT/TRTR)
+CkTRTP4  DC    A(ExpGR2)           A(expected GR2 after TRT/TRTR)
+CkTRTP5  DS    F                   word = actual CC after TRT/TRTR
+CkTRTP6  DS    F                   word = expected CC after TRT/TRTR
+*
+***********************************************************************
+*        Parameter list for CkPatCC, CkPatCC1; for ED/EDMK checks
+***********************************************************************
+*
+CkPCP    DS    0D                  Parameter list for CkPatCC[1]
+CkPCP1   DC    A(EDPatWk)          Edit pattern after ED/EDMK
+CkPCP2   DS    F                   Length of pattern
+CkPCP3   DS    A                   A(expected result; same len as oat)
+CkPCP4   DS    F                   Actual CC
+CkPCP5   DS    F                   Expected CC
+*                                  Next two only for EDMK
+CkPCP6   DC    A(ActGR1)           A(actual GR1 after EDMK)
+CkPCP7   DS    A                   A(expected GR1 after EDMK)
+*
+***********************************************************************
+*        Values used by the ED,EDMK tests
+***********************************************************************
+*
+TEDCpy   MVC   0(*-*,14),0(15)     Copy data
+*
+         DS    0D
+EDPatWk  DS    XL40,XL1            Edit pattern work, pad
+EDENumWk DS    XL(L'EDPatWk),XL1   Expected EDNum work area, pad
+*
+PDAWk    DS    XL16,XL1            Packed decimal area work, pad
+*
+***********************************************************************
+*        Values used by the EDMK tests
+***********************************************************************
+AMLit    DS    CL2
+AM24     DC    C'24'
+AM31     DC    C'31'
+AM64     DC    C'64'
+AMEnd    DC    C'00'
+*
+***********************************************************************
+*        WTOs
+***********************************************************************
+WTOBlank WTO   ' ',MF=L
+*
+WTOBegin WTO   '*** Begin test xxxx ***',MF=L
+WBName   EQU   WTOBegin+4+15,4,C'C'    Instruction mnemonic
+*
+WTOEnd   WTO   '*** End   test xxxx ***',MF=L
+WEName   EQU   WTOEnd+4+15,4,C'C'      Instruction mnemonic
+*
+WTOBeg7  WTO   '*** Begin S0C7 test xxxx ***',MF=L
+WB7Name  EQU   WTOBeg7+4+20,4,C'C'     Instruction mnemonic
+*
+WTOEnd7  WTO   '*** End   S0C7 test xxxx ***',MF=L
+WE7Name  EQU   WTOEnd7+4+20,4,C'C'     Instruction mnemonic
+*
+*                         1         2         3         4         5
+*               0123456789012345678901234567890123456789012345678901234
+WTOTot   WTO   'xxxx   Number of tests xxxxx   Number of errors xxxxx',X
+               MF=L
+WTLit    EQU   WTOTot+4+0,4,C'C'
+WT#      EQU   WTOTot+4+23,5,C'C'
+WT#E     EQU   WTOTot+4+48,5,C'C'
+*
+*                         1         2         3         4         5
+*               0123456789012345678901234567890123456789012345678901234
+WTO1     WTO   'AM xx Actual: CC x  GR1 xxxxxxxxxxxxxxxx  GR2 xxxxxxxxxX
+               xxxxxxx',MF=L
+W1AM     EQU   WTO1+4+3,2,C'C'     Amode literal
+W1CC     EQU   WTO1+4+17,1,C'C'    CC
+W1GR1    EQU   WTO1+4+24,16,C'C'   GR1
+W1GR2    EQU   WTO1+4+46,16,C'C'   GR2
+*
+WTO2     WTO   '*** Error: actual did not match expected ***',MF=L
+*
+WTO3     WTO   '      Expect: CC x  GR1 xxxxxxxxxxxxxxxx  GR2 xxxxxxxxxX
+               xxxxxxx',MF=L
+W3CC     EQU   WTO3+4+17,1,C'C'    CC
+W3GR1    EQU   WTO3+4+24,16,C'C'   GR1
+W3GR2    EQU   WTO3+4+46,16,C'C'   GR2
+*
+*                         1         2         3         4         5
+*               0123456789012345678901234567890123456789012345678901234
+WTO4     WTO   'AM xx Act CC x  Exp CC x  Act GR1 xxxxxxxxxxxxxxxx  ExpX
+                GR1 xxxxxxxxxxxxxxxx',MF=L
+W4AM     EQU   WTO4+4+3,2,C'C'     Amode literal
+W4ActCC  EQU   WTO4+4+13,1,C'C'    CC
+W4ExpCC  EQU   WTO4+4+23,1,C'C'    CC
+W4ActGR1 EQU   WTO4+4+34,16,C'C'   GR1
+W4ExpGR1 EQU   WTO4+4+60,16,C'C'   GR2
+*
+*----------------------------------------------------------------------
+*
+*        WTOs for ED tests
+*
+*                         1         2         3         4         5
+*               0123456789012345678901234567890123456789012345678901234
+WTOPDAPH WTO   '    PDArea xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',MF=L
+WPDAPH   EQU   WTOPDAPH+4+11,32,C'C'
+*
+*                         1         2         3         4         5
+*               0123456789012345678901234567890123456789012345678901234
+WTOPatPH WTO   '    EDPat  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',  X
+               MF=L
+WPatPH   EQU   WTOPATPH+4+11,40,C'C'
+*
+*                         1         2         3         4         5
+*               0123456789012345678901234567890123456789012345678901234
+WTOE#PH  WTO   'xxx EDNum  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',  X
+               MF=L
+WE#PHLit EQU   WTOE#PH+4+0,3,C'C'
+WE#PH    EQU   WTOE#PH+4+11,40,C'C'
+*
+WTOE#C  WTO    '           xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',  X
+               MF=L
+WE#C    EQU    WTOE#C+4+11,40,C'C'
+*
+*                         1         2         3         4         5
+*               0123456789012345678901234567890123456789012345678901234
+WTOEDCC WTO    'Act CC x  Exp CC x',MF=L
+WEDCCA  EQU    WTOEDCC+4+7,1,C'C'
+WEDCCE  EQU    WTOEDCC+4+17,1,C'C'
+*
+*----------------------------------------------------------------------
+*        WTOs for EDMK tests
+*
+*                         1         2         3         4         5
+*               0123456789012345678901234567890123456789012345678901234
+WTOAMBeg WTO   '*** Begin amode xx tests',MF=L
+WAMBLit  EQU   WTOAMBeg+4+16,2,C'C'
+*
+WTOAMEnd WTO   '*** End   amode xx tests',MF=L
+WAMELit  EQU   WTOAMEnd+4+16,2,C'C'
+*
+*                         1         2         3         4         5
+*               0123456789012345678901234567890123456789012345678901234
+WTOE#AR1 WTO   'EDNum address xxxxxxxx  Act GR1 xxxxxxxxxxxxxxxx  Exp GX
+               R1 xxxxxxxxxxxxxxxx',MF=L
+WE#A     EQU   WTOE#AR1+4+14,8,C'C'
+WActGR1  EQU   WTOE#AR1+4+32,16,C'C'
+WExpGR1  EQU   WTOE#AR1+4+58,16,C'C'
+*
+***********************************************************************
+*        Strings used in the TRT and TRTR tests
+***********************************************************************
+         DS    0D
+StrNone  DC    C'abcd'
+StrMid   DC    C'a  d'
+StrEnd   DC    C'abc '
+StrBeg   DC    C' bcd'
+*
+STOREnd  DS    0D              End of STOR
+STORLen  EQU   *-STOR          Length of STOR
+*
+***********************************************************************
+*        Tests for ED and EDMK
+***********************************************************************
+EDTCS    CSECT
+EDTCS    AMODE 31
+EDTCS    RMODE 31
+***********************************************************************
+*        ED and EDMK test cases; DSECT TEDDS
+***********************************************************************
+*
+EDTests  DC    A(EDT01,TEDDSLN,EDTn,0) A(1st), len 1, A(last), unused
+*
+EDT01    DS    0D                  First test case
+* ago .npat01
+*
+*        Pat01 tests
+*
+         DC    A(Pat01,L'Pat01)            EDPatA, EDPatL
+         DC    A(PD01,L'PD01)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat01_PD01)        EDECC
+         DC    A(Exp_EDNum_Pat01_PD01)     EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+         DC    A(Pat01,L'Pat01)            EDPatA, EDPatL
+         DC    A(PD02,L'PD02)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat01_PD02)        EDECC
+         DC    A(Exp_EDNum_Pat01_PD02)     EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+         DC    A(Pat01,L'Pat01)            EDPatA, EDPatL
+         DC    A(PD03,L'PD03)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat01_PD03)        EDECC
+         DC    A(Exp_EDNum_Pat01_PD03)     EDENumA
+         DC    A(Exp_GR1_Pat01_PD03_24)    EDE24R1A
+         DC    A(Exp_GR1_Pat01_PD03_31)    EDE31R1A
+         DC    A(Exp_GR1_Pat01_PD03_64)    EDE64R1A
+*
+         DC    A(Pat01,L'Pat01)            EDPatA, EDPatL
+         DC    A(PD04,L'PD04)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat01_PD04)        EDECC
+         DC    A(Exp_EDNum_Pat01_PD04)     EDENumA
+         DC    A(Exp_GR1_Pat01_PD04_24)    EDE24R1A
+         DC    A(Exp_GR1_Pat01_PD04_31)    EDE31R1A
+         DC    A(Exp_GR1_Pat01_PD04_64)    EDE64R1A
+*
+.npat01 anop
+* ago .npat01a
+*
+*        Pat01_A tests
+*
+         DC    A(Pat01_A,L'Pat01_A)            EDPatA, EDPatL
+         DC    A(PD01_A,L'PD01_A)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat01_A_PD01_A)        EDECC
+         DC    A(Exp_EDNum_Pat01_A_PD01_A)     EDENumA
+         DC    A(Exp_GR1_Pat01_A_PD01_A_24)    EDE24R1A
+         DC    A(Exp_GR1_Pat01_A_PD01_A_31)    EDE31R1A
+         DC    A(Exp_GR1_Pat01_A_PD01_A_64)    EDE64R1A
+*
+         DC    A(Pat01_A,L'Pat01_A)            EDPatA, EDPatL
+         DC    A(PD02_A,L'PD02_A)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat01_A_PD02_A)        EDECC
+         DC    A(Exp_EDNum_Pat01_A_PD02_A)     EDENumA
+         DC    A(Exp_GR1_Pat01_A_PD02_A_24)    EDE24R1A
+         DC    A(Exp_GR1_Pat01_A_PD02_A_31)    EDE31R1A
+         DC    A(Exp_GR1_Pat01_A_PD02_A_64)    EDE64R1A
+*
+         DC    A(Pat01_A,L'Pat01_A)            EDPatA, EDPatL
+         DC    A(PD03_A,L'PD03_A)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat01_A_PD03_A)        EDECC
+         DC    A(Exp_EDNum_Pat01_A_PD03_A)     EDENumA
+         DC    A(Exp_GR1_Pat01_A_PD03_A_24)    EDE24R1A
+         DC    A(Exp_GR1_Pat01_A_PD03_A_31)    EDE31R1A
+         DC    A(Exp_GR1_Pat01_A_PD03_A_64)    EDE64R1A
+*
+         DC    A(Pat01_A,L'Pat01_A)            EDPatA, EDPatL
+         DC    A(PD04_A,L'PD04_A)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat01_A_PD04_A)        EDECC
+         DC    A(Exp_EDNum_Pat01_A_PD04_A)     EDENumA
+         DC    A(Exp_GR1_Pat01_A_PD04_A_24)    EDE24R1A
+         DC    A(Exp_GR1_Pat01_A_PD04_A_31)    EDE31R1A
+         DC    A(Exp_GR1_Pat01_A_PD04_A_64)    EDE64R1A
+*
+         DC    A(Pat01_A,L'Pat01_A)            EDPatA, EDPatL
+         DC    A(PD05_A,L'PD05_A)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat01_A_PD05_A)        EDECC
+         DC    A(Exp_EDNum_Pat01_A_PD05_A)     EDENumA
+         DC    A(Exp_GR1_Pat01_A_PD05_A_24)    EDE24R1A
+         DC    A(Exp_GR1_Pat01_A_PD05_A_31)    EDE31R1A
+         DC    A(Exp_GR1_Pat01_A_PD05_A_64)    EDE64R1A
+*
+         DC    A(Pat01_A,L'Pat01_A)            EDPatA, EDPatL
+         DC    A(PD06_A,L'PD06_A)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat01_A_PD06_A)        EDECC
+         DC    A(Exp_EDNum_Pat01_A_PD06_A)     EDENumA
+         DC    A(Exp_GR1_Pat01_A_PD06_A_24)    EDE24R1A
+         DC    A(Exp_GR1_Pat01_A_PD06_A_31)    EDE31R1A
+         DC    A(Exp_GR1_Pat01_A_PD06_A_64)    EDE64R1A
+*
+         DC    A(Pat01_A,L'Pat01_A)            EDPatA, EDPatL
+         DC    A(PD07_A,L'PD07_A)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat01_A_PD07_A)        EDECC
+         DC    A(Exp_EDNum_Pat01_A_PD07_A)     EDENumA
+         DC    A(Exp_GR1_Pat01_A_PD07_A_24)    EDE24R1A
+         DC    A(Exp_GR1_Pat01_A_PD07_A_31)    EDE31R1A
+         DC    A(Exp_GR1_Pat01_A_PD07_A_64)    EDE64R1A
+*
+.npat01a anop
+* ago .npat02
+*
+*        Pat02 tests
+*
+         DC    A(Pat02,L'Pat02)            EDPatA, EDPatL
+         DC    A(PD01,L'PD01)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat02_PD01)        EDECC
+         DC    A(Exp_EDNum_Pat02_PD01)     EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+         DC    A(Pat02,L'Pat02)            EDPatA, EDPatL
+         DC    A(PD02,L'PD02)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat02_PD02)        EDECC
+         DC    A(Exp_EDNum_Pat02_PD02)     EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+         DC    A(Pat02,L'Pat02)            EDPatA, EDPatL
+         DC    A(PD03,L'PD03)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat02_PD03)        EDECC
+         DC    A(Exp_EDNum_Pat02_PD03)     EDENumA
+         DC    A(Exp_GR1_Pat02_PD03_24)    EDE24R1A
+         DC    A(Exp_GR1_Pat02_PD03_31)    EDE31R1A
+         DC    A(Exp_GR1_Pat02_PD03_64)    EDE64R1A
+*
+         DC    A(Pat02,L'Pat02)            EDPatA, EDPatL
+         DC    A(PD04,L'PD04)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat02_PD04)        EDECC
+         DC    A(Exp_EDNum_Pat02_PD04)     EDENumA
+         DC    A(Exp_GR1_Pat02_PD04_24)    EDE24R1A
+         DC    A(Exp_GR1_Pat02_PD04_31)    EDE31R1A
+         DC    A(Exp_GR1_Pat02_PD04_64)    EDE64R1A
+*
+.npat02 anop
+* ago .npat03
+*
+*        Pat03 tests
+*
+         DC    A(Pat03,L'Pat03)            EDPatA, EDPatL
+         DC    A(PD01,L'PD01)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat03_PD01)        EDECC
+         DC    A(Exp_EDNum_Pat03_PD01)     EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+         DC    A(Pat03,L'Pat03)            EDPatA, EDPatL
+         DC    A(PD02,L'PD02)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat03_PD02)        EDECC
+         DC    A(Exp_EDNum_Pat03_PD02)     EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+         DC    A(Pat03,L'Pat03)            EDPatA, EDPatL
+         DC    A(PD03,L'PD03)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat03_PD03)        EDECC
+         DC    A(Exp_EDNum_Pat03_PD03)     EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+         DC    A(Pat03,L'Pat03)            EDPatA, EDPatL
+         DC    A(PD04,L'PD04)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat03_PD04)        EDECC
+         DC    A(Exp_EDNum_Pat03_PD04)     EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+.npat03 anop
+* ago .npat03M
+*
+*        Pat03M tests
+*
+         DC    A(Pat03M,L'Pat03M)          EDPatA, EDPatL
+         DC    A(PD01,L'PD01)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat03M_PD01)       EDECC
+         DC    A(Exp_EDNum_Pat03M_PD01)    EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+         DC    A(Pat03M,L'Pat03M)          EDPatA, EDPatL
+         DC    A(PD02,L'PD02)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat03M_PD02)       EDECC
+         DC    A(Exp_EDNum_Pat03M_PD02)    EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+         DC    A(Pat03M,L'Pat03M)          EDPatA, EDPatL
+         DC    A(PD03,L'PD03)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat03M_PD03)       EDECC
+         DC    A(Exp_EDNum_Pat03M_PD03)    EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+         DC    A(Pat03M,L'Pat03M)          EDPatA, EDPatL
+         DC    A(PD04,L'PD04)              EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat03M_PD04)       EDECC
+         DC    A(Exp_EDNum_Pat03M_PD04)    EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+.npat03M anop
+* ago .npat04
+*
+*        Pat04 tests
+*
+         DC    A(Pat04,L'Pat04)            EDPatA, EDPatL
+         DC    A(PD05A,L'PD05A)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat04_PD05ABCD)    EDECC
+         DC    A(Exp_EDNum_Pat04_PD05ABCD) EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+         DC    A(Pat04,L'Pat04)            EDPatA, EDPatL
+         DC    A(PD05B,L'PD05B)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat04_PD05ABCD)    EDECC
+         DC    A(Exp_EDNum_Pat04_PD05ABCD) EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+         DC    A(Pat04,L'Pat04)            EDPatA, EDPatL
+         DC    A(PD05C,L'PD05C)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat04_PD05ABCD)    EDECC
+         DC    A(Exp_EDNum_Pat04_PD05ABCD) EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+         DC    A(Pat04,L'Pat04)            EDPatA, EDPatL
+         DC    A(PD05D,L'PD05D)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat04_PD05ABCD)    EDECC
+         DC    A(Exp_EDNum_Pat04_PD05ABCD) EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+*
+*
+         DC    A(Pat04,L'Pat04)            EDPatA, EDPatL
+         DC    A(PD06A,L'PD06A)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat04_PD06A)       EDECC
+         DC    A(Exp_EDNum_Pat04_PD06A)    EDENumA
+         DC    A(Exp_GR1_Pat04_PD06A_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat04_PD06A_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat04_PD06A_64)   EDE64R1A
+*
+         DC    A(Pat04,L'Pat04)            EDPatA, EDPatL
+         DC    A(PD06B,L'PD06B)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat04_PD06B)       EDECC
+         DC    A(Exp_EDNum_Pat04_PD06B)    EDENumA
+         DC    A(Exp_GR1_Pat04_PD06B_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat04_PD06B_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat04_PD06B_64)   EDE64R1A
+*
+         DC    A(Pat04,L'Pat04)            EDPatA, EDPatL
+         DC    A(PD06C,L'PD06C)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat04_PD06C)       EDECC
+         DC    A(Exp_EDNum_Pat04_PD06C)    EDENumA
+         DC    A(Exp_GR1_Pat04_PD06C_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat04_PD06C_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat04_PD06C_64)   EDE64R1A
+*
+         DC    A(Pat04,L'Pat04)            EDPatA, EDPatL
+         DC    A(PD06D,L'PD06D)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat04_PD06D)       EDECC
+         DC    A(Exp_EDNum_Pat04_PD06D)    EDENumA
+         DC    A(Exp_GR1_Pat04_PD06D_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat04_PD06D_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat04_PD06D_64)   EDE64R1A
+*
+         DC    A(Pat04,L'Pat04)            EDPatA, EDPatL
+         DC    A(PD06E,L'PD06E)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat04_PD06E)       EDECC
+         DC    A(Exp_EDNum_Pat04_PD06E)    EDENumA
+         DC    A(Exp_GR1_Pat04_PD06E_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat04_PD06E_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat04_PD06E_64)   EDE64R1A
+*
+.npat04 anop
+* ago .npat05
+*
+*        Pat05 tests
+*
+         DC    A(Pat05,L'Pat05)            EDPatA, EDPatL
+         DC    A(PD06A,L'PD06A)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat05_PD06A)       EDECC
+         DC    A(Exp_EDNum_Pat05_PD06A)    EDENumA
+         DC    A(Exp_GR1_Pat05_PD06A_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat05_PD06A_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat05_PD06A_64)   EDE64R1A
+*
+         DC    A(Pat05,L'Pat05)            EDPatA, EDPatL
+         DC    A(PD06B,L'PD06B)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat05_PD06B)       EDECC
+         DC    A(Exp_EDNum_Pat05_PD06B)    EDENumA
+         DC    A(Exp_GR1_Pat05_PD06B_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat05_PD06B_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat05_PD06B_64)   EDE64R1A
+*
+         DC    A(Pat05,L'Pat05)            EDPatA, EDPatL
+         DC    A(PD06C,L'PD06C)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat05_PD06C)       EDECC
+         DC    A(Exp_EDNum_Pat05_PD06C)    EDENumA
+         DC    A(Exp_GR1_Pat05_PD06C_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat05_PD06C_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat05_PD06C_64)   EDE64R1A
+*
+         DC    A(Pat05,L'Pat05)            EDPatA, EDPatL
+         DC    A(PD06D,L'PD06D)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat05_PD06D)       EDECC
+         DC    A(Exp_EDNum_Pat05_PD06D)    EDENumA
+         DC    A(Exp_GR1_Pat05_PD06D_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat05_PD06D_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat05_PD06D_64)   EDE64R1A
+*
+         DC    A(Pat05,L'Pat05)            EDPatA, EDPatL
+         DC    A(PD06E,L'PD06E)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat05_PD06E)       EDECC
+         DC    A(Exp_EDNum_Pat05_PD06E)    EDENumA
+         DC    A(EDMKPresetGR1)            EDE24R1A
+         DC    A(EDMKPresetGR1)            EDE31R1A
+         DC    A(EDMKPresetGR1)            EDE64R1A
+*
+.npat05 anop
+* ago .npat06
+*
+*        Pat06 tests
+*
+         DC    A(Pat06,L'Pat06)            EDPatA, EDPatL
+         DC    A(PD06A,L'PD06A)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat06_PD06A)       EDECC
+         DC    A(Exp_EDNum_Pat06_PD06A)    EDENumA
+         DC    A(Exp_GR1_Pat06_PD06A_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat06_PD06A_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat06_PD06A_64)   EDE64R1A
+*
+         DC    A(Pat06,L'Pat06)            EDPatA, EDPatL
+         DC    A(PD06B,L'PD06B)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat06_PD06B)       EDECC
+         DC    A(Exp_EDNum_Pat06_PD06B)    EDENumA
+         DC    A(Exp_GR1_Pat06_PD06B_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat06_PD06B_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat06_PD06B_64)   EDE64R1A
+*
+         DC    A(Pat06,L'Pat06)            EDPatA, EDPatL
+         DC    A(PD06C,L'PD06C)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat06_PD06C)       EDECC
+         DC    A(Exp_EDNum_Pat06_PD06C)    EDENumA
+         DC    A(Exp_GR1_Pat06_PD06C_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat06_PD06C_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat06_PD06C_64)   EDE64R1A
+*
+         DC    A(Pat06,L'Pat06)            EDPatA, EDPatL
+         DC    A(PD06D,L'PD06D)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat06_PD06D)       EDECC
+         DC    A(Exp_EDNum_Pat06_PD06D)    EDENumA
+         DC    A(Exp_GR1_Pat06_PD06D_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat06_PD06D_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat06_PD06D_64)   EDE64R1A
+*
+         DC    A(Pat06,L'Pat06)            EDPatA, EDPatL
+         DC    A(PD06E,L'PD06E)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat06_PD06E)       EDECC
+         DC    A(Exp_EDNum_Pat06_PD06E)    EDENumA
+         DC    A(Exp_GR1_Pat06_PD06E_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat06_PD06E_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat06_PD06E_64)   EDE64R1A
+*
+.npat06 anop
+* ago .npat07
+*
+*        Pat07 tests
+*
+         DC    A(Pat07,L'Pat07)            EDPatA, EDPatL
+         DC    A(PD06A,L'PD06A)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat07_PD06A)       EDECC
+         DC    A(Exp_EDNum_Pat07_PD06A)    EDENumA
+         DC    A(Exp_GR1_Pat07_PD06A_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat07_PD06A_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat07_PD06A_64)   EDE64R1A
+*
+         DC    A(Pat07,L'Pat07)            EDPatA, EDPatL
+         DC    A(PD06B,L'PD06B)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat07_PD06B)       EDECC
+         DC    A(Exp_EDNum_Pat07_PD06B)    EDENumA
+         DC    A(Exp_GR1_Pat07_PD06B_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat07_PD06B_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat07_PD06B_64)   EDE64R1A
+*
+         DC    A(Pat07,L'Pat07)            EDPatA, EDPatL
+         DC    A(PD06C,L'PD06C)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat07_PD06C)       EDECC
+         DC    A(Exp_EDNum_Pat07_PD06C)    EDENumA
+         DC    A(Exp_GR1_Pat07_PD06C_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat07_PD06C_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat07_PD06C_64)   EDE64R1A
+*
+         DC    A(Pat07,L'Pat07)            EDPatA, EDPatL
+         DC    A(PD06D,L'PD06D)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat07_PD06D)       EDECC
+         DC    A(Exp_EDNum_Pat07_PD06D)    EDENumA
+         DC    A(Exp_GR1_Pat07_PD06D_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat07_PD06D_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat07_PD06D_64)   EDE64R1A
+*
+         DC    A(Pat07,L'Pat07)            EDPatA, EDPatL
+         DC    A(PD06E,L'PD06E)            EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat07_PD06E)       EDECC
+         DC    A(Exp_EDNum_Pat07_PD06E)    EDENumA
+         DC    A(Exp_GR1_Pat07_PD06E_24)   EDE24R1A
+         DC    A(Exp_GR1_Pat07_PD06E_31)   EDE31R1A
+         DC    A(Exp_GR1_Pat07_PD06E_64)   EDE64R1A
+*
+.npat07 anop
+* ago .npat08
+*
+*        Pat08 tests
+*
+         DC    A(Pat08,L'Pat08)            EDPatA, EDPatL
+         DC    A(USPD01,L'USPD01)          EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat08_USPD01)      EDECC
+         DC    A(Exp_EDNum_Pat08_USPD01)   EDENumA
+         DC    A(Exp_GR1_Pat08_USPD01_24)  EDE24R1A
+         DC    A(Exp_GR1_Pat08_USPD01_31)  EDE31R1A
+         DC    A(Exp_GR1_Pat08_USPD01_64)  EDE64R1A
+*
+         DC    A(Pat08,L'Pat08)            EDPatA, EDPatL
+         DC    A(USPD02,L'USPD02)          EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat08_USPD02)      EDECC
+         DC    A(Exp_EDNum_Pat08_USPD02)   EDENumA
+         DC    A(Exp_GR1_Pat08_USPD02_24)  EDE24R1A
+         DC    A(Exp_GR1_Pat08_USPD02_31)  EDE31R1A
+         DC    A(Exp_GR1_Pat08_USPD02_64)  EDE64R1A
+*
+.npat08 anop
+* ago .npat09
+*
+*        Pat09 tests
+*
+         DC    A(Pat09,L'Pat09)            EDPatA, EDPatL
+         DC    A(USPD01,L'USPD01)          EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat09_USPD01)      EDECC
+         DC    A(Exp_EDNum_Pat09_USPD01)   EDENumA
+         DC    A(Exp_GR1_Pat09_USPD01_24)  EDE24R1A
+         DC    A(Exp_GR1_Pat09_USPD01_31)  EDE31R1A
+         DC    A(Exp_GR1_Pat09_USPD01_64)  EDE64R1A
+*
+         DC    A(Pat09,L'Pat09)            EDPatA, EDPatL
+         DC    A(USPD02,L'USPD02)          EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat09_USPD02)      EDECC
+         DC    A(Exp_EDNum_Pat09_USPD02)   EDENumA
+         DC    A(Exp_GR1_Pat09_USPD02_24)  EDE24R1A
+         DC    A(Exp_GR1_Pat09_USPD02_31)  EDE31R1A
+         DC    A(Exp_GR1_Pat09_USPD02_64)  EDE64R1A
+*
+.npat09 anop
+* ago .npat10
+*
+*        Pat10 tests
+*
+         DC    A(Pat10,L'Pat10)            EDPatA, EDPatL
+         DC    A(USPD04A,L'USPD04A)        EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat10_USPD04A)     EDECC
+         DC    A(Exp_EDNum_Pat10_USPD04A)  EDENumA
+         DC    A(Exp_GR1_Pat10_USPD04A_24) EDE24R1A
+         DC    A(Exp_GR1_Pat10_USPD04A_31) EDE31R1A
+         DC    A(Exp_GR1_Pat10_USPD04A_64) EDE64R1A
+*
+         DC    A(Pat10,L'Pat10)            EDPatA, EDPatL
+         DC    A(USPD04B,L'USPD04B)        EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat10_USPD04B)     EDECC
+         DC    A(Exp_EDNum_Pat10_USPD04B)  EDENumA
+         DC    A(Exp_GR1_Pat10_USPD04B_24) EDE24R1A
+         DC    A(Exp_GR1_Pat10_USPD04B_31) EDE31R1A
+         DC    A(Exp_GR1_Pat10_USPD04B_64) EDE64R1A
+*
+         DC    A(Pat10,L'Pat10)            EDPatA, EDPatL
+         DC    A(USPD04C,L'USPD04C)        EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat10_USPD04C)     EDECC
+         DC    A(Exp_EDNum_Pat10_USPD04C)  EDENumA
+         DC    A(Exp_GR1_Pat10_USPD04C_24) EDE24R1A
+         DC    A(Exp_GR1_Pat10_USPD04C_31) EDE31R1A
+         DC    A(Exp_GR1_Pat10_USPD04C_64) EDE64R1A
+*
+.npat10 anop
+* ago .npat11
+*
+*        Pat11 tests
+*
+         DC    A(Pat11,L'Pat11)            EDPatA, EDPatL
+         DC    A(USPD04A,L'USPD04A)        EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat11_USPD04A)     EDECC
+         DC    A(Exp_EDNum_Pat11_USPD04A)  EDENumA
+         DC    A(Exp_GR1_Pat11_USPD04A_24) EDE24R1A
+         DC    A(Exp_GR1_Pat11_USPD04A_31) EDE31R1A
+         DC    A(Exp_GR1_Pat11_USPD04A_64) EDE64R1A
+*
+         DC    A(Pat11,L'Pat11)            EDPatA, EDPatL
+         DC    A(USPD04B,L'USPD04B)        EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat11_USPD04B)     EDECC
+         DC    A(Exp_EDNum_Pat11_USPD04B)  EDENumA
+         DC    A(Exp_GR1_Pat11_USPD04B_24) EDE24R1A
+         DC    A(Exp_GR1_Pat11_USPD04B_31) EDE31R1A
+         DC    A(Exp_GR1_Pat11_USPD04B_64) EDE64R1A
+*
+         DC    A(Pat11,L'Pat11)            EDPatA, EDPatL
+         DC    A(USPD04C,L'USPD04C)        EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat11_USPD04C)     EDECC
+         DC    A(Exp_EDNum_Pat11_USPD04C)  EDENumA
+         DC    A(Exp_GR1_Pat11_USPD04C_24) EDE24R1A
+         DC    A(Exp_GR1_Pat11_USPD04C_31) EDE31R1A
+         DC    A(Exp_GR1_Pat11_USPD04C_64) EDE64R1A
+*
+.npat11 anop
+* ago .npat12
+*
+*        Pat12 tests
+*
+         DC    A(Pat12,L'Pat12)            EDPatA, EDPatL
+         DC    A(USPD04A,L'USPD04A)        EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat12_USPD04A)     EDECC
+         DC    A(Exp_EDNum_Pat12_USPD04A)  EDENumA
+         DC    A(Exp_GR1_Pat12_USPD04A_24) EDE24R1A
+         DC    A(Exp_GR1_Pat12_USPD04A_31) EDE31R1A
+         DC    A(Exp_GR1_Pat12_USPD04A_64) EDE64R1A
+*
+         DC    A(Pat12,L'Pat12)            EDPatA, EDPatL
+         DC    A(USPD04B,L'USPD04B)        EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat12_USPD04B)     EDECC
+         DC    A(Exp_EDNum_Pat12_USPD04B)  EDENumA
+         DC    A(Exp_GR1_Pat12_USPD04B_24) EDE24R1A
+         DC    A(Exp_GR1_Pat12_USPD04B_31) EDE31R1A
+         DC    A(Exp_GR1_Pat12_USPD04B_64) EDE64R1A
+*
+         DC    A(Pat12,L'Pat12)            EDPatA, EDPatL
+         DC    A(USPD04C,L'USPD04C)        EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat12_USPD04C)     EDECC
+         DC    A(Exp_EDNum_Pat12_USPD04C)  EDENumA
+         DC    A(Exp_GR1_Pat12_USPD04C_24) EDE24R1A
+         DC    A(Exp_GR1_Pat12_USPD04C_31) EDE31R1A
+         DC    A(Exp_GR1_Pat12_USPD04C_64) EDE64R1A
+*
+.npat12 anop
+* ago .npat13
+*
+*        Pat13 tests
+*
+         DC    A(Pat13,L'Pat13)            EDPatA, EDPatL
+         DC    A(USPD04A,L'USPD04A)        EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat13_USPD04A)     EDECC
+         DC    A(Exp_EDNum_Pat13_USPD04A)  EDENumA
+         DC    A(Exp_GR1_Pat13_USPD04A_24) EDE24R1A
+         DC    A(Exp_GR1_Pat13_USPD04A_31) EDE31R1A
+         DC    A(Exp_GR1_Pat13_USPD04A_64) EDE64R1A
+*
+         DC    A(Pat13,L'Pat13)            EDPatA, EDPatL
+         DC    A(USPD04B,L'USPD04B)        EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat13_USPD04B)     EDECC
+         DC    A(Exp_EDNum_Pat13_USPD04B)  EDENumA
+         DC    A(Exp_GR1_Pat13_USPD04B_24) EDE24R1A
+         DC    A(Exp_GR1_Pat13_USPD04B_31) EDE31R1A
+         DC    A(Exp_GR1_Pat13_USPD04B_64) EDE64R1A
+*
+         DC    A(Pat13,L'Pat13)            EDPatA, EDPatL
+         DC    A(USPD04C,L'USPD04C)        EDPDAA, EDPDAL
+         DC    A(Exp_CC_Pat13_USPD04C)     EDECC
+         DC    A(Exp_EDNum_Pat13_USPD04C)  EDENumA
+         DC    A(Exp_GR1_Pat13_USPD04C_24) EDE24R1A
+         DC    A(Exp_GR1_Pat13_USPD04C_31) EDE31R1A
+         DC    A(Exp_GR1_Pat13_USPD04C_64) EDE64R1A
+*
+.npat13 anop
+***********************************************************************
+*        Put new tests above this line
+***********************************************************************
+EDTn     EQU   *-TEDDSLN               Last test case
+*
+***********************************************************************
+*        ED, EDMK tests that result in S0C7
+***********************************************************************
+*
+ED0C7Tests     DC    A(EDT0C71,TEDDSLN,EDT0C7n,0) 1st, len 1, last
+EDT0C71        DS    0D
+         DC    A(Pat9,L'Pat9)          EDPatA, EDPatL
+         DC    A(PDec9IA,L'PDec9IA)    EDPDAA, EDPDAL
+         DC    F'3'                    EDECC
+         DC    A(Pat9)                 EDENumA
+         DC    A(EDMKPresetGR1)        EDE24R1A
+         DC    A(EDMKPresetGR1)        EDE31R1A
+         DC    A(EDMKPresetGR1)        EDE64R1A
+*
+         DC    A(Pat9,L'Pat9)          EDPatA, EDPatL
+         DC    A(PDec9IB,L'PDec9IB)    EDPDAA, EDPDAL
+         DC    F'3'                    EDECC
+         DC    A(Pat9)                 EDENumA
+         DC    A(EDMKPresetGR1)        EDE24R1A
+         DC    A(EDMKPresetGR1)        EDE31R1A
+         DC    A(EDMKPresetGR1)        EDE64R1A
+*
+         DC    A(Pat9,L'Pat9)          EDPatA, EDPatL
+         DC    A(PDec9IC,L'PDec9IC)    EDPDAA, EDPDAL
+         DC    F'3'                    EDECC
+         DC    A(Pat9)                 EDENumA
+         DC    A(EDMKPresetGR1)        EDE24R1A
+         DC    A(EDMKPresetGR1)        EDE31R1A
+         DC    A(EDMKPresetGR1)        EDE64R1A
+*
+***********************************************************************
+*              Put new tests above this line
+***********************************************************************
+EDT0C7n        EQU   *-TEDDSLN         Last test case
+*
+***********************************************************************
+*        Default/initial GR1 value (EDMK tests only)
+***********************************************************************
+               DS    0D
+*
+EDMKPresetGR1  DC    F'-1',F'-1'       Same value as TEDMK MKPresetGR1
+*
+***********************************************************************
+* Group 1: one signed packed decimal length 3 no field separator
+***********************************************************************
+*
+*======================================================================
+* Patterns
+*======================================================================
+*
+Pat01    DC    X'402020202020'         PL3 no start significance
+Pat02    DC    X'402020202120'         PL3 start Significance
+Pat03    DC    X'402120202020'         PL3 start significance
+Pat03M   DC    X'4021204B20202040C3D9' PL3 start sig, trailing msg
+*
+***********************************************************************
+* Packed decimal fields
+***********************************************************************
+*
+PD01     DC    PL3'0'
+PD02     DC    PL3'-0'
+PD03     DC    PL3'123'
+PD04     DC    PL3'-456'
+*
+***********************************************************************
+* Expected values: EDNum, GR1, CC
+*
+* Make sure Exp_EDNum_Patxx_ values are same length as Patxx
+***********************************************************************
+*
+*----------------------------------------------------------------------
+* Pat01
+*
+Exp_EDNum_Pat01_PD01   DC    X'404040404040'
+Exp_EDNum_Pat01_PD02   DC    X'404040404040'
+Exp_EDNum_Pat01_PD03   DC    X'404040F1F2F3'
+Exp_EDNum_Pat01_PD04   DC    X'404040F4F5F6'
+*
+Exp_CC_Pat01_PD01      EQU   0
+Exp_CC_Pat01_PD02      EQU   0
+Exp_CC_Pat01_PD03      EQU   2
+Exp_CC_Pat01_PD04      EQU   1
+*
+Exp_GR1_Pat01_PD02_24  DC    F'-1',X'FF',AL3(EDPatWk+5)
+Exp_GR1_Pat01_PD02_31  DC    F'-1',A(EDPatWk+5)
+Exp_GR1_Pat01_PD02_64  DC    F'0',A(EDPatWk+5)
+*
+Exp_GR1_Pat01_PD03_24  DC    F'-1',X'FF',AL3(EDPatWk+3)
+Exp_GR1_Pat01_PD03_31  DC    F'-1',A(EDPatWk+3)
+Exp_GR1_Pat01_PD03_64  DC    F'0',A(EDPatWk+3)
+*
+Exp_GR1_Pat01_PD04_24  DC    F'-1',X'FF',AL3(EDPatWk+3)
+Exp_GR1_Pat01_PD04_31  DC    F'-1',A(EDPatWk+3)
+Exp_GR1_Pat01_PD04_64  DC    F'0',A(EDPatWk+3)
+*
+*----------------------------------------------------------------------
+* Pat02
+*
+Exp_EDNum_Pat02_PD01   DC    X'4040404040F0'
+Exp_EDNum_Pat02_PD02   DC    X'4040404040F0'
+Exp_EDNum_Pat02_PD03   DC    X'404040F1F2F3'
+Exp_EDNum_Pat02_PD04   DC    X'404040F4F5F6'
+*
+Exp_CC_Pat02_PD01      EQU   0
+Exp_CC_Pat02_PD02      EQU   0
+Exp_CC_Pat02_PD03      EQU   2
+Exp_CC_Pat02_PD04      EQU   1
+*
+Exp_GR1_Pat02_PD01_24  DC    F'-1',X'FF',AL3(EDPatWk+5)
+Exp_GR1_Pat02_PD01_31  DC    F'-1',A(EDPatWk+5)
+Exp_GR1_Pat02_PD01_64  DC    F'0',A(EDPatWk+5)
+*
+Exp_GR1_Pat02_PD02_24  DC    F'-1',X'FF',AL3(EDPatWk+5)
+Exp_GR1_Pat02_PD02_31  DC    F'-1',A(EDPatWk+5)
+Exp_GR1_Pat02_PD02_64  DC    F'0',A(EDPatWk+5)
+*
+Exp_GR1_Pat02_PD03_24  DC    F'-1',X'FF',AL3(EDPatWk+3)
+Exp_GR1_Pat02_PD03_31  DC    F'-1',A(EDPatWk+3)
+Exp_GR1_Pat02_PD03_64  DC    F'0',A(EDPatWk+3)
+*
+Exp_GR1_Pat02_PD04_24  DC    F'-1',X'FF',AL3(EDPatWk+3)
+Exp_GR1_Pat02_PD04_31  DC    F'-1',A(EDPatWk+3)
+Exp_GR1_Pat02_PD04_64  DC    F'0',A(EDPatWk+3)
+*
+*----------------------------------------------------------------------
+* Pat03
+*
+Exp_EDNum_Pat03_PD01   DC    X'4040F0F0F0F0'
+Exp_EDNum_Pat03_PD02   DC    X'4040F0F0F0F0'
+Exp_EDNum_Pat03_PD03   DC    X'4040F0F1F2F3'
+Exp_EDNum_Pat03_PD04   DC    X'4040F0F4F5F6'
+*
+Exp_CC_Pat03_PD01      EQU   0
+Exp_CC_Pat03_PD02      EQU   0
+Exp_CC_Pat03_PD03      EQU   2
+Exp_CC_Pat03_PD04      EQU   1
+*
+*----------------------------------------------------------------------
+* Pat03M
+*
+Exp_EDNum_Pat03M_PD01   DC    X'4040F04BF0F0F0404040'
+Exp_EDNum_Pat03M_PD02   DC    X'4040F04BF0F0F040C3D9'
+Exp_EDNum_Pat03M_PD03   DC    X'4040F04BF1F2F3404040'
+Exp_EDNum_Pat03M_PD04   DC    X'4040F04BF4F5F640C3D9'
+*
+Exp_CC_Pat03M_PD01      EQU   0
+Exp_CC_Pat03M_PD02      EQU   0
+Exp_CC_Pat03M_PD03      EQU   2
+Exp_CC_Pat03M_PD04      EQU   1
+*
+***********************************************************************
+* Group 1A: two signed packed decimal length 3 no field separator
+***********************************************************************
+*
+*======================================================================
+* Patterns
+*======================================================================
+*
+Pat01_A  DC    X'4020202020202020202020'   2 PL3 no start significance
+*
+***********************************************************************
+* Packed decimal fields used with patterns
+***********************************************************************
+*
+*                ------======
+PD01_A   DC    X'00000C00000C'     ++
+PD02_A   DC    X'00123C00000C'     ++
+PD03_A   DC    X'00000C00456C'     ++
+PD04_A   DC    X'00123D00456C'     -+
+PD05_A   DC    X'00123C00456D'     +-
+PD06_A   DC    X'00123D00456D'     --
+PD07_A   DC    X'00000D00000C'     -+
+*
+***********************************************************************
+* Expected values: EDNum, GR1, CC
+*
+* Make sure Exp_EDNum_Patxx_ values are same length as Patxx
+***********************************************************************
+*
+*----------------------------------------------------------------------
+* Pat01A
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat01_A_PD01_A     DS    0X    ++
+         DC    X'40'           Fill; sig off
+         DC    X'4040404040'   1st; 0; +; sig off; lwn 0; CC=0
+         DC    X'4040404040'   2nd; 0; +; sig off; len 0; CC=0
+Exp_EDNum_Pat01_A_PD01_A_L   EQU   *-Exp_EDNum_Pat01_A_PD01_A
+*
+Exp_CC_Pat01_A_PD01_A   EQU   0
+*
+Exp_GR1_Pat01_A_PD01_A_24   EQU   EDMKPresetGR1
+Exp_GR1_Pat01_A_PD01_A_31   EQU   EDMKPresetGR1
+Exp_GR1_Pat01_A_PD01_A_64   EQU   EDMKPresetGR1
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat01_A_PD02_A     DS    0X    ++
+         DC    X'40'           Fill; sig off
+         DC    X'4040F1F2F3'   1st; sig on; +; sig off; CC=2
+*                    ^-------- EDMK R1 points here
+         DC    X'4040404040'   2nd 0; +; sig off; len 0; CC still 2
+Exp_EDNum_Pat01_A_PD02_A_L   EQU   *-Exp_EDNum_Pat01_A_PD02_A
+*
+Exp_CC_Pat01_A_PD02_A   EQU   2   ??? jjg investigate why
+*
+Exp_GR1_Pat01_A_PD02_A_24   DC    F'-1',X'FF',AL3(EDPatWk+3)
+Exp_GR1_Pat01_A_PD02_A_31   DC    F'-1',A(EDPatWk+3)
+Exp_GR1_Pat01_A_PD02_A_64   DC    A(0),A(EDPatWk+3)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat01_A_PD03_A     DS    0X    ++
+         DC    X'40'           Fill; sig off
+         DC    X'4040404040'   1st; 0; +; sig off
+         DC    X'4040F4F5F6'   2nd; sig on; +; sig off; CC=2
+*                    ^-------- EDMK R1 points here
+Exp_EDNum_Pat01_A_PD03_A_L   EQU   *-Exp_EDNum_Pat01_A_PD03_A
+*
+Exp_CC_Pat01_A_PD03_A   EQU   2
+*
+Exp_GR1_Pat01_A_PD03_A_24   DC    F'-1',X'FF',AL3(EDPatWk+8)
+Exp_GR1_Pat01_A_PD03_A_31   DC    F'-1',A(EDPatWk+8)
+Exp_GR1_Pat01_A_PD03_A_64   DC    A(0),A(EDPatWk+8)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat01_A_PD04_A     DS    0X    -+
+         DC    X'40'           Fill; sig off
+         DC    X'4040F1F2F3'   1st; sig on; -; sig on; CC=1
+         DC    X'F0F0F4F5F6'   2nd; sig on; +; sig off; CC=2
+*                ^------------ Sig was on; R1 not set
+Exp_EDNum_Pat01_A_PD04_A_L   EQU   *-Exp_EDNum_Pat01_A_PD04_A
+*
+Exp_CC_Pat01_A_PD04_A   EQU   2
+*
+Exp_GR1_Pat01_A_PD04_A_24   DC    F'-1',X'FF',AL3(EDPatWk+3)
+Exp_GR1_Pat01_A_PD04_A_31   DC    F'-1',A(EDPatWk+3)
+Exp_GR1_Pat01_A_PD04_A_64   DC    A(0),A(EDPatWk+3)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat01_A_PD05_A     DS    0X    +-
+         DC    X'40'           Fill; sig off
+         DC    X'4040F1F2F3'   1st; sig on; +; sig off; CC=2
+*                    ^-------- EDMK R1 points here
+         DC    X'4040F4F5F6'   2nd; sig on; -; sig on; CC=1
+*                    ^-------- EDMK R1 points here
+Exp_EDNum_Pat01_A_PD05_A_L   EQU   *-Exp_EDNum_Pat01_A_PD05_A
+*
+Exp_CC_Pat01_A_PD05_A   EQU   1
+*
+Exp_GR1_Pat01_A_PD05_A_24   DC    F'-1',X'FF',AL3(EDPatWk+8)
+Exp_GR1_Pat01_A_PD05_A_31   DC    F'-1',A(EDPatWk+8)
+Exp_GR1_Pat01_A_PD05_A_64   DC    A(0),A(EDPatWk+8)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat01_A_PD06_A     DS    0X    --
+         DC    X'40'           Fill; sig off
+         DC    X'4040F1F2F3'   1st; sig on; -; sig on; CC=1
+*                    ^-------- EDMK R1 points here
+         DC    X'F0F0F4F5F6'   2nd; was sig on; -; sig on; CC=1
+*                ^------------ Sig was on; R1 not set
+Exp_EDNum_Pat01_A_PD06_A_L   EQU   *-Exp_EDNum_Pat01_A_PD06_A
+*
+Exp_CC_Pat01_A_PD06_A   EQU   1
+*
+Exp_GR1_Pat01_A_PD06_A_24   DC    F'-1',X'FF',AL3(EDPatWk+3)
+Exp_GR1_Pat01_A_PD06_A_31   DC    F'-1',A(EDPatWk+3)
+Exp_GR1_Pat01_A_PD06_A_64   DC    A(0),A(EDPatWk+3)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat01_A_PD07_A     DS    0X    -+
+         DC    X'40'           Fill; sig off
+         DC    X'4040404040'   1st; 0; -; sig off; CC=0
+         DC    X'4040404040'   2nd; 0; +; sig off; CC=0
+Exp_EDNum_Pat01_A_PD07_A_L   EQU   *-Exp_EDNum_Pat01_A_PD07_A
+*
+Exp_CC_Pat01_A_PD07_A   EQU   0
+*
+Exp_GR1_Pat01_A_PD07_A_24   EQU   EDMKPresetGR1
+Exp_GR1_Pat01_A_PD07_A_31   EQU   EDMKPresetGR1
+Exp_GR1_Pat01_A_PD07_A_64   EQU   EDMKPresetGR1
+*
+***********************************************************************
+* Group 2: signed packed decimal length 5; 2 fields; field separator
+***********************************************************************
+*
+*======================================================================
+* Patterns
+*======================================================================
+*
+*----------------------------------------------------------------------
+* Pat04  Two PL5 fields; field separator; no significance starter
+*
+Pat04_A  DS    0X
+         DC    X'40'                   Fill character
+         DC    x'202020202020202020'   First PL5
+         DC    X'22'                   Field separator
+         DC    X'202020202020202020'   Second PL5
+Pat04_B  DS    0X
+Pat04    EQU   Pat04_A,Pat04_B-Pat04_A,C'X'
+*
+*----------------------------------------------------------------------
+* Pat05  Two PL5 fields; field separator; early sig starter in first
+*
+Pat05_A  DS    0X
+         DC    X'40'                   Fill character
+         DC    X'202120202020202020'   First PL5; early sig starter
+         DC    X'22'                   Field separator
+         DC    X'202020202020202020'   Second PL5; no sig starter
+Pat05_B  DS    0X
+Pat05    EQU   Pat05_A,Pat05_B-Pat05_A,C'X'
+*
+*----------------------------------------------------------------------
+* Pat06  Two PL5 fields; field separator; early sig starter in second
+*
+Pat06_A  DS    0X
+         DC    X'40'                   Fill character
+         DC    X'202020202020202020'   First PL5; no sig starter
+         DC    X'22'                   Field separator
+         DC    X'202120202020202020'   Second PL5; early sig starter
+Pat06_B  DS    0X
+Pat06    EQU   Pat06_A,Pat06_B-Pat06_A,C'X'
+*
+*----------------------------------------------------------------------
+* Pat07  Two PL5 fields; field separator; early sig starter in both
+*
+Pat07_A  DS    0X
+         DC    X'40'                   Fill character
+         DC    X'202120202020202020'   First PL5; early sig starter
+         DC    X'22'                   Field separator
+         DC    X'202120202020202020'   Second PL5; early sig starter
+Pat07_B  DS    0X
+Pat07    EQU   Pat07_A,Pat07_B-Pat07_A,C'X'
+*
+*======================================================================
+*
+***********************************************************************
+* Packed decimal fields
+***********************************************************************
+*
+*        PL5 values
+*
+*                ----------==========
+PD05A    DC    X'000000000C000000000C' ++
+PD05B    DC    X'000000000C000000000D' +-
+PD05C    DC    X'000000000D000000000C' -+
+PD05D    DC    X'000000000D000000000D' --
+*
+PD06A    DC    X'000012345C000098765C' ++
+PD06B    DC    X'000012345C000098765D' +-
+PD06C    DC    X'000012345D000098765C' -+
+PD06D    DC    X'000012345D000098765D' --
+PD06E    DC    X'000012345C000000000C' ++
+*
+PD07     DC    PL5'123'
+PD08     DC    PL5'-456'
+*
+***********************************************************************
+* Expected values: EDNum, GR1, CC
+*
+* Make sure Exp_EDNum_Patxx_ values are same length as Patxx
+***********************************************************************
+*
+*======================================================================
+* Expected values when using Pat04 with PD05A,B,C,D
+*======================================================================
+*
+Exp_EDNum_Pat04_PD05ABCD  DS    0X
+         DC    X'40'                   Fill character
+         DC    X'40404040404040404040' First PL5 field
+         DC    X'40'                   Field separator
+         DC    X'40404040404040404040' Second PL5 field
+Exp_EDNum_Pat04_PD05ABCD_L EQU   *-Exp_EDNum_Pat04_PD05ABCD
+*
+Exp_CC_Pat04_PD05ABCD EQU 0
+*
+*======================================================================
+* Expected values when using Pat04 with PD06A,B,C,D,E
+*======================================================================
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat04_PD06A  DS    0X        ++
+         DC    X'40'                   Fill character
+         DC    X'40404040F1F2F3F4F5'   First PL5 field; CC=2; sig off
+*                        ^------------ So far, EDMK R1 points here
+         DC    X'40'                   Field separator; sig off
+         DC    X'40404040F9F8F7F6F5'   Second PL5 field; CC=2; sig off
+*                        ^------------ Final EDMK R1 points here
+*
+Exp_CC_Pat04_PD06A EQU 2
+*
+Exp_GR1_Pat04_PD06A_24 DC  F'-1',X'FF',AL3(EDPatWk+15)
+Exp_GR1_Pat04_PD06A_31 DC  F'-1',A(EDPatWk+15)
+Exp_GR1_Pat04_PD06A_64 DC  A(0),A(EDPatWk+15)
+*
+*Exp EDNum  4040404040F1F2F3F4F54040404040F9F8F7F6F5 PD06A,B,C,D
+*           b b b b b 1 2 3 4 5 b b b b b 9 8 7 6 5
+*                     ^----------------------------- R1
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat04_PD06B  DS    0X        +-
+         DC    X'40'                   Fill character
+         DC    X'40404040F1F2F3F4F5'   First PL5 field; CC=2; sig off
+*                        ^------------ EDMK R1 points here
+         DC    X'40'                   Field separator; sig off
+         DC    X'40404040F9F8F7F6F5'   Second PL5 field; CC=1; sig on
+*                        ^------------ Final EDMK R1 points here
+Exp_EDNum_Pat04_PD06B_L EQU   *-Exp_EDNum_Pat04_PD06B
+*
+Exp_CC_Pat04_PD06B EQU 1
+*
+Exp_GR1_Pat04_PD06B_24 DC  F'-1',X'FF',AL3(EDPatWk+15)
+Exp_GR1_Pat04_PD06B_31 DC  F'-1',A(EDPatWk+15)
+Exp_GR1_Pat04_PD06B_64 DC  A(0),A(EDPatWk+15)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat04_PD06C  DS    0X        -+
+         DC    X'40'                   Fill character
+         DC    X'40404040F1F2F3F4F5'   First PL5 field; CC=1; sig on
+*                        ^------------ EDMK R1 points here
+         DC    X'40'                   Field separator; sig off
+         DC    X'40404040F9F8F7F6F5'   Second PL5 field; CC=2; sig off
+*                        ^------------ Final EDMK R1 points here
+Exp_EDNum_Pat04_PD06C_L EQU   *-Exp_EDNum_Pat04_PD06C
+*
+Exp_CC_Pat04_PD06C EQU 2
+*
+Exp_GR1_Pat04_PD06C_24 DC  F'-1',X'FF',AL3(EDPatWk+15)
+Exp_GR1_Pat04_PD06C_31 DC  F'-1',A(EDPatWk+15)
+Exp_GR1_Pat04_PD06C_64 DC  A(0),A(EDPatWk+15)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat04_PD06D  DS    0X        --
+         DC    X'40'                   Fill character
+         DC    X'40404040F1F2F3F4F5'   First PL5 field; CC=1; sig on
+*                        ^------------ EDMK R1 points here
+         DC    X'40'                   Field separator; sig off
+         DC    X'40404040F9F8F7F6F5'   Second PL5 field; CC=1; sig on
+*                        ^------------ Final EDMK R1 points here
+Exp_EDNum_Pat04_PD06D_L EQU   *-Exp_EDNum_Pat04_PD06D
+*
+Exp_CC_Pat04_PD06D EQU 1
+*
+Exp_GR1_Pat04_PD06D_24 DC  F'-1',X'FF',AL3(EDPatWk+15)
+Exp_GR1_Pat04_PD06D_31 DC  F'-1',A(EDPatWk+15)
+Exp_GR1_Pat04_PD06D_64 DC  A(0),A(EDPatWk+15)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat04_PD06E  DS    0X        ++
+         DC    X'40'                   Fill character
+         DC    X'40404040F1F2F3F4F5'   First PL5 field; CC=2; sig off
+*                        ^------------ Final EDMK R1 points here
+         DC    X'40'                   Field separator; sig off
+         DC    X'404040404040404040'   Second PL5 field; CC=0; sig off
+Exp_EDNum_Pat04_PD06E_L EQU   *-Exp_EDNum_Pat04_PD06E
+*
+Exp_CC_Pat04_PD06E EQU 0
+*
+Exp_GR1_Pat04_PD06E_24 DC  F'-1',X'FF',AL3(EDPatWk+5)
+Exp_GR1_Pat04_PD06E_31 DC  F'-1',A(EDPatWk+5)
+Exp_GR1_Pat04_PD06E_64 DC  A(0),A(EDPatWk+5)
+*
+*----------------------------------------------------------------------
+*
+*======================================================================
+* Expected values when using Pat05 with PD06A,B,C,D,E
+*======================================================================
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat05_PD06A  DS    0X        ++
+         DC    X'40'                   Fill character
+         DC    X'4040F0F0F1F2F3F4F5'   First PL5 field; CC=2; sig off
+*                        ^------------ Early sig start, so R1 not set
+         DC    X'40'                   Field separator; sig off
+         DC    X'40404040F9F8F7F6F5'   Second PL5 field; CC=2; sig off
+*                        ^------------ EDMK R1 points here
+Exp_EDNum_Pat05_PD06A_L EQU   *-Exp_EDNum_Pat05_PD06A
+*
+Exp_CC_Pat05_PD06A EQU 2
+*
+Exp_GR1_Pat05_PD06A_24 DC  F'-1',X'FF',AL3(EDPatWk+15)
+Exp_GR1_Pat05_PD06A_31 DC  F'-1',A(EDPatWk+15)
+Exp_GR1_Pat05_PD06A_64 DC  A(0),A(EDPatWk+15)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat05_PD06B  DS    0X        +-
+         DC    X'40'                   Fill character
+         DC    X'4040F0F0F1F2F3F4F5'   First PL5 field; CC=2; sig off
+*                    ^---------------- sig was on so R1 not set
+         DC    X'40'                   Field separator; sig off
+         DC    X'40404040F9F8F7F6F5'   Second PL5 field; CC=1; sig on
+*                        ^------------ Final EDMK R1 points here
+Exp_EDNum_Pat05_PD06B_L EQU   *-Exp_EDNum_Pat05_PD06B
+*
+Exp_CC_Pat05_PD06B EQU 1
+*
+Exp_GR1_Pat05_PD06B_24 DC  F'-1',X'FF',AL3(EDPatWk+15)
+Exp_GR1_Pat05_PD06B_31 DC  F'-1',A(EDPatWk+15)
+Exp_GR1_Pat05_PD06B_64 DC  A(0),A(EDPatWk+15)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat05_PD06C  DS    0X        -+
+         DC    X'40'                   Fill character
+         DC    X'4040F0F0F1F2F3F4F5'   First PL5 field; CC=1; sig on
+*                    ^---------------- Sig was on so R1 not set
+         DC    X'40'                   Field separator; sig off
+         DC    X'40404040F9F8F7F6F5'   Second PL5 field; CC=2; sig off
+*                        ^------------ Final EDMK R1 points here
+Exp_EDNum_Pat05_PD06C_L EQU   *-Exp_EDNum_Pat05_PD06C
+*
+Exp_CC_Pat05_PD06C EQU 2
+*
+Exp_GR1_Pat05_PD06C_24 DC  F'-1',X'FF',AL3(EDPatWk+15)
+Exp_GR1_Pat05_PD06C_31 DC  F'-1',A(EDPatWk+15)
+Exp_GR1_Pat05_PD06C_64 DC  A(0),A(EDPatWk+15)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat05_PD06D  DS    0X        --
+         DC    X'40'                   Fill character
+         DC    X'4040F0F0F1F2F3F4F5'   First PL5 field; CC=1; sig on
+*                    ^---------------- Sig was on sof R1 not set
+         DC    X'40'                   Field separator; sig off
+         DC    X'40404040F9F8F7F6F5'   Second PL5 field; CC=1; sig on
+*                        ^------------ Final EDMK R1 points here
+Exp_EDNum_Pat05_PD06D_L EQU   *-Exp_EDNum_Pat05_PD06D
+*
+Exp_CC_Pat05_PD06D EQU 1
+*
+Exp_GR1_Pat05_PD06D_24 DC  F'-1',X'FF',AL3(EDPatWk+15)
+Exp_GR1_Pat05_PD06D_31 DC  F'-1',A(EDPatWk+15)
+Exp_GR1_Pat05_PD06D_64 DC  A(0),A(EDPatWk+15)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat05_PD06E  DS    0X        ++
+         DC    X'40'                   Fill character
+         DC    X'4040F0F0F1F2F3F4F5'   First PL5 field; CC=2; sig off
+*                    ^---------------- Sig was on so R1 not set
+         DC    X'40'                   Field separator; sig off
+         DC    X'404040404040404040'   Second PL5 field; CC=0; sig off
+Exp_EDNum_Pat05_PD06E_L EQU   *-Exp_EDNum_Pat05_PD06E
+*
+Exp_CC_Pat05_PD06E EQU 0
+*
+Exp_GR1_Pat05_PD06E_24 DC  F'-1',F'-1'
+Exp_GR1_Pat05_PD06E_31 DC  F'-1',F'-1'
+Exp_GR1_Pat05_PD06E_64 DC  A(0),A(EDPatWk+5)
+*
+*----------------------------------------------------------------------
+*
+*======================================================================
+* Expected values when using Pat06 with PD06A,B,C,D,E
+*======================================================================
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat06_PD06A  DS    0X
+         DC    X'40'                   Fill character
+         DC    X'40404040F1F2F3F4F5'   First PL5 field; CC=2; sig off
+*                        ^------------ EDMK R1 points here
+         DC    X'40'                   Field separator; sig off
+*                                      Early sig start in second field
+         DC    X'4040F0F0F9F8F7F6F5'   Second PL5 field; CC=2; sig off
+*                        ^------------ Early sig start so R1 not set
+Exp_EDNum_Pat06_PD06A_L EQU   *-Exp_EDNum_Pat06_PD06A
+*
+Exp_CC_Pat06_PD06A EQU 2
+*
+Exp_GR1_Pat06_PD06A_24 DC  F'-1',X'FF',AL3(EDPatWk+5)
+Exp_GR1_Pat06_PD06A_31 DC  F'-1',A(EDPatWk+5)
+Exp_GR1_Pat06_PD06A_64 DC  A(0),A(EDPatWk+5)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat06_PD06B  DS    0X        +-
+         DC    X'40'                   Fill character
+         DC    X'40404040F1F2F3F4F5'   First PL5 field; CC=2; sig off
+*                        ^------------ EDMK R1 points here; sig on
+         DC    X'40'                   Field separator; sig off
+         DC    X'4040F0F0F9F8F7F6F5'   Second PL5 field; CC=1; sig on
+*                    ^---------------- Sig on so R1 not set
+Exp_EDNum_Pat06_PD06B_L EQU   *-Exp_EDNum_Pat06_PD06B
+*
+Exp_CC_Pat06_PD06B EQU 1
+*
+Exp_GR1_Pat06_PD06B_24 DC  F'-1',X'FF',AL3(EDPatWk+5)
+Exp_GR1_Pat06_PD06B_31 DC  F'-1',A(EDPatWk+5)
+Exp_GR1_Pat06_PD06B_64 DC  A(0),A(EDPatWk+5)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat06_PD06C  DS    0X        -+
+         DC    X'40'                   Fill character
+         DC    X'40404040F1F2F3F4F5'   First PL5 field; CC=1; sig on
+*                        ^------------ EDMK R1 points here; sig on
+         DC    X'40'                   Field separator; sig off
+         DC    X'4040F0F0F9F8F7F6F5'   Second PL5 field; CC=2; sig off
+*                    ^---------------- Sig on so R1 not set
+Exp_EDNum_Pat06_PD06C_L EQU   *-Exp_EDNum_Pat06_PD06C
+*
+Exp_CC_Pat06_PD06C EQU 2
+*
+Exp_GR1_Pat06_PD06C_24 DC  F'-1',X'FF',AL3(EDPatWk+5)
+Exp_GR1_Pat06_PD06C_31 DC  F'-1',A(EDPatWk+5)
+Exp_GR1_Pat06_PD06C_64 DC  A(0),A(EDPatWk+5)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat06_PD06D  DS    0X        --
+         DC    X'40'                   Fill character
+         DC    X'40404040F1F2F3F4F5'   First PL5 field; CC=1; sig on
+*                        ^------------ EDMK R1 points here; sig on
+         DC    X'40'                   Field separator; sig off
+         DC    X'4040F0F0F9F8F7F6F5'   Second PL5 field; CC=1; sig on
+*                    ^---------------- Sig on so R1 not set
+Exp_EDNum_Pat06_PD06D_L EQU   *-Exp_EDNum_Pat06_PD06D
+*
+Exp_CC_Pat06_PD06D EQU 1
+*
+Exp_GR1_Pat06_PD06D_24 DC  F'-1',X'FF',AL3(EDPatWk+5)
+Exp_GR1_Pat06_PD06D_31 DC  F'-1',A(EDPatWk+5)
+Exp_GR1_Pat06_PD06D_64 DC  A(0),A(EDPatWk+5)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat06_PD06E  DS    0X        ++
+         DC    X'40'                   Fill character
+         DC    X'40404040F1F2F3F4F5'   First PL5 field; CC=2; sig off
+*                        ^------------ EDMK R1 points here
+         DC    X'40'                   Field separator; sig off
+         DC    X'4040F0F0F0F0F0F0F0'   Sig on so R1 not set; 0; CC=0
+Exp_EDNum_Pat06_PD06E_L EQU   *-Exp_EDNum_Pat06_PD06E
+*
+Exp_CC_Pat06_PD06E EQU 0
+*
+Exp_GR1_Pat06_PD06E_24 DC  F'-1',X'FF',AL3(EDPatWk+5)
+Exp_GR1_Pat06_PD06E_31 DC  F'-1',A(EDPatWk+5)
+Exp_GR1_Pat06_PD06E_64 DC  A(0),A(EDPatWk+5)
+*
+*----------------------------------------------------------------------
+*
+*======================================================================
+* Expected values when using Pat07 with PD06A,B,C,D,E
+*======================================================================
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat07_PD06A  DS    0X        ++
+         DC    X'40'                   Fill character
+         DC    X'4040F0F0F1F2F3F4F5'   First PL5 field; CC=2; sig off
+*                    ^---------------- Early sig start; R1 not set
+         DC    X'40'                   Field separator; sig off
+*                                      Early sig start in second field
+         DC    X'4040F0F0F9F8F7F6F5'   Second PL5 field; CC=2; sig off
+*                    ^---------------- Early sig start;so R1 not set
+Exp_EDNum_Pat07_PD06A_L EQU   *-Exp_EDNum_Pat07_PD06A
+*
+Exp_CC_Pat07_PD06A EQU 2
+*
+Exp_GR1_Pat07_PD06A_24   EQU   EDMKPresetGR1
+Exp_GR1_Pat07_PD06A_31   EQU   EDMKPresetGR1
+Exp_GR1_Pat07_PD06A_64   EQU   EDMKPresetGR1
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat07_PD06B  DS    0X        +-
+         DC    X'40'                   Fill character
+         DC    X'4040F0F0F1F2F3F4F5'   First PL5 field; CC=2; sig off
+*                    ^---------------- Early sig start; R1 not set
+         DC    X'40'                   Field separator; sig off
+*                                      Early sig start in second field
+         DC    X'4040F0F0F9F8F7F6F5'   Second PL5 field; CC=1; sig on
+*                    ^---------------- Early sig start; R1 not set
+Exp_EDNum_Pat07_PD06B_L EQU   *-Exp_EDNum_Pat07_PD06B
+*
+Exp_CC_Pat07_PD06B EQU 1
+*
+Exp_GR1_Pat07_PD06B_24   EQU   EDMKPresetGR1
+Exp_GR1_Pat07_PD06B_31   EQU   EDMKPresetGR1
+Exp_GR1_Pat07_PD06B_64   EQU   EDMKPresetGR1
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat07_PD06C  DS    0X        -+
+         DC    X'40'                   Fill character
+         DC    X'4040F0F0F1F2F3F4F5'   First PL5 field; CC=1; sig on
+*                    ^---------------- Early sig start; R1 not set
+         DC    X'40'                   Field separator; sig off
+*                                      Early sig start in second field
+         DC    X'4040F0F0F9F8F7F6F5'   Second PL5 field; CC=2; sig off
+*                    ^---------------- Early sig start; R1 not set
+Exp_EDNum_Pat07_PD06C_L EQU   *-Exp_EDNum_Pat07_PD06C
+*
+Exp_CC_Pat07_PD06C EQU 2
+*
+Exp_GR1_Pat07_PD06C_24   EQU   EDMKPresetGR1
+Exp_GR1_Pat07_PD06C_31   EQU   EDMKPresetGR1
+Exp_GR1_Pat07_PD06C_64   EQU   EDMKPresetGR1
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat07_PD06D  DS    0X        --
+         DC    X'40'                   Fill character
+         DC    X'4040F0F0F1F2F3F4F5'   First PL5 field; CC=1; sig on
+*                    ^---------------- Early sig start; R1 not set
+         DC    X'40'                   Field separator; sig off
+*                                      Early sig start in second field
+         DC    X'4040F0F0F9F8F7F6F5'   Second PL5 field; CC=1; sig on
+*                    ^---------------- Early sig start; R1 not set
+Exp_EDNum_Pat07_PD06D_L EQU   *-Exp_EDNum_Pat07_PD06D
+*
+Exp_CC_Pat07_PD06D EQU 1
+*
+Exp_GR1_Pat07_PD06D_24   EQU   EDMKPresetGR1
+Exp_GR1_Pat07_PD06D_31   EQU   EDMKPresetGR1
+Exp_GR1_Pat07_PD06D_64   EQU   EDMKPresetGR1
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat07_PD06E  DS    0X        ++
+         DC    X'40'                   Fill character
+         DC    X'4040F0F0F1F2F3F4F5'   First PL5 field; CC=2; sig off
+*                    ^---------------- Early sig start; R1 not set
+         DC    X'40'                   Field separator; sig off
+         DC    X'4040F0F0F0F0F0F0F0'   Early sig start; 0; CC=0
+Exp_EDNum_Pat07_PD06E_L EQU   *-Exp_EDNum_Pat07_PD06E
+*
+Exp_CC_Pat07_PD06E EQU 0
+*
+Exp_GR1_Pat07_PD06E_24   EQU   EDMKPresetGR1
+Exp_GR1_Pat07_PD06E_31   EQU   EDMKPresetGR1
+Exp_GR1_Pat07_PD06E_64   EQU   EDMKPresetGR1
+*
+***********************************************************************
+* Group 3: unsigned packed decimal length 4 no field separator
+***********************************************************************
+*
+*=====================================================================
+* Patterns
+*=====================================================================
+*
+*                  1 2 3 4 5 6 7 8
+Pat08    DC    X'402020202020202020'   No significance starter
+Pat09    DC    X'402021202020202020'   Early significance starter
+*
+***********************************************************************
+* Unsigned packed decimal fields used with patterns
+***********************************************************************
+*
+USPD01   DC    X'00000000'
+USPD02   DC    X'00012345'
+*
+***********************************************************************
+* Expected values: EDNum, GR1, CC
+*
+* Make sure Exp_EDNum_Patxx_ values are same length as Patxx
+***********************************************************************
+*
+*----------------------------------------------------------------------
+* Pat08
+*
+Exp_EDNum_Pat08_USPD01   DC    X'404040404040404040'
+Exp_EDNum_Pat08_USPD02   DC    X'40404040F1F2F3F4F5'
+*
+Exp_CC_Pat08_USPD01      EQU   0
+Exp_CC_Pat08_USPD02      EQU   1
+*
+Exp_GR1_Pat08_USPD01_24  EQU   EDMKPresetGR1
+Exp_GR1_Pat08_USPD01_31  EQU   EDMKPresetGR1
+Exp_GR1_Pat08_USPD01_64  EQU   EDMKPresetGR1
+*
+Exp_GR1_Pat08_USPD02_24  DC    F'-1',X'FF',AL3(EDPatWk+4)
+Exp_GR1_Pat08_USPD02_31  DC    F'-1',A(EDPatWk+4)
+Exp_GR1_Pat08_USPD02_64  DC    F'0',A(EDPatWk+4)
+*
+*----------------------------------------------------------------------
+* Pat09
+*
+Exp_EDNum_Pat09_USPD01   DC    X'404040F0F0F0F0F0F0'
+Exp_EDNum_Pat09_USPD02   DC    X'404040F0F1F2F3F4F5'
+*
+Exp_CC_Pat09_USPD01      EQU   0
+Exp_CC_Pat09_USPD02      EQU   1
+*
+Exp_GR1_Pat09_USPD01_24  EQU   EDMKPresetGR1
+Exp_GR1_Pat09_USPD01_31  EQU   EDMKPresetGR1
+Exp_GR1_Pat09_USPD01_64  EQU   EDMKPresetGR1
+*
+Exp_GR1_Pat09_USPD02_24  EQU   EDMKPresetGR1
+Exp_GR1_Pat09_USPD02_31  EQU   EDMKPresetGR1
+Exp_GR1_Pat09_USPD02_64  EQU   EDMKPresetGR1
+*
+***********************************************************************
+* Group 4: unsigned packed decimal length 4; 2 fields; field separator
+***********************************************************************
+*
+*======================================================================
+* Patterns
+*======================================================================
+*
+*----------------------------------------------------------------------
+* Pat10  Two XL4 fields; field separator; no significance starters
+*
+Pat10_A  DS    0X
+         DC    X'40'                   Fill character
+         DC    X'2020202020202020'     First XL4
+         DC    X'22'                   Field separator
+         DC    X'2020202020202020'     Second XL4
+Pat10_B  DS    0X
+Pat10    EQU   Pat10_A,Pat10_B-Pat10_A,C'X'
+*
+*----------------------------------------------------------------------
+* Pat11  Two XL4 fields; field separator; early sig starter in first
+*
+Pat11_A  DS    0X
+         DC    X'40'                   Fill character
+         DC    X'2021202020202020'     First XL4; early sig starter
+         DC    X'22'                   Field separator
+         DC    X'2020202020202020'     Second XL4
+Pat11_B  DS    0X
+Pat11    EQU   Pat11_A,Pat11_B-Pat11_A,C'X'
+*
+*----------------------------------------------------------------------
+* Pat12  Two XL4 fields; field separator; early sig starter in second
+*
+Pat12_A  DS    0X
+         DC    X'40'                   Fill character
+         DC    X'2020202020202020'     First XL4
+         DC    X'22'                   Field separator
+         DC    X'2021202020202020'     Second XL4; early sig starter
+Pat12_B  DS    0X
+Pat12    EQU   Pat12_A,Pat12_B-Pat12_A,C'X'
+*
+*----------------------------------------------------------------------
+* Pat13  Two XL4 fields; field separator; early sig starter in both
+*
+Pat13_A  DS    0X
+         DC    X'40'                   Fill character
+         DC    X'2021202020202020'     First XL4; early sig starter
+         DC    X'22'                   Field separator
+         DC    X'2021202020202020'     Second XL4; early sig starter
+Pat13_B  DS    0X
+Pat13    EQU   Pat13_A,Pat13_B-Pat13_A,C'X'
+*
+*======================================================================
+*
+***********************************************************************
+* Unsigned packed decimal fields
+***********************************************************************
+*
+*        Two XL4 values in each
+*
+*                0 1 2 3 4 5 6 7
+USPD03   DC    X'0000000000000000'
+*                --------========
+*
+*                0 1 2 3 4 5 6 7
+USPD04A  DC    X'0001234500098765'
+USPD04B  DC    X'0001234500000000'
+USPD04C  DC    X'0000000000098765'
+*                --------========
+*
+***********************************************************************
+* Expected values: EDNum, GR1, CC
+*
+* Make sure Exp_EDNum_Patxx_ values are same length as Patxx
+***********************************************************************
+*
+*======================================================================
+* Expected values when using Pat10 with USPD03
+*======================================================================
+*
+Exp_EDNum_Pat10_USPD03  DS    0X
+         DC    X'40'                   Fill character
+         DC    X'404040404040404040'   First XL4 field; 0 len; CC=0
+         DC    X'40'                   Field separator; sig off
+         DC    X'404040404040404040'   Second XL4 field; 0 len; CC=0
+Exp_EDNum_Pat10_USPD03_L EQU   *-Exp_EDNum_Pat10_USPD03
+*
+Exp_CC_Pat10_USPD03   EQU   0
+*
+Exp_GR1_Pat10_USPD03_24   EQU   EDMKPresetGR1
+Exp_GR1_Pat10_USPD03_31   EQU   EDMKPresetGR1
+Exp_GR1_Pat10_USPD03_64   EQU   EDMKPresetGR1
+*
+*======================================================================
+* Expected values when using Pat10 with USPD04A,B,C
+*======================================================================
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat10_USPD04A  DS    0X
+         DC    X'40'                   Fill character; sig off
+         DC    X'404040F1F2F3F4F5'     First XL4 field; CC=1; sig on
+*                      ^-------------- EDMK R1 points here
+         DC    X'40'                   Field separator; sig off
+         DC    X'404040F9F8F7F6F5'     Second XL4 field; CC=1; sig on
+*                      ^-------------- Final EDMK R1 points here
+*
+Exp_EDNum_Pat10_USPD04A_L EQU   *-Exp_EDNum_Pat10_USPD04A
+*
+Exp_CC_Pat10_USPD04A   EQU   1
+*
+Exp_GR1_Pat10_USPD04A_24   DC    F'-1',X'FF',AL3(EDPatWk+13)
+Exp_GR1_Pat10_USPD04A_31   DC    F'-1',A(EDPatWk+13)
+Exp_GR1_Pat10_USPD04A_64   DC    A(0),A(EDPatWk+13)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat10_USPD04B  DS    0X
+         DC    X'40'                   Fill character; sig off
+         DC    X'404040F1F2F3F4F5'     First XL4 field; CC=1; sig on
+*                      ^-------------- EDMK R1 points here
+         DC    X'40'                   Field separator; sig off
+         DC    X'4040404040404040'     Second XL4 field; 0 len; CC=0
+*
+Exp_EDNum_Pat10_USPD04B_L EQU   *-Exp_EDNum_Pat10_USPD04B
+*
+Exp_CC_Pat10_USPD04B   EQU   0
+*
+Exp_GR1_Pat10_USPD04B_24   DC    F'-1',X'FF',AL3(EDPatWk+4)
+Exp_GR1_Pat10_USPD04B_31   DC    F'-1',A(EDPatWk+4)
+Exp_GR1_Pat10_USPD04B_64   DC    A(0),A(EDPatWk+4)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat10_USPD04C  DS    0X
+         DC    X'40'                   Fill character; sig off
+         DC    X'4040404040404040'     First XL4 field;0;CC=0; sig off
+         DC    X'40'                   Field separator; sig off
+         DC    X'404040F9F8F7F6F5'     Second XL4 field;CC=1;sig on
+*                      ^-------------- EDMK R1 points here
+*
+Exp_EDNum_Pat10_USPD04C_L EQU   *-Exp_EDNum_Pat10_USPD04C
+*
+Exp_CC_Pat10_USPD04C   EQU   1
+*
+Exp_GR1_Pat10_USPD04C_24   DC    F'-1',X'FF',AL3(EDPatWk+13)
+Exp_GR1_Pat10_USPD04C_31   DC    F'-1',A(EDPatWk+13)
+Exp_GR1_Pat10_USPD04C_64   DC    A(0),A(EDPatWk+13)
+*
+*======================================================================
+* Expected values when using Pat11 with USPD04A,B,C
+*======================================================================
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat11_USPD04A  DS    0X
+         DC    X'40'                   Fill character; sig off
+         DC    X'4040F0F1F2F3F4F5'     First XL4 field; CC=1; sig on
+*                    ^---------------- Sig on; R1 unchanged
+         DC    X'40'                   Field separator; sig off
+         DC    X'404040F9F8F7F6F5'     Second XL4 field; CC=1; sig on
+*                      ^-------------- Final EDMK R1 points here
+*
+Exp_EDNum_Pat11_USPD04A_L EQU   *-Exp_EDNum_Pat11_USPD04A
+*
+Exp_CC_Pat11_USPD04A   EQU   1
+*
+Exp_GR1_Pat11_USPD04A_24   DC    F'-1',X'FF',AL3(EDPatWk+13)
+Exp_GR1_Pat11_USPD04A_31   DC    F'-1',A(EDPatWk+13)
+Exp_GR1_Pat11_USPD04A_64   DC    A(0),A(EDPatWk+13)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat11_USPD04B  DS    0X
+         DC    X'40'                   Fill character; sig off
+         DC    X'4040F0F1F2F3F4F5'     First XL4 field; CC=1; sig on
+*                    ^---------------- Sig on; R1 unchanged
+         DC    X'40'                   Field separator; sig off
+         DC    X'4040404040404040'     Second XL4 field; 0 len; CC=0
+*
+Exp_EDNum_Pat11_USPD04B_L EQU   *-Exp_EDNum_Pat11_USPD04B
+*
+Exp_CC_Pat11_USPD04B   EQU   0
+*
+Exp_GR1_Pat11_USPD04B_24   EQU   EDMKPresetGR1
+Exp_GR1_Pat11_USPD04B_31   EQU   EDMKPresetGR1
+Exp_GR1_Pat11_USPD04B_64   EQU   EDMKPresetGR1
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat11_USPD04C  DS    0X
+         DC    X'40'                   Fill character; sig off
+         DC    X'4040F0F0F0F0F0F0'     First XL4 field;0;CC=0; sig on
+         DC    X'40'                   Field separator; sig off
+         DC    X'404040F9F8F7F6F5'     Second XL4 field;CC=1;sig on
+*                      ^-------------- EDMK R1 points here
+*
+Exp_EDNum_Pat11_USPD04C_L EQU   *-Exp_EDNum_Pat11_USPD04C
+*
+Exp_CC_Pat11_USPD04C   EQU   1
+*
+Exp_GR1_Pat11_USPD04C_24   DC    F'-1',X'FF',AL3(EDPatWk+13)
+Exp_GR1_Pat11_USPD04C_31   DC    F'-1',A(EDPatWk+13)
+Exp_GR1_Pat11_USPD04C_64   DC    A(0),A(EDPatWk+13)
+*
+*======================================================================
+* Expected values when using Pat12 with USPD04A,B,C
+*======================================================================
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat12_USPD04A  DS    0X
+         DC    X'40'                   Fill character; sig off
+         DC    X'404040F1F2F3F4F5'     First XL4 field; CC=1; sig on
+*                      ^-------------- EDMK R1 points here
+         DC    X'40'                   Field separator; sig off
+         DC    X'4040F0F9F8F7F6F5'     Second XL4 field; CC=1; sig on
+*                    ^---------------- Sig on; R1 unchanged
+*
+Exp_EDNum_Pat12_USPD04A_L EQU   *-Exp_EDNum_Pat12_USPD04A
+*
+Exp_CC_Pat12_USPD04A   EQU   1
+*
+Exp_GR1_Pat12_USPD04A_24   DC    F'-1',X'FF',AL3(EDPatWk+4)
+Exp_GR1_Pat12_USPD04A_31   DC    F'-1',A(EDPatWk+4)
+Exp_GR1_Pat12_USPD04A_64   DC    A(0),A(EDPatWk+4)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat12_USPD04B  DS    0X
+         DC    X'40'                   Fill character; sig off
+         DC    X'404040F1F2F3F4F5'     First XL4 field; CC=1; sig on
+*                      ^-------------- EDMK R1 points here
+         DC    X'40'                   Field separator; sig off
+         DC    X'4040F0F0F0F0F0F0'     Second XL4 field; 0; CC=0;sig on
+*                    ^---------------- Sig on; R1 unchanged
+*
+Exp_EDNum_Pat12_USPD04B_L EQU   *-Exp_EDNum_Pat12_USPD04B
+*
+Exp_CC_Pat12_USPD04B   EQU   0
+*
+Exp_GR1_Pat12_USPD04B_24   DC    F'-1',X'FF',AL3(EDPatWk+4)
+Exp_GR1_Pat12_USPD04B_31   DC    F'-1',A(EDPatWk+4)
+Exp_GR1_Pat12_USPD04B_64   DC    A(0),A(EDPatWk+4)
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat12_USPD04C  DS    0X
+         DC    X'40'               Fill character; sig off
+         DC    X'4040404040404040' First XL4 field;len 0;CC=0;sig off
+         DC    X'40'               Field separator; sig off
+         DC    X'4040F0F9F8F7F6F5' Second XL4 field;CC=1;sig on
+*                    ^------------ Sig on; R1 unchanged
+*
+Exp_EDNum_Pat12_USPD04C_L EQU   *-Exp_EDNum_Pat12_USPD04C
+*
+Exp_CC_Pat12_USPD04C   EQU   1
+*
+Exp_GR1_Pat12_USPD04C_24   EQU   EDMKPresetGR1
+Exp_GR1_Pat12_USPD04C_31   EQU   EDMKPresetGR1
+Exp_GR1_Pat12_USPD04C_64   EQU   EDMKPresetGR1
+*
+*======================================================================
+* Expected values when using Pat13 with USPD04A,B,C
+*======================================================================
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat13_USPD04A  DS    0X
+         DC    X'40'                   Fill character; sig off
+         DC    X'4040F0F1F2F3F4F5'     First XL4 field; CC=1; sig on
+*                    ^---------------- Sig on; R1 unchanged
+         DC    X'40'                   Field separator; sig off
+         DC    X'4040F0F9F8F7F6F5'     Second XL4 field; CC=1; sig on
+*                    ^---------------- Sig on; R1 unchanged
+*
+Exp_EDNum_Pat13_USPD04A_L EQU   *-Exp_EDNum_Pat13_USPD04A
+*
+Exp_CC_Pat13_USPD04A   EQU   1
+*
+Exp_GR1_Pat13_USPD04A_24   EQU   EDMKPresetGR1
+Exp_GR1_Pat13_USPD04A_31   EQU   EDMKPresetGR1
+Exp_GR1_Pat13_USPD04A_64   EQU   EDMKPresetGR1
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat13_USPD04B  DS    0X
+         DC    X'40'                   Fill character; sig off
+         DC    X'4040F0F1F2F3F4F5'     First XL4 field; CC=1; sig on
+*                    ^---------------- Sig on; R1 unchanged
+         DC    X'40'                   Field separator; sig off
+         DC    X'4040F0F0F0F0F0F0'     Second XL4 field; 0 len; CC=0
+*                    ^---------------- Sig on; R1 unchanged
+*
+Exp_EDNum_Pat13_USPD04B_L EQU   *-Exp_EDNum_Pat13_USPD04B
+*
+Exp_CC_Pat13_USPD04B   EQU   0
+*
+Exp_GR1_Pat13_USPD04B_24   EQU   EDMKPresetGR1
+Exp_GR1_Pat13_USPD04B_31   EQU   EDMKPresetGR1
+Exp_GR1_Pat13_USPD04B_64   EQU   EDMKPresetGR1
+*
+*----------------------------------------------------------------------
+Exp_EDNum_Pat13_USPD04C  DS    0X
+         DC    X'40'                   Fill character; sig off
+         DC    X'4040F0F0F0F0F0F0'     First XL4 field;0;CC=0; sig on
+*                    ^---------------- Sig on; R1 unchanged
+         DC    X'40'                   Field separator; sig off
+         DC    X'4040F0F9F8F7F6F5'     Second XL4 field;CC=1;sig on
+*                    ^---------------- Sig on; R1 unchanged
+*
+Exp_EDNum_Pat13_USPD04C_L EQU   *-Exp_EDNum_Pat13_USPD04C
+*
+Exp_CC_Pat13_USPD04C   EQU   1
+*
+Exp_GR1_Pat13_USPD04C_24   EQU   EDMKPresetGR1
+Exp_GR1_Pat13_USPD04C_31   EQU   EDMKPresetGR1
+Exp_GR1_Pat13_USPD04C_64   EQU   EDMKPresetGR1
+*
+*----------------------------------------------------------------------
+*
+***********************************************************************
+* Group 5: Pattern for 2 PL3; used in ED/EDMK S0C7 tests
+***********************************************************************
+*
+Pat9     DC    X'402020202020222020202020' Two PL3 with field sep
+*
+PDec9IA  DC    X'A0000C00000C'     1st invalid PD; 2nd valid PD
+PDec9IB  DC    X'00000C00A00C'     1st valid PD; 2nd invalid PD
+PDec9IC  DC    X'00001C00A00C'     1st valid PD; 2nd invalid PD
+*
+*----------------------------------------------------------------------
+*
+*        Pad at end to avoid S0C4
+*
+         DS    0D
+         DC    XL8'00'
+*
+***********************************************************************
+*        DSECTs
+***********************************************************************
+*
+***********************************************************************
+*        Test case data for TRT, TRTR tests
+***********************************************************************
+*
+TTRTDS   DSECT
+TRTStorA DS    A                   A(storage to test)
+TRTStorL DS    F                   Length of storage to test
+TRTTTblA DS    A                   A(256-byte translate table)
+TRTPrR1A DS    A                   A(Preset GR1 for test)
+TRTECC   DS    F                   Expected condition code
+TRTER2A  DS    A                   A(Expected GR2 value)
+***********************************************************************
+*        Three expected GR1 values
+*        1. TRT/TRTR 24-bit addressing test
+*        2. TRT/TRTR 31-bit addressing test
+*        3. TRT/TRTR 64-bit addressing test
+***********************************************************************
+TRTEGR1A  DS   0A                  A(expected GR1 values)
+TRTE24R1A DS   A                   A(Expected GR1; 24-bit test)
+TRTE31R1A DS   A                   A(Expected GR1; 31-bit test)
+TRTE64R1A DS   A                   A(Expected GR1; 64-bit test)
+TTRTDSLN  EQU  *-TTRTDS            Length of test case data
+*
+***********************************************************************
+*        Test case data for ED, EDMK tests
+***********************************************************************
+*
+TEDDS    DSECT
+EDPatA   DS    A                   A(edit pattern)
+EDPatL   DS    F                   Length of edit pattern
+EDPDAA   DS    A                   A(packed decimal area)
+EDPDAL   DS    F                   Length of packed decimal area
+EDECC    DS    F                   Expected condition code
+EDENumA  DS    A                   A(expected result; same len as pat)
+***********************************************************************
+*        Three expected GR1 values (EDMK only)
+*        1. EDMK 24-bit addressing test
+*        2. EDMK 31-bit addressing test
+*        3. EDMK 64-bit addressing test
+***********************************************************************
+EDEGR1A  DS    0A                  A(expected GR1 values)
+EDE24R1A DS    A                   A(Expected GR1; 24-bit test)
+EDE31R1A DS    A                   A(Expected GR1; 31-bit test)
+EDE64R1A DS    A                   A(Expected GR1; 64-bit test)
+TEDDSLN  EQU   *-TEDDS             Length of test case data
+*
+***********************************************************************
+*        EPIE
+***********************************************************************
+*
+         IHAEPIE ,
+*
+         END   IS596

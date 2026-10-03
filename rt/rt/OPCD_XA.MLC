@@ -110,7 +110,7 @@ OPCD_XA  RMODE 24
          USING OPCD_XA,R15             * Establish addressability
          B     TESTOPC2                * Skip header data
          DC    AL1(TESTOPC2-*),C'OPCD_XA &SYSDATE &SYSTIME'
-TESTOPC2 EQU   *
+TESTOPC2 DS    0H
          STM   R14,R12,12(R13)         * Save GPRs
          LR    R12,R15                 * Copy base address
          LR    R2,R1                   * Copy ptr to parm string
@@ -259,7 +259,7 @@ BASSM64A SAM64                         * Back to amode64
          DC    X'0000'                 *
 BASSM64B SAM64                         * Back to amode64
          XGR   R15,R15                 *
-         LA    R14,BASSM64C+1          * To Amode 64
+         LA    R15,BASSM64C+1          * To Amode 64
          BASSM R14,R15                 * 0CEF
          DC    X'0000'                 *
 BASSM64C SAM24                         * From amode64 to amode24

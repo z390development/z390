@@ -1,0 +1,23 @@
+         DEFINE CATALOG,NAME=BLDCAT1
+*
+* FIXED ESDS
+*
+         DEFINE CLUSTER,                                               X
+               NAME=ESDS_F,                                            X
+               REUSE=YES,                                              X
+               RECORDSIZE=50,                                          X
+               INDEX=NONINDEXED,                                       X
+               DATABLOCKSIZE=4K
+*
+* VARIABLE ESDS
+*
+         DEFINE CLUSTER,                                               X
+               NAME=ESDS_V,                                            X
+               REUSE=YES,                                              X
+               RECORDSIZE=(1,26),                                      X
+               INDEX=NONINDEXED,                                       X
+               DATABLOCKSIZE=4K,                                       X
+               DATAFREESPACE=(00,20)
+*
+         DEFINE END
+         END

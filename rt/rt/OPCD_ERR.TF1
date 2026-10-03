@@ -1,0 +1,61 @@
+OPCD_ERR  AZ390 AZ390E error 122     (1/142)145            SPM   R4,R5                   ** too many operands
+OPCD_ERR  AZ390 AZ390I extra parameter found - ,R5                   ** too many operands
+OPCD_ERR  AZ390 AZ390E error  35     (1/143)146            SPM   ,R5                     ** operand 1 missing
+OPCD_ERR  AZ390 AZ390I expression parsing error
+OPCD_ERR  AZ390 AZ390E error  35     (1/144)147            SPM   ,                       ** operand 1 missing
+OPCD_ERR  AZ390 AZ390I expression parsing error
+OPCD_ERR  AZ390 AZ390E error  50     (1/146)148            BALR  R14                     ** operand 2 missing
+OPCD_ERR  AZ390 AZ390I missing operand comma - R14
+OPCD_ERR  AZ390 AZ390E error  35     (1/147)149            BALR  ,R14                    ** operand 1 missing
+OPCD_ERR  AZ390 AZ390I expression parsing error
+OPCD_ERR  AZ390 AZ390E error  35     (1/148)150            BALR  ,                       ** operands 1 and 2 missing
+OPCD_ERR  AZ390 AZ390I expression parsing error
+OPCD_ERR  AZ390 AZ390E error  32     (1/149)151            BALR 
+OPCD_ERR  AZ390 AZ390I invalid absolute value
+OPCD_ERR  AZ390 AZ390E error 122     (1/150)152            BALR  R14,R15,R4              ** too many operands
+OPCD_ERR  AZ390 AZ390I extra parameter found - ,R4              ** too many operands
+OPCD_ERR  AZ390 AZ390E error  56     (1/152)153            MR    R5,R8                   ** operand 1 odd
+OPCD_ERR  AZ390 AZ390I incorrect register specification - 5
+OPCD_ERR  AZ390 AZ390E error  56     (1/153)154            DR    R5,R6                   ** operand 1 odd
+OPCD_ERR  AZ390 AZ390I incorrect register specification - 5
+OPCD_ERR  AZ390 AZ390E error  35     (1/160)160            BCR   ,R1                     ** First operand missing
+OPCD_ERR  AZ390 AZ390I expression parsing error
+OPCD_ERR  AZ390 AZ390E error 122     (1/161)161            BCR   15,R2,2                 ** Too many operands
+OPCD_ERR  AZ390 AZ390I extra parameter found - ,2                 ** Too many operands
+OPCD_ERR  AZ390 AZ390E error  29     (1/163)163            BNLER R5                      ** Not supported 0735
+OPCD_ERR  AZ390 AZ390I ERRSUM missing macro = BNLER
+OPCD_ERR  AZ390 AZ390E error  29     (1/164)164            BNHER R5                      ** Not supported 0755
+OPCD_ERR  AZ390 AZ390I ERRSUM missing macro = BNHER
+OPCD_ERR  AZ390 AZ390E error  29     (1/165)165            BLHR  R5                      ** Not supported 0765
+OPCD_ERR  AZ390 AZ390I ERRSUM missing macro = BLHR
+OPCD_ERR  AZ390 AZ390E error  29     (1/166)166            BNLHR R5                      ** Not supported 0795
+OPCD_ERR  AZ390 AZ390I ERRSUM missing macro = BNLHR
+OPCD_ERR  AZ390 AZ390E error  29     (1/167)167            BHER  R5                      ** Not supported 07A5
+OPCD_ERR  AZ390 AZ390I ERRSUM missing macro = BHER
+OPCD_ERR  AZ390 AZ390E error  29     (1/168)168            BLER  R5                      ** Not supported 07C5
+OPCD_ERR  AZ390 AZ390I ERRSUM missing macro = BLER
+OPCD_ERR  AZ390 AZ390E error 122     (1/175)174            SPM   R5,5                    ** Too many operands
+OPCD_ERR  AZ390 AZ390I extra parameter found - ,5                    ** Too many operands
+OPCD_ERR  AZ390 AZ390E error  35     (1/176)175            SPM   ,                       * Missing operand
+OPCD_ERR  AZ390 AZ390I expression parsing error
+OPCD_ERR  AZ390 AZ390E error  56     (1/183)181            MVCL  R1,R4                   ** operand 1 odd
+OPCD_ERR  AZ390 AZ390I incorrect register specification - 1
+OPCD_ERR  AZ390 AZ390E error  56     (1/184)182            MVCL  R2,R3                   ** operand 2 odd
+OPCD_ERR  AZ390 AZ390I incorrect register specification - 3
+OPCD_ERR  AZ390 AZ390E error  56     (1/185)183            CLCL  R1,R4                   ** operand1 odd
+OPCD_ERR  AZ390 AZ390I incorrect register specification - 1
+OPCD_ERR  AZ390 AZ390E error  56     (1/186)184            CLCL  R2,R3                   ** operand2 odd
+OPCD_ERR  AZ390 AZ390I incorrect register specification - 3
+OPCD_ERR  AZ390 AZ390E ERRSUM Critical Error Summary Option
+OPCD_ERR  AZ390 AZ390E ERRSUM Fix and repeat until all nested errors resolved
+OPCD_ERR  AZ390 AZ390E ERRSUM missing macro =BNLER
+OPCD_ERR  AZ390 AZ390E ERRSUM missing macro =BNHER
+OPCD_ERR  AZ390 AZ390E ERRSUM missing macro =BLHR
+OPCD_ERR  AZ390 AZ390E ERRSUM missing macro =BNLHR
+OPCD_ERR  AZ390 AZ390E ERRSUM missing macro =BHER
+OPCD_ERR  AZ390 AZ390E ERRSUM missing macro =BLER
+OPCD_ERR  AZ390 AZ390E ERRSUM total missing   copy   files =0
+OPCD_ERR  AZ390 AZ390E ERRSUM total missing   macro  files =6
+OPCD_ERR  AZ390 AZ390E ERRSUM total undefined symbols      =0
+OPCD_ERR  AZ390 AZ390E ERRSUM total mz390 errors    = 0
+OPCD_ERR  AZ390 AZ390E ERRSUM total az390 errors    = 24

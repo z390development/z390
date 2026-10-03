@@ -1,4 +1,4 @@
-         TITLE 'Test SLA, SLAK, SLDA, and SLAG Instructions'
+1         TITLE 'Test SLA, SLAK, SLDA, and SLAG Instructions'
 ***********************************************************************
 * Start create : 02-28-2017
 * 1st delivery :
@@ -47,7 +47,7 @@ RPI20090 DS    0H
          ST    R1,WAPARM@              Save pointer to parameter list
          STMH  R12,R12,WAR12H          Save high half of R12
          LLGTR R12,R12                 Ensure high half of R12 is zero
-         MVC   WAEYE,=CL8'RPI2009E'    Set eyecatcher
+*        MVC   WAEYE,=CL8'RPI2009E'    Set eyecatcher
 *
 ***********************************************************************
 *
@@ -404,6 +404,8 @@ EXIT     DS    0H
 *
          LTORG
 *
+         DC    8X'00'              Filler - Required to match addresses+
+                                       in the associated RT script
 ESPARM   DS    0A                  Parameter list for ESPIE exit
          DC    A(ESRET@)           A(Return address for ESPIE)
          DC    A(ESCOMP)           Completion code from ESPIE exit

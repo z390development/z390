@@ -1,4 +1,4 @@
-OPCDX_UNI TITLE 'Reference program to test z390-only opcode generation'
+OPCD_ZZZ TITLE 'Reference program to test z390-only opcode generation'
 ***********************************************************************
 * Start create : 18-10-2014
 * 1st delivery :
@@ -103,19 +103,19 @@ WORKAREA_LEN EQU *-WORKAREA
 * Program entry and linkage
 *
 ***********************************************************************
-OPCDX_UNI RSECT ,                       *
-OPCDX_UNI AMODE 31
-OPCDX_UNI RMODE ANY
+OPCD_ZZZ RSECT ,                       *
+OPCD_ZZZ AMODE 31
+OPCD_ZZZ RMODE ANY
 ***********************************************************************
-         USING OPCDX_UNI,R15            * Establish addressability
+         USING OPCD_ZZZ,R15            * Establish addressability
          B     TESTOPC2                * Skip header data
-         DC    AL1(TESTOPC2-*),C'OPCDX_UNI &SYSDATE &SYSTIME'
-TESTOPC2 EQU   *
+         DC    AL1(TESTOPC2-*),C'OPCD_ZZZ &SYSDATE &SYSTIME'
+TESTOPC2 DS    0H
          STM   R14,R12,12(R13)         * Save GPRs
          LR    R12,R15                 * Copy base address
          LR    R2,R1                   * Copy ptr to parm string
          DROP  R15                     * No longer needed
-         USING OPCDX_UNI,R12            * Re-establish addressability
+         USING OPCD_ZZZ,R12            * Re-establish addressability
          LA    R11,WORKAREA_LEN        * Size of req'd workarea
          GETMAIN R,LV=(R11),LOC=BELOW  * Acquire working storage
          ST    R1,8(,R13)              * Set ptr to new savearea
@@ -131,8 +131,8 @@ TESTOPC2 EQU   *
 * Set up working storage areas
 *
 ***********************************************************************
-         MVC   WAEYE,=CL8'OPCDX_UNI'    * Init Eye-catcher
-         B     EXIT                    * Never execute code below
+         MVC   WAEYE,=CL8'OPCD_ZZZ'     * Init Eye-catcher
+         B     EXIT                     * Never execute code below
 
 ***********************************************************************
 *

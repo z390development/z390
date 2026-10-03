@@ -7,7 +7,7 @@ cd $(dirname $0)    # set to directory of script
 cd ..               # go to root
 
 sysmac='sysmac(mac)'
-syscpy='syscpy(mac+zcobol/lib)'
+syscpy='syscpy(mac+zcobol/cpy)'
 sys390='sys390(zcobol/lib)'
 
 bash/asm zcobol/lib/ABORT $sysmac $syscpy $1 $2 $3 $4 $5 $6 $7 $8 $9

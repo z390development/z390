@@ -58,7 +58,7 @@ TESTOPC2 EQU   *
 * Set up working storage areas
 *
 ***********************************************************************
-         MVC   WAEYE,=CL8'RPI1540 '    * Init Eye-catcher
+*        MVC   WAEYE,=CL8'RPI1540 '    * Init Eye-catcher
 
 ***********************************************************************
 *

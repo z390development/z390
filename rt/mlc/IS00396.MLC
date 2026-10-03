@@ -1,3 +1,7 @@
+*
+* Test program supplied by Lin Lyons
+* See Issue #396 for details
+*
 TESTB    START 0
          USING *,13
          STM   14,12,12(13)

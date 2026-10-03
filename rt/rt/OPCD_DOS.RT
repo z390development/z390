@@ -1,8 +1,8 @@
 *
 * skip intro
-t15
+t16
 *
-* SPM ######################################## (@15, t14)
+* SPM ######################################## (@16, t14)
 t1
   v * 2      = x'0450'
 t1
@@ -31,131 +31,131 @@ t3
   v psw.cc   = x'03'
   v psw.mask = x'06'
 *
-* BALR ######################################## (@29, t58)
+* BALR ######################################## (@30, t58)
 * ---------------------------- amode24 (t11)
 t4
   v * 2      = x'05E0'
 t1
-  v psw.addr = x'008086' 3             * Branch not taken
-  v 14r      = x'F1F2F3F456008086'
+  v psw.addr = x'00808C' 3             * Branch not taken
+  v 14r      = x'F1F2F3F45600808C'
 t1
   v * 2      = x'0500'
 t1
-  v psw.addr = x'00808A' 3             * Branch not taken
-  v 0r       = x'F4F4F4F44600808A'
+  v psw.addr = x'008090' 3             * Branch not taken
+  v 0r       = x'F4F4F4F446008090'
 t1
   v * 2      = x'05EF'
 t1
-  v psw.addr = x'008094' 3             * Branch taken
-  v 14r      = x'F1F2F3F466008090'
+  v psw.addr = x'00809A' 3             * Branch taken
+  v 14r      = x'F1F2F3F466008096'
 t1
   v * 2      = x'0555'
-  v 5r       = x'F4F4F4F40000809C'
+  v 5r       = x'F4F4F4F4000080A2'
 t1
-  v psw.addr = x'00809C' 3             * Branch taken
-  v 5r       = x'F4F4F4F46600809A'
+  v psw.addr = x'0080A2' 3             * Branch taken
+  v 5r       = x'F4F4F4F4660080A0'
 * ---------------------------- EX BALR (@11, t11)
 t4
-  v psw.addr = x'008092' 3             * Branch taken
-  v 14r      = x'F1F2F3F4A60080A8'
+  v psw.addr = x'008098' 3             * Branch taken
+  v 14r      = x'F1F2F3F4A60080AE'
 t6
-  v psw.addr = x'008092' 3             * Branch taken
-  v 14r      = x'F1F2F3F4F60080B6'
+  v psw.addr = x'008098' 3             * Branch taken
+  v 14r      = x'F1F2F3F4F60080BC'
 t1
 * ---------------------------- amode31 (@22, t8)
 t3
   v * 2      = x'0540'
 t1
-  v psw.addr = x'000080C4' 4           * Branch not taken
-  v 4r       = x'F1F2F3F4800080C4'
+  v psw.addr = x'000080CA' 4           * Branch not taken
+  v 4r       = x'F1F2F3F4800080CA'
   v * 2      = x'0500'
 t1
-  v psw.addr = x'000080C6' 4           * no branch
-  v 0r       = x'F4F4F4F4800080C6'
+  v psw.addr = x'000080CC' 4           * no branch
+  v 0r       = x'F4F4F4F4800080CC'
   v * 2      = x'0545'
 t1
-  v psw.addr = x'000080CA' 4           * branch taken
-  v 4r       = x'F1F2F3F4800080C8'
+  v psw.addr = x'000080D0' 4           * branch taken
+  v 4r       = x'F1F2F3F4800080CE'
 t1
-  v 5r       = x'F4F4F4F4000080D2'
+  v 5r       = x'F4F4F4F4000080D8'
   v * 2      = x'0555'
 t1
-  v psw.addr = x'000080D2' 4           * branch taken
-  v 5r       = x'F4F4F4F4800080D0'
+  v psw.addr = x'000080D8' 4           * branch taken
+  v 5r       = x'F4F4F4F4800080D6'
 * ---------------------------- EX BALR (@30, t9)
 t4
-  v psw.addr = x'00008092' 4           * branch taken
-  v 14r      = x'F1F2F3F4800080DE'
+  v psw.addr = x'00008098' 4           * branch taken
+  v 14r      = x'F1F2F3F4800080E4'
 t4
-  v psw.addr = x'00008092' 4           * branch taken
-  v14r       = x'F1F2F3F4800080E6'
+  v psw.addr = x'00008098' 4           * branch taken
+  v14r       = x'F1F2F3F4800080EC'
 t1
 * ---------------------------- amode64 (@39, t9)
 t3
   v * 2 = x'05E0'
 t1
-  v psw.addr = x'00000000000080F4' 8   * no branch
-  v 14r      = x'00000000000080F4'
+  v psw.addr = x'00000000000080FA' 8   * no branch
+  v 14r      = x'00000000000080FA'
   v * 2      = x'0500'
 t1
-  v psw.addr = x'00000000000080F6' 8   * no branch
-  v 0r       = x'00000000000080F6'
+  v psw.addr = x'00000000000080FC' 8   * no branch
+  v 0r       = x'00000000000080FC'
   v * 2      = x'05EF'
 t1
-  v psw.addr = x'00000000000080FA' 8   * branch taken
-  v 14r      = x'00000000000080F8'
+  v psw.addr = x'0000000000008100' 8   * branch taken
+  v 14r      = x'00000000000080FE'
 t2
   v * 2      = x'0555'
-  v 5r       = x'0000000000008106'
+  v 5r       = x'000000000000810C'
 t1
-  v psw.addr = x'0000000000008106' 8   * branch taken
-  v 5r       = x'0000000000008104'
+  v psw.addr = x'000000000000810C' 8   * branch taken
+  v 5r       = x'000000000000810A'
 * ---------------------------- EX BALR (@48, t10)
 t4
-  v psw.addr = x'0000000000008092' 8   * branch taken
-  v 14r      = x'0000000000008112'
+  v psw.addr = x'0000000000008098' 8   * branch taken
+  v 14r      = x'0000000000008118'
 t4
-  v psw.addr = x'0000000000008092' 8   * branch taken
-  v 14r      = x'000000000000811A'
+  v psw.addr = x'0000000000008098' 8   * branch taken
+  v 14r      = x'0000000000008120'
 t2
 *
-* BCTR ######################################## (@87, t22)
+* BCTR ######################################## (@88, t22)
 * ---------------------------- amode24 (t9)
 t1
   v * 2      = X'0660'
 t1
-  v psw.addr = X'008124' 3             * no branch
+  v psw.addr = X'00812A' 3             * no branch
   v 6r       = X'1A1B1C1D00000002'
 t2
   v * 2      = X'0667'
   v psw.cc   = X'01'
 t1
-  V psw.addr = X'00812A' 3             * branch taken
+  v psw.addr = X'008130' 3             * branch taken
   v 6r       = X'1A1B1C1D00000001'
 t1
-  v psw.addr = X'00812C' 3             * branch not taken
+  v psw.addr = X'008132' 3             * branch not taken
   v psw.cc   = X'01' 1                 * should be unchanged
   v 6r       = X'1A1B1C1D00000000'
 t1
   v * 2      = X'0667'
 t1
-  v psw.addr = X'008136' 3             * branch taken
+  v psw.addr = X'00813C' 3             * branch taken
   v 6r       = X'1A1B1C1DFFFFFFFF'
 * ---------------------------- EX BCTR (@9, t13)
 t4
-  v psw.addr = X'008142' 3             * no branch
+  v psw.addr = X'008148' 3             * no branch
   v 6r       = X'1A1B1C1D00000002'
 t4
-  v psw.addr = X'00814A' 3             * branch taken
+  v psw.addr = X'008150' 3             * branch taken
   v 6r       = X'1A1B1C1D00000001'
 t2
-  v psw.addr = X'008150' 3             * branch taken
+  v psw.addr = X'008156' 3             * branch taken
   v 6r       = X'1A1B1C1D00000000'
 t3
-  v psw.addr = X'00815A' 3             * branch not taken
+  v psw.addr = X'008160' 3             * branch not taken
   v 6r       = X'1A1B1C1DFFFFFFFF'
 * ---------------------------- amode31 (@21, t?)
-* BCR ######################################## (@101, t37)
+* BCR ######################################## (@102, t37)
 t2
 * 07D4
 l * 2
@@ -276,3 +276,4 @@ psw
 * 0A0A
 l *+4 2
 t1
+z

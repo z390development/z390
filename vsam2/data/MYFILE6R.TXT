@@ -1,0 +1,40 @@
+0000000002The Tempest
+0000000003The Two Gentlemen of Verona
+0000000006Merry Wives of Windsor
+0000000011Twelfth Night
+0000000012Measure for Measure
+0000000015Much Ado About Nothing
+0000000016A Midsummer Night's Dream
+0000000021Love's Labours Lost
+0000000029The Merchant of Venice
+0000000034As You Like It
+0000000035All's Well That Ends Well
+0000000039The Taming of the Shrew
+0000000040The Winter's Tale
+0000000043The Comedy of Errors
+0000000054King John
+0000000055Richard II
+0000000057First Part of Henry IV
+0000000074Second Part of Henry IV
+0000000078Henry V
+0000000079First Part of Henry VI
+0000000084Second Part of Henry VI
+0000000095Third Part of Henry VI
+0000000102Richard III
+0000000105Henry VIII
+0000000116Troilus and Cressida
+0000000129Timon of Athens
+0000000130Coriolanus
+0000000138Julius Caesar
+0000000139Antony and Cleopatra
+0000000140Cymbeline
+0000000143Titus Andronicus
+0000000147Pericles
+0000000161King Lear
+0000000166Romeo and Juliet
+0000000169Macbeth
+0000000171Hamlet
+0000000177Othello
+0000000181Venus and Adonis
+0000000189The Rape of Lucrece
+

@@ -6,13 +6,26 @@ RPI1641  TITLE 'Test system macro variable for zVSAM version'
 * Programmer   : AF Kornelis
 * Purpose      : For testing
 ***********************************************************************
+*
+* Usage Note:
+* When running this program use option zVSAM(n) to test option handling
+*      and the passing of the parameter value or its default.
+* Consider to add a few tests with invalid values to validate error
+*      handling
+*
+***********************************************************************
+* 07/04/26 AFK Add WTO to display the zVSAM setting
+***********************************************************************
 
 RPI1641  RSECT ,                       *
 RPI1641  AMODE 24
 RPI1641  RMODE 24
 ***********************************************************************
          GBLC  &SYSASM
-         MNOTE *,'zVSAM version &SYSASM'
+         MNOTE *,'zVSAM version &SYSZVSAM in &SYSASM'
+*
+         WTO   'zVSAM version &SYSZVSAM in &SYSASM'
+*
          XR    15,15                   * Set RC=0
          BR    14                      * Return
          END

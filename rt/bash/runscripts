@@ -1,0 +1,233 @@
+#!/bin/bash
+
+# runscripts: run scripted regression tests
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
+
+sysmac='sysmac(mac)'
+optable='optable(z390)'
+
+# -- test generated Q command when EOF is reached
+rtscript='rt/rt/BATCH.RT'
+export rtscript
+bash/asmlg demo/HELLO noloadhigh $sysmac 'test(rtscript)'          || test $? -eq 16
+
+# -- test normal termination when z command is executed
+rtscript='rt/rt/BATCHZ.RT'
+export rtscript
+bash/asmlg demo/HELLO noloadhigh $sysmac 'test(rtscript)'
+
+# -- other test scripts
+rtscript='rt/rt/OPCD_DOS.RT'
+export rtscript
+opt='@'rt/rt/OPCD_DOS.OPT
+bash/asmlg rt/rt/OPCD_DOS noloadhigh $sysmac $opt 'test(rtscript)'
+
+opt='@'rt/rt/OPCD_ERR.OPT
+bash/asm   rt/rt/OPCD_ERR noloadhigh $sysmac $opt                || test $? -eq 12
+# Compare AZ390 diagnostic lines only (filter out MZ390 framing + FID= path)
+grep -v 'MZ390\|FID=' rt/rt/OPCD_ERR.ERR | diff - rt/rt/OPCD_ERR.TF1 || exit 1
+
+opt='@'rt/rt/OPCD_UNI.OPT
+bash/asml  rt/rt/OPCD_UNI noloadhigh $sysmac $opt
+
+rtscript='rt/rt/OPCD_XA.RT'
+export rtscript
+opt='@'rt/rt/OPCD_XA.OPT
+bash/asmlg rt/rt/OPCD_XA noloadhigh $sysmac $opt 'test(rtscript)'
+
+opt='@'rt/rt/OPCD_ZZZ.OPT
+bash/asmlg rt/rt/OPCD_ZZZ noloadhigh $sysmac $opt
+
+rtscript='rt/rt/RPI1540.RT'
+export rtscript
+bash/asmlg rt/rt/RPI1540  noloadhigh $sysmac      'test(rtscript)'
+
+rtscript='rt/rt/RPI1544.RT'
+export rtscript
+bash/asmlg rt/rt/RPI1544  noloadhigh $sysmac      'test(rtscript)'
+
+bash/asmlg rt/rt/RPI1609  noloadhigh $sysmac                     || test $? -eq 12
+bash/asmlg rt/rt/RPI1625  noloadhigh $sysmac                     || test $? -eq 12
+bash/asmlg rt/rt/RPI1641  noloadhigh $sysmac 'zvsam(2)'
+grep '^zVSAM version 2 in z390$' rt/rt/RPI1641.LOG || exit 1
+
+rtscript='rt/rt/RPI2000.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2000  noloadhigh $sysmac 'test(rtscript)'
+
+rtscript='rt/rt/RPI2001A.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2001A noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2001B.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2001B noloadhigh $sysmac 'test(rtscript)'
+
+rtscript='rt/rt/RPI2002A.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2002A noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2002B.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2002B noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2002C.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2002C noloadhigh $sysmac 'test(rtscript)'
+
+rtscript='rt/rt/RPI2003.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2003 noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2004.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2004 noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2005.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2005 noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2006.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2006 noloadhigh $sysmac 'mem(32)' 'test(rtscript)'
+rtscript='rt/rt/RPI2007.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2007 noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2008.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2008 noloadhigh $sysmac 'test(rtscript)'
+
+bash/asml  rt/rt/RPI2009A $sysmac
+bash/asml  rt/rt/RPI2009B $sysmac
+bash/asml  rt/rt/RPI2009C $sysmac
+bash/asml  rt/rt/RPI2009D $sysmac
+bash/asml  rt/rt/RPI2009E $sysmac
+bash/asml  rt/rt/RPI2009F $sysmac
+
+rtscript='rt/rt/RPI2009A_A.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(A)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AFI.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AFI)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AG.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AG)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AGF.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AGF)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AGFI.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AGFI)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AGFR.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AGFR)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AGHI.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AGHI)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AGHIK.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AGHIK)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AGR.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AGR)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AGRK.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AGRK)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AGSI.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AGSI)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AH.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AH)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AHHHR.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AHHHR)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AHHLR.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AHHLR)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AHI.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AHI)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AHIK.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AHIK)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AHY.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AHY)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AIH.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AIH)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AR.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AR)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_ARK.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(ARK)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_ASI.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(ASI)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_AY.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(AY)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_LAA.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(LAA)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009A_LAAG.RT'
+export rtscript
+bash/exec rt/rt/RPI2009A noloadhigh $sysmac 'parm(LAAG)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009B_S.RT'
+export rtscript
+bash/exec rt/rt/RPI2009B noloadhigh $sysmac 'parm(S)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009B_SG.RT'
+export rtscript
+bash/exec rt/rt/RPI2009B noloadhigh $sysmac 'parm(SG)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009B_SGF.RT'
+export rtscript
+bash/exec rt/rt/RPI2009B noloadhigh $sysmac 'parm(SGF)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009B_SGFR.RT'
+export rtscript
+bash/exec rt/rt/RPI2009B noloadhigh $sysmac 'parm(SGFR)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009B_SGR.RT'
+export rtscript
+bash/exec rt/rt/RPI2009B noloadhigh $sysmac 'parm(SGR)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009B_SGRK.RT'
+export rtscript
+bash/exec rt/rt/RPI2009B noloadhigh $sysmac 'parm(SGRK)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009B_SH.RT'
+export rtscript
+bash/exec rt/rt/RPI2009B noloadhigh $sysmac 'parm(SH)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009B_SHHHR.RT'
+export rtscript
+bash/exec rt/rt/RPI2009B noloadhigh $sysmac 'parm(SHHHR)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009B_SHHLR.RT'
+export rtscript
+bash/exec rt/rt/RPI2009B noloadhigh $sysmac 'parm(SHHLR)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009B_SHY.RT'
+export rtscript
+bash/exec rt/rt/RPI2009B noloadhigh $sysmac 'parm(SHY)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009B_SR.RT'
+export rtscript
+bash/exec rt/rt/RPI2009B noloadhigh $sysmac 'parm(SR)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009B_SRK.RT'
+export rtscript
+bash/exec rt/rt/RPI2009B noloadhigh $sysmac 'parm(SRK)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009B_SY.RT'
+export rtscript
+bash/exec rt/rt/RPI2009B noloadhigh $sysmac 'parm(SY)' 'test(rtscript)'
+rtscript='rt/rt/RPI2009C.RT'
+export rtscript
+bash/exec rt/rt/RPI2009C noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2009D.RT'
+export rtscript
+bash/exec rt/rt/RPI2009D noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2009E.RT'
+export rtscript
+bash/exec rt/rt/RPI2009E noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2009F.RT'
+export rtscript
+bash/exec rt/rt/RPI2009F noloadhigh $sysmac 'test(rtscript)'
+rtscript='rt/rt/RPI2010.RT'
+export rtscript
+bash/asmlg rt/rt/RPI2010 noloadhigh $sysmac 'test(rtscript)'
+
+# if we get here, there were no errors
+echo "Verify tests ran without errors"
+exit 0

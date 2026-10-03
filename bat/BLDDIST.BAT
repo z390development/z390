@@ -18,20 +18,21 @@ echo Building z390 %VERSION%
 set DIST_DIR=dist
 
 rem build jar
-call bat\BLDJAR.BAT %z_TraceMode%                   || goto error
+call bat\BLDJAR.BAT %z_TraceMode% %*                 || goto error
 
 rem generate HLASM compatible SPM's
-call bat\BLDZSTRMAC.BAT %z_TraceMode% build\zstrmac || goto error
+call bat\BLDZSTRMAC.BAT %z_TraceMode% build\zstrmac  || goto error
 
 rem build standard libraries
-call bat\BLDLIB.BAT %z_TraceMode%                   || goto error
-call bat\BLDCBLLIB.BAT %z_TraceMode%                || goto error
+call bat\BLDLIB.BAT %z_TraceMode%                    || goto error
+call bat\BLDCBLLIB.BAT %z_TraceMode%                 || goto error
 
 if /I %1. NEQ *All. goto Standard_build
-   call barcode\BLD390.BAT   %z_TraceMode%          || goto error
-   call bat\BLDGUAM.BAT      %z_TraceMode%          || goto error
-   call cics\bat\DFHALL.BAT  %z_TraceMode%          || goto error
-   call cics\bat\DFHALLV.BAT %z_TraceMode%          || goto error
+   call barcode\BLD390.BAT    %z_TraceMode%          || goto error
+   call bat\BLDGUAM.BAT       %z_TraceMode%          || goto error
+   call vsam2\bat\BLDVSAM.BAT %z_TraceMode%          || goto error
+   call cics\bat\DFHALL.BAT   %z_TraceMode%          || goto error
+   call cics\bat\DFHALLV.BAT  %z_TraceMode%          || goto error
 :Standard_build
 
 rem Create/clean dist folder
@@ -65,9 +66,6 @@ xcopy /E /I /Y ..\..\build\zstrmac\* mac\spm\ > nul
 rem add javadoc
 mkdir javadoc
 xcopy /E /I /Y ..\..\build\javadoc\* javadoc\ > nul
-
-rem remove components not required for distribution
-del /F /Q bash\bldjar bat\BLDJAR.BAT bash\blddist bash\relver bat\RELVER.BAT
 
 rem create zip package
 cd ..

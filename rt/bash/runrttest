@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# runrttest: Run the testcases from the rt/test folder
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script - rt/bash
+cd ..               # up to rt
+cd ..               # up to z390
+
+sysmac='sysmac(mac)'
+optable='optable(z390)'
+
+bash/asmlg rt/test/TESTACT1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTAIN1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTAIN2 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTAIN3 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTASM1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTASM2 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTCAL1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTCAL2 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTCDE1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTCFD1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTCPY1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTCPY2 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTCTD1 notiming stats bal noloadhigh
+# Compare program WTO lines only (drop EZ390 header/trailer, license, wrapped SYSMAC)
+grep -vE 'EZ390|ABSOLUTELY NO WARRANTY|This is free software|under certain conditions|SYSMAC\(' \
+    rt/test/TESTCTD1.LOG | tr -d '\r' | diff - <(tr -d '\r' < rt/test/TESTCTD1.TF1) || exit 1
+
+bash/asmlg rt/test/TESTCVB1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTCVBG notiming stats bal noloadhigh
+
+
+
+
+bash/asml  rt/test/TESTSUB1 notiming stats bal
+
+# TESTBLD1 requires rt\test\TESTSUB1.390 and mvs\demo\DEMO.390
+[ -f mvs/demo/DEMO.390 ] || bash/asml mvs/demo/DEMO notiming stats bal
+bash/asmlg rt/test/TESTBLD1 notiming stats bal noloadhigh sys390(rt/test+mvs/demo)
+
+# if we get here, there were no errors
+echo "rt/test - all tests ran without errors"
+exit 0

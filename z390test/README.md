@@ -44,7 +44,7 @@ case that executes an assembly of the module and checks the return code.
 ```groovy
 import org.junit.jupiter.api.Test
 
-class TestZ390Test extends z390Test {
+class BeginZ390Test extends z390Test {
 
     var options = ['trace', 'noloadhigh', "SYSMAC(${basePath("mac")})"]
 
