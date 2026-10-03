@@ -80,4 +80,3 @@
 .ERR2    MNOTE 12,'PUT MF= NOT SUPPORTED'
          MEXIT
          MEND
-

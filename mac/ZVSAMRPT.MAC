@@ -33,4 +33,3 @@ RPTRREC@ DC    XL4                OFFSET IN THE BLOCK TO THIS RECORD
 *                                 FOXES WHEN RPTR_END SET
 RPTRLENG EQU   *-ZVSAMRPT         DSECT LENGTH
          MEND
-

@@ -100,4 +100,3 @@ P020CBYP_&SYSNDX DS 0H
 .BYP020C ANOP
          MEXIT
          MEND
-

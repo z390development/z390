@@ -46,4 +46,3 @@ P0C02RSP DS    AL4                RESP
 P0C02RS2 DS    AL4                RESP2
 P0C02END EQU   *                  END MARKER
          MEND
-

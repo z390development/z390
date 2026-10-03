@@ -85,4 +85,3 @@ BMSDATA  DS    0X                 VARIABLE FIELDS ANCHOR
 *        DS    0C                 PICOUT IF PRESENT
 *        DS    0C                 INITIAL/XINIT OF LENGTH BMSFL
          MEND
-

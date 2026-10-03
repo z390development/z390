@@ -50,4 +50,3 @@ P4C04RSP DS    AL4                RESP
 P4C04RS2 DS    AL4                RESP2
 P4C04END EQU   *                  END MARKER
          MEND
-
