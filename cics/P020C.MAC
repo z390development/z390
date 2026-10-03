@@ -40,4 +40,3 @@ P020CRSP DS    AL4                RESP
 P020CRS2 DS    AL4                RESP2
 P020CEND EQU   *                  END MARKER
          MEND
-

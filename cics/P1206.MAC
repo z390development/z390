@@ -42,4 +42,3 @@ P1206RSP DS    AL4                RESP
 P1206RS2 DS    AL4                RESP2
 P1206END EQU   *                  END MARKER
          MEND
-
