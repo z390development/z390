@@ -35,6 +35,7 @@ eval $(${cicspath}/bash/z390file)
 # parms below are defaults for interactive use. Override using positional parameters on call
 bash/ez390 ${cicspath}/${program} NOTIME "MAXQUE(2048000)" $1 $2 $3 $4 CON
 rc=$?
+# -- returncode 16 is expected - not showing that to avoid confusion
 cat <<EOF
 *********************************************************
 *

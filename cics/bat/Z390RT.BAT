@@ -30,6 +30,7 @@ CALL %CICSPATH%\bat\Z390FILE
 rem -- parms below are defaults for interactive use. Override using positional parameters on call
 CALL bat\EZ390 %z_TraceMode% %CICSPATH%\%PROGRAM% NOTIME MAXQUE(2048000) %1 %2 %3 %4 CON
 set z_ReturnCode=%ERRORLEVEL%
+rem -- returncode 16 is expected - not showing that to avoid confusion
 echo #########################################################
 echo #
 echo # %0 zCICS regression test suite completed
