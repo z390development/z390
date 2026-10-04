@@ -33,7 +33,6 @@ set z_ReturnCode=%ERRORLEVEL%
 echo #########################################################
 echo #
 echo # %0 zCICS regression test suite completed
-echo # %0 error level is %z_ReturnCode%
 echo #
 echo #########################################################
 
