@@ -35,23 +35,27 @@ eval $(${cicspath}/bash/z390file)
 # parms below are defaults for interactive use. Override using positional parameters on call
 bash/ez390 ${cicspath}/${program} NOTIME "MAXQUE(2048000)" $1 $2 $3 $4 CON
 rc=$?
-echo *********************************************************
-echo *
-echo * $0 zCICS regression test suite completed
-echo * $0 error level is $rc
-echo *
-echo *********************************************************
+cat <<EOF
+*********************************************************
+*
+* $0 zCICS regression test suite completed
+* $0 error level is $rc
+*
+*********************************************************
+EOF
 
 # run the comparator
 seqout=${cicspath}/seq/SEQCOMP.TXT
 ${cicspath}/bash/z390cmpg
 rc=$?
-echo *********************************************************
-echo *
-echo * $0 zCICS regression test comparator comlete
-echo * $0 error level is $rc
-echo *
-echo *********************************************************
+cat <<EOF
+*********************************************************
+*
+* $0 zCICS regression test comparator comlete
+* $0 error level is $rc
+*
+*********************************************************
+EOF
 if [ $rc -gt 0 ]; then
     exit $rc
 fi
