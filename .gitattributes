@@ -1,5 +1,9 @@
 * text=auto
+
 **/*.sh text eol=lf
 **/bash/** text eol=lf
+
+cics/seq/SEQI*.TXT=crlf
+
 *.png filter=lfs diff=lfs merge=lfs -text
 *.jpg filter=lfs diff=lfs merge=lfs -text
