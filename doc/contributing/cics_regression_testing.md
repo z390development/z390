@@ -219,6 +219,8 @@ Largest stream (58 input records).
 
 Programs: `TESTBED9` (creates TS queues), then `Z390CEBR`.
 
+**Note:** `contribute_cics.md` documents a current failure (AEIV/U0444) triggered from this stream (GitHub issue 784).
+
 ---
 
 ### SEQI0013 — IC01
@@ -264,7 +266,7 @@ Same as 0014 with **VSM2** / `CEBR VSM2`.
 
 ---
 
-### SEQI0017 — BMS1 (mapping support — known problem case)
+### SEQI0017 — BMS1 (mapping support)
 
 | Step | Action                                                                                                       |
 |------|--------------------------------------------------------------------------------------------------------------|
@@ -275,8 +277,6 @@ Same as 0014 with **VSM2** / `CEBR VSM2`.
 | 5    | CLEAR                                                                                                        |
 
 Program: `TESTBMS1` (BMS SEND/RECEIVE MAP — mirrors GUI4/GUI6 flow).
-
-**Note:** `contribute_cics.md` documents a current failure (AEIV/U0444) triggered from this stream (GitHub issue 784).
 
 ---
 

@@ -20,6 +20,7 @@
 .**********************************************************************
 .* 05/06/06 RPI 308 ADD EXEC CICS SUPPORT FOR RECEIVE                 *
 .* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY         *
+.* 2026-10-04 AFK #784 PF key not honored                             *
 .**********************************************************************
          MACRO
          CICS_RECEIVE
@@ -183,9 +184,9 @@ P0402EDF_&SYSNDX DS 0H
 .BYP0402 ANOP
 P0402BYP_&SYSNDX DS 0H
          LARL  R15,P0402AID       ADDRESS TARGET
-         ICM   R0,15,0(R15)       ANY HANDLE AID ?
+         ICM   R15,15,0(R15)      ANY HANDLE AID ?                      #784
          JZ    P0402_&SYSNDX._01  EXIT IF NONE
-         BR    R0                 GO TO HANDLE AID ROUTINE
+         BR    R15                GO TO HANDLE AID ROUTINE              #784
 *
 P0402_&SYSNDX._01 EQU *
          MEXIT

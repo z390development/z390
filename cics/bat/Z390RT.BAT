@@ -27,18 +27,39 @@ set Z390SEQ=%CICSPATH%\seq\
 
 COPY %CICSPATH%\Z390RT.INI %CICSPATH%\Z390CICS.INI /Y >NUL
 CALL %CICSPATH%\bat\Z390FILE
-CALL bat\EZ390 %z_TraceMode% %CICSPATH%\%PROGRAM% NOTIME %1 %2 %3 %4 CON
-IF ERRORLEVEL 1 GOTO WRONG
-PAUSE Verify startup of zCICS
+rem -- parms below are defaults for interactive use. Override using positional parameters on call
+CALL bat\EZ390 %z_TraceMode% %CICSPATH%\%PROGRAM% NOTIME MAXQUE(2048000) %1 %2 %3 %4 CON
+set z_ReturnCode=%ERRORLEVEL%
+echo #########################################################
+echo #
+echo # %0 zCICS regression test suite completed
+echo # %0 error level is %z_ReturnCode%
+echo #
+echo #########################################################
 
+rem -- run the comparator
+call cics\bat\Z390CMPG.BAT ASCII
+set z_ReturnCode=%ERRORLEVEL%
+echo #########################################################
+echo #
+echo # %0 zCICS regression test comparator comlete
+echo # %0 error level is %z_ReturnCode%
+echo #
+echo #########################################################
+if %z_ReturnCode% GTR 0 goto return
+
+rem -- ensure the differences file is empty
+for %%A in (%SEQOUT%) do if %%~zA GTR 0 (
+    echo %0 differences written to %SEQOUT%
+    set z_ReturnCode=8
+    goto return
+)
 set z_ReturnCode=0
-GOTO return
 
-:WRONG
-echo %0 error while starting zCICS
-set z_ReturnCode=8
+rem -- undo changed made to run the test
+COPY %CICSPATH%\Z390RUN.INI %CICSPATH%\Z390CICS.INI /Y >NUL
+DEL  %Z390SEQ%\SEQO0001.TXT /Q >NUL
 
 :return
-popd
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 exit /b %z_ReturnCode%
