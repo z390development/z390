@@ -1,0 +1,49 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="c8972deb-752f-9fd1-c0f5-ecf008ad8a40" name="Page-1">
+    <mxGraphModel dx="1414" dy="744" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="40" width="680" x="120" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Block Header" vertex="1">
+          <mxGeometry height="40" width="280" x="120" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="20" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="40" width="680" x="120" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="36" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="40" width="680" x="120" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="38" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Free space" vertex="1">
+          <mxGeometry height="40" width="680" x="120" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="39" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="40" width="680" x="120" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="37" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Block Footer" vertex="1">
+          <mxGeometry height="40" width="80" x="720" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="40" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Prefix area - part 1" vertex="1">
+          <mxGeometry height="40" width="400" x="400" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="41" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Prefix area - part 2" vertex="1">
+          <mxGeometry height="40" width="680" x="120" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="42" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Counters area" vertex="1">
+          <mxGeometry height="40" width="400" x="120" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="43" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Free space" vertex="1">
+          <mxGeometry height="40" width="280" x="520" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="44" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Other fields addressed from Prefix area" vertex="1">
+          <mxGeometry height="40" width="470" x="250" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="45" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Free space" vertex="1">
+          <mxGeometry height="40" width="130" x="120" y="320" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
