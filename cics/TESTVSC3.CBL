@@ -1291,4 +1291,3 @@
             IF FDBK2 = X'04' THEN MOVE '04' TO FHFDBK2.
             IF FDBK2 = X'10' THEN MOVE '10' TO FHFDBK2.
       *  BR    R9                 RETURN
-

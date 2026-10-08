@@ -33,4 +33,3 @@
          MVC   0(&LENGTH,R15),0(R1) MVC IT
          AEND
          MEND
-

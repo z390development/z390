@@ -87,4 +87,3 @@
 .ERR3    MNOTE 12,'GET MF= NOT SUPPORTED'
          MEXIT
          MEND
-
