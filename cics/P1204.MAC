@@ -45,4 +45,3 @@ P1204RSP DS    AL4                RESP
 P1204RS2 DS    AL4                RESP2
 P1204END EQU   *                  END MARKER
          MEND
-

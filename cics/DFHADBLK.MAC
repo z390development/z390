@@ -32,4 +32,3 @@ AIDCLEAR DS    A                  CLEAR  ADDRESS    1
          DS    24A                PF1-24 ADDRESSES  5-28
 AIDLENG  EQU   *-DFHADBLK
          MEND
-
