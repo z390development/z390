@@ -41,4 +41,3 @@ P0204RSP DS    AL4                RESP
 P0204RS2 DS    AL4                RESP2
 P0204END EQU   *                  END MARKER
          MEND
-

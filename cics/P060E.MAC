@@ -62,4 +62,3 @@ P060ERSP DS    AL4                RESP
 P060ERS2 DS    AL4                RESP2
 P060EEND EQU   *                  END MARKER
          MEND
-

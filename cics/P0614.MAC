@@ -59,4 +59,3 @@ P0614RSP DS    AL4                RESP
 P0614RS2 DS    AL4                RESP2
 P0614END EQU   *                  END MARKER
          MEND
-

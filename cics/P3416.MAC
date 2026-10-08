@@ -44,4 +44,3 @@ P3416RSP DS    AL4                RESP
 P3416RS2 DS    AL4                RESP2
 P3416END EQU   *                  END MARKER
          MEND
-

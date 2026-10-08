@@ -35,4 +35,3 @@ CWALENG  DS    XL4                CWA LENGTH
          DS    0D
 CWPREFIX EQU   *-DFHCWBLK
          MEND
-

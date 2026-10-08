@@ -23,4 +23,3 @@
          LARL  R1,&TARGET         ADDRESS TARGET
          CLI   0(R1),&SOURCE      CLI IT
          MEND
-
