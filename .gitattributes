@@ -2,7 +2,7 @@
 
 **/*.sh text eol=lf
 **/bash/** text eol=lf
-
+z390test/gradlew text eol=lf
 cics/seq/SEQI*.TXT eol=crlf
 
 *.png filter=lfs diff=lfs merge=lfs -text

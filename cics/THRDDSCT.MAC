@@ -46,4 +46,3 @@ THRDSEQ  EQU   10                 POSITION OF SEQUENTIAL TERMINAL
 THRDNUM  EQU   11                 CURRENT NO. OF THREADS
 *
          MEND
-

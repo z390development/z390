@@ -3106,4 +3106,3 @@ TESTLAB3 EQU   *
          DCBD
          EQUREGS
          END
-

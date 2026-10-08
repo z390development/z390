@@ -216,4 +216,3 @@
             EXEC CICS SEND FROM(TEST6R) LENGTH(TEST6RL) END-EXEC.
       *  B     AB4                EXIT
             GO TO AB4.
-
