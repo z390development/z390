@@ -44,4 +44,3 @@ RMODE    EQU   *
 FLIP     DC    X'00'
 *
          END
-

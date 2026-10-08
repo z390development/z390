@@ -29,4 +29,3 @@ SAMPLE2  CSECT
 HERE     DS    C
          YREGS
          END
-

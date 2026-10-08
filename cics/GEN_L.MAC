@@ -23,4 +23,3 @@
          LARL  R15,&SOURCE        ADDRESS SOURCE
          L     &TARGET,0(R15)     L IT
          MEND
-
