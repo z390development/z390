@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# rungroovy runs a groovy regression test suite, or a script (or part of it) using gradle
+
+# use optional argument 'full' to include optional tests
+test_mode=standard
+if [ "$1" = "full" ]; then
+  test_mode=full
+  shift
+fi
+
+# switch to z390test folder
+cd "$(dirname "$0")/../z390test"
+
+# execute the test or tests
+if [ $# -eq 0 ]; then
+  ./gradlew test --rerun -PtestMode="$test_mode"
+else
+  ./gradlew test --rerun -PtestMode="$test_mode" --tests "$@"
+fi
+
+exit $?
