@@ -10,10 +10,10 @@
         <meta name="author" content="z390 Development team">
       
       
-        <link rel="canonical" href="https://z390development.github.io/z390/contributing/contributors/">
+        <link rel="canonical" href="https://z390development.github.io/z390/contributing/cics_regression_testing/">
       
       
-        <link rel="prev" href="../contributing_zcobol/">
+        <link rel="prev" href="../contribute_cics/">
       
       
         <link rel="next" href="../../design/zCOBOL/replace_implementation/">
@@ -27,7 +27,7 @@
     
     
       
-        <title>The z390 team - z390</title>
+        <title>zCics Sequential Terminal Regression Testing - z390</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#the-z390-team" class="md-skip">
+        <a href="#zcics-sequential-terminal-regression-testing" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              The z390 team
+              zCics Sequential Terminal Regression Testing
             
           </span>
         </div>
@@ -2067,10 +2067,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../cics_regression_testing/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    zCics Sequential Terminal Regression Testing
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -2086,6 +2113,456 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-regression-run-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the Regression Run Works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How the Regression Run Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-read-a-seqi-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to Read a SEQI Record
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transaction-reconstruction-by-seqi-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transaction Reconstruction by SEQI File
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Transaction Reconstruction by SEQI File">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#seqi0001-invalid-transaction-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0001 — Invalid transaction (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0002-mmm1-apct-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0002 — MMM1 APCT (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0003-mmm2-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0003 — MMM2 (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0004-gui4-map-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0004 — GUI4 map test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0005-gui6-map-test-full-keyboard-exercise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0005 — GUI6 map test (full keyboard exercise)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0006-tst1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0006 — TST1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0007-bed1-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0007 — BED1 (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0008-bed2-2-pf-key-sweep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0008 — BED2 (×2, PF-key sweep)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0009-bed3-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0009 — BED3 (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0010-bed4-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0010 — BED4 (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0011-bed5-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0011 — BED5 (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0012-bed9-extensive-cebr-exercise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0012 — BED9 + extensive CEBR exercise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0013-ic01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0013 — IC01
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0014-vsm1-cebr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0014 — VSM1 + CEBR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0015-vsm2-cebr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0015 — VSM2 + CEBR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0016-vsm3-cebr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0016 — VSM3 + CEBR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0017-bms1-mapping-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0017 — BMS1 (mapping support)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0018-bec1-zcobol-clone-of-bed1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0018 — BEC1 (zCobol clone of BED1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0019-bec2-zcobol-clone-of-bed2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0019 — BEC2 (zCobol clone of BED2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0020-bec3-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0020 — BEC3 (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0021-bec4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0021 — BEC4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0022-bec5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0022 — BEC5
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0023-bec9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0023 — BEC9
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0024-icc1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0024 — ICC1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0025-vsc1-cebr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0025 — VSC1 + CEBR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0026-vsc2-cebr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0026 — VSC2 + CEBR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0027-vsc3-cebr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0027 — VSC3 + CEBR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0028-bmc1-zcobol-clone-of-bms1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0028 — BMC1 (zCobol clone of BMS1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0029-logo-asgn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0029 — LOGO + ASGN
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0030-setf-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0030 — SETF (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0031-chn1-cebr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0031 — CHN1 + CEBR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0032-shutdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0032 — Shutdown
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#seqc-comparator-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQC Comparator Coverage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#practical-decoding-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Practical Decoding Tips
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2605,6 +3082,444 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-the-regression-run-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the Regression Run Works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How the Regression Run Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-read-a-seqi-record" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to Read a SEQI Record
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transaction-reconstruction-by-seqi-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transaction Reconstruction by SEQI File
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Transaction Reconstruction by SEQI File">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#seqi0001-invalid-transaction-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0001 — Invalid transaction (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0002-mmm1-apct-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0002 — MMM1 APCT (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0003-mmm2-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0003 — MMM2 (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0004-gui4-map-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0004 — GUI4 map test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0005-gui6-map-test-full-keyboard-exercise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0005 — GUI6 map test (full keyboard exercise)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0006-tst1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0006 — TST1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0007-bed1-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0007 — BED1 (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0008-bed2-2-pf-key-sweep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0008 — BED2 (×2, PF-key sweep)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0009-bed3-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0009 — BED3 (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0010-bed4-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0010 — BED4 (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0011-bed5-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0011 — BED5 (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0012-bed9-extensive-cebr-exercise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0012 — BED9 + extensive CEBR exercise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0013-ic01" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0013 — IC01
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0014-vsm1-cebr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0014 — VSM1 + CEBR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0015-vsm2-cebr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0015 — VSM2 + CEBR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0016-vsm3-cebr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0016 — VSM3 + CEBR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0017-bms1-mapping-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0017 — BMS1 (mapping support)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0018-bec1-zcobol-clone-of-bed1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0018 — BEC1 (zCobol clone of BED1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0019-bec2-zcobol-clone-of-bed2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0019 — BEC2 (zCobol clone of BED2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0020-bec3-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0020 — BEC3 (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0021-bec4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0021 — BEC4
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0022-bec5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0022 — BEC5
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0023-bec9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0023 — BEC9
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0024-icc1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0024 — ICC1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0025-vsc1-cebr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0025 — VSC1 + CEBR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0026-vsc2-cebr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0026 — VSC2 + CEBR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0027-vsc3-cebr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0027 — VSC3 + CEBR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0028-bmc1-zcobol-clone-of-bms1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0028 — BMC1 (zCobol clone of BMS1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0029-logo-asgn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0029 — LOGO + ASGN
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0030-setf-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0030 — SETF (×2)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0031-chn1-cebr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0031 — CHN1 + CEBR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seqi0032-shutdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQI0032 — Shutdown
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#seqc-comparator-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SEQC Comparator Coverage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#practical-decoding-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Practical Decoding Tips
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -2623,78 +3538,784 @@
   
 
 
-<h1 id="the-z390-team">The z390 team</h1>
-<p>z390 has been written in Java, Assembler, and Cobol.
-Additionally, it contains a large number of macros,
-and bat/bash/groovy scripts.</p>
-<p>The main contributors for the z390 project are,
-in alphabetical order:</p>
+<h1 id="zcics-sequential-terminal-regression-testing">zCics Sequential Terminal Regression Testing</h1>
+<p><strong>Note:</strong> This document was generated by Cursor AI.</p>
+<h2 id="how-the-regression-run-works">How the Regression Run Works</h2>
+<p>When you run <code>cics\bat\Z390RT.BAT</code>:</p>
+<ol>
+<li>It copies <code>Z390RT.INI</code> &rarr; <code>Z390CICS.INI</code> with <code>SEQ_TERM=YES</code>.</li>
+<li>That disables normal local terminals and starts one <strong>sequential terminal</strong> <code>SQ01</code> with <strong>no initial transid</strong>.</li>
+<li><code>Z390KCP</code> opens <code>cics\seq\SEQI0001.TXT</code> for input and <code>cics\seq\SEQO0001.TXT</code> for output.</li>
+<li>Each <strong>TGET</strong> from application code reads the next CRLF-terminated record from the current <code>SEQI</code> file.</li>
+<li>Each <strong>TPUT</strong> writes a CRLF-terminated record to <code>SEQO0001.TXT</code>.</li>
+<li>On end-of-file, <code>LCL0402</code> closes the file, increments the number (<code>0001</code> &rarr; <code>0002</code> &rarr; ...), and opens the next <code>SEQI</code> file.</li>
+<li>When input is exhausted, the terminal requests shutdown.</li>
+</ol>
+<h3 id="key-files">Key files</h3>
 <table>
 <thead>
 <tr>
-<th>Name</th>
-<th>Contributions</th>
+<th>File</th>
+<th>Role</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Abe Kornelis</td>
-<td>International coordinator / macro assembler regression testing</td>
+<td><code>cics\seq\SEQDOC.TXT</code></td>
+<td>Authoritative human summary of each stream</td>
 </tr>
 <tr>
-<td>Anthony Delosa</td>
-<td>Documentation / git /github / groovy / regression testsuite</td>
+<td><code>cics\seq\SEQInnnn.TXT</code></td>
+<td>Input byte streams (TGET replay)</td>
 </tr>
 <tr>
-<td>David Bond</td>
-<td>regression test routines for floating point conversions</td>
+<td><code>cics\seq\SEQCnnnn.TXT</code></td>
+<td>Golden output streams for comparison</td>
 </tr>
 <tr>
-<td>Don Higgins</td>
-<td>project manager, Java code for z390.jar, and RPI fixes and enhancements</td>
+<td><code>cics\seq\SEQO0001.TXT</code></td>
+<td>Output from a regression run</td>
 </tr>
 <tr>
-<td>James Cray</td>
-<td>developed first z390-DB2 interface during 2010</td>
+<td><code>cics\bat\Z390CMPG.BAT</code></td>
+<td>Compares <code>SEQC</code> files against <code>SEQO0001.TXT</code></td>
 </tr>
 <tr>
-<td>John Erhman</td>
-<td>SHARE coordinator for all assembler related sessions including z390</td>
+<td><code>cics\bat\Z390TRC.BAT</code></td>
+<td>Capture mode (<code>SEQ_TERM=TRACE</code>)</td>
 </tr>
 <tr>
-<td>John Ganci</td>
-<td>Support and maintenance</td>
+<td><code>cics\bat\Z390SEQG.BAT</code></td>
+<td>Extracts <code>.TRE</code> trace &rarr; <code>SEQI</code>/<code>SEQC</code> files</td>
 </tr>
 <tr>
-<td>John Hennesy</td>
-<td>zcobol debugger and regression testing of zcobol</td>
-</tr>
-<tr>
-<td>Martin Trubner</td>
-<td>VSE macro assembler testing and SHARE User presentation on z390</td>
-</tr>
-<tr>
-<td>Martin Ward</td>
-<td>Linux Support including Perl scripts and testing</td>
-</tr>
-<tr>
-<td>Melvyn Maltz</td>
-<td>CICS compatible transaction manager written in z390 assembler and documentation</td>
-</tr>
-<tr>
-<td>Peter Koppany</td>
-<td>z390 documentation and regression testing</td>
-</tr>
-<tr>
-<td>Ray Mullins</td>
-<td>VSE regression testing and moderator for z390 email group</td>
-</tr>
-<tr>
-<td>Sam Knutson</td>
-<td>invitation to speak about z390 at SHARE and webmaster of SHARE CBT library</td>
+<td><code>cics\seq\SEQISHUT.TXT</code></td>
+<td>Sample shutdown stream (<code>CEMT P SHUT</code>)</td>
 </tr>
 </tbody>
 </table>
+<h2 id="how-to-read-a-seqi-record">How to Read a SEQI Record</h2>
+<p>Each record is one simulated 3270 keystroke/data submission:</p>
+<table>
+<thead>
+<tr>
+<th>Byte(s)</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>AID</strong> — <code>7D</code>=ENTER, <code>6D</code>=CLEAR, <code>F1</code>-<code>F9</code>=PF1-PF9, <code>7A</code>-<code>7C</code>=PF10-PF12, <code>C1</code>-<code>C6</code>=PF13-PF18</td>
+</tr>
+<tr>
+<td>2-3</td>
+<td><strong>Cursor position</strong> (3270 address, EBCDIC-encoded)</td>
+</tr>
+<tr>
+<td>4+</td>
+<td><strong>Field data</strong> (EBCDIC text, map fields, CEBR commands, etc.)</td>
+</tr>
+</tbody>
+</table>
+<p>Records are separated by <code>0D 0A</code> (CRLF). Decode field data as <strong>EBCDIC cp037</strong>.</p>
+<p>Starting a transaction from a blank screen:
+<div class="highlight"><pre><span></span><code>ENTER + cursor + 4-char TRANSID
+</code></pre></div></p>
+<p>Example from <code>SEQI0001.TXT</code>: <code>7D 40 C4 C1 C1 C1 C1</code> &rarr; ENTER, then transid <strong>AAAA</strong>.</p>
+<p><code>CLEAR</code> (<code>6D</code>) ends a transaction and returns to an empty screen.</p>
+<p>For CEBR:
+<div class="highlight"><pre><span></span><code>ENTER + cursor + "CEBR" + optional argument(s)
+</code></pre></div></p>
+<p>e.g. <code>Icebr MYQUEUE1</code>, <code>Icebr x'01cb458f'</code>.</p>
+<p>AID reference: <code>AIDINDEX</code> table in <code>cics\LCL0402.MLC</code>.</p>
+<hr />
+<h2 id="transaction-reconstruction-by-seqi-file">Transaction Reconstruction by SEQI File</h2>
+<p>Below, <strong>steps</strong> are the user-visible actions encoded in each file. <strong>Program</strong> is from <code>DFHPCT.MLC</code>.</p>
+<h3 id="seqi0001-invalid-transaction-2">SEQI0001 — Invalid transaction (×2)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>AAAA</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>CLEAR</td>
+</tr>
+<tr>
+<td>3</td>
+<td>ENTER <strong>AAAA</strong> again</td>
+</tr>
+<tr>
+<td>4</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: none (invalid transid &rarr; APCT/NOTFND handling).</p>
+<hr />
+<h3 id="seqi0002-mmm1-apct-2">SEQI0002 — MMM1 APCT (×2)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>MMM1</strong> (program <code>BADPROG</code> &rarr; APCT)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>CLEAR</td>
+</tr>
+<tr>
+<td>3</td>
+<td>ENTER <strong>MMM1</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="seqi0003-mmm2-2">SEQI0003 — MMM2 (×2)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>MMM2</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>CLEAR</td>
+</tr>
+<tr>
+<td>3</td>
+<td>ENTER <strong>MMM2</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>MMMMCIC2</code>.</p>
+<hr />
+<h3 id="seqi0004-gui4-map-test">SEQI0004 — GUI4 map test</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>GUI4</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>ENTER field data <strong>abc</strong> (map field 1)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>ENTER field data <strong>def</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td>ENTER <strong>END</strong></td>
+</tr>
+<tr>
+<td>5</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTGUI4</code>.</p>
+<hr />
+<h3 id="seqi0005-gui6-map-test-full-keyboard-exercise">SEQI0005 — GUI6 map test (full keyboard exercise)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>GUI6</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Field 1: <code>aaa</code> (underscore-padded)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Field 2: <code>bbb</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Field 3: <code>123</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>PF1</td>
+</tr>
+<tr>
+<td>6</td>
+<td>PF3 &rarr; switches to reverse field order</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Field 3: <code>987</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>Field 2: <code>qqq</code></td>
+</tr>
+<tr>
+<td>9</td>
+<td>Field 1: <code>xxx</code></td>
+</tr>
+<tr>
+<td>10</td>
+<td>PF3 &rarr; end</td>
+</tr>
+<tr>
+<td>11</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTGUI6</code>.</p>
+<hr />
+<h3 id="seqi0006-tst1">SEQI0006 — TST1</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>TST1</strong></td>
+</tr>
+<tr>
+<td>2-4</td>
+<td>Three ENTER presses (in-transaction prompts)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>PF3</td>
+</tr>
+<tr>
+<td>6</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTCIC1</code>.</p>
+<hr />
+<h3 id="seqi0007-bed1-2">SEQI0007 — BED1 (×2)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Run 1</td>
+<td>ENTER <strong>BED1</strong>, then 8× ENTER (exercise temp storage screens), CLEAR</td>
+</tr>
+<tr>
+<td>Run 2</td>
+<td>Same again</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTBED1</code> — tests EXEC CICS WRITEQ TS and related temp-storage APIs.</p>
+<hr />
+<h3 id="seqi0008-bed2-2-pf-key-sweep">SEQI0008 — BED2 (×2, PF-key sweep)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Run 1</td>
+<td>ENTER <strong>BED2</strong>, then PF12 down through PF1, then PF13-PF18, CLEAR</td>
+</tr>
+<tr>
+<td>Run 2</td>
+<td>ENTER <strong>BED2</strong>, then PF22-PF18 descending (PF24..PF18 via <code>4C 4B 4A C9..C7</code>), CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTBED4</code>.</p>
+<hr />
+<h3 id="seqi0009-bed3-2">SEQI0009 — BED3 (×2)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Run 1</td>
+<td>ENTER <strong>BED3</strong>, PF4, PF5, PF6, CLEAR</td>
+</tr>
+<tr>
+<td>Run 2</td>
+<td>ENTER <strong>BED3</strong>, PF6, PF5, PF4, PF6, PF5, PF7, PF6, CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTBED5</code>.</p>
+<hr />
+<h3 id="seqi0010-bed4-2">SEQI0010 — BED4 (×2)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Each run</td>
+<td>ENTER <strong>BED4</strong>, 3× ENTER, CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTBED6</code>.</p>
+<hr />
+<h3 id="seqi0011-bed5-2">SEQI0011 — BED5 (×2)</h3>
+<p>Same pattern as 0010 but transid <strong>BED5</strong>.</p>
+<p>Program: <code>TESTBED6</code>.</p>
+<hr />
+<h3 id="seqi0012-bed9-extensive-cebr-exercise">SEQI0012 — BED9 + extensive CEBR exercise</h3>
+<p>Largest stream (58 input records).</p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Steps</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BED9 setup</td>
+<td>ENTER <strong>BED9</strong>, CLEAR</td>
+</tr>
+<tr>
+<td>CEBR entry variants</td>
+<td><strong>CEBR</strong> (blank), CLEAR</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>CEBR FRED</strong>, CLEAR</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>CEBR MYQUEUE1</strong>, CLEAR</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>CEBR x'01cb458f'</strong>, CLEAR</td>
+</tr>
+<tr>
+<td>Cursor select</td>
+<td>ENTER <strong>CEBR</strong>, cursor-select <strong>MYQUEUE1</strong></td>
+</tr>
+<tr>
+<td>Navigation</td>
+<td>PF11, PF5, PF4, PF8, PF4, PF1, ENTER, PF2×3, PF3</td>
+</tr>
+<tr>
+<td>Queue list</td>
+<td>PF2×3, cursor-select <strong>MYQUEUE2</strong></td>
+</tr>
+<tr>
+<td>Scrolling/commands</td>
+<td>PF9×3, <code>c 5</code>, <code>l 30</code>, PF7, PF8×2, PF12, PF9, PF10</td>
+</tr>
+<tr>
+<td>More commands</td>
+<td>PF4, PF5, <code>t</code>, <code>b</code></td>
+</tr>
+<tr>
+<td>Queue lookup</td>
+<td><code>q MYQUEUE1</code>, <code>q x'01cb458f'</code></td>
+</tr>
+<tr>
+<td>Wrap-up</td>
+<td>PF2×3, PF11, PF2×3, PF11, <code>c 36</code>, PF7, PF12, PF2, <strong>PURGE</strong>, CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Programs: <code>TESTBED9</code> (creates TS queues), then <code>Z390CEBR</code>.</p>
+<p><strong>Note:</strong> <code>contribute_cics.md</code> documents a current failure (AEIV/U0444) triggered from this stream (GitHub issue 784).</p>
+<hr />
+<h3 id="seqi0013-ic01">SEQI0013 — IC01</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>IC01</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTIC01</code> (interval control).</p>
+<hr />
+<h3 id="seqi0014-vsm1-cebr">SEQI0014 — VSM1 + CEBR</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>VSM1</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>CLEAR</td>
+</tr>
+<tr>
+<td>3</td>
+<td>ENTER <strong>CEBR VSM1</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td>PF5</td>
+</tr>
+<tr>
+<td>5</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTVSM1</code>, then CEBR on VSAM file.</p>
+<hr />
+<h3 id="seqi0015-vsm2-cebr">SEQI0015 — VSM2 + CEBR</h3>
+<p>Same as 0014 with <strong>VSM2</strong> / <code>CEBR VSM2</code>.</p>
+<hr />
+<h3 id="seqi0016-vsm3-cebr">SEQI0016 — VSM3 + CEBR</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>VSM3</strong>, CLEAR</td>
+</tr>
+<tr>
+<td>2</td>
+<td>ENTER <strong>CEBR VSM3</strong></td>
+</tr>
+<tr>
+<td>3</td>
+<td>PF11×2</td>
+</tr>
+<tr>
+<td>4</td>
+<td>PF5</td>
+</tr>
+<tr>
+<td>5</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="seqi0017-bms1-mapping-support">SEQI0017 — BMS1 (mapping support)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>BMS1</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>GUI4 phase: fields <strong>ABC</strong>, <strong>DEF</strong>, <strong>END</strong></td>
+</tr>
+<tr>
+<td>3</td>
+<td>GUI6 phase: long map input including <code>test with underscores</code>, <code>test erase eof</code>, numeric/date fields, PF keys</td>
+</tr>
+<tr>
+<td>4</td>
+<td>PF1, PF4 (twice), ENTER, PF3</td>
+</tr>
+<tr>
+<td>5</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTBMS1</code> (BMS SEND/RECEIVE MAP — mirrors GUI4/GUI6 flow).</p>
+<hr />
+<h3 id="seqi0018-bec1-zcobol-clone-of-bed1">SEQI0018 — BEC1 (zCobol clone of BED1)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>BEC1</strong></td>
+</tr>
+<tr>
+<td>2-9</td>
+<td>8× ENTER (same screen flow as BED1)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTBEC1</code>.</p>
+<hr />
+<h3 id="seqi0019-bec2-zcobol-clone-of-bed2">SEQI0019 — BEC2 (zCobol clone of BED2)</h3>
+<p>PF12&rarr;PF1, PF13&rarr;PF18 sweep after <strong>BEC2</strong>, then CLEAR.</p>
+<p>Program: <code>TESTBEC4</code>.</p>
+<hr />
+<h3 id="seqi0020-bec3-2">SEQI0020 — BEC3 (×2)</h3>
+<p>Same PF-key patterns as BED3 but transid <strong>BEC3</strong>.</p>
+<p>Program: <code>TESTBEC5</code>.</p>
+<hr />
+<h3 id="seqi0021-bec4">SEQI0021 — BEC4</h3>
+<p>Same as BED4 pattern: <strong>BEC4</strong>, 3× ENTER, CLEAR.</p>
+<p>Program: <code>TESTBEC6</code>.</p>
+<hr />
+<h3 id="seqi0022-bec5">SEQI0022 — BEC5</h3>
+<p>Same as BED5 pattern.</p>
+<p>Program: <code>TESTBEC6</code>.</p>
+<hr />
+<h3 id="seqi0023-bec9">SEQI0023 — BEC9</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>BEC9</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTBEC9</code>.</p>
+<hr />
+<h3 id="seqi0024-icc1">SEQI0024 — ICC1</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>ICC1</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTICC1</code> (zCobol IC01).</p>
+<hr />
+<h3 id="seqi0025-vsc1-cebr">SEQI0025 — VSC1 + CEBR</h3>
+<p>Same pattern as 0014: <strong>VSC1</strong>, CLEAR, <strong>CEBR VSC1</strong>, PF5, CLEAR.</p>
+<p>Program: <code>TESTVSC1</code>.</p>
+<hr />
+<h3 id="seqi0026-vsc2-cebr">SEQI0026 — VSC2 + CEBR</h3>
+<p>Same with <strong>VSC2</strong>.</p>
+<hr />
+<h3 id="seqi0027-vsc3-cebr">SEQI0027 — VSC3 + CEBR</h3>
+<p>Same as 0016: <strong>VSC3</strong>, CEBR, PF11×2, PF5, CLEAR.</p>
+<hr />
+<h3 id="seqi0028-bmc1-zcobol-clone-of-bms1">SEQI0028 — BMC1 (zCobol clone of BMS1)</h3>
+<p>Identical step sequence to SEQI0017 but transid <strong>BMC1</strong>.</p>
+<p>Program: <code>TESTBMC1</code>.</p>
+<hr />
+<h3 id="seqi0029-logo-asgn">SEQI0029 — LOGO + ASGN</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>LOGO</strong> (map consistency check)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>CLEAR</td>
+</tr>
+<tr>
+<td>3</td>
+<td>ENTER <strong>ASGN</strong> (ASSIGN testing)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Programs: <code>Z390LOGO</code>, <code>TESTASGN</code>.</p>
+<hr />
+<h3 id="seqi0030-setf-2">SEQI0030 — SETF (×2)</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>SETF</strong>, CLEAR</td>
+</tr>
+<tr>
+<td>2</td>
+<td>ENTER <strong>SETF</strong>, CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTSETF</code>.</p>
+<hr />
+<h3 id="seqi0031-chn1-cebr">SEQI0031 — CHN1 + CEBR</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong>CHN1</strong>, CLEAR</td>
+</tr>
+<tr>
+<td>2</td>
+<td>ENTER <strong>CEBR CHN1</strong></td>
+</tr>
+<tr>
+<td>3</td>
+<td>PF11 × 6</td>
+</tr>
+<tr>
+<td>4</td>
+<td>CLEAR</td>
+</tr>
+</tbody>
+</table>
+<p>Program: <code>TESTCHN1</code>, then CEBR.</p>
+<hr />
+<h3 id="seqi0032-shutdown">SEQI0032 — Shutdown</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ENTER <strong><code>.CEMT P SHUT</code></strong> (master-terminal CEMT shutdown command)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>EOF marker (<code>0x1A</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Same content as <code>SEQISHUT.TXT</code>. Used to terminate the regression run cleanly.</p>
+<hr />
+<h2 id="seqc-comparator-coverage">SEQC Comparator Coverage</h2>
+<p>Only these streams currently have golden <code>SEQC</code> files for <code>Z390CMPG</code> in <code>wrk_rt</code>:</p>
+<p><code>0001–0011</code>, <code>0017–0024</code>, <code>0028</code></p>
+<p>Streams <strong>0012–0016</strong>, <strong>0025–0027</strong>, <strong>0029–0031</strong> have input (<code>SEQI</code>) but no <code>SEQC</code> golden output.</p>
+<hr />
+<h2 id="practical-decoding-tips">Practical Decoding Tips</h2>
+<ol>
+<li>Records are separated by <code>0D 0A</code> (CRLF).</li>
+<li>Decode bytes as <strong>EBCDIC cp037</strong> (not ASCII).</li>
+<li>Byte 1 is the AID; see <code>AIDINDEX</code> in <code>cics\LCL0402.MLC</code>.</li>
+<li>Cross-check against <code>SEQDOC.TXT</code> and the matching test program (<code>TESTBED*</code>, <code>TESTBMS1</code>, etc.).</li>
+</ol>
+<hr />
 
 
 
