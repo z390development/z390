@@ -18,6 +18,8 @@
 ***********************************************************************
 * Author - Don Higgins                                                *
 ***********************************************************************
+* 2026-06-26 AFK Regression test run fails with Length Error            #784
+***********************************************************************
 *
 * BROWSE TEMPORARY STORAGE
 *
@@ -915,6 +917,7 @@ EXTRLIMT DS    AL2                LENGTH LIMIT
 *
 RECEIVE  EQU   *
          XC    RCVEAREA,RCVEAREA  CLEAR RECEIVE AREA
+         MVC   RCVELEN,=AL2(L'RCVEAREA) SET RECEIVE BUFFER LENGTH       #784
          EXEC  CICS RECEIVE INTO(RCVEAREA) LENGTH(RCVELEN)
          BR    R9                 RETURN
 *
