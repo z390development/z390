@@ -447,6 +447,10 @@ import javax.swing.JTextArea;
  * 2026-08-10 AFK #807 Fix issues flagged by linter
  * 2026-08-27 AFK #916 Missing break statements in case construct
  * 2026-09-12 RJS #877 Do not display stale object code on error lines
+ * 2026-09-18 RJS #935 Fill ADDR2 in listing for relative branches
+ *                     (BRAS/JAS and other get_hex_relative_offset callers)
+ *                     Fill ADDR1/ADDR2 in listing for RX/RS/SS
+ *                     absolute D(B)/D(X,B) storage operands
  *****************************************************/
 
 
@@ -9479,6 +9483,7 @@ public  class  az390 implements Runnable {
     private void get_hex_relative_offset(int bits) {
         if (calc_exp()) {
             if  (exp_type == sym_rel) {
+                hex_bddd2_loc = tz390.get_hex(exp_val,6); // #935 ADDR2 before offset conversion
                 if (bits == 12) {
                     obj_code = obj_code + get_hex_relative_offset_12();
                 } else if (bits == 16) {
@@ -9532,8 +9537,8 @@ public  class  az390 implements Runnable {
         hex_bddd_loc = "      ";
         calc_lit_or_exp();
         if (!bal_abort) {
+            hex_bddd_loc = tz390.get_hex(exp_val,6); // #935 ADDR1 before abs parse
             if (exp_type == sym_rel) {
-                hex_bddd_loc = tz390.get_hex(exp_val,6);
                 hex_bddd = get_exp_bddd();
                 ll  = get_exp_ll();
             } else {
@@ -9611,8 +9616,8 @@ public  class  az390 implements Runnable {
         String hex_xbddd = "llbddd";
         calc_lit_or_exp();
         if (!bal_abort) {
+            hex_bddd2_loc = tz390.get_hex(exp_val,6); // #935 ADDR2 before abs parse
             if  (exp_type == sym_rel) { //
-                hex_bddd2_loc = tz390.get_hex(exp_val,6);
                 hex_bddd2 = get_exp_bddd(); // RPI 1148
                 hex_xbddd = get_exp_v2x() +hex_bddd2;
             } else {
@@ -9632,8 +9637,8 @@ public  class  az390 implements Runnable {
         String hex_xbddd = "llbddd";
         calc_lit_or_exp();
         if (!bal_abort) {
+            hex_bddd2_loc = tz390.get_hex(exp_val,6); // #935 ADDR2 before abs parse
             if  (exp_type == sym_rel) { //
-                hex_bddd2_loc = tz390.get_hex(exp_val,6);
                 hex_bddd2 = get_exp_bddd(); // RPI 1148
                 hex_xbddd = get_exp_x() +hex_bddd2;
             } else {
@@ -9715,8 +9720,8 @@ public  class  az390 implements Runnable {
         hex_bddd2 = null;
         calc_lit_or_exp();
         if  (!bal_abort) {
+            hex_bddd2_loc = tz390.get_hex(exp_val,6); // #935 ADDR2 before abs parse
             if  (exp_type == sym_rel) {
-                hex_bddd2_loc = tz390.get_hex(exp_val,6);
                 hex_bddd2 = get_exp_bddd(); // RPI 1148
             } else {
                 hex_bddd2 = get_exp_abs_bddd();
