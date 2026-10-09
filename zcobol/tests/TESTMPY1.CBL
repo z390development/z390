@@ -322,4 +322,3 @@
            MOVE 16 TO RETURN-CODE..
            DISPLAY 'BAD-TEST'.
       *    STOP RUN.
-      

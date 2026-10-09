@@ -287,4 +287,4 @@ The GETMAIN size will be (PCELLCT+SCELLCT)*CSIZE
 ```
 
 Get the next cell in this pool, GR1 contains the address or zero if all cells 
-have been read. 
+have been read.
