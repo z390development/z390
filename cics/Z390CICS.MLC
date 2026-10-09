@@ -24,7 +24,8 @@
 *                                                                     *
 * 04/22/08 RPI 837 ADD NOTIME TO PREVENT 422 ABEND IN 15 SECONDS      *
 * 09/21/21         MOD TO KCPSTART \BAT\EZ390                         *
-* 2922-92-28 jjg Issue #356 Linux/MacOS support                       *
+* 2022-02-28 jjg Issue #356 Linux/MacOS support                       *
+* 2026-10-03 afk after abend AEIV U0444 ensues due to table order error
 *                                                                     *
 ***********************************************************************
 *
@@ -1652,11 +1653,6 @@ MSGTABLE EQU   *
          DC    X'FFFFFF'          STOPPER
 *
 APPABTAB EQU   *
-         DC    C'AEI0',CL13'PGMIDERR'
-         DC    C'AEI1',CL13'TRANSIDERR'
-         DC    C'AEI2',CL13'ENDDATA'
-         DC    C'AEI4',CL13'EXPIRED'
-         DC    C'AEI9',CL13'MAPFAIL'
          DC    C'AEIK',CL13'TERMIDERR'
          DC    C'AEIL',CL13'FILENOTFOUND'
          DC    C'AEIM',CL13'NOTFND'
@@ -1670,6 +1666,11 @@ APPABTAB EQU   *
          DC    C'AEIU',CL13'ILLOGIC'
          DC    C'AEIV',CL13'LENGERR'
          DC    C'AEIZ',CL13'ITEMERR'
+         DC    C'AEI0',CL13'PGMIDERR'
+         DC    C'AEI1',CL13'TRANSIDERR'
+         DC    C'AEI2',CL13'ENDDATA'
+         DC    C'AEI4',CL13'EXPIRED'
+         DC    C'AEI9',CL13'MAPFAIL'
          DC    C'AEXK',CL13'END'
          DC    C'AEXL',CL13'DISABLED'
          DC    C'AEYB',CL13'INVMPSZ'
