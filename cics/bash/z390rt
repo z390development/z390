@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# z390rt: start zCICS transaction server in regression test mode
+
+####################
+# path
+####################
+
+cicspath=cics
+export CICSPATH=cics
+
+program=Z390CICS
+export Z390INI=${cicspath}/${program}.INI
+
+# get the z390 directory
+zdir=$(dirname $0)
+zdir=$(cd $zdir && pwd)
+# go up two levels from z390/cics/bash
+zdir=$(dirname $zdir)
+zdir=$(dirname $zdir)
+
+# z390.jar in z390 directory
+export JARPATH=${zdir}
+
+export Z390SEQ=${cicspath}/seq/
+
+cp -f ${cicspath}/Z390RT.INI ${cicspath}/Z390CICS.INI
+
+# z390file uses the $CICSPATH environment variable and
+# echos export statements for all zCICS file definitions.
+# Evaluate the export statements so environment
+# variables are accessible here.
+eval $(${cicspath}/bash/z390file)
+
+# parms below are defaults for interactive use. Override using positional parameters on call
+bash/ez390 ${cicspath}/${program} NOTIME "MAXQUE(2048000)" $1 $2 $3 $4 CON
+rc=$?
+# -- returncode 16 is expected - not showing that to avoid confusion
+cat <<EOF
+*********************************************************
+*
+* $0 zCICS regression test suite completed
+*
+*********************************************************
+EOF
+
+# run the comparator
+seqout=${cicspath}/seq/SEQCOMP.TXT
+${cicspath}/bash/z390cmpg
+rc=$?
+cat <<EOF
+*********************************************************
+*
+* $0 zCICS regression test comparator comlete
+* $0 error level is $rc
+*
+*********************************************************
+EOF
+if [ $rc -gt 0 ]; then
+    exit $rc
+fi
+
+# ensure the differences file is empty
+if [ -s "$seqout" ]; then
+    echo $0 differences written to $seqout
+    exit 8
+fi
+
+# undo changes made to run the test
+cp -f ${cicspath}/Z390RUN.INI ${cicspath}/Z390CICS.INI
+rm -f ${Z390SEQ}/SEQO0001.TXT
+
+exit 0
