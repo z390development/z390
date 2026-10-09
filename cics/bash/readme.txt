@@ -12,6 +12,7 @@ z390file - set commands for all files CICS can access
 z390kcpl - start launcher for ascii CICS remote terminal on wifi
 z390kcpr - start remote 3270 CICS remote terminal on wifie
 z390seqg - start sequential CICS datastream builder
+z390rt   - start CICS transaction server in regression test mode
 
 To start CICS server, start z390cicg
 To start remote CICS 3270 terminal, start z390kcpr
