@@ -898,6 +898,7 @@ public  class  az390 implements Runnable {
     /** variable      */ boolean exp_equ     = false; // RPI 749
     /** variable      */ boolean exp_lit_mod = false; // RPI 749
     /** variable      */ int exp_len = 1;
+    /** variable      */ int exp_equ_len = 1; // length attribute of leftmost term if it is a symbol
     /** variable      */ int tot_exp_stk_sym = 0;
     /** variable      */ int tot_exp_stk_op  = 0;
     /** variable      */ int[]    exp_stk_sym_esd = (int[]) Array.newInstance(int.class, max_exp_stk);
@@ -7345,6 +7346,7 @@ public  class  az390 implements Runnable {
         exp_first_sym_len = true; // is this first exp symbol length
         exp_use_lab = null; // RPI 375
         exp_len = 1;
+        exp_equ_len = 1;
         tot_exp_stk_sym = 0;
         tot_exp_stk_op  = 0;
         tot_exp_rld_add = 0;
@@ -7991,6 +7993,9 @@ public  class  az390 implements Runnable {
                 if (exp_first_sym_len) {
                     exp_first_sym_len = false;
                     exp_len = sym_len[cur_sid];
+                }
+                if (tot_exp_stk_sym == 1 && tot_exp_stk_op == 0) {
+                    exp_equ_len = sym_len[cur_sid]; // symbol is leftmost term
                 }
                 exp_stk_sym_esd[tot_exp_stk_sym-1]  = esd_base[sym_esd[cur_sid]]; // RPI 301
                 exp_stk_sym_val[tot_exp_stk_sym-1]  = sym_loc[cur_sid];
@@ -11697,7 +11702,9 @@ public  class  az390 implements Runnable {
      * define or update symbol definition:
      * <ol>
      *  <li>Set sym_loc to first pos value</li>
-     *  <li>Set sym_len to optional 2nd pos value else set sym_len to 1.</li>
+     *  <li>Set sym_len to optional 2nd pos value else set sym_len to
+     *      the length attribute of the leftmost term of the 1st pos value,
+     *      or 1 if that term is not a symbol.</li>
      *  <li>Set sym_attr to optional 3rd pos value.</li>
      *  <li>Set sym_attrp 4th program type</li>
      *  <li>Set sym_attra 5th assembler type</li>
@@ -11735,7 +11742,7 @@ public  class  az390 implements Runnable {
                     }
                 }
                 sym_loc[store_sid] = exp_val;
-                sym_len[store_sid] = 1;
+                sym_len[store_sid] = exp_equ_len;
                 hex_bddd1_loc = tz390.get_hex(exp_val,8); // RPI 1099 was 6 vs 8
                 hex_bddd2_loc = "    ";                   // RPI 1099
                 if (exp_next_char(',')) {
