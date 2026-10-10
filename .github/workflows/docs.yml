@@ -1,9 +1,11 @@
 name: Publish docs via GitHub Pages
-on: 
+on:
   push:
     branches:
       - main
-      - doc/**
+
+permissions:
+  contents: read
 
 env:
   JAVA_DISTRIBUTION: temurin
@@ -14,11 +16,19 @@ jobs:
     name: Deploy docs
     runs-on: ubuntu-latest
     steps:
+      - name: Create docs publisher token
+        id: app
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.DOCS_APP_ID }}
+          private-key: ${{ secrets.DOCS_APP_PRIVATE_KEY }}
       - name: checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
           lfs: true
+          persist-credentials: true
+          token: ${{ steps.app.outputs.token }}
       - name: version
         run: echo "version=$(git describe --tags)" >> $GITHUB_OUTPUT
         id: version
