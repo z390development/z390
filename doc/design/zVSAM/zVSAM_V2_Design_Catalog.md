@@ -36,7 +36,7 @@ It holds information on zVSAM clusters only. Sequential datasets cannot be catal
 | Optional DTA/IDX dsname overrides            | Null-terminated strings in `VCLRDSNS` / `VAIXDSNS`  |
 
 It does **not** hold runtime state (high-used XLRA, record counts, spacemaps).
-That lives in the prefix and counters areas of each physical file. Those areas
+That lives in the prefix and counters areas of each component's first physical file. Those areas
 are expected to move into a catalog dataset in a future release; see
 [File Structure](zVSAM_V2_Design_File_Structure.md).
 
@@ -83,7 +83,7 @@ Unlike V1, V2 does **not** embed a model DCB in the catalog (`VCDTDCBA` is gone)
 
 The catalog will hold at least:
 - cluster name
-- pointer to index file
+- pointer to index and data components
 - pointers to all related AIX clusters
 - LRECL
 - record type (F, V, FS, VS)
@@ -127,9 +127,16 @@ V1 used `{name}.VES`, `{name}.VX0`, and `{name}.VXN` and stored those defaults
 in the VCDT. V2 stores a single `X'00'` when no override is given; OPEN must
 synthesize `.DTA` / `.IDX`.
 
-> [!NOTE]
-> V2 behavior is simple. Maybe too simple. I suggest we look into copying V1 behaviour,
-> using the proper extensions we assign to zVSAM V2 physical files.
+When additional files need to be allocated to a component, an eight-character decimal number
+is inserted between the file name and extension of the first file (the base file) to distinguish
+the extension files. The base file name never changes, and does not need to have such a number,
+unless it has been explicitly created with a trailing qualifier of eight zero characters.
+The number zero is reserved for the base file. Additional files number from 1 up to 99999999.
+
+E.g. when a cluster named `MYAIX21.DTA` is extended, a file `MYAIX21.00000001.DTA` is added
+to the data component. The index component `MYAIX21.IDX` remains a single-file component until
+that component, too, runs out of space. It is then - independently of the data component -
+extended with `MYAIX21.00000001.IDX`.
 
 ## DEFINE CATALOG
 
@@ -221,11 +228,11 @@ stricter wording in File Structure should be relaxed to match this chapter.
 
 ### Other cluster operands
 
-| Operand        | Default | Meaning                                                                            |
-|----------------|---------|------------------------------------------------------------------------------------|
-| `REUSE=YES/NO` | `NO`    | Reset high-used at OPEN (`VCLRRUSE` in `VCLRFLG2`).                                |
-| `DTADSN=`      | omitted | Full host path of the data file. C string addressed by `VCLRDTAA`.                 |
-| `IDXDSN=`      | omitted | Full host path of the index file, addressed by `VCLRIDXA`. Must not equal `DTADSN`.|
+| Operand        | Default | Meaning                                                                                  |
+|----------------|---------|------------------------------------------------------------------------------------------|
+| `REUSE=YES/NO` | `NO`    | Reset high-used at OPEN (`VCLRRUSE` in `VCLRFLG2`).                                      |
+| `DTADSN=`      | omitted | Full host path of the first data file. C string addressed by `VCLRDTAA`.                 |
+| `IDXDSN=`      | omitted | Full host path of the first index file, addressed by `VCLRIDXA`. Must not equal `DTADSN`.|
 
 LDS skips `RECORDSIZE`, `SPANNED`, `KEYS`, and `REUSE` in `DEFINE2` and goes
 straight to the DSN overrides.
@@ -260,7 +267,7 @@ possibly spanned list of base pointers.
 | `INDEXADJUST=YES/NO`                   | `NO`     | Same meaning as on a cluster.                                                                                                                      |
 | `DATAFREESPACE=` / `INDEXFREESPACE=`   | `0`      | 0–99. Valid on AIX.                                                                                                                                |
 | `DATAFREEBLOCKS=` / `INDEXFREEBLOCKS=` | `(0,0)`  | Valid on AIX (it is indexed).                                                                                                                      |
-| `DTADSN=` / `IDXDSN=`                  | omitted  | Overrides for the AIX `.DTA` / `.IDX` files.                                                                                                       |
+| `DTADSN=` / `IDXDSN=`                  | omitted  | Overrides for the AIX `.DTA` / `.IDX` first file of each component                                                                                 |
 
 `DEFINE END` requires every `RELATE=` to name a cluster in this catalog. An AIX
 may relate to KSDS or ESDS. Relating an AIX to RRDS or LDS is not a defined
@@ -334,7 +341,7 @@ with the cluster name so AIX and path pointers can use `A(name)`.
 | 12     | `VCLRTYPE`   | CL4  | `ESDS` / `KSDS` / `RRDS` / `LDS` |
 | 16     | `VCLRFLG1`   | X    | See flag table                   |
 | 17     | `VCLRFLG2`   | X    | See flag table                   |
-| 18–19  | `VCLRFLG3/4` | XL2  | Reserved (zero)                  |
+| 18     | `VCLRFLG3/4` | XL2  | Reserved (zero)                  |
 | 20     | `VCLRLAVG`   | F    | Average length if variable       |
 | 24     | `VCLRLMAX`   | F    | Max or fixed length              |
 | 28     | `VCLRKLEN`   | F    | Primary key length (KSDS)        |
@@ -383,7 +390,7 @@ with the cluster name so AIX and path pointers can use `A(name)`.
 | 12     | `VAIXRELN` | CL8  | Related cluster name              |
 | 20     | `VAIXFLG1` | X    | See flag table                    |
 | 21     | `VAIXFLG2` | X    | See flag table                    |
-| 22–23  |            | XL2  | Reserved                          |
+| 22     |            | XL2  | Reserved                          |
 | 24     | `VAIXKLEN` | F    | Alternate key length              |
 | 28     | `VAIXKOFF` | F    | Alternate key offset              |
 | 32     | `VAIXDTAA` | A    | Override DTA dsname               |
@@ -470,7 +477,7 @@ V2 OPEN is intended to:
 2. Inspect `VCDTID` and instantiate Java catalog objects from either a V1 or a
    V2 layout.
 3. Resolve the named cluster or path.
-4. Derive DTA/IDX paths (override or `{dir}{name}.DTA` / `.IDX`).
+4. Derive DTA/IDX paths (override or `{dir}{name}.DTA` / `.IDX`). For first file in a component only.
 5. Open those files and validate the prefix against the catalog (type, LRECL,
    block size, key offset/length) as described in ACB Processes.
 
@@ -521,7 +528,7 @@ catalog cluster. Planned consequences:
 
 - `DEFINE` / `DELETE` become runtime operations against that cluster, not an
   assembly step.
-- Prefix counters that today sit in the first 4096 bytes of each file can move
+- Counters that today sit in the counters area of each component can move
   into catalog records.
 - A `SYSCAT` (or similar) host variable can name the catalog; the ACB DDNAME
   can then name the cluster directly.

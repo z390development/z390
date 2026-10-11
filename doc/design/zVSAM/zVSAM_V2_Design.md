@@ -49,6 +49,7 @@ to the extent that the following acronyms and terms are understood:
 | ACB     | Access Control Block                                                |
 | AIX     | Alternate IndeX                                                     |
 | CBMR    | Control Block Modification Request                                  |
+| CA      | Control Area                                                        |
 | CI      | Control Interval                                                    |
 | DRP     | z390 only: Displaced Record Pointer                                 |
 | ESDS    | Entry Sequenced Data Set                                            |
@@ -74,22 +75,22 @@ to the extent that the following acronyms and terms are understood:
 In this document we also use the following terms.
 The ones that are used by IBM as well, are intended to have the same meaning they do in IBM manuals.
 
-| Term       | Meaning                                                                                      |
-|------------|----------------------------------------------------------------------------------------------|
-| allow mode | enabled by `allow` option on z390 invocation. `noallow` or compatibility mode is the default |
-| Area       | a section of storage with a defined layout, depending on the type of Area                    |
-| Block      | zVSAM equivalent of a Control Interval - the unit of I/O operations                          |
-| Cluster    | a set of files that logically belong together                                                |
-| Component  | either a data component or an index component of a cluster                                   |
-| Element    | a primary key, RRN, or XLRA in an AIX record                                                 |
-| File       | a single file as seen by the hosting operating system                                        |
-| Foxes      | a value consisting of all high-values i.e. a value of all X'FF' bytes                        |
-| List       | a structure holding items that are linked together by pointers                               |
-| Segment    | a portion of a record in a spanned dataset                                                   |
-| Segmented  | a record that has been split into segments in a spanned dataset                              |
-| Spanned    | an attribute of a dataset that allows records to be split into segments                      |
-| Sphere     | a cluster and all associated AIXs                                                            |
-| Table      | a structure holding items that are physically adjacent                                       |
+| Term       | Meaning                                                                                            |
+|------------|----------------------------------------------------------------------------------------------------|
+| allow mode | enabled by `allow` option on z390 invocation. `noallow` or compatibility mode is the default       |
+| Area       | a section of storage with a defined layout, depending on the type of Area                          |
+| Block      | zVSAM equivalent of a Control Interval - the unit of I/O operations                                |
+| Cluster    | a component (ESDS, RRDS, LDS) or a set of components (KSDS, AIX) that logically belong together    |
+| Component  | either a data component or an index component of a cluster, consists of 1 or more Files            |
+| Element    | a primary key (KSDS), RRN (RRDS), or XLRA (any cluster type) uniquely identifying a record         |
+| File       | a single file as seen by the hosting operating system, the closest thing in z390 to a Control Area |
+| Foxes      | a value consisting of all high-values i.e. a value of all X'FF' bytes                              |
+| List       | a structure holding items that are linked together by pointers                                     |
+| Segment    | a portion of a record in a spanned dataset                                                         |
+| Segmented  | a record that has been split into segments in a spanned dataset                                    |
+| Spanned    | an attribute of a dataset that allows records to be split into segments                            |
+| Sphere     | a cluster and all associated AIXs                                                                  |
+| Table      | a structure holding items that are physically adjacent                                             |
 
 ## Compatibility
 
