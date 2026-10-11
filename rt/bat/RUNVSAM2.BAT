@@ -13,12 +13,7 @@ rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 pushd %~dps0..\..
 
-call bat\asml %z_TraceMode% vsam2\mlc\Z390CAT2 trace sysmac(mac) noloadhigh zvsam(2) || goto error
-call bat\asml %z_TraceMode% vsam2\mlc\ZVSAM19C trace sysmac(mac) noloadhigh zvsam(2) || goto error
-call bat\asml %z_TraceMode% vsam2\mlc\TESTGNCB trace sysmac(mac) noloadhigh zvsam(2) || goto error
-call bat\asml %z_TraceMode% vsam2\mlc\TESTMDCB trace sysmac(mac) noloadhigh zvsam(2) || goto error
-call bat\asml %z_TraceMode% vsam2\mlc\TESTSHCB trace sysmac(mac) noloadhigh zvsam(2) || goto error
-call bat\asml %z_TraceMode% vsam2\mlc\TESTTSCB trace sysmac(mac) noloadhigh zvsam(2) || goto error
+call vsam2\bat\RUNTESTS %z_TraceMode% || goto error
 
 rem if we get here, there were no errors
 echo Verify all zVSAM(2) tests ok

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# testtscb: assemble, link module using TESTCB macro
+# testtscb: assemble, link, execute module using TESTCB macro
 
 ########################################
 # setup
@@ -18,9 +18,9 @@ zvsam="zvsam(2)"
 
 rc=0
 
-# run build TESTTSCB.390
+# build and execute TESTTSCB.390
 
-bash/asml ${vsampath}/mlc/TESTTSCB $1 $2 $3 $4 $5 $zvsam
+bash/asmlg ${vsampath}/mlc/TESTTSCB $1 $2 $3 $4 $5 $zvsam
 rc=$?
 if [ $rc -ne 0 ]; then echo "error in testtscb"; fi
 

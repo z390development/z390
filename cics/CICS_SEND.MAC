@@ -536,4 +536,3 @@ P1804MRS_&SYSNDX DS 0H
          MEXIT
 .*
          MEND
-

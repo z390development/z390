@@ -6,4 +6,3 @@ FILEERTB DS    0F
          DC    X'00080068',F'21',F'110',CL8'ILLOGIC' ANY INVALID OPT
          DC    X'0008006C',F'13',F'80',CL8'NOTFND'  INVALID LRECL
          DC    X'FF'              STOPPER
-

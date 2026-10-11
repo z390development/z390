@@ -1,0 +1,68 @@
+*********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2021 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License 
+* along with this program; if not, see https://www.gnu.org/licenses.
+***********************************************************************
+* Author - Don Higgins                                                *
+* 06/13/07 RPI 640 TEST QUOTED STRINGS IN EXEC CICS
+* 02/01/08 RPI 805 TEST EXEC CICS COMMENTS WITH LEADING COMMA/PERIOD
+* 06/13/08 RPI 860 ALLOW COMMAS TO SEPARATE OPERANDS AS WELL AS SPACES
+* 09/15/08 RPI 905 ALLOW COMMA-SPACE FOLLOWED BY COMMENTS ON CONTINUED
+*                  LINES, MERGE KEYWORD AND (...) INTO SINGLE OPERAND,
+*                  GENERATE LABEL ON EXEC STMT IF FOUND. GEN EQUREGS
+* 08/03/26 AFK     Rename TESTCIC2 to MMMMCIC1 and move from rt\test
+*                      to cics folder
+*********************************************************************
+DFHEISTG DSECT       DSA STORAGE
+MSGSBA   DS   CL4
+SENDMSG  DS   CL100  MESSAGE BUFFER
+MMMMCIC1 CSECT
+*
+* SEND MSG1 TO GUAM TN3270 TERMINAL
+*
+         MVC   MSGSBA,SBA11
+         MVC   SENDMSG(L'MSG1),MSG1
+         BAL   R14,GETTIME
+         MVC   SENDMSG(13),TIMEHERE
+    EXEC  CICS SEND FROM(MSGSBA) LENGTH(L'MSG1+4+C' '-C' ') ;RPI640
+    EXEC  CICS SEND FROM(MSGSBA) LENGTH(L'MSG1+4+C','-C'.') .RPI860
+    EXEC  CICS SEND FROM(MSGSBA) LENGTH(L'MSG1+4+C','-C'.'). RPI805
+    EXEC  CICS SEND FROM(MSGSBA) LENGTH(L'MSG1+4+C','-C'.') ,RPI805
+    EXEC  CICS SEND FROM(MSGSBA) LENGTH(L'MSG1+4+C','-C'.') .RPI805
+L1  EXEC  CICS SEND FROM(MSGSBA), COMMENT 1                            X
+               LENGTH (L'MSG1+4+C','-C'.'), COMMENT 2 MERGE LENGTH(..)
+    EXEC  CICS RETURN
+*
+GETTIME  EQU   *
+         TIME  DEC,TIME,LINKAGE=SYSTEM
+         MVO   TIMEPACK,TIME
+         MVC   TIMEHERE(13),TIMEEDIT
+         ED    TIMEHERE(13),TIMEPACK
+         BR    R14
+*
+SBA11    TN3270 WCC_KD,(SBA,1,1)
+MSG1     DC    C'  HH:MM:SS.TT HELLO FROM MMMMCIC1'
+*
+TIME     DS    CL4                HHMMSSTT
+         DS    CL8                SPACE FOR DATE
+TIMEPACK DC    PL5'0'             0HHMMSSTTC
+TIMEEDIT DC    X'402120207A20207A20204B2020'
+TIMEHERE DS    CL13
+*
+         TN3270 SYMBOLS
+         EQUREGS
+         EQUREGS , TEST SUPPRESSING DUPS RPI 905
+         END

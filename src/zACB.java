@@ -19,17 +19,23 @@ with this program; if not, see <https://www.gnu.org/licenses/>.
 
 
 
-/***************************************************************************
- * 
+/* ***************************************************
+ * Maintenance
+ *****************************************************
+ * 2016-12-24 initial coding
+ * 2026-03-23 AFK Fix/Add javadoc comments
+ * 2026-08-07 #807 Fix issues flagged by linter
+ *****************************************************/
+
+
+
+/**
+ *
  * The zACB object is the Java-level representation of an ACB
  * The zACB class handles all ACB-based requests: Open and Close
  *
  */
-public class zACB
-{/* *************************************************** Maintenance
-  * 2016-12-24 initial coding 
-  * 2026-03-23 AFK Fix/Add javadoc comments
-  *****************************************************/
+public class zACB {
     /** Pointer to next ACB          */ private int acb_pointer;
     /** DDname for ACB               */ private String ddname;
     /** Data Set create count        */ private int create_count;
@@ -45,50 +51,52 @@ public class zACB
 
 
 
-/**
- * Constructor for new ACB
- *
- * @param acb_addr address of ACB in z390 storage to be opened
- */
-public zACB(int acb_addr)
-   {acb_pointer = acb_addr;
-    ddname = "";
-    create_count = 0;
-    open_count = 0;
-    point_count = 0;
-    get_count = 0;
-    insert_count = 0;
-    update_count = 0;
-    erase_count = 0;
-    close_count = 0;
-    eof_count = 0;
-    error_count = 0;
-    System.out.println("zACB constructed");
+    /**
+     * Constructor for new ACB
+     *
+     * @param acb_addr address of ACB in z390 storage to be opened
+     */
+    public zACB(int acb_addr) {
+        acb_pointer = acb_addr;
+        ddname = "";
+        create_count = 0;
+        open_count = 0;
+        point_count = 0;
+        get_count = 0;
+        insert_count = 0;
+        update_count = 0;
+        erase_count = 0;
+        close_count = 0;
+        eof_count = 0;
+        error_count = 0;
+        System.out.println("zACB constructed");
     }
 
 
 
-/**
- * Open new ACB
- *
- * @return return code
- */
-public int Open()
-     {System.out.println("Open invoked");
-      return 0;
-      }
-
-/**
- * Close ACB
- *
- * @return return code
- */
-public int Close()
-   {System.out.println("Close invoked");
-    return 0;
+    /**
+     * Open new ACB
+     *
+     * @return return code
+     */
+    public int Open() {
+        System.out.println("Open invoked");
+        return 0;
     }
 
 
 
-/* end of module zACB */
+    /**
+     * Close ACB
+     *
+     * @return return code
+     */
+    public int Close() {
+        System.out.println("Close invoked");
+        return 0;
+    }
+
+
+
+    /* end of module zACB */
 }

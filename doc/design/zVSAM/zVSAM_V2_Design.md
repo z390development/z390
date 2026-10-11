@@ -50,6 +50,7 @@ to the extent that the following acronyms and terms are understood:
 | AIX     | Alternate IndeX                                                     |
 | CBMR    | Control Block Modification Request                                  |
 | CI      | Control Interval                                                    |
+| DRP     | z390 only: Displaced Record Pointer                                 |
 | ESDS    | Entry Sequenced Data Set                                            |
 | EXLST   | Exit List                                                           |
 | IBM     | International Business Machines Corp., USA                          |
@@ -65,7 +66,7 @@ to the extent that the following acronyms and terms are understood:
 | SPX     | Segment Prefix                                                      |
 | VSAM    | Virtual Storage Access Method                                       |
 | XRBA    | Extended Relative Byte Address                                      |
-| XLRA    | Extended Logical Record Address                                     |
+| XLRA    | Extended Logical Record Address - z390 equivalent of RBA/XRBA       |
 | zACB    | z390 equivalent of the ACB                                          |
 | zEXLST  | z390 equivalent of the EXLST                                        |
 | zRPL    | z390 equivalent of the RPL                                          |
@@ -73,25 +74,26 @@ to the extent that the following acronyms and terms are understood:
 In this document we also use the following terms.
 The ones that are used by IBM as well, are intended to have the same meaning they do in IBM manuals.
 
-| Term      | Meaning                                                                   |
-|-----------|---------------------------------------------------------------------------|
-| Area      | a section of storage with a defined layout, depending on the type of Area |
-| Block     | zVSAM equivalent of a Control Interval - the unit of I/O operations       |
-| Cluster   | a set of files that logically belong together                             |
-| Component | either a data component or an index component of a cluster                |
-| Element   | a primary key or XRBA in an AIX record                                    |
-| File      | a single file as seen by the hosting operating system                     |
-| Foxes     | a value consisting of all high-values i.e. a value of all X'FF' bytes     |
-| List      | a structure holding items that are linked together by pointers            |
-| Segment   | a portion of a record in a spanned dataset                                |
-| Segmented | a record that has been split into segments in a spanned dataset           |
-| Spanned   | an attribute of a dataset that allows records to be split into segments   |
-| Sphere    | a cluster and all associated AIXs                                         |
-| Table     | a structure holding items that are physically adjacent                    |
+| Term       | Meaning                                                                                      |
+|------------|----------------------------------------------------------------------------------------------|
+| allow mode | enabled by `allow` option on z390 invocation. `noallow` or compatibility mode is the default |
+| Area       | a section of storage with a defined layout, depending on the type of Area                    |
+| Block      | zVSAM equivalent of a Control Interval - the unit of I/O operations                          |
+| Cluster    | a set of files that logically belong together                                                |
+| Component  | either a data component or an index component of a cluster                                   |
+| Element    | a primary key, RRN, or XLRA in an AIX record                                                 |
+| File       | a single file as seen by the hosting operating system                                        |
+| Foxes      | a value consisting of all high-values i.e. a value of all X'FF' bytes                        |
+| List       | a structure holding items that are linked together by pointers                               |
+| Segment    | a portion of a record in a spanned dataset                                                   |
+| Segmented  | a record that has been split into segments in a spanned dataset                              |
+| Spanned    | an attribute of a dataset that allows records to be split into segments                      |
+| Sphere     | a cluster and all associated AIXs                                                            |
+| Table      | a structure holding items that are physically adjacent                                       |
 
 ## Compatibility
 
-As this document relates to zVSAM V2, there are two type of compatibility we need to consider.
+As this document relates to zVSAM V2, there are two types of compatibility we need to consider.
 On the one hand we have designed zVSAM to be compatible with IBM VSAM.
 And on the other hand we need to consider compatibility with
 z390's zVSAM V1 – the prior implementation of zVSAM in the z390 environment.
@@ -126,21 +128,21 @@ We have taken the following measures to facilitate the transition from zVSAM V1 
 
 1. We have introduced a new z390 option: ZVSAM which indicates which version of
    zVSAM you want z390 to use.
-   For maximum compatibility the default is set to ZVSAM(1) to enable zVSAM v1.
+   For maximum compatibility the default is set to ZVSAM(1) to enable zVSAM V1.
    The default will be changed to ZVSAM(2) in a future release of z390.
    The parameter takes the following forms:
     1. ZVSAM(0) – zVSAM usage is disallowed
     2. ZVSAM(1) – zVSAM V1 is enabled, zVSAM V2 is disabled
     3. ZVSAM(2) – zVSAM V2 is enabled, zVSAM V1 is disabled
 2. Any assembly involving zVSAM must use either zVSAM V1 or zVSAM V2,
-   the cannot be mixed. However, modules using zVSAM V1 and zVSAM V2 can be linked
-   and executed in the z390. This should allow for a gradual transition from zVSAM V1 to V2.
+   they cannot be mixed. However, modules using zVSAM V1 and zVSAM V2 can be linked
+   and executed in the z390 environment. This should allow for a gradual transition from zVSAM V1 to V2.
 3. To convert your zVSAM V1 clusters to zVSAM V2 you'll have to take the following steps:
     1. unload the existing data from their clusters using REPRO. \
        For details on how to use REPRO, please refer to the "z390_VSAM_User_Guide"
     2. reload your data from your unload files, using ZREPRO. \
        For details on how to use zREPRO, please refer to the "z390_zVSAM_zREPRO_User_Guide"
 4. All macros supporting zVSAM will be modified to make them version-aware.
-   The ZVSAM option value described above will be propagated into a sytem SETC variable &SYSZVSAM.
+   The ZVSAM option value described above will be propagated into a system SETC variable &SYSZVSAM.
    This variable can be tested to choose the correct expansion of these macros.
    Your own code can also test this system variable.

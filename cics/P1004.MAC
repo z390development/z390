@@ -52,4 +52,3 @@ P1004RSP DS    AL4                RESP
 P1004RS2 DS    AL4                RESP2
 P1004END EQU   *                  END MARKER
          MEND
-

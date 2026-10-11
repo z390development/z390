@@ -60,4 +60,3 @@ DFHGREEN EQU   X'F4'              GREEN
 DFHTURQ  EQU   X'F5'              TURQUOISE
 DFHYELLO EQU   X'F6'              YELLOW
 DFHNEUTR EQU   X'F7'              NEUTRAL (WHITE)
-

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# testgncb: assemble, link module using GENCB macro
+# testgncb: assemble, link, execute module using GENCB macro
 
 ########################################
 # setup
@@ -18,9 +18,9 @@ zvsam="zvsam(2)"
 
 rc=0
 
-# run build TESTGNCB.390
+# build and execute TESTGNCB.390
 
-bash/asml ${vsampath}/mlc/TESTGNCB $1 $2 $3 $4 $5 $zvsam
+bash/asmlg ${vsampath}/mlc/TESTGNCB $1 $2 $3 $4 $5 $zvsam
 rc=$?
 if [ $rc -ne 0 ]; then echo "error in testgncb"; fi
 

@@ -42,4 +42,3 @@ P9628RSP DS    AL4                RESP
 P9628RS2 DS    AL4                RESP2
 P9628END EQU   *                  END MARKER
          MEND
-

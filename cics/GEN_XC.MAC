@@ -28,4 +28,3 @@
          XC    0(&LENGTH,R15),0(R1) XC IT
          AEND
          MEND
-

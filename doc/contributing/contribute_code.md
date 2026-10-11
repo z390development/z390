@@ -1,7 +1,7 @@
 # Contributing to z390
 
 The following document will provide details on how to contribute to the z390
-project. For how to contribute to the documentation, see 
+project. For how to contribute to the documentation, see
 [contributing to documentation](contribute_docs.md)
 
 ## Setup and build
@@ -34,6 +34,31 @@ to download the appropriate version for your system.
 You can find a quick reference for some frequently used git commands
 the bottom of this document.
 
+### Install lfs
+
+LFS is a git feature for Large File Support. z390 uses lfs for storing
+binary files (e.g. jpg, png) without bloating the repository itself.
+
+The installation depends on your host operating system.
+
+For Linux:
+```
+sudo apt update
+sudo apt install git-lfs
+git lfs install
+cd /mnt/c/z390dev/wrk_rt
+git lfs pull
+```
+
+On Windows:
+1. Download the Windows installer from https://git-lfs.com (or the GitHub releases page).
+2. Run the installer.
+3. issue:
+```
+git lfs install
+git lfs pull
+```
+
 ### Clone the code
 
 Start with a clone of the main repository.
@@ -49,15 +74,17 @@ for more details.
 
 === "Windows"
 
-    `bat> BUILD.BAT`
+    `bat> BUILD.BAT [*All]`
 
 === "MacOS/Unix"
-        
-    `bash> ./build.sh`
+
+    `bash> ./build.sh ['*All']`
 
 If the job successfully runs, it means you are ready to start development.
 
-This build procedure invokes the full regression testing script.
+This build procedure invokes the standard regression test script.
+Adding the `*All` parameter includes the optional tests.
+
 Build and regression testing both can take quite some time.
 Luckily, you do not need to do this very often.
 
@@ -65,7 +92,7 @@ Luckily, you do not need to do this very often.
 
 #### Code Style
 
-The project has not adopted any specific code style. The best guidance that can be 
+The project has not adopted any specific code style. The best guidance that can be
 provided is to follow the existing style of code that already exists.
 
 #### Javadocs
@@ -83,7 +110,7 @@ the bldjar script.
     `bat> bat\BLDJAR.BAT`
 
 === "MacOS/Unix"
-        
+
     `bash> bash/bldjar`
 
 The published Java API documentation is available on GitHub Pages at
@@ -106,26 +133,30 @@ The test scripts are in subdirectory z390test\src\test\groovy\org\z390\test
 | force a test run                          | `gradlew test --rerun`           |
 | run a specific test/testset               | `gradlew test --tests 'pattern'` |
 | run all zCobol tests                      | `gradlew test --tests '*cbl*'`   |
+| run full test suite (Standard+Optional)   | `gradlew test -PtestMode=full`   |
 | stop test after failure                   | `gradlew test --fail-fast`       |
+
+Options from the above examples can be combined on a single command
+to tailor a test run to your specific needs.
 
 ## Proposing new functionality
 
-Enhancements are welcome, but be aware that you are stepping into 
-an existing and well established project. 
+Enhancements are welcome, but be aware that you are stepping into
+an existing and well established project.
 
 Before you spend time on an enhancement, we __strongly__ suggest
-that you first discuss your proposal with the core team and get their 
+that you first discuss your proposal with the core team and get their
 buy-in before progressing.
 
-The best place to have these discussions is on the 
+The best place to have these discussions is on the
 [z390 developer Google group](https://groups.google.com/g/z390development).
 
-Once you get approval from the group, you can work on your change via the 
+Once you get approval from the group, you can work on your change via the
 standard GitHub pull request model.
 
 ## Submitting changes
 
-Changes can be submitted to the project by creating a pull request on the 
+Changes can be submitted to the project by creating a pull request on the
 [z390 project repository](https://github.com/z390development/z390).
 
 ## Creating a new release
@@ -165,11 +196,11 @@ To create a new release:
 
 ### Automated Release Process
 
-When a pull request containing changes to version.txt is merged to main, 
+When a pull request containing changes to version.txt is merged to main,
 the GitHub Actions workflow will automatically:
 
 1. Build the z390 distribution
-2. Run all tests 
+2. Run all tests
 3. Create a git tag for the version
 4. Create a GitHub release using the version from version.txt
 5. Attach the distribution zip file to the release
@@ -194,7 +225,6 @@ mac           | Primary maclib folder for z390
 doc+doc_overrides | z390 Markdown documentation
 .github       | Scripts and config for GitHub build actions
 
-
 The following directories provide additional features using the z390 toolkit.
 
 Directory     | Description
@@ -205,20 +235,19 @@ structuredmacros | Alternative Structured Programming Macros from Daniel H. Snyd
 sort          | Sort utility
 zpar          | Generate program execution traces
 
-
-The following directories provide tests and demos for various features 
+The following directories provide tests and demos for various features
 available in z390.
 
 Directory     | Description
 --------------|------------
 assist        | ASSIST instruction support
-barcode       | 
+barcode       | sample program
 bsam          | BSAM sequential file support
 guam          | Graphic User Access method support
 linklib       | ???
 mfacc         | Mainframe assembler coding contest
 mvs           | IBM MVS 3.8j sys1.maclib macros
-perl          | (Deprecated) Scipts to run Win BAT files on *nix. Use bash 
+perl          | (Deprecated) Scipts to run Win BAT files on \*nix. Use bash
 qsam          | QSAM sequential file support
 rt            | Various regression tests for z390
 soa           | Service Orientated Architecture (SOA) and TCP/IP support
@@ -228,41 +257,40 @@ vse           | VSE OS support
 
 ### Compatibility macros
 
-z390 includes a number of macros that are interface compatible with those 
-provided by mainframe operating systems. 
+z390 includes a number of macros that are interface compatible with those
+provided by mainframe operating systems.
 
 The internal operation of the macros is different from a real mainframe.
 For example, the SVC instructions used by z390 are not the same as SVC
 calls used by z/OS.
 
 This means, if you want to write programs that will work on a real mainframe
-then you need to use the supplied macros to perform the OS based actions. 
-You cannot write programs that use SVC commands as they are not the 
-same.
+then you need to use the supplied macros to perform the OS based actions.
+You cannot write programs that use SVC commands as they are not the same.
 
 ### Structured macro extensions
 
-z390 extends the standard HLASM syntax with additional keywords that allow you 
+z390 extends the standard HLASM syntax with additional keywords that allow you
 to write structured macro code.
 
 See [Structured Macro Extensions](../user_guide/z390/structured_macro.md) for more details.
 
-This makes writing macros easier but structured macros are NOT compatible 
+This makes writing macros easier but structured macros are NOT compatible
 with HLASM.
 
 Structured macro extensions are used extensively in the codebase which means
 moving between the mainframe and z390 has some challenges.
 
 The project is looking at how to make this transition easier as it understands
-z390 users come here because they want to write and run HLASM programs and 
+z390 users come here because they want to write and run HLASM programs and
 macros.
 
 ### License
 
 By contributing to the z390 project, you agree to assign all copyright
-to z390 Assembler LLC. 
+to z390 Assembler LLC.
 
-This allows the project to operate and change without the consultation 
+This allows the project to operate and change without the consultation
 of all copyright holders. This has not presented itself as an issue to
 date but could be an issue in the future.
 
@@ -307,7 +335,7 @@ The following preamble should be applied to all programs
 .* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 .* GNU General Public License for more details.
 .*
-.* You should have received a copy of the GNU General Public License 
+.* You should have received a copy of the GNU General Public License
 .* along with this program; if not, see https://www.gnu.org/licenses.
 .**********************************************************************
 .* dd/mm/yy change details
@@ -324,18 +352,19 @@ The following preamble should be applied to all programs
 git info: https://git-scm.com
 git documentation:https://git-scm.com/doc
 
-Action                                    | Command
-------------------------------------------|------------
-get list of available commands            | `git help`
-get syntax details for a git command      | `git help <command>`
-create local clone of git repo            | `git clone <url\> <subdir>`
-review status of current branch           | `git status`
-get list of all defined branches          | `git branch -v --all`
-prepare commit                            | `git add .`
-commit a set of changes                   | `git commit -m"descriptive comments"`
-push changes to your own fork             | `git push`
-remove ignored and added files from repo  | `git clean -d -f -X`
-graphical display of branches             | `git log --graph --oneline --decorate --all`
--- > when viewing the branches displayed  | `<Enter> to scroll 1 line, <PgDn> to scroll a page, q to quit`
-go 'back in time' to a specific commit    | `git branch -f <new_branch> [<start-point>]`
-                                          | `git switch <new_branch>`
+| Action                                    | Command                                                        |
+|-------------------------------------------|----------------------------------------------------------------|
+| get list of available commands            | `git help`                                                     |
+| get syntax details for a git command      | `git help <command>`                                           |
+| create local clone of git repo            | `git clone <url\> <subdir>`                                    |
+| review status of current branch           | `git status`                                                   |
+| get list of all defined branches          | `git branch -v --all`                                          |
+| prepare commit                            | `git add .`                                                    |
+| set script executable                     | `git add --chmod=+x path/to/your-script.sh`                    |
+| commit a set of changes                   | `git commit -m"descriptive comments"`                          |
+| push changes to your own fork             | `git push`                                                     |
+| remove ignored and added files from repo  | `git clean -d -f -X`                                           |
+| graphical display of branches             | `git log --graph --oneline --decorate --all`                   |
+| -- > when viewing the branches displayed  | `<Enter> to scroll 1 line, <PgDn> to scroll a page, q to quit` |
+| go 'back in time' to a specific commit    | `git branch -f <new_branch> [<start-point>]`                   |
+|                                           | `git switch <new_branch>`                                      |

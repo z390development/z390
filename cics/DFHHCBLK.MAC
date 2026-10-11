@@ -76,4 +76,3 @@ HCNERROR DS    A                    1=ERROR
          DS    A                  122=CHANNELERR
 HCNLENG  EQU   *-DFHHCBLK
          MEND
-

@@ -117,10 +117,14 @@ class z390Test {
 
     def callZ390(String asmFileExcludingExtension, String command, String... args) {
         println("Executing ${command}: ${asmFileExcludingExtension}")
+        // Repo root as cwd: so catalog relative paths resolve correctly
+        File workDir = new File(this.project_root.toString()).canonicalFile
+        println("workdir: ${workDir}")
+        // prepare command
         var cmd = ["java", "-classpath", basePath('z390.jar'),
                    '-Xrs', '-Xms150000K', '-Xmx150000K', command, asmFileExcludingExtension, *args].join(" ")
         println(cmd)
-        var proc = cmd.execute(this.getEnvList(), null)   // , workDir);
+        var proc = cmd.execute(this.getEnvList(), workDir)
         var sout = new StringBuilder()
         var serr = new StringBuilder()
         proc.consumeProcessOutput(sout, serr)
@@ -329,4 +333,67 @@ class z390Test {
         this.getOutput(cobFilenameNoExt)
         return rc
     }
+
+    /** Helper for SNAP comparison: True for SNAP header lines. */
+    static boolean isSnapHeader(String line) {
+        line ==~ /(?i)SNAP DUMP.*/
+    }
+
+    /** Helper for SNAP comparison: True for standard SNAP hex dump lines (keeps load address). */
+    static boolean isSnapDataLine(String line) {
+        line ==~ /^\s+[0-9A-Fa-f]{8}\s+\*.*/
+    }
+
+    /**
+     * This function extracts the SNAP data part from a .LOG file for comparison against a reference file
+     * From LOG text: from first SNAP header through last SNAP data line.
+     * Stops at first line that is neither header nor data (EZ390 trailer, errors, etc.).
+     */
+    static List<String> extractSnapLines(String logText) {
+        def lines = logText.readLines()
+        int start = lines.findIndexOf { isSnapHeader(it) }
+        if (start < 0) {
+            return []
+        }
+        def result = []
+        for (int i = start; i < lines.size(); i++) {
+            def line = lines[i]
+            if (isSnapHeader(line) || isSnapDataLine(line)) {
+                result << line
+            } else {
+                break   // trailer / non-SNAP — do not include
+            }
+        }
+        return result
+    }
+
+    /**
+     * Program WTO / console lines from an EZ390 .LOG (or a full-LOG .TF1).
+     * Skips the EZ390 header, including wrapped SYSMAC/SYSCPY option lines,
+     * and stops at the EZ390 trailer.
+     */
+    static List<String> extractProgramLogLines(String logText) {
+        def lines = logText.readLines()
+        int start = lines.findIndexOf { it.contains('EZ390I options') }
+        if (start < 0) {
+            return []
+        }
+        def result = []
+        boolean started = false
+        for (int i = start + 1; i < lines.size(); i++) {
+            def line = lines[i]
+            if (line.contains('EZ390I total errors') || line.contains('EZ390 ENDED')) {
+                break
+            }
+            if (!started) {
+                if (line ==~ /^\s+.*/) {
+                    continue  // wrapped options
+                }
+                started = true
+            }
+            result << line
+        }
+        return result
+    }
+
 }

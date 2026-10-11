@@ -22,15 +22,34 @@ rem note you can use current z390.jar with compatible java runtime with sdk
 rem process options
 set z_docs=Y
 set z_dbg=N
+set z_all=N
 :opt_loop
 if /I %1. EQU . goto options_ok
 if /I %1. EQU Nodocs.  set z_docs=N
 if /I %1. EQU docs.    set z_docs=Y
 if /I %1. EQU Debug .  set z_dbg=Y
 if /I %1. EQU Nodebug. set z_dbg=N
+if /I %1. EQU *All.    set z_all=Y
 shift /1
 goto opt_loop
 :options_ok
+
+rem download/update linter jar (version is pinned in src\checkstyle.xml)
+if not exist "build\checkstyle" mkdir build\checkstyle
+if /I %z_all% == Y powershell -NoProfile -ExecutionPolicy Bypass -File "bat\GetCheckStyle.ps1"
+if not exist "build\checkstyle\checkstyle-all.jar" goto no_linter || rem failed upgrade is no problem (hopefully) - but missing jar is
+powershell -NoProfile -ExecutionPolicy Bypass -File "bat\GetCheckStyle.ps1" -VerifyOnly
+if %ERRORLEVEL% NEQ 0 goto wrong_linter
+
+:run_linter
+java -jar build\checkstyle\checkstyle-all.jar --version
+
+rem run the linter
+java -jar build\checkstyle\checkstyle-all.jar -c src\checkstyle.xml src
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% NEQ 0 (echo %0 ERROR: Error while validating z390 java sources
+                         goto return
+                         )
 
 rem prepare to compile java code and create jar file
 if not exist ".\jar\" mkdir jar
@@ -92,6 +111,17 @@ if exist jar\z390.jar (copy jar\z390.jar .\z390.jar /B /V /Y
 
 rem replace jar file in z390 root (force overwrite)
 copy jar\z390.jar . /Y
+goto return
+
+:no_linter
+echo linter tool CheckStyle not available - run with *All argument (or install CheckStyle manually)
+set z_ReturnCode=8
+goto return
+
+:wrong_linter
+echo linter tool CheckStyle version does not match src\checkstyle.xml - run with *All argument (or upgrade manually)
+set z_ReturnCode=8
+goto return
 
 :return
 popd

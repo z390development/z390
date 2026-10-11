@@ -68,19 +68,20 @@ The standard zCICS tests are documented in `cics\seq\SEQDOC.TXT`.
    provided called `SEQISHUT.TXT`, copy this to a new file called SEQInnnn,
    where nnnn is the next available input file sequence.
 2. Run `cics\bat\Z390RT.BAT` to start Z390\CICS
-2.1 This uses the Z390RT.INI file which has `SEQ_TERM=YES`
-    This adjusts other INI parms:
-2.2 `LOCAL_TERMINALS=0`
-2.3 No `INITIAL_TRANSID=`
-2.4 `TRACE_LOCALS=NO`
-2.5 To prevent a MAXQUE overflow add a MAXQUE argument to the invocation command. E.g. `cics\bat\Z390RT.BAT MAXQUE(256000)`
+    1. This uses the Z390RT.INI file which has `SEQ_TERM=YES`
+       This adjusts other INI parms:
+    2. `LOCAL_TERMINALS=0`
+    3. No `INITIAL_TRANSID=`
+    4. `TRACE_LOCALS=NO`
+    5. To prevent a MAXQUE overflow add a MAXQUE argument to the invocation command. E.g. `cics\bat\Z390RT.BAT MAXQUE(256000)`
 3. The regression test will run and shut down if item 1 above has been done.
-   It will use the SEQInnnn files as input and creates a single `SEQO0001.TXT` file as output.
-   The output streams are also sent to the Sequential terminal.
+    1. It will use the SEQInnnn files as input and creates a single `SEQO0001.TXT` file as output.
+    2. The output streams are also sent to the Sequential terminal.
+    3. The log is captured in `cics\Z390CICS.LOG`
 
 **Status Note:**
 The current configuration abends U0444. This is a secondary symptom following a zCICS AEIV abend
-indicating a length error of some kind. The problem seems to be triggered from SEQI0017.
+indicating a length error of some kind. The problem seems to be triggered from SEQI0012.
 This problem will need to be investigated and resolved before we can validate test results using
 the comparator process described below.
 

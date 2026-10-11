@@ -23,4 +23,3 @@
          LARL  R1,&TARGET         ADDRESS TARGET
          MVI   0(R1),&SOURCE      MVI IT
          MEND
-

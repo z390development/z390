@@ -312,4 +312,3 @@ ISYSDSEQ DS    CL5                SEQ_TERM
          EQUREGS REGS=GPR
 * R3  PARM POINTER
          END
-

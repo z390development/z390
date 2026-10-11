@@ -61,4 +61,3 @@ P1804RSP DS    AL4                RESP
 P1804RS2 DS    AL4                RESP2
 P1804END EQU   *                  END MARKER
          MEND
-

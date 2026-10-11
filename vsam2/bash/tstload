@@ -1,0 +1,64 @@
+#!/bin/bash
+# tstload: run all zREPRO LOAD/UNLOAD/VERIFY tests for zVSAM V2
+# Optional arg 1: path to z390Archive clone (forwarded to tstloadin)
+
+########################################
+# setup
+########################################
+
+cd "$(dirname "$0")"   # vsam2/bash
+cd ../..              # repo root
+
+vsampath=vsam2
+
+trace_mode=
+archive=
+if [ $# -gt 0 ]; then
+    SHELLNOCASEMATCH=$(shopt -p nocasematch)
+    shopt -s nocasematch
+    case "$1" in
+        tron)  shift; trace_mode=tron ;;
+        troff) shift; trace_mode=troff ;;
+    esac
+    $SHELLNOCASEMATCH
+fi
+# remaining arg (if any) is archive path for tstloadin
+if [ -n "$1" ]; then
+    archive=$1
+fi
+
+########################################
+# code
+########################################
+
+rc=0
+
+run_one() {
+    # $1 = script name, $2... = args
+    local script=$1
+    shift
+    "${vsampath}/bash/${script}" ${trace_mode} "$@"
+    rc=$?
+    if [ $rc -ne 0 ]; then
+        echo "$0 ERROR: $script encountered RC $rc - exiting"
+        exit $rc
+    fi
+}
+
+run_one tstload01            # ESDS-V  + AIX
+run_one tstload02            # ESDS-F  + AIX
+run_one tstload03            # KSDS-V  + AIX
+run_one tstload06            # RRDS-F
+run_one tstload07            # RRDS-V
+run_one tstload08            # KSDS-F
+run_one tstload09            # KSDS-F  + AIX
+run_one tstloadin "$archive" # KSDS-F  + AIX (test 2 spacemap pages)
+run_one tstload10            # ESDS-VS + AIX
+run_one tstload11            # RRDS-VS
+run_one tstload12            # KSDS-VS + AIX
+run_one tstload13            # KSDS-FS + AIX
+run_one tstloadnk            # KSDS-F  + AIX
+run_one tstloadne            # ESDS-F
+run_one tstloadnr            # RRDS-F
+
+exit $rc

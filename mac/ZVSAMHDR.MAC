@@ -49,4 +49,3 @@ BHDRFREE DS    XL4                Remaining free space in Block
          DS    0D                 Round for ZVSAMPFX which follows
 BHDRLENG EQU   *-ZVSAMHDR         DSECT LENGTH
          MEND
-

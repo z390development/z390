@@ -28,7 +28,7 @@
 * 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 *********************************************************************
          PRINT DATA
-TESTCTD1 RT1   MAIN
+TESTCFD1 RT1   MAIN
 WORK   DC    XL16'00' INT128,E,D,L WORK AREA
 DECIMAL  DC    CL45' '  DECIMAL WORK AREA
          EQUREGS

@@ -267,4 +267,3 @@ TSDDATA  EQU   *
          EQUREGS
 *
          END
-

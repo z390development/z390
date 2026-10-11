@@ -103,4 +103,3 @@
             ELSE
       * ABORT    ABEND 999,DUMP
                EXEC CICS ABEND ABCODE(' 999') END-EXEC.
-

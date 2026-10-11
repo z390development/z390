@@ -50,4 +50,3 @@ P3414RSP DS    AL4                RESP
 P3414RS2 DS    AL4                RESP2
 P3414END EQU   *                  END MARKER
          MEND
-

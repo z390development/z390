@@ -32,4 +32,3 @@
          02  DFHPA2   PIC X VALUE X'6E'.
          02  DFHPA3   PIC X VALUE X'6B'.
          02  DFHCLEAR PIC X VALUE X'6D'.
-

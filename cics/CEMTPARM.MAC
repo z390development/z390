@@ -38,4 +38,3 @@ COMM     DS    X                  COMMAREA
 CEMTPLEN EQU   20                 LENGTH OF EACH PARSE AREA
 CEMTPNUM EQU   20                 NO. OF PARSE AREAS
          MEND
-

@@ -15,4 +15,3 @@ IFILDKP  DS    AL4                KEYPOSITION    (VCLRKPOS/VAIXKPOS)
 IFILDRCS DS    AL4                RECORDSIZE     (VCLRLREC)
 IFILDTYP DS    X                  TYPE           (VCLRFLG1)
 IFILDLEN EQU   *-IFILDATA
-

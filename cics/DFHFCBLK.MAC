@@ -64,4 +64,3 @@ FCPLEN   DS    FL4                LENGTH OF FOLLOWING DATA
          DS    0D
 FCPREFIX EQU   *-DFHFCBLK
          MEND
-
