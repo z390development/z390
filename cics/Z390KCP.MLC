@@ -21,6 +21,7 @@
 * 05/07/06 RPI 308 ADD INITIAL EXEC CICS SUPPORT COMMAND PROCESSOR    *
 * 06/17/08 RPI 845 CHANGE ESTAE ROUTINES TO USE NEW SDWA              *
 * 11/11/08 RPI 946 CORRECTIONS TO MESSAGES TO PREVENT 6'S DISPLAYED   *
+* 2026-10-04 AFK #784 close failure at end of test run                *
 ***********************************************************************
 Z390KCP  SUBENTRY BASES=(R13,R3,R4)
 *
@@ -633,7 +634,7 @@ SHUTKCP  EQU   *
          BNE   SHUTIT             EXIT IF NOT
 * CLOSE SEQ TERM
          LARL  R1,SEQSEND         SEND DCB
-         CLOSE (R1)               CLOSE IT
+         CLOSE ((R1))             CLOSE IT                              #784
 SHUTIT   EQU   *
          SUBEXIT
 *
@@ -1365,4 +1366,3 @@ MSGABCDE DS    CL4                ABEND CODE
 * R11 EIB
 * R13 SAVE AREA AND BASE 1
          END
-

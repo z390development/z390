@@ -38,4 +38,3 @@ BMSCOLOR DS    X                  COLOUR ATTRIBUTE   name.C
 BMSINP2  DS    0C                 FIELD INPUT        name.I
 BMSOUT2  DS    0C                 FIELD OUTPUT       name.O
          MEND
-

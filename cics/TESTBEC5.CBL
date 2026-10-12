@@ -292,4 +292,3 @@
             EXEC CICS SEND FROM(ERRMSG) LENGTH(ERRMSGL) END-EXEC.
       *  B     NEXT2              EXIT
             GO TO NEXT2.
-

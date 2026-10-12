@@ -23,4 +23,3 @@
          LARL  R1,&TARGET         ADDRESS TARGET
          ST    &SOURCE,0(R1)      ST IT
          MEND
-

@@ -32,4 +32,3 @@ MAPBITS  DS    0B                 Bitstring
 *                                 10=has available space
 *                                 11=full
          MEND
-

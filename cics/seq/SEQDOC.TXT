@@ -68,4 +68,3 @@ Sequential Terminal Streams
 0030  SETF/CLEAR/SETF/CLEAR
 0031  CHN1/CLEAR/CEBR CHN1/PF11*6/CLEAR
 0032  shutdown
-

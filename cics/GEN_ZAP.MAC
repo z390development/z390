@@ -32,4 +32,3 @@
          ZAP   0(&LENGTH1,R15),0(&LENGTH2,R1) ZAP IT
          AEND
          MEND
-

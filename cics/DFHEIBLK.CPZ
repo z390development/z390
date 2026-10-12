@@ -21,4 +21,3 @@
            02  EIBRESP2 PIC 9(9) COMP.
            02  EIBPROG  PIC X(8).
            02  EIBDTFRM PIC X.
-

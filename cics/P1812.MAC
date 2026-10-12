@@ -50,4 +50,3 @@ P1812RSP DS    AL4                RESP
 P1812RS2 DS    AL4                RESP2
 P1812END EQU   *                  END MARKER
          MEND
-

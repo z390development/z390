@@ -36,4 +36,3 @@
          02  DFHTURQ  PIC X VALUE X'F5'.
          02  DFHYELLO PIC X VALUE X'F6'.
          02  DFHNEUTR PIC X VALUE X'F7'.
-

@@ -215,4 +215,3 @@
 
         ABEND.
             EXEC CICS ABEND ABCODE('BEC4') END-EXEC.
-

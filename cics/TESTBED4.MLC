@@ -168,4 +168,3 @@ WORDS    EQU   *
 *
          TN3270 SYMBOLS
          END
-

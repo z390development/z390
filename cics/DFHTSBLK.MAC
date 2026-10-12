@@ -43,4 +43,3 @@ TSPLEN   DS    XL4                LENGTH OF FOLLOWING DATA
 TSPREFIX EQU   *-DFHTSBLK
 TSPDATA  DS    0X                 TS DATA
          MEND
-

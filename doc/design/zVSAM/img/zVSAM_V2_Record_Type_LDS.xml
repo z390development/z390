@@ -1,1 +1,43 @@
-<mxfile userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36" version="9.0.4" editor="www.draw.io" type="device"><diagram id="c8972deb-752f-9fd1-c0f5-ecf008ad8a40" name="Page-1">5ZdNj5swEIZ/DVJ7aAUYSHJsPro9dC9NpZ4dmIAVwyDjhGR/fW0wIdSp1MMGoTSHYL8e2+PH9jA4ZJWfXwQts1dMgDu+m5wdsnZ83/PnkXpo5dIq4SJohVSwxBj1wpa9gRFdox5ZAtXAUCJyycqhGGNRQCwHGhUC66HZHvlw1pKmYAnbmHJb/cUSmbXqPHR7/RuwNOtm9lzTsqPxIRV4LMx8jk/2za9tzmk3lrGvMppgfSORjUNWAlG2pfy8Aq7Zdtjafl//0nr1W0Ah/6WD33Y4UX6EzuPGL3npWDSrAW3vOmRZZ0zCtqSxbq3V7istkzlXNU8V7fmNSycQEs43kvHnBTAHKS7K5Hp6DBtzdrzI1Ot+J6K50bKbXQiMRs3mp9ehewCqYBjc5xFYPH5AjCJRmvLa/RC4i0hv80VC9fH/RtXNPeWz47tjAgktIK+00N7lKECfGo7xoVIFzg66LjP9T3d40k8sVMSbHMD5mACj6Z8oMuoVm1lAvtNKKkV0UWniEWlUXMSzcC31lWuD9x9k1ILkcPkCKvZGd42BplUiK2TjTrh0wrVS6FFi1SYrugPlLC1UmcNeD6UpMZVDfDGyRM23UrhZkf7UlfWn4H0wB2QY92c25fAOZP89INspQwfZvq3PBPmanI4BmViQNzL+/Nx8Fzbf4FF87TzPBFZzlp+YM7kTLGaP4my/0a/5tP+Qt5eF5Q68SaSPqtp/5jVtN9/SZPMb</diagram></mxfile>
+<mxfile host="app.diagrams.net">
+  <diagram id="c8972deb-752f-9fd1-c0f5-ecf008ad8a40" name="Page-1">
+    <mxGraphModel dx="1414" dy="744" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="40" width="680" x="120" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Record 1 (4096 bytes)" vertex="1">
+          <mxGeometry height="40" width="680" x="120" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="20" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="40" width="680" x="120" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="25" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Many more blocks like the above ones" vertex="1">
+          <mxGeometry height="40" width="680" x="120" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="26" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="40" width="680" x="120" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="27" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Last record (4096 bytes)" vertex="1">
+          <mxGeometry height="40" width="680" x="120" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="31" parent="1" style="text;html=1;resizable=0;points=[];autosize=1;align=left;verticalAlign=top;spacingTop=-4;" value="Block 1" vertex="1">
+          <mxGeometry height="20" width="50" x="43" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="32" parent="1" style="text;html=1;resizable=0;points=[];autosize=1;align=left;verticalAlign=top;spacingTop=-4;" value="Block 2" vertex="1">
+          <mxGeometry height="20" width="50" x="43" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="33" parent="1" style="text;html=1;resizable=0;points=[];autosize=1;align=left;verticalAlign=top;spacingTop=-4;" value="Etc." vertex="1">
+          <mxGeometry height="20" width="40" x="43" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="34" parent="1" style="text;html=1;resizable=0;points=[];autosize=1;align=left;verticalAlign=top;spacingTop=-4;" value="Last Block" vertex="1">
+          <mxGeometry height="20" width="70" x="43" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="36" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Record 2 (4096 bytes)" vertex="1">
+          <mxGeometry height="40" width="680" x="120" y="200" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

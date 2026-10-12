@@ -41,11 +41,13 @@ PUTVT    DCB   RECFM=VT,LRECL=10,MACRF=PM,RECORD=RECORD2,DSNAME=DSN2
 GETFT    DCB   RECFM=FT,LRECL=80,MACRF=GM,RECORD=RECORD3,DSNAME=DSN1
 GETVT    DCB   RECFM=VT,LRECL=10,MACRF=GM,RECORD=RECORD4,DSNAME=DSN2
 
-DSN1     DC    C'rt\test\TESTDCBD.TF2',X'00'               
-DSN2     DC    C'rt\test\TESTDCBD.TF3',X'00'                
-RECORD1  DC    X'C1C2C3414243',CL74' '
-RECORD2  DC    H'10',H'0'
-         DC    X'C1C2C3414243'
+DSN1     DC    C'rt/test/TESTDCBD.OUT',X'00'
+DSN2     DC    C'rt/test/TESTDCBD.RPT',X'00'
+         DC    D'0'                           * Align
+RECORD1  DC    X'C1C2C3414243',CL74' '        * 80 bytes of record data
+RECORD2  DC    H'10',H'0'                     * RDW
+         DC    X'C1C2C3414243'                * Record data
+         DC    X'FFFF'                        * Filler for alignment
 RECORD3  DC    CL80' '
 RECORD4  DC    CL10' '
 ENDIT    EQU   *

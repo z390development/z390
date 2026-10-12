@@ -33,4 +33,3 @@ TSNICTRM DS    CL4                ICTERM
 TSNICTRN DS    CL4                ICTRAN
 TSNLEN   EQU   *-TSNAMES
          MEND
-

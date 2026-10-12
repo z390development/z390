@@ -53,4 +53,3 @@
 .ERR2    MNOTE 12,'ERASE MF= NOT SUPPORTED'
          MEXIT
          MEND
-

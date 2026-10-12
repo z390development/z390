@@ -730,4 +730,3 @@
 
         ABEND.
             EXEC CICS ABEND ABCODE('BEC9') END-EXEC.
-

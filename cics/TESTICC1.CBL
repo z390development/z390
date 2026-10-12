@@ -502,4 +502,3 @@
             MOVE SPACE TO STCKAFTS.
             EXEC CICS SEND FROM(TDAFT) LENGTH(TDAFTLEN) END-EXEC.
       *  BR    R9                 RETURN
-

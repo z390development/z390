@@ -534,4 +534,3 @@
 
         ABEND.
             EXEC CICS ABEND ABCODE('BMC1') END-EXEC.
-

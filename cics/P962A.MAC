@@ -41,4 +41,3 @@ P962ARSP DS    AL4                RESP
 P962ARS2 DS    AL4                RESP2
 P962AEND EQU   *                  END MARKER
          MEND
-

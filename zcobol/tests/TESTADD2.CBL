@@ -321,4 +321,3 @@
            ADD  16 TO RETURN-CODE..
            DISPLAY 'BAD'.
       *    STOP RUN.
-      

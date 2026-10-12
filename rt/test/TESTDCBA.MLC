@@ -43,9 +43,9 @@ SYSUT2   DCB   RECFM=FT,LRECL=80,MACRF=PM,                             X
                RECORD=RECORD,DSNAME=DSN2
 SYSOUT   DCB   RECFM=FT,BLKSIZE=120,MACRF=PM,                          X
                RECORD=RECORD,DSNAME=DSN3
-DSN1     DC    C'rt\test\TESTDCBA.TF1',X'00'
-DSN2     DC    C'rt\test\TESTDCBA.TF2',X'00'
-DSN3     DC    C'rt\test\TESTDCBA.TF3',X'00'
+DSN1     DC    C'rt/test/TESTDCBA.TF1',X'00'  * forward slash valid on
+DSN2     DC    C'rt/test/TESTDCBA.OUT',X'00'  * both Windows and Linux
+DSN3     DC    C'rt/test/TESTDCBA.RPT',X'00'  * backslash is Win only
 PTOT     DC    PL2'0'
 MSG      DS    0CL120
          DC    C'REC#='

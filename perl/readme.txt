@@ -11,4 +11,4 @@ This perl directory has been added to the path for commannds issued by the z390.
 For help with Linux and Mac use of z390 please contact one of these volunteer contributors:
 
   John Ganci  jyganci@gmail.com
-  Martin Ward martin@gkc.org.uk  
+  Martin Ward martin@gkc.org.uk
