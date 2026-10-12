@@ -106,7 +106,9 @@ This logic consists of the following elements:
 > Since that would impact the non-VSAM macros for DCB handling, I doubt this is feasible.
 > To be investigated and evaluated.
 
-Open logic for ACB handles a single ACB and proceeds as follows:
+Open logic for ACB handles a single ACB and will open the first file of each component that needs to be opened.
+Other files may need to be opened during normal processing. These implied opens follow a different logic path.
+The ACB OPEN for a cluster proceeds as follows:
 
 | Action                            | Details                                                                              |
 |-----------------------------------|--------------------------------------------------------------------------------------|
@@ -251,7 +253,8 @@ This logic is only entered if any of the following conditions are raised:
 
 ## Close
 
-Upon close the prefix counter field `CTRSTMST` must be updated.
+Upon close the prefix counter field `CTRSTMST` must be updated. All open files for the cluster must be closed,
+including files opened as part of the upgrade set (recursively).
 
 Do we need to include a last-updated timestamp to validate that last update of AIX is not behind the base cluster?
 
