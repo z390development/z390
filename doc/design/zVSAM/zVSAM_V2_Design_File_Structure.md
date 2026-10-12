@@ -2,6 +2,57 @@
 
 This document describes the file structures for implementing zVSAM V2 data sets.
 
+| Chapter 1 - [Basic Concepts](#basic-concepts)                                                                                   |
+|---------------------------------------------------------------------------------------------------------------------------------|
+| [Files, Blocks, Records](#files-blocks-records)                                                                                 |
+| [Data and Indexes](#data-and-indexes)                                                                                           |
+| [Cluster types and Cluster Components](#cluster-types-and-cluster-components)                                                   |
+| [Record Formats](#record-formats)                                                                                               |
+| [Concept of Fixed-length records stored in blocks](#concept-of-fixed-length-records-stored-in-blocks)                           |
+| [Concept of Fixed-length Segmented records stored in blocks](#concept-of-fixed-length-segmented-records-stored-in-blocks)       |
+| [Concept of Variable-length records stored in blocks](#concept-of-variable-length-records-stored-in-blocks)                     |
+| [Concept of Variable-length Segmented records stored in blocks](#concept-of-variable-length-segmented-records-stored-in-blocks) |
+
+| Chapter 2 - [File Structure](#file-structure)                                                                                   |
+|---------------------------------------------------------------------------------------------------------------------------------|
+| [Physical files](#physical-files)                                                                                               |
+| [Structure of physical files](#structure-of-physical-files)                                                                     |
+| [Components of a Block](#components-of-a-block)                                                                                 |
+| [ESDS Data Organization](#esds-data-organization)                                                                               |
+| [Data Block Chain Organization for unspanned records](#data-block-chain-organization-for-unspanned-records)                     |
+| [Data Block Chain Organization for spanned records](#data-block-chain-organization-for-spanned-records)                         |
+| [KSDS Data Organization](#ksds-data-organization)                                                                               |
+| [KSDS Index Organization](#ksds-index-organization)                                                                             |
+| [RRDS Data Organization](#rrds-data-organization)                                                                               |
+| [AIX Data Organization](#aix-data-organization)                                                                                 |
+| [AIX Index Organization](#aix-index-organization)                                                                               |
+| [LDS Data Organization](#lds-data-organization)                                                                                 |
+
+| Cluster type | Fixed non-Spanned                 | Fixed Spanned                  | Variable non-Spanned                 | Variable Spanned                  |
+|--------------|-----------------------------------|--------------------------------|--------------------------------------|-----------------------------------|
+| ESDS         | [ESDS-F](#esds-fixed-non-spanned) | [ESDS-FS](#esds-fixed-spanned) | [ESDS-V](#esds-variable-non-spanned) | [ESDS-VS](#esds-variable-spanned) |
+| KSDS         | [KSDS-F](#ksds-fixed-non-spanned) | [KSDS-FS](#ksds-fixed-spanned) | [KSDS-V](#ksds-variable-non-spanned) | [KSDS-VS](#ksds-variable-spanned) |
+| RRDS         | [RRDS-F](#rrds-fixed-non-spanned) | [RRDS-FS](#rrds-fixed-spanned) | [RRDS-V](#rrds-variable-non-spanned) | [RRDS-VS](#rrds-variable-spanned) |
+| AIX          | [AIX Unique](#aix-unique)         | --                             | [AIX Non-unique](#aix-non-unique)    | --                                |
+| LDS          | [LDS Blocks](#lds-blocks)         | --                             | --                                   | --                                |
+
+| Chapter 3 - [Block Structures](#block-structures)                                                                               |
+|---------------------------------------------------------------------------------------------------------------------------------|
+| [Block Header](#block-header)                                                                                                   |
+| [Block Footer](#block-footer)                                                                                                   |
+| [Prefix Area](#prefix-area)                                                                                                     |
+| [Counters Area](#counters-area)                                                                                                 |
+| [File map](#file-map)                                                                                                           |
+| [RRN map](#rrn-map)                                                                                                             |
+| [Spacemap](#spacemap)                                                                                                           |
+| [Data blocks](#data-blocks)                                                                                                     |
+| [Record Pointer List](#record-pointer-list)                                                                                     |
+| [Index Blocks](#index-blocks)                                                                                                   |
+| [Free Space](#free-space)                                                                                                       |
+| [XLRA](#xlra)                                                                                                                   |
+| [SPX](#spx)                                                                                                                     |
+| [RLF](#rlf)                                                                                                                     |
+
 ## Basic Concepts
 
 ### Files, Blocks, Records

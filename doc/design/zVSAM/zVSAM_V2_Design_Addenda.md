@@ -754,7 +754,7 @@ The prefix area contains basic structural information about the component. It is
 - the file prefix area occurs on every file's prefix Block
 - the component prefix area occurs only on the prefix block of a component's first file.
 
-The file prefix areas has the following format:
+The file prefix area has the following format:
 
 | Label     | Offset | Field type | Function                                                      |
 |-----------|--------|------------|---------------------------------------------------------------|
@@ -819,7 +819,7 @@ The file prefix areas has the following format:
 | PFXIXMAP  | X'0A0' | XL8        | STCK of last index spacemap update                            |
 |           | X'0A8' | XL88       | Reserved                                                      |
 
-The component prefix areas has the following format:
+The component prefix area has the following format:
 
 | Label     | Offset | Field type | Function                                                      |
 |-----------|--------|------------|---------------------------------------------------------------|
@@ -875,16 +875,16 @@ The component prefix areas has the following format:
 |           | X'160' | XL32       | reserved                                                      |
 
 There are various pointer fields in the file prefix area.
-All pointer fields are marked with an `@` at the endof their label.
+All pointer fields are marked with an `@` at the end of their label.
 
 These pointer fields point to fields allocated elsewhere in the prefix block, unless they've been set to foxes.
-The exact addresses of the datqa fields on the prefix block may vary.
+The exact addresses of the data fields on the prefix block may vary.
 
 The four `PFXxVOL@`, `PFXxPAT@`, `PFXxNAM@` pointers all point to a halfword-prefixed string.
 On Linux/Unix systems, the UUID is stored (in string format), not the volume label.
 The `PFXCPFX@` is valid only for the first file of a component; it points to the component prefix area. In all non-first files, the pointer contains foxes.
-The `PFXFM@` is valid for the first file of a component, and as many more as needed; it points to the file translation table (or a section) or contains foxes to indicates its absence.
-The `PFXRM@` is valid for the first file of an RRDS data component, and as many more files as needed; it points to the RRN translation table (or a section) or contains foxes to indicates its absence.
+The `PFXFM@` is valid for the first file of a component, and as many more as needed; it points to the file translation table (or a section) or contains foxes to indicate its absence.
+The `PFXRM@` is valid for the first file of an RRDS data component, and as many more files as needed; it points to the RRN translation table (or a section) or contains foxes to indicate its absence.
 The `PFXCTRS@` pointer addresses a separate area that holds various counters.
 This area is expected to move into the catalog dataset in a future release.
 
