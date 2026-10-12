@@ -7,28 +7,24 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 env:
   JAVA_DISTRIBUTION: temurin
   JAVA_VERSION: 21
 
 jobs:
-  deploy:
-    name: Deploy docs
+  build:
+    name: Build docs
     runs-on: ubuntu-latest
     steps:
-      - name: Create docs publisher token
-        id: app
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ vars.DOCS_APP_ID }}
-          private-key: ${{ secrets.DOCS_APP_PRIVATE_KEY }}
       - name: checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
           lfs: true
-          persist-credentials: true
-          token: ${{ steps.app.outputs.token }}
       - name: version
         run: echo "version=$(git describe --tags)" >> $GITHUB_OUTPUT
         id: version
@@ -41,6 +37,28 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
       - run: pip install -r doc/requirements.txt
       - run: bash/bldjavadoc doc/javadoc
-      - run: mkdocs gh-deploy --force
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+      - name: Build site
+        run: mkdocs build
         env:
           Z390_VERSION: ${{ steps.version.outputs.version }}
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    name: Deploy docs
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
