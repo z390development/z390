@@ -1,14 +1,17 @@
 name: Publish docs via GitHub Pages
 on:
   push:
+    # Run for main and for doc/**. Deploy is decided on the deploy job below.
     branches:
       - main
+      - "doc/**"
 
 permissions:
   contents: read
 
 concurrency:
-  group: pages
+  # Upstream main shares one group. Every other run uses its own, so a doc build does not wait on a production deploy.
+  group: "${{ (github.repository == 'z390development/z390' && github.ref == 'refs/heads/main') && 'pages' || format('pages-{0}', github.ref) }}"
   cancel-in-progress: false
 
 env:
@@ -50,6 +53,10 @@ jobs:
 
   deploy:
     name: Deploy docs
+    # Official site: upstream main only. A fork deploys its own Pages site for main and for doc/**.
+    if: >-
+      (github.repository == 'z390development/z390' && github.ref == 'refs/heads/main')
+      || github.event.repository.fork
     needs: build
     runs-on: ubuntu-latest
     permissions:

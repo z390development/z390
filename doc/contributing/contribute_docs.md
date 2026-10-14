@@ -88,7 +88,9 @@ PSW       | Program status word - Always capitals
 
 The z390 docs use the Python utility mkdocs to convert the markdown to web pages that are published to GitHub pages.
 
-The following instructions will allow you to preview the published version on GitHub prior to committing your changes.
+The following instructions run a local preview while you edit.
+To inspect the site as GitHub Pages will publish it,
+push a `doc/**` branch to a fork, as described in [Preview on a fork](#preview-on-a-fork).
 
 ### Installation
 
@@ -135,14 +137,39 @@ You can view the web site preview using a web browser pointed at the following a
     mkdocs serve
     ```
 
+### Preview on a fork
+
+Pushing `main` on `z390development/z390` publishes the official site at <https://z390development.github.io/z390/>.
+
+To inspect that build before merging, push a branch whose name starts with `doc/` to your fork,
+for example `doc/cics-guide`. The workflow builds the site and deploys it to your fork's Pages site:
+`https://<owner>.github.io/z390/`
+
+`<owner>` is your GitHub user name. The same address is the environment URL on that fork's Actions run for this workflow.
+The pull request on `z390development/z390` does not show it.
+
+A push of `doc/**` to `z390development/z390` builds the site and uploads the artifact, and does not deploy.
+A deploy on the main repository happens only when the changes are merged.
+
+Each fork has one Pages site. A later push of `main` or of another `doc/**` branch on that fork replaces it.
+
+### One-time setup
+
+On a fork, do this once before the first preview:
+
+1. Enable GitHub Actions for the fork.
+2. Open Settings, Pages, Build and deployment, and set Source to GitHub Actions.
+
+Until Pages is enabled, the build fails at the Configure Pages step.
+
 ## Generate the PDF
 
-The distribution will include a PDF with the documentation. 
+The distribution will include a PDF with the documentation.
 
 You can use the following commands to generate the PDF.
 
 === "Ubuntu Linux"
-       
+
     ``` sh
     apt update && apt install -y libsdl-pango-dev
     source docenv/bin/activate
@@ -164,7 +191,7 @@ You can use the following commands to generate the PDF.
 
     ``` dos
     docenv\Scripts\activate
-    set ENABLE_PDF_EXPORT=1 
+    set ENABLE_PDF_EXPORT=1
     mkdocs build
     ```
 
