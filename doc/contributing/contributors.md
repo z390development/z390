@@ -12,15 +12,19 @@ in alphabetical order:
 | Abe Kornelis   | International coordinator / macro assembler regression testing                      |
 | Anthony Delosa | Documentation / git /github / groovy / regression testsuite                         |
 | David Bond     | regression test routines for floating point conversions                             |
+| Dave Kienow    | Java code updates                                                                   |
 | Don Higgins    | project manager, Java code for z390.jar, and RPI fixes and enhancements             |
+| Hugh Sweeney   | Initial java coding for zVSAM V2                                                    |
 | James Cray     | developed first z390-DB2 interface during 2010                                      |
 | John Erhman    | SHARE coordinator for all assembler related sessions including z390                 |
 | John Ganci     | Support and maintenance                                                             |
 | John Hennesy   | zcobol debugger and regression testing of zcobol                                    |
+| Lin Lyons      | Tester and prolific reportor of issues                                              |
 | Martin Trubner | VSE macro assembler testing and SHARE User presentation on z390                     |
 | Martin Ward    | Linux Support including Perl scripts and testing                                    |
 | Melvyn Maltz   | CICS compatible transaction manager written in z390 assembler and documentation     |
 | Peter Koppany  | z390 documentation and regression testing                                           |
 | Ray Mullins    | VSE regression testing and moderator for z390 email group                           |
 | Sam Knutson    | invitation to speak about z390 at SHARE and webmaster of SHARE CBT library          |
+| Zane Hambly    | zCobol support, zVSAM V2 implementation                                             |
 

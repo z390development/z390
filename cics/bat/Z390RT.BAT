@@ -42,7 +42,7 @@ call cics\bat\Z390CMPG.BAT ASCII
 set z_ReturnCode=%ERRORLEVEL%
 echo #########################################################
 echo #
-echo # %0 zCICS regression test comparator comlete
+echo # %0 zCICS regression test comparator complete
 echo # %0 error level is %z_ReturnCode%
 echo #
 echo #########################################################

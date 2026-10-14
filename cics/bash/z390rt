@@ -51,7 +51,7 @@ rc=$?
 cat <<EOF
 *********************************************************
 *
-* $0 zCICS regression test comparator comlete
+* $0 zCICS regression test comparator complete
 * $0 error level is $rc
 *
 *********************************************************

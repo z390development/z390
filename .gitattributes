@@ -1,8 +1,9 @@
 *                 text=auto
 **/*.sh           text eol=lf
 **/bash/**        text eol=lf
-cics/seq/SEQI*.TXT     eol=crlf
 z390test/gradlew  text eol=lf
+**/*.[bB][aA][tT] text eol=crlf
+cics/seq/SEQI*.TXT     eol=crlf
 *.png filter=lfs -text        diff=lfs merge=lfs
 *.jpg filter=lfs -text        diff=lfs merge=lfs
 *.jar filter=lfs -text        diff=lfs merge=lfs
