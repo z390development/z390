@@ -50,6 +50,7 @@
 .* 04/25/12 RPI 1211 add TMP_PIC_DEC for scaling ZC_CALC 
 .* 05/05/12 RPI 1211 add &BASE_MIN_RANGE to ensure block base coverage
 .* 05/12/26 #789     Allow variable length in reference modification
+.* 05/23/26 #808     WRITE statement not handling AFTER/BEFORE
 .*********************************************************************
 .*
 .* PGM NAME AND ZCOBOL VERSION CHECKED BY ZC390NUC IN ZC390LIB.390
@@ -106,6 +107,11 @@
          GBLC  &FILE_LRECL1(100) MIN REC SIZE (DEF CHAR)
          GBLC  &FILE_LRECL2(100) MAX REC SIZE (DEF CHAR)
          GBLC  &FILE_DEPENDING(100) VAR LRECL FLD FOR FILE 
+         GBLC  &FILE_LINAGE(100) Linage nr of LINES or field name       #808
+         GBLC  &FILE_FOOTING(100) Linage FOOTING value or field name    #808
+         GBLC  &FILE_TOP(100)    Linage TOP value or field name         #808
+         GBLC  &FILE_BOTTOM(100) Linage BOTTOM value or field name      #808
+         GBLB  &FILE_ADVANCING(100) ADVANCING option used/supported     #808
 .*
 .* WS BASE REGISTERS (GEN_ID sys init, GEN_BASE dynamic,PERIOD reset)
 .*
