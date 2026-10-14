@@ -159,7 +159,7 @@ Accessing subfields of the zACB directly may adversely impact portability of you
 | NCIS     | value of Block splits in the data component (last 4 bytes) Zero for OBJECT=INDEX. Derived from `CTRNCIS`                                                                                                                |
 | NDELR    | value of deleted records from the data component (last 4 bytes) Zero for OBJECT=INDEX. Derived from `CTRNDELR`                                                                                                          |
 | NEXCP    | value of I/O requests for the data/index components (last 4 bytes) Derived from `CTRNEXCP`                                                                                                                              |
-| NEXT     | value of extents of the data/index components (returns 1)                                                                                                                                                               |
+| NEXT     | value of extents of the data/index components (returns the number of physical files in the component)                                                                                                                   |
 | NINSR    | value of records inserted for the data component (last 4 bytes) Zero for OBJECT=INDEX. Derived from `CTRNINSR`                                                                                                          |
 | NIXL     | value of index levels for index component. Zero for OBJECT=DATA. Derived from highest non-foxes `PFXBLVLn`                                                                                                              |
 | NLOGR    | nr of records in the component. Taken from prefix counter field `CTRNLOGR`.                                                                                                                                             |
@@ -214,7 +214,7 @@ Review notes:
 | NCIS     | value of block splits (last 4 bytes) Compares to zero for OBJECT=INDEX From `CTRNCIS`                                                                                                                                   |
 | NDELR    | value of deleted records (last 4 bytes) Compares to zero for OBJECT=INDEX From `CTRNDELR`                                                                                                                               |
 | NEXCP    | value of I/O requests (last 4 bytes) From `CTRNEXCP`                                                                                                                                                                    |
-| NEXT     | value of extents (last 4 bytes) From `CTRNEXT` (always 1)                                                                                                                                                               |
+| NEXT     | value of extents (last 4 bytes) From `CTRNEXT` (nr of physical files in the component)                                                                                                                                  |
 | NINSR    | value of inserted records (last 4 bytes) Compares to zero for OBJECT=INDEX From `CTRNINSR`                                                                                                                              |
 | NIXL     | value of index levels Compares to zero for OBJECT=DATA From `PFXBLVLn`                                                                                                                                                  |
 | NLOGR    | value of records (last 4 bytes) From `CTRNLOGR`                                                                                                                                                                         |
@@ -750,41 +750,54 @@ Additional notes:
 The prefix area occurs only on the prefix block. It is located directly after the block header on the prefix block.
 No record pointer list lies in between.
 
-The prefix area contains basic structural information about the file. It has the following format:
+The prefix area contains basic structural information about the component. It is split into two parts:
+- the file prefix area occurs on every file's prefix Block
+- the component prefix area occurs only on the prefix block of a component's first file.
+
+The file prefix area has the following format:
 
 | Label     | Offset | Field type | Function                                                      |
 |-----------|--------|------------|---------------------------------------------------------------|
-| ZVSAMPFX  |        | DSECT      | Prefix area                                                   |
-| PFXEYE    | X'000' | CL4        | Eye catcher                                                   |
-| PFXZPFX   |        | =C'zPFX'   |                                                               |
+| ZVSAMFPFX |        | DSECT      | Prefix area                                                   |
+| PFXFEYE   | X'000' | CL4        | Eye catcher                                                   |
+| PFXFZPFX  |        | =C'zPFX'   |                                                               |
 | PFXRCLEN  | X'004' | XL4        | record length, max length if variable                         |
 | PFXKYLEN  | X'008' | XL4        | key length                                                    |
 | PFXKYOFF  | X'00C' | XL4        | key offset, excluding SPX/RLF                                 |
-| PFXCTRS@  | X'010' | XL2        | offset to counters area ZVSAMCTR                              |
-| PFXDVOL@  | X'012' | XL2        | offset to the data component's volume label                   |
-| PFXDNAM@  | X'014' | XL2        | offset to the data component's filename                       |
-| PFXDPAT@  | X'016' | XL2        | offset to the data component's pathname                       |
-| PFXXVOL@  | X'018' | XL2        | offset to the index component's volume label                  |
-| PFXXNAM@  | X'01A' | XL2        | offset to the index component's filename                      |
-| PFXXPAT@  | X'01C' | XL2        | offset to the index component's pathname                      |
-| PFXRM@    | X'01E' | XL2        | offset to RRN map table                                       |
-| PFXRME#   | X'020' | XL2        | Nr of entries in RRN map table                                |
-| PFXSLOTS  | X'022' | XL2        | Nr of slots per block (RRDS only)                             |
-| PFXIXLVL  | X'024' | XL1        | nr of index levels                                            |
-| PFXALTHR  | X'025' | XL1        | allocation redrive threshold                                  |
-| PFXRPTR#  | X'026' | XL1        | Nr of bits in RPTR index part of XLRA                         |
-| PFXFRSPC  | X'027' | XL1        | initial freespace % within block                              |
-| PFXFRBLK  | X'028' | XL2        | initial freespace blocks                                      |
-| PFXFRINT  | X'02A' | XL2        | initial freespace interval between free blocks                |
-| PFXMAPOF  | X'02C' | XL4        | offset within spacemap block to last used byte for allocation |
-| PFXFFLGS  | X'030' | XL1        | file flags                                                    |
+| PFXDVOL@  | X'010' | XL3        | offset to the data component's volume label (first file)      |
+| PFXDPAT@  | X'016' | XL3        | offset to the data component's pathname     (first file)      |
+| PFXDNAM@  | X'013' | XL3        | offset to the data component's filename     (first file)      |
+| PFXXVOL@  | X'019' | XL3        | offset to the index component's volume label (first file)     |
+| PFXXNAM@  | X'01C' | XL3        | offset to the index component's filename     (first file)     |
+| PFXXPAT@  | X'01F' | XL3        | offset to the index component's pathname     (first file)     |
+| PFXPVOL@  | X'022' | XL3        | offset to the component's previous file volume label          |
+| PFXPNAM@  | X'025' | XL3        | offset to the component's previous file filename              |
+| PFXPPAT@  | X'028' | XL3        | offset to the component's previous file pathname              |
+| PFXNVOL@  | X'02B' | XL3        | offset to the component's next file volume label              |
+| PFXNNAM@  | X'02E' | XL3        | offset to the component's next file filename                  |
+| PFXNPAT@  | X'031' | XL3        | offset to the component's next file pathname                  |
+| PFXCPFX@  | X'034' | XL3        | offset to component prefix area                               |
+| PFXCTRS@  | X'037' | XL3        | offset to counters area ZVSAMCTR                              |
+| PFXFM@    | X'03A' | XL3        | offset to file map                                            |
+| PFXFME#   | X'03D' | XL4        | Nr of entries in file map (present on this prefix block)      |
+| PFXRM@    | X'041' | XL3        | offset to RRN map                                             |
+| PFXRME#   | X'044' | XL4        | Nr of entries in RRN map (present on this prefix block)       |
+| PFXSLOTS  | X'048' | XL3        | Nr of slots per block (RRDS only)                             |
+| PFXIXLVL  | X'04B' | XL1        | nr of index levels                                            |
+| PFXALTHR  | X'04C' | XL1        | allocation redrive threshold                                  |
+| PFXRPTR#  | X'04D' | XL1        | Nr of bits in RPTR index part of XLRA                         |
+| PFXFRSPC  | X'04E' | XL1        | initial freespace % within block                              |
+| PFXFRBLK  | X'04F' | XL2        | initial freespace blocks                                      |
+| PFXFRINT  | X'051' | XL2        | initial freespace interval between free blocks                |
+| PFXMAPOF  | X'053' | XL4        | offset within spacemap block to last used byte for allocation |
+| PFXFFLGS  | X'057' | XL1        | file flags                                                    |
 | PFX_ESDS  |        | =X'80'     | ESDS                                                          |
 | PFX_KSDS  |        | =X'40'     | KSDS                                                          |
 | PFX_RRDS  |        | =X'20'     | RRDS                                                          |
 | PFX_LDS   |        | =X'10'     | LDS                                                           |
 | PFX_AIX   |        | =X'08'     | AIX                                                           |
 | PFX_INDX  |        | =X'01'     | index component                                               |
-| PFXRFLGS  | X'031' | XL1        | record flags                                                  |
+| PFXRFLGS  | X'058' | XL1        | record flags                                                  |
 | PFX_RFIX  |        | =X'80'     | 1=fixed, 0=variable                                           |
 | PFX_RSPN  |        | =X'40'     | 1=spanned, 0=non-spanned                                      |
 | PFX_KUNQ  |        | =X'20'     | 1=AIX unique, 0=AIX non-unique                                |
@@ -792,74 +805,97 @@ The prefix area contains basic structural information about the file. It has the
 | PFX_AIXKS |        | =X'03'     | PFX_AIXT=B'11' - AIX on KSDS                                  |
 | PFX_AIXES |        | =X'02'     | PFX_AIXT=B'10' - AIX on ESDS                                  |
 | PFX_AIXRR |        | =X'01'     | PFX_AIXT=B'01' - AIX on RRDS                                  |
-| PFXAIXN   | X'032' | XL1        | no. of AIX's on the upgrade set                               |
-|           | X'033' | XL1        | reserved                                                      |
-| PFXBLKSZ  | X'034' | XL4        | blocksize used for this file (except prefix block)            |
-| PFXHXLRA  | X'038' | XL8        | XLRA of highest allocated block                               |
-|           | X'040' | XL8        | reserved                                                      |
-| PFXMAPNW  | X'048' | XL8        | XLRA of spacemap block last used for allocation               |
-| PFXBMAP   | X'050' | XL8        | XLRA of first spacemap block                                  |
-| PFXEMAP   | X'058' | XL8        | XLRA of last spacemap block                                   |
-| PFXBDATA  | X'060' | XL8        | XLRA of first data block                                      |
-| PFXEDATA  | X'068' | XL8        | XLRA of last data block                                       |
-| PFXBOVFL  | X'070' | XL8        | XLRA of first block on overflow chain                         |
-| PFXEOVFL  | X'078' | XL8        | XLRA of last block on overflow chain                          |
-| PFXBSEGM  | X'080' | XL8        | XLRA of first segment block                                   |
-| PFXESEGM  | X'088' | XL8        | XLRA of last segment block                                    |
-|           | X'090' | XL8        | reserved                                                      |
-| PFXROOT   | X'098' | XL8        | XLRA of root index block                                      |
-| PFXBLVL0  | X'0A0' | XL8        | XLRA of Header Block index level 0                            |
-| PFXELVL0  | X'0A8' | XL8        | XLRA of End Block index level 0                               |
-| PFXBLVL1  | X'0B0' | XL8        | XLRA of Header Block index level 1                            |
-| PFXELVL1  | X'0B8' | XL8        | XLRA of End Block index level 1                               |
-| PFXBLVL2  | X'0C0' | XL8        | XLRA of Header Block index level 2                            |
-| PFXELVL2  | X'0C8' | XL8        | XLRA of End Block index level 2                               |
-| PFXBLVL3  | X'0D0' | XL8        | XLRA of Header Block index level 3                            |
-| PFXELVL3  | X'0D8' | XL8        | XLRA of End Block index level 3                               |
-| PFXBLVL4  | X'0E0' | XL8        | XLRA of Header Block index level 4                            |
-| PFXELVL4  | X'0E8' | XL8        | XLRA of End Block index level 4                               |
-| PFXBLVL5  | X'0F0' | XL8        | XLRA of Header Block index level 5                            |
-| PFXELVL5  | X'0F8' | XL8        | XLRA of End Block index level 5                               |
-| PFXBLVL6  | X'100' | XL8        | XLRA of Header Block index level 6                            |
-| PFXELVL6  | X'108' | XL8        | XLRA of End Block index level 6                               |
-| PFXBLVL7  | X'110' | XL8        | XLRA of Header Block index level 7                            |
-| PFXELVL7  | X'118' | XL8        | XLRA of End Block index level 7                               |
-| PFXBLVL8  | X'120' | XL8        | XLRA of Header Block index level 8                            |
-| PFXELVL8  | X'128' | XL8        | XLRA of End Block index level 8                               |
-| PFXBLVL9  | X'130' | XL8        | XLRA of Header Block index level 9                            |
-| PFXELVL9  | X'138' | XL8        | XLRA of End Block index level 9                               |
-| PFXBLVLA  | X'140' | XL8        | XLRA of Header Block index level 10                           |
-| PFXELVLA  | X'148' | XL8        | XLRA of End Block index level 10                              |
-| PFXBLVLB  | X'150' | XL8        | XLRA of Header Block index level 11                           |
-| PFXELVLB  | X'158' | XL8        | XLRA of End Block index level 11                              |
-| PFXBLVLC  | X'160' | XL8        | XLRA of Header Block index level 12                           |
-| PFXELVLC  | X'168' | XL8        | XLRA of End Block index level 12                              |
-| PFXBLVLD  | X'170' | XL8        | XLRA of Header Block index level 13                           |
-| PFXELVLD  | X'178' | XL8        | XLRA of End Block index level 13                              |
-| PFXBLVLE  | X'180' | XL8        | XLRA of Header Block index level 14                           |
-| PFXELVLE  | X'188' | XL8        | XLRA of End Block index level 14                              |
-| PFXBLVLF  | X'190' | XL8        | XLRA of Header Block index level 15                           |
-| PFXELVLF  | X'198' | XL8        | XLRA of End Block index level 15                              |
-| PFXDTSKC  | X'1A0' | XL8        | STCK of data component creation                               |
-| PFXIXSKC  | X'1A8' | XL8        | STCK of index component creation                              |
-| PFXDTSKU  | X'1B0' | XL8        | STCK of last update to data component                         |
-| PFXIXSKU  | X'1B8' | XL8        | STCK of last update to index component                        |
-| PFXDTMAP  | X'1C0' | XL8        | STCK of last data spacemap update                             |
-| PFXIXMAP  | X'1C8' | XL8        | STCK of last index spacemap update                            |
-|           | X'1D0' | XL48       | Reserved                                                      |
+| PFXAIXN   | X'059' | XL1        | no. of AIX's on the upgrade set                               |
+|           | X'05A' | XL6        | reserved                                                      |
+| PFXBLKSZ  | X'060' | XL4        | blocksize used for this file (except prefix block)            |
+|           | X'064' | XL4        | reserved                                                      |
+| PFXHXLRA  | X'068' | XL8        | XLRA of highest allocated block                               |
+| PFXMAPNW  | X'070' | XL8        | XLRA of spacemap block last used for allocation               |
+| PFXDTSKC  | X'078' | XL8        | STCK of data component creation                               |
+| PFXIXSKC  | X'080' | XL8        | STCK of index component creation                              |
+| PFXDTSKU  | X'088' | XL8        | STCK of last update to data component                         |
+| PFXIXSKU  | X'090' | XL8        | STCK of last update to index component                        |
+| PFXDTMAP  | X'098' | XL8        | STCK of last data spacemap update                             |
+| PFXIXMAP  | X'0A0' | XL8        | STCK of last index spacemap update                            |
+|           | X'0A8' | XL88       | Reserved                                                      |
 
-There are 8 pointer fields in the prefix area. These point to fields allocated elsewhere in the prefix block.
-Their exact addresses on the prefix block may vary.
+The component prefix area has the following format:
 
-The `PFXDVOL@`, `PFXDPAT@`, `PFXDNAM@` pointers and the `PFXXVOL@`, `PFXXPAT@`, `PFXXNAM@` all point to a halfword-prefixed string.
+| Label     | Offset | Field type | Function                                                      |
+|-----------|--------|------------|---------------------------------------------------------------|
+| ZVSAMCPFX |        | DSECT      | Prefix area                                                   |
+| PFXCEYE   | X'000' | CL4        | Eye catcher                                                   |
+| PFXCZPFX  |        | =C'zPFX'   |                                                               |
+| PFXCEYE2  | X'004' | CL4        | Eye catcher part 2                                            |
+| PFXCZEXT  |        | =C'zEXT'   |                                                               |
+| PFXFMET   | X'008' | XL4        | Nr of entries in entire file map                              |
+| PFXRMET   | X'00C' | XL4        | Nr of entries in entire RRN map                               |
+| PFXBMAP   | X'010' | XL8        | XLRA of first spacemap block                                  |
+| PFXEMAP   | X'018' | XL8        | XLRA of last spacemap block                                   |
+| PFXBDATA  | X'020' | XL8        | XLRA of first data block                                      |
+| PFXEDATA  | X'028' | XL8        | XLRA of last data block                                       |
+| PFXBOVFL  | X'030' | XL8        | XLRA of first block on overflow chain                         |
+| PFXEOVFL  | X'038' | XL8        | XLRA of last block on overflow chain                          |
+| PFXBSEGM  | X'040' | XL8        | XLRA of first segment block                                   |
+| PFXESEGM  | X'048' | XL8        | XLRA of last segment block                                    |
+|           | X'050' | XL8        | reserved                                                      |
+| PFXROOT   | X'058' | XL8        | XLRA of root index block                                      |
+| PFXBLVL0  | X'060' | XL8        | XLRA of Header Block index level 0                            |
+| PFXELVL0  | X'068' | XL8        | XLRA of End Block index level 0                               |
+| PFXBLVL1  | X'070' | XL8        | XLRA of Header Block index level 1                            |
+| PFXELVL1  | X'078' | XL8        | XLRA of End Block index level 1                               |
+| PFXBLVL2  | X'080' | XL8        | XLRA of Header Block index level 2                            |
+| PFXELVL2  | X'088' | XL8        | XLRA of End Block index level 2                               |
+| PFXBLVL3  | X'090' | XL8        | XLRA of Header Block index level 3                            |
+| PFXELVL3  | X'098' | XL8        | XLRA of End Block index level 3                               |
+| PFXBLVL4  | X'0A0' | XL8        | XLRA of Header Block index level 4                            |
+| PFXELVL4  | X'0A8' | XL8        | XLRA of End Block index level 4                               |
+| PFXBLVL5  | X'0B0' | XL8        | XLRA of Header Block index level 5                            |
+| PFXELVL5  | X'0B8' | XL8        | XLRA of End Block index level 5                               |
+| PFXBLVL6  | X'0C0' | XL8        | XLRA of Header Block index level 6                            |
+| PFXELVL6  | X'0C8' | XL8        | XLRA of End Block index level 6                               |
+| PFXBLVL7  | X'0D0' | XL8        | XLRA of Header Block index level 7                            |
+| PFXELVL7  | X'0D8' | XL8        | XLRA of End Block index level 7                               |
+| PFXBLVL8  | X'0E0' | XL8        | XLRA of Header Block index level 8                            |
+| PFXELVL8  | X'0E8' | XL8        | XLRA of End Block index level 8                               |
+| PFXBLVL9  | X'0F0' | XL8        | XLRA of Header Block index level 9                            |
+| PFXELVL9  | X'0F8' | XL8        | XLRA of End Block index level 9                               |
+| PFXBLVLA  | X'100' | XL8        | XLRA of Header Block index level 10                           |
+| PFXELVLA  | X'108' | XL8        | XLRA of End Block index level 10                              |
+| PFXBLVLB  | X'110' | XL8        | XLRA of Header Block index level 11                           |
+| PFXELVLB  | X'118' | XL8        | XLRA of End Block index level 11                              |
+| PFXBLVLC  | X'120' | XL8        | XLRA of Header Block index level 12                           |
+| PFXELVLC  | X'128' | XL8        | XLRA of End Block index level 12                              |
+| PFXBLVLD  | X'130' | XL8        | XLRA of Header Block index level 13                           |
+| PFXELVLD  | X'138' | XL8        | XLRA of End Block index level 13                              |
+| PFXBLVLE  | X'140' | XL8        | XLRA of Header Block index level 14                           |
+| PFXELVLE  | X'148' | XL8        | XLRA of End Block index level 14                              |
+| PFXBLVLF  | X'150' | XL8        | XLRA of Header Block index level 15                           |
+| PFXELVLF  | X'158' | XL8        | XLRA of End Block index level 15                              |
+|           | X'160' | XL32       | reserved                                                      |
+
+There are various pointer fields in the file prefix area.
+All pointer fields are marked with an `@` at the end of their label.
+
+These pointer fields point to fields allocated elsewhere in the prefix block, unless they've been set to foxes.
+The exact addresses of the data fields on the prefix block may vary.
+
+The four `PFXxVOL@`, `PFXxPAT@`, `PFXxNAM@` pointers all point to a halfword-prefixed string.
 On Linux/Unix systems, the UUID is stored (in string format), not the volume label.
-The `PFXRM@` is valid only for an RRDS data file, and points to the RRN translation table.
+The `PFXCPFX@` is valid only for the first file of a component; it points to the component prefix area. In all non-first files, the pointer contains foxes.
+The `PFXFM@` is valid for the first file of a component, and as many more as needed; it points to the file translation table (or a section) or contains foxes to indicate its absence.
+The `PFXRM@` is valid for the first file of an RRDS data component, and as many more files as needed; it points to the RRN translation table (or a section) or contains foxes to indicate its absence.
 The `PFXCTRS@` pointer addresses a separate area that holds various counters.
 This area is expected to move into the catalog dataset in a future release.
 
+Growth of a component may cause new entries to be added to the file table or the RRN table. When needed these tables can be continued
+on the prefix block of the next file. When a new RRN map entry needs to be created, but the remaining free space on all prefix blocks is
+not sufficient, the operation will fail with an error. For a file map entry this cannot occur: the new file's prefix block offers room for growth.
+
 ### Counters Area
 
-The counters area occurs only on the prefix block. Its location can be found by following the prefix area's `PFXCTRS@` field.
+The counters area occurs only on the prefix block of a component's first file.
+Its location can be found by following the prefix area's `PFXCTRS@` field.
 
 Most counter fields, but not all, are maintained in order to be able to satisfy a
 SHOWCB BLK=ACB or TESTCB BLK=ACB request.

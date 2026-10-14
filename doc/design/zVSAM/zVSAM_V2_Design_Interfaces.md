@@ -580,12 +580,12 @@ Defined options for the FIELDS parameter are listed below:
 | NCIS     | 4      | Nr of Block splits in the data component. Foxes for index.                                   |
 | NDELR    | 4      | Nr of deleted records from data component. Foxes for index.                                  |
 | NEXCP    | 4      | Nr of I/O requests for the component                                                         |
-| NEXT     | 4      | Nr of extents to the physical file. Foxes.                                                   |
+| NEXT     | 4      | Nr of files allocated to the component.                                                      |
 | NINSR    | 4      | Nr of records inserted for the data component. Foxes for index.                              |
 | NIXL     | 4      | Nr of index levels for index component. Foxes for data component.                            |
 | NLOGR    | 4      | Nr of records in the component                                                               |
 | NRETR    | 4      | Nr of records retrieved from the data component. Foxes for index.                            |
-| NSSS     | 4      | Nr of control area splits. Foxes.                                                            |
+| NSSS     | 4      | Nr of control area splits. Zero.                                                             |
 | NUIW     | 4      | Nr of implicit write operations.                                                             |
 | NUPDR    | 4      | Nr of updated records in the component                                                       |
 | PASSWD   | 4      | Ptr to password, consisting of length (1 byte, binary) followed by actual password value     |
@@ -701,12 +701,12 @@ The TESTCB ACB macro can be coded as follows:
 |                | NCIS=nr                   | Nr of Block splits                                                            | EQ LO HI            |
 |                | NDELR=nr                  | Nr of deleted records                                                         | EQ LO HI            |
 |                | NEXCP=nr                  | Nr of I/O requests                                                            | EQ LO HI            |
-|                | NEXT=nr                   | Nr of extents                                                                 | EQ LO HI            |
+|                | NEXT=nr                   | Nr of files                                                                   | EQ LO HI            |
 |                | NINSR=nr                  | Nr of records inserted                                                        | EQ LO HI            |
 |                | NIXL=nr                   | Nr of index levels                                                            | EQ LO HI            |
 |                | NLOGR=nr                  | Nr of records                                                                 | EQ LO HI            |
 |                | NRETR=nr                  | Nr of records retrieved                                                       | EQ LO HI            |
-|                | NSSS=nr                   | Nr of control area splits. Compares to zero.                                  | EQ LO HI            |
+|                | NSSS=nr                   | Nr of control area splits. Contains zeros.                                    | EQ LO HI            |
 |                | NUIW=nr                   | Nr of non-user writes                                                         | EQ LO HI            |
 |                | NUPDR=nr                  | Nr of updates applied                                                         | EQ LO HI            |
 |                | OFLAGS=OPEN               | Opened successfully?                                                          | EQ NE=HI            |
