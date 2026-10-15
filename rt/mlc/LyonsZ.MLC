@@ -1,0 +1,343 @@
+*          AGO   .START    PROFILE   OPTIONS  WTOR ROUTCDE 11
+* This program was supplied by Lin Lyons to reproduce the issue
+*      reported as #943 on github. Do not execute this program.
+*      The problem was an assembly error - just assemble the program
+*
+* C:\USERS\LINLY\DOCUMENTS\Z390CODE\Z
+*                                                 Z ASM
+* s ff230.!=C'DCB'  (=,!=,<,<=,>,>=)
+*                                                 Z ASM
+* SET G=C:\USERS\LINLY\DOCUMENTS\Z390CODE\Z
+* SET SYSPRINT=%G%.SYSPRINT
+* SET    SYSIN=%G%.SYSIN
+* SET       IN=%G%.INPUT
+* SET      OUT=%G%.OUT
+* SET    BREAK=%G%.BRAKE.BRAKE.TXT
+* BAT\ASMLG %G%.MLC  TIME(2)
+*
+* SET  G=C:\USERS\LINLY\DOCUMENTS\Z390CODE\ERRDESC
+* SET  LISTING=%G%.PRN
+* SET    SYSIN=%G%.BREAK.SYSIN.TXT
+* SET    BREAK=%G%.BREAK.BREAK.TXT
+* SET SYSPRINT=%G%.BREAK.SYSPRINT.TXT
+* BAT\EZ390  C:\USERS\LINLY\DOCUMENTS\Z390CODE\QBREAK
+*                `                                  ZB         QBREAK
+* LOADLOC=FF000                   BREAK POINTS
+* LABEL=Z,ZZ
+*
+* .START   ANOP
+* ---------------------------------
+         MACRO
+&LBL     $$LA  &REG,&FLD           $$LA  REVB  ????
+         AIF   ('&FLD(1,1)' NE '(').A
+&LBL     LA    &REG,0&FLD
+         MEXIT
+.A       ANOP
+&LBL     LA    &REG,&FLD
+         MEND
+* ---------------------------------
+         MACRO
+&LBL     ERR   &BC,&MSG
+         LCLC  &L
+         LCLA  &N
+&N       SETA  K'&MSG-3
+&L       SETC  'SYS&SYSNDX'
+&LBL     REVB  &BC,&L.Z
+         BAL   R14,ERR
+         DC    AL1(&N),C&MSG
+&L.Z     DS    0H
+         MEND
+* ---------------------------------
+         MACRO
+&LABEL   REVB  &COND,&TO
+         LCLC  &C,&B
+         LCLA  &LEN
+         AIF   ('&COND' NE 'B').ADDREM
+&LABEL   NOP   &TO
+         MEXIT
+.ADDREM  ANOP
+&LEN     SETA  K'&COND
+         AIF   ('&COND'(2,1) NE 'N').ADD
+&B       SETC  '&COND'(3,&LEN-2)
+         AGO   .DOIT
+.ADD     ANOP
+&B       SETC  '&COND'(2,&LEN-1)
+&B       SETC  'N&B'
+.DOIT    ANOP
+&LABEL   B&B    &TO
+         MEND
+* ---------------------------------
+LyonsZ   START 0
+         USING *,13
+         YREGS
+         B     BEGIN-LyonsZ(15)
+         DC    17F'0'
+IDMSG    DC    C'LyonsZ   V01.01A COPYRIGHT LINWOOD G. LYONS, ASM &SYSDA
+               ATE RUN '
+IDMSGD   DC    C'          LINLYONS AT YAHOO OR CORYBLYONS AT YAHOO'
+LIDMSG   EQU   *-IDMSG
+MVCPARM  MVC   PARM,2(R4)
+BEGIN    STM   14,12,12(13)
+         ST    15,8(13)
+         ST    13,4(15)
+         LA    13,0(15)
+         L     4,0(1)
+*
+         SR    R0,R0          USE SYSTEM DATE, NOT PASSED DATE
+         L     R1,=A(IDMSGD)
+         LA    15,QDAYDATE
+         BALR  14,15
+*
+LINE     EQU   QDAYDATE+5,133
+PARM     EQU   QDAYDATE+145,100
+CARD     EQU   QDAYDATE+245,80
+*
+         MVC   LINE-5(5),=X'0050000040'   WTO  MF=(E,LINE-5)
+         MVC   LINE,LINE-1
+         MVC   PARM-7(7),=C' PARM= '
+         MVC   PARM,PARM-1
+         MVC   CARD(90),CARD-1
+*
+         LH    1,0(R4)
+         SH    R1,=H'1'
+         BM    *+10
+         EX    R1,MVCPARM
+*
+         LA    R2,SYSPRINT
+         BAL   R9,OPENSYSP
+         LA    R2,SYSIN
+         BAL   R9,OPENIN
+         EX    0,*
+* ====================================================
+OPENMSG  DC    C' OPENED FOR OUTPUT, RECFM=   LRECL=..... '
+         PUSH  PRINT
+         PRINT  NOGEN
+         USING IHADCB,2
+OPENSYSP MVC   DW,DCBDDNAM
+         OPEN  (SYSPRINT,OUTPUT)
+         PUT   SYSPRINT,PARM-7
+         MVC   LINE-5(4),=H'64,0'
+         MVC   LINE(LIDMSG),IDMSG
+         PUT   SYSPRINT,LINE
+         MVC   LINE,LINE-1
+         B     LISTDCBM
+OPENOUT  MVC   DW,DCBDDNAM
+         CLC   =H'0',DCBLRECL
+         BNE   OPENO
+         MVC   DCBRECFM,DCBRECFM-IHADCB+IN
+         MVC   DCBLRECL,DCBLRECL-IHADCB+IN
+OPENO    MVC   OPENMSG+12(3),=C'OUT'
+         OPEN  ((2),OUTPUT)
+OPENIN   MVC   DW,DCBDDNAM
+         OPEN  ((2),INPUT)
+         MVC   OPENMSG+12(3),=C' IN'
+         POP   PRINT
+LISTDCBM MVC   LINE(8),DW
+         UNPK  OPENMSG+26(3),DCBRECFM(2)
+         TR    OPENMSG+26(2),HEX-240
+         MVI   OPENMSG+28,C' '
+         LH    R0,DCBLRECL
+         CVD   R0,16(13)
+         OI    23(13),X'0F'
+         UNPK  OPENMSG+35(5),21(3,13)
+         MVC   LINE+8(L'OPENMSG),OPENMSG
+         B     PUTLINE
+*
+WTOLINE  WTO   MF=(E,LINE-5)
+PUTLINE  PUT   SYSPRINT,LINE-1
+         MVC   LINE,LINE-1
+         BR    R9
+         B     PUTLINE
+         DROP  2
+         POP   PRINT
+* ==========================================================
+*
+*        ERR   BNE,'MESSAGE' = MSG AND AND ABEND
+*        ERR   BNE,' MESSAGE' = MSG AND RETURN
+*        ERR   BNE,$MESSAGE' = PRINT CARD DATA AND ABEND
+*        ERR   BNE  $MESSAGE' = PRINT CARD DATA + MSG, AND RETURN
+*
+* =========================================================
+ERRMVC   MVC   LINE+12(0),1(R14)
+         DC    F'0'
+ERR      LA    R1,0(R14)
+         ST    R1,ERR-4
+         MVC   LINE,LINE-1         BOTH ERROR MSG,
+         SR    R15,R15             AND GENERAL MSG ROUTINE.
+         IC    R15,0(R14)          IF THE FIRST CHAR = BLANK, CC
+         EX    R15,ERRMVC         THEN IT'S GENERAL MSG,
+         MVC   LINE(7),=C'ERR AT '
+* --------------------------------------------------------------
+         SR    R1,R13              IF NOT, WRITE THE MSG AND ABEND
+         ST    R1,12(R13)
+         UNPK  LINE+7(5),14(R13)
+         TR    LINE+7(4),HEX-240
+         MVI   LINE+11,C' '
+*
+         CLI   1(R14),C' '         Q. DO WE ABEND
+         BNE   *+14                   NO.
+         MVC   LINE(3),=C'MSG'        YES, INDICATE MSG, NOT ERR
+         LA    R14,1(R14)                  AND POINT PAST $
+*
+         CLI   1(R14),C'$'         Q. PRINT SYSIN CARD
+         BNE   *+18                   NO
+         LA    R1,LINE+15(R15)        YES CALC END OF MSG LOC
+         MVC   0(32,R1),CARD              AND MOVE CARD DATA.
+*
+         BAL   R9,WTOLINE
+*
+*        PUT   SYSPRINT,LINE-1
+*        MVC   LINE,LINE-1
+* ----------------------------------------
+         SR    R15,R15
+         L     R14,ERR-4
+         SH    R14,=H'8'
+         CLI   9(R14),C' '
+         BNE   *+8
+         LA    R15,15
+         EX    R15,0(R14)
+         ABEND 1
+* ================================================================
+* --------------------------------------
+* --------------------------------------
+ZZ       DC    H'0'
+ZZZ      DC    H'0'
+*
+         LTORG
+P0       DC    X'0C'
+P1       DC    X'1C'
+HEX      DC    C'0123456789ABCDEF'
+* PARMHDR  DC    C' PARM = '
+* PARM     DC    CL40'NO PARM FOUND'
+* LINE     DC    CL133' '
+* ---------------------------------
+         PUSH  PRINT
+         PRINT NOGEN
+IN       DCB   DDNAME=IN,DSORG=PS,MACRF=GL,RECFM=FT,LRECL=266,EODAD=ZZZ
+OUT      DCB   DDNAME=OUT,DSORG=PS,MACRF=PM
+SYSIN  DCB  DDNAME=SYSIN,DSORG=PS,MACRF=GL,RECFM=FT,LRECL=80,EODAD=ZZ
+SYSPRINT DCB   DDNAME=SYSPRINT,DSORG=PS,MACRF=PM,RECFM=FT,LRECL=133
+         POP   PRINT
+* -------------------------------------------------
+*
+DW       DC    D'0'
+* REDEF    DS    0D
+*          DS    CL5
+* LINE     DS    CL133
+*          DS    CL7
+* PARM     DS    CL100
+* CARD     DS    CL80,CL20
+*          ORG   REDEF
+*
+         PUSH  USING
+         USING *,5
+QDAYDATE STM   R14,R5,12(R13)         SAVE TIME (R0) AND DATE (R1)
+         LA    R5,0(15)
+         LA    R4,40(R13)
+         L     R2,0(R1)
+         TIME DEC
+         STM   R0,R2,0(R4)      SAVE TIME, DATE, PRINT LINE
+* -------------------SAVE YEAR, PACKED+BINARY  DAY, PACKED+BINARY---
+         ZAP   24(8,R4),6(2,R4)     PACK DAY OF YEAR
+         CVB   R0,24(R4)
+         STH   R0,12(R4)            BINARY DAY OF YEAR
+.*
+         SR    R1,R1
+         IC    R1,5(R4)            LOAD YEAR
+         SLL   R1,4
+         LA    R1,15(R1)           ADD PACKED SIGN
+         STH   R1,30(R4)           STORE IN DOUBLE WORD
+         CVB   R15,24(R4)
+         SH    R15,=H'24'
+         STH   R15,14(R4)          BINARY YEAR
+.*
+         LR    R1,R15
+         N     R1,=F'3'
+         STC   R1,4(R4)            0=LEAP YEAR
+.*
+         LR    R1,R15
+         SRL   R1,2
+         STH   R1,16(R4)           # OF EXTRA LEAP YEAR DAYS
+* ============================= CALC DAY
+         LR    R0,R15
+         LH    R2,12(R4)
+         MH    R15,=H'365'
+         AR    R15,R1            # EXTRA LEAP YEARS
+         AH    R15,12(R4)        # DAYS SINCE JAN 1
+.*
+         SR    R14,R14
+         D     R14,=F'7'       AFTER DIVIDE= ODD REG=QUOTION,
+         SLL   R14,2           DAY# * 4
+         LA    R15,QDAYDATD
+         LA    R15,0(R15,R14)
+* --------------------------------------
+         L     R1,8(R4)            LOAD PRINT LINE LOCATION
+         MVC   0(4,R1),0(R15)      MOVE DAY TO PRINT LOCATION
+         NC    1(2,R1),=X'BFBF'
+* ================================== DAY DONE, GET CALENDAR MONTH+DAY
+         LH    14,12(R4)              LOAD DAY
+         LA    R15,QDAYDATM-1           DAYS IN A MONTH
+         CLI   4(R4),0           Q. IS THIS A LEAP YEAR?
+         BNE   *+8                    NO, OKAY
+         LA    R15,12(R15)            YES, POINT TO LEAP YEAR TBL
+         SR    R0,R0
+         ZAP   16(2,R4),QDAYDATM-2(1)   INIT MONTH=00
+*
+QDAYDATC LA    R15,1(R15)               FIRST/NEXT MONEY
+         AP    16(2,R4),QDAYDATM-1(1)    ADD 1 TO MONTH
+         IC    R0,0(R15)                LOAD DAYS THIS MONTH
+         SR    R14,R0                   SUBT = # DAS LEFT
+         BP    QDAYDATC              Q. STILL POSITIVE, LOOP
+*
+         AR    R14,R0                   NO, ADD LAST MONTH'S DAYS BACK
+         CVD   R14,24(R4)               STORE TODAY'S DAY#
+         OI    31(R4),X'0F'   TODAY'S DATE SIGN
+*
+         L     R1,8(R4)
+         OI    17(R4),X'0F'             MONTH SIGN
+         UNPK  3(3,1),16(2,R4)          UNPK MONTH
+         MVI   3(1),C' '                ERASE HIGH 0
+*
+         CVD   R14,24(R4)
+         OI    31(R4),X'0F'
+         UNPK  6(3,1),30(2,R4)          UNPK DAY OF MONTH
+         MVI   6(1),C'/'
+*
+         MVI   9(R1),C'/'
+         UNPK  10(3,R1),05(2,R4)
+         MVI   12(R1),C' '
+*
+         MVC   13(6,R1),=X'4021207A2020'
+         ED    13(6,R1),0(R4)
+*
+         LM    14,5,12(13)
+         DROP  5
+         POP   USING
+         BR    14
+* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+*
+         DC    X'0C1C'     MONTH-2 =P'0'  AND  MONTH-1 =P'1'
+QDAYDATM DC    AL1(31,28,31,30,31,30,31,31,30,31,30,99)
+         DC    AL1(31,29,31,30,31,30,31,31,30,31,30,99)
+**       DC    C'MON TUE WED THU FRI SAT SUN MON TUE '
+QDAYDATD DC    C'SUN MON TUE WED THU FRI SAT SUN MON TUE '
+QDAYDATL EQU   *-QDAYDATE
+*
+*   *               +   28 31  30  31  30  31  31  30  31  30  31
+*   MONTHTBL DC    AL1(31,59,90,120,151,181,212,243,273,304,334,365)
+*            DC    AL1(31,60,91,121,152,182,213,244,274,305,335,366)
+*   DAYTBL   DC    C'SUN MON TUE WED THU FRI SAT SUN '
+*
+*        0126 = JULY  2026  205 = DAY OF YEAR  (JULY 24, 2026)
+*
+*    BIN ==>   R0= 004E7D54  R1= 0126205F
+*    DEC==>    R0= 14212162  R1= 0126205F
+*        MEND
+* -------------------------------------------------
+@@PAD#0  EQU   *-LyonsZ+4095
+@@PAD#1  EQU   @@PAD#0/(4097)
+@@PAD#2  EQU   (@@PAD#1*4096)
+         ORG   LyonsZ+@@PAD#2
+*
+*        DCBD  DEVD=DA
+         END

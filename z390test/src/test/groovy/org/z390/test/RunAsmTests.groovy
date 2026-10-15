@@ -275,6 +275,12 @@ class RunAsmTests extends z390Test {
         assert this.fileData['LOG'].contains("LPSW S0C2 trapped"), "S0C2 Abend was not trapped"
     }
     @Test
+    void test_LyonsZ() { // just assemble - no linkage or execution needed for this test
+        int rc = this.asm(basePath("rt", "mlc", "LyonsZ"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
     void test_ZOPCHECK() {
         var syscpyOption = "SYSCPY(${basePath('zopcheck')}+${basePath('mac')})"
         this.env = ['SNAPOUT': basePath('zopcheck', 'SNAPOUT.TXT')]

@@ -50,6 +50,7 @@ bash/asml  rt/mlc/TESTX2C  trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TB2CX2C  trace noloadhigh $sysmac
 bash/asmlg rt/mlc/TLPSW    trace noloadhigh $sysmac
 bash/asm   rt/mlc/ATTRIB\$O trace noloadhigh $sysmac
+bash/asm   rt/mlc/LyonsZ   trace noloadhigh $sysmac
 rt/bash/zopcheck
 
 # if we get here, there were no errors
