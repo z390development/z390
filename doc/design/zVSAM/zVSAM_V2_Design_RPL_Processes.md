@@ -50,8 +50,9 @@ Prefix counter field `CTRNEXCP` needs to be incremented whenever a block needs t
 occurs when the cluster was opened with `MACRF=NDF`. With `MACRF=DFR` no writes are forced and no
 EXCP needs to be counted.
 
-When a file can no longer be extended a secondary file needs to be allocated. When that is done transparently,
-`CTRNEXT` needs to be incremented. Setting its initial value is a function of zRepro.
+When a file can no longer be extended a secondary file needs to be allocated. That is done transparently,
+the new file is allocated, initialized, and chained to the previous-last file. Additional housekeeping is
+performed, including an increment of `CTRNEXT`. Setting the initial value of `CTRNEXT` is a function of zRepro.
 
 Prefix counter fields `CTRNINSR` and `CTRNLOGR` need to be incremented whenever a new record is added
 to the component.

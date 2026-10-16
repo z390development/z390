@@ -25,11 +25,11 @@
         <mxCell id="37" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Block Footer" vertex="1">
           <mxGeometry height="40" width="80" x="720" y="320" as="geometry" />
         </mxCell>
-        <mxCell id="40" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Prefix area - part 1" vertex="1">
+        <mxCell id="40" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="File Prefix area - Part 1" vertex="1">
           <mxGeometry height="40" width="400" x="400" y="160" as="geometry" />
         </mxCell>
-        <mxCell id="41" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Prefix area - part 2" vertex="1">
-          <mxGeometry height="40" width="680" x="120" y="200" as="geometry" />
+        <mxCell id="41" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Component Prefix area" vertex="1">
+          <mxGeometry height="40" width="460" x="340" y="200" as="geometry" />
         </mxCell>
         <mxCell id="42" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Counters area" vertex="1">
           <mxGeometry height="40" width="400" x="120" y="240" as="geometry" />
@@ -42,6 +42,9 @@
         </mxCell>
         <mxCell id="45" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="Free space" vertex="1">
           <mxGeometry height="40" width="130" x="120" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="bo6frHqn00QRRFvdOruF-45" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="File Prefix area - Part 2" vertex="1">
+          <mxGeometry height="40" width="220" x="120" y="200" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
