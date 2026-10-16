@@ -1,17 +1,26 @@
 name: Publish docs via GitHub Pages
-on: 
+on:
   push:
+    # Run for main and for doc/**. Deploy is decided on the deploy job below.
     branches:
       - main
-      - doc/**
+      - "doc/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  # Upstream main shares one group. Every other run uses its own, so a doc build does not wait on a production deploy.
+  group: "${{ (github.repository == 'z390development/z390' && github.ref == 'refs/heads/main') && 'pages' || format('pages-{0}', github.ref) }}"
+  cancel-in-progress: false
 
 env:
   JAVA_DISTRIBUTION: temurin
   JAVA_VERSION: 21
 
 jobs:
-  deploy:
-    name: Deploy docs
+  build:
+    name: Build docs
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -31,6 +40,32 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
       - run: pip install -r doc/requirements.txt
       - run: bash/bldjavadoc doc/javadoc
-      - run: mkdocs gh-deploy --force
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+      - name: Build site
+        run: mkdocs build
         env:
           Z390_VERSION: ${{ steps.version.outputs.version }}
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    name: Deploy docs
+    # Official site: upstream main only. A fork deploys its own Pages site for main and for doc/**.
+    if: >-
+      (github.repository == 'z390development/z390' && github.ref == 'refs/heads/main')
+      || github.event.repository.fork
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
