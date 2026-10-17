@@ -68,7 +68,7 @@ class RunRtTest extends z390Test {
         this.env = [:]
         def name = spec.name
         if (spec.setEnv) {
-            env.put('SYSUT1', basePath('rt', 'test', "${name}.TF1"))
+            env.put('SYSUT1', inputFile("${name}.TF1"))
             env.put('SYSUT2', basePath('rt', 'test', "${name}.OUT"))
             env.put('SYSOUT', basePath('rt', 'test', "${name}.RPT"))
         }
@@ -76,13 +76,24 @@ class RunRtTest extends z390Test {
         this.printOutput()
         assert rc == 0
         assertSameContent(basePath('rt', 'test', "${name}.OUT"),
-                           basePath('rt', 'test', "${name}.${spec.outRef}"),
+                           inputFile("${name}.${spec.outRef}"),
                            spec.outText as boolean,
                            "${name}.OUT")
         assertSameContent(basePath('rt', 'test', "${name}.RPT"),
-                           basePath('rt', 'test', "${name}.TF3"),
+                           inputFile("${name}.TF3"),
                            spec.rptText as boolean,
                            "${name}.RPT")
+    }
+
+    // helper function: return plain name, or the same name with Ebcdic inserted before the last qualifier.
+    private String inputFile(String fileName) {
+        var path = basePath('rt', 'test', fileName)
+        if (new File(path).isFile()) {
+            return path
+        }
+        int dot = fileName.lastIndexOf('.')
+        var ebcdicName = fileName.substring(0, dot) + '.Ebcdic' + fileName.substring(dot)
+        return basePath('rt', 'test', ebcdicName)
     }
 
     // helper function for file comparisons - used by test_dcb

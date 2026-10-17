@@ -9,12 +9,17 @@ class RunRTQSAM extends z390Test {
     var options = ["SYSMAC(${basePath("mac")})", "TIME(30)", "TRACE"]
 
     void run_test(String postfix) {
-        env = ['SNAPOUT': 'DUMMY', 'SYSUT2': basePath('qsam', "TEST${postfix}.TFV")]
+        var dataFile = "TEST${postfix}.TFV"
+        if (!new File(basePath('qsam', dataFile)).exists()) {
+            dataFile = "TEST${postfix}.Binary.TFV"
+        }
+        var dataPath = basePath('qsam', dataFile)
+        env = ['SNAPOUT': 'DUMMY', 'SYSUT2': dataPath]
         int rc
         rc = asmlg(basePath('qsam', "BLD${postfix}"), *options)
         printOutput()
         assert rc == 0
-        env.put('SYSUT1', basePath('qsam', "TEST${postfix}.TFV"))
+        env.put('SYSUT1', dataPath)
         asmlg(basePath('qsam', "CHK${postfix}"), *options)
         printOutput()
         assert rc == 0
