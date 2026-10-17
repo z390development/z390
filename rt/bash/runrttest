@@ -52,15 +52,15 @@ export SYSUT1=rt/test/TESTDCB5.TF1
 export SYSUT2=rt/test/TESTDCB5.OUT
 export SYSOUT=rt/test/TESTDCB5.RPT
 bash/asmlg rt/test/TESTDCB5 notiming stats bal noloadhigh
-cmp -s rt/test/TESTDCB5.OUT rt/test/TESTDCB5.TF2 || exit 1
+cmp -s rt/test/TESTDCB5.OUT rt/test/TESTDCB5.Ebcdic.TF2 || exit 1
 tr -d '\r' < rt/test/TESTDCB5.RPT | diff - <(tr -d '\r' < rt/test/TESTDCB5.TF3) || exit 1
-export SYSUT1=rt/test/TESTDCB6.TF1
+export SYSUT1=rt/test/TESTDCB6.Ebcdic.TF1
 export SYSUT2=rt/test/TESTDCB6.OUT
 export SYSOUT=rt/test/TESTDCB6.RPT
 bash/asmlg rt/test/TESTDCB6 notiming stats bal noloadhigh
-cmp -s rt/test/TESTDCB6.OUT rt/test/TESTDCB6.TF2 || exit 1
+cmp -s rt/test/TESTDCB6.OUT rt/test/TESTDCB6.Ebcdic.TF2 || exit 1
 tr -d '\r' < rt/test/TESTDCB6.RPT | diff - <(tr -d '\r' < rt/test/TESTDCB6.TF3) || exit 1
-export SYSUT1=rt/test/TESTDCB7.TF1
+export SYSUT1=rt/test/TESTDCB7.Ebcdic.TF1
 export SYSUT2=rt/test/TESTDCB7.OUT
 export SYSOUT=rt/test/TESTDCB7.RPT
 bash/asmlg rt/test/TESTDCB7 notiming stats bal noloadhigh
@@ -106,8 +106,8 @@ export SYSUT1=
 export SYSUT2=
 export SYSOUT=
 bash/asmlg rt/test/TESTDCBE notiming stats bal noloadhigh
-cmp -s rt/test/TESTDCBE.OUT rt/test/TESTDCBE.TF2 || exit 1
-cmp -s rt/test/TESTDCBE.RPT rt/test/TESTDCBE.TF3 || exit 1
+cmp -s rt/test/TESTDCBE.OUT rt/test/TESTDCBE.TF2        || exit 1
+cmp -s rt/test/TESTDCBE.RPT rt/test/TESTDCBE.Ebcdic.TF3 || exit 1
 export SYSUT1=rt/test/TESTDCBF.TF1
 export SYSUT2=rt/test/TESTDCBF.OUT
 export SYSOUT=rt/test/TESTDCBF.RPT
