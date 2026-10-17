@@ -32,6 +32,7 @@ import java.io.FileReader;
  * 09/25/09 RPI 1080 replace init_tables with init_tz390
  * 2025-09-14 AFK  Add/fix javadoc comments
  * 2026-08-09 #807 Fix issues flagged by linter
+ * 2026-10-14 AFK  Z390.IVP file has moved to src folder
  ****************************************************
  *                                       last RPI
  ****************************************************/
@@ -87,7 +88,7 @@ public class iz390 {
         System.out.println("IVP OS   version = " + os_ver);
         System.out.println("IVP J2SE version = " + j2se_ver);
         System.out.println("IVP z390 version = " + z390_ver);
-        ivp_file_name = z390_dir + File.separator + "Z390.IVP"; // RPI 713
+        ivp_file_name = z390_dir + File.separator + "src" + File.separator + "Z390.IVP"; // RPI 713
         ivp_file      = new File(ivp_file_name);
         if (ivp_file.isFile()) {
             try {
