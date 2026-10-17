@@ -17,25 +17,25 @@ pushd %~dps0..\..
 erase QSAM\BLD*.ERR
 erase QSAM\TEST*.TFV
 set SNAPOUT=DUMMY
-set SYSUT2=QSAM\TESTV.TFV
+set SYSUT2=QSAM\TESTV.Binary.TFV
 call bat\ASMLG %z_TraceMode% QSAM\BLDV.MLC   TRACE TIME(300) %1 || goto error
-set SYSUT1=QSAM\TESTV.TFV
+set SYSUT1=QSAM\TESTV.Binary.TFV
 call bat\ASMLG %z_TraceMode% QSAM\CHKV.MLC   TRACE TIME(300)    || goto error
-set SYSUT2=QSAM\TESTVB.TFV
+set SYSUT2=QSAM\TESTVB.Binary.TFV
 call bat\ASMLG %z_TraceMode% QSAM\BLDVB.MLC  TRACE TIME(300) %1 || goto error
-set SYSUT1=QSAM\TESTVB.TFV
+set SYSUT1=QSAM\TESTVB.Binary.TFV
 call bat\ASMLG %z_TraceMode% QSAM\CHKVB.MLC  TRACE TIME(300)    || goto error
 set SYSUT2=QSAM\TESTVT.TFV
 call bat\ASMLG %z_TraceMode% QSAM\BLDVT.MLC  TRACE TIME(300) %1 || goto error
 set SYSUT1=QSAM\TESTVT.TFV
 call bat\ASMLG %z_TraceMode% QSAM\CHKVT.MLC  TRACE TIME(300)    || goto error
-set SYSUT2=QSAM\TESTVL.TFV
+set SYSUT2=QSAM\TESTVL.Binary.TFV
 call bat\ASMLG %z_TraceMode% QSAM\BLDVL.MLC  TRACE TIME(300) %1 || goto error
-set SYSUT1=QSAM\TESTVL.TFV
+set SYSUT1=QSAM\TESTVL.Binary.TFV
 call bat\ASMLG %z_TraceMode% QSAM\CHKVL.MLC  TRACE TIME(300)    || goto error
-set SYSUT2=QSAM\TESTVBL.TFV
+set SYSUT2=QSAM\TESTVBL.Binary.TFV
 call bat\ASMLG %z_TraceMode% QSAM\BLDVBL.MLC TRACE TIME(300) %1 || goto error
-set SYSUT1=QSAM\TESTVBL.TFV
+set SYSUT1=QSAM\TESTVBL.Binary.TFV
 call bat\ASMLG %z_TraceMode% QSAM\CHKVBL.MLC TRACE TIME(300)    || goto error
 set SYSUT2=QSAM\TESTVTL.TFV
 call bat\ASMLG %z_TraceMode% QSAM\BLDVTL.MLC TRACE TIME(300) %1 || goto error

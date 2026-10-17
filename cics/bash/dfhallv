@@ -76,7 +76,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 # build the fixed RRDS
 ########################################
 
-export INFILE=${cicspath}/MYFILE6F.TF1
+export INFILE=${cicspath}/MYFILE6F.Ebcdic.TF1
 export OUTFILE=${cicspath}/Z390CAT1.MYFILE06
 bash/ez390 linklib/REPRO
 rc=$?
@@ -87,7 +87,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 ########################################
 
 export INFILE=${cicspath}/Z390CAT1.MYFILE06
-export OUTFILE=${cicspath}/MYFILE6F.TF2
+export OUTFILE=${cicspath}/MYFILE6F.Ebcdic.TF2
 bash/ez390 linklib/REPRO
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi
@@ -96,7 +96,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 # build the variable RRDS
 ########################################
 
-export INFILE=${cicspath}/MYFILE7V.TF1
+export INFILE=${cicspath}/MYFILE7V.Ebcdic.TF1
 export OUTFILE=${cicspath}/Z390CAT1.MYFILE07
 bash/ez390 linklib/REPRO
 rc=$?
@@ -107,7 +107,7 @@ if [ $rc -ne 0 ]; then wrong; fi
 ########################################
 
 export INFILE=${cicspath}/Z390CAT1.MYFILE07
-export OUTFILE=${cicspath}/MYFILE7V.TF2
+export OUTFILE=${cicspath}/MYFILE7V.Ebcdic.TF2
 bash/ez390 linklib/REPRO
 rc=$?
 if [ $rc -ne 0 ]; then wrong; fi

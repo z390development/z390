@@ -1,0 +1,378 @@
+#!/bin/bash
+# check_text_files: report control bytes and missing final line endings.
+#
+# A file is in scope when this repository's .gitattributes marks it as plain
+# text. text=auto counts as text: Git's content probe is ignored, because
+# that probe misclassifies EBCDIC files. -text files are out of scope.
+# Setting eol also marks a file as text, which is how Git treats it.
+#
+# Zero-byte files are ignored. Every other in-scope file is reported when:
+#
+# * it contains a byte below 0x20 other than CR (0x0D) or LF (0x0A)
+# * it does not end with a line-end marker (CR, LF, or CRLF)
+#
+# CR and LF are the line endings accepted above, so they are not also reported
+# as unexpected control bytes. Every other byte below 0x20 is, including NUL,
+# HT (tab), and SUB (Ctrl-Z). Each hit reports the count and the first offset.
+#
+# Tracked paths come from git ls-files. Attribute values come from
+# git check-attr so matching follows Git's .gitattributes rules. System
+# and global attribute files are not consulted.
+#
+#   bash/check_text_files
+#
+# Exit 0 when nothing was reported, 1 when a control byte, a missing line
+# ending, an unreadable path, or a git failure was reported, 2 when this
+# directory is not a checkout with .gitattributes.
+#
+# Requires bash 3.2 or newer, plus git, od, awk, and sort. od reads every
+# byte, including NUL, which line-oriented tools would skip.
+
+if [ "$#" -ne 0 ]; then
+    echo "check_text_files: no arguments expected" >&2
+    echo "usage: bash/check_text_files" >&2
+    exit 1
+fi
+
+export LC_ALL=C
+set -u
+set -o pipefail
+
+caller_pwd=$(pwd)
+tmp=
+cleanup() {
+    cd "$caller_pwd" 2>/dev/null || true
+    if [ -n "$tmp" ]; then
+        rm -rf "$tmp"
+    fi
+}
+trap cleanup EXIT
+
+for need in git od awk sort; do
+    if ! command -v "$need" >/dev/null 2>&1; then
+        echo "check_text_files: $need is required" >&2
+        exit 1
+    fi
+done
+
+repo=$(cd "$(dirname "$0")" && pwd)
+while [ ! -e "$repo/.git" ] || [ ! -f "$repo/.gitattributes" ]; do
+    parent=$(dirname "$repo")
+    if [ "$parent" = "$repo" ]; then
+        break
+    fi
+    repo=$parent
+done
+
+if [ ! -f "$repo/.gitattributes" ]; then
+    echo "No .gitattributes in $repo" >&2
+    exit 2
+fi
+if [ ! -e "$repo/.git" ]; then
+    echo "$repo is not a git checkout" >&2
+    exit 2
+fi
+cd "$repo"
+
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/z390-check-text.XXXXXX") || {
+    echo "check_text_files: cannot create a temporary directory" >&2
+    exit 1
+}
+
+sep=$(printf '\034')
+bom=$(printf '\357\273\277')
+
+run_git() {
+    local out=$1
+    local err=$2
+    shift 2
+    (
+        unset GIT_DIR
+        unset GIT_WORK_TREE
+        export GIT_ATTR_NOSYSTEM=1
+        export GIT_TERMINAL_PROMPT=0
+        git -c "core.attributesFile=" "$@"
+    ) >"$out" 2>"$err"
+}
+
+is_plain_text() {
+    case $1 in
+        unset)
+            return 1
+            ;;
+        unspecified)
+            case $2 in
+                lf|crlf) return 0 ;;
+                *) return 1 ;;
+            esac
+            ;;
+        *)
+            return 0
+            ;;
+    esac
+}
+
+if ! run_git "$tmp/ls-files" "$tmp/ls-files.err" ls-files -s -z; then
+    rc=$?
+    detail=$(tr '\n' ' ' < "$tmp/ls-files.err" | sed 's/[[:space:]]*$//')
+    echo "git ls-files -s -z failed ($rc): $detail" >&2
+    exit 1
+fi
+
+: > "$tmp/entries"
+: > "$tmp/paths"
+while IFS= read -r -d '' record || [ -n "$record" ]; do
+    if [ -z "$record" ]; then
+        continue
+    fi
+    case $record in
+        *$'\t'*) ;;
+        *)
+            echo "git ls-files returned a record without a path" >&2
+            exit 1
+            ;;
+    esac
+    mode=${record%% *}
+    path=${record#*$'\t'}
+    printf '%s%s%s\n' "$path" "$sep" "$mode" >> "$tmp/entries"
+    printf '%s\0' "$path" >> "$tmp/paths"
+done < "$tmp/ls-files"
+
+: > "$tmp/attr-rows"
+if [ -s "$tmp/paths" ]; then
+    (
+        unset GIT_DIR
+        unset GIT_WORK_TREE
+        export GIT_ATTR_NOSYSTEM=1
+        export GIT_TERMINAL_PROMPT=0
+        git -c "core.attributesFile=" check-attr --stdin -z text eol
+    ) <"$tmp/paths" >"$tmp/check-attr" 2>"$tmp/check-attr.err"
+    rc=$?
+    if [ "$rc" -ne 0 ]; then
+        detail=$(tr '\n' ' ' < "$tmp/check-attr.err" | sed 's/[[:space:]]*$//')
+        echo "git check-attr --stdin -z text eol failed ($rc): $detail" >&2
+        exit 1
+    fi
+
+    field_n=0
+    path=
+    attr=
+    while IFS= read -r -d '' field || [ -n "$field" ]; do
+        # Git for Windows can prefix .gitattributes with a UTF-8 BOM on a pipe.
+        case $field in
+            "$bom"*) field=${field#"$bom"} ;;
+        esac
+        case $((field_n % 3)) in
+            0) path=$field ;;
+            1) attr=$field ;;
+            2)
+                printf '%s%s%s%s%s\n' "$path" "$sep" "$attr" "$sep" "$field" >> "$tmp/attr-rows"
+                ;;
+        esac
+        field_n=$((field_n + 1))
+    done < "$tmp/check-attr"
+    if [ $((field_n % 3)) -ne 0 ]; then
+        echo "git check-attr returned an unexpected record layout" >&2
+        exit 1
+    fi
+fi
+
+awk -v FS="$sep" -v OFS="$sep" '
+    {
+        path = $1
+        attr = $2
+        value = $3
+        if (attr == "text") {
+            text[path] = value
+        } else if (attr == "eol") {
+            eol[path] = value
+        }
+        seen[path] = 1
+    }
+    END {
+        for (path in seen) {
+            t = (path in text) ? text[path] : "unspecified"
+            e = (path in eol) ? eol[path] : "unspecified"
+            print path, t, e
+        }
+    }
+' "$tmp/attr-rows" > "$tmp/attrs"
+
+LC_ALL=C sort -t "$sep" -k1,1 "$tmp/entries" > "$tmp/entries.sorted"
+LC_ALL=C sort -t "$sep" -k1,1 "$tmp/attrs" > "$tmp/attrs.sorted"
+
+: > "$tmp/hits"
+: > "$tmp/missing"
+: > "$tmp/unreadable"
+checked=0
+skipped_empty=0
+skipped_not_text=0
+skipped_not_file=0
+
+exec 3< "$tmp/entries.sorted"
+exec 4< "$tmp/attrs.sorted"
+have_entry=0
+have_attr=0
+epath=
+emode=
+apath=
+atext=
+aeol=
+if IFS="$sep" read -r epath emode <&3; then
+    have_entry=1
+fi
+if IFS="$sep" read -r apath atext aeol <&4; then
+    have_attr=1
+fi
+
+while [ "$have_entry" -eq 1 ]; do
+    if [ "$have_attr" -eq 0 ] || [[ "$apath" > "$epath" ]]; then
+        printf '%s\n' "$epath: no attribute result from git check-attr" >> "$tmp/unreadable"
+        if IFS="$sep" read -r epath emode <&3; then
+            have_entry=1
+        else
+            have_entry=0
+        fi
+        continue
+    fi
+    if [[ "$apath" < "$epath" ]]; then
+        if IFS="$sep" read -r apath atext aeol <&4; then
+            have_attr=1
+        else
+            have_attr=0
+        fi
+        continue
+    fi
+
+    if ! is_plain_text "$atext" "$aeol"; then
+        skipped_not_text=$((skipped_not_text + 1))
+    elif [ "$emode" != "100644" ] && [ "$emode" != "100755" ]; then
+        skipped_not_file=$((skipped_not_file + 1))
+    elif [ ! -e "./$epath" ] || [ ! -r "./$epath" ]; then
+        printf '%s\n' "$epath: cannot read file" >> "$tmp/unreadable"
+    elif [ ! -s "./$epath" ]; then
+        skipped_empty=$((skipped_empty + 1))
+    elif ! od -An -tu1 -v "./$epath" 2>"$tmp/od.err" | awk '
+        {
+            for (i = 1; i <= NF; i++) {
+                b = $i + 0
+                n++
+                last = b
+                if (b < 32 && b != 10 && b != 13) {
+                    cnt[b]++
+                    if (cnt[b] == 1) {
+                        first[b] = n - 1
+                    }
+                }
+            }
+        }
+        END {
+            if (n == 0) {
+                exit 0
+            }
+            for (b = 0; b < 32; b++) {
+                if (cnt[b] > 0) {
+                    printf "C %d %d %d\n", b, cnt[b], first[b]
+                }
+            }
+            if (last != 10 && last != 13) {
+                printf "E %d\n", last + 0
+            }
+        }
+    ' > "$tmp/scan"
+    then
+        detail=$(tr '\n' ' ' < "$tmp/od.err" | sed 's/[[:space:]]*$//')
+        printf '%s\n' "$epath: ${detail:-cannot read file}" >> "$tmp/unreadable"
+    else
+        checked=$((checked + 1))
+        while read -r kind a b c; do
+            case $kind in
+                C)
+                    printf '%s%s%s%s%s%s%s\n' \
+                        "$a" "$sep" "$epath" "$sep" "$b" "$sep" "$c" >> "$tmp/hits"
+                    ;;
+                E)
+                    printf '%s%s%s\n' "$epath" "$sep" "$a" >> "$tmp/missing"
+                    ;;
+            esac
+        done < "$tmp/scan"
+    fi
+
+    if IFS="$sep" read -r epath emode <&3; then
+        have_entry=1
+    else
+        have_entry=0
+    fi
+    if IFS="$sep" read -r apath atext aeol <&4; then
+        have_attr=1
+    else
+        have_attr=0
+    fi
+done
+exec 3<&-
+exec 4<&-
+
+printf 'Checked %d text file(s) marked by .gitattributes (text=auto included without Git'\''s content probe).\n' "$checked"
+printf 'Skipped %d empty file(s), %d file(s) not marked as text, %d non-regular path(s).\n' \
+    "$skipped_empty" "$skipped_not_text" "$skipped_not_file"
+printf '\n'
+
+if [ ! -s "$tmp/hits" ]; then
+    printf '%s\n' 'Control bytes below 0x20 other than CR (0x0D) and LF (0x0A): none'
+else
+    LC_ALL=C sort -t "$sep" -k1,1n -k2,2 "$tmp/hits" > "$tmp/hits.sorted"
+    awk -v FS="$sep" '
+        function cname(b) {
+            return names[b + 1]
+        }
+        BEGIN {
+            split("NUL SOH STX ETX EOT ENQ ACK BEL BS HT LF VT FF CR SO SI DLE DC1 DC2 DC3 DC4 NAK SYN ETB CAN EM SUB ESC FS GS RS US", names, " ")
+        }
+        function flush() {
+            if (n == 0) {
+                return
+            }
+            printf "Control byte 0x%02X (%s) in %d file(s):\n%s", byte, cname(byte), n, block
+        }
+        {
+            b = $1 + 0
+            if (n > 0 && b != byte) {
+                flush()
+                n = 0
+                block = ""
+            }
+            byte = b
+            n++
+            block = block sprintf("  %s (%s, first at offset %s)\n", $2, $3, $4)
+        }
+        END {
+            flush()
+        }
+    ' "$tmp/hits.sorted"
+fi
+
+printf '\n'
+if [ ! -s "$tmp/missing" ]; then
+    printf '%s\n' 'No line-end marker at end of file: none'
+else
+    LC_ALL=C sort -t "$sep" -k1,1 "$tmp/missing" > "$tmp/missing.sorted"
+    missing_n=$(wc -l < "$tmp/missing.sorted" | tr -d ' ')
+    printf 'No line-end marker at end of file: %d file(s):\n' "$missing_n"
+    while IFS="$sep" read -r mpath last; do
+        printf '  %s (last byte 0x%02X)\n' "$mpath" "$last"
+    done < "$tmp/missing.sorted"
+fi
+
+unreadable_n=$(wc -l < "$tmp/unreadable" | tr -d ' ')
+if [ "$unreadable_n" -gt 0 ]; then
+    printf '\n' >&2
+    printf 'Unreadable: %d path(s):\n' "$unreadable_n" >&2
+    while IFS= read -r line; do
+        printf '  %s\n' "$line" >&2
+    done < "$tmp/unreadable"
+fi
+
+if [ -s "$tmp/hits" ] || [ -s "$tmp/missing" ] || [ "$unreadable_n" -gt 0 ]; then
+    exit 1
+fi
+exit 0

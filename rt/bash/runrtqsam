@@ -31,14 +31,14 @@ shopt -u nullglob
 
 export SNAPOUT=DUMMY
 
-export SYSUT2=qsam/TESTV.TFV
+export SYSUT2=qsam/TESTV.Binary.TFV
 bash/asmlg qsam/BLDV.MLC trace $1
-export SYSUT1=qsam/TESTV.TFV
+export SYSUT1=qsam/TESTV.Binary.TFV
 bash/asmlg qsam/CHKV.MLC trace $1
 
-export SYSUT2=qsam/TESTVB.TFV
+export SYSUT2=qsam/TESTVB.Binary.TFV
 bash/asmlg qsam/BLDVB.MLC trace $1
-export SYSUT1=qsam/TESTVB.TFV
+export SYSUT1=qsam/TESTVB.Binary.TFV
 bash/asmlg qsam/CHKVB.MLC trace $1
 
 export SYSUT2=qsam/TESTVT.TFV
@@ -46,14 +46,14 @@ bash/asmlg qsam/BLDVT.MLC trace $1
 export SYSUT1=qsam/TESTVT.TFV
 bash/asmlg qsam/CHKVT.MLC trace $1
 
-export SYSUT2=qsam/TESTVL.TFV
+export SYSUT2=qsam/TESTVL.Binary.TFV
 bash/asmlg qsam/BLDVL.MLC trace $1
-export SYSUT1=qsam/TESTVL.TFV
+export SYSUT1=qsam/TESTVL.Binary.TFV
 bash/asmlg qsam/CHKVL.MLC trace $1
 
-export SYSUT2=qsam/TESTVBL.TFV
+export SYSUT2=qsam/TESTVBL.Binary.TFV
 bash/asmlg qsam/BLDVBL.MLC trace $1
-export SYSUT1=qsam/TESTVBL.TFV
+export SYSUT1=qsam/TESTVBL.Binary.TFV
 bash/asmlg qsam/CHKVBL.MLC trace $1
 
 export SYSUT2=qsam/TESTVTL.TFV
