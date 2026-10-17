@@ -7,6 +7,9 @@ z390test/gradlew   text eol=lf
 *.jpg filter=lfs  -text        diff=lfs merge=lfs
 *.jar filter=lfs  -text        diff=lfs merge=lfs
 
+# bat scripts require CRLF
+**/*.[bB][aA][tT] text eol=crlf
+
 # Ebcdic files are not text
 **/*.[eE][bB][cC][dD][iI][cC].* -text
 # Binary files
