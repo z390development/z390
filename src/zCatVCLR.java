@@ -16,7 +16,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along
 with this program; if not, see <https://www.gnu.org/licenses/>.
 */
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 
@@ -26,6 +28,7 @@ import java.util.LinkedList;
  * 2016-12-28 initial coding
  * 2026-03-23 AFK Fix/Add javadoc comments
  * 2026-08-07 #807 Fix issues flagged by linter
+ * 2026-10-27 View on the VCLR in z390 memory, mapped by VCDTD2 (V1 by VCDTD1)
  *****************************************************/
 
 
@@ -34,93 +37,332 @@ import java.util.LinkedList;
  * The zCatVCLR object is the Java-level representation of a Catalog definition
  *              for a zVSAM base cluster
  */
-public class zCatVCLR {
-    /** ID C'VCLR'                                    */ private String   VCLRID;   // DS    CL4   ID C'VCLR'
-    /** NAME OF BASE CLUSTER                          */ private String   VCLRNAME; // DS    CL8   NAME OF BASE CLUSTER
-    /** TYPE OF BASE CLUSTER (ESDS/RRDS/KSDS/LDS)     */ private String   VCLRTYPE; // DS    CL4   TYPE OF BASE CLUSTER (ESDS/RRDS/KSDS/LDS)
-                                                         //               VCLRFLAG; // DS    0XL4  OPTION FLAGS
-                                                         //               VCLRFLG1; // DS    X     VCDT OPTION BYTE 1
-    /** RECFM=V VARIABLE LENGTH VS FIXED              */ private boolean  VCLRVREC; // EQU   X'80' RECFM=V VARIABLE LENGTH VS FIXED
-    /** REUSE OPTION RESETS EOF TO 0 AT ACB OPEN      */ private boolean  VCLRRUSE; // EQU   X'40' REUSE OPTION RESETS EOF TO 0 AT ACB OPEN
-    /** SPANNED                                       */ private boolean  VCLRSPAN; // EQU   X'10' SPANNED
-    /** KSDS KEY SEQUENCED                            */ private boolean  VCLRKSDS; // EQU   X'08' KSDS KEY SEQUENCED
-    /** RRDS RELATIVE RECORD                          */ private boolean  VCLRRRDS; // EQU   X'04' RRDS RELATIVE RECORD
-    /** ESDS ENTRY SEQUENCED                          */ private boolean  VCLRESDS; // EQU   X'02' ESDS ENTRY SEQUENCED
-    /** LDS  LINEAR CI SEQUENCE                       */ private boolean  VCLRLDS;  // EQU   X'01' LDS  LINEAR CI SEQUENCE
-                                                         //               VCLRFLG2; // DS    X     VCDT OPTION BYTE 2
-    /** DATAADJUST=YES                                */ private boolean  VCLRDADJ; // EQU   X'80' DATAADJUST=YES
-    /** INDEXADJUST=YES                               */ private boolean  VCLRIADJ; // EQU   X'40' INDEXADJUST=YES
-                                                         //               VCLRFLG3; // DS    X     VCDT OPTION BYTE 3
-                                                         //               VCLRFLG4; // DS    X     VCDT OPTION BYTE 4
-    /** AVG RECORD LENGTH FOR VREC                    */ private int      VCLRLAVG; // DS    F     AVG RECORD LENGTH FOR VREC
-    /** MAX RECORD LENGTH (EXCLUDES 4 BYTE RDW)       */ private int      VCLRLMAX; // DS    F     MAX RECORD LENGTH (EXCLUDES 4 BYTE RDW)
-    /** KSDS PRIMARY KEY LENGTH                       */ private int      VCLRKLEN; // DS    F     KSDS PRIMARY KEY LENGTH
-    /** KSDS PRIMARY KEY OFFSET                       */ private int      VCLRKOFF; // DS    F     KSDS PRIMARY KEY OFFSET
-    /** OVERRIDE DTA DSNAME                           */ private String   VCLRDTA;  // DS    A     OVERRIDE DTA DSNAME
-    /** OVERRIDE IDX DSNAME                           */ private String   VCLRIDX;  // DS    A     OVERRIDE IDX DSNAME
-    /** DATA BLOCKSIZE IN BYTES                       */ private int      VCLRDBS;  // DS    F     DATA BLOCKSIZE IN BYTES
-    /** INDEX BLOCKSIZE IN BYTES                      */ private int      VCLRIBS;  // DS    F     INDEX BLOCKSIZE IN BYTES
-    /** DATA CA PERCENT                               */ private int      VCLRDCA;  // DS    X     DATA CA PERCENT
-    /** DATA CI PERCENT                               */ private int      VCLRDCI;  // DS    X     DATA CI PERCENT
-    /** INDEX CA PERCENT                              */ private int      VCLRICA;  // DS    X     INDEX CA PERCENT
-    /** INDEX CI PERCENT                              */ private int      VCLRICI;  // DS    X     INDEX CI PERCENT
-    /** NUMBER OF AIX'S WITH UPGRADE FOR THIS CLUSTER */ private int      VCLRAIXN; // DS    F     NUMBER OF AIX'S WITH UPGRADE FOR THIS CLUSTER
-    /** AIX UPGRADE TABLE OF VAIX ADDRESSES           */ private LinkedList<zCatVAIX> VCLRAIX_list;
-                                                                                     // DS    A     ADDR AIX UPGRADE TABLE OF VAIX ADDRESSES
+public class zCatVCLR extends zControlBlock {
+    /** VCLRLEN for a V2 catalog              */ static final int LEN_V2 = 68;
+    /** VCLRLEN for a V1 catalog              */ static final int LEN_V1 = 56;
+    /** block size when the catalog has none  */ static final int DFT_BLKSZ = 4096;
+    /** longest DSN accepted                  */ static final int MAX_DSN = 1024;
+    /** translation tables                    */ private final tz390 tz;
+    /** true for a V1 (C'VCDT') catalog       */ private final boolean v1;
+    /** the upgrade set, linked by zCatVCDT   */ private final List<zCatVAIX> upgrades = new ArrayList<zCatVAIX>();
+
+
 
     /**
-     * Constructor for new Base Cluster definition
+     * Map a VCLR in z390 memory
      *
-     * @param sz390 svc-handler instance
-     * @param tz390 table data instance
-     * @param VCLR_ptr pointer to VCLR
+     * @param tz   translation tables
+     * @param mem  z390 memory
+     * @param addr address of the VCLR
+     * @param v1   true when the catalog is V1
      */
-    public zCatVCLR(sz390 sz390
-                  , tz390 tz390
-                  , int VCLR_ptr
-                    ) {
-        VCLRID   = sz390.get_ascii_string(VCLR_ptr +  0, 4, true);
-        if (tz390.opt_tracev) {
-            //tz390.put_trace("VCLRID  =" + VCLRID);
-            System.out.println("VCLRID  =" + VCLRID);
+    public zCatVCLR(tz390 tz, byte[] mem, int addr, boolean v1) {
+        super(mem, addr, v1 ? LEN_V1 : LEN_V2);
+        this.tz = tz;
+        this.v1 = v1;
+        if (!"VCLR".equals(get_string(0, 4, tz))) {
+            throw new zException("zCatVCLR: no VCLR eyecatcher at " + Integer.toHexString(addr), 8, 8);
         }
-        VCLRNAME = sz390.get_ascii_string(VCLR_ptr +  4, 8, true);
-        if (tz390.opt_tracev) {
-            //tz390.put_trace("VCLRNAME=" + VCLRNAME);
-            System.out.println("VCLRNAME=" + VCLRNAME);
-        }
-        VCLRTYPE = sz390.get_ascii_string(VCLR_ptr + 12, 4, true);
-        if (tz390.opt_tracev) {
-            //tz390.put_trace("VCLRTYPE=" + VCLRTYPE);
-            System.out.println("VCLRTYPE=" + VCLRTYPE);
-        }
-        VCLRVREC = false;
-        VCLRRUSE = false;
-        VCLRSPAN = false;
-        VCLRKSDS = false;
-        VCLRRRDS = false;
-        VCLRESDS = false;
-        VCLRLDS  = false;
-        VCLRDADJ = false;
-        VCLRIADJ = false;
-        VCLRLAVG = 0;
-        VCLRLMAX = 0;
-        VCLRKLEN = 0;
-        VCLRKOFF = 0;
-        VCLRDTA  = null;
-        VCLRIDX  = null;
-        VCLRDBS  = 0;
-        VCLRIBS  = 0;
-        VCLRDCA  = 0;
-        VCLRDCI  = 0;
-        VCLRICA  = 0;
-        VCLRICI  = 0;
-        VCLRAIXN = 0;
-        VCLRAIX_list = null;
-        System.out.println("zCatVCLR constructed");
     }
 
 
 
-    /* end of module zCatVCLR */
+    /**
+     * @return cluster name
+     */
+    public String get_name() {
+        return get_string(4, 8, tz);
+    }
+
+
+
+    /**
+     * @return ESDS, KSDS, RRDS or LDS
+     */
+    public String get_type() {
+        return get_string(12, 4, tz);
+    }
+
+
+
+    /**
+     * @return true for variable length records
+     */
+    public boolean is_variable() {
+        return get_boolean(16, (byte) 0x80);
+    }
+
+
+
+    /**
+     * @return true for spanned records, never for V1
+     */
+    public boolean is_spanned() {
+        return !v1 && get_boolean(16, (byte) 0x10);
+    }
+
+
+
+    /**
+     * @return true for a KSDS
+     */
+    public boolean is_ksds() {
+        return get_boolean(16, (byte) 0x08);
+    }
+
+
+
+    /**
+     * @return true for an RRDS
+     */
+    public boolean is_rrds() {
+        return get_boolean(16, (byte) 0x04);
+    }
+
+
+
+    /**
+     * @return true for an ESDS
+     */
+    public boolean is_esds() {
+        return get_boolean(16, (byte) 0x02);
+    }
+
+
+
+    /**
+     * @return true for an LDS
+     */
+    public boolean is_lds() {
+        return get_boolean(16, (byte) 0x01);
+    }
+
+
+
+    /**
+     * @return true for REUSE=YES, which V1 kept in byte 1
+     */
+    public boolean is_reuse() {
+        return v1 ? get_boolean(16, (byte) 0x40) : get_boolean(17, (byte) 0x20);
+    }
+
+
+
+    /**
+     * @return true for DATAADJUST=YES
+     */
+    public boolean is_data_adjust() {
+        return !v1 && get_boolean(17, (byte) 0x80);
+    }
+
+
+
+    /**
+     * @return true for INDEXADJUST=YES
+     */
+    public boolean is_index_adjust() {
+        return !v1 && get_boolean(17, (byte) 0x40);
+    }
+
+
+
+    /**
+     * @return average record length
+     */
+    public int get_lavg() {
+        return get_int(20);
+    }
+
+
+
+    /**
+     * @return maximum (or fixed) record length
+     */
+    public int get_lmax() {
+        return get_int(24);
+    }
+
+
+
+    /**
+     * @return primary key length
+     */
+    public int get_key_length() {
+        return get_int(28);
+    }
+
+
+
+    /**
+     * @return primary key offset
+     */
+    public int get_key_offset() {
+        return get_int(32);
+    }
+
+
+
+    /**
+     * @return DTADSN override, empty when there is none
+     */
+    public String get_dta_dsn() {
+        return dsn(36);
+    }
+
+
+
+    /**
+     * @return IDXDSN override, empty when there is none
+     */
+    public String get_idx_dsn() {
+        return dsn(40);
+    }
+
+
+
+    /**
+     * @return data block size; V1 has only the CI size, if that
+     */
+    public int get_data_block_size() {
+        int size = get_int(44);
+        return v1 && size == 0 ? DFT_BLKSZ : size;
+    }
+
+
+
+    /**
+     * @return index block size
+     */
+    public int get_index_block_size() {
+        return v1 ? DFT_BLKSZ : get_int(48);
+    }
+
+
+
+    /**
+     * @return DATAFREESPACE percentage
+     */
+    public int get_data_freespace() {
+        return v1 ? 0 : get_byte(52) & 0xff;
+    }
+
+
+
+    /**
+     * @return INDEXFREESPACE percentage
+     */
+    public int get_index_freespace() {
+        return v1 ? 0 : get_byte(53) & 0xff;
+    }
+
+
+
+    /**
+     * @return DATAFREEBLOCKS x, the number of free blocks
+     */
+    public int get_data_free_blocks() {
+        return v1 ? 0 : get_short(54) & 0xffff;
+    }
+
+
+
+    /**
+     * @return DATAFREEBLOCKS y, the interval
+     */
+    public int get_data_free_interval() {
+        return v1 ? 0 : get_short(56) & 0xffff;
+    }
+
+
+
+    /**
+     * @return INDEXFREEBLOCKS x, the number of free blocks
+     */
+    public int get_index_free_blocks() {
+        return v1 ? 0 : get_short(58) & 0xffff;
+    }
+
+
+
+    /**
+     * @return INDEXFREEBLOCKS y, the interval
+     */
+    public int get_index_free_interval() {
+        return v1 ? 0 : get_short(60) & 0xffff;
+    }
+
+
+
+    /**
+     * @return the AIXs in this cluster's upgrade set
+     */
+    public List<zCatVAIX> get_upgrades() {
+        return Collections.unmodifiableList(upgrades);
+    }
+
+
+
+    /**
+     * Derive the first data file, override or {dir}{name}.DTA
+     *
+     * @param dir catalog directory, ending in a separator
+     * @return host file name
+     */
+    public String get_dta_file(String dir) {
+        String dsn = get_dta_dsn();
+        return dsn.isEmpty() ? dir + get_name() + ".DTA" : dsn;
+    }
+
+
+
+    /**
+     * Derive the first index file, override or {dir}{name}.IDX
+     *
+     * @param dir catalog directory, ending in a separator
+     * @return host file name
+     */
+    public String get_idx_file(String dir) {
+        String dsn = get_idx_dsn();
+        return dsn.isEmpty() ? dir + get_name() + ".IDX" : dsn;
+    }
+
+
+
+    /**
+     * @return number of upgrade AIXs, AL1 in V2 and F in V1
+     */
+    int get_upgrade_count() {
+        return v1 ? get_int(48) : get_byte(62) & 0xff;
+    }
+
+
+
+    /**
+     * @return address of the upgrade address list
+     */
+    int get_upgrade_list() {
+        return (v1 ? get_int(52) : get_int(63)) & 0x7fffffff;
+    }
+
+
+
+    /**
+     * Called by zCatVCDT while it links the tables
+     *
+     * @param aix an AIX in the upgrade set
+     */
+    void add_upgrade(zCatVAIX aix) {
+        upgrades.add(aix);
+    }
+
+
+
+    /**
+     * @param off offset of the DSN pointer
+     * @return the string it points at, empty when there is none
+     */
+    private String dsn(int off) {
+        int addr = get_int(off) & 0x7fffffff;
+        return addr == 0 ? "" : get_cstring(addr, MAX_DSN, tz);
+    }
 }
