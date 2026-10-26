@@ -62,6 +62,12 @@ class RunVsam2 extends z390Test {
         this.printOutput()
         assert rc == 0
     }
+    @Test
+    void test_TESTVCAT() {
+        int rc = this.asmlg(basePath("vsam2", "mlc", "TESTVCAT"), *options, sys390)
+        this.printOutput()
+        assert rc == 0
+    }
 
     // zREPRO LOAD/UNLOAD/VERIFY/BUILDAIX cases
 
