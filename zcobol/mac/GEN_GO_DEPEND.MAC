@@ -47,11 +47,22 @@
                AWHEN C'H'
          LH    ZC_R1,&FIELD_NAME
                AWHEN C'P'
+.*             A subscripted index has its address in FIELD_REG; the
+.*             SS-format ZAP/PACK need the explicit off(len,reg) form,
+.*             not off(reg) which an SS operand reads as off(length).
+         AIF   (&FIELD_SIX)
+         ZAP   ZCVT_PWORK,0(&SYM_LEN(&FIELD_IX),&FIELD_REG)
+         AELSE
          ZAP   ZCVT_PWORK,&FIELD_NAME
+         AEND
          CVB   ZC_R1,ZCVT_PWORK
                AWHEN C'Z'
          :&LPLEN SETA &SYM_LEN(&FIELD_IX)/2+1
+         AIF   (&FIELD_SIX)
+         PACK  ZCVT_PWORK1(&LPLEN),0(&SYM_LEN(&FIELD_IX),&FIELD_REG)
+         AELSE
          PACK  ZCVT_PWORK1(&LPLEN),&FIELD_NAME
+         AEND
          ZAP   ZCVT_PWORK,ZCVT_PWORK1(&LPLEN)
          CVB   ZC_R1,ZCVT_PWORK
             AELSE
