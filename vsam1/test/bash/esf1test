@@ -31,9 +31,9 @@ rc=0
 
 # run ESF1TEST to create and test ESDS with 3 80 byte records
 
-export QFILE=${vsampath}/ESF1.Ebcdic.TF1
+export QFILE=${vsampath}/ESF1.EBCDIC.TF1
 export VFILE=${vsampath}/TESTCAT.ESF1
-rm -f ${vsampath}/ESF1.Ebcdic.TF1
+rm -f ${vsampath}/ESF1.EBCDIC.TF1
 rm -f ${vsampath}/ESF1.VES
 bash/asmlg ${vsampath}/ESF1TEST $1 $2 $3 $4 $5 $zvsam $trace
 rc=$?

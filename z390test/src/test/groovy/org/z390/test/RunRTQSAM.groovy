@@ -11,7 +11,7 @@ class RunRTQSAM extends z390Test {
     void run_test(String postfix) {
         var dataFile = "TEST${postfix}.TFV"
         if (!new File(basePath('qsam', dataFile)).exists()) {
-            dataFile = "TEST${postfix}.Ebcdic.TFV"
+            dataFile = "TEST${postfix}.EBCDIC.TFV"
         }
         var dataPath = basePath('qsam', dataFile)
         env = ['SNAPOUT': 'DUMMY', 'SYSUT2': dataPath]

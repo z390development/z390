@@ -34,7 +34,7 @@ rc=0
 
 # load ESV1.VES from ESV1.TF1
 
-export INFILE=${vsampath}/ESV1.Ebcdic.TF1
+export INFILE=${vsampath}/ESV1.EBCDIC.TF1
 export OUTFILE=${vsampath}/TESTCAT.ESV1
 bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
 rc=$?
@@ -47,9 +47,9 @@ if [ "$trace" = "traceall" ]; then cp linklib/REPRO.TRE ${vsampath}/${pgmname}.R
 
 # unload ESV1.VES to ESV1.TF2
 
-rm -f ${vsampath}/ESV1.Ebcdic.TF2
+rm -f ${vsampath}/ESV1.EBCDIC.TF2
 export INFILE=${vsampath}/TESTCAT.ESV1
-export OUTFILE=${vsampath}/ESV1.Ebcdic.TF2
+export OUTFILE=${vsampath}/ESV1.EBCDIC.TF2
 bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "error in REPRO unload of ESV1"; fi
@@ -61,7 +61,7 @@ if [ "$trace" = "traceall" ]; then cp linklib/REPRO.TRE ${vsampath}/${pgmname}.R
 
 # compare input and output QSAM files
 
-diff ${vsampath}/ESV1.Ebcdic.TF1 ${vsampath}/ESV1.Ebcdic.TF2 > ${vsampath}/${pgmname}.DIF
+diff ${vsampath}/ESV1.EBCDIC.TF1 ${vsampath}/ESV1.EBCDIC.TF2 > ${vsampath}/${pgmname}.DIF
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "ESV1.TF1 not equal to ESV1.TF2"; fi
 

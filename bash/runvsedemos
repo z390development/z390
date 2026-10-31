@@ -21,8 +21,8 @@ rc=$?
 if [ $debug -eq 1 ]; then echo "DEMOVSE2: rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then echo "Error in DEMOVSE2"; fi
 
-export SYSUT1=vse/demo/DEMOVSE3.Ebcdic.TF1
-export SYSUT2=vse/demo/DEMOVSE3.Ebcdic.TF2
+export SYSUT1=vse/demo/DEMOVSE3.EBCDIC.TF1
+export SYSUT2=vse/demo/DEMOVSE3.EBCDIC.TF2
 
 bash/asmlg vse/demo/DEMOVSE3 $sysmac
 rc=$?
@@ -30,4 +30,4 @@ if [ $debug -eq 1 ]; then echo "DEMOVSE3: rc=$rc"; fi
 if [ "$rc" -ne "0" ]; then echo "Error in DEMOVSE3"; fi
 
 echo "Verify vse demos DEMOVSE1, DEMOVSE2, and DEMOVSE3 ended okay"
-echo "Verify vse/demo/ files DEMOVSE3.Ebcdic.TF1 and DEMOVSE3.Ebcdic.TF2 are identical"
+echo "Verify vse/demo/ files DEMOVSE3.EBCDIC.TF1 and DEMOVSE3.EBCDIC.TF2 are identical"

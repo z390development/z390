@@ -17,18 +17,18 @@ pushd %~dps0..\..
 erase bsam\*.ERR
 erase bsam\TEST*.TFV
 set SNAPOUT=DUMMY
-set SYSUT2=bsam\TESTW.Ebcdic.TFV
+set SYSUT2=bsam\TESTW.EBCDIC.TFV
 call bat\ASMLG %z_TraceMode% bsam\BLDW.MLC TRACE   || goto error
-set SYSUT1=bsam\TESTW.Ebcdic.TFV
+set SYSUT1=bsam\TESTW.EBCDIC.TFV
 call bat\ASMLG %z_TraceMode% bsam\CHKW.MLC TRACE   || goto error
-set SYSUT2=bsam\TESTWL.Ebcdic.TFV
+set SYSUT2=bsam\TESTWL.EBCDIC.TFV
 call bat\ASMLG %z_TraceMode% bsam\BLDWL.MLC TRACE  || goto error
-set SYSUT1=bsam\TESTWL.Ebcdic.TFV
+set SYSUT1=bsam\TESTWL.EBCDIC.TFV
 call bat\ASMLG %z_TraceMode% bsam\CHKWL.MLC TRACE  || goto error
-set SYSUT1=bsam\TESTW.Ebcdic.TFV
+set SYSUT1=bsam\TESTW.EBCDIC.TFV
 set SYSUT2=bsam\CPYRW.VES
 call bat\ASMLG %z_TraceMode% bsam\CPYRW.MLC TRACE  || goto error
-set SYSUT1=bsam\TESTWL.Ebcdic.TFV
+set SYSUT1=bsam\TESTWL.EBCDIC.TFV
 set SYSUT2=bsam\CPYRWL.VES
 call bat\ASMLG %z_TraceMode% bsam\CPYRWL.MLC TRACE || goto error
 dir bsam\TEST*.TFV

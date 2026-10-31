@@ -92,7 +92,7 @@ class RunRtTest extends z390Test {
             return path
         }
         int dot = fileName.lastIndexOf('.')
-        var ebcdicName = fileName.substring(0, dot) + '.Ebcdic' + fileName.substring(dot)
+        var ebcdicName = fileName.substring(0, dot) + '.EBCDIC' + fileName.substring(dot)
         return basePath('rt', 'test', ebcdicName)
     }
 

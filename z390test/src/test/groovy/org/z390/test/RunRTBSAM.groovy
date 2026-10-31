@@ -9,12 +9,12 @@ class RunRTBSAM extends z390Test {
     var options = ["SYSMAC(${basePath("mac")})", "TRACE"]
 
     void run_test(String postfix) {
-        env = ['SNAPOUT': 'DUMMY', 'SYSUT2': basePath('bsam', "TEST${postfix}.Ebcdic.TFV")]
+        env = ['SNAPOUT': 'DUMMY', 'SYSUT2': basePath('bsam', "TEST${postfix}.EBCDIC.TFV")]
         int rc
         rc = asmlg(basePath('bsam', "BLD${postfix}"), *options)
         printOutput()
         assert rc == 0
-        env.put('SYSUT1', basePath('bsam', "TEST${postfix}.Ebcdic.TFV"))
+        env.put('SYSUT1', basePath('bsam', "TEST${postfix}.EBCDIC.TFV"))
         rc = asmlg(basePath('bsam', "CHK${postfix}"), *options)
         printOutput()
         assert rc == 0

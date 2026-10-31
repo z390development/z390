@@ -84,10 +84,10 @@ export INFILE=zcobol/tests/SORTASC.TF1
 export OUTFILE=zcobol/tests/SORTASC.OUT
 bash/cblclg zcobol/tests/SORTASC $1 $2 $3 $4 $5 $6 $7 $8 $9
 diff zcobol/tests/SORTASC.OUT zcobol/tests/SORTASC.TF2 || exit 1
-export INFILE=zcobol/tests/SORTDEF.Ebcdic.TF1
+export INFILE=zcobol/tests/SORTDEF.EBCDIC.TF1
 export OUTFILE=zcobol/tests/SORTDEF.OUT
 bash/cblclg zcobol/tests/SORTDEF $1 $2 $3 $4 $5 $6 $7 $8 $9
-diff zcobol/tests/SORTDEF.OUT zcobol/tests/SORTDEF.Ebcdic.TF2 || exit 1
+diff zcobol/tests/SORTDEF.OUT zcobol/tests/SORTDEF.EBCDIC.TF2 || exit 1
 export INFILE=zcobol/tests/SORTPROC.TF1
 export OUTFILE=zcobol/tests/SORTPROC.OUT
 bash/cblclg zcobol/tests/SORTPROC $1 $2 $3 $4 $5 $6 $7 $8 $9

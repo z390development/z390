@@ -2,7 +2,7 @@
 
 # rrv1rpo1: load/unload RRV1 using default RV LLLL.RRN.record format
 #
-#           note: RRV1.Ebcdic.TF1 QSAM input file is created by RRV1TEST.MLC
+#           note: RRV1.EBCDIC.TF1 QSAM input file is created by RRV1TEST.MLC
 
 ########################################
 # print error message and exit
@@ -32,9 +32,9 @@ if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
 
 rc=0
 
-# load RRV1.VES from RRV1.Ebcdic.TF1
+# load RRV1.VES from RRV1.EBCDIC.TF1
 
-export INFILE=${vsampath}/RRV1.Ebcdic.TF1
+export INFILE=${vsampath}/RRV1.EBCDIC.TF1
 export OUTFILE=${vsampath}/TESTCAT.RRV1
 bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
 rc=$?
@@ -45,11 +45,11 @@ if [ $rc -ne 0 ]; then errmsg "error in REPRO load of ESV1"; fi
 cp linklib/REPRO.LOG ${vsampath}/${pgmname}.RLG
 if [ "$trace" = "traceall" ]; then cp linklib/REPRO.TRE ${vsampath}/${pgmname}.RLE; fi
 
-# unload RRV1.VES to RRV1.Ebcdic.TF2
+# unload RRV1.VES to RRV1.EBCDIC.TF2
 
-rm -f ${vsampath}/RRV1.Ebcdic.TF2
+rm -f ${vsampath}/RRV1.EBCDIC.TF2
 export INFILE=${vsampath}/TESTCAT.RRV1
-export OUTFILE=${vsampath}/RRV1.Ebcdic.TF2
+export OUTFILE=${vsampath}/RRV1.EBCDIC.TF2
 bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "error in REPRO unload of ESV1"; fi
@@ -61,8 +61,8 @@ if [ "$trace" = "traceall" ]; then cp linklib/REPRO.TRE ${vsampath}/${pgmname}.R
 
 # compare input and output QSAM files
 
-diff ${vsampath}/RRV1.Ebcdic.TF1 ${vsampath}/RRV1.Ebcdic.TF2 > ${vsampath}/${pgmname}.DIF
+diff ${vsampath}/RRV1.EBCDIC.TF1 ${vsampath}/RRV1.EBCDIC.TF2 > ${vsampath}/${pgmname}.DIF
 rc=$?
-if [ $rc -ne 0 ]; then errmsg "RRV1.Ebcdic.TF1 not equal to RRV1.Ebcdic.TF2"; fi
+if [ $rc -ne 0 ]; then errmsg "RRV1.EBCDIC.TF1 not equal to RRV1.EBCDIC.TF2"; fi
 
 exit $rc

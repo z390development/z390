@@ -26,20 +26,20 @@ done
 shopt -u nullglob
 
 export SNAPOUT=DUMMY
-export SYSUT2=bsam/TESTW.Ebcdic.TFV
+export SYSUT2=bsam/TESTW.EBCDIC.TFV
 bash/asmlg bsam/BLDW.MLC trace $1
-export SYSUT1=bsam/TESTW.Ebcdic.TFV
+export SYSUT1=bsam/TESTW.EBCDIC.TFV
 bash/asmlg bsam/CHKW.MLC trace
 
-export SYSUT2=bsam/TESTWL.Ebcdic.TFV
+export SYSUT2=bsam/TESTWL.EBCDIC.TFV
 bash/asmlg bsam/BLDWL.MLC trace $1
-export SYSUT1=bsam/TESTWL.Ebcdic.TFV
+export SYSUT1=bsam/TESTWL.EBCDIC.TFV
 bash/asmlg bsam/CHKWL.MLC trace
 
-export SYSUT1=bsam/TESTW.Ebcdic.TFV
+export SYSUT1=bsam/TESTW.EBCDIC.TFV
 export SYSUT2=bsam/CPYRW.VES
 bash/asmlg bsam/CPYRW.MLC trace $1
-export SYSUT1=bsam/TESTWL.Ebcdic.TFV
+export SYSUT1=bsam/TESTWL.EBCDIC.TFV
 export SYSUT2=bsam/CPYRWL.VES
 bash/asmlg bsam/CPYRWL.MLC trace
 

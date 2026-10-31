@@ -10,7 +10,7 @@ z390test/gradlew   text eol=lf
 # bat scripts require CRLF
 **/*.[bB][aA][tT] text eol=crlf
 
-# Ebcdic files are not text
+# EBCDIC files are not text
 **/*.[eE][bB][cC][dD][iI][cC].* -text
 # Binary files
 **/*.[bB][iI][nN][aA][rR][yY].* -text

@@ -14,10 +14,10 @@ rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 pushd %~dps0..
 call bat\asmlg %z_TraceMode% vse\demo\DEMOVSE1 sysmac(vse\mac+mac) || goto error
 call bat\asmlg %z_TraceMode% vse\demo\DEMOVSE2 sysmac(vse\mac+mac) || goto error
-set SYSUT1=vse\demo\DEMOVSE3.Ebcdic.TF1
-set SYSUT2=vse\demo\DEMOVSE3.Ebcdic.TF2
+set SYSUT1=vse\demo\DEMOVSE3.EBCDIC.TF1
+set SYSUT2=vse\demo\DEMOVSE3.EBCDIC.TF2
 call bat\asmlg %z_TraceMode% vse\demo\DEMOVSE3 sysmac(vse\mac+mac) || goto error
-comp /M vse\demo\DEMOVSE3.Ebcdic.TF1 vse\demo\DEMOVSE3.Ebcdic.TF2
+comp /M vse\demo\DEMOVSE3.EBCDIC.TF1 vse\demo\DEMOVSE3.EBCDIC.TF2
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% GTR 0 (set z_ReturnCode=8
                          echo %0 ERROR: DEMOVSE3 data were not copied correctly

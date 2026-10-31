@@ -32,7 +32,7 @@ rc=0
 
 # run ESV1SP seq put to build ESV1.VES
 
-export QFILE=${vsampath}/ESV1.Ebcdic.TF1
+export QFILE=${vsampath}/ESV1.EBCDIC.TF1
 export VFILE=${vsampath}/DEMOCAT.ESV1
 rm -f ${vsampath}/ESV1.VES
 rm -f ${vsampath}/ESV1.VX0
@@ -40,10 +40,10 @@ bash/asmlg ${vsampath}/ESV1SP $1 $2 $3 $4 $5 $zvsam $trace
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "error in ESV1SP"; fi
 
-# run ESV1SG seq get from ESV1.VES to ESV1.Ebcdic.TF2
+# run ESV1SG seq get from ESV1.VES to ESV1.EBCDIC.TF2
 
-rm -f ${vsampath}/ESV1.Ebcdic.TF2
-export QFILE=${vsampath}/ESV1.Ebcdic.TF2
+rm -f ${vsampath}/ESV1.EBCDIC.TF2
+export QFILE=${vsampath}/ESV1.EBCDIC.TF2
 export VFILE=${vsampath}/DEMOCAT.ESV1
 bash/asmlg ${vsampath}/ESV1SG $1 $2 $3 $4 $5 $zvsam $trace
 rc=$?
@@ -51,8 +51,8 @@ if [ $rc -ne 0 ]; then errmsg "error in ESV1SG"; fi
 
 # compare input and output QSAM files
 
-diff ${vsampath}/ESV1.Ebcdic.TF1 ${vsampath}/ESV1.Ebcdic.TF2 > ${vsampath}/${pgmname}.DIF
+diff ${vsampath}/ESV1.EBCDIC.TF1 ${vsampath}/ESV1.EBCDIC.TF2 > ${vsampath}/${pgmname}.DIF
 rc=$?
-if [ $rc -ne 0 ]; then errmsg "ESV1.Ebcdic.TF1 not equal to ESV1.Ebcdic.TF2"; fi
+if [ $rc -ne 0 ]; then errmsg "ESV1.EBCDIC.TF1 not equal to ESV1.EBCDIC.TF2"; fi
 
 exit $rc
