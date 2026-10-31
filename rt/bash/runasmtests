@@ -30,6 +30,7 @@ bash/asmlg rt/mlc/IS660 trace noloadhigh $sysmac
 bash/asm   rt/mlc/IS704 trace noloadhigh notiming $sysmac $optable || test $? -eq 12
 # Compare AZ390 diagnostic lines only (filter out MZ390 framing + FID= path)
 grep -v 'MZ390\|FID=' rt/mlc/IS704.ERR | diff - rt/mlc/IS704.TF1 || exit 1
+bash/asm   rt/mlc/IS943 trace noloadhigh $sysmac
 
 bash/asml  rt/mlc/T714M1                 $sysmac
 bash/asml  rt/mlc/T714M2 rmode31         $sysmac
@@ -50,7 +51,6 @@ bash/asml  rt/mlc/TESTX2C  trace noloadhigh $sysmac $optable
 bash/asmlg rt/mlc/TB2CX2C  trace noloadhigh $sysmac
 bash/asmlg rt/mlc/TLPSW    trace noloadhigh $sysmac
 bash/asm   rt/mlc/ATTRIB\$O trace noloadhigh $sysmac
-bash/asm   rt/mlc/LyonsZ   trace noloadhigh $sysmac
 rt/bash/zopcheck
 
 # if we get here, there were no errors

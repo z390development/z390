@@ -38,6 +38,7 @@ rem Compare AZ390 diagnostic lines only (filter out MZ390 framing + FID= path)
 findstr /v /c:"MZ390" /c:"FID=" rt\mlc\IS704.ERR > rt\mlc\IS704.ERR.flt
 fc rt\mlc\IS704.ERR.flt rt\mlc\IS704.TF1 > nul || goto error
 del rt\mlc\IS704.ERR.flt
+call bat\asm   %z_TraceMode% rt\mlc\IS943    trace sysmac(mac)                                || goto error
 
 call bat\asml  %z_TraceMode% rt\mlc\T714M1   trace sysmac(mac)                                || goto error
 call bat\asml  %z_TraceMode% rt\mlc\T714M2   trace sysmac(mac) rmode31                        || goto error
@@ -58,7 +59,6 @@ call bat\asml  %z_TraceMode% rt\mlc\TESTX2C  trace sysmac(mac) noloadhigh optabl
 call bat\asmlg %z_TraceMode% rt\mlc\TB2CX2C  trace sysmac(mac) noloadhigh                     || goto error
 call bat\asmlg %z_TraceMode% rt\mlc\TLPSW    trace sysmac(mac) noloadhigh                     || goto error
 call bat\asm   %z_TraceMode% rt\mlc\ATTRIB$O trace sysmac(mac)                                || goto error
-call bat\asm   %z_TraceMode% rt\mlc\LyonsZ   trace sysmac(mac)                                || goto error
 call rt\bat\ZOPCHECK %z_TraceMode%                                                            || goto error
 
 rem -- all checks passed without issue
