@@ -55,6 +55,13 @@ namespace Z390.TextCheck
 
     public static class Scanner
     {
+        // Scan
+        //   in:      file bytes. The caller does not pass an empty file.
+        //   out:     one ControlHit per offending value, ascending.
+        //   purpose: same C0 rule as the bash od/awk scan.
+        //   flow:    tally count and 0-based first offset. Skip bytes >= 0x20
+        //            and HT LF VT FF CR DC1 EM (09, 0A, 0B, 0C, 0D, 11, 19).
+        //            The last-byte line-end test stays in PowerShell.
         public static ControlHit[] Scan(byte[] data)
         {
             int[] counts = new int[32];
@@ -85,14 +92,30 @@ namespace Z390.TextCheck
 
 Add-Type -TypeDefinition $scanSource -Language CSharp
 
+# Write-Out
+#   in:      one string.
+#   out:     that line on stdout.
+#   purpose: plain text. Write-Output would format and wrap.
+#   flow:    Console.Out.WriteLine.
 function Write-Out([string]$Text) {
     [Console]::Out.WriteLine($Text)
 }
 
+# Write-Err
+#   in:      one string.
+#   out:     that line on stderr.
+#   purpose: diagnostics stay off the report stream. Write-Error adds a category.
+#   flow:    Console.Error.WriteLine.
 function Write-Err([string]$Text) {
     [Console]::Error.WriteLine($Text)
 }
 
+# Get-RepoRoot
+#   in:      none. Starts at $PSScriptRoot, or the working directory if that is empty.
+#   out:     full path of the nearest ancestor with both .git and .gitattributes,
+#            or the start directory when no ancestor has both.
+#   purpose: locate the checkout. The caller reports which marker is missing.
+#   flow:    walk Parent and stop at the first directory that has both.
 function Get-RepoRoot {
     $here = $PSScriptRoot
     if (-not $here) {
@@ -111,6 +134,13 @@ function Get-RepoRoot {
 }
 
 # Keep a byte[] intact. PowerShell unrolls a returned byte[] into single bytes.
+# Split-OnNul
+#   in:      a byte array, possibly empty or null.
+#   out:     List[byte[]] of the spans between NULs, as one pipeline object.
+#   purpose: split git -z output without decoding it.
+#   flow:    copy each span, including an empty span for a doubled NUL.
+#            A trailing NUL does not add a final empty span. return ,$parts
+#            keeps the list from being unrolled.
 function Split-OnNul([byte[]]$Data) {
     $parts = New-Object 'System.Collections.Generic.List[byte[]]'
     if ($null -eq $Data -or $Data.Length -eq 0) {
@@ -138,6 +168,11 @@ function Split-OnNul([byte[]]$Data) {
     return ,$parts
 }
 
+# Convert-GitText
+#   in:      raw field bytes.
+#   out:     a .NET string. Empty input yields ''.
+#   purpose: decode a git -z field as UTF-8, not as the console code page.
+#   flow:    drop a leading EF BB BF, then UTF-8-decode the rest.
 function Convert-GitText([byte[]]$Data) {
     if ($null -eq $Data -or $Data.Length -eq 0) {
         return ''
@@ -152,6 +187,13 @@ function Convert-GitText([byte[]]$Data) {
     return [System.Text.Encoding]::UTF8.GetString($Data, $start, $Data.Length - $start)
 }
 
+# Invoke-GitRaw
+#   in:      repo path, git arguments, optional stdin bytes.
+#   out:     stdout as one byte[]. Exit 1 if git cannot start or returns nonzero.
+#   purpose: binary pipes. PowerShell's git wrapper would re-encode -z output.
+#   flow:    drop GIT_DIR and GIT_WORK_TREE, ignore system attributes, disable
+#            the credential prompt, blank core.attributesFile. Copy both streams
+#            before writing stdin so a large path list cannot deadlock the child.
 function Invoke-GitRaw {
     param(
         [Parameter(Mandatory)][string]$Repo,
@@ -222,6 +264,12 @@ function Invoke-GitRaw {
     }
 }
 
+# Get-TrackedFiles
+#   in:      repo path.
+#   out:     list of { Mode, Path, PathBytes }, as one pipeline object.
+#   purpose: tracked index entries. Mode lets the caller skip non-files.
+#   flow:    git ls-files -s -z. Each record is "mode object stage\tpath".
+#            Mode is the first word. PathBytes stay raw for check-attr stdin.
 function Get-TrackedFiles([string]$Repo) {
     $raw = Invoke-GitRaw -Repo $Repo -GitArgs @('ls-files', '-s', '-z')
     $entries = New-Object System.Collections.Generic.List[object]
@@ -260,6 +308,13 @@ function Get-TrackedFiles([string]$Repo) {
     return ,$entries
 }
 
+# Get-AttributeMap
+#   in:      repo path, tracked entries.
+#   out:     ordinal hashtable path -> @{ attr = value }.
+#   purpose: text and eol from this repo's .gitattributes only.
+#   flow:    NUL-terminate each raw path and pass it to check-attr --stdin -z.
+#            Records are path, attr, value. A trailing empty field is dropped.
+#            A count not divisible by 3 is fatal.
 function Get-AttributeMap([string]$Repo, $Entries) {
     $info = New-Object System.Collections.Hashtable ([StringComparer]::Ordinal)
     if ($Entries.Count -eq 0) {
@@ -297,6 +352,12 @@ function Get-AttributeMap([string]$Repo, $Entries) {
     return $info
 }
 
+# Test-PlainText
+#   in:      hashtable of attribute name to value for one path.
+#   out:     $true when the path is in scope.
+#   purpose: same rule as bash is_plain_text. text=auto is in; no content probe.
+#   flow:    text=unset is out. Any other explicit text value is in.
+#            unspecified is in only when eol is lf or crlf.
 function Test-PlainText($Attrs) {
     $text = 'unspecified'
     if ($Attrs.ContainsKey('text')) {
@@ -337,6 +398,7 @@ $skippedNotText = 0
 $skippedNotFile = 0
 
 foreach ($entry in $entries) {
+    # check-attr did not answer for a path we sent.
     if (-not $attrsByPath.ContainsKey($entry.Path)) {
         $unreadable.Add("$($entry.Path): no attribute result from git check-attr")
         continue
@@ -345,6 +407,7 @@ foreach ($entry in $entries) {
         $skippedNotText++
         continue
     }
+    # 100644 and 100755 are the regular-file modes. Anything else is not scanned.
     if ($entry.Mode -ne '100644' -and $entry.Mode -ne '100755') {
         $skippedNotFile++
         continue
@@ -372,6 +435,7 @@ foreach ($entry in $entries) {
             First = $hit.First
         })
     }
+    # CR or LF as the final byte counts, so a trailing CRLF counts too.
     $last = [int]$data[$data.Length - 1]
     if ($last -ne 0x0A -and $last -ne 0x0D) {
         $missingEol.Add([pscustomobject]@{
@@ -385,6 +449,7 @@ Write-Out ("Checked {0} text file(s) marked by .gitattributes (text=auto include
 Write-Out ("Skipped {0} empty file(s), {1} file(s) not marked as text, {2} non-regular path(s)." -f $skippedEmpty, $skippedNotText, $skippedNotFile)
 Write-Out ''
 
+# Group by byte value, then path, matching the bash report order.
 $groups = @($controlHits | Group-Object -Property Value | Sort-Object { [int]$_.Name })
 if ($groups.Count -eq 0) {
     Write-Out 'Control bytes below 0x20 other than CR, LF, HT, VT, FF, DC1, and EM: none'
@@ -412,6 +477,7 @@ else {
     }
 }
 
+# Unreadable paths go to stderr. They still force exit 1 below.
 if ($unreadable.Count -gt 0) {
     Write-Err ''
     Write-Err ("Unreadable: {0} path(s):" -f $unreadable.Count)

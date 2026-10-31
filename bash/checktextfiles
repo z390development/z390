@@ -42,6 +42,12 @@ set -o pipefail
 
 caller_pwd=$(pwd)
 tmp=
+
+# cleanup
+#   in:      caller_pwd, tmp
+#   out:     none. Previous cwd restored; tmp removed when set.
+#   purpose: EXIT trap. Later steps cd into the repo and own a temp dir.
+#   flow:    cd back, then rm -rf tmp. Both failures are ignored.
 cleanup() {
     cd "$caller_pwd" 2>/dev/null || true
     if [ -n "$tmp" ]; then
@@ -57,6 +63,8 @@ for need in git od awk sort; do
     fi
 done
 
+# Walk up from this script to the checkout that has both .git and .gitattributes.
+# Stopping at / leaves the later checks to report which marker is missing.
 repo=$(cd "$(dirname "$0")" && pwd)
 while [ ! -e "$repo/.git" ] || [ ! -f "$repo/.gitattributes" ]; do
     parent=$(dirname "$repo")
@@ -81,9 +89,18 @@ tmp=$(mktemp -d "${TMPDIR:-/tmp}/z390-check-text.XXXXXX") || {
     exit 1
 }
 
+# FS (0x1C) separates fields in the temp tables. Git paths cannot contain it.
+# bom is the UTF-8 BOM Git for Windows may stick on the first check-attr field.
 sep=$(printf '\034')
 bom=$(printf '\357\273\277')
 
+# run_git
+#   in:      $1 stdout path, $2 stderr path, then git arguments.
+#   out:     those two files. Status is git's status.
+#   purpose: run git against this checkout only.
+#   flow:    subshell drops GIT_DIR and GIT_WORK_TREE, ignores the system
+#            attributes file, disables the credential prompt, and blanks
+#            core.attributesFile. Streams are redirected by the caller.
 run_git() {
     local out=$1
     local err=$2
@@ -97,6 +114,12 @@ run_git() {
     ) >"$out" 2>"$err"
 }
 
+# is_plain_text
+#   in:      $1 text attribute, $2 eol attribute.
+#   out:     status 0 in scope, 1 out of scope. No output.
+#   purpose: decide scope without Git's text=auto content probe.
+#   flow:    unset is out. Any other explicit text value, including auto, is in.
+#            unspecified is in only when eol is lf or crlf.
 is_plain_text() {
     case $1 in
         unset)
@@ -121,6 +144,8 @@ if ! run_git "$tmp/ls-files" "$tmp/ls-files.err" ls-files -s -z; then
     exit 1
 fi
 
+# ls-files -s -z records are "<mode> <object> <stage>\t<path>\0".
+# entries keeps path and mode. paths is the NUL list fed to check-attr.
 : > "$tmp/entries"
 : > "$tmp/paths"
 while IFS= read -r -d '' record || [ -n "$record" ]; do
@@ -140,6 +165,8 @@ while IFS= read -r -d '' record || [ -n "$record" ]; do
     printf '%s\0' "$path" >> "$tmp/paths"
 done < "$tmp/ls-files"
 
+# check-attr -z repeats path, attribute, value as three NUL fields.
+# A record whose field count is not a multiple of 3 is fatal.
 : > "$tmp/attr-rows"
 if [ -s "$tmp/paths" ]; then
     (
@@ -180,6 +207,11 @@ if [ -s "$tmp/paths" ]; then
 fi
 
 awk -v FS="$sep" -v OFS="$sep" '
+    # Pivot attr rows to one row per path.
+    #   in:      path, attr, value. attr is text or eol.
+    #   out:     path, text, eol. A missing attribute is unspecified.
+    #   purpose: check-attr emits one row per attribute; the merge wants one per path.
+    #   flow:    store both values, then emit every path that appeared.
     {
         path = $1
         attr = $2
@@ -200,6 +232,8 @@ awk -v FS="$sep" -v OFS="$sep" '
     }
 ' "$tmp/attr-rows" > "$tmp/attrs"
 
+# Sort-merge, not an associative array: bash 3.2 has none.
+# LC_ALL=C makes the sort order the same order [[ < ]] and [[ > ]] use.
 LC_ALL=C sort -t "$sep" -k1,1 "$tmp/entries" > "$tmp/entries.sorted"
 LC_ALL=C sort -t "$sep" -k1,1 "$tmp/attrs" > "$tmp/attrs.sorted"
 
@@ -220,6 +254,7 @@ emode=
 apath=
 atext=
 aeol=
+# Prime both cursors. have_* stays 0 once that stream is exhausted.
 if IFS="$sep" read -r epath emode <&3; then
     have_entry=1
 fi
@@ -228,6 +263,7 @@ if IFS="$sep" read -r apath atext aeol <&4; then
 fi
 
 while [ "$have_entry" -eq 1 ]; do
+    # No attr row at this path. Advance the entry only.
     if [ "$have_attr" -eq 0 ] || [[ "$apath" > "$epath" ]]; then
         printf '%s\n' "$epath: no attribute result from git check-attr" >> "$tmp/unreadable"
         if IFS="$sep" read -r epath emode <&3; then
@@ -237,6 +273,7 @@ while [ "$have_entry" -eq 1 ]; do
         fi
         continue
     fi
+    # Attr row sorts before the entry. Drop it and keep the entry.
     if [[ "$apath" < "$epath" ]]; then
         if IFS="$sep" read -r apath atext aeol <&4; then
             have_attr=1
@@ -246,6 +283,7 @@ while [ "$have_entry" -eq 1 ]; do
         continue
     fi
 
+    # Paths match. Scope, then mode, then readability, then contents.
     if ! is_plain_text "$atext" "$aeol"; then
         skipped_not_text=$((skipped_not_text + 1))
     elif [ "$emode" != "100644" ] && [ "$emode" != "100755" ]; then
@@ -255,6 +293,14 @@ while [ "$have_entry" -eq 1 ]; do
     elif [ ! -s "./$epath" ]; then
         skipped_empty=$((skipped_empty + 1))
     elif ! od -An -tu1 -v "./$epath" 2>"$tmp/od.err" | awk '
+        # Scan one file from od -An -tu1 -v.
+        #   in:      unsigned decimal bytes, every byte, including NUL.
+        #   out:     "C value count first" per offending byte, then "E last"
+        #            when the final byte is not CR or LF. Status 0.
+        #   purpose: collect C0 hits and a missing final line ending.
+        #   flow:    count bytes below 0x20 except HT LF VT FF CR DC1 EM
+        #            (9, 10, 11, 12, 13, 17, 25). first is 0-based.
+        #            E is omitted when last is 10 or 13, so CR, LF, and CRLF pass.
         {
             for (i = 1; i <= NF; i++) {
                 b = $i + 0
@@ -287,6 +333,7 @@ while [ "$have_entry" -eq 1 ]; do
         printf '%s\n' "$epath: ${detail:-cannot read file}" >> "$tmp/unreadable"
     else
         checked=$((checked + 1))
+        # C is a control hit. E is the last byte of a file with no line ending.
         while read -r kind a b c; do
             case $kind in
                 C)
@@ -300,6 +347,7 @@ while [ "$have_entry" -eq 1 ]; do
         done < "$tmp/scan"
     fi
 
+    # Matched rows are consumed together so an attr row is not reused.
     if IFS="$sep" read -r epath emode <&3; then
         have_entry=1
     else
@@ -324,18 +372,33 @@ if [ ! -s "$tmp/hits" ]; then
 else
     LC_ALL=C sort -t "$sep" -k1,1n -k2,2 "$tmp/hits" > "$tmp/hits.sorted"
     awk -v FS="$sep" '
+        # cname
+        #   in:      byte 0..31
+        #   out:     C0 mnemonic. names from split() is 1-based, hence b + 1.
+        #   purpose: label the report heading.
+        #   flow:    index the mnemonic list built in BEGIN.
         function cname(b) {
             return names[b + 1]
         }
         BEGIN {
             split("NUL SOH STX ETX EOT ENQ ACK BEL BS HT LF VT FF CR SO SI DLE DC1 DC2 DC3 DC4 NAK SYN ETB CAN EM SUB ESC FS GS RS US", names, " ")
         }
+        # flush
+        #   in:      byte, n, block. All three are awk globals.
+        #   out:     one heading and the path lines gathered for that byte.
+        #   purpose: emit a group when the byte value changes, and at END.
+        #   flow:    no-op when n is 0. The caller clears n and block after a real flush.
         function flush() {
             if (n == 0) {
                 return
             }
             printf "Control byte 0x%02X (%s) in %d file(s):\n%s", byte, cname(byte), n, block
         }
+        # Group hits already sorted by byte, then path.
+        #   in:      value, path, count, first offset.
+        #   out:     one heading per byte value, paths in sorted order.
+        #   purpose: the control-byte section of the report.
+        #   flow:    append to the current group; flush when the value changes.
         {
             b = $1 + 0
             if (n > 0 && b != byte) {
@@ -365,6 +428,7 @@ else
     done < "$tmp/missing.sorted"
 fi
 
+# Unreadable paths go to stderr. They still force exit 1 below.
 unreadable_n=$(wc -l < "$tmp/unreadable" | tr -d ' ')
 if [ "$unreadable_n" -gt 0 ]; then
     printf '\n' >&2
