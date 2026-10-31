@@ -16,7 +16,7 @@ bash/bldjar                            # create the z390 jar
 
 # remove old assembly results
 # this prevents a standard build from picking up left-over modules
-find . -type f -name '*.obj' -delete 2>/dev/null || true
+find . -type f -name '*.OBJ' -delete 2>/dev/null || true
 find . -type f -name '*.390' -delete 2>/dev/null || true
 
 # generate HLASM compatible SPM's
@@ -72,7 +72,7 @@ stage=$(pwd)
 
 # add linklib object files and the jar; neither is tracked
 mkdir -p linklib
-cp -f "$ROOT_DIR"/linklib/*.obj linklib/
+cp -f "$ROOT_DIR"/linklib/*.OBJ linklib/
 cp -f "$ROOT_DIR/z390.jar" .
 
 # add generated structured programming macros to mac/spm folder
@@ -82,7 +82,7 @@ cp -f "$ROOT_DIR"/build/zstrmac/* mac/spm/
 # add zCICS VSAM clusters produced by DFHALLV
 mkdir -p cics/vsam
 if [ "$build_all" -eq 1 ]; then
-    cp -f "$ROOT_DIR"/cics/vsam/*.v* cics/vsam/
+    cp -f "$ROOT_DIR"/cics/vsam/*.V* cics/vsam/
 fi
 
 # add javadoc, including its subfolders

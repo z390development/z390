@@ -75,8 +75,7 @@ rem if arc was specified, we run the vsam2 tests
 if /I "%arc%"  NEQ "" (
    call vsam2\bat\TSTLOADIN.BAT %z_TraceMode% "%arc%"            || goto error)
 rem if NIST was specified, run the NIST test suite (will error always)
-if /I "%nist%" NEQ "" (
-   call bat\RUNNIST.BAT %z_TraceMode% "%nist%")
+if /I "%nist%" NEQ "" call bat\RUNNIST.BAT %z_TraceMode% "%nist%"
 
 set z_ReturnCode=0
 goto return
