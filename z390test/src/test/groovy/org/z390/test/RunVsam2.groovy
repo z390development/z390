@@ -88,8 +88,8 @@ class RunVsam2 extends z390Test {
         def expectedFile = new File(pathJoin(dataDirAbs, inputName))
         def actualFile = new File(pathJoin(dataDirAbs, unloadName))
         assert actualFile.exists(), "${label}: unload file missing ${actualFile.path}"
-        assert expectedFile.readLines() == actualFile.readLines(),
-                "${label}: unload ${unloadName} does not match input ${inputName}"
+        assert CompareTextFile(expectedFile.path, actualFile.path),
+                "${label}: ${compareTextFileReport}"
     }
 
     void runLoadTest(Map loadCase) {

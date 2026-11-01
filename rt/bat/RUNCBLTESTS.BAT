@@ -93,21 +93,21 @@ call bat\CBLCLG %z_TraceMode% zcobol\tests\YOUZPI2  %1 %2 %3 %4 %5 %6 %7 %8 %9 |
 set INFILE=zcobol\tests\SORTASC.TF1
 set OUTFILE=zcobol\tests\SORTASC.OUT
 call bat\CBLCLG %z_TraceMode% zcobol\tests\SORTASC  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-fc zcobol\tests\SORTASC.OUT zcobol\tests\SORTASC.TF2 > nul || goto error
+call bat\COMPARETEXTFILE.BAT zcobol\tests\SORTASC.OUT zcobol\tests\SORTASC.TF2 > nul || goto error
 set INFILE=zcobol\tests\SORTDEF.TF1
 set OUTFILE=zcobol\tests\SORTDEF.OUT
 call bat\CBLCLG %z_TraceMode% zcobol\tests\SORTDEF  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-fc zcobol\tests\SORTDEF.OUT zcobol\tests\SORTDEF.TF2 > nul || goto error
+call bat\COMPARETEXTFILE.BAT zcobol\tests\SORTDEF.OUT zcobol\tests\SORTDEF.TF2 > nul || goto error
 set INFILE=zcobol\tests\SORTPROC.TF1
 set OUTFILE=zcobol\tests\SORTPROC.OUT
 call bat\CBLCLG %z_TraceMode% zcobol\tests\SORTPROC %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-fc zcobol\tests\SORTPROC.OUT zcobol\tests\SORTPROC.TF2 > nul || goto error
+call bat\COMPARETEXTFILE.BAT zcobol\tests\SORTPROC.OUT zcobol\tests\SORTPROC.TF2 > nul || goto error
 set INFILE=zcobol\tests\SORTMULT.TF1
 set ASCFILE=zcobol\tests\SORTMULT_ASC.OUT
 set DESCFILE=zcobol\tests\SORTMULT_DSC.OUT
 call bat\CBLCLG %z_TraceMode% zcobol\tests\SORTMULT %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-fc zcobol\tests\SORTMULT_ASC.OUT zcobol\tests\SORTMULT_ASC.TF2 > nul || goto error
-fc zcobol\tests\SORTMULT_DSC.OUT zcobol\tests\SORTMULT_DSC.TF2 > nul || goto error
+call bat\COMPARETEXTFILE.BAT zcobol\tests\SORTMULT_ASC.OUT zcobol\tests\SORTMULT_ASC.TF2 > nul || goto error
+call bat\COMPARETEXTFILE.BAT zcobol\tests\SORTMULT_DSC.OUT zcobol\tests\SORTMULT_DSC.TF2 > nul || goto error
 set INFILE=
 set OUTFILE=
 set ASCFILE=

@@ -59,11 +59,8 @@ class RunMfAcc extends z390Test{
         int rc = this.asmlg(basePath("mfacc", "P16AFK1"), *options, 'parm(ASCII)')
         this.printOutput()
         assert rc == 0
-        // Load files to fileData
-        loadFile(basePath("mfacc", "P16AFK1.TF1"), 'TF1')
-        loadFile(basePath("mfacc", "P16AFK1.OUT"), 'OUT')
-        // Check files equal
-        assert fileData.get('TF1') == fileData.get('OUT')
+        assert CompareTextFile(basePath("mfacc", "P16AFK1.TF1"),
+                                basePath("mfacc", "P16AFK1.OUT")), compareTextFileReport
     }
 
     @Test // can be run with notime option, but takes too long to complete

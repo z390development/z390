@@ -11,6 +11,7 @@ class z390Test {
     String stderr = ""
     var env = [:]
     var fileData = [:]
+    String compareTextFileReport = ""
     var message = "z390Test - Test framework for z390 project"
     int cmdTimeMs = 100000
     boolean printOutput = false
@@ -394,6 +395,93 @@ class z390Test {
             result << line
         }
         return result
+    }
+
+    /**
+     * Compare two whole text files. CRLF and LF are the same line-end.
+     * A lone CR and a missing final line-end still differ.
+     * On a mismatch, compareTextFileReport names the first difference.
+     */
+    boolean CompareTextFile(String path1, String path2) {
+        compareTextFileReport = ""
+        byte[] left = readCompareBytes(path1)
+        if (left == null) {
+            compareTextFileReport = "comparetextfile: cannot read ${path1}"
+            return false
+        }
+        byte[] right = readCompareBytes(path2)
+        if (right == null) {
+            compareTextFileReport = "comparetextfile: cannot read ${path2}"
+            return false
+        }
+        int i1 = 0
+        int i2 = 0
+        int line = 1
+        int pos = 1
+        while (true) {
+            def u1 = nextCompareUnit(left, i1)
+            def u2 = nextCompareUnit(right, i2)
+            i1 = u1.next
+            i2 = u2.next
+            if (!sameCompareUnit(u1, u2)) {
+                compareTextFileReport = "CompareTextFile: files differ\n${path1}\n${path2}\nline ${line} byte ${pos}: ${showCompareUnit(u1)} / ${showCompareUnit(u2)}"
+                return false
+            }
+            if (u1.kind == 'eof') {
+                return true
+            }
+            if (u1.kind == 'lf' || u1.kind == 'crlf') {
+                line++
+                pos = 1
+            } else {
+                pos++
+            }
+        }
+    }
+
+    private byte[] readCompareBytes(String path) {
+        File file = new File(path)
+        if (!file.isFile()) {
+            return null
+        }
+        return file.bytes
+    }
+
+    private Map nextCompareUnit(byte[] bytes, int index) {
+        if (bytes == null || index >= bytes.length) {
+            return [kind: 'eof', value: -1, next: index]
+        }
+        int b = bytes[index] & 0xFF
+        if (b == 13 && index + 1 < bytes.length && (bytes[index + 1] & 0xFF) == 10) {
+            return [kind: 'crlf', value: -1, next: index + 2]
+        }
+        if (b == 10) {
+            return [kind: 'lf', value: -1, next: index + 1]
+        }
+        return [kind: 'byte', value: b, next: index + 1]
+    }
+
+    private boolean sameCompareUnit(Map left, Map right) {
+        boolean leftEnd = left.kind == 'lf' || left.kind == 'crlf'
+        boolean rightEnd = right.kind == 'lf' || right.kind == 'crlf'
+        if (leftEnd || rightEnd) {
+            return leftEnd && rightEnd
+        }
+        if (left.kind == 'eof' || right.kind == 'eof') {
+            return left.kind == 'eof' && right.kind == 'eof'
+        }
+        return left.value == right.value
+    }
+
+    private String showCompareUnit(Map unit) {
+        if (unit.kind == 'eof') return 'end of file'
+        if (unit.kind == 'crlf') return 'CRLF'
+        if (unit.kind == 'lf') return 'LF'
+        int value = unit.value as int
+        if (value >= 32 && value <= 126) {
+            return "'" + ((char) value) + "'"
+        }
+        return String.format('0x%02X', value)
     }
 
 }

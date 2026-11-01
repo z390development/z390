@@ -1,0 +1,72 @@
+#!/bin/bash
+# comparetextfile: compare two text files. CRLF and LF are the same line-end.
+# Exit 0 when equal, 1 on the first difference, 2 when a file cannot be read.
+
+if [ "$#" -ne 2 ]; then
+    echo "comparetextfile: two file paths are required" >&2
+    exit 2
+fi
+
+for f in "$1" "$2"; do
+    if [ ! -r "$f" ]; then
+        echo "comparetextfile: cannot read $f" >&2
+        exit 2
+    fi
+done
+
+awk -v path1="$1" -v path2="$2" '
+function show(kind, byte) {
+    if (kind == "eof") return "end of file"
+    if (kind == "crlf") return "CRLF"
+    if (kind == "lf") return "LF"
+    if (byte >= 32 && byte <= 126) return sprintf("'\''%c'\''", byte)
+    return sprintf("0x%02X", byte)
+}
+function isend(kind) { return kind == "lf" || kind == "crlf" }
+function same(k1, b1, k2, b2) {
+    if (isend(k1) || isend(k2)) return isend(k1) && isend(k2)
+    if (k1 == "eof" || k2 == "eof") return k1 == "eof" && k2 == "eof"
+    return b1 == b2
+}
+function load(path, arr) {
+    cmd = "od -An -tu1 -v \"" path "\""
+    n = 0
+    while ((cmd | getline line) > 0) {
+        m = split(line, parts, " ")
+        for (i = 1; i <= m; i++) {
+            if (parts[i] != "") arr[++n] = parts[i] + 0
+        }
+    }
+    close(cmd)
+    return n
+}
+function nextu(arr, len, idx,    b) {
+    if (idx > len) { nk = "eof"; nb = -1; ni = idx; return }
+    b = arr[idx]
+    if (b == 13 && idx < len && arr[idx + 1] == 10) {
+        nk = "crlf"; nb = -1; ni = idx + 2; return
+    }
+    if (b == 10) { nk = "lf"; nb = -1; ni = idx + 1; return }
+    nk = "byte"; nb = b; ni = idx + 1
+}
+BEGIN {
+    n1 = load(path1, a1)
+    n2 = load(path2, a2)
+    i1 = 1; i2 = 1; line = 1; pos = 1
+    while (1) {
+        nextu(a1, n1, i1); k1 = nk; b1 = nb; i1 = ni
+        nextu(a2, n2, i2); k2 = nk; b2 = nb; i2 = ni
+        if (!same(k1, b1, k2, b2)) {
+            print "CompareTextFile: files differ"
+            print path1
+            print path2
+            printf "line %d byte %d: %s / %s\n", line, pos, show(k1, b1), show(k2, b2)
+            exit 1
+        }
+        if (k1 == "eof") exit 0
+        if (isend(k1)) { line++; pos = 1 } else pos++
+    }
+}
+' 
+status=$?
+exit $status

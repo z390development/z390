@@ -59,7 +59,7 @@ if [ "$trace" = "traceall" ]; then cp linklib/REPRO.TRE ${vsampath}/${pgmname}.R
 
 # compare input and output QSAM files
 
-diff ${vsampath}/ESV5.TF1 ${vsampath}/ESV5.TF2 > ${vsampath}/${pgmname}.DIF
+bash/comparetextfile ${vsampath}/ESV5.TF1 ${vsampath}/ESV5.TF2 > ${vsampath}/${pgmname}.DIF
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "ESV5.TF1 not equal to ESV5.TF2"; fi
 

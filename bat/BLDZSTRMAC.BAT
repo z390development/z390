@@ -11,13 +11,12 @@ if /I "%1" == "tron" (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-pushd %~dps0..
+pushd %~dps0..                                           || goto nopush
 set z_Dest=%1
 if "%z_Dest%"=="" set z_Dest=build\zstrmac
 echo %0 Destination: %z_Dest%
-if not exist "%z_Dest%" mkdir %z_Dest%
-echo Deleting %z_Dest%\*.*
-erase /Q %z_Dest%\*.*
+if not exist "%z_Dest%"     (mkdir %z_Dest%              || goto error)
+if     exist "%z_Dest%\*.*" (erase /F /Q %z_Dest%\*.*    || goto error)
 
 set z_STR=rt\test\ZSTRMAC2.ZSM
 
@@ -32,15 +31,20 @@ for %%M in %z_MACS% do (set SYSUT1=mac\%%M.MAC
 rem Copy the static copy files
 set z_CPYS=(mac\ASMMSP.CPY mac\ZSTRGBL.CPY mac\ZSTRMAC.CPY)
 for %%C in %z_CPYS% do (echo Adding %%C to %z_Dest%
-                        copy %%C %z_Dest% >nul 2>&1 || goto error
+                        copy %%C %z_Dest% >nul       || goto error
                         )
 set z_ReturnCode=0
 goto return
 
+:nopush
+set z_ReturnCode=%ERRORLEVEL%
+echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
+goto exit
 :error
 set z_ReturnCode=%ERRORLEVEL%
 echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
 :return
 popd
+:exit
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 exit /b %z_ReturnCode%

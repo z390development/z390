@@ -10,6 +10,7 @@ if /I "%1" == "tron" (set z_TraceMode=tron
                       )
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
+pushd %~dps0..\..                                  || goto nopush
 
 rem
 rem Maintenance note: this procedure leaves trash behind.
@@ -147,8 +148,14 @@ goto return
 :WRONG
 echo %0 error while REPRO-ing %INFILE% to %OUTFILE% - see log and listings for details
 set z_ReturnCode=8
+goto return
 
+:nopush
+set z_ReturnCode=%ERRORLEVEL%
+echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
+goto exit
 :return
 popd
+:exit
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 exit /b %z_ReturnCode%

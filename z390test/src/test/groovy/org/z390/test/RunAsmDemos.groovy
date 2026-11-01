@@ -111,7 +111,8 @@ class RunAsmDemos extends z390Test {
         // print the fileData
         this.printOutput()
         // Check files equal
-        assert fileData.get('TF1') == fileData.get('TF2')
+        assert CompareTextFile(basePath('demo', 'TESTDCB1.TF1'),
+                                basePath('demo', 'TESTDCB1.TF2')), compareTextFileReport
         assert rc == 0
     }
     @Test
@@ -129,7 +130,8 @@ class RunAsmDemos extends z390Test {
         // print the fileData
         this.printOutput()
         // Check files equal
-        assert fileData.get('TF1') == fileData.get('TF2')
+        assert CompareTextFile(basePath('demo', 'TESTDCB2.TF1'),
+                                basePath('demo', 'TESTDCB2.TF2')), compareTextFileReport
         assert rc == 0
     }
 }

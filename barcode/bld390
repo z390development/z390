@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# bld390: assemble barcode programs and copy load modules to linklib
+
+set -e              # exit on all errors
+cd $(dirname $0)    # set to directory of script
+cd ..               # go to root
+
+bash/asm  barcode/ENCODETR "sysmac(+barcode)" "syscpy(+barcode)"
+bash/asml barcode/S4BCDRVA "sysmac(+barcode)" "syscpy(+barcode)"
+cp barcode/*.390 linklib
