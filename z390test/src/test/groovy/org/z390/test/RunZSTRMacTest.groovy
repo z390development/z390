@@ -71,7 +71,8 @@ class RunZSTRMacTest extends z390Test {
         this.loadFile(basePath('rt', 'test', 'TESTSPE1.MLC'), 'SPE1_ZSTRMAC1')
         this.loadFile(basePath('rt', 'test', 'TESTSPE1.TXT'), 'SPE1_ZSTRMAC2')
         printOutput("Step 5")
-        assert fileData['SPE1_ZSTRMAC1'] == fileData['SPE1_ZSTRMAC2']
+        assert CompareTextFile(basePath('rt', 'test', 'TESTSPE1.MLC'),
+                                basePath('rt', 'test', 'TESTSPE1.TXT')), compareTextFileReport
 
         /*
         Instead of generation using the macros, this uses structured macro support built into mz390
@@ -102,7 +103,8 @@ class RunZSTRMacTest extends z390Test {
         this.loadFile(basePath('rt', 'test', 'TESTSPE1.MLC'), 'TESTSPE1.MLC')
         this.loadFile(basePath('rt', 'test', 'TESTSPE1.TXT'), 'TESTSPE1.TXT')
         printOutput("Step 6 Compare")
-        assert fileData['TESTSPE1.MLC'] == fileData['TESTSPE1.TXT']
+        assert CompareTextFile(basePath('rt', 'test', 'TESTSPE1.MLC'),
+                                basePath('rt', 'test', 'TESTSPE1.TXT')), compareTextFileReport
     }
 
     @Test

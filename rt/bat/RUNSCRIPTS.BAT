@@ -27,7 +27,7 @@ call bat\asm   %z_TraceMode% rt\rt\OPCD_ERR  sysmac(mac) noloadhigh             
      if %ERRORLEVEL% NEQ 12 goto error
 rem Compare AZ390 diagnostic lines only (filter out MZ390 framing + FID= path)
 findstr /v /c:"MZ390" /c:"FID=" rt\rt\OPCD_ERR.ERR > rt\rt\OPCD_ERR.ERR.flt
-fc  rt\rt\OPCD_ERR.ERR.flt rt\rt\OPCD_ERR.TF1 > nul || goto error
+call bat\COMPARETEXTFILE.BAT rt\rt\OPCD_ERR.ERR.flt rt\rt\OPCD_ERR.TF1 > nul || goto error
 del rt\rt\OPCD_ERR.ERR.flt
 call bat\asml  %z_TraceMode% rt\rt\OPCD_UNI  sysmac(mac) noloadhigh @rt\rt\OPCD_UNI.OPT || goto error
 

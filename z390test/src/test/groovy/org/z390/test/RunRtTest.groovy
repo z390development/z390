@@ -36,8 +36,8 @@ class RunRtTest extends z390Test {
 
     /**
      * DCB tests. setEnv false means the program uses DSNAME= and must not
-     * inherit SYSUT1/SYSUT2/SYSOUT. outText/rptText true compares lines so CR/LF
-     * differences are ignored; false compares raw bytes.
+     * inherit SYSUT1/SYSUT2/SYSOUT. outText/rptText true compares text, treating
+     * CRLF and LF as the same line-end; false compares raw bytes.
      */
     @TestFactory
     Collection<DynamicTest> test_dcb_pgms() {
@@ -92,7 +92,7 @@ class RunRtTest extends z390Test {
         assert actual.isFile(), "missing output ${actualPath}"
         assert expected.isFile(), "missing reference ${expectedPath}"
         if (text) {
-            assert actual.readLines() == expected.readLines(), "${label} differs from ${expected.name}"
+            assert CompareTextFile(actualPath, expectedPath), compareTextFileReport
         } else {
             assert actual.bytes == expected.bytes, "${label} differs from ${expected.name}"
         }

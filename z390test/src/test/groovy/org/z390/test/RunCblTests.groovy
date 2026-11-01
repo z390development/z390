@@ -125,9 +125,8 @@ class RunCblTests extends z390Test{
         int rc = this.cblclg(basePath("zcobol", "tests", "SORTASC"), 'TIME(30)')
         this.printOutput()
         assert rc == 0
-        var actual = new File(basePath('zcobol', 'tests', 'SORTASC.OUT')).text
-        var expected = new File(basePath('zcobol', 'tests', 'SORTASC.TF2')).text
-        assert actual == expected, "SORTASC output does not match reference"
+        assert CompareTextFile(basePath('zcobol', 'tests', 'SORTASC.OUT'),
+                                basePath('zcobol', 'tests', 'SORTASC.TF2')), compareTextFileReport
     }
 
     @Test
@@ -137,9 +136,8 @@ class RunCblTests extends z390Test{
         int rc = this.cblclg(basePath("zcobol", "tests", "SORTDEF"), 'TIME(30)')
         this.printOutput()
         assert rc == 0
-        var actual = new File(basePath('zcobol', 'tests', 'SORTDEF.OUT')).text
-        var expected = new File(basePath('zcobol', 'tests', 'SORTDEF.TF2')).text
-        assert actual == expected, "SORTDEF output does not match reference"
+        assert CompareTextFile(basePath('zcobol', 'tests', 'SORTDEF.OUT'),
+                                basePath('zcobol', 'tests', 'SORTDEF.TF2')), compareTextFileReport
     }
 
     @Test
@@ -149,9 +147,8 @@ class RunCblTests extends z390Test{
         int rc = this.cblclg(basePath("zcobol", "tests", "SORTPROC"), 'TIME(30)')
         this.printOutput()
         assert rc == 0
-        var actual = new File(basePath('zcobol', 'tests', 'SORTPROC.OUT')).text
-        var expected = new File(basePath('zcobol', 'tests', 'SORTPROC.TF2')).text
-        assert actual == expected, "SORTPROC output does not match reference"
+        assert CompareTextFile(basePath('zcobol', 'tests', 'SORTPROC.OUT'),
+                                basePath('zcobol', 'tests', 'SORTPROC.TF2')), compareTextFileReport
     }
 
     @Test
@@ -162,12 +159,10 @@ class RunCblTests extends z390Test{
         int rc = this.cblclg(basePath("zcobol", "tests", "SORTMULT"), 'TIME(30)')
         this.printOutput()
         assert rc == 0
-        var actualAsc = new File(basePath('zcobol', 'tests', 'SORTMULT_ASC.OUT')).text
-        var expectedAsc = new File(basePath('zcobol', 'tests', 'SORTMULT_ASC.TF2')).text
-        assert actualAsc == expectedAsc, "SORTMULT ascending output does not match reference"
-        var actualDsc = new File(basePath('zcobol', 'tests', 'SORTMULT_DSC.OUT')).text
-        var expectedDsc = new File(basePath('zcobol', 'tests', 'SORTMULT_DSC.TF2')).text
-        assert actualDsc == expectedDsc, "SORTMULT descending output does not match reference"
+        assert CompareTextFile(basePath('zcobol', 'tests', 'SORTMULT_ASC.OUT'),
+                                basePath('zcobol', 'tests', 'SORTMULT_ASC.TF2')), compareTextFileReport
+        assert CompareTextFile(basePath('zcobol', 'tests', 'SORTMULT_DSC.OUT'),
+                                basePath('zcobol', 'tests', 'SORTMULT_DSC.TF2')), compareTextFileReport
     }
 
 }

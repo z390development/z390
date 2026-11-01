@@ -71,11 +71,8 @@ class RunAsmTests extends z390Test {
         int rc = this.asmlg(basePath("tests", "TESTFPC1"), *options, "SYSOBJ(+${basePath("linklib")})", 'optable(z390) notrace')
         this.printOutput()
         assert rc == 0
-        // Load files to fileData
-        loadFile(basePath("tests", "TESTFPC1.TF1"), 'TF1')
-        loadFile(basePath("tests", "TESTFPC1.TST"), 'TST')
-        // Check files equal
-        assert fileData.get('TF1') == fileData.get('TST')
+        assert CompareTextFile(basePath("tests", "TESTFPC1.TF1"),
+                                basePath("tests", "TESTFPC1.TST")), compareTextFileReport
     }
     @Test
     void test_TESTFPC2() {
@@ -83,11 +80,8 @@ class RunAsmTests extends z390Test {
         int rc = this.asmlg(basePath("tests", "TESTFPC2"), *options, "SYSOBJ(+${basePath("linklib")})", 'optable(z390) notrace')
         this.printOutput()
         assert rc == 0
-        // Load files to fileData
-        loadFile(basePath("tests", "TESTFPC2.TF1"), 'TF1')
-        loadFile(basePath("tests", "TESTFPC2.TST"), 'TST')
-        // Check files equal
-        assert fileData.get('TF1') == fileData.get('TST')
+        assert CompareTextFile(basePath("tests", "TESTFPC2.TF1"),
+                                basePath("tests", "TESTFPC2.TST")), compareTextFileReport
     }
     @Test
     void test_TESTAMPS() {

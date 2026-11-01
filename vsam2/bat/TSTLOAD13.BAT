@@ -55,7 +55,7 @@ echo -- Step 3: compare unload data >>%data%\%logfile%
 echo --                             >>%data%\%logfile%
 set MYLOAD=%input%\MYFILEDV.TXT
 set UNLOAD=%data%\MYFILEDV.TXO
-fc %MYLOAD% %UNLOAD% >>%data%\%logfile%
+call bat\COMPARETEXTFILE.BAT %MYLOAD% %UNLOAD% >>%data%\%logfile%
 set retcode=%ERRORLEVEL%
 if %retcode% NEQ 0 goto error
 

@@ -49,7 +49,7 @@ if [ $rc -ne 0 ]; then errmsg "error in unload of KSDS KSF1NAME"; fi
 
 # compare input and output QSAM files
 
-diff ${vsampath}/KSF1NAME.TF1 ${vsampath}/KSF1NAME.TF2 > ${vsampath}/${pgmname}.DIF
+bash/comparetextfile ${vsampath}/KSF1NAME.TF1 ${vsampath}/KSF1NAME.TF2 > ${vsampath}/${pgmname}.DIF
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "KSF1NAME.TF1 not equal to KSF1NAME.TF2"; fi
 

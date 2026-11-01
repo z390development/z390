@@ -36,7 +36,7 @@ call bat\asm   %z_TraceMode% rt\mlc\IS704    trace sysmac(mac) noloadhigh optabl
      if %ERRORLEVEL% NEQ 12 goto error
 rem Compare AZ390 diagnostic lines only (filter out MZ390 framing + FID= path)
 findstr /v /c:"MZ390" /c:"FID=" rt\mlc\IS704.ERR > rt\mlc\IS704.ERR.flt
-fc rt\mlc\IS704.ERR.flt rt\mlc\IS704.TF1 > nul || goto error
+call bat\COMPARETEXTFILE.BAT rt\mlc\IS704.ERR.flt rt\mlc\IS704.TF1 > nul || goto error
 del rt\mlc\IS704.ERR.flt
 
 call bat\asml  %z_TraceMode% rt\mlc\T714M1   trace sysmac(mac)                                || goto error
