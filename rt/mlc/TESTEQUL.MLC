@@ -1,0 +1,65 @@
+*********************************************************************
+* z390 - Mainframe assembler emulator and run-time engine
+* Copyright (C) 2026 z390 Assembler LLC
+*
+* This file is part of z390.
+*
+* z390 is free software; you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation; either version 2 of the License, or
+* (at your option) any later version.
+* z390 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, see https://www.gnu.org/licenses.
+*********************************************************************
+* Test the length attribute of EQU symbols without a length operand.
+* HLASM Language Reference, EQU instruction: the length attribute is
+* that of the leftmost (or only) term of the first operand; 1 if that
+* term is *, a self-defining term or a length attribute reference.
+*********************************************************************
+         MACRO
+         TEST  &SYM,&LEN
+         LA    R1,L'&SYM
+         CHI   R1,&LEN
+         BNE   ERROR
+         MEND
+TESTEQUL SUBENTRY
+         EQUREGS
+         TEST  A1,8                symbol
+         TEST  A2,8                symbol+n
+         TEST  A3,4                explicit length operand
+         TEST  A4,8                symbol equated to a symbol
+         TEST  A5,240              absolute: symbol-symbol
+         TEST  A6,240              symbol equated to that
+         TEST  A7,6                symbol naming an instruction
+         TEST  A8,5                forward reference
+         TEST  S1,1                self-defining term
+         TEST  S2,1                self-defining term+symbol-symbol
+         TEST  S3,1                location counter reference
+         TEST  S4,1                length attribute reference
+         WTO   'TESTEQUL EQU LENGTH ATTRIBUTES OK'
+         SUBEXIT
+ERROR    WTO   'TESTEQUL ERROR IN EQU LENGTH ATTRIBUTE'
+         SUBEXIT RC=12
+FLD      DS    CL8
+TO       DS    CL80
+FROM     DS    CL240
+MACH     MVC   TO,FROM
+A1       EQU   FLD
+A2       EQU   FLD+2
+A3       EQU   FLD,4
+A4       EQU   A1
+A5       EQU   FROM-TO
+A6       EQU   A5
+A7       EQU   MACH
+A8       EQU   LATER
+S1       EQU   102
+S2       EQU   X'FF'+FLD-TO
+S3       EQU   *+10
+S4       EQU   L'FLD+FLD
+LATER    DS    CL5
+         END
