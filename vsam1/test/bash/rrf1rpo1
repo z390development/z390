@@ -30,9 +30,9 @@ if [ "$1" = "traceall" ]; then trace=traceall; shift; fi
 
 rc=0
 
-# load RRF1.VES from RRF1.TF1
+# load RRF1.VES from RRF1.EBCDIC.TF1
 
-export INFILE=${vsampath}/RRF1.TF1
+export INFILE=${vsampath}/RRF1.EBCDIC.TF1
 export OUTFILE=${vsampath}/TESTCAT.RRF1
 bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
 rc=$?
@@ -43,11 +43,11 @@ if [ $rc -ne 0 ]; then errmsg "error in REPRO load of RRF1"; fi
 cp linklib/REPRO.LOG ${vsampath}/${pgmname}.RLG
 if [ "$trace" = "traceall" ]; then cp linklib/REPRO.TRE ${vsampath}/${pgmname}.RLE; fi
 
-# unload RRF1.VES to RRF1.TF2
+# unload RRF1.VES to RRF1.EBCDIC.TF2
 
-rm -f ${vsampath}/RRF1.TF2
+rm -f ${vsampath}/RRF1.EBCDIC.TF2
 export INFILE=${vsampath}/TESTCAT.RRF1
-export OUTFILE=${vsampath}/RRF1.TF2
+export OUTFILE=${vsampath}/RRF1.EBCDIC.TF2
 bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "error in REPRO unload of RRF1"; fi
@@ -59,8 +59,8 @@ if [ "$trace" = "traceall" ]; then cp linklib/REPRO.TRE ${vsampath}/${pgmname}.R
 
 # compare input and output QSAM files
 
-diff ${vsampath}/RRF1.TF1 ${vsampath}/RRF1.TF2 > ${vsampath}/${pgmname}.DIF
+diff ${vsampath}/RRF1.EBCDIC.TF1 ${vsampath}/RRF1.EBCDIC.TF2 > ${vsampath}/${pgmname}.DIF
 rc=$?
-if [ $rc -ne 0 ]; then errmsg "RRF1.TF1 not equal to RRF1.TF2"; fi
+if [ $rc -ne 0 ]; then errmsg "RRF1.EBCDIC.TF1 not equal to RRF1.EBCDIC.TF2"; fi
 
 exit $rc

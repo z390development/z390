@@ -5,6 +5,12 @@
 set -e              # exit on all errors
 cd $(dirname $0)    # set to directory of script
 
+# check tracked text files for control bytes or a missing final line ending
+if ! ./checktextfiles; then
+    echo "bldjar: text file check failed"
+    exit 1
+fi
+
 # use the installed linter; install/upgrade is manual via bash/getcheckstyle
 if [ ! -f ../build/checkstyle/checkstyle-all.jar ]; then
     echo "bldjar: linter tool Checkstyle not available - run bash/getcheckstyle to install"

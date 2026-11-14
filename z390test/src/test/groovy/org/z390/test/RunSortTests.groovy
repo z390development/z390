@@ -32,11 +32,11 @@ class RunSortTests extends z390Test {
 
     @Test
     void test_TESTSRT1() {
-        env.put("SYSUT2", basePath('sort', 'TESTSRT1.IN'))
+        env.put("SYSUT2", basePath('sort', 'TESTSRT1.Binary.IN'))
         int rc = this.asmlg(basePath("sort", "TESTSRT1"), *options)
         assert rc == 0
 
-        this.env.put('SORTIN', basePath('sort', 'TESTSRT1.IN[RECFM=F,LRECL=20]'))
+        this.env.put('SORTIN', basePath('sort', 'TESTSRT1.Binary.IN[RECFM=F,LRECL=20]'))
         this.env.put('SORTOUT', basePath('sort', 'TESTSRT1.OUT'))
         this.env.put("SYSIN", basePath('sort', 'TESTSRT1.INI'))
         rc = this.ez390(basePath("sort", "SORT"), *runOptions)
@@ -47,12 +47,12 @@ class RunSortTests extends z390Test {
         rc = this.asmlg(basePath("sort", "TESTSRT2"), *options)
         assert rc == 0
 
-        env.put("SYSUT2", basePath('sort', 'TESTSRT3.IN'))
+        env.put("SYSUT2", basePath('sort', 'TESTSRT3.Binary.IN'))
         rc = this.asmlg(basePath("sort", "TESTSRT3"), 'PARM(100000)', *options)
         printOutput()
         assert rc == 0
 
-        this.env.put('SORTIN', basePath('sort', 'TESTSRT3.IN[RECFM=F,LRECL=4]'))
+        this.env.put('SORTIN', basePath('sort', 'TESTSRT3.Binary.IN[RECFM=F,LRECL=4]'))
         this.env.put('SORTOUT', basePath('sort', 'TESTSRT3.OUT'))
         this.env.put("SYSIN", basePath('sort', 'TESTSRT3.INI'))
         rc = this.ez390(basePath("sort", "SORT"), 'PARM(1000)', *runOptions)

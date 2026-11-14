@@ -39,6 +39,7 @@ rem and SORT.STA are created in the sort directory
 rem Note: SORT.390 is in linklib, not the sort directory
 call bat\ez390 %z_TraceMode% %sortlib%\SORT %sys390% STATS %1 %2 %3 %4 %5
 set z_ReturnCode=%ERRORLEVEL%
+if exist %sortlib%\SORT1.STA del %sortlib%\SORT1.STA /Q
 rename %sortlib%\SORT.STA SORT1.STA
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: SORT failure in sort test 1
                          goto return
@@ -46,7 +47,7 @@ if %z_ReturnCode% NEQ 0 (echo %0 ERROR: SORT failure in sort test 1
 
 rem Test 2: Test 2: TESTSRT1/2  Test all key types with 21 20 byte records
 rem                     Generate data to sort
-set SYSUT2=%sortlib%\TESTSRT1.IN
+set SYSUT2=%sortlib%\TESTSRT1.Binary.IN
 call bat\EXEC %z_TraceMode% %sortlib%\TESTSRT1 %1 %2 %3 %4 %5
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: TESTSRT1 failure generating data in sort test 2
@@ -54,12 +55,13 @@ if %z_ReturnCode% NEQ 0 (echo %0 ERROR: TESTSRT1 failure generating data in sort
                          )
 
 rem Test 3: Test 3: TESTSRT1/2  Test all key types with 21 20 byte records
-set SORTIN=%sortlib%\TESTSRT1.IN[RECFM=F,LRECL=20]
+set SORTIN=%sortlib%\TESTSRT1.Binary.IN[RECFM=F,LRECL=20]
 set SORTOUT=%sortlib%\TESTSRT1.OUT
 set SYSIN=%sortlib%\TESTSRT1.INI
 if exist %SORTOUT% erase %SORTOUT%
 call bat\ez390 %z_TraceMode% %sortlib%\SORT %sys390% STATS %1 %2 %3 %4 %5
 set z_ReturnCode=%ERRORLEVEL%
+if exist %sortlib%\SORT2.STA del %sortlib%\SORT2.STA /Q
 rename %sortlib%\SORT.STA SORT2.STA
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: SORT failure in sort test 3
                          goto return
@@ -85,7 +87,7 @@ rem                              1   100,000 = 0x000186A0
 rem                              2    99,999 = 0x0001069F
 rem                               ...
 rem                        100,000         1 = 0x00000001
-set SYSUT2=%sortlib%\TESTSRT3.IN
+set SYSUT2=%sortlib%\TESTSRT3.Binary.IN
 set parm=PARM(100000) TIME(300)
 call bat\EXEC %z_TraceMode% %sortlib%\TESTSRT3 %parm% %1 %2 %3 %4 %5
 set z_ReturnCode=%ERRORLEVEL%
@@ -95,13 +97,14 @@ if %z_ReturnCode% NEQ 0 (echo %0 ERROR: TESTSRT3 failure generating data in test
 
 rem Test 6: TESTSRT3/4  Test sorting 100000 recs using 1000 rec table
 rem                     Sort the file generated in test 5
-set SORTIN=%sortlib%\TESTSRT3.IN[RECFM=F,LRECL=4]
+set SORTIN=%sortlib%\TESTSRT3.Binary.IN[RECFM=F,LRECL=4]
 set SORTOUT=%sortlib%\TESTSRT3.OUT
 set SYSIN=%sortlib%\TESTSRT3.INI
 if exist %SORTOUT% erase %SORTOUT%
 set sortparm=PARM(1000) TIME(300)
-call bat\ez390 %z_TraceMode% %sortlib%\SORT %sys390% %sortparm% %1 %2 %3 %4 %5
+call bat\ez390 %z_TraceMode% %sortlib%\SORT %sys390% %sortparm% STATS %1 %2 %3 %4 %5
 set z_ReturnCode=%ERRORLEVEL%
+if exist %sortlib%\SORT3.STA del %sortlib%\SORT3.STA /Q
 rename %sortlib%\SORT.STA SORT3.STA
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: SORT failure in test 6
                          goto return

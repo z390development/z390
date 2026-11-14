@@ -31,10 +31,10 @@ rc=0
 
 # run ESV1TEST to create and test ESDS with 3 80 byte records
 
-export QFILE=${vsampath}/ESV1.TQ1
+export QFILE=${vsampath}/ESV1.EBCDIC.TQ1
 export VFILE=${vsampath}/TESTCAT.ESV1
 # the TQ1 and VES files are recreated by ESV1TEST; the VX0 file does not exist
-rm -f ${vsampath}/ESV1.TQ1
+rm -f ${vsampath}/ESV1.EBCDIC.TQ1
 rm -f ${vsampath}/ESV1.VES
 bash/asmlg ${vsampath}/ESV1TEST $1 $2 $3 $4 $5 $zvsam $trace
 rc=$?

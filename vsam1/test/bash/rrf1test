@@ -31,7 +31,7 @@ rc=0
 
 # run RRF1TEST to create and test RRDS with 3 80 byte records
 
-export QFILE=${vsampath}/RRF1.TF1
+export QFILE=${vsampath}/RRF1.EBCDIC.TF1
 export VFILE=${vsampath}/TESTCAT.RRF1
 rm -f ${vsampath}/RRF1.VES
 bash/asmlg ${vsampath}/RRF1TEST $1 $2 $3 $4 $5 $zvsam $trace
