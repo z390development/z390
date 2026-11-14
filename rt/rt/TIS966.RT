@@ -1,0 +1,16 @@
+*
+* Add two breakpoints
+a 8002.
+a 8006.
+*
+* go will hit first breakpoint @ 8002.
+g
+*
+* Remove first breakpoint
+a 8002.
+*
+* go hits second breakpoint @ 8006. - but reports 8002.
+g
+*
+* final go to complete the program
+z

@@ -1,0 +1,6 @@
+TIS966   CSECT
+         LR    14,14               No change
+         LR    15,15               No change
+         SR    15,15               Set return code
+         BR    14                  Return to caller
+         END
