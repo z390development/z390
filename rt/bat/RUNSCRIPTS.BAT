@@ -107,6 +107,7 @@ set  rtscript=rt\rt\RPI2009D.RT       && call bat\exec  %z_TraceMode% rt\rt\RPI2
 set  rtscript=rt\rt\RPI2009E.RT       && call bat\exec  %z_TraceMode% rt\rt\RPI2009E  sysmac(mac) noloadhigh             test(rtscript) || goto error
 set  rtscript=rt\rt\RPI2009F.RT       && call bat\exec  %z_TraceMode% rt\rt\RPI2009F  sysmac(mac) noloadhigh             test(rtscript) || goto error
 set  rtscript=rt\rt\RPI2010.RT        && call bat\asmlg %z_TraceMode% rt\rt\RPI2010   sysmac(mac) noloadhigh             test(rtscript) || goto error
+set  rtscript=rt\rt\TIS966.RT         && call bat\asmlg %z_TraceMode% rt\rt\TIS966    sysmac(mac) noloadhigh             test(rtscript) || goto error
 
 rem -- all checks passed without issue
 set z_ReturnCode=0
