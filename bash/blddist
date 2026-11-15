@@ -14,12 +14,32 @@ DIST_DIR=dist
 # build jar
 bash/bldjar                            # create the z390 jar
 
+# remove old assembly results
+# this prevents a standard build from picking up left-over modules
+find . -type f -name '*.OBJ' -delete 2>/dev/null || true
+find . -type f -name '*.390' -delete 2>/dev/null || true
+
 # generate HLASM compatible SPM's
 bash/bldzstrmac 'build/zstrmac'
 
 # build standard libraries
 bash/bldlib                            # build standard libs
 bash/bldcbllib                         # build cobol libs
+
+# build optional components when invoked with *All (any case)
+build_all=0
+for arg in "$@"; do
+  if [ "$(printf '%s' "$arg" | tr '[:upper:]' '[:lower:]')" = "*all" ]; then
+    build_all=1
+  fi
+done
+if [ "$build_all" -eq 1 ]; then
+  barcode/bld390
+  bash/bldguam
+  vsam2/bash/bldvsam
+  cics/bash/dfhall
+  cics/bash/dfhallv
+fi
 
 # Create/clean dist folder
 mkdir -p ${DIST_DIR}                   # create dist folder if does not exist
@@ -34,27 +54,40 @@ cd ${DIST_DIR}
 mkdir z390_${VERSION}
 cd z390_${VERSION}
 
-# add core files to the build dir
-cp ${ROOT_DIR}/z390.jar .               # jar
-CORE_DIRS=( bash bat mac zcobol cics linklib README.txt LICENSE )
-for dir in ${CORE_DIRS[@]}; do
-    cp -R ${ROOT_DIR}/${dir} .
-done
+# add tracked files from the working tree; listings and other ignored output stay behind
+stage=$(pwd)
+(
+    set -o pipefail
+    cd "$ROOT_DIR"
+    git ls-files -z | xargs -0 cp --parents -t "$stage"
+)
 
-# add test and supplimental components
-SUPP_DIRS=( assist demo guam qsam bsam rt soa sort structuredmacros mfacc mvs tests vsam1 
-vsam2 vse zopcheck zpar )
-for dir in ${SUPP_DIRS[@]}; do
-    cp -R ${ROOT_DIR}/${dir} .
-done
+# add load modules produced by this build, but not copies already under dist
+(
+    set -o pipefail
+    cd "$ROOT_DIR"
+    find . -type f -name '*.390' -not -path './dist/*' -print0 \
+        | xargs -0 cp --parents -t "$stage"
+)
 
-# add structured programming macros to mac/spm folder
+# add linklib object files and the jar; neither is tracked
+mkdir -p linklib
+cp -f "$ROOT_DIR"/linklib/*.OBJ linklib/
+cp -f "$ROOT_DIR/z390.jar" .
+
+# add generated structured programming macros to mac/spm folder
 mkdir -p mac/spm
-cp -R ${ROOT_DIR}/build/zstrmac/* mac/spm
+cp -f "$ROOT_DIR"/build/zstrmac/* mac/spm/
 
-# add javadoc
+# add zCICS VSAM clusters produced by DFHALLV
+mkdir -p cics/vsam
+if [ "$build_all" -eq 1 ]; then
+    cp -f "$ROOT_DIR"/cics/vsam/*.V* cics/vsam/
+fi
+
+# add javadoc, including its subfolders
 mkdir -p javadoc
-cp -R ${ROOT_DIR}/build/javadoc/* javadoc
+cp -R "$ROOT_DIR"/build/javadoc/* javadoc/
 
 # create zip package
 cd ..

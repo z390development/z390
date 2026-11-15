@@ -83,7 +83,7 @@ if [ $rc -ne 0 ]; then errmsg "error in unload of KSDS KSF1NAME"; fi
 
 # compare input and output QSAM files
 
-diff ${vsampath}/KSF1NAME.TF1 ${vsampath}/KSF1NAME.TF2 > ${vsampath}/${pgmname}.DIF
+bash/comparetextfile ${vsampath}/KSF1NAME.TF1 ${vsampath}/KSF1NAME.TF2 > ${vsampath}/${pgmname}.DIF
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "KSF1NAME: KSF1NAME.TF1 not equal to KSF1NAME.TF2"; fi
 
@@ -100,7 +100,7 @@ if [ $rc -ne 0 ]; then errmsg "error in unload of NAMELIST"; fi
 
 # compare input and output QSAM files
 
-diff ${vsampath}/KSF1NAME.TF1 ${vsampath}/KSF1NAME.TF2 > ${vsampath}/${pgmname}.DIF
+bash/comparetextfile ${vsampath}/KSF1NAME.TF1 ${vsampath}/KSF1NAME.TF2 > ${vsampath}/${pgmname}.DIF
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "NAMELIST: KSF1NAME.TF1 not equal to KSF1NAME.TF2"; fi
 
@@ -117,7 +117,7 @@ if [ $rc -ne 0 ]; then errmsg "error in unload of ADDRLIST"; fi
 
 # compare input and output QSAM files
 
-diff ${vsampath}/KSF1ADDR.TF1 ${vsampath}/KSF1ADDR.TF2 > ${vsampath}/${pgmname}.DIF
+bash/comparetextfile ${vsampath}/KSF1ADDR.TF1 ${vsampath}/KSF1ADDR.TF2 > ${vsampath}/${pgmname}.DIF
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "KSF1ADDR.TF1 not equal to KSF1ADDR.TF2"; fi
 
@@ -134,7 +134,7 @@ if [ $rc -ne 0 ]; then errmsg "error in unload of CITYLIST"; fi
 
 # compare input and output QSAM files
 
-diff ${vsampath}/KSF1CITY.TF1 ${vsampath}/KSF1CITY.TF2 > ${vsampath}/${pgmname}.DIF
+bash/comparetextfile ${vsampath}/KSF1CITY.TF1 ${vsampath}/KSF1CITY.TF2 > ${vsampath}/${pgmname}.DIF
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "KSF1CITY.TF1 not equal to KSF1CITY.TF2"; fi
 
@@ -151,7 +151,7 @@ if [ $rc -ne 0 ]; then errmsg "error in unload of STATLIST"; fi
 
 # compare input and output QSAM files
 
-diff ${vsampath}/KSF1STAT.TF1 ${vsampath}/KSF1STAT.TF2 > ${vsampath}/${pgmname}.DIF
+bash/comparetextfile ${vsampath}/KSF1STAT.TF1 ${vsampath}/KSF1STAT.TF2 > ${vsampath}/${pgmname}.DIF
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "KSF1STAT.TF1 not equal to KSF1STAT.TF2"; fi
 
@@ -168,7 +168,7 @@ if [ $rc -ne 0 ]; then errmsg "error in unload of ZIPLIST"; fi
 
 # compare input and output QSAM files
 
-diff ${vsampath}/KSF1ZIP.TF1 ${vsampath}/KSF1ZIP.TF2 > ${vsampath}/${pgmname}.DIF
+bash/comparetextfile ${vsampath}/KSF1ZIP.TF1 ${vsampath}/KSF1ZIP.TF2 > ${vsampath}/${pgmname}.DIF
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "KSF1ZIP.TF1 not equal to KSF1ZIP.TF2"; fi
 

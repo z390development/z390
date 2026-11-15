@@ -51,7 +51,7 @@ if [ $rc -ne 0 ]; then errmsg "error in ESV1SG"; fi
 
 # compare input and output QSAM files
 
-diff ${vsampath}/ESV1.TF1 ${vsampath}/ESV1.TF2 > ${vsampath}/${pgmname}.DIF
+bash/comparetextfile ${vsampath}/ESV1.TF1 ${vsampath}/ESV1.TF2 > ${vsampath}/${pgmname}.DIF
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "ESV1.TF1 not equal to ESV1.TF2"; fi
 

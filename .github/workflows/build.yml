@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       VERSION: ${{ steps.version.outputs.VERSION }}
+      MODE: ${{ steps.dist_mode.outputs.mode }}
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -30,8 +31,31 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
       - name: Install Checkstyle linter
         run: bash/getcheckstyle
+      - name: Select distribution
+        id: dist_mode
+        shell: bash
+        run: |
+          MODE=standard
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            if git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -qx 'version.txt'; then
+              MODE=full
+            fi
+          elif git rev-parse -q --verify HEAD^2 >/dev/null; then
+            if git diff --name-only HEAD^1 HEAD^2 | grep -qx 'version.txt'; then
+              MODE=full
+            fi
+          elif git diff --name-only HEAD^1 HEAD | grep -qx 'version.txt'; then
+            MODE=full
+          fi
+          echo "mode=${MODE}" >> "$GITHUB_OUTPUT"
+          echo "Mode: ${MODE}"
       - name: Build z390 distribution
-        run: bash/blddist
+        run: |
+          if [ "${{ steps.dist_mode.outputs.mode }}" = "full" ]; then
+            bash/blddist '*All'
+          else
+            bash/blddist
+          fi
       - name: Run installation verification (IVP)
         run: bash bash/ivp
         working-directory: ${{ github.workspace }}
@@ -53,24 +77,6 @@ jobs:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           java-version: ${{ env.JAVA_VERSION }}
 
-      - name: Select test mode
-        id: test_mode
-        shell: bash
-        run: |
-          MODE=standard
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            if git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -qx 'version.txt'; then
-              MODE=full
-            fi
-          elif git rev-parse -q --verify HEAD^2 >/dev/null; then
-            if git diff --name-only HEAD^1 HEAD^2 | grep -qx 'version.txt'; then
-              MODE=full
-            fi
-          elif git diff --name-only HEAD^1 HEAD | grep -qx 'version.txt'; then
-            MODE=full
-          fi
-          echo "mode=${MODE}" >> "$GITHUB_OUTPUT"
-          echo "Test mode: ${MODE}"
       - name: get dist artifact
         uses: actions/download-artifact@v4
         with:
@@ -81,7 +87,7 @@ jobs:
           unzip z390_${VERSION}.zip -d dist
           ls -l dist/z390_${VERSION}
           cp dist/z390_${VERSION}/z390.jar .
-          Z390_PROJECT_ROOT="../dist/z390_${VERSION}" z390test/gradlew -p z390test test -PtestMode=${{ steps.test_mode.outputs.mode }}
+          Z390_PROJECT_ROOT="../dist/z390_${VERSION}" z390test/gradlew -p z390test test -PtestMode=${{ needs.build-distribution.outputs.MODE }}
         env:
           VERSION: ${{ needs.build-distribution.outputs.VERSION }}
       - name: Upload z390Test output on failure
@@ -167,6 +173,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.build-distribution.outputs.VERSION }}
+          body: |
+            Download **z390_${{ needs.build-distribution.outputs.VERSION }}.zip** for the complete pre-built z390 package.
+            The Source code links are the git tree for this version, not the pre-built distribution.
           files: |
             z390_${{ needs.build-distribution.outputs.VERSION }}.zip
           generate_release_notes: true

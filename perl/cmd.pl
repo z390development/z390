@@ -144,6 +144,21 @@ sub open_bat_file_error(){
   die "exiting dos processor";
 }
 
+sub run_comparetextfile {
+  my ($left, $right, $report, $append) = @_;
+  my $mode = $append ? ">>" : ">";
+  open my $out, $mode, $report or die "comparetextfile open output $report failed: $!";
+  open my $in, "-|", "bash", "bash/comparetextfile", $left, $right
+    or die "comparetextfile failed to start: $!";
+  while (my $row = <$in>) {
+    print $out $row;
+  }
+  close $out or die "comparetextfile close output $report failed: $!";
+  close $in;
+  $errorlevel = $?;
+  print "comparetextfile errorlevel: $errorlevel\n";
+}
+
 sub batch_file($$) {
   my ($cmd, $args) = @_;
   $cmd =~ s/\\/\//g;              # replace \ with /
@@ -206,6 +221,10 @@ sub batch_file($$) {
       } elsif ($line =~ /^:\S/i) {
         # Label line
 
+# call bat\COMPARETEXTFILE.BAT path1 path2 > report
+      } elsif ($line =~ /^call\s+\S*COMPARETEXTFILE\.BAT\s+(\S+)\s+(\S+)\s*(>>?)\s*(\S+)/i) {
+        run_comparetextfile($1, $2, $4, ($3 eq ">>"));
+
 # call
       } elsif ($line =~ /^call\s+(\S+)(.*)$/i) {
         # Call another batch file:
@@ -220,23 +239,11 @@ sub batch_file($$) {
 
 # diff dir1 dir2 file3
       } elsif ($line =~ /^diff\s+(\S+)\s+(\S+)\s+(\S+)$/i) {
-        open IN, "diff -b $1 $2 |" or die "diff generation failed"; ## RPI 713 ignore white space
-        open OUT,"> $3" or die "diff open output $3 failed";
-        print OUT <IN>;
-        close IN;
-        close OUT;
-        $errorlevel = system("diff -b -q $1 $2"); ## // RPI 713 set rc, skip white space, brief
-        print "diff errorlevel: $errorlevel\n";
+        run_comparetextfile($1, $2, $3, 0);
 
 # fc dir1 dir2 > file3
-      } elsif ($line =~ /^fc\s+(\S+)\s+(\S+)\s*>\s*(\S+)$/i) {
-        open IN, "diff -b $1 $2 |" or die "diff generation failed"; ## RPI 713 ignore white space
-        open OUT,"> $3" or die "diff open output $3 failed";
-        print OUT <IN>;
-        close IN;
-        close OUT;
-        $errorlevel = system("diff -b -q $1 $2"); ## // RPI 713 set rc, skip white space, brief
-        print "diff errorlevel: $errorlevel\n";
+      } elsif ($line =~ /^fc\s+(\S+)\s+(\S+)\s*(>>?)\s*(\S+)$/i) {
+        run_comparetextfile($1, $2, $4, ($3 eq ">>"));
 
 # dir
       } elsif ($line =~ /^dir\s+(.*)$/i) {

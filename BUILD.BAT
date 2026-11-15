@@ -10,7 +10,7 @@ if /I "%1" == "tron" (set z_TraceMode=tron
                       )
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
-pushd %~dps0
+pushd %~dps0                                                     || goto nopush
 
 rem -- parse all parameters
 set buildall=
@@ -26,19 +26,30 @@ echo Error: unrecognized parameter: %1
 echo Use *All include optional components in the test
 echo     arc  <path to z390Archive> to run zvsam2 bulk load test
 echo     nist <path to nistcobol85> to run zCobol against nist test suite
-goto error
+set z_ReturnCode=1
+goto return
 
 :parm_all
 set buildall=%1
 shift /1
 goto parmloop
 :parm_nist
+if "%~2"=="" (
+    echo %0 ERROR: nist requires a path
+    set z_ReturnCode=1
+    goto return
+)
 set "nist=%~2"
 set runnist=yes
 shift /1
 shift /1
 goto parmloop
 :parm_arc
+if "%~2"=="" (
+    echo %0 ERROR: arc requires a path
+    set z_ReturnCode=1
+    goto return
+)
 set "arc=%~2"
 shift /1
 shift /1
@@ -46,11 +57,13 @@ goto parmloop
 :parmsdone
 
 rem Output Java version for CI/CD
-java -version 2>&1 | echo ::set-output name=javaversion::%
+java -version > "%TEMP%\z390-java-version.txt" 2>&1              || goto error
+set /p JAVAVER=<"%TEMP%\z390-java-version.txt"                   || goto error
+echo ::set-output name=javaversion::%JAVAVER%
 
 rem build the package -- %1 might be *ALL to include non-standard components in the build
-call bat\BLDDIST.BAT %z_TraceMode% %buildall% || goto error
-call bat\IVP.BAT     %z_TraceMode% %buildall% || goto error
+call bat\BLDDIST.BAT  %z_TraceMode% %buildall%                   || goto error
+call bat\IVP.BAT      %z_TraceMode% %buildall%                   || goto error
 
 rem run the tests - include the optional tests only when *All is in effect
 set testMode=standard
@@ -59,17 +72,23 @@ call z390test\gradlew.bat -p z390test cleanTest                  || goto error
 call z390test\gradlew.bat -p z390test test -PtestMode=%testMode% || goto error
 
 rem if arc was specified, we run the vsam2 tests
-if /I "%arc%"  NEQ "" call vsam2\bat\TSTLOADIN.BAT %z_TraceMode% "%arc%" || goto error
+if /I "%arc%"  NEQ "" (
+   call vsam2\bat\TSTLOADIN.BAT %z_TraceMode% "%arc%"            || goto error)
 rem if NIST was specified, run the NIST test suite (will error always)
 if /I "%nist%" NEQ "" call bat\RUNNIST.BAT %z_TraceMode% "%nist%"
 
 set z_ReturnCode=0
 goto return
 
+:nopush
+set z_ReturnCode=%ERRORLEVEL%
+echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
+goto exit
 :error
 set z_ReturnCode=%ERRORLEVEL%
 echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
 :return
 popd
+:exit
 rem ----- Lvl(%z_NestLevel%) End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 exit /b %z_ReturnCode%

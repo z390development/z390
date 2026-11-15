@@ -15,61 +15,44 @@ if /I "%1" == "tron" (set z_TraceMode=tron
 set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 
-pushd %~dps0..
+pushd %~dps0..                                       || goto nopush
 rem both the compiler javac.exe and jar builder jar.exe must be on sdk path
 rem note you can use current z390.jar with compatible java runtime with sdk
 
 rem process options
-set z_docs=Y
 set z_dbg=N
-set z_all=N
 :opt_loop
 if /I %1. EQU . goto options_ok
-if /I %1. EQU Nodocs.  set z_docs=N
-if /I %1. EQU docs.    set z_docs=Y
 if /I %1. EQU Debug .  set z_dbg=Y
 if /I %1. EQU Nodebug. set z_dbg=N
-if /I %1. EQU *All.    set z_all=Y
 shift /1
 goto opt_loop
 :options_ok
 
-rem download/update linter jar (version is pinned in src\checkstyle.xml)
-if not exist "build\checkstyle" mkdir build\checkstyle
-if /I %z_all% == Y powershell -NoProfile -ExecutionPolicy Bypass -File "bat\GetCheckStyle.ps1"
-if not exist "build\checkstyle\checkstyle-all.jar" goto no_linter || rem failed upgrade is no problem (hopefully) - but missing jar is
-powershell -NoProfile -ExecutionPolicy Bypass -File "bat\GetCheckStyle.ps1" -VerifyOnly
-if %ERRORLEVEL% NEQ 0 goto wrong_linter
-
-:run_linter
-java -jar build\checkstyle\checkstyle-all.jar --version
-
-rem run the linter
-java -jar build\checkstyle\checkstyle-all.jar -c src\checkstyle.xml src
-set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% NEQ 0 (echo %0 ERROR: Error while validating z390 java sources
-                         goto return
-                         )
-
 rem prepare to compile java code and create jar file
-if not exist ".\jar\" mkdir jar
-cd jar
-if exist *.* erase *.* /Q
+if not exist ".\jar\" (mkdir jar                     || goto error)
+cd jar                                               || goto error
+if exist *.* (erase *.* /F /Q                        || goto error)
 
 rem -- determine java version
+javac -version                                       || goto error
 for /f "usebackq tokens=2 delims= " %%i in (`javac -version 2^>^&1`) do (set z_ver=%%i)
 for /f "tokens=1,2,3 delims=." %%a in ("%z_ver%") do (
     set z_major=%%a
     set z_minor=%%b
     set z_patch=%%c
 )
+if not defined z_major (
+    echo %0 ERROR: cannot read javac version
+    set z_ReturnCode=1
+    goto return
+)
 if %z_major% LSS 9 (set jvopt=-source 8 -target 8) else (set jvopt=--release 8)
 if /I %z_dbg% EQU Debug (set jvopt=%jvopt% -g -d .) else (set jvopt=%jvopt% -g:none -d .)
 
 rem compile z390 java sources to class vm object code
-java -version
 echo javac %jvopt% ..\src\*.java
-javac.exe %jvopt% ..\src\*.java
+javac.exe  %jvopt% ..\src\*.java
 set z_ReturnCode=%ERRORLEVEL%
 if %z_ReturnCode% NEQ 0 (echo %0 ERROR: Error compiling z390 java sources
                          goto return
@@ -94,36 +77,22 @@ if not exist z390.jar   (echo %0 ERROR: Error z390.jar file failed to be created
                          )
 
 rem back to z390 root dir
-cd ..
-
-rem unless suppressed, generate javadoc.
-if /I %z_docs% EQU Y call bat\BLDJVDOC.BAT %z_TraceMode%
-if /I %z_docs% EQU Y set z_ReturnCode=%ERRORLEVEL%
-if %z_ReturnCode% NEQ 0 goto return
-echo .
-
-if /I %z_docs% EQU Y (set z_msg=z390.jar and javadoc have been created okay
-              ) else (set z_msg=z390.jar has been created okay
-                      )
-if exist jar\z390.jar (copy jar\z390.jar .\z390.jar /B /V /Y
-                       echo %0 %z_msg%
-                       )
+cd ..                                                || goto error
 
 rem replace jar file in z390 root (force overwrite)
-copy jar\z390.jar . /Y
+copy jar\z390.jar . /Y                               || goto error
+echo %0 z390.jar has been created okay
 goto return
 
-:no_linter
-echo linter tool CheckStyle not available - run with *All argument (or install CheckStyle manually)
-set z_ReturnCode=8
-goto return
-
-:wrong_linter
-echo linter tool CheckStyle version does not match src\checkstyle.xml - run with *All argument (or upgrade manually)
-set z_ReturnCode=8
-goto return
-
+:nopush
+set z_ReturnCode=%ERRORLEVEL%
+echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
+goto exit
+:error
+set z_ReturnCode=%ERRORLEVEL%
+echo %0 ERROR: Encountered RC %z_ReturnCode% - exiting
 :return
 popd
+:exit
 rem ----- Lvl(%z_NestLevel%)  End %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 exit /b %z_ReturnCode%
