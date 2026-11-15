@@ -115,6 +115,16 @@ bash/asmlg rt/test/TESTDCBF notiming stats bal noloadhigh
 cmp -s rt/test/TESTDCBF.OUT rt/test/TESTDCBF.TF2 || exit 1
 tr -d '\r' < rt/test/TESTDCBF.RPT | diff - <(tr -d '\r' < rt/test/TESTDCBF.TF3) || exit 1
 
+bash/asmlg rt/test/TESTDMP1 notiming stats bal noloadhigh            || test $? -eq 16
+bash/asmlg rt/test/TESTDMP2 notiming stats bal noloadhigh dump       || test $? -eq 16
+bash/asmlg rt/test/TESTDMP3 notiming stats bal noloadhigh            || test $? -eq 16
+bash/asmlg rt/test/TESTDMP4 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTDMP5 notiming stats bal noloadhigh dump ascii || test $? -eq 16
+
+
+
+
+
 
 
 bash/asml  rt/test/TESTSUB1 notiming stats bal

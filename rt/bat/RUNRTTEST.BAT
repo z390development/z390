@@ -121,6 +121,17 @@ call bat\asmlg %z_TraceMode% rt\test\TESTDCBF notiming stats bal noloadhigh %1 %
 fc rt\test\TESTDCBF.OUT rt\test\TESTDCBF.TF2 > nul || goto error
 fc rt\test\TESTDCBF.RPT rt\test\TESTDCBF.TF3 > nul || goto error
 
+call bat\asmlg %z_TraceMode% rt\test\TESTDMP1 notiming stats bal noloadhigh            %1 %2 %3 %4 %5 %6 %7 %8 %9
+     if %ERRORLEVEL% NEQ 16 goto error
+call bat\asmlg %z_TraceMode% rt\test\TESTDMP2 notiming stats bal noloadhigh dump       %1 %2 %3 %4 %5 %6 %7 %8 %9
+     if %ERRORLEVEL% NEQ 16 goto error
+call bat\asmlg %z_TraceMode% rt\test\TESTDMP3 notiming stats bal noloadhigh            %1 %2 %3 %4 %5 %6 %7 %8 %9
+     if %ERRORLEVEL% NEQ 16 goto error
+call bat\asmlg %z_TraceMode% rt\test\TESTDMP4 notiming stats bal noloadhigh            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asmlg %z_TraceMode% rt\test\TESTDMP5 notiming stats bal noloadhigh dump ascii %1 %2 %3 %4 %5 %6 %7 %8 %9
+     if %ERRORLEVEL% NEQ 16 goto error
+
+
 
 
 

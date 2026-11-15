@@ -141,6 +141,61 @@ class RunRtTest extends z390Test {
         assert expected == actual, "TESTCTD1.LOG WTO lines differ from TESTCTD1.TF1"
     }
 
+    @Test
+    void test_TESTDMP1() {
+        int rc = this.asmlg(basePath("rt", "test", "TESTDMP1"), *options)
+        this.printOutput()
+        assert rc == 16
+        loadFile(basePath('rt', 'test', "TESTDMP1.TF1"), 'TF1')
+        def expected = fileData.get('TF1').readLines()
+        def actual   = extractProgramLogLines(fileData.get('LOG'))
+        assert expected == actual, "TESTDMP1.LOG WTO lines differ from TESTDMP1.TF1"
+    }
+
+    @Test
+    void test_TESTDMP2() {
+        int rc = this.asmlg(basePath("rt", "test", "TESTDMP2"), *options, "dump")
+        this.printOutput()
+        assert rc == 16
+        loadFile(basePath('rt', 'test', "TESTDMP2.TF1"), 'TF1')
+        def expected = fileData.get('TF1').readLines()
+        def actual   = extractProgramLogLines(fileData.get('LOG'))
+        assert expected == actual, "TESTDMP2.LOG WTO lines differ from TESTDMP2.TF1"
+    }
+
+    @Test
+    void test_TESTDMP3() {
+        int rc = this.asmlg(basePath("rt", "test", "TESTDMP3"), *options)
+        this.printOutput()
+        assert rc == 16
+        loadFile(basePath('rt', 'test', "TESTDMP3.TF1"), 'TF1')
+        def expected = fileData.get('TF1').readLines()
+        def actual   = extractProgramLogLines(fileData.get('LOG'))
+        assert expected == actual, "TESTDMP3.LOG WTO lines differ from TESTDMP3.TF1"
+    }
+
+    @Test
+    void test_TESTDMP4() {
+        int rc = this.asmlg(basePath("rt", "test", "TESTDMP4"), *options)
+        this.printOutput()
+        assert rc == 0
+        loadFile(basePath('rt', 'test', "TESTDMP4.TF2"), 'TF2')
+        def expected = fileData.get('TF2').readLines()
+        def actual   = extractProgramLogLines(fileData.get('LOG'))
+        assert expected == actual, "TESTDMP4.LOG WTO lines differ from TESTDMP4.TF2"
+    }
+
+    @Test
+    void test_TESTDMP5() {
+        int rc = this.asmlg(basePath("rt", "test", "TESTDMP5"), *options, "dump", "ascii")
+        this.printOutput()
+        assert rc == 16
+        loadFile(basePath('rt', 'test', "TESTDMP5.TF1"), 'TF1')
+        def expected = fileData.get('TF1').readLines()
+        def actual   = extractProgramLogLines(fileData.get('LOG'))
+        assert expected == actual, "TESTDMP5.LOG WTO lines differ from TESTDMP5.TF1"
+    }
+
 
 
 
