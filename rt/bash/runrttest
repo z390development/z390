@@ -120,7 +120,24 @@ bash/asmlg rt/test/TESTDMP2 notiming stats bal noloadhigh dump       || test $? 
 bash/asmlg rt/test/TESTDMP3 notiming stats bal noloadhigh            || test $? -eq 16
 bash/asmlg rt/test/TESTDMP4 notiming stats bal noloadhigh
 bash/asmlg rt/test/TESTDMP5 notiming stats bal noloadhigh dump ascii || test $? -eq 16
+bash/asmlg rt/test/TESTDST1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTECB1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTENT1 notiming stats bal noloadhigh
+export sysut1=rt/test/TESTENV1.TF1
+bash/asmlg rt/test/TESTENV1 notiming stats bal noloadhigh
 
+# test Ctrl-Z handling at end of file
+cp -- rt/test/TESTEOF1.TF1 rt/test/TESTEOF1.TMP
+printf '\x1a' >> rt/test/TESTEOF1.TMP
+export SYSUT1=rt/test/TESTEOF1.TMP
+export SYSUT2=rt/test/TESTEOF1.OUT
+export SYSOUT=rt/test/TESTEOF1.RPT
+bash/asmlg rt/test/TESTEOF1 notiming stats bal noloadhigh
+tr -d '\r' < rt/test/TESTEOF1.OUT | diff - <(tr -d '\r' < rt/test/TESTEOF1.TF1) || exit 1
+tr -d '\r' < rt/test/TESTEOF1.RPT | diff - <(tr -d '\r' < rt/test/TESTEOF1.TF3) || exit 1
+export SYSUT1=
+export SYSUT2=
+export SYSOUT=
 
 
 

@@ -18,7 +18,7 @@ class RunRtTest extends z390Test {
         var tests = []
         var modules = [
                 'TESTACT1', 'TESTAIN1', 'TESTAIN2', 'TESTAIN3', 'TESTASM1', 'TESTASM2', 'TESTCAL1', 'TESTCAL2',
-                'TESTCFD1', 'TESTCPY1', 'TESTCPY2', 'TESTCVB1', 'TESTCVBG'
+                'TESTCFD1', 'TESTCPY1', 'TESTCPY2', 'TESTCVB1', 'TESTCVBG', 'TESTDST1', 'TESTENT1', 'TESTENV1'
         ]
         modules.each {
             module -> tests.add(
@@ -149,7 +149,7 @@ class RunRtTest extends z390Test {
         loadFile(basePath('rt', 'test', "TESTDMP1.TF1"), 'TF1')
         def expected = fileData.get('TF1').readLines()
         def actual   = extractProgramLogLines(fileData.get('LOG'))
-        assert expected == actual, "TESTDMP1.LOG WTO lines differ from TESTDMP1.TF1"
+        assert expected == actual, "TESTDMP1.LOG dump lines differ from TESTDMP1.TF1"
     }
 
     @Test
@@ -160,7 +160,7 @@ class RunRtTest extends z390Test {
         loadFile(basePath('rt', 'test', "TESTDMP2.TF1"), 'TF1')
         def expected = fileData.get('TF1').readLines()
         def actual   = extractProgramLogLines(fileData.get('LOG'))
-        assert expected == actual, "TESTDMP2.LOG WTO lines differ from TESTDMP2.TF1"
+        assert expected == actual, "TESTDMP2.LOG dump lines differ from TESTDMP2.TF1"
     }
 
     @Test
@@ -171,7 +171,7 @@ class RunRtTest extends z390Test {
         loadFile(basePath('rt', 'test', "TESTDMP3.TF1"), 'TF1')
         def expected = fileData.get('TF1').readLines()
         def actual   = extractProgramLogLines(fileData.get('LOG'))
-        assert expected == actual, "TESTDMP3.LOG WTO lines differ from TESTDMP3.TF1"
+        assert expected == actual, "TESTDMP3.LOG dump lines differ from TESTDMP3.TF1"
     }
 
     @Test
@@ -182,7 +182,7 @@ class RunRtTest extends z390Test {
         loadFile(basePath('rt', 'test', "TESTDMP4.TF2"), 'TF2')
         def expected = fileData.get('TF2').readLines()
         def actual   = extractProgramLogLines(fileData.get('LOG'))
-        assert expected == actual, "TESTDMP4.LOG WTO lines differ from TESTDMP4.TF2"
+        assert expected == actual, "TESTDMP4.LOG SNAP dump lines differ from TESTDMP4.TF2"
     }
 
     @Test
@@ -193,7 +193,52 @@ class RunRtTest extends z390Test {
         loadFile(basePath('rt', 'test', "TESTDMP5.TF1"), 'TF1')
         def expected = fileData.get('TF1').readLines()
         def actual   = extractProgramLogLines(fileData.get('LOG'))
-        assert expected == actual, "TESTDMP5.LOG WTO lines differ from TESTDMP5.TF1"
+        assert expected == actual, "TESTDMP5.LOG dump lines differ from TESTDMP5.TF1"
+    }
+
+    @Test
+    void test_TESTECB1() {
+        int rc = this.asmlg(basePath("rt", "test", "TESTECB1"), *options, "trace")
+        this.printOutput()
+        assert rc == 0
+        loadFile(basePath('rt', 'test', "TESTECB1.TF1"), 'TF1')
+        loadFile(basePath('rt', 'test', "TESTECB1.TRE"), 'TRE')
+        def expected = fileData.get('TF1').readLines()
+        def actual   = fileData.get('TRE').readLines()
+        assert expected == actual, "TESTECB1.TRE trace data differ from TESTECB1.TF1"
+    }
+
+    @Test
+    void test_TESTENV1() {
+        env.put('sysut1', 'rt\\test\\TESTENV1.TF1') // looks like a path, but is just a meaningless string
+        int rc = this.asmlg(basePath("rt", "test", "TESTENV1"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_TESTEOF1() {
+        this.env = [:]
+        def srcFile = new File(basePath('rt', 'test', 'TESTEOF1.TF1'))
+        def tmpFile = new File(basePath('rt', 'test', 'TESTEOF1.TMP'))
+        tmpFile.withOutputStream { out ->
+            srcFile.withInputStream { input -> out << input }
+            out.write(0x1A) // Append X'1A' byte (EOF marker)
+        }
+        env.put('SYSUT1', basePath('rt', 'test', 'TESTEOF1.TMP'))
+        env.put('SYSUT2', basePath('rt', 'test', 'TESTEOF1.OUT'))
+        env.put('SYSOUT', basePath('rt', 'test', 'TESTEOF1.RPT'))
+        int rc = this.asmlg(basePath('rt', 'test', 'TESTEOF1'), *options)
+        this.printOutput()
+        assert rc == 0
+        assertSameContent(basePath('rt', 'test', 'TESTEOF1.OUT'),
+                          basePath('rt', 'test', 'TESTEOF1.TF1'),
+                          true,
+                          'TESTEOF1.OUT')
+        assertSameContent(basePath('rt', 'test', 'TESTEOF1.RPT'),
+                          basePath('rt', 'test', 'TESTEOF1.TF3'),
+                          true,
+                          'TESTEOF1.RPT')
     }
 
 

@@ -21,14 +21,20 @@
 * Date   - 07/12/07                                                 *
 *********************************************************************
 * 07/12/07 RPI 413 TEST GETENV AND SETENV                                  
+* 2026-11-17 SETENV macro was never implemented: test GETENV only
 *********************************************************************
 TESTENV1 SUBENTRY                              
          WTO   'TESTENV1 START GETENV TEST'
-         GETENV PATH
-         LR    4,2 SAVE PATH VALUE
-         LA    5,256(4)
-         SNAP  ID=1,TEXT='PATH VALUE',STORAGE=((4),(5))
-         WTO   'TESTENV1 ENDED OK'
+         GETENV SYSUT1
+         LR    4,2 SAVE SYSUT1 VALUE
+         LA    5,20(4)
+         SNAP  ID=1,TEXT='sysut1 VALUE',STORAGE=((4),(5))
+         CLC   MYVALUE(MYLENGTH),0(4)
+         BE    OKAY
+         ABEND 137
+OKAY     WTO   'TESTENV1 ENDED OK'
          SUBEXIT
-PATH     DC    C'PATH',X'00'
+SYSUT1   DC    C'sysut1',X'00'
+MYVALUE  DC    C'rt\test\TESTENV1.TF1',X'00'
+MYLENGTH EQU   *-MYVALUE
          END

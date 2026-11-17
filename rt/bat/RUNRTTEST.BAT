@@ -120,6 +120,9 @@ set sysout=rt\test\TESTDCBF.RPT
 call bat\asmlg %z_TraceMode% rt\test\TESTDCBF notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 fc rt\test\TESTDCBF.OUT rt\test\TESTDCBF.TF2 > nul || goto error
 fc rt\test\TESTDCBF.RPT rt\test\TESTDCBF.TF3 > nul || goto error
+set sysut1=
+set sysut2=
+set sysout=
 
 call bat\asmlg %z_TraceMode% rt\test\TESTDMP1 notiming stats bal noloadhigh            %1 %2 %3 %4 %5 %6 %7 %8 %9
      if %ERRORLEVEL% NEQ 16 goto error
@@ -130,6 +133,23 @@ call bat\asmlg %z_TraceMode% rt\test\TESTDMP3 notiming stats bal noloadhigh     
 call bat\asmlg %z_TraceMode% rt\test\TESTDMP4 notiming stats bal noloadhigh            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\asmlg %z_TraceMode% rt\test\TESTDMP5 notiming stats bal noloadhigh dump ascii %1 %2 %3 %4 %5 %6 %7 %8 %9
      if %ERRORLEVEL% NEQ 16 goto error
+call bat\asmlg %z_TraceMode% rt\test\TESTDST1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asmlg %z_TraceMode% rt\test\TESTECB1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asmlg %z_TraceMode% rt\test\TESTENT1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+set sysut1=rt\test\TESTENV1.TF1
+call bat\asmlg %z_TraceMode% rt\test\TESTENV1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+
+rem test Ctrl-Z handling at end of file
+copy /y /a rt\test\TESTEOF1.TF1 "rt\test\TESTEOF1.TMP" >nul && rem this creates a copy with Ctrl-Z appended
+set sysut1=rt\test\TESTEOF1.TMP
+set sysut2=rt\test\TESTEOF1.OUT
+set sysout=rt\test\TESTEOF1.RPT
+call bat\asmlg %z_TraceMode% rt\test\TESTEOF1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+fc rt\test\TESTEOF1.OUT rt\test\TESTEOF1.TF1 > nul || goto error
+fc rt\test\TESTEOF1.RPT rt\test\TESTEOF1.TF3 > nul || goto error
+set sysut1=
+set sysut2=
+set sysout=
 
 
 
