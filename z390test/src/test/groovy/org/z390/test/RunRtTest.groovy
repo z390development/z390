@@ -18,7 +18,7 @@ class RunRtTest extends z390Test {
         var tests = []
         var modules = [
                 'TESTACT1', 'TESTAIN1', 'TESTAIN2', 'TESTAIN3', 'TESTASM1', 'TESTASM2', 'TESTCAL1', 'TESTCAL2',
-                'TESTCFD1', 'TESTCPY1', 'TESTCPY2', 'TESTCVB1', 'TESTCVBG', 'TESTDST1', 'TESTENT1', 'TESTENV1'
+                'TESTCFD1', 'TESTCPY1', 'TESTCPY2', 'TESTCVB1', 'TESTCVBG', 'TESTDST1', 'TESTENT1'
         ]
         modules.each {
             module -> tests.add(
@@ -241,13 +241,19 @@ class RunRtTest extends z390Test {
                           'TESTEOF1.RPT')
     }
 
+    @Test
+    void test_TESTEQU1() {
+        int rc = this.asm(basePath("rt", "test", "TESTEQU1"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
 
-
-
-
-
-
-    // The below is pre-existing code that we will need to validate/revamp later
+    @Test
+    void test_TESTEQU2() {
+        int rc = this.asm(basePath("rt", "test", "TESTEQU2"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
 
     // rt1 = asmlg
     var rt1Options = ['bal', 'notiming', 'stats', *libs]

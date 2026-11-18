@@ -151,6 +151,8 @@ set sysut1=
 set sysut2=
 set sysout=
 
+call bat\asm   %z_TraceMode% rt\test\TESTEQU1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asm   %z_TraceMode% rt\test\TESTEQU2 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 
 
 

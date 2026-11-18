@@ -139,6 +139,8 @@ export SYSUT1=
 export SYSUT2=
 export SYSOUT=
 
+bash/asm   rt/test/TESTEQU1 notiming stats bal noloadhigh
+bash/asm   rt/test/TESTEQU2 notiming stats bal noloadhigh
 
 
 
