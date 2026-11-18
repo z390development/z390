@@ -226,6 +226,12 @@ class RunAsmTests extends z390Test {
         assert expected == errLines, "IS704.ERR diagnostics differ from IS704.TF1"
     }
     @Test
+    void test_IS943() { // just assemble - no linkage or execution needed for this test
+        int rc = this.asm(basePath("rt", "mlc", "IS943"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+    @Test
     void test_GETMINI() {
         int rc = this.asmlg(basePath("rt", "mlc", "GETMINI"), *options, 'optable(z390)', "SYSOBJ(${basePath("linklib")})")
         this.printOutput()
