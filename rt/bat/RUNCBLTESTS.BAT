@@ -93,7 +93,7 @@ call bat\CBLCLG %z_TraceMode% zcobol\tests\YOUZPI2  %1 %2 %3 %4 %5 %6 %7 %8 %9 |
 set INFILE=zcobol\tests\SORTASC.TF1
 set OUTFILE=zcobol\tests\SORTASC.OUT
 call bat\CBLCLG %z_TraceMode% zcobol\tests\SORTASC  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-fc zcobol\tests\SORTASC.OUT zcobol\tests\SORTASC.EBCDIC.TF2 > nul || goto error
+fc zcobol\tests\SORTASC.OUT zcobol\tests\SORTASC.TF2 > nul || goto error
 set INFILE=zcobol\tests\SORTDEF.EBCDIC.TF1
 set OUTFILE=zcobol\tests\SORTDEF.OUT
 call bat\CBLCLG %z_TraceMode% zcobol\tests\SORTDEF  %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
