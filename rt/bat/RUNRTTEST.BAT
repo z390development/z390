@@ -133,11 +133,11 @@ call bat\asmlg %z_TraceMode% rt\test\TESTDMP3 notiming stats bal noloadhigh     
 call bat\asmlg %z_TraceMode% rt\test\TESTDMP4 notiming stats bal noloadhigh            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\asmlg %z_TraceMode% rt\test\TESTDMP5 notiming stats bal noloadhigh dump ascii %1 %2 %3 %4 %5 %6 %7 %8 %9
      if %ERRORLEVEL% NEQ 16 goto error
-call bat\asmlg %z_TraceMode% rt\test\TESTDST1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asmlg %z_TraceMode% rt\test\TESTECB1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\asmlg %z_TraceMode% rt\test\TESTENT1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asmlg %z_TraceMode% rt\test\TESTDST1 notiming stats bal noloadhigh            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asmlg %z_TraceMode% rt\test\TESTECB1 notiming stats bal noloadhigh nostats    %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asmlg %z_TraceMode% rt\test\TESTENT1 notiming stats bal noloadhigh            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 set sysut1=rt\test\TESTENV1.TF1
-call bat\asmlg %z_TraceMode% rt\test\TESTENV1 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
+call bat\asmlg %z_TraceMode% rt\test\TESTENV1 notiming stats bal noloadhigh            %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 
 rem test Ctrl-Z handling at end of file
 copy /y /a rt\test\TESTEOF1.TF1 "rt\test\TESTEOF1.TMP" >nul && rem this creates a copy with Ctrl-Z appended

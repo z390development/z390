@@ -121,7 +121,7 @@ bash/asmlg rt/test/TESTDMP3 notiming stats bal noloadhigh            || test $? 
 bash/asmlg rt/test/TESTDMP4 notiming stats bal noloadhigh
 bash/asmlg rt/test/TESTDMP5 notiming stats bal noloadhigh dump ascii || test $? -eq 16
 bash/asmlg rt/test/TESTDST1 notiming stats bal noloadhigh
-bash/asmlg rt/test/TESTECB1 notiming stats bal noloadhigh
+bash/asmlg rt/test/TESTECB1 notiming stats bal noloadhigh nostats
 bash/asmlg rt/test/TESTENT1 notiming stats bal noloadhigh
 export sysut1=rt/test/TESTENV1.TF1
 bash/asmlg rt/test/TESTENV1 notiming stats bal noloadhigh

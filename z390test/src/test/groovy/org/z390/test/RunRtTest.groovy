@@ -200,7 +200,7 @@ class RunRtTest extends z390Test {
 
     @Test
     void test_TESTECB1() {
-        int rc = this.asmlg(basePath("rt", "test", "TESTECB1"), *options, "trace")
+        int rc = this.asmlg(basePath("rt", "test", "TESTECB1"), *options, "trace", "nostats")
         this.printOutput()
         assert rc == 0
         loadFile(basePath('rt', 'test', "TESTECB1.TF1"), 'TF1')
