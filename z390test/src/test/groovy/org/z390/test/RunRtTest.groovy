@@ -181,7 +181,9 @@ class RunRtTest extends z390Test {
         assert rc == 0
         loadFile(basePath('rt', 'test', "TESTDMP4.TF2"), 'TF2')
         def expected = fileData.get('TF2').readLines()
-        def actual   = extractProgramLogLines(fileData.get('LOG'))
+         def path = basePath('rt', 'test') + File.separator
+         def actual = extractProgramLogLines(fileData.get('LOG'))
+             .collect { it.replace(path, '<path>') }
         assert expected == actual, "TESTDMP4.LOG SNAP dump lines differ from TESTDMP4.TF2"
     }
 
