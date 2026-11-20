@@ -18,6 +18,7 @@
 ***********************************************************************
 * Author - Don Higgins                                                *
 * 05/05/06 RPI 280 test ECBLIST using 2 command processes                                 
+* 2026-11-20 AFK Assemble with NOSTATS to avoid IO count differences
 *********************************************************************
          TITLE 'TESTECB1 TEST WAIT ECBLIST USING STIMER EXIT'
 TESTECB1 SUBENTRY

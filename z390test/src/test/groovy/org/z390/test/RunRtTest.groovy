@@ -18,7 +18,7 @@ class RunRtTest extends z390Test {
         var tests = []
         var modules = [
                 'TESTACT1', 'TESTAIN1', 'TESTAIN2', 'TESTAIN3', 'TESTASM1', 'TESTASM2', 'TESTCAL1', 'TESTCAL2',
-                'TESTCFD1', 'TESTCPY1', 'TESTCPY2', 'TESTCVB1', 'TESTCVBG'
+                'TESTCFD1', 'TESTCPY1', 'TESTCPY2', 'TESTCVB1', 'TESTCVBG', 'TESTDST1', 'TESTENT1'
         ]
         modules.each {
             module -> tests.add(
@@ -141,13 +141,122 @@ class RunRtTest extends z390Test {
         assert expected == actual, "TESTCTD1.LOG WTO lines differ from TESTCTD1.TF1"
     }
 
+    @Test
+    void test_TESTDMP1() {
+        int rc = this.asmlg(basePath("rt", "test", "TESTDMP1"), *options)
+        this.printOutput()
+        assert rc == 16
+        loadFile(basePath('rt', 'test', "TESTDMP1.TF1"), 'TF1')
+        def expected = fileData.get('TF1').readLines()
+        def actual   = extractProgramLogLines(fileData.get('LOG'))
+        assert expected == actual, "TESTDMP1.LOG dump lines differ from TESTDMP1.TF1"
+    }
 
+    @Test
+    void test_TESTDMP2() {
+        int rc = this.asmlg(basePath("rt", "test", "TESTDMP2"), *options, "dump")
+        this.printOutput()
+        assert rc == 16
+        loadFile(basePath('rt', 'test', "TESTDMP2.TF1"), 'TF1')
+        def expected = fileData.get('TF1').readLines()
+        def actual   = extractProgramLogLines(fileData.get('LOG'))
+        assert expected == actual, "TESTDMP2.LOG dump lines differ from TESTDMP2.TF1"
+    }
 
+    @Test
+    void test_TESTDMP3() {
+        int rc = this.asmlg(basePath("rt", "test", "TESTDMP3"), *options)
+        this.printOutput()
+        assert rc == 16
+        loadFile(basePath('rt', 'test', "TESTDMP3.TF1"), 'TF1')
+        def expected = fileData.get('TF1').readLines()
+        def actual   = extractProgramLogLines(fileData.get('LOG'))
+        assert expected == actual, "TESTDMP3.LOG dump lines differ from TESTDMP3.TF1"
+    }
 
+    @Test
+    void test_TESTDMP4() {
+        int rc = this.asmlg(basePath("rt", "test", "TESTDMP4"), *options)
+        this.printOutput()
+        assert rc == 0
+        loadFile(basePath('rt', 'test', "TESTDMP4.TF2"), 'TF2')
+        def expected = fileData.get('TF2').readLines()
+         def path = basePath('rt', 'test') + File.separator
+         def actual = extractProgramLogLines(fileData.get('LOG'))
+             .collect { it.replace(path, '<path>') }
+        assert expected == actual, "TESTDMP4.LOG SNAP dump lines differ from TESTDMP4.TF2"
+    }
 
+    @Test
+    void test_TESTDMP5() {
+        int rc = this.asmlg(basePath("rt", "test", "TESTDMP5"), *options, "dump", "ascii")
+        this.printOutput()
+        assert rc == 16
+        loadFile(basePath('rt', 'test', "TESTDMP5.TF1"), 'TF1')
+        def expected = fileData.get('TF1').readLines()
+        def actual   = extractProgramLogLines(fileData.get('LOG'))
+        assert expected == actual, "TESTDMP5.LOG dump lines differ from TESTDMP5.TF1"
+    }
 
+    @Test
+    void test_TESTECB1() {
+        int rc = this.asmlg(basePath("rt", "test", "TESTECB1"), *options, "trace", "nostats")
+        this.printOutput()
+        assert rc == 0
+        loadFile(basePath('rt', 'test', "TESTECB1.TF1"), 'TF1')
+        loadFile(basePath('rt', 'test', "TESTECB1.TRE"), 'TRE')
+        def expected = fileData.get('TF1').readLines()
+        def path   = basePath('rt', 'test') + File.separator
+        def actual = fileData.get('TRE').readLines().collect { it.replace(path, '<path>') }
+        assert expected == actual, "TESTECB1.TRE trace data differ from TESTECB1.TF1"
+    }
 
-    // The below is pre-existing code that we will need to validate/revamp later
+    @Test
+    void test_TESTENV1() {
+        env.put('sysut1', 'rt\\test\\TESTENV1.TF1') // looks like a path, but is just a meaningless string
+        int rc = this.asmlg(basePath("rt", "test", "TESTENV1"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_TESTEOF1() {
+        this.env = [:]
+        def srcFile = new File(basePath('rt', 'test', 'TESTEOF1.TF1'))
+        def tmpFile = new File(basePath('rt', 'test', 'TESTEOF1.TMP'))
+        tmpFile.withOutputStream { out ->
+            srcFile.withInputStream { input -> out << input }
+            out.write(0x1A) // Append X'1A' byte (EOF marker)
+        }
+        env.put('SYSUT1', basePath('rt', 'test', 'TESTEOF1.TMP'))
+        env.put('SYSUT2', basePath('rt', 'test', 'TESTEOF1.OUT'))
+        env.put('SYSOUT', basePath('rt', 'test', 'TESTEOF1.RPT'))
+        int rc = this.asmlg(basePath('rt', 'test', 'TESTEOF1'), *options)
+        this.printOutput()
+        assert rc == 0
+        assertSameContent(basePath('rt', 'test', 'TESTEOF1.OUT'),
+                          basePath('rt', 'test', 'TESTEOF1.TF1'),
+                          true,
+                          'TESTEOF1.OUT')
+        assertSameContent(basePath('rt', 'test', 'TESTEOF1.RPT'),
+                          basePath('rt', 'test', 'TESTEOF1.TF3'),
+                          true,
+                          'TESTEOF1.RPT')
+    }
+
+    @Test
+    void test_TESTEQU1() {
+        int rc = this.asm(basePath("rt", "test", "TESTEQU1"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
+
+    @Test
+    void test_TESTEQU2() {
+        int rc = this.asm(basePath("rt", "test", "TESTEQU2"), *options)
+        this.printOutput()
+        assert rc == 0
+    }
 
     // rt1 = asmlg
     var rt1Options = ['bal', 'notiming', 'stats', *libs]
