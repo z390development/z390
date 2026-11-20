@@ -25,6 +25,7 @@
 * 04/26/07 RPI 600 CORRECT DUPLICATE ID= ON SNAP    
 * 07/05/07 RPI 642 TEST TEXT=(REG) WITH NULL TERM SUPPORT
 * 04/18/09 RPI 1017 ADD MF=L/E TESTS                         
+* 2026-11-20 AFK Adjust hardcoded path to be valid on Linux              AFK
 *********************************************************************
 TESTDMP4 SUBENTRY
          WTO   'TESTDMP4 TEST SNAP DUMP OPTIONS'
@@ -49,7 +50,7 @@ LIST4    SNAP  MF=L,PDATA=ALL,ID=4,STORAGE=(LIST2,LIST4),TEXT='LIST4'
 TEXT     DC    C'TEST TEXT=(2)',X'00' RPI 642
 SYSUT1   DCB   RECFM=FT,BLKSIZE=80,MACRF=GM,                           X
                DSNAME=DSN1
-DSN1     DC    C'rt\test\TESTDMP4.TF1',X'00'
+DSN1     DC    C'rt/test/TESTDMP4.TF1',X'00'                             AFK
 DATA1    DC    C'MEMORY DUMP AREA'
 DATA2    EQU   *
          DCBD

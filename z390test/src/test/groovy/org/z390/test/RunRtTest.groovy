@@ -204,7 +204,8 @@ class RunRtTest extends z390Test {
         loadFile(basePath('rt', 'test', "TESTECB1.TF1"), 'TF1')
         loadFile(basePath('rt', 'test', "TESTECB1.TRE"), 'TRE')
         def expected = fileData.get('TF1').readLines()
-        def actual   = fileData.get('TRE').readLines()
+        def path   = basePath('rt', 'test') + File.separator
+        def actual = fileData.get('TRE').readLines().collect { it.replace(path, '<path>') }
         assert expected == actual, "TESTECB1.TRE trace data differ from TESTECB1.TF1"
     }
 
