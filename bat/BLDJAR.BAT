@@ -34,6 +34,13 @@ shift /1
 goto opt_loop
 :options_ok
 
+rem check tracked text files for control bytes or a missing final line ending
+powershell -NoProfile -ExecutionPolicy Bypass -File "bat\CheckTextFiles.PS1"
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% NEQ 0 (echo %0 ERROR: text file check failed
+                         goto return
+                         )
+
 rem download/update linter jar (version is pinned in src\checkstyle.xml)
 if not exist "build\checkstyle" mkdir build\checkstyle
 if /I %z_all% == Y powershell -NoProfile -ExecutionPolicy Bypass -File "bat\GetCheckStyle.ps1"

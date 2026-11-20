@@ -38,19 +38,19 @@ bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "error in load of KSDS KSF1NAME"; fi
 
-# unload KSDS KSF1NAME.VES to KSF1NAME.TF2
+# unload KSDS KSF1NAME.VES to KSF1NAME.OUT
 
-rm -f ${vsampath}/KSF1NAME.TF2
+rm -f ${vsampath}/KSF1NAME.OUT
 export INFILE=${vsampath}/TESTCAT.KSF1NAME
-export OUTFILE=${vsampath}/KSF1NAME.TF2[RECFM=FT]
+export OUTFILE=${vsampath}/KSF1NAME.OUT[RECFM=FT]
 bash/exec linklib/REPRO $1 $2 $3 $4 $5 $zvsam $trace
 rc=$?
 if [ $rc -ne 0 ]; then errmsg "error in unload of KSDS KSF1NAME"; fi
 
 # compare input and output QSAM files
 
-diff ${vsampath}/KSF1NAME.TF1 ${vsampath}/KSF1NAME.TF2 > ${vsampath}/${pgmname}.DIF
+diff ${vsampath}/KSF1NAME.TF1 ${vsampath}/KSF1NAME.OUT > ${vsampath}/${pgmname}.DIF
 rc=$?
-if [ $rc -ne 0 ]; then errmsg "KSF1NAME.TF1 not equal to KSF1NAME.TF2"; fi
+if [ $rc -ne 0 ]; then errmsg "KSF1NAME.TF1 not equal to KSF1NAME.OUT"; fi
 
 exit $rc
