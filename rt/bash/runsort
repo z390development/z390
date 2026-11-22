@@ -35,7 +35,7 @@ cp sort/SORT.STA sort/SORT1.STA
 
 # Test 2: TESTSRT1/2  Test all key types with 21 20 byte records
 #                     Generate data to sort
-export SYSUT2=sort/TESTSRT1.IN
+export SYSUT2=sort/TESTSRT1.Binary.IN
 bash/exec sort/TESTSRT1 $1 $2 $3 $4 $5
 rc=$?
 if [ "$rc" -ne "0" ]; then
@@ -44,7 +44,7 @@ fi
 
 # Test 3: TESTSRT1/2  Test all key types with 21 20 byte records
 #                     Sort the data generated in Test 2
-export SORTIN=sort/TESTSRT1.IN[RECFM=F,LRECL=20]
+export SORTIN=sort/TESTSRT1.Binary.IN[RECFM=F,LRECL=20]
 export SORTOUT=sort/TESTSRT1.OUT
 export SYSIN=sort/TESTSRT1.INI
 if [ -f sort/TESTSRT1.OUT ]; then rm sort/TESTSRT1.OUT; fi
@@ -77,7 +77,7 @@ fi
 #                               ...
 #                        100,000         1 = 0x00000001
 
-export SYSUT2=sort/TESTSRT3.IN
+export SYSUT2=sort/TESTSRT3.Binary.IN
 parm="PARM(100000) TIME(300)"
 bash/exec sort/TESTSRT3 $parm $1 $2 $3 $4 $5
 rc=$?
@@ -87,7 +87,7 @@ fi
 
 # Test 6: TESTSRT3/4  Test sorting 100000 recs using 1000 rec table
 #                     Sort the file generated in test 5
-export SORTIN=sort/TESTSRT3.IN[RECFM=F,LRECL=4]
+export SORTIN=sort/TESTSRT3.Binary.IN[RECFM=F,LRECL=4]
 export SORTOUT=sort/TESTSRT3.OUT
 export SYSIN=sort/TESTSRT3.INI
 if [ -f sort/TESTSRT3.OUT ]; then rm sort/TESTSRT3.OUT; fi
