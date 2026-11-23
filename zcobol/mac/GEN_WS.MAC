@@ -40,6 +40,7 @@
 .* 04/05/11 RPI 1139 SETA INDEX ARG IN QUOTES FOR HLASM COMP.
 .* 01/26/12 RPI 1181 correct literal values with _ vs -
 .* 02/16/12 RPI 1181 don't issue error for 0 length FILLER
+.* 05/17/26 #808     WRITE not recognizing BEFORE / AFTER clauses
 *********************************************************************
          GEN_WS      
          COPY  ZC_WS   
@@ -62,6 +63,7 @@ ZC_WSLOC LOCTR
          :&GRP_VAL SETC ''
          :&GRP_LVL SETA 0   
          :&I       SETA  1
+         :&ZC_ALL_BLANKS_LRECL SETA 0 Size of all blanks record area    #808
          AWHILE (&I LE &SYM_TOT)
             ACTR 1000
 .*
@@ -164,6 +166,15 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
             AEND
             :&I SETA &I+1
          AEND
+.*                                                                      #808
+.* Add all-blanks buffer to support WRITE with ADVANCING clause         #808
+.* For files with Fixed-record lengths the RDW must be skipped          #808
+.*                                                                      #808
+         AIF   (&ZC_ALL_BLANKS_LRECL NE 0)                              #808
+ZC_ALL_BLNKS_RECORD_LENGTH DS XL4(0)       Record Descriptor Word       #808
+ZC_ALL_BLNKS_RECORD_SPACES DS CL(&ZC_ALL_BLANKS_LRECL)' '               #808
+ZC_ALL_BLNKS_RECORD_CNTRL  DS CL2' '       1 or 2 control chars         #808
+         AEND                                                           #808
          MEXIT
 .*
 .* GEN WS DC
@@ -370,6 +381,19 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
                :&DDNAME  SETC  'DDNAME=&FILE_DDNAME(&FILE_IX)'
      AEND
      AIF       ('&FILE_ORG(&FILE_IX)' EQ 'LSEQ')       
+.*                                                                      #808
+.* GEN DCB mapping (only once)                                          #808
+.*                                                                      #808
+               AIF  (NOT &DCBD)    RPI 1048 FIX FWD REF TO DCBLEN
+                    :&DCBD SETB 1  RPI 1048
+                    DCBD ,         RPI 1048
+               AEND                     RPI 1048
+.*                                                                      #808
+.* Determine max of minimum record lengths over all files               #808
+.* This is needed to allocate a blanks area to support ADVANCING clause #808
+               AIF (&FILE_LRECL1 GT &ZC_ALL_BLANKS_LRECL)               #808
+                   :&ZC_ALL_BLANKS_LRECL SETA &FILE_LRECL1              #808
+               AEND                                                     #808
 .*
 .* GEN DCB FOR LINE SEQUENTIAL (FT/VT)
 .*
@@ -380,11 +404,11 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
                    :&RECFM SETC 'FT'
                    :&LRECL SETA &FILE_LRECL2(&FILE_IX)
                AEND
-               AIF  (NOT &DCBD)    RPI 1048 FIX FWD REF TO DCBLEN
-                    :&DCBD SETB 1  RPI 1048
-         DCBD ,         RPI 1048
-               AEND                     RPI 1048
 &FILE_NAME(&FILE_IX) DCB DSORG=PS,RECFM=&RECFM,BLKSIZE=&LRECL,&DDNAME
+.* If LINAGE clause present on FD add room for counters                 #808
+         AIF   ('&FILE_LINAGE(&FILE_IX)' NE '')                         #808
+         DC    4H'0' 4 unnamed halfwords: LINAGE,FOOTING, TOP, BOTTOM   #808
+         AEND                                                           #808
      AELSEIF ('&FILE_ORG(&FILE_IX)' EQ 'QSAM')
 .*
 .* GEN DCB FOR SEQUENTIAL (F/V)
@@ -396,11 +420,12 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
                    :&RECFM SETC 'F'
                    :&LRECL SETA &FILE_LRECL2(&FILE_IX)
                AEND
-               AIF  (NOT &DCBD)    RPI 1048 FIX FWD REF TO DCBLEN
-                    :&DCBD SETB 1  RPI 1048
-         DCBD ,         RPI 1048
-               AEND                     RPI 1048
+  mnote 8,'**!! LRECL=&LRECL'
 &FILE_NAME(&FILE_IX) DCB DSORG=PS,RECFM=&RECFM,BLKSIZE=&LRECL,&DDNAME
+.* If LINAGE clause present on FD add room for counters                 #808
+         AIF   ('&FILE_LINAGE(&FILE_IX)' NE '')                         #808
+         DC    4H'0' 4 unnamed halfwords: LINAGE,FOOTING, TOP, BOTTOM   #808
+         AEND                                                           #808
      AELSEIF ('&FILE_ORG(&FILE_IX)' EQ 'KSDS')
 .*
 .* GEN ACB FOR INDEXED 
@@ -418,10 +443,6 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
                        AEND
                    AEND
                AEND
-               AIF  (NOT &DCBD)    RPI 1048 FIX FWD REF TO DCBLEN
-                    :&DCBD SETB 1  RPI 1048
-         DCBD ,         RPI 1048
-               AEND                     RPI 1048
 &FILE_NAME(&FILE_IX) DCB DSORG=PS,RECFM=&RECFM,BLKSIZE=&LRECL,&DDNAME
      AELSEIF ('&FILE_ORG(&FILE_IX)' EQ 'RRDS')
 .*
@@ -440,10 +461,6 @@ ZC_WS_LOC_&I EQU *-ZC_WS CHECK &SYM_NAME(&I) WS LOC
                        AEND
                    AEND
                AEND
-               AIF  (NOT &DCBD)    RPI 1048 FIX FWD REF TO DCBLEN
-                    :&DCBD SETB 1  RPI 1048
-         DCBD ,         RPI 1048
-               AEND                     RPI 1048
 &FILE_NAME(&FILE_IX) DCB DSORG=PS,RECFM=&RECFM,BLKSIZE=&LRECL,&DDNAME
      AELSE
                MNOTE 8,'GEN_WS UNKNOWN FILE ORG - &FILE_ORG(&FILE_IX)'
