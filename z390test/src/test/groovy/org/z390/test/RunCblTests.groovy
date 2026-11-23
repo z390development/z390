@@ -131,13 +131,13 @@ class RunCblTests extends z390Test{
 
     @Test
     void testSORTDEF() {
-        this.env.put('INFILE', basePath('zcobol', 'tests', 'SORTDEF.TF1'))
+        this.env.put('INFILE', basePath('zcobol', 'tests', 'SORTDEF.EBCDIC.TF1'))
         this.env.put('OUTFILE', basePath('zcobol', 'tests', 'SORTDEF.OUT'))
         int rc = this.cblclg(basePath("zcobol", "tests", "SORTDEF"), 'TIME(30)')
         this.printOutput()
         assert rc == 0
         assert CompareTextFile(basePath('zcobol', 'tests', 'SORTDEF.OUT'),
-                                basePath('zcobol', 'tests', 'SORTDEF.TF2')), compareTextFileReport
+                                basePath('zcobol', 'tests', 'SORTDEF.EBCDIC.TF2')), compareTextFileReport
     }
 
     @Test

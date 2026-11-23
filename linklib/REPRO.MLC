@@ -41,6 +41,7 @@
 * 10/13/10 RPI 1130 REMOVE SNAP ID=123
 * 10/16/10 RPI 1130 USE BASE CLUSTER PATH FOR AIX
 * 10/18/10 RPI 1130 CORRECT AIX BUFFER TO PREVENT OVERLAY, FIX LRECL
+* 2026-10-18 AFK #961 Fix override detection on file designation
 *********************************************************************
 *
 *  REPRO WILL LOAD OR UNLOAD VSAM FILE FROM/TO QSAM FILE 
@@ -184,21 +185,33 @@ VCATMVC  MVC   VCATDSN(0),0(R8)  MOVE VSAM CATALOG DSN
 * CHECK QSAM OVERRIDE
 *
 CHECK_QSAM_OVERRIDE PENTRY
-         LR   R9,R8  SAVE QSAM DSNAME
-         IF   (CLI,PER_BRK_CHAR,EQ,C'.')
-              L  R1,PER_BRK_ADDR
-              IF (TRT,1(255,R1),NE,FIND_PER_BRK_NULL)
-                 IF (CLI,0(R1),EQ,C'[')
-                    ST R1,PER_BRK_ADDR
-                    PM SET_QFILE_RECFM
-                 ENDIF
-              ENDIF
-         ELSE
-              IF   (CLI,PER_BRK_CHAR,EQ,C'[')
-                    PM SET_QFILE_RECFM
-              ENDIF
-         ENDIF
-         PEXIT
+         LR    R9,R8              R9 = QSAM DSNAME, INCL. ANY [RECFM=]  #961
+         STM   R1,R2,QSAMSAVE     TRT/TRTR RESULTS                      #961
+         ST    R15,QSAMSAVE+8     EX LENGTH REGISTER                    #961
+         TRT   0(256,R8),FIND_BRK_NULL  STOP ON ']' OR X'00'            #961
+         BZ    QSAMREST           NO ']' AND NO NULL IN 256 BYTES       #961
+         CLI   0(R1),C']'                                               #961
+         BNE   QSAMREST           STOPPED ON THE TERMINATING NULL       #961
+         CLI   1(R1),X'00'                                              #961
+         BNE   QSAMREST           ']' IS NOT THE LAST BYTE OF THE SPEC  #961
+*                                                                       #961
+* R1 = TERMINATING ']'.  TRT THE BYTES IN FRONT OF IT FOR '['.          #961
+* Z390 TRTR WALKS TOWARD LOWER ADDRESSES, SO IT CANNOT BE USED HERE.    #961
+*                                                                       #961
+         LR    R15,R1                                                   #961
+         SR    R15,R8             BYTES FROM R8 UP TO BUT EXCLUDING ']' #961
+         BNP   QSAMREST           ']' IS THE FIRST BYTE                 #961
+         BCTR  R15,0              EX LENGTH IS LENGTH-1                 #961
+         EX    R15,QSAMTRT                                              #961
+         BZ    QSAMREST           NO OPENING '['                        #961
+         ST    R1,PER_BRK_ADDR    R1 = '['                              #961
+         PM    SET_QFILE_RECFM    PLANT X'00' AT '[' AND SET RECFM      #961
+QSAMREST DS    0H                                                       #961
+         LM    R1,R2,QSAMSAVE                                           #961
+         L     R15,QSAMSAVE+8                                           #961
+         PEXIT                                                          #961
+QSAMTRT  TRT   0(0,R8),FIND_OPEN_BRK                                    #961
+         PEXIT                                                          #961
 *
 * SET QFILE RECFM OVERRIDE
 *
@@ -900,6 +913,7 @@ VCATDSN  DC    CL256' '
 VCAT390  DC    C'.390',X'00'
 PER_BRK_CHAR DC C'X'  PERIOD, BRACKET, OR NULL TERM CHAR
 PER_BRK_ADDR DC A(0)  ADDR OF TERM CHAR
+QSAMSAVE DS    3F                 SAVED R1, R2, R15                     #961
 FIND_PER_BRK_NULL DC 256X'00'
          ORG   FIND_PER_BRK_NULL+X'00'
          DC    X'FF' STOP ON SOURCE NULL
@@ -918,6 +932,20 @@ VAIX_AREA  DC  A(0)   AIX  RECORD AREA
 VSAM_LRECL DC  F'0'   VSAM LRECL
 VSAM_AREA  DC  A(0)   VSAM RECORD AREA
          LTORG
+
+* Translate table for finding the opening [ and closing ]               #961
+* in a file designation that may have an override                       #961
+FIND_BRK_NULL DC 256X'00'        STOP ON ']' OR X'00', NOT ON '.'       #961
+         ORG   FIND_BRK_NULL+X'00'                                      #961
+         DC    X'FF'                                                    #961
+         ORG   FIND_BRK_NULL+C']'                                       #961
+         DC    C']'                                                     #961
+         ORG                                                            #961
+FIND_OPEN_BRK DC 256X'00'        TRTR STOPS ONLY ON '['                 #961
+         ORG   FIND_OPEN_BRK+C'['                                       #961
+         DC    C'['                                                     #961
+
+         ORG
          EQUREGS
          VCDTD
          END

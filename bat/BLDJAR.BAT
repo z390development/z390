@@ -29,6 +29,13 @@ shift /1
 goto opt_loop
 :options_ok
 
+rem check tracked text files for control bytes or a missing final line ending
+powershell -NoProfile -ExecutionPolicy Bypass -File "bat\CheckTextFiles.PS1"
+set z_ReturnCode=%ERRORLEVEL%
+if %z_ReturnCode% NEQ 0 (echo %0 ERROR: text file check failed
+                         goto return
+                         )
+
 rem prepare to compile java code and create jar file
 if not exist ".\jar\" (mkdir jar                     || goto error)
 cd jar                                               || goto error

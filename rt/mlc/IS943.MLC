@@ -1,0 +1,16 @@
+*
+* This is a simplification of a program supplied by Lin Lyons
+* to reproduce the issue reported as #943 on github.
+*      The original failure was error 188:
+*      PARM EQU QDAYDATE+145,100
+*
+IS943    CSECT
+PARM     EQU   QDAYDATE+2,2
+STOR     DC    XL(STORLEN)'00'
+*
+QDAYDATE DS    0H
+         DC    4X'00'
+*
+STORLEN  EQU   4   No error if move this line above the STOR DC line
+*
+         END

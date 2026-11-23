@@ -40,13 +40,13 @@ set sysut1=rt\test\TESTDCB2.TF1
 set sysut2=rt\test\TESTDCB2.OUT
 set sysout=rt\test\TESTDCB2.RPT
 call bat\asmlg %z_TraceMode% rt\test\TESTDCB2 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB2.OUT rt\test\TESTDCB2.TF2 > nul || goto error
+call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB2.OUT rt\test\TESTDCB2.EBCDIC.TF2 > nul || goto error
 call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB2.RPT rt\test\TESTDCB2.TF3 > nul || goto error
-set sysut1=rt\test\TESTDCB3.TF1
+set sysut1=rt\test\TESTDCB3.EBCDIC.TF1
 set sysut2=rt\test\TESTDCB3.OUT
 set sysout=rt\test\TESTDCB3.RPT
 call bat\asmlg %z_TraceMode% rt\test\TESTDCB3 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB3.OUT rt\test\TESTDCB3.TF1 > nul || goto error
+call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB3.OUT rt\test\TESTDCB3.EBCDIC.TF1 > nul || goto error
 call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB3.RPT rt\test\TESTDCB3.TF3 > nul || goto error
 set sysut1=rt\test\TESTDCB4.TF1
 set sysut2=rt\test\TESTDCB4.OUT
@@ -58,31 +58,31 @@ set sysut1=rt\test\TESTDCB5.TF1
 set sysut2=rt\test\TESTDCB5.OUT
 set sysout=rt\test\TESTDCB5.RPT
 call bat\asmlg %z_TraceMode% rt\test\TESTDCB5 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB5.OUT rt\test\TESTDCB5.TF2 > nul || goto error
+call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB5.OUT rt\test\TESTDCB5.EBCDIC.TF2 > nul || goto error
 call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB5.RPT rt\test\TESTDCB5.TF3 > nul || goto error
-set sysut1=rt\test\TESTDCB6.TF1
+set sysut1=rt\test\TESTDCB6.EBCDIC.TF1
 set sysut2=rt\test\TESTDCB6.OUT
 set sysout=rt\test\TESTDCB6.RPT
 call bat\asmlg %z_TraceMode% rt\test\TESTDCB6 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB6.OUT rt\test\TESTDCB6.TF2 > nul || goto error
+call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB6.OUT rt\test\TESTDCB6.EBCDIC.TF2 > nul || goto error
 call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB6.RPT rt\test\TESTDCB6.TF3 > nul || goto error
-set sysut1=rt\test\TESTDCB7.TF1
+set sysut1=rt\test\TESTDCB7.EBCDIC.TF1
 set sysut2=rt\test\TESTDCB7.OUT
 set sysout=rt\test\TESTDCB7.RPT
 call bat\asmlg %z_TraceMode% rt\test\TESTDCB7 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB7.OUT rt\test\TESTDCB7.TF2 > nul || goto error
 call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB7.RPT rt\test\TESTDCB7.TF3 > nul || goto error
-set sysut1=rt\test\TESTDCB8.TF1
+set sysut1=rt\test\TESTDCB8.EBCDIC.TF1
 set sysut2=rt\test\TESTDCB8.OUT
 set sysout=rt\test\TESTDCB8.RPT
 call bat\asmlg %z_TraceMode% rt\test\TESTDCB8 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB8.OUT rt\test\TESTDCB8.TF1 > nul || goto error
+call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB8.OUT rt\test\TESTDCB8.EBCDIC.TF1 > nul || goto error
 call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB8.RPT rt\test\TESTDCB8.TF3 > nul || goto error
-set sysut1=rt\test\TESTDCB9.TF1
+set sysut1=rt\test\TESTDCB9.EBCDIC.TF1
 set sysut2=rt\test\TESTDCB9.OUT
 set sysout=rt\test\TESTDCB9.RPT
 call bat\asmlg %z_TraceMode% rt\test\TESTDCB9 notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB9.OUT rt\test\TESTDCB9.TF2 > nul || goto error
+call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB9.OUT rt\test\TESTDCB9.EBCDIC.TF2 > nul || goto error
 call bat\COMPARETEXTFILE.BAT rt\test\TESTDCB9.RPT rt\test\TESTDCB9.TF3 > nul || goto error
 set sysut1=
 set sysut2=
@@ -90,11 +90,11 @@ set sysout=
 call bat\asmlg %z_TraceMode% rt\test\TESTDCBA notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
 call bat\COMPARETEXTFILE.BAT rt\test\TESTDCBA.OUT rt\test\TESTDCBA.TF1 > nul || goto error
 call bat\COMPARETEXTFILE.BAT rt\test\TESTDCBA.RPT rt\test\TESTDCBA.TF3 > nul || goto error
-set sysut1=rt\test\TESTDCBB.TF1
+set sysut1=rt\test\TESTDCBB.EBCDIC.TF1
 set sysut2=rt\test\TESTDCBB.OUT
 set sysout=rt\test\TESTDCBB.RPT
 call bat\asmlg %z_TraceMode% rt\test\TESTDCBB notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\COMPARETEXTFILE.BAT rt\test\TESTDCBB.OUT rt\test\TESTDCBB.TF1 > nul || goto error
+call bat\COMPARETEXTFILE.BAT rt\test\TESTDCBB.OUT rt\test\TESTDCBB.EBCDIC.TF1 > nul || goto error
 call bat\COMPARETEXTFILE.BAT rt\test\TESTDCBB.RPT rt\test\TESTDCBB.TF3 > nul || goto error
 set sysut1=
 set sysut2=
@@ -112,13 +112,13 @@ set sysut1=
 set sysut2=
 set sysout=
 call bat\asmlg %z_TraceMode% rt\test\TESTDCBE notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\COMPARETEXTFILE.BAT rt\test\TESTDCBE.OUT rt\test\TESTDCBE.TF2 > nul || goto error
-call bat\COMPARETEXTFILE.BAT rt\test\TESTDCBE.RPT rt\test\TESTDCBE.TF3 > nul || goto error
-set sysut1=rt\test\TESTDCBF.TF1
+call bat\COMPARETEXTFILE.BAT rt\test\TESTDCBE.OUT rt\test\TESTDCBE.EBCDIC.TF2 > nul || goto error
+call bat\COMPARETEXTFILE.BAT rt\test\TESTDCBE.RPT rt\test\TESTDCBE.EBCDIC.TF3 > nul || goto error
+set sysut1=rt\test\TESTDCBF.EBCDIC.TF1
 set sysut2=rt\test\TESTDCBF.OUT
 set sysout=rt\test\TESTDCBF.RPT
 call bat\asmlg %z_TraceMode% rt\test\TESTDCBF notiming stats bal noloadhigh %1 %2 %3 %4 %5 %6 %7 %8 %9 || goto error
-call bat\COMPARETEXTFILE.BAT rt\test\TESTDCBF.OUT rt\test\TESTDCBF.TF2 > nul || goto error
+call bat\COMPARETEXTFILE.BAT rt\test\TESTDCBF.OUT rt\test\TESTDCBF.EBCDIC.TF2 > nul || goto error
 call bat\COMPARETEXTFILE.BAT rt\test\TESTDCBF.RPT rt\test\TESTDCBF.TF3 > nul || goto error
 
 

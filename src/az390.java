@@ -447,6 +447,7 @@ import javax.swing.JTextArea;
  * 2026-08-10 AFK #807 Fix issues flagged by linter
  * 2026-08-27 AFK #916 Missing break statements in case construct
  * 2026-09-12 RJS #877 Do not display stale object code on error lines
+ * 2026-10-04 AFK #943 Error 188 First EQU change
  *****************************************************/
 
 
@@ -1709,6 +1710,7 @@ public  class  az390 implements Runnable {
      * scan bal source and update symbols
      */
     private void update_symbols() {
+        sect_change = false; // set again only if this pass moves an EQU, label, or section #943
         loc_ctr = 0;
         cur_lit_pool = 1;
         cur_esd = 0;
@@ -1773,8 +1775,6 @@ public  class  az390 implements Runnable {
     private void update_sects() {
         if (tot_loc_stmt > 0 && cur_pass == 1) { // RPI 632
             sect_change_error();  // RPI 632 force first 2 passes if LOCTR found
-        } else {
-            sect_change = false;
         }
         int cst_ctr = 0;
         int index = 1;
@@ -6309,6 +6309,7 @@ public  class  az390 implements Runnable {
             }
         }
         get_bal_line();
+        sect_change = false; // discard lookahead; this pass sets the flag again #943
         while (!bal_eof && bal_line != null) {
             save_bal_line();
             parse_bal_line();
