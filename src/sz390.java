@@ -236,6 +236,7 @@ import javax.swing.Timer;
  * 2026-06-27 Issue #853 Test script lines with leading * sometimes marked as invalid command
  * 2026-07-11 Issue #865 Test run ends RC=0 even when test script does not run to completion
  * 2026-08-27 AFK   #916 Missing break statements in case construct
+ * 2026-11-12 JG    #966 Test break sometimes shows incorrect break address
  *****************************************************/
 
 
@@ -7521,7 +7522,7 @@ public class sz390 implements Runnable {
 
 
     /**
-     * set break on specified instruction address
+     * set/remove break on specified instruction address // #966
      *
      * @param addr Instruction address for breakpoint
      */
@@ -7533,7 +7534,9 @@ public class sz390 implements Runnable {
                 tz390.put_trace("test break addr removed - " + tz390.get_hex(addr,8));
                 tot_test_break_addr--;
                 if (index < tot_test_break_addr) {
+                    test_break_addr_cmd[index] = test_break_addr_cmd[tot_test_break_addr]; // #966
                     test_break_addr[index] = test_break_addr[tot_test_break_addr];
+                    test_break_addr_cmd[tot_test_break_addr] = null; // no loitering       // #966
                 }
                 return;
             }

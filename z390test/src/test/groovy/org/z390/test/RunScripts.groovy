@@ -264,4 +264,13 @@ class RunScripts extends z390Test {
         this.printOutput()
         assert rc == 0
     }
+    @Test
+    void test_TIS966() {
+        env = ['RTSCRIPT': basePath('rt', 'rt', "TIS966.RT")]
+        int rc = this.asmlg(basePath("rt", "rt", "TIS966"), *options, "test(RTSCRIPT)")
+        loadFile(basePath("rt", "rt", "TIS966.TRE"), "TRE")
+        this.printOutput()
+        assert rc == 0
+        assert fileData.get('TRE').contains("test break on a 8006."), "TIS966 - breakpoint reporting regressed"
+    }
 }
