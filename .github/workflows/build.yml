@@ -34,6 +34,9 @@ jobs:
       - name: Select distribution
         id: dist_mode
         shell: bash
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           MODE=standard
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -47,8 +50,15 @@ jobs:
           elif git diff --name-only HEAD^1 HEAD | grep -qx 'version.txt'; then
             MODE=full
           fi
+          # build/** forces the same full build and test set as a version.txt change.
+          # On a pull request HEAD_BRANCH is the source branch; on a push REF_NAME is the branch.
+          BRANCH="${HEAD_BRANCH:-$REF_NAME}"
+          case "$BRANCH" in
+            build/*) MODE=full ;;
+          esac
           echo "mode=${MODE}" >> "$GITHUB_OUTPUT"
           echo "Mode: ${MODE}"
+          echo "Branch: ${BRANCH}"
       - name: Build z390 distribution
         run: |
           if [ "${{ steps.dist_mode.outputs.mode }}" = "full" ]; then

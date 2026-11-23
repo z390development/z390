@@ -81,6 +81,10 @@ For running individual test scripts, the `bat\RUNGROOVY.BAT` and `bash/rungroovy
 procedures support a `full` parameter that includes the optional test cases.
 Optional test cases are skipped by default.
 
+GitHub Actions includes these optional test cases when it selects distribution mode `full`.
+A change to `version.txt` selects that mode, and so does a branch whose name matches `build/**`.
+The branch check is described in `doc/contributing/contribute_code.md`.
+
 ## Methods for testing
 
 The z390Test class embeds a number of methods for interacting with z390 similar
