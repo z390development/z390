@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       VERSION: ${{ steps.version.outputs.VERSION }}
+      DIST_VERSION: ${{ steps.version.outputs.DIST_VERSION }}
       MODE: ${{ steps.dist_mode.outputs.mode }}
     steps:
       - name: Checkout main
@@ -23,6 +24,7 @@ jobs:
         run: |
           VERSION=$(cat version.txt)
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "DIST_VERSION=V${VERSION}" >> $GITHUB_OUTPUT
         id: version
         shell: bash
       - uses: actions/setup-java@v3
@@ -73,7 +75,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: ./dist/z390_${{ steps.version.outputs.VERSION }}.zip
+          path: ./dist/z390_${{ steps.version.outputs.DIST_VERSION }}.zip
 
   run-tests:
     runs-on: ubuntu-latest
@@ -99,7 +101,7 @@ jobs:
           cp dist/z390_${VERSION}/z390.jar .
           Z390_PROJECT_ROOT="../dist/z390_${VERSION}" z390test/gradlew -p z390test test -PtestMode=${{ needs.build-distribution.outputs.MODE }}
         env:
-          VERSION: ${{ needs.build-distribution.outputs.VERSION }}
+          VERSION: ${{ needs.build-distribution.outputs.DIST_VERSION }}
       - name: Upload z390Test output on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -128,7 +130,7 @@ jobs:
           call z390_%VERSION%\bat\RUNASMDEMOS.BAT
           call z390_%VERSION%\bat\RUNCBLDEMOS.BAT
         env:
-          VERSION: ${{ needs.build-distribution.outputs.VERSION }}
+          VERSION: ${{ needs.build-distribution.outputs.DIST_VERSION }}
 
   create-release:
     # Run on merged PRs to main that modified or added version.txt
@@ -184,8 +186,8 @@ jobs:
         with:
           tag_name: v${{ needs.build-distribution.outputs.VERSION }}
           body: |
-            Download **z390_${{ needs.build-distribution.outputs.VERSION }}.zip** for the complete pre-built z390 package.
+            Download **z390_${{ needs.build-distribution.outputs.DIST_VERSION }}.zip** for the complete pre-built z390 package.
             The Source code links are the git tree for this version, not the pre-built distribution.
           files: |
-            z390_${{ needs.build-distribution.outputs.VERSION }}.zip
+            z390_${{ needs.build-distribution.outputs.DIST_VERSION }}.zip
           generate_release_notes: true

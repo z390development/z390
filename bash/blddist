@@ -7,9 +7,12 @@ cd $(dirname $0)                        # set to directory of script
 cd ..                                   # cd back to root       
 
 ROOT_DIR=$(pwd)
+
+# Get version from version.txt - prefix with V before use
 VERSION=$(cat version.txt)
-echo "Building z390 ${VERSION}"
+VERSION=V${VERSION}
 DIST_DIR=dist
+echo "Building z390 ${VERSION}"
 
 # build jar
 bash/bldjar                            # create the z390 jar

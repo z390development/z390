@@ -12,10 +12,11 @@ set /A z_NestLevel=%z_NestLevel%+1
 rem ----- Lvl(%z_NestLevel%) Start %0 %1 %2 %3 %4 %5 %6 %7 %8 %9
 pushd %~dps0..                                       || goto nopush
 
-rem Get version from version.txt
+rem Get version from version.txt - prefix with V before use
 set /p VERSION=<version.txt                          || goto error
-echo Building z390 %VERSION%
+set VERSION=V%VERSION%
 set DIST_DIR=dist
+echo Building z390 %VERSION%
 
 rem validate java sources
 call bat\RUNLINTER.BAT %z_TraceMode%                 || goto error
