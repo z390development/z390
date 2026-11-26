@@ -28,6 +28,7 @@ bash/bldzstrmac 'build/zstrmac'
 # build standard libraries
 bash/bldlib                            # build standard libs
 bash/bldcbllib                         # build cobol libs
+vsam2/bash/bldvsam                     # build vsam
 
 # build optional components when invoked with *All (any case)
 build_all=0

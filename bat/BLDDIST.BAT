@@ -34,8 +34,9 @@ rem generate HLASM compatible SPM's
 call bat\BLDZSTRMAC.BAT %z_TraceMode% build\zstrmac  || goto error
 
 rem build standard libraries
-call bat\BLDLIB.BAT    %z_TraceMode%                 || goto error
-call bat\BLDCBLLIB.BAT %z_TraceMode%                 || goto error
+call bat\BLDLIB.BAT        %z_TraceMode%             || goto error
+call bat\BLDCBLLIB.BAT     %z_TraceMode%             || goto error
+call vsam2\bat\BLDVSAM.BAT %z_TraceMode%             || goto error
 
 if /I %1. NEQ *All. goto Standard_build
    call barcode\BLD390.BAT    %z_TraceMode%          || goto error
@@ -89,7 +90,7 @@ for /f "usebackq delims=" %%F in ("%TEMP%\z390-blddist-390.txt") do (
 
 rem add linklib object files and the jar; neither is tracked
 if not exist linklib (mkdir linklib                  || goto error)
-copy /Y "!root!\linklib\*.obj" linklib\ > nul        || goto error
+copy /Y "!root!\linklib\*.OBJ" linklib\ > nul        || goto error
 copy /Y "!root!\z390.jar" .             > nul        || goto error
 
 rem add generated structured programming macros to mac/spm folder
@@ -99,7 +100,7 @@ copy /Y ..\..\build\zstrmac\* mac\spm\ > nul         || goto error
 rem add zCICS VSAM clusters produced by DFHALLV
 if not exist cics\vsam (mkdir cics\vsam              || goto error)
 if /I "%1"=="*All" (
-    copy /Y "!root!\cics\vsam\*.v*" cics\vsam\ > nul || goto error)
+    copy /Y "!root!\cics\vsam\*.V*" cics\vsam\ > nul || goto error)
 
 rem add javadoc, including its subfolders
 if not exist javadoc (mkdir javadoc                  || goto error)

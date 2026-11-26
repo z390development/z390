@@ -18,7 +18,7 @@ rem -- zVSAM V2 introduces the OCPL to allow Open/Close of muiltiple files
 rem -- but that code has not been written yet for sz390.java's open/close handling.
 set ERRMSG=assembly/link error
 call bat\asml vsam2\mlc\ZREPRO   zVSAM(1) stats sys390(linklib) || goto errmsg
-call bat\asml vsam2\mlc\ZVSAM19C zVSAM(2) stats sys390(linklib) || goto errmsg
+call bat\asm  vsam2\mlc\ZVSAM19C zVSAM(2) stats sysobj(linklib) || goto errmsg
 call bat\asml vsam2\mlc\Z390CAT2 zVSAM(2) stats                 || goto errmsg
 
 set RC=0
