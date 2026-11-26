@@ -18,7 +18,7 @@ call zc390bld                                %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem gen zstrmac translator using zstrmac.bat 
 call zstrmac linklib\zstrmac.zsm linklib\zstrmac.txt notiming stats
 rem verify zstrmac.txt matches linklib\zstrmac2.sav
-fc zstrmac.txt linklib\zstrmac.sav > linklib\zstrmac.dif
+call bat\COMPARETEXTFILE.BAT zstrmac.txt linklib\zstrmac.sav > linklib\zstrmac.dif
 rem test expansion of rtgendir and rtgencmp and copy gen'd files 
 call rt\RT3 linklib\RTGENDIR sysparm(RTGENDIR) notiming %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT3 linklib\RTGENCMP sysparm(RTGENCMP) notiming %1 %2 %3 %4 %5 %6 %7 %8 %9

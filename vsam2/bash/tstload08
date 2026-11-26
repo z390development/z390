@@ -68,12 +68,13 @@ if [ $rc -ne 0 ]; then echo "$0 ERROR: Encountered RC $rc - exiting"; exit $rc; 
 echo "--                             " >> "${data}/${logfile}"
 echo "-- Step 3: compare unload data " >> "${data}/${logfile}"
 echo "--                             " >> "${data}/${logfile}"
-if diff -q --strip-trailing-cr "${input}/MYFILE8F.TXT" "${data}/MYFILE8F.TXO"; then
+report=$(bash/comparetextfile "${input}/MYFILE8F.TXT" "${data}/MYFILE8F.TXO")
+rc=$?
+if [ $rc -eq 0 ]; then
     echo "diff: no differences encountered" >> "${data}/${logfile}"
 else
-    rc=$?
     echo "diff: files differ" >> "${data}/${logfile}"
-    diff --strip-trailing-cr "${input}/MYFILE8F.TXT" "${data}/MYFILE8F.TXO" >> "${data}/${logfile}" 2>&1 || true
+    printf '%s\n' "$report" >> "${data}/${logfile}"
     echo "$0 ERROR: Encountered RC $rc - exiting"
     exit $rc
 fi

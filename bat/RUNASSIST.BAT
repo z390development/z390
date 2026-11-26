@@ -31,7 +31,7 @@ call bat\asmlg %z_TraceMode% assist\test\TSTXHEXI ASSIST PARM(v)  || goto error
 set XREAD=assist\test\SOLP06.XRD
 set XPRNT=assist\test\SOLP06.XPR
 call bat\asmlg %z_TraceMode% assist\test\SOLP06 ASSIST PARM(v)    || goto error
-call fc.exe assist\test\SOLP06.XPR assist\test\SOLP06.TF1         || goto error2
+call bat\COMPARETEXTFILE.BAT assist\test\SOLP06.XPR assist\test\SOLP06.TF1         || goto error2
 
 set z_ReturnCode=0
 goto return

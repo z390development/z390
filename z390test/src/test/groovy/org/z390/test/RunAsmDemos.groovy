@@ -13,14 +13,6 @@ class RunAsmDemos extends z390Test {
         "SYSCPY(${basePath('mac')})",
         "SYSOBJ(${basePath('linklib')})"
     ]
-    var options_20s = [
-        'trace',
-        'nocon',
-        'time(20)',
-        "SYSMAC(${basePath('mac')})",
-        "SYSCPY(${basePath('mac')})",
-        "SYSOBJ(${basePath('linklib')})"
-    ]
 
     @Test
     // Test usage of explicit default extension
@@ -86,7 +78,7 @@ class RunAsmDemos extends z390Test {
     }
     @Test
     void test_SIEVE() {
-        int rc = this.asmlg(basePath("demo", "SIEVE"), *options_20s)
+        int rc = this.asmlg(basePath("demo", "SIEVE"), *options)
         this.printOutput()
         assert rc == 0
     }
@@ -111,7 +103,8 @@ class RunAsmDemos extends z390Test {
         // print the fileData
         this.printOutput()
         // Check files equal
-        assert fileData.get('TF1') == fileData.get('TF2')
+        assert CompareTextFile(basePath('demo', 'TESTDCB1.TF1'),
+                                basePath('demo', 'TESTDCB1.TF2')), compareTextFileReport
         assert rc == 0
     }
     @Test
@@ -129,7 +122,8 @@ class RunAsmDemos extends z390Test {
         // print the fileData
         this.printOutput()
         // Check files equal
-        assert fileData.get('TF1') == fileData.get('TF2')
+        assert CompareTextFile(basePath('demo', 'TESTDCB2.TF1'),
+                                basePath('demo', 'TESTDCB2.TF2')), compareTextFileReport
         assert rc == 0
     }
 }

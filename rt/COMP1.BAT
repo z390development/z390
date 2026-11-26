@@ -8,9 +8,9 @@ goto end
 :ok2
 if exist /usr/local/lib/z390/z390.jar goto linux
 :windows
-fc %1 %2 > %3
+call bat\COMPARETEXTFILE.BAT %1 %2 > %3
 goto end
 :linux
 rem note following diff cmd is pre-processed by cmd.pl
-diff %1 %2 %3
+call bat\COMPARETEXTFILE.BAT %1 %2 > %3
 :end

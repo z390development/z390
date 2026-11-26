@@ -34,7 +34,7 @@
 *  file which does not have match will generate:     
 *     copy missing %3missing_filename.
 *  Matching files will generate:
-*     fc %1file %2file > %3file. 
+*     call bat\COMPARETEXTFILE.BAT %1file %2file > %3file. 
 *
 *********************************************************************
          :&LAST_FILE SETC '(FILE EMPTY)' PREVIOUS FILE
@@ -99,7 +99,7 @@
 .*
          AENTRY COMP_FILES
          :&TOT_COMP SETA &TOT_COMP+1
-         PUNCH 'FC %1\&NEXT_FILE %2\&NEXT_FILE > %3\&NEXT_FILE',       X
-               DSNAME='&SYSPARM'
+         PUNCH 'CALL bat\COMPARETEXTFILE.BAT %1\&NEXT_FILE %2\&NEXT_FILX
+               E > %3\&NEXT_FILE',DSNAME='&SYSPARM'
          AEND      
          END

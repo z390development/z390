@@ -33,6 +33,7 @@ import java.io.FileReader;
  * 2025-09-14 AFK  Add/fix javadoc comments
  * 2026-08-09 #807 Fix issues flagged by linter
  * 2026-10-14 AFK  Z390.IVP file has moved to src folder
+ * 2026-11-23 #952 single consistent install
  ****************************************************
  *                                       last RPI
  ****************************************************/
@@ -85,9 +86,9 @@ public class iz390 {
         tz390.init_tz390();   // RPI 1080
         z390_ver = tz390.version;
         z390_base_ver = z390_ver.substring(0,7);
-        System.out.println("IVP OS   version = " + os_ver);
-        System.out.println("IVP J2SE version = " + j2se_ver);
-        System.out.println("IVP z390 version = " + z390_ver);
+        System.out.println("IVP OS      version = " + os_ver);
+        System.out.println("IVP J2SE    version = " + j2se_ver);
+        System.out.println("IVP z390    version = " + z390_ver);
         ivp_file_name = z390_dir + File.separator + "src" + File.separator + "Z390.IVP"; // RPI 713
         ivp_file      = new File(ivp_file_name);
         if (ivp_file.isFile()) {
@@ -111,31 +112,71 @@ public class iz390 {
             ivp_rc = 16;
         }
         /*
+         * check if zCobol install ok
+         */
+        ivp_file_name = z390_dir + File.separator + "zcobol";
+        ivp_file      = new File(ivp_file_name);
+        if (!ivp_file.isDirectory()) {
+            System.out.println("IVP zCobol component not present");
+            ivp_rc = 4;
+        } else {
+            ivp_file_name = ivp_file_name + File.separator + "lib" + File.separator + "ZC390LIB.390";
+            ivp_file      = new File(ivp_file_name);
+            if (ivp_file.isFile()) {
+                System.out.println("IVP zCobol  version = " + ivp_ver);
+            } else {
+                System.out.println("IVP zCobol  not installed");
+            }
+        }
+        /*
+         * check if zCics install ok
+         */
+        ivp_file_name = z390_dir + File.separator + "cics";
+        ivp_file      = new File(ivp_file_name);
+        if (!ivp_file.isDirectory()) {
+            System.out.println("IVP zCics component not present");
+            ivp_rc = 4;
+        } else {
+            ivp_file_name = ivp_file_name + File.separator + "Z390CICS.390";
+            ivp_file      = new File(ivp_file_name);
+            if (ivp_file.isFile()) {
+                System.out.println("IVP zCics   version = " + ivp_ver);
+            } else {
+                System.out.println("IVP zCics   not installed");
+            }
+        }
+        /*
+         * check if zSort install ok (part of linklib)
+         */
+        ivp_file_name = z390_dir + File.separator + "linklib";
+        ivp_file      = new File(ivp_file_name);
+        if (!ivp_file.isDirectory()) {
+            System.out.println("IVP zSort component not present");
+            ivp_rc = 4;
+        } else {
+            ivp_file_name = ivp_file_name + File.separator + "SORT.390";
+            ivp_file      = new File(ivp_file_name);
+            if (ivp_file.isFile()) {
+                System.out.println("IVP zSort   version = " + ivp_ver);
+            } else {
+                System.out.println("IVP zSort   not installed");
+            }
+        }
+        /*
          * check if RT optional installs ok
          */
         ivp_file_name = z390_dir + File.separator + "rt";
         ivp_file      = new File(ivp_file_name);
         if (!ivp_file.isDirectory()) {
-            System.out.println("IVP RT optional  zip not installed");
+            System.out.println("IVP RT component not present");
             ivp_rc = 4;
         } else {
-            ivp_file_name = z390_dir + File.separator + "rt" + File.separator + "Z390.IVP";
+            ivp_file_name = ivp_file_name + File.separator + "rt" + File.separator + "BATCH.RT";
             ivp_file      = new File(ivp_file_name);
             if (ivp_file.isFile()) {
-                try {
-                    ivp_buff = new BufferedReader(new FileReader(ivp_file_name));
-                    ivp_ver = ivp_buff.readLine();
-                    System.out.println("IVP z390 install = " + ivp_ver);
-                    if (ivp_ver.length() < 7 || !ivp_ver.substring(0,7).equals(z390_ver.substring(0,7))) {
-                        System.out.println("IVP z390 RT.zip install not equal base version");
-                        ivp_rc = 8;
-                    } else {
-                        System.out.println("IVP RT   install = " + ivp_ver);
-                    }
-                } catch (Exception e) {
-                    System.out.println("IVP I/O error - " + e.toString());
-                    ivp_rc = 8;
-                }
+                System.out.println("IVP RT      version = " + ivp_ver);
+            } else {
+                System.out.println("IVP RT      not installed");
             }
         }
         /*
@@ -144,26 +185,15 @@ public class iz390 {
         ivp_file_name = z390_dir + File.separator + "mvs";
         ivp_file      = new File(ivp_file_name);
         if (!ivp_file.isDirectory()) {
-            System.out.println("IVP MVS optional  zip not installed");
+            System.out.println("IVP MVS 3.8 macs not present");
             ivp_rc = 4;
         } else {
-            ivp_file_name = z390_dir + File.separator + "mvs" + File.separator + "Z390.IVP";
+            ivp_file_name = ivp_file_name + File.separator + "maclib" + File.separator + "ABEND.MAC";
             ivp_file      = new File(ivp_file_name);
             if (ivp_file.isFile()) {
-                try {
-                    ivp_buff = new BufferedReader(new FileReader(ivp_file_name));
-                    ivp_ver = ivp_buff.readLine();
-                    System.out.println("IVP z390 install = " + ivp_ver);
-                    if (ivp_ver.length() < 7 || !ivp_ver.substring(0,7).equals(z390_ver.substring(0,7))) {
-                        System.out.println("IVP z390 MVS.zip install not equal base version");
-                        ivp_rc = 8;
-                    } else {
-                        System.out.println("IVP MVS  install = " + ivp_ver);
-                    }
-                } catch (Exception e) {
-                    System.out.println("IVP I/O error - " + e.toString());
-                    ivp_rc = 8;
-                }
+                System.out.println("IVP MVS 3.8 maclib  = present");
+            } else {
+                System.out.println("IVP MVS 3.8 maclib not installed");
             }
         }
         /*

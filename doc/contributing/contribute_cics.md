@@ -33,6 +33,10 @@ after each assembly to provide an overview of unreferenced fields.
 **Note:** On Windows zCICS can also be built as part of the z390 build procedure:
     `bat> BUILD.BAT *All`
 
+GitHub Actions builds zCICS as part of that same full distribution when `version.txt` changes,
+or when the branch name matches `build/**`.
+See [Full build on GitHub](contribute_code.md#full-build-on-github).
+
 ## zCICS Sequential Terminal Support
 
 This chapter explains the use of zCICS Sequential Terminal Support,

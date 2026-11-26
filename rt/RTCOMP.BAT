@@ -19,5 +19,5 @@ rename %~dps0RTGENCMP.PCH RTGENCMP.BAT
 call %~dps0RTGENCMP.BAT %1 %2 %3
 goto end
 :linux
-diff %1 %2 %3/DIFF.TXT
+call bat\COMPARETEXTFILE.BAT %1 %2 > %3/DIFF.TXT
 :end

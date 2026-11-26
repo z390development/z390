@@ -84,6 +84,8 @@ If the job successfully runs, it means you are ready to start development.
 
 This build procedure invokes the standard regression test script.
 Adding the `*All` parameter includes the optional tests.
+To run that full build and the optional tests on GitHub Actions without changing `version.txt`,
+push a branch named `build/**`. See [Full build on GitHub](#full-build-on-github).
 
 Build and regression testing both can take quite some time.
 Luckily, you do not need to do this very often.
@@ -199,11 +201,27 @@ To create a new release:
 When a pull request containing changes to version.txt is merged to main,
 the GitHub Actions workflow will automatically:
 
-1. Build the z390 distribution
-2. Run all tests
+1. Build the z390 distribution with `*All` parameter
+2. Run the full test suite (no exceptions, nothing is skipped)
 3. Create a git tag for the version
 4. Create a GitHub release using the version from version.txt
 5. Attach the distribution zip file to the release
+
+### Full build on GitHub
+
+A change to `version.txt` makes GitHub Actions run the full build:
+`bash/blddist '*All'`, then the test suite with `-PtestMode=full`.
+
+The same full build runs for a branch whose name matches `build/**`.
+Push a branch whose name starts with `build/` to your fork,
+for example `build/cics-fix`, or open a pull request from that branch.
+The name `build` alone does not match. A name with further slashes, such as `build/cics/maps`, does match.
+
+This is the same kind of branch-name trigger as the documentation preview branches
+in [Preview on a fork](contribute_docs.md#preview-on-a-fork).
+A `build/**` run uploads the distribution artifact.
+It does not create a git tag or a GitHub release.
+After the pull request merges, the push to `main` sees the branch name `main`, so a full build on `main` still depends on a change to `version.txt`.
 
 ## Useful technical details
 
