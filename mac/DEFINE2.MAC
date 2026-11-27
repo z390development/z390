@@ -74,7 +74,6 @@
 .*                     MAXELEMENTS=N,  WHEN UNIQUEKEY=NO, ADJUST BLKSZ
 .*                     UPGRADE=YES,    UPDATE AIX FOR BASE CHANGE  1130
 .*                     REUSE=YES,      ERASE ALL DATA AT OPEN RPI 1130
-.*                     SPANNED=NO,     SPANNED NO/YES
 .*                     DTADSN=,        OPTIONAL DSNAME FOR AIX
 .*                     DATABLOCKSIZE=4K,  DATA BLOCKSIZE
 .*                     INDEXBLOCKSIZE=4K, INDEX BLOCKSIZE
@@ -183,6 +182,9 @@
          AIF   (&CLR_DBS(&CLR_TOT) LT 512)
          MNOTE 12,'CLUSTER DATABLOCKSIZE LESS THAN 512 BYTES'
          AEND
+         AIF   (&CLR_DBS(&CLR_TOT) GT 16777216)
+         MNOTE 12,'CLUSTER DATABLOCKSIZE GREATER THAN 16MB'
+         AEND
 .*
 .*
 .* SET CLUSTER INDEXBLOCKSIZE
@@ -197,6 +199,9 @@
          AEND
          AIF   (&CLR_IBS(&CLR_TOT) LT 512)
          MNOTE 12,'CLUSTER INDEXBLOCKSIZE LESS THAN 512 BYTES'
+         AEND
+         AIF   (&CLR_IBS(&CLR_TOT) GT 16777216)
+         MNOTE 12,'CLUSTER INDEXBLOCKSIZE GREATER THAN 16MB'
          AEND
 .*
 .* SET CLUSTER DATAADJUST
@@ -423,6 +428,9 @@
          MNOTE 12,'INVALID AIX NAME - &NAME'
 .SET_AIX_NAME2 ANOP
 &AIX_NAME(&AIX_TOT) SETC '&NAME'
+         AIF   ('&SPANNED' NE 'NO')
+         MNOTE 12,'SPANNED IS NOT AN AIX OPERAND - &SPANNED'
+         AEND
 .*
 .* SET AIX KEY LENGTH AND OFFSET
 .*
@@ -514,9 +522,12 @@
                :&LEN SETA &LEN*1024
                :&AIX_DBS(&AIX_TOT) SETA &LEN
          AEND
-         AIF   ('&MAXELEMENTS' NE '').SET_AIX_IDXBLKSZ
+         AIF   (&AIX_MAXELEMENTS(&AIX_TOT) NE 0).SET_AIX_IDXBLKSZ
          AIF   (&AIX_DBS(&AIX_TOT) LT 512)
          MNOTE 12,'AIX DATABLOCKSIZE LESS THAN 512 BYTES'
+         AEND
+         AIF   (&AIX_DBS(&AIX_TOT) GT 16777216)
+         MNOTE 12,'AIX DATABLOCKSIZE GREATER THAN 16MB'
          AEND
 .*
 .SET_AIX_IDXBLKSZ ANOP
@@ -532,6 +543,9 @@
          AEND
          AIF   (&AIX_IBS(&AIX_TOT) LT 512)
          MNOTE 12,'AIX INDEXBLOCKSIZE LESS THAN 512 BYTES'
+         AEND
+         AIF   (&AIX_IBS(&AIX_TOT) GT 16777216)
+         MNOTE 12,'AIX INDEXBLOCKSIZE GREATER THAN 16MB'
          AEND
 .*
 .* SET AIX DATAADJUST
@@ -550,12 +564,14 @@
 .*
 .* SET AIX INDEXADJUST
 .*
-         AIF   ('&INDEXADJUST' EQ 'NO').SET_AIX_IADJ
+         AIF   ('&INDEXADJUST' EQ 'NO').SET_AIX_NOIADJ
          AIF   ('&INDEXADJUST' EQ 'YES').SET_AIX_IADJ
          MNOTE 12,'AIX INDEXADJUST MUST BE YES/NO - &INDEXADJUST'
 .*
 .SET_AIX_IADJ ANOP
 &AIX_IADJ(&AIX_TOT) SETB 1
+.*
+.SET_AIX_NOIADJ ANOP
 .*
 .* SET AIX DATAFREESPACE
 .*
@@ -637,7 +653,7 @@
          AIF   ('&UPDATE' EQ 'YES').SET_UPDATE
          MNOTE 12,'PATH UPDATE MUST BE YES/NO - &UPDATE'
 .SET_UPDATE ANOP
-&PTH_UPDATE(&PTH_TOT) SETB 1
+&PTH_AIXU(&PTH_TOT) SETB 1
 .SET_PTH_UPDATE2 ANOP
          MEXIT
 .**************
@@ -701,6 +717,40 @@
          AGO   .CHK_PTH
 .*
 .CHK_PTH_END ANOP
+.*
+.* VERIFY NAMES ARE UNIQUE ACROSS CLUSTERS, AIXS AND PATHS
+.*
+         LCLC  &ALLNAM(300)
+&NAMTOT  SETA  0
+&I       SETA  0
+         AWHILE (&I LT &CLR_TOT)
+               :&I SETA &I+1
+               :&NAMTOT SETA &NAMTOT+1
+               :&ALLNAM(&NAMTOT) SETC '&CLR_NAME(&I)'
+         AEND
+&I       SETA  0
+         AWHILE (&I LT &AIX_TOT)
+               :&I SETA &I+1
+               :&NAMTOT SETA &NAMTOT+1
+               :&ALLNAM(&NAMTOT) SETC '&AIX_NAME(&I)'
+         AEND
+&I       SETA  0
+         AWHILE (&I LT &PTH_TOT)
+               :&I SETA &I+1
+               :&NAMTOT SETA &NAMTOT+1
+               :&ALLNAM(&NAMTOT) SETC '&PTH_NAME(&I)'
+         AEND
+&I       SETA  1
+         AWHILE (&I LT &NAMTOT)
+               :&J SETA &I+1
+               AWHILE (&J LE &NAMTOT)
+                   AIF ('&ALLNAM(&I)' EQ '&ALLNAM(&J)')
+                       MNOTE 12,'DEFINE NAME &ALLNAM(&I) NOT UNIQUE'
+                   AEND
+                   :&J SETA &J+1
+               AEND
+               :&I SETA &I+1
+         AEND
          ZDEFINE2 , GENERATE VCDT CATALOG LOADABLE TABLE
          VCDTD2   , GENERATE VCDT DSECTS
          MEXIT

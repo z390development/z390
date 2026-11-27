@@ -1,0 +1,190 @@
+.**********************************************************************
+.* z390 - Mainframe assembler emulator and run-time engine
+.* Copyright (C) 2021 z390 Assembler LLC
+.*
+.* This file is part of z390.
+.*
+.* z390 is free software; you can redistribute it and/or modify
+.* it under the terms of the GNU General Public License as published by
+.* the Free Software Foundation; either version 2 of the License, or
+.* (at your option) any later version.
+.* z390 is distributed in the hope that it will be useful,
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.* GNU General Public License for more details.
+.*
+.* You should have received a copy of the GNU General Public License 
+.* along with this program; if not, see https://www.gnu.org/licenses.
+.*********************************************************************
+
+.* GUARD
+TESTVCAT SUBENTRY BASES=(R13,R12,R11)
+         AIF   (&SYSZVSAM EQ 2).VEROK
+         MNOTE 15, `TESTVCAT REQUIRES ZVSAM(2)`
+.VEROK   ANOP
+
+         IILF  R15,C'VC01'    MARK TEST
+         LOAD  EP=Z390CAT2    R0=A (VCDT)
+         LTR   R15,R15        LOADED ?
+         JNZ   TESTFAIL       EXIT IF NOT
+         LR    R2,R0          R2=VCDT HEADER
+         USING IHAVCDT,R2
+
+         IILF  R15,C'VC02'    MARK TEST
+         CLC   VCDTID,=C'VCD2' V2 EYECATCHER?
+         JNE   TESTFAIL        EXIT IF NOT
+         IILF  R15,C'VC03'    MARK TEST
+         CLC   VCDTNAME,=CL8'Z390CAT2' NAME OK?
+         JNE   TESTFAIL        EXIT IF NOT
+         IILF  R15,C'VC04'    MARK TEST
+         CLC   VCDTCLRT,=F'16'  16 CLUSTERS DEFINED
+         JNE   TESTFAIL        EXIT IF NOT
+         IILF  R15,C'VC05'    MARK TEST
+         CLC   VCDTAIXT,=F'11'  11 AIXS DEFINED
+         JNE   TESTFAIL        EXIT IF NOT
+         IILF  R15,C'VC06'    MARK TEST
+         CLC   VCDTPTHT,=F'11'  11 PATHS DEFINED
+         JNE   TESTFAIL        EXIT IF NOT
+
+         L     R3,VCDTCLRA        R3=FIRST VCLR ENTRY
+         USING IHAVCLR,R3
+         L     R4,VCDTCLRT        R4=CLUSTER COUNT
+CLRLOOP  DS    0H
+         IILF  R15,C'VC07'        MARK TEST
+         CLC   VCLRID,=C'VCLR'    EYECATCHER ON EVERY STRIDE ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC08'        MARK TEST
+         CLC   VCLRTYPE,=C'KSDS'  TYPE STRING SAYS KSDS ?
+         JNE   CLRNKSDS           NO, THEN THE BIT MUST BE OFF
+         TM    VCLRFLG1,VCLRKSDS  BIT AGREES ?
+         JZ    TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC09'        MARK TEST
+         L     R5,VCLRKLEN        A KSDS MUST HAVE A KEY
+         LTR   R5,R5              ZERO LENGTH ?
+         JZ    TESTFAIL           EXIT IF SO
+         J     CLRNEXT            ON TO THE NEXT ENTRY
+CLRNKSDS TM    VCLRFLG1,VCLRKSDS  NOT KSDS, SO BIT OFF ?
+         JNZ   TESTFAIL           EXIT IF NOT
+CLRNEXT  DS    0H
+         LA    R3,VCLRLEN(,R3)    STRIDE TO NEXT ENTRY
+         BCT   R4,CLRLOOP         UNTIL COUNT EXHAUSTED
+
+         L     R3,VCDTCLRA        BACK TO THE FIRST ENTRY
+         L     R4,VCDTCLRT        AND THE FULL COUNT
+FINDF03  CLC   VCLRNAME,=CL8'MYFILE03' THIS ONE ?
+         JE    CHKF03             YES, CHECK IT
+         LA    R3,VCLRLEN(,R3)    NO, STRIDE ON
+         BCT   R4,FINDF03         UNTIL COUNT EXHAUSTED
+         IILF  R15,C'VC10'        MARK TEST
+         J     TESTFAIL           NOT IN THE TABLE AT ALL
+CHKF03   DS    0H
+         IILF  R15,C'VC11'        MARK TEST
+         CLC   VCLRLAVG,=F'10'    RECORDSIZE=(10,26) AVERAGE ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC12'        MARK TEST
+         CLC   VCLRLMAX,=F'26'    AND MAXIMUM ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC13'        MARK TEST
+         TM    VCLRFLG1,VCLRVREC  TWO SIZES MEANS VARIABLE
+         JZ    TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC14'        MARK TEST
+         CLC   VCLRKLEN,=F'3'     KEYS=(3,0) LENGTH ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC15'        MARK TEST
+         CLC   VCLRDBS,=F'4096'   DATABLOCKSIZE=4K IN BYTES ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC16'        MARK TEST
+         CLC   VCLRIBS,=F'512'    INDEXBLOCKSIZE=512 ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC17'        MARK TEST
+         CLI   VCLRDFS,20         DATAFREESPACE=20 ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC18'        MARK TEST
+         TM    VCLRFLG2,VCLRIADJ  INDEXADJUST=YES ?
+         JZ    TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC19'        MARK TEST
+         TM    VCLRFLG2,VCLRDADJ  DATAADJUST=NO ?
+         JNZ   TESTFAIL           EXIT IF SET
+         IILF  R15,C'VC20'        MARK TEST
+         CLI   VCLRFLG1,VCLRVREC+VCLRKSDS NOTHING ELSE IN BYTE 1 ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC21'        MARK TEST
+         CLI   VCLRFLG2,VCLRIADJ  NO REUSE IN BYTE 2 ?
+         JNE   TESTFAIL           EXIT IF NOT
+         DROP  R3
+
+         USING IHAVAIX,R3
+         IILF  R15,C'VC22'        MARK TEST
+         LA    R1,=CL8'MYAIX11'   UNIQUE, UPGRADE, BOTH ADJUSTS
+         BRAS  R14,FINDAIX        R3=VAIX ENTRY
+         IILF  R15,C'VC23'        MARK TEST
+         CLI   VAIXFLG1,VAIXUKEY+VAIXUAIX UNIQUE IS F ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC24'        MARK TEST
+         CLI   VAIXFLG2,VAIXDADJ+VAIXIADJ NO REUSE ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC25'        MARK TEST
+         LA    R1,=CL8'MYAIX2U'   NON-UNIQUE, UPGRADE
+         BRAS  R14,FINDAIX        R3=VAIX ENTRY
+         IILF  R15,C'VC26'        MARK TEST
+         CLI   VAIXFLG1,VAIXVREC+VAIXUAIX+VAIXSPAN NON-UNIQUE IS VS
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC27'        MARK TEST
+         CLI   VAIXFLG2,VAIXIADJ  INDEXADJUST ONLY ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC28'        MARK TEST
+         LA    R1,=CL8'MYAIXIN'   NON-UNIQUE, NO UPGRADE
+         BRAS  R14,FINDAIX        R3=VAIX ENTRY
+         IILF  R15,C'VC29'        MARK TEST
+         CLI   VAIXFLG1,VAIXVREC+VAIXSPAN NON-UNIQUE IS VS
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC30'        MARK TEST
+         CLC   VAIXMAXE,=F'2000'  MAXELEMENTS=2000 ?
+         JNE   TESTFAIL           EXIT IF NOT
+         DROP  R3
+
+         L     R3,VCDTPTHA        R3=FIRST VPTH ENTRY
+         USING IHAVPTH,R3
+         IILF  R15,C'VC31'        MARK TEST
+         CLC   VPTHID,=C'PATH'    EYECATCHER ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC32'        MARK TEST
+         CLC   VPTHNAME,=CL8'AIX11PH' FIRST PATH ?
+         JNE   TESTFAIL           EXIT IF NOT
+         IILF  R15,C'VC33'        MARK TEST
+         CLI   VPTHFLG1,VPTHAIXP  AIX PATH, UPDATE=NO ?
+         JNE   TESTFAIL           EXIT IF NOT
+         DROP  R3
+
+        
+.*Success, failure, and the tail of it
+         WTO   'TESTVCAT SUCCESSFUL'
+         J     EXIT            EXIT
+TESTFAIL DS 0H
+         ST    R15,WTOMARK        SAVE TEST ID IN WTO
+         LARL  R1,WTOFAIL         R1=WTO MSG
+         WTO   MF=(E,(R1))        SHOW IT
+         SUBEXIT RC=15
+EXIT     DS    0H
+         SUBEXIT
+
+         USING IHAVAIX,R3
+FINDAIX  DS    0H
+         L     R3,VCDTAIXA        R3=FIRST VAIX ENTRY
+         L     R4,VCDTAIXT        R4=AIX COUNT
+FINDAIXL CLC   VAIXNAME,0(R1)     THIS ONE ?
+         BER   R14                YES, BACK TO CALLER
+         LA    R3,VAIXLEN(,R3)    NO, STRIDE ON
+         BCT   R4,FINDAIXL        UNTIL COUNT EXHAUSTED
+         J     TESTFAIL           NOT IN THE TABLE AT ALL
+         DROP  R3
+         DS    0H
+WTOFAIL  DC    AL2(WTOFALEN-*,0)
+         DC    C'ERR!!! TEST '
+WTOMARK  DS    CL4
+         DC    C' FAILED'
+WTOFALEN EQU   *
+         LTORG
+         VCDTD
+         YREGS
+         END        
